@@ -1,0 +1,30 @@
+# --- Godot 4 ---
+# Cache éditeur / imports (régénéré automatiquement)
+.godot/
+# Les fichiers *.import SONT versionnés (paramètres d'import des assets).
+
+# Exports : les presets peuvent contenir des chemins/identifiants locaux.
+# On versionne un modèle sans secret : export_presets.example.cfg
+export_presets.cfg
+build/
+exports/
+
+# Mono / C# (non utilisé, par sécurité)
+.mono/
+data_*/
+mono_crash.*.json
+
+# Temporaires / OS
+*.tmp
+*.translation
+.DS_Store
+Thumbs.db
+*~
+*.swp
+
+# IDE
+.vscode/
+.idea/
+
+# Addons : GUT est VERSIONNÉ (addons/gut) pour des tests reproductibles
+# et une CI sans téléchargement. Ne pas l'ignorer.
