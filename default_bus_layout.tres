@@ -1,0 +1,146 @@
+[gd_resource type="AudioBusLayout" format=3]
+
+[sub_resource type="AudioEffectStereoEnhance" id="AudioEffectStereoEnhance_j3pel"]
+resource_name = "Mono"
+pan_pullout = 0.0
+
+[sub_resource type="AudioEffectHardLimiter" id="AudioEffectHardLimiter_g28q7"]
+ceiling_db = -1.0
+
+[sub_resource type="AudioEffectAmplify" id="AudioEffectAmplify_n8wo2"]
+resource_name = "Duck"
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_5t1r3"]
+resource_name = "Muffle"
+cutoff_hz = 2500.0
+
+[sub_resource type="AudioEffectAmplify" id="AudioEffectAmplify_cenje"]
+resource_name = "Duck"
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_dqt2m"]
+resource_name = "Glass"
+cutoff_hz = 8000.0
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_7kkex"]
+resource_name = "Station"
+damping = 0.4
+wet = 0.25
+
+[sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_k2ilm"]
+threshold = -12.0
+ratio = 3.0
+attack_us = 5000.0
+release_ms = 120.0
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_2g6t7"]
+resource_name = "Hall"
+predelay_msec = 40.0
+room_size = 0.85
+damping = 0.35
+wet = 0.22
+
+[sub_resource type="AudioEffectAmplify" id="AudioEffectAmplify_y2dp7"]
+resource_name = "Duck"
+
+[sub_resource type="AudioEffectHighPassFilter" id="AudioEffectHighPassFilter_dapn3"]
+resource_name = "Hygiaphone"
+cutoff_hz = 380.0
+resonance = 0.6
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_e2wrs"]
+resource_name = "HygiaphoneLP"
+cutoff_hz = 3400.0
+resonance = 0.7
+
+[sub_resource type="AudioEffectEQ6" id="AudioEffectEQ6_ro4dx"]
+band_db/320_hz = -2.0
+band_db/1000_hz = 3.0
+band_db/3200_hz = 2.0
+
+[sub_resource type="AudioEffectDistortion" id="AudioEffectDistortion_51bpa"]
+mode = 3
+drive = 0.12
+post_gain = -1.0
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_2mq3o"]
+resource_name = "Booth"
+predelay_msec = 8.0
+room_size = 0.15
+damping = 0.6
+wet = 0.12
+
+[sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_5tfch"]
+threshold = -18.0
+gain = 3.0
+attack_us = 3000.0
+release_ms = 150.0
+
+[resource]
+bus/0/effect/0/effect = SubResource("AudioEffectStereoEnhance_j3pel")
+bus/0/effect/0/enabled = false
+bus/0/effect/1/effect = SubResource("AudioEffectHardLimiter_g28q7")
+bus/0/effect/1/enabled = true
+bus/1/name = &"Music"
+bus/1/solo = false
+bus/1/mute = false
+bus/1/bypass_fx = false
+bus/1/volume_db = 0.0
+bus/1/send = &"Master"
+bus/1/effect/0/effect = SubResource("AudioEffectAmplify_n8wo2")
+bus/1/effect/0/enabled = true
+bus/1/effect/1/effect = SubResource("AudioEffectLowPassFilter_5t1r3")
+bus/1/effect/1/enabled = false
+bus/2/name = &"Ambience"
+bus/2/solo = false
+bus/2/mute = false
+bus/2/bypass_fx = false
+bus/2/volume_db = 0.0
+bus/2/send = &"Master"
+bus/2/effect/0/effect = SubResource("AudioEffectAmplify_cenje")
+bus/2/effect/0/enabled = true
+bus/2/effect/1/effect = SubResource("AudioEffectLowPassFilter_dqt2m")
+bus/2/effect/1/enabled = true
+bus/2/effect/2/effect = SubResource("AudioEffectReverb_7kkex")
+bus/2/effect/2/enabled = true
+bus/3/name = &"SFX"
+bus/3/solo = false
+bus/3/mute = false
+bus/3/bypass_fx = false
+bus/3/volume_db = 0.0
+bus/3/send = &"Master"
+bus/3/effect/0/effect = SubResource("AudioEffectCompressor_k2ilm")
+bus/3/effect/0/enabled = true
+bus/4/name = &"SFX_World"
+bus/4/solo = false
+bus/4/mute = false
+bus/4/bypass_fx = false
+bus/4/volume_db = 0.0
+bus/4/send = &"SFX"
+bus/4/effect/0/effect = SubResource("AudioEffectReverb_2g6t7")
+bus/4/effect/0/enabled = true
+bus/5/name = &"Voice"
+bus/5/solo = false
+bus/5/mute = false
+bus/5/bypass_fx = false
+bus/5/volume_db = 0.0
+bus/5/send = &"Master"
+bus/5/effect/0/effect = SubResource("AudioEffectAmplify_y2dp7")
+bus/5/effect/0/enabled = true
+bus/5/effect/1/effect = SubResource("AudioEffectHighPassFilter_dapn3")
+bus/5/effect/1/enabled = true
+bus/5/effect/2/effect = SubResource("AudioEffectLowPassFilter_e2wrs")
+bus/5/effect/2/enabled = true
+bus/5/effect/3/effect = SubResource("AudioEffectEQ6_ro4dx")
+bus/5/effect/3/enabled = true
+bus/5/effect/4/effect = SubResource("AudioEffectDistortion_51bpa")
+bus/5/effect/4/enabled = true
+bus/5/effect/5/effect = SubResource("AudioEffectReverb_2mq3o")
+bus/5/effect/5/enabled = true
+bus/5/effect/6/effect = SubResource("AudioEffectCompressor_5tfch")
+bus/5/effect/6/enabled = true
+bus/6/name = &"UI"
+bus/6/solo = false
+bus/6/mute = false
+bus/6/bypass_fx = false
+bus/6/volume_db = 0.0
+bus/6/send = &"Master"

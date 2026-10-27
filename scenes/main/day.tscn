@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/day/day_scene.gd" id="1_scene"]
 [ext_resource type="PackedScene" path="res://scenes/booth/booth.tscn" id="2_booth"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/day/day_clock.gd" id="4_clock"]
 [ext_resource type="Script" path="res://scripts/day/inspection_session.gd" id="5_insp"]
 [ext_resource type="Script" path="res://scripts/booth/portrait_service.gd" id="6_portrait"]
+[ext_resource type="Script" path="res://scripts/audio/audio_director.gd" id="7_audio"]
 
 [node name="Day" type="Control"]
 layout_mode = 3
@@ -67,3 +68,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="AudioDirector" type="Node" parent="." node_paths=PackedStringArray("booth")]
+unique_name_in_owner = true
+script = ExtResource("7_audio")
+booth = NodePath("../BoothContainer/BoothViewport/Booth")

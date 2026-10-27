@@ -1,6 +1,6 @@
 # CLEARANCE — Audio Design
 
-> Version 0.1 · Propriétaire : Audio Designer · Statut : **brouillon à valider**
+> Version 0.2 · Propriétaire : Audio Designer · Statut : **implémenté (M6)** — voir §12 pour l'état réel
 > Cohérent avec `DESIGN_SYSTEM.md` §9 (Audio-UI), §11 (Assets libres) et `docs/ARCHITECTURE.md` §7 (catalogue `EventBus`).
 > Moteur : Godot 4.7.2. Dossier cible : `res://assets/audio/{sfx,ambience,music,voice}/`.
 
@@ -31,7 +31,7 @@
 
 ## 2. Architecture des bus
 
-Fichier : `res://assets/audio/default_bus_layout.tres` (déclaré dans `project.godot` → `audio/buses/default_bus_layout`).
+Fichier : `res://default_bus_layout.tres` (chemin par défaut de Godot, aucune entrée `project.godot`), **généré** depuis `scripts/audio/audio_buses.gd` (`AudioBuses`, source de vérité des noms et effets) par `tools/build_audio.gd`.
 
 ```
 Master ── Limiter (ceiling −1 dBTP)
@@ -306,7 +306,14 @@ Tous les sons 3D sont **mono** (sinon Godot ne les spatialise pas correctement).
 
 | Fichier (`res://…`) | Source (URL) | Auteur | Licence | Attribution requise | Modifié ? | Date d'import | Importé par |
 |---|---|---|---|---|---|---|---|
-| | | | | | | | |
+| `assets/audio/sfx/passenger/sfx_passenger_step_*`, `step_stop_*`, `knock_glass_*` ; `assets/audio/ambience/amb_queue_advance_*` | kenney.nl/assets/impact-sounds (Impact Sounds 1.0 : `footstep_concrete_*`, `impactMetal_light_*`, `impactGlass_heavy_*`, `impactSoft_heavy_*`) | Kenney | CC0 1.0 | non (crédit de courtoisie) | oui : rééchantillonnage, filtres, superposition d'éclaboussures synthétiques | 2026-10-27 | Audio Designer |
+| `assets/audio/sfx/booth/sfx_booth_stamp_*`, `slot_in_*`, `slot_out_*` | kenney.nl/assets/impact-sounds (`impactPlate_heavy_*`, `impactPunch_heavy_*`, `impactMetal_light_*`) + kenney.nl/assets/interface-sounds (`click_*`) | Kenney | CC0 1.0 | non | oui : couches + clic métallique / buzz synthétiques, saturation douce | 2026-10-27 | Audio Designer |
+| `assets/audio/sfx/booth/sfx_booth_intercom_*` | kenney.nl/assets/interface-sounds (`switch_*`) | Kenney | CC0 1.0 | non | oui : + souffle de larsen synthétique | 2026-10-27 | Audio Designer |
+| `assets/audio/sfx/station/sfx_station_door_*` ; chocs du lit `amb_station_bed_loop.ogg` | kenney.nl/assets/sci-fi-sounds (`doorOpen_*`, `doorClose_*`) + impact-sounds (`impactMetal_heavy_*`) | Kenney | CC0 1.0 | non | oui : sifflement pneumatique, passe-bas « lointain » | 2026-10-27 | Audio Designer |
+| Tous les autres fichiers de `assets/audio/` (UI, holo, imprimante, souffles, papiers, pluie, néon, murmure, annonces PA, musique) | synthèse procédurale `tools/build_audio.gd` (graines fixes) ; voix : `TessarVoice` | studio CLEARANCE | propriété du projet | — | — | 2026-10-27 | Audio Designer |
+| Barks des passagers (aucun fichier) | synthèse à l'exécution `scripts/audio/tessar_voice.gd` | studio CLEARANCE | propriété du projet | — | — | — | Audio Designer |
+
+Régénération : `bash tools/fetch_assets.sh` (packs Kenney dans `art_src/downloads/`, ignoré par git) puis `bash tools/build_audio.sh` (ffmpeg + libvorbis requis).
 
 ---
 
@@ -326,6 +333,24 @@ L'`AudioDirector` (nœud de `day.tscn`) est le **seul** écouteur audio de l'Eve
 4. Formule rituelle « Gloire au Consortium » : validation Lore Master.
 5. `AudioStreamInteractive` (Godot 4.3+) pour la musique : OK côté Godot Architect ?
 
+## 12. Implémentation M6 (état réel)
+
+| Élément | Implémentation | Écart vs §2–§8 |
+|---|---|---|
+| Bus | `AudioBuses` → `default_bus_layout.tres` : Master [Mono (StereoEnhance `pan_pullout=0`, off), HardLimiter −1 dB] ; Music [Duck, Muffle LPF 2,5 kHz (pause)] ; Ambience [Duck, LPF 8 kHz, Reverb Station] ; SFX [Compressor 3:1] → SFX_World [Reverb Hall] ; Voice [Duck, HP 380 Hz + LP 3,4 kHz (« Hygiaphone »), EQ6, grain, Reverb Booth, Compressor 4:1] ; UI sec | Hygiaphone = HP+LP (au lieu d'un BandPass unique, plus large et intelligible) ; filtre « intercom off » non fait (pas d'action intercom) |
+| Ducking | Effets `AudioEffectAmplify` « Duck » pilotés par `AudioDirector` (voix : Music −6 / Ambience −4, 80/400 ms ; tampon : −3 dB 150 ms sur Music/Ambience/Voice) | Les volumes joueur restent sur `volume_db` des bus (Settings), sans conflit |
+| Réglages | `Settings` applique volumes **et** `audio_mono` (nouvelle clé) ; `PassengerAudio` met `panning_strength = 0` en mono | Le toggle Mono n'est pas encore dans `OptionsPanel` (UI/UX) |
+| Directeur | `scripts/audio/audio_director.gd` (nœud `AudioDirector` de `day.tscn`), pools `VoicePool` : SFX 8, SFX_World 2, UI 4, Ambience 2 (+ 4 boucles, 2 lecteurs musique, 1 bourdon holo, 1 voix 2D de secours) ; vol P3→P1, P1 jamais volé ; polyphonie par cue | Pas d'`AudioStreamRandomizer` en `.tres` : construits en code depuis `AudioCueBank` |
+| Passager 3D | `PassengerAudio` ajouté **à l'exécution** sous chaque `PassengerActor` du pool (`BoothDirector.actors`) : FootEmitter (SFX_World), BreathEmitter / BodyEmitter (SFX), VoiceEmitter (Voice) ; écoute `anim_event` et `arrived` ; respirations d'attente 4–9 s (÷2 nerveux). `AudioListener3D` « AgentEars » placé à 1,3 m du comptoir côté caméra (la caméra télé est trop loin pour l'atténuation) ; écoute 3D activée sur le viewport du booth | Émetteurs à hauteur fixe (pas d'os) : le rig final change en parallèle |
+| Barks | `TessarVoice` : phrase du lexique LORE §10 sinon syllabes V/CV/CVn/s/r tirées de la clé (longueur ∝ sous-titre, `sa?` final pour une question) ; synthèse source-filtre 16 kHz (impulsions de Rosenberg, 3 formants interpolés, bruits filtrés pour s/sh/h/v et occlusives) ; timbre par passager (sexe → f0, tranche d'âge → jitter/vibrato, taille → formants, graine d'apparence → ±) ; prosodie par humeur (accent pénultième, déclinaison, colère/nervosité/soulagement). Rendu dans un `WorkerThreadPool` (~25–55 ms) + cache 48 | Pas de banque de syllabes enregistrées ; aucun fichier voix |
+| Musique | 5 boucles 24 s à 80 BPM (briefing, shift calme, shift tension < 25 % du temps, bilan, bilan mineur si solde négatif), fondus 2,5 s entre 2 lecteurs | `AudioStreamInteractive` non utilisé (transitions sur la mesure à faire si besoin) |
+| Formats | SFX/UI/one-shots : WAV 16 bits mono 48 kHz ; boucles : OGG Vorbis 48 kHz stéréo (q4–5), `loop`/`bpm` dans les `.import` ; total ≈ 9 Mo | — |
+
+**Cues couvertes** : toutes celles de §4 sauf `passenger.bark_depart` (pas de sous-titre côté UI → règle « toujours sous-titré »), `booth.stamp_lift`, `ui.link_drag`, `ui.hover` et `ui.toast_*` (assets prêts, aucun signal public côté UI), `ui.rebel_message` (post-MVP). Sondes UI sans modifier l'UI : `ComparisonUI.selection.a` (sélection A) et `tool_bar.stamps[*].is_holding()` (tampon maintenu, `ui.stamp_hold`).
+
+**Accessibilité vérifiée** : chaque cue critique a son doublage visuel existant (timer : barre ambre/rouge ; tampon : animation + empreinte ; discordance : lien magenta + numéro ; concordance : chip ; citation : ticket ; règle nouvelle : badge NOUVEAU ; barks : sous-titres). « Réduire les effets » (`fx_intensity < 1`) coupe `ui.timer_critical_tick` et adoucit les tampons de 4 dB.
+
 ## Changelog
 
 - 0.1 — Création : intentions, bus, cue sheet, barks MVP, budget, mix, conventions, licences.
+- 0.2 — M6 : implémentation (§12), registre des licences (§10.1), bus layout à la racine.

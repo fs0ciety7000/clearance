@@ -4,7 +4,8 @@
 ## Toute modification passe par `set_value()` (ou les propriétés typées), qui
 ## valide la valeur, l'applique, la sauvegarde et émet
 ## `EventBus.settings_changed(key, value)`.
-## Les volumes sont appliqués ici aux bus audio existants ; les autres réglages
+## Les volumes et le mode mono sont appliqués ici aux bus audio
+## (`res://default_bus_layout.tres`, docs/AUDIO.md §2) ; les autres réglages
 ## (taille du texte, effets, animations, sous-titres, horloge) sont appliqués
 ## par leurs consommateurs à l'écoute de `settings_changed`.
 ## Pas de `class_name` (autoload).
@@ -28,6 +29,8 @@ const KEY_TEXT_SCALE: StringName = &"text_scale"
 const KEY_SUBTITLES: StringName = &"subtitles"
 ## Horloge de shift ralentie (accessibilité « Temps », UI_FLOW §6).
 const KEY_CLOCK_SLOW_ACCESSIBILITY: StringName = &"clock_slow_accessibility"
+## Audio mono (audition unilatérale, docs/AUDIO.md §9) : somme L/R sur `Master`.
+const KEY_AUDIO_MONO: StringName = &"audio_mono"
 
 const FX_LEVELS: PackedFloat32Array = [1.0, 0.5, 0.0]
 const TEXT_SCALE_MIN: float = 0.9
@@ -47,6 +50,7 @@ const DEFAULTS: Dictionary = {
 	&"text_scale": 1.0,
 	&"subtitles": true,
 	&"clock_slow_accessibility": false,
+	&"audio_mono": false,
 }
 
 ## Réglage de volume → nom du bus audio (docs/AUDIO.md §2).
@@ -189,7 +193,7 @@ func save_settings() -> Error:
 	return err
 
 
-## Applique tous les réglages qui relèvent de Settings (volumes).
+## Applique tous les réglages qui relèvent de Settings (volumes, mono).
 func apply_all() -> void:
 	for key: StringName in DEFAULTS:
 		_apply(key)
@@ -202,11 +206,14 @@ func _reset_values() -> void:
 
 
 func _apply(key: StringName) -> void:
+	if key == KEY_AUDIO_MONO:
+		AudioBuses.set_effect_enabled(AudioBuses.MASTER, AudioBuses.FX_MONO, get_bool(key))
+		return
 	if VOLUME_BUSES.has(key):
 		var bus_name: StringName = VOLUME_BUSES[key]
 		var bus: int = AudioServer.get_bus_index(bus_name)
 		if bus < 0:
-			return # bus pas encore créé (default_bus_layout.tres, Audio Designer)
+			return # bus absent (layout non chargé)
 		var volume: float = get_float(key)
 		AudioServer.set_bus_mute(bus, volume <= 0.0)
 		AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(volume, 0.0001)))

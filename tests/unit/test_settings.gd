@@ -35,7 +35,8 @@ func test_default_values() -> void:
 
 func test_expected_key_set() -> void:
 	var keys: Array[StringName] = _settings.call(&"get_keys")
-	assert_eq(keys.size(), 11)
+	assert_eq(keys.size(), 12)
+	assert_has(keys, &"audio_mono", "mode mono (docs/AUDIO.md §9, M6)")
 
 
 func test_typed_properties_read_defaults() -> void:
