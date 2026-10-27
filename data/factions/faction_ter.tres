@@ -1,11 +1,23 @@
 [gd_resource type="Resource" script_class="FactionDef" format=3 uid="uid://dqrwlh6vrqq8g"]
 
-[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="1_toolv"]
+[ext_resource type="Resource" path="res://data/names/namepool_ter.tres" id="1_4d4fi"]
+[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="2_ncrfh"]
 
 [resource]
-script = ExtResource("1_toolv")
+script = ExtResource("2_ncrfh")
 id = &"ter"
 name_key = "faction_ter_name"
 code = "TER"
 id_prefix = "HG-2"
 origin_sectors = PackedStringArray("Terre — Concordat des Zones Sèches")
+name_pool = ExtResource("1_4d4fi")
+citizen_class_weights = Dictionary[StringName, float]({
+&"C-3": 0.35,
+&"C-4": 0.65
+})
+purpose_weights = Dictionary[StringName, float]({
+&"family_visit": 0.3,
+&"transit": 0.15,
+&"work": 0.55
+})
+employers = PackedStringArray("Kessler-Ashe Orbital", "Valcourt-Hsu Logistique", "Hydroponie Ceres-Verte", "Meridian Biosystèmes")

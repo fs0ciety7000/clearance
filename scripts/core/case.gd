@@ -55,6 +55,17 @@ func get_value(ref: FieldRef) -> Variant:
 	return get_document(ref.document_id).get_value(ref.field_id)
 
 
+## Geste « Retirez votre visière » (D-021) : le visage présenté devient
+## comparable. Renvoie vrai si une visière couvrante a été retirée.
+func remove_visor() -> bool:
+	if passenger_presented == null or passenger_presented.appearance == null:
+		return false
+	if not passenger_presented.appearance.is_face_covered():
+		return false
+	passenger_presented.appearance = passenger_presented.appearance.without_visor()
+	return true
+
+
 ## Toutes les références de champs portant ce `truth_path`, dans l'ordre des documents.
 func find_refs_by_truth_path(path: StringName) -> Array[FieldRef]:
 	var refs: Array[FieldRef] = []

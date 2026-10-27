@@ -34,6 +34,10 @@ passenger_overrides = {
 &"faction_id": &"tyc"
 }
 forced_anomalies = Array[int]([3])
+injection_params = {
+&"char_count": 1,
+&"document_id": &"entry_permit"
+}
 dialogue_id = &"sc05_luciole_messenger"
 sets_flag = &"lucioles_contact"
 

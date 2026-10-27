@@ -1,5 +1,7 @@
-## Générateur des données M2 (`res://data/**/*.tres`) — documents, origines MVP,
-## règles, RuleSets et DayDef des jours 1–3 (GDD §7, §8, §10, §12 ; LORE §5, §9).
+## Générateur des données (`res://data/**/*.tres`) — documents, origines MVP,
+## règles, RuleSets et DayDef des jours 1–3 (GDD §7, §8, §10, §12 ; LORE §5, §9) ;
+## M3 : réserves de noms, champs générateur des origines, catalogue
+## d'apparences placeholder (BOOTH_SCENE §12.2, identifiants seulement).
 ##
 ## Usage (depuis la racine du projet, après `godot --headless --import`) :
 ##   godot --headless --script res://tools/build_data.gd
@@ -18,6 +20,8 @@ const DOCS_DIR: String = "res://data/documents"
 const FACTIONS_DIR: String = "res://data/factions"
 const RULES_DIR: String = "res://data/rules"
 const DAYS_DIR: String = "res://data/days"
+const NAMES_DIR: String = "res://data/names"
+const APPEARANCE_DIR: String = "res://data/appearance"
 
 const K := AnomalyType.Kind
 const FK := FieldDef.FieldKind
@@ -33,7 +37,8 @@ func _init() -> void:
 
 
 func _build() -> void:
-	_build_factions()
+	_build_factions(_build_name_pools())
+	_build_appearance_catalog()
 	var docs: Dictionary[StringName, DocumentTypeDef] = _build_documents()
 	var rules: Dictionary[StringName, Rule] = _build_rules()
 	var sets: Array[RuleSet] = _build_rule_sets(rules)
@@ -45,10 +50,164 @@ func _build() -> void:
 # Origines (MVP : TYC, HAL, TER — GDD §8.3, LORE §5)
 # ---------------------------------------------------------------------------
 
-func _build_factions() -> void:
-	_save(_faction(&"tyc", "TYC", "HG-4", ["Colonie Tycho (Lune)", "Cratère Tycho — dortoirs Kessler-Ashe"]), FACTIONS_DIR, "faction_tyc")
-	_save(_faction(&"hal", "HAL", "HG-1", ["Anneaux D–F", "Anneau C — logements de service", "Coursives d'Halcyon Gate"]), FACTIONS_DIR, "faction_hal")
-	_save(_faction(&"ter", "TER", "HG-2", ["Terre — Concordat des Zones Sèches"]), FACTIONS_DIR, "faction_ter")
+func _build_factions(pools: Dictionary[StringName, NamePool]) -> void:
+	var tyc: FactionDef = _faction(&"tyc", "TYC", "HG-4", ["Colonie Tycho (Lune)", "Cratère Tycho — dortoirs Kessler-Ashe"])
+	tyc.citizen_class_weights = {&"C-3": 0.80, &"C-4": 0.15, &"C-2": 0.05}
+	tyc.purpose_weights = {Passenger.PURPOSE_WORK: 0.75, Passenger.PURPOSE_FAMILY_VISIT: 0.15, Passenger.PURPOSE_RETURN: 0.10}
+	tyc.employers = ["Kessler-Ashe Orbital", "Valcourt-Hsu Logistique", "Ondine Synaptique"]
+	var hal: FactionDef = _faction(&"hal", "HAL", "HG-1", ["Anneaux D–F", "Anneau C — logements de service", "Coursives d'Halcyon Gate"])
+	hal.citizen_class_weights = {&"C-1": 0.05, &"C-2": 0.25, &"C-3": 0.45, &"C-4": 0.25}
+	hal.purpose_weights = {Passenger.PURPOSE_RETURN: 0.70, Passenger.PURPOSE_WORK: 0.20, Passenger.PURPOSE_TRADE: 0.10}
+	hal.employers = ["Bureau de Continuité", "Banque Aurel", "Valcourt-Hsu Logistique", "Meridian Biosystèmes", "Ondine Synaptique"]
+	var ter: FactionDef = _faction(&"ter", "TER", "HG-2", ["Terre — Concordat des Zones Sèches"])
+	ter.citizen_class_weights = {&"C-4": 0.65, &"C-3": 0.35}
+	ter.purpose_weights = {Passenger.PURPOSE_WORK: 0.55, Passenger.PURPOSE_FAMILY_VISIT: 0.30, Passenger.PURPOSE_TRANSIT: 0.15}
+	ter.employers = ["Kessler-Ashe Orbital", "Valcourt-Hsu Logistique", "Hydroponie Ceres-Verte", "Meridian Biosystèmes"]
+	for faction: FactionDef in [tyc, hal, ter]:
+		faction.name_pool = pools[faction.id]
+		_save(faction, FACTIONS_DIR, "faction_%s" % faction.id)
+
+
+# ---------------------------------------------------------------------------
+# Réserves de noms (LORE §5 : 15 prénoms + 15 noms par origine)
+# ---------------------------------------------------------------------------
+
+func _build_name_pools() -> Dictionary[StringName, NamePool]:
+	var pools: Array[NamePool] = [
+		_pool(&"tyc",
+				["Mira", "Ilse", "Anouk", "Yara", "Rosalind", "Elena", "Sabine"],
+				["Tomás", "Dmitri", "Lev", "Bastien", "Kasimir", "Joaquín", "Arkady"],
+				["Noor"],
+				["Vasquez-Orlov", "Brandt", "Kowalczyk", "Moreno-Lind", "Petrenko", "Achebe-Sörensen", "Duval",
+				"Halvorsen", "Navarro", "Ivanova", "Lindqvist-Rey", "Mbeki", "Castellanos", "Novak", "Oyelaran-Holm"]),
+		_pool(&"hal",
+				["Céleste", "Ophélie", "Margaux", "Adaeze", "Mei", "Isadora", "Philippa"],
+				["Auguste", "Hiro", "Soren", "Valentin", "Corentin", "Kenji", "Aurelio"],
+				["Lin"],
+				["Valcourt", "Hsu", "Aurel", "Delacroix-Tan", "Whitmore", "Okafor", "Langlois", "Sato", "Ferreira",
+				"Lindgren", "Beaumont", "Choi", "Ravel", "Montclair", "Adeyemi"]),
+		_pool(&"ter",
+				["Amara", "Fatou", "Leila", "Ana-Lucía", "Priya", "Inès", "Ngozi", "Samira"],
+				["Rahul", "Mateus", "Kwame", "Tariq", "Emeka", "Bilal", "Diego"],
+				[],
+				["Diallo", "Ramanathan", "Haddad", "Okonkwo", "Silva", "Mensah", "Rahman", "Benali", "Gutiérrez",
+				"Abara", "Nair", "Mahmoud", "Tembo", "Quispe", "Ferhat"]),
+	]
+	# Okonkwo, le mentor du J1 (LORE §5.3), n'est jamais généré.
+	pools[2].reserved_names = ["Okonkwo"]
+	var result: Dictionary[StringName, NamePool] = {}
+	for pool: NamePool in pools:
+		_save(pool, NAMES_DIR, "namepool_%s" % pool.id)
+		result[pool.id] = pool
+	return result
+
+
+func _pool(id: StringName, f: PackedStringArray, m: PackedStringArray, x: PackedStringArray, family: PackedStringArray) -> NamePool:
+	var pool: NamePool = NamePool.new()
+	pool.id = id
+	pool.given_names_f = f
+	pool.given_names_m = m
+	pool.given_names_x = x
+	pool.family_names = family
+	return pool
+
+
+# ---------------------------------------------------------------------------
+# Catalogue d'apparences placeholder (BOOTH_SCENE §12.2 : identifiants seulement)
+# ---------------------------------------------------------------------------
+
+func _build_appearance_catalog() -> void:
+	var catalog: AppearanceCatalog = AppearanceCatalog.new()
+	catalog.min_distance = 5
+	catalog.window_size = 15
+	catalog.max_attempts = 12
+	catalog.age_band_weights = PackedFloat32Array([0.35, 0.45, 0.20])
+	catalog.height_step_range = Vector2i(-2, 2)
+
+	var silhouettes: Array[AppearanceOptionDef] = []
+	for id: String in ["s1_stocky", "s2_slender", "s3_medium", "s4_slight"]:
+		silhouettes.append(_option("silhouette_" + id))
+	silhouettes[0].faction_weights = {&"ter": 1.5}
+
+	var faces: Array[AppearanceOptionDef] = []
+	for shape: String in ["round", "square", "oval", "angular"]:
+		for ears: int in 3:
+			faces.append(_option("face_%s_e%d" % [shape, ears + 1]))
+
+	var eyes: Array[AppearanceOptionDef] = [
+		_option("eyes_brown", 3.0), _option("eyes_hazel", 2.0), _option("eyes_green"),
+		_option("eyes_blue"), _option("eyes_grey"), _option("eyes_heterochromia", 0.1),
+	]
+
+	var nose_mouth: Array[AppearanceOptionDef] = []
+	for nose: int in 3:
+		for lips: int in 2:
+			nose_mouth.append(_option("nose_mouth_n%d_l%d" % [nose + 1, lips + 1]))
+
+	var skins: Array[AppearanceOptionDef] = []
+	for i: int in 8:
+		skins.append(_option("skin_%02d" % (i + 1)))
+	# Peau grise de la poussière lunaire (LORE §5.1).
+	skins[7].faction_weights = {&"tyc": 3.0}
+	skins[7].tags = ["tycho_grey"]
+
+	var hair: Array[AppearanceOptionDef] = []
+	for cut: String in ["short", "long", "bun", "braids", "curly", "mohawk", "shaved"]:
+		for colour: int in 10:
+			hair.append(_option("hair_%s_c%02d" % [cut, colour + 1], 0.6 if colour >= 6 else 1.0))
+
+	var headwear: Array[AppearanceOptionDef] = [
+		_option(String(PassengerAppearance.OPTION_NONE), 6.0), _option("hood"), _option("cap"), _option("beanie"),
+		_option(String(PassengerAppearance.VISOR_DOWN), 0.0), _option(String(PassengerAppearance.VISOR_UP), 0.0),
+	]
+
+	var outfits: Array[AppearanceOptionDef] = []
+	for i: int in 8:
+		outfits.append(_option("outfit_%02d" % (i + 1)))
+
+	var accessories: Array[AppearanceOptionDef] = [
+		_option(String(PassengerAppearance.OPTION_NONE), 5.0), _option("half_visor"), _option("respirator_neck"),
+		_option("scarf"), _option("holo_tattoo_1", 0.5), _option("holo_tattoo_2", 0.5),
+		_option("holo_tattoo_3", 0.5), _option("holo_tattoo_4", 0.5),
+	]
+
+	var palettes: Array[AppearanceOptionDef] = []
+	for i: int in 12:
+		palettes.append(_option("palette_%02d" % (i + 1)))
+
+	catalog.slots = [
+		_slot(&"silhouette", true, false, silhouettes),
+		_slot(&"face", true, true, faces),
+		_slot(&"eyes", true, true, eyes),
+		_slot(&"nose_mouth", true, true, nose_mouth),
+		_slot(&"skin", true, true, skins),
+		_slot(PassengerAppearance.SLOT_HAIR, false, true, hair),
+		_slot(PassengerAppearance.SLOT_HEADWEAR, false, false, headwear),
+		_slot(&"outfit", false, false, outfits),
+		_slot(PassengerAppearance.SLOT_ACCESSORY, false, false, accessories),
+		_slot(PassengerAppearance.SLOT_PALETTE, false, false, palettes),
+	]
+	for slot: AppearanceSlotDef in catalog.slots:
+		slot.resource_scene_unique_id = "slot_%s" % slot.id
+		for option: AppearanceOptionDef in slot.options:
+			option.resource_scene_unique_id = "opt_%s_%s" % [slot.id, option.id]
+	_save(catalog, APPEARANCE_DIR, "appearance_catalog")
+
+
+func _slot(id: StringName, identity: bool, in_portrait: bool, options: Array[AppearanceOptionDef]) -> AppearanceSlotDef:
+	var slot: AppearanceSlotDef = AppearanceSlotDef.new()
+	slot.id = id
+	slot.identity = identity
+	slot.visible_in_portrait = in_portrait
+	slot.options = options
+	return slot
+
+
+func _option(id: String, weight: float = 1.0) -> AppearanceOptionDef:
+	var option: AppearanceOptionDef = AppearanceOptionDef.new()
+	option.id = StringName(id)
+	option.weight = weight
+	return option
 
 
 func _faction(id: StringName, code: String, prefix: String, sectors: PackedStringArray) -> FactionDef:
@@ -277,7 +436,7 @@ func _build_days(sets: Array[RuleSet]) -> void:
 		_scripted(&"sc_01", 0, {&"faction_id": &"hal", &"citizen_class": &"C-3", &"purpose": Passenger.PURPOSE_RETURN,
 				&"origin_sector": "Anneau C — logements de service"}, [], &"sc01_returning_technician"),
 		_scripted(&"sc_02", 1, {&"faction_id": &"ter", &"sex": Passenger.SEX_F, &"citizen_class": &"C-4"},
-				[K.EXPIRED_DOCUMENT], &"sc02_hurried_mother"),
+				[K.EXPIRED_DOCUMENT], &"sc02_hurried_mother", {&"document_id": &"id_card", &"expired_days": 3}),
 		_scripted(&"tuto_concordant", 2, {}, [], &""),
 		_scripted(&"tuto_missing_document", 3, {}, [K.MISSING_DOCUMENT], &""),
 	]
@@ -286,7 +445,8 @@ func _build_days(sets: Array[RuleSet]) -> void:
 			{K.EXPIRED_DOCUMENT: 0.4, K.MISSING_DOCUMENT: 0.2, K.PORTRAIT_MISMATCH: 0.4}, mvp_factions, 0.0, 0.15)
 	d2.scripted_cases = [
 		_scripted(&"sc_03", 3, {&"faction_id": &"tyc", &"sex": Passenger.SEX_M, &"citizen_class": &"C-3",
-				&"purpose": Passenger.PURPOSE_WORK}, [K.PORTRAIT_MISMATCH], &"sc03_nervous_miner"),
+				&"purpose": Passenger.PURPOSE_WORK}, [K.PORTRAIT_MISMATCH], &"sc03_nervous_miner",
+				{&"trait_count": 3, &"photo_noise": true}),
 	]
 
 	var d3: DayDef = _day(3, sets[2], 600.0, 11, [0.45, 0.45, 0.10, 0.0],
@@ -301,7 +461,7 @@ func _build_days(sets: Array[RuleSet]) -> void:
 	mira.appearance_overrides = {PassengerAppearance.SLOT_HEADWEAR: &"visor_down"}
 	mira.sets_flag = &"met_mira"
 	var messenger: ScriptedCaseDef = _scripted(&"sc_05", 7, {&"faction_id": &"tyc", &"citizen_class": &"C-3"},
-			[K.ID_MISMATCH], &"sc05_luciole_messenger")
+			[K.ID_MISMATCH], &"sc05_luciole_messenger", {&"document_id": &"entry_permit", &"char_count": 1})
 	messenger.sets_flag = &"lucioles_contact"
 	d3.scripted_cases = [mira, messenger]
 
@@ -335,8 +495,9 @@ func _day(n: int, rule_set: RuleSet, duration: float, count: int, count_weights:
 
 
 func _scripted(id: StringName, index: int, overrides: Dictionary, anomalies: Array[AnomalyType.Kind],
-		dialogue: StringName) -> ScriptedCaseDef:
+		dialogue: StringName, params: Dictionary = {}) -> ScriptedCaseDef:
 	var s: ScriptedCaseDef = ScriptedCaseDef.new()
+	s.injection_params = params
 	s.id = id
 	s.at_index = index
 	s.passenger_overrides = overrides

@@ -12,7 +12,8 @@ var day_def: DayDef = null
 var rule_set: RuleSet = null
 var faction_db: Dictionary[StringName, FactionDef] = {}
 var document_db: Dictionary[StringName, DocumentTypeDef] = {}
-## Slots comparés par `FaceComparator` (M3 : dérivés de l'`AppearanceCatalog`).
+## Slots comparés par `FaceComparator` (dérivés de l'`AppearanceCatalog` par
+## `DataCatalog.make_context()` et `CaseBuilder` ; liste par défaut sinon).
 var identity_slots: Array[StringName] = FaceComparator.DEFAULT_IDENTITY_SLOTS.duplicate()
 
 

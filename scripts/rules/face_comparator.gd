@@ -4,9 +4,10 @@
 ## slots changeables (coiffe, coiffure, tenue, accessoires) sont ignorés, et
 ## `age_band` est toléré à ±1 (bruit légitime). Au-delà, `&"age_band"` figure
 ## dans le résultat. Discordance ⇔ résultat non vide.
-## M2 : les slots comparés sont une liste par défaut ; en M3, ils seront
-## dérivés de l'`AppearanceCatalog` (`identity && visible_in_portrait`) et
-## injectés via `RuleContext.identity_slots`.
+## Les slots comparés sont dérivés de l'`AppearanceCatalog`
+## (`identity && visible_in_portrait`, M3 : `identity_slots_of()`,
+## `compare_in()`) et injectés via `RuleContext.identity_slots` ;
+## `DEFAULT_IDENTITY_SLOTS` reste le repli sans catalogue (tests M2).
 class_name FaceComparator
 extends RefCounted
 
@@ -27,3 +28,16 @@ static func compare(a: PassengerAppearance, b: PassengerAppearance,
 	if absi(a.age_band - b.age_band) > AGE_BAND_TOLERANCE:
 		differing.append(AGE_BAND_SLOT)
 	return differing
+
+
+## Slots comparés d'un catalogue (`identity && visible_in_portrait`) ; liste
+## par défaut si le catalogue est absent.
+static func identity_slots_of(catalog: AppearanceCatalog) -> Array[StringName]:
+	if catalog == null:
+		return DEFAULT_IDENTITY_SLOTS.duplicate()
+	return catalog.get_identity_slots()
+
+
+## Comparaison avec les slots du catalogue.
+static func compare_in(a: PassengerAppearance, b: PassengerAppearance, catalog: AppearanceCatalog) -> Array[StringName]:
+	return compare(a, b, identity_slots_of(catalog))

@@ -1,15 +1,25 @@
 ## Apparence modulaire d'une personne (ARCHITECTURE §5.3, §9.3, D-012).
 ##
 ## **Pure** : uniquement des identifiants (slot → option), aucune ressource
-## visuelle. Le générateur d'apparences et le catalogue arrivent en M3 ; M2 n'a
-## besoin que de la structure, des copies et de la comparaison (portraits).
+## visuelle. Produite par `AppearanceGenerator` (M3) depuis l'`AppearanceCatalog`.
+## Visière (D-021) : coiffe `visor_down` = visage masqué (INCOMPARABLE en mode
+## Inspection) ; `without_visor()` donne l'apparence après le geste de retrait.
 class_name PassengerAppearance
 extends RefCounted
 
 const SLOT_HEADWEAR: StringName = &"headwear"
+const SLOT_ACCESSORY: StringName = &"accessory"
+const SLOT_HAIR: StringName = &"hair"
+const SLOT_PALETTE: StringName = &"palette"
+## Option « aucune » (coiffe, accessoire).
+const OPTION_NONE: StringName = &"none"
+## Visière baissée (état de présentation, jamais tiré au hasard par le roster).
+const VISOR_DOWN: StringName = &"visor_down"
+## Visière relevée après le geste `remove_visor` (non couvrante).
+const VISOR_UP: StringName = &"visor_up"
 ## Options de coiffe qui masquent le visage (visière baissée, D-021) :
 ## le visage devient INCOMPARABLE tant qu'elle n'est pas retirée.
-const COVERING_HEADWEAR: Array[StringName] = [&"visor_down"]
+const COVERING_HEADWEAR: Array[StringName] = [VISOR_DOWN]
 
 ## slot → option id (ex. `&"eyes": &"eyes_03"`).
 var traits: Dictionary[StringName, StringName] = {}
@@ -34,14 +44,26 @@ func is_face_covered() -> bool:
 	return COVERING_HEADWEAR.has(get_trait(SLOT_HEADWEAR))
 
 
+## Apparence après retrait de la visière (copie ; inchangée si le visage
+## n'était pas masqué). Les slots d'identité ne changent jamais.
+func without_visor() -> PassengerAppearance:
+	var result: PassengerAppearance = copy()
+	if is_face_covered():
+		result.traits[SLOT_HEADWEAR] = VISOR_UP
+	return result
+
+
 ## Nombre de slots différents parmi `slots` (tous les slots connus si vide).
 func distance(other: PassengerAppearance, slots: Array[StringName] = []) -> int:
 	var keys: Array[StringName] = slots
 	if keys.is_empty():
 		keys = _union_slots(other)
 	var count: int = 0
+	var mine: Dictionary[StringName, StringName] = traits
+	var theirs: Dictionary[StringName, StringName] = other.traits
 	for slot: StringName in keys:
-		if get_trait(slot) != other.get_trait(slot):
+		# Accès direct (boucle chaude de l'anti-répétition, §9.3).
+		if mine.get(slot, &"") != theirs.get(slot, &""):
 			count += 1
 	return count
 

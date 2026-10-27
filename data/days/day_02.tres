@@ -15,6 +15,10 @@ passenger_overrides = {
 &"sex": &"M"
 }
 forced_anomalies = Array[int]([2])
+injection_params = {
+&"photo_noise": true,
+&"trait_count": 3
+}
 dialogue_id = &"sc03_nervous_miner"
 
 [resource]

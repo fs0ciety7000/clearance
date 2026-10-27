@@ -1,11 +1,24 @@
 [gd_resource type="Resource" script_class="FactionDef" format=3 uid="uid://d3okkbg4l7y0b"]
 
-[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="1_vwr3u"]
+[ext_resource type="Resource" path="res://data/names/namepool_tyc.tres" id="1_dflk3"]
+[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="2_756ys"]
 
 [resource]
-script = ExtResource("1_vwr3u")
+script = ExtResource("2_756ys")
 id = &"tyc"
 name_key = "faction_tyc_name"
 code = "TYC"
 id_prefix = "HG-4"
 origin_sectors = PackedStringArray("Colonie Tycho (Lune)", "Cratère Tycho — dortoirs Kessler-Ashe")
+name_pool = ExtResource("1_dflk3")
+citizen_class_weights = Dictionary[StringName, float]({
+&"C-2": 0.05,
+&"C-3": 0.8,
+&"C-4": 0.15
+})
+purpose_weights = Dictionary[StringName, float]({
+&"family_visit": 0.15,
+&"return": 0.1,
+&"work": 0.75
+})
+employers = PackedStringArray("Kessler-Ashe Orbital", "Valcourt-Hsu Logistique", "Ondine Synaptique")

@@ -1,5 +1,6 @@
 ## Chargement des définitions de `res://data/` (documents, origines, règles,
-## RuleSets, jours), indexées par identifiant.
+## RuleSets, jours ; M3 : réserves de noms et catalogue d'apparences),
+## indexées par identifiant.
 ##
 ## Pur (aucun Node, aucun autoload) : utilisé par les tests de validation des
 ## données et, en M5, par la scène de jour pour construire le `RuleContext`.
@@ -14,6 +15,9 @@ var documents: Dictionary[StringName, DocumentTypeDef] = {}
 var rules: Dictionary[StringName, Rule] = {}
 var rule_sets: Dictionary[StringName, RuleSet] = {}
 var days: Dictionary[int, DayDef] = {}
+var name_pools: Dictionary[StringName, NamePool] = {}
+## Catalogue d'apparences (unique, `data/appearance/`).
+var appearance_catalog: AppearanceCatalog = null
 ## Chemins `.tres` chargés.
 var paths: PackedStringArray = []
 ## Problèmes de chargement (ressource illisible, type inconnu, doublon).
@@ -49,13 +53,17 @@ func get_day(day_number: int) -> DayDef:
 	return days.get(day_number, null)
 
 
-## Contexte de règles d'un jour (date, RuleSet, bases origines et documents).
+## Contexte de règles d'un jour (date, RuleSet, bases origines et documents ;
+## slots de visage comparés tirés du catalogue d'apparences).
 func make_context(day_number: int) -> RuleContext:
 	var day: DayDef = get_day(day_number)
 	if day == null:
 		push_error("DataCatalog.make_context: jour %d introuvable" % day_number)
 		return null
-	return RuleContext.for_day(day, factions, documents)
+	var ctx: RuleContext = RuleContext.for_day(day, factions, documents)
+	if appearance_catalog != null:
+		ctx.identity_slots = FaceComparator.identity_slots_of(appearance_catalog)
+	return ctx
 
 
 func _register(path: String) -> void:
@@ -76,6 +84,14 @@ func _register(path: String) -> void:
 	elif res is Rule:
 		var rule: Rule = res
 		_add(rules, rule.id, rule, path)
+	elif res is NamePool:
+		var pool: NamePool = res
+		_add(name_pools, pool.id, pool, path)
+	elif res is AppearanceCatalog:
+		if appearance_catalog != null:
+			errors.append("%s : catalogue d'apparences en double" % path)
+		else:
+			appearance_catalog = res
 	elif res is DayDef:
 		var day: DayDef = res
 		if days.has(day.day_number):

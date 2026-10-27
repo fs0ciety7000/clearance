@@ -25,6 +25,10 @@ passenger_overrides = {
 &"sex": &"F"
 }
 forced_anomalies = Array[int]([0])
+injection_params = {
+&"document_id": &"id_card",
+&"expired_days": 3
+}
 dialogue_id = &"sc02_hurried_mother"
 
 [sub_resource type="Resource" id="scripted_tuto_concordant"]
