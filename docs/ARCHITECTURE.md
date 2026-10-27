@@ -422,7 +422,7 @@ Convention : nom au **passé** pour un fait (`*_started`, `*_stamped`), `*_reque
 | ~~`document_handed`~~ | — | **Supprimé** — remplacé par `documents_presented` (voir ci-dessous) |
 | `document_focused` | `doc: DocumentInstance` | UI → InspectionSession (télémétrie, tuto) |
 | `passenger_reaction_triggered` 🆕 | `reaction: PassengerReaction.Kind` | InspectionSession (réponses d'interrogation, réaction au verdict selon `dialogue_tags`) / dialogue → BoothDirector (OneShot + expression + bark) |
-| `passenger_departed` 🆕 | `case_id: StringName` | BoothDirector (acteur hors champ en fin de `Exit*Path`) → DayController (`DEPARTING → WAITING_CASE \| SUMMARY`, autorise « Suivant ») |
+| `passenger_departed` 🆕 | `case_id: StringName` | BoothDirector (le sortant a **libéré le guichet** — il finit sa sortie en parallèle, pool de 2, §8 bis.1) → DayController (`DEPARTING → WAITING_CASE \| SUMMARY`, autorise « Suivant ») |
 | `inspection_target_picked` 🆕 | `ref: FieldRef` | BoothDirector (clic sur le visage de l'acteur en mode Inspection → `FieldRef.PASSENGER_FACE`) → UI comparaison (même chemin qu'un clic sur un champ de document) |
 | **Inspection / comparaison** | | |
 | `inspection_mode_changed` | `enabled: bool` | UI → InspectionSession, Booth (FX) |
@@ -574,7 +574,7 @@ Booth (Node3D)                         scripts/booth/booth_director.gd  (class_n
 ├── ExitApprovedPath (Path3D)          # vers le portail du secteur
 ├── ExitRefusedPath (Path3D)           # demi-tour vers le hall
 ├── LookTargetPlane (Marker3D)         # plan de la vitre : origine = centre, -Z = normale vers l'agent
-├── PassengerSlot (Node3D)             # parent de l'instance unique de PassengerActor (poolée)
+├── PassengerSlots (Node3D)            # parent du pool de 2 PassengerActor (A/B), créés au chargement du jour
 ├── QueueImpostors (Node3D)            # scripts/booth/queue_impostors.gd — file d'attente en imposteurs
 ├── HoloEmitter (AudioStreamPlayer3D)  # « hologramme qui s'allume » sur documents_presented (bus SFX)
 └── WatchdogTimer (Timer)
@@ -585,7 +585,8 @@ Responsabilités de `BoothDirector` (≈ 200 lignes max, sinon extraire) :
 2. Piloter l'acteur (API impérative) et convertir ses signaux locaux en signaux EventBus (`passenger_arrived`, `documents_presented`, `passenger_departed`, `inspection_target_picked`).
 3. Calculer la cible du regard (projection souris, §8 bis.4) chaque frame.
 4. Watchdogs locaux par étape (§8 bis.6).
-5. Il ne connaît ni `CaseKey`, ni les règles, ni le score : il ne lit que `Case.case_id`, `Case.passenger_presented.appearance`, `Case.dialogue_tags` (voix) et `CaseResult.verdict_kind`.
+5. **Pool de 2 acteurs** (arbitrage Orchestrateur, BOOTH_SCENE §15.1) : `Dictionary[StringName, PassengerActor]` case_id → acteur. Sur `case_presented`, il prend l'acteur libre, le ré-habille et lance la marche, même si l'autre acteur est encore sur un `Exit*Path`. `passenger_departed(case_id)` est émis quand le sortant **libère le guichet** (marqueur `ClearMark` / ≈ 1 s après la fin de `leave`), pas quand il disparaît : le sortant finit son trajet hors-champ en parallèle, puis repasse « libre » (masqué). La machine à états du DayController ne change pas ; l'idempotence par `case_id` (§7) évite toute confusion entre les deux acteurs. Si aucun acteur n'est libre (sortant bloqué), le plus ancien est caché de force.
+6. Il ne connaît ni `CaseKey`, ni les règles, ni le score : il ne lit que `Case.case_id`, `Case.passenger_presented.appearance`, `Case.dialogue_tags` (voix) et `CaseResult.verdict_kind`.
 
 ### 8 bis.2 Scène `res://scenes/passenger/passenger_actor.tscn`
 
@@ -595,7 +596,7 @@ PassengerActor (CharacterBody3D)       scripts/booth/passenger_actor.gd  (class_
 ├── Locomotion (Node)                  scripts/booth/passenger_locomotion.gd — suivi de Path3D (§8 bis.3)
 ├── Visual (Node3D)                    # rig instancié depuis le .glb (ou capsule placeholder en M4)
 │   └── Armature
-│       └── Skeleton3D                 # profil SkeletonProfileHumanoid (retarget Mixamo, D-011)
+│       └── Skeleton3D                 # profil SkeletonProfileHumanoid (retarget Quaternius UAL / Mixamo, D-011)
 │           ├── Body / Outfit / Hair / Headwear / Accessory (MeshInstance3D)   # swappés par AppearanceApplier
 │           ├── HeadAttachment (BoneAttachment3D → "Head")
 │           │   ├── Face (MeshInstance3D)          # quad/visière, ShaderMaterial face_dither.gdshader
@@ -618,7 +619,7 @@ Signaux **locaux** de `PassengerActor` : `arrived`, `departed`, `anim_event(name
 
 ### 8 bis.3 Animation et déplacement
 
-**AnimationLibrary `passenger`** (`assets/models/passenger/passenger_anims.res`) : `walk` (boucle, *in place*), `idle` (boucle), `present_documents`, `leave` (demi-tour + premier pas), `react_angry`, `react_nervous`, `shrug`, `talk` (boucle, haut du corps). Les clips Mixamo sont importés « in place » (pas de root motion) et retargetés sur `SkeletonProfileHumanoid` ; la bibliothèque est **sauvegardée en fichier** à l'import avec *Keep Custom Tracks* pour que les pistes de méthodes ajoutées à la main (marqueurs) survivent à un ré-import.
+**AnimationLibrary `passenger`** (`assets/models/passenger/passenger_anims.res`) : `walk` (boucle, *in place*), `idle` (boucle), `present_documents`, `leave` (demi-tour + premier pas), `react_angry`, `react_nervous`, `shrug`, `talk` (boucle, haut du corps). Source : **Quaternius Universal Animation Library (CC0) en priorité**, Mixamo en complément pour les clips manquants. Les clips sont importés « in place » (pas de root motion) et retargetés sur `SkeletonProfileHumanoid` ; la bibliothèque est **sauvegardée en fichier** à l'import avec *Keep Custom Tracks* pour que les pistes de méthodes ajoutées à la main (marqueurs) survivent à un ré-import.
 
 **AnimationTree** (racine `AnimationNodeBlendTree`) :
 
@@ -637,7 +638,7 @@ Main (StateMachine) :
 ```
 
 - Paramètres pilotés par l'acteur uniquement : `parameters/Main/playback.travel(...)`, `parameters/TalkBlend/blend_amount` (0 → 1 en 0.15 s pendant un bark), `parameters/ReactionSelect/transition_request`, `parameters/Reaction/request = ONE_SHOT_REQUEST_FIRE`.
-- Les réactions ne sont jouées qu'en `idle` (ou juste avant `leave`) ; reçues pendant la marche, elles sont **mises en file** (1 max, la dernière gagne). `RELIEVED` n'a pas de clip (cf. §13 R14) : expression `relieved` + bark seulement.
+- Les réactions ne sont jouées qu'en `idle` (ou juste avant `leave`) ; reçues pendant la marche, elles sont **mises en file** (1 max, la dernière gagne). `RELIEVED` n'a pas de clip (D-014) : expression `relieved` + voix (bark) seulement au MVP.
 - **Déplacement** : `PassengerLocomotion` échantillonne la `Curve3D` du `Path3D` (`sample_baked(distance, true)`), avance `distance += speed * delta`, vise un point « carotte » 0,3 m devant, fixe `velocity` vers ce point et appelle `move_and_slide()`. Arrivé à `curve.get_baked_length()` et à < 5 cm de `DeskMark`, il **cale** position et orientation sur `DeskMark` (interpolation 0,2 s) puis émet `arrived`. `AnimationTree` : `walk` avec `speed_scale = speed / WALK_NOMINAL_SPEED` (anti-glissement des pieds).
 - **Pourquoi pas `PathFollow3D`** : il impose le `transform` directement (téléportation, pas de `move_and_slide`, pas de sol ni de collision) et oblige à re-parenter l'acteur sous chaque `Path3D`. L'échantillonnage garde un vrai `CharacterBody3D` (gravité, `floor_snap`, collisions avec la file/porte) avec un seul parent stable (`PassengerSlot`).
 - **Pourquoi pas `NavigationAgent3D` au MVP** : les trajets sont **auteurés** (mise en scène, cadrage caméra), courts et sans obstacle dynamique ; un navmesh ajouterait un bake, du non-déterminisme visuel et du debug pour zéro gain. À reconsidérer si le hall devient dynamique (post-MVP).
@@ -651,7 +652,7 @@ Main (StateMachine) :
 
 ### 8 bis.5 Apparence, visage et micro-expressions
 
-- **Application** : `AppearanceApplier.apply(appearance: PassengerAppearance, catalog: AppearanceCatalog)` remplace meshes/matériaux par slot, règle `height_step` (échelle du `Visual`, ±3 % par pas) et la palette via **`instance uniform`** (pas de duplication de matériaux par passager). Appelé à chaque `case_presented` sur l'instance unique poolée.
+- **Application** : `AppearanceApplier.apply(appearance: PassengerAppearance, catalog: AppearanceCatalog)` remplace meshes/matériaux par slot, règle `height_step` (échelle du `Visual`, ±3 % par pas) et la palette via **`instance uniform`** (pas de duplication de matériaux par passager). Appelé à chaque `case_presented` sur l'acteur libre du pool.
 - **Visage** : atlas de textures (grille, une cellule par expression × variante de visage ; format fixé dans ASSETS.md). Shader `face_dither.gdshader` : `instance uniform int expression_from`, `expression_to`, `float blend` → transition par **dithering ordonné (Bayer 4×4)** entre deux cellules, cohérente avec la DA holo/rétro ; `face_variant` choisit la ligne de l'atlas selon les traits `face`/`eyes`/`nose_mouth`.
 - **`ExpressionController`** : expose `set_expression(id: StringName, hold_sec := 0.0)` ; gère le clignement (intervalle tiré d'un RNG seedé par `case_id` — cosmétique, mais reproductible pour les captures), l'alternance bouche `talk_a/talk_b` pendant un bark, et les micro-expressions (flash 120–250 ms de `suspicious`/`nervous`/`contempt`) déclenchées par : réaction, question d'interrogation sensible (tag de dialogue), ou regard insistant de la souris sur le visage > 2 s en mode Inspection. Expressions de base : `neutral, blink, talk_a, talk_b, nervous, angry, relieved, suspicious, contempt, sad`.
 - **Portraits des documents** : `PortraitRenderer` (scène `portrait_studio.tscn`, `SubViewport` 256×320, `UPDATE_ONCE`) rend un `PortraitValue` avec **le même `AppearanceApplier`** que l'acteur (même source de vérité, D-012), puis applique filtre photo (`photo_seed`) ; cache `Dictionary[hash(appearance+photo_seed), ImageTexture]` vidé à chaque jour. Fallback headless/tests : pas de rendu, la comparaison est faite sur les traits.
@@ -680,7 +681,7 @@ Main (StateMachine) :
 
 ### 8 bis.9 Performance
 
-- **Un seul acteur animé** (squelette + AnimationTree + 2 LookAt) à l'écran ; instance **poolée** (créée au chargement du jour, ré-habillée à chaque cas) → pas d'instanciation ni de compilation de shader en plein jeu. Pool de 2 seulement si l'on fait se croiser sortant et entrant (post-MVP).
+- **Au plus 2 acteurs animés** simultanément (squelette + AnimationTree), et seulement pendant le chevauchement départ/arrivée (≈ 1–1,5 s par cas) ; le reste du temps un seul. **Pool de 2** créé au chargement du jour, ré-habillé à chaque cas → pas d'instanciation ni de compilation de shader en plein jeu. Le sortant a ses `LookAtModifier3D` à `influence = 0` et son `ExpressionController` en pause (seul l'acteur au guichet regarde/s'exprime). Budgets à tenir **pour 2 acteurs** : 2 × ≤ 15 k tris, 2 AnimationTree, audio de pas sur les deux (voix/souffle seulement pour l'acteur au guichet).
 - **File d'attente en imposteurs** : `QueueImpostors` = `MultiMeshInstance3D` de silhouettes low-poly non riggées (ou billboards), 4–8 instances, teinte/silhouette par `instance custom data` tirées d'un RNG cosmétique seedé par le jour (MVP : génériques, le booth ne connaît pas les cas futurs ; l'imposteur de tête est masqué quand l'acteur entre en scène). Avance d'un cran à chaque `passenger_departed` (tween, pas d'animation squelettale).
 - Budgets indicatifs : acteur ≤ 15 k tris, 1 matériau principal + visage ; atlas visage ≤ 1024² ; préchauffage des shaders (acteur, visage, holo) pendant l'écran d'intro du jour.
 - `AnimationTree.callback_mode_process = IDLE` ; `LookAtModifier3D` coût négligeable pour 2 os.
@@ -800,7 +801,7 @@ Invariants (debug + tests) : un injecteur de visage ne touche **jamais** `passen
 |---|---|---|---|
 | R1 | Vérité terrain vs règles | Divergence anomalie ↔ verdict (§6) | Verdict attendu calculé par le RuleEngine + invariants — **à valider** |
 | R2 | UI « projetée » sur la 3D | Documents rendus dans des `SubViewport` sur des meshes = texte flou, input complexe, coût GPU | **Documents et Rulebook en `CanvasLayer` 2D** au-dessus de la scène 3D (lisibilité, thème DS, accessibilité) ; `SubViewport` réservé aux écrans décoratifs du guichet — **à valider avec UI/UX et client** |
-| R3 | Portraits procéduraux | Coût art élevé, lisibilité des différences ; photo et modèle 3D doivent correspondre (D-012) | **Révisé** : portrait rendu depuis la même `PassengerAppearance` via `PortraitRenderer` (`SubViewport` `UPDATE_ONCE` + cache) dès M4 ; chaque option de slot d'identité doit être **lisible en 256×320** (contrainte pour le 3D Designer, ASSETS.md) sinon `IMPOSTOR_LOOKALIKE` est injouable |
+| R3 | Portraits procéduraux | Coût art élevé, lisibilité des différences ; photo et modèle 3D doivent correspondre (D-012) | **Arbitré** : portrait = **rendu `SubViewport` du même modèle** (`PortraitRenderer`, `UPDATE_ONCE` + cache), plus de couches 2D indépendantes ; **dès M4 en greybox** (capsule + couleurs/formes par trait), modèle final en M6 ; coût : 1 rendu par photo distincte à la présentation du cas (cache par jour) ; chaque option de slot d'identité doit être **lisible en 256×320** (contrainte pour le 3D Designer, ASSETS.md) sinon `IMPOSTOR_LOOKALIKE` est injouable |
 | R4 | Localisation | Ajouter `tr()` après coup coûte cher | Clés dès M1 (`*_key`), table CSV FR uniquement en MVP — **à valider** |
 | R5 | Équilibrage | Difficulté uniquement par poids : peut être opaque | Outil de debug : générer 100 cas d'un jour et afficher les stats (scène d'outil, M3) |
 | R6 | Godot 4.4 minimum | `Dictionary` typés requis | Figer 4.4.x dans le README et la CI |
@@ -808,10 +809,10 @@ Invariants (debug + tests) : un injecteur de visage ne touche **jamais** `passen
 | R8 | Interrogation | Format des dialogues non défini | Dépend du Scénariste : proposer `DialogueDef` (.tres) en M4 |
 | R9 | Temps | Temps réel vs horloge in-game accélérée | Horloge in-game affichée (DayClock), `duration_sec` réel en données — à confirmer par le Game Designer |
 | R10 | `res://ui/theme/` hors `scenes/ui` | Confusion de rangement | `res://ui/` réservé au thème (§3) |
-| R11 | Retarget Mixamo → Kenney | Proportions différentes (pieds qui glissent, mains qui traversent le bureau), noms d'os, échelle, clips « in place » oubliés, pistes de méthode perdues au ré-import | `SkeletonProfileHumanoid` + `BoneMap` versionné ; clips téléchargés *in place* ; bibliothèque sauvegardée en fichier avec *Keep Custom Tracks* ; test GUT des clips/marqueurs (§12) ; capsule placeholder tant que le retarget n'est pas validé |
+| R11 | Retarget Quaternius UAL / Mixamo → Kenney | Proportions différentes (pieds qui glissent, mains qui traversent le bureau), noms d'os, échelle, clips « in place » oubliés, pistes de méthode perdues au ré-import | `SkeletonProfileHumanoid` + `BoneMap` versionné ; clips téléchargés *in place* ; bibliothèque sauvegardée en fichier avec *Keep Custom Tracks* ; test GUT des clips/marqueurs (§12) ; capsule placeholder tant que le retarget n'est pas validé |
 | R12 | Désync animation ↔ logique | Marqueur `documents_out` sauté/doublé, anim bloquée, booth absent → jour figé | Logique pilotée par signaux idempotents avec `case_id` ; watchdog local + timeouts DayController ; `NullBooth`/`SilentBooth` en CI (§8 bis.6, P8) |
 | R13 | Horloge pendant la marche | Temps « perdu » à regarder marcher = frustration | 🟡 Horloge continue (proposition), marche 4–6 s, option « réduire les animations » — **à valider client / Game Designer** |
-| R14 | Contrat `PassengerReaction` | (a) GDScript n'a pas d'enum global : le type est `PassengerReaction.Kind` ; (b) `RELIEVED` n'a **pas de clip** dans la liste | (a) adopté ; (b) MVP = expression + bark seulement ; ajouter un clip `react_relieved` si le client veut un geste — **à valider** |
+| R14 | Contrat `PassengerReaction` | (a) GDScript n'a pas d'enum global : le type est `PassengerReaction.Kind` ; (b) `RELIEVED` n'a **pas de clip** dans la liste | (a) adopté ; (b) **arbitré (D-014)** : MVP = expression + voix, pas de clip ; `react_relieved` éventuel post-MVP |
 | R15 | Choix de la sortie | `case_resolved` ne portait pas le verdict | Ajout de `CaseResult.verdict_kind` (signature du signal inchangée) — **à valider Orchestrateur** |
 | R16 | Anti-répétition vs indépendance des cas | Une fenêtre glissante rend le cas `i` dépendant des précédents | Roster du jour dépendant uniquement de `day_seed` (§9.3) ; testé (§12) |
 | R17 | Clic sur le visage | Cible 3D petite, inaccessible clavier/manette | Vignette « Visage » équivalente dans l'UI ; `HeadArea` généreuse — à caler avec UI/UX (UI_FLOW) |
@@ -826,8 +827,8 @@ Invariants (debug + tests) : un injecteur de visage ne touche **jamais** `passen
 | **M2 — Documents & règles** | `FieldDef`, `DocumentTypeDef`, `FactionDef`, `DocumentInstance`, `Case`, `CaseKey`, `Rule` + 5 familles, `RuleSet`, `RuleEngine`, `DiscrepancyChecker`, `RulebookEntry` ; 3 types de documents, 2 factions, 8 règles en `.tres` | Gameplay Systems, Lore Master | Tests unitaires par famille de règles ; test de validation des données |
 | **M3 — Générateur** | `PassengerGenerator`, `DocumentFactory`, `NamePool`, injecteurs (≥ 6 types), `CaseBuilder`, invariants, outil de stats | Gameplay Systems, QA | Tests de propriétés sur 1 000 seeds verts ; déterminisme prouvé |
 | **M3 (ext.) — Apparences** | `PassengerAppearance`, `AppearanceCatalog`/slots (catalogue placeholder : ids seulement), `AppearanceGenerator` + roster, `FaceComparator`, injecteurs `PORTRAIT_MISMATCH` / `IMPOSTOR_LOOKALIKE` | Gameplay Systems, QA | Tests de propriétés apparences (§12) verts |
-| **M4 — Interface de comparaison + booth greybox** | Vues de documents (gabarits DS), drag/zoom, mode Inspection A↔B (dont `PASSENGER_FACE`), surlignage, interrogation minimale, tampon, Rulebook ; **`booth.tscn` greybox** (vitre, `ArrivalPath`, `DeskMark`, `Exit*Path`, `LookTargetPlane`), **`BoothDirector`**, **`PassengerActor` capsule placeholder** animée (AnimationTree complet avec clips placeholder : bob de marche, inclinaison pour `present_documents`, secousse pour les réactions), regard sur un os/nœud tête factice, face quad avec shader de dithering et atlas provisoire, signaux booth + `NullBooth` | UI/UX, Design System, Godot Architect, 3D Designer | Un cas jouable de bout en bout : arrivée → documents → verdict → départ, à la souris et au clavier ; revue DS |
+| **M4 — Interface de comparaison + booth greybox** | Vues de documents (gabarits DS), drag/zoom, mode Inspection A↔B (dont `PASSENGER_FACE`), surlignage, interrogation minimale, tampon, Rulebook ; **`booth.tscn` greybox** (vitre, `ArrivalPath`, `DeskMark`, `Exit*Path`, `LookTargetPlane`), **`BoothDirector`** (pool de 2), **`PassengerActor` capsule placeholder** animée, **`PortraitRenderer` greybox** (capsule + couleurs) (AnimationTree complet avec clips placeholder : bob de marche, inclinaison pour `present_documents`, secousse pour les réactions), regard sur un os/nœud tête factice, face quad avec shader de dithering et atlas provisoire, signaux booth + `NullBooth` | UI/UX, Design System, Godot Architect, 3D Designer | Un cas jouable de bout en bout : arrivée → documents → verdict → départ, à la souris et au clavier ; revue DS |
 | **M5 — Boucle de jour** | `DayController` (machine à états §8 + timeouts), `DayClock`, `InspectionSession` (réactions), `ScoringService`, résumé de jour, 3 `DayDef`, sauvegarde entre jours, 1 passager scénarisé, option « réduire les animations » | Gameplay Systems, Game Designer, Scénariste | *Vertical slice* : 3 jours jouables, sauvegarde/chargement, tests d'intégration `NullBooth` + `SilentBooth` |
-| **M6 — Passager final** | Rig Kenney + clips Mixamo retargetés (8 clips, marqueurs), catalogue d'apparence réel (meshes, atlas visages, palettes), `PortraitRenderer` final, micro-expressions, `LookAtModifier3D` réglé, file en imposteurs, audio (pas, souffle, holo, barks, bus) selon AUDIO.md, budgets perf vérifiés | 3D Designer, Audio Designer, Godot Architect | Playtest QA : aucune désync sur 3 jours, 60 FPS sur la config cible, IMPOSTOR_LOOKALIKE détectable à l'œil (taux de réussite testeurs ≥ seuil Game Designer) |
+| **M6 — Passager final** | Rig Kenney + clips Quaternius UAL / Mixamo retargetés (8 clips, marqueurs), pool de 2 acteurs réglé (chevauchement départ/arrivée), catalogue d'apparence réel (meshes, atlas visages, palettes), `PortraitRenderer` final, micro-expressions, `LookAtModifier3D` réglé, file en imposteurs, audio (pas, souffle, holo, barks, bus) selon AUDIO.md, budgets perf vérifiés | 3D Designer, Audio Designer, Godot Architect | Playtest QA : aucune désync sur 3 jours, 60 FPS sur la config cible, IMPOSTOR_LOOKALIKE détectable à l'œil (taux de réussite testeurs ≥ seuil Game Designer) |
 
 Chaque jalon passe par la revue Orchestrateur + une entrée `DECISIONS.md` si un contrat change.
