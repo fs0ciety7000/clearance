@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clearance — Comparaison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Contrat Design System CLEARANCE ===== */
+:root{
+  --bg-void:#07080C; --bg-panel:#0E1118; --bg-elevated:#161B26; --line-subtle:#232A38;
+  --text-primary:#E8F1F5; --text-secondary:#8A97A8; --text-muted:#4E5868;
+  --accent-cyan:#00E5FF; --accent-yellow:#FFE600; --accent-magenta:#FF2E88;
+  --state-amber:#FFA31A; --state-red:#FF3B3B; --state-green:#2EFF9A;
+  --f-display:"Chakra Petch", "Inter", sans-serif;
+  --f-ui:"Inter", system-ui, sans-serif;
+  --f-data:"JetBrains Mono", ui-monospace, monospace;
+  --chamfer:polygon(var(--c) 0,100% 0,100% calc(100% - var(--c)),calc(100% - var(--c)) 100%,0 100%,0 var(--c));
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color:var(--text-primary);font-family:var(--f-ui)}
+[hidden]{display:none !important}
+
+/* ===== Stage 1920x1080 mise à l'échelle ===== */
+#stage{position:fixed;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:var(--bg-void)}
+
+/* ===== Composant chanfreiné (bordure 1px suivant le chanfrein) ===== */
+.ch{position:relative;isolation:isolate;--c:12px;--bc:var(--line-subtle);--bg:var(--bg-panel)}
+.ch::before,.ch::after{content:"";position:absolute;z-index:-1;clip-path:var(--chamfer)}
+.ch::before{inset:0;background:var(--bc)}
+.ch::after{inset:1px;background:linear-gradient(var(--bg),var(--bg)),var(--base,var(--bg-panel))}
+
+.kbd{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;font:500 12px/1 var(--f-data);color:var(--text-secondary);border:1px solid var(--line-subtle);background:var(--bg-void);clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)}
+.kbd.pad{border-radius:12px;clip-path:none;min-width:24px}
+.label{font:600 11px/1.2 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary)}
+
+/* ===== A · Barre d'état ===== */
+.topbar{position:absolute;left:0;top:0;width:1920px;height:56px;display:flex;align-items:center;padding:0 24px;gap:24px;background:var(--bg-panel);border-bottom:1px solid var(--line-subtle);z-index:5}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .mark{width:28px;height:28px;background:var(--accent-yellow);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);position:relative}
+.brand .mark::after{content:"";position:absolute;inset:8px;background:var(--bg-panel);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.brand b{font:700 20px/1 var(--f-display);letter-spacing:.18em;color:var(--text-primary)}
+.brand span{font:600 11px/1 var(--f-ui);letter-spacing:.14em;color:var(--accent-yellow);text-transform:uppercase;padding-left:12px;border-left:1px solid var(--line-subtle)}
+.loc{flex:1;display:flex;justify-content:center;align-items:baseline;gap:16px}
+.loc b{font:600 16px/1 var(--f-display);letter-spacing:.14em}
+.loc span{font:500 13px/1 var(--f-data);color:var(--text-secondary)}
+.clock{display:flex;align-items:center;gap:16px}
+.clock .time{font:600 28px/1 var(--f-display);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.clock .bar{width:220px;height:8px;background:var(--bg-elevated);position:relative;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.clock .bar i{position:absolute;inset:0 auto 0 0;width:58%;background:var(--accent-cyan)}
+.clock .bar i::after{content:"";position:absolute;right:-2px;top:0;bottom:0;width:2px;background:var(--text-primary)}
+.clock .end{font:500 13px/1 var(--f-data);color:var(--text-secondary)}
+.stat{display:flex;flex-direction:column;gap:4px;padding-left:20px;border-left:1px solid var(--line-subtle)}
+.stat b{font:600 16px/1 var(--f-data)}
+
+/* ===== B · Vue guichet ===== */
+.booth{position:absolute;left:0;top:56px;width:1920px;height:376px;overflow:hidden;
+  background:
+    radial-gradient(420px 220px at 18% 30%, rgba(255,46,136,.20), transparent 70%),
+    radial-gradient(520px 260px at 82% 22%, rgba(0,229,255,.16), transparent 70%),
+    radial-gradient(300px 160px at 62% 8%, rgba(255,230,0,.08), transparent 70%),
+    linear-gradient(180deg,#0B1020 0%,#090B14 60%,#07080C 100%);}
+.city{position:absolute;inset:0}
+.rain{position:absolute;inset:-40px;opacity:.35;
+  background-image:repeating-linear-gradient(104deg, transparent 0 22px, rgba(138,151,168,.35) 22px 23px, transparent 23px 61px),
+                   repeating-linear-gradient(100deg, transparent 0 37px, rgba(138,151,168,.22) 37px 38px, transparent 38px 89px);
+  background-size:100% 140px,100% 220px;animation:rain 0.6s linear infinite}
+@keyframes rain{to{background-position:-30px 140px,-40px 220px}}
+.neon{position:absolute;font-family:var(--f-display);font-weight:700;letter-spacing:.3em;pointer-events:none;user-select:none}
+.neon.v{writing-mode:vertical-rl;left:572px;top:40px;font-size:30px;color:rgba(255,230,0,.55);text-shadow:0 0 12px rgba(255,230,0,.6),0 0 32px rgba(255,230,0,.35);padding:14px 6px;border:2px solid rgba(255,230,0,.35);box-shadow:0 0 24px rgba(255,230,0,.2)}
+.neon.h{right:572px;top:52px;font-size:22px;color:rgba(255,46,136,.6);text-shadow:0 0 10px rgba(255,46,136,.7),0 0 28px rgba(255,46,136,.4);animation:flick 7s steps(1) infinite}
+@keyframes flick{0%,100%{opacity:1}43%{opacity:.55}44%{opacity:1}71%{opacity:.7}72%{opacity:1}}
+.glass{position:absolute;left:520px;right:520px;top:16px;bottom:22px;pointer-events:none;
+  background:linear-gradient(115deg, rgba(232,241,245,.05) 0 18%, transparent 18% 26%, rgba(232,241,245,.03) 26% 30%, transparent 30%);
+  border:10px solid #0C0F16;outline:1px solid var(--line-subtle);box-shadow:inset 0 0 60px rgba(0,0,0,.6)}
+.glass::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg, rgba(0,229,255,.035) 0 1px, transparent 1px 4px)} /* scanlines : vitre uniquement */
+.glass .grille{position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);width:160px;height:10px;background:repeating-linear-gradient(90deg,#232A38 0 3px,#0C0F16 3px 7px)}
+.passenger{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:440px;height:330px}
+.ledge{position:absolute;left:0;right:0;bottom:0;height:22px;background:linear-gradient(180deg,#161B26,#0E1118);border-top:1px solid #2c3446}
+.ledge::after{content:"";position:absolute;left:50%;top:6px;width:260px;height:6px;transform:translateX(-50%);background:var(--bg-void);box-shadow:0 0 0 1px var(--line-subtle)}
+
+.dialog{position:absolute;left:32px;top:24px;width:456px;padding:20px 22px 22px;--bg:rgba(14,17,24,.94);--bc:var(--line-subtle);--c:14px}
+.dialog .who{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.dialog .who b{font:600 13px/1 var(--f-display);letter-spacing:.14em;color:var(--accent-cyan)}
+.dialog p.quote{font:400 18px/1.5 var(--f-ui);color:var(--text-primary)}
+.dialog .hint{margin-top:16px;font:400 13px/1.45 var(--f-ui);color:var(--text-secondary);padding-top:14px;border-top:1px solid var(--line-subtle)}
+.qcard{margin-top:16px;padding:12px 14px 12px 16px;--bg:rgba(255,46,136,.08);--bc:rgba(255,46,136,.55);--c:8px;display:flex;gap:12px;align-items:flex-start}
+.qcard .ic{flex:none;margin-top:2px}
+.qcard .t{flex:1}
+.qcard .t .label{color:var(--accent-magenta)}
+.qcard .t p{margin-top:6px;font:500 15px/1.45 var(--f-ui);color:var(--text-primary)}
+.qcard .k{display:flex;gap:4px;align-self:center}
+
+.queue{position:absolute;right:32px;top:24px;width:440px;padding:18px 22px;--bg:rgba(14,17,24,.94);--c:14px;display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}
+.queue .cell{display:flex;flex-direction:column;gap:6px}
+.queue .cell b{font:600 24px/1 var(--f-display);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.queue .cell b small{font:500 14px/1 var(--f-data);color:var(--text-secondary)}
+.queue .full{grid-column:1/-1;padding-top:14px;border-top:1px solid var(--line-subtle);display:flex;align-items:center;justify-content:space-between}
+.flag{display:inline-flex;align-items:center;gap:8px;font:600 13px/1 var(--f-ui);letter-spacing:.08em;text-transform:uppercase}
+.flag.mag{color:var(--accent-magenta)}
+.flag.dim{color:var(--text-secondary)}
+
+/* ===== C · Plan de travail ===== */
+.bench{position:absolute;left:0;top:432px;width:1456px;height:552px;
+  background:
+    radial-gradient(900px 380px at 50% 100%, rgba(0,229,255,.06), transparent 70%),
+    linear-gradient(180deg,#0B0E15,#090B11);
+  border-top:1px solid #2c3446}
+.bench .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(35,42,56,.45) 1px,transparent 1px),linear-gradient(90deg,rgba(35,42,56,.45) 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(180deg,transparent,#000 30%,#000 80%,transparent);-webkit-mask-image:linear-gradient(180deg,transparent,#000 30%,#000 80%,transparent);opacity:.55}
+.bench-head{position:absolute;left:32px;right:24px;top:12px;height:28px;display:flex;align-items:center;justify-content:space-between}
+.insp-flag{display:inline-flex;align-items:center;gap:10px;font:600 12px/1 var(--f-display);letter-spacing:.16em;color:var(--text-muted)}
+.insp-flag .dot{width:10px;height:10px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--text-muted)}
+.insp .insp-flag{color:var(--accent-cyan)}
+.insp .insp-flag .dot{background:var(--accent-cyan);box-shadow:0 0 8px var(--accent-cyan)}
+/* coins cyan en mode inspection */
+.bench .corners,.rulebook .corners{position:absolute;inset:6px;pointer-events:none;opacity:0;transition:opacity .2s;
+  --l:24px;--w:2px;--col:var(--accent-cyan);
+  background:
+   linear-gradient(var(--col),var(--col)) 0 0/var(--l) var(--w),linear-gradient(var(--col),var(--col)) 0 0/var(--w) var(--l),
+   linear-gradient(var(--col),var(--col)) 100% 0/var(--l) var(--w),linear-gradient(var(--col),var(--col)) 100% 0/var(--w) var(--l),
+   linear-gradient(var(--col),var(--col)) 0 100%/var(--l) var(--w),linear-gradient(var(--col),var(--col)) 0 100%/var(--w) var(--l),
+   linear-gradient(var(--col),var(--col)) 100% 100%/var(--l) var(--w),linear-gradient(var(--col),var(--col)) 100% 100%/var(--w) var(--l);
+  background-repeat:no-repeat}
+.insp .corners{opacity:1}
+
+/* Documents holographiques */
+.doc{position:absolute;--c:16px;--bc:rgba(0,229,255,.38);--bg:rgba(20,26,38,.96);filter:drop-shadow(0 0 18px rgba(0,229,255,.12)) drop-shadow(0 16px 24px rgba(0,0,0,.55))}
+.doc header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px 12px 24px;border-bottom:1px solid rgba(0,229,255,.18)}
+.doc header .t{display:flex;flex-direction:column;gap:4px}
+.doc header .t b{font:600 15px/1 var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--text-primary)}
+.doc header .t span{font:500 11px/1 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--accent-cyan)}
+.doc header .code{font:500 11px/1 var(--f-data);color:var(--text-secondary)}
+.doc .body{padding:14px 24px 18px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px}
+.fields .wide{grid-column:1/-1}
+.field{position:relative;display:flex;flex-direction:column;gap:5px;padding:7px 10px;margin:0 -10px}
+.field .fl{font:600 10.5px/1.2 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary)}
+.field .fv{font:500 16px/1.2 var(--f-data);color:var(--text-primary);letter-spacing:.02em}
+.field .fv.big{font-size:20px;font-weight:700}
+.insp .field::after{content:"";position:absolute;left:10px;right:10px;bottom:2px;border-bottom:1px dashed rgba(0,229,255,.35)}
+.field .tag{position:absolute;top:-9px;right:-9px;width:22px;height:22px;display:none;align-items:center;justify-content:center;font:700 11px/1 var(--f-display);color:var(--bg-void);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);z-index:2}
+.field.sel{box-shadow:inset 0 0 0 2px var(--accent-cyan);background:rgba(0,229,255,.08)}
+.field.sel .tag{display:flex;background:var(--accent-cyan)}
+.field.sel::after,.field.bad::after,.field.ok::after{display:none}
+.field.ok{box-shadow:inset 0 0 0 1px rgba(0,229,255,.7);background:rgba(0,229,255,.05)}
+.field.ok .tag{display:flex;background:var(--accent-cyan)}
+.field.bad{box-shadow:inset 0 0 0 2px var(--accent-magenta),0 0 16px rgba(255,46,136,.25);
+  background:repeating-linear-gradient(135deg, rgba(255,46,136,.13) 0 3px, transparent 3px 9px)}
+.field.bad .tag{display:flex;background:var(--accent-magenta)}
+.field.bad .fv{color:#fff}
+.field .warn{display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%)}
+.field.bad .warn{display:block}
+
+.idgrid{display:grid;grid-template-columns:120px 1fr;gap:20px}
+.photo{width:120px;height:150px;position:relative;overflow:hidden;background:linear-gradient(180deg,#1B2333,#0E1118);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.photo::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg, rgba(0,229,255,.08) 0 1px, transparent 1px 3px)} /* scanlines : image uniquement */
+.mrz{margin-top:14px;padding-top:12px;border-top:1px solid rgba(0,229,255,.14);font:400 12px/1.5 var(--f-data);color:var(--text-muted);letter-spacing:.1em;white-space:nowrap;overflow:hidden}
+.seal{width:64px;height:64px;flex:none;position:relative}
+.implants{list-style:none;display:flex;flex-direction:column;gap:4px;margin-top:2px}
+.implants li{font:500 14px/1.3 var(--f-data);color:var(--text-primary);display:flex;gap:8px;align-items:center}
+.implants li::before{content:"";width:6px;height:6px;background:var(--accent-cyan);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.implants li small{font:500 11px/1 var(--f-ui);letter-spacing:.08em;color:var(--text-secondary);text-transform:uppercase}
+.bars{height:28px;margin-top:12px;background:repeating-linear-gradient(90deg,var(--text-muted) 0 2px,transparent 2px 4px,var(--text-muted) 4px 5px,transparent 5px 9px,var(--text-muted) 9px 12px,transparent 12px 14px);opacity:.6}
+
+/* ===== D · Rulebook ===== */
+.rulebook{position:absolute;left:1464px;top:440px;width:440px;height:536px;--c:16px;--bg:var(--bg-panel);--bc:var(--line-subtle);display:flex;flex-direction:column}
+.insp .rulebook{--bc:rgba(0,229,255,.45)}
+.rb-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px 24px}
+.rb-head .t{display:flex;align-items:baseline;gap:12px}
+.rb-head b{font:700 18px/1 var(--f-display);letter-spacing:.2em}
+.rb-head span{font:500 12px/1 var(--f-data);color:var(--accent-yellow)}
+.rb-head .r{display:flex;align-items:center;gap:8px}
+.newcount{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;font:700 10.5px/1 var(--f-ui);letter-spacing:.12em;color:var(--bg-void);background:var(--state-amber);clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)}
+.tabs{display:flex;gap:2px;padding:0 20px 0 24px;border-bottom:1px solid var(--line-subtle)}
+.tabs span{padding:8px 12px 10px;font:600 12px/1 var(--f-ui);letter-spacing:.06em;color:var(--text-secondary);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs span.on{color:var(--text-primary);border-color:var(--accent-cyan)}
+.today{margin:14px 20px 4px 24px;padding:4px 0}
+.today .field{margin:0;padding:10px 12px;background:var(--bg-elevated);flex-direction:row;align-items:center;justify-content:space-between}
+.today .field .fv{font-size:20px;font-weight:700}
+.rules{list-style:none;padding:8px 20px 12px 24px;display:flex;flex-direction:column;gap:2px;flex:1}
+.rule{position:relative;display:grid;grid-template-columns:24px 1fr;gap:8px;padding:9px 10px;margin:0 -10px;font:400 14px/1.45 var(--f-ui);color:var(--text-primary)}
+.rule .n{font:600 13px/1.6 var(--f-data);color:var(--text-secondary)}
+.rule em{font-style:normal;font-family:var(--f-data);font-size:13px;color:var(--text-primary);background:var(--bg-elevated);padding:1px 5px}
+.rule.new{background:rgba(255,163,26,.07);box-shadow:inset 3px 0 0 var(--state-amber)}
+.rule.new .newtag{display:inline-flex;margin-bottom:4px;padding:3px 6px;font:700 10px/1 var(--f-ui);letter-spacing:.14em;color:var(--bg-void);background:var(--state-amber)}
+.rule.cited{box-shadow:inset 3px 0 0 var(--accent-magenta);background:rgba(255,46,136,.06)}
+.rule.cited .n{color:var(--accent-magenta)}
+.rb-foot{display:flex;justify-content:space-between;align-items:center;padding:10px 20px 14px 24px;border-top:1px solid var(--line-subtle);font:500 12px/1 var(--f-data);color:var(--text-secondary)}
+
+/* ===== E · Barre d'outils ===== */
+.toolbar{position:absolute;left:0;top:984px;width:1920px;height:96px;display:flex;align-items:center;gap:16px;padding:0 24px;background:var(--bg-panel);border-top:1px solid var(--line-subtle)}
+.btn{display:inline-flex;align-items:center;gap:12px;height:60px;padding:0 20px;--c:10px;--bg:var(--bg-elevated);--bc:var(--line-subtle);font:600 15px/1 var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--text-primary);cursor:default}
+.btn .keys{display:flex;gap:4px;margin-left:4px}
+.btn.on{--bc:var(--accent-cyan);--bg:rgba(0,229,255,.10);color:var(--accent-cyan)}
+.btn.q .badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;font:700 12px/1 var(--f-data);color:var(--bg-void);background:var(--accent-magenta);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.btn.q.live{--bc:rgba(255,46,136,.7)}
+.btn.q.dim{color:var(--text-secondary)}
+.status{flex:1;display:flex;align-items:center;gap:12px;padding:0 16px;font:500 14px/1.3 var(--f-ui);color:var(--text-secondary)}
+.status b{color:var(--text-primary);font-weight:600}
+.status .mag{color:var(--accent-magenta);font-weight:600}
+.status .cy{color:var(--accent-cyan);font-weight:600}
+.tray{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 16px;--c:12px;--bg:var(--bg-void);--bc:var(--line-subtle)}
+.tray .lbl{display:flex;flex-direction:column;gap:6px;padding-right:8px}
+.tray .lbl .label{color:var(--accent-yellow)}
+.tray .lbl div{display:flex;gap:4px}
+.stamp{height:64px;padding:0 22px 0 16px;gap:14px;font-size:17px}
+.stamp .sub{display:block;font:500 11px/1 var(--f-ui);letter-spacing:.08em;text-transform:none;color:var(--text-secondary);margin-top:6px}
+.stamp.ok{--bc:var(--state-green);--bg:rgba(46,255,154,.08);color:var(--state-green)}
+.stamp.no{--bc:var(--state-red);--bg:rgba(255,59,59,.08);color:var(--state-red)}
+
+/* ===== Liens holographiques ===== */
+#links{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none;z-index:20;overflow:visible}
+.link-draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw .45s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.dash-move{animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-20}}
+#linkLabel{position:absolute;z-index:21;pointer-events:none;display:flex;align-items:center;gap:10px;padding:10px 14px 10px 12px;--c:8px;white-space:nowrap}
+#linkLabel.mag{--bg:#1A0E17;--bc:var(--accent-magenta)}
+#linkLabel.cy{--bg:#0B1A20;--bc:rgba(0,229,255,.7)}
+#linkLabel.cur{--bg:var(--bg-elevated);--bc:rgba(0,229,255,.5)}
+#linkLabel .h{font:700 13px/1 var(--f-display);letter-spacing:.16em}
+#linkLabel.mag .h{color:var(--accent-magenta)}
+#linkLabel.cy .h,#linkLabel.cur .h{color:var(--accent-cyan)}
+#linkLabel .d{font:500 13px/1 var(--f-ui);color:var(--text-primary);padding-left:10px;border-left:1px solid var(--line-subtle)}
+#linkLabel .d code{font-family:var(--f-data);font-size:13px}
+
+/* ===== Sélecteur d'état de la maquette (hors jeu) ===== */
+.mock-switch{position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:100;display:flex;align-items:center;gap:4px;padding:6px;background:rgba(14,17,24,.92);border:1px solid var(--line-subtle);font-family:var(--f-ui);backdrop-filter:blur(6px)}
+.mock-switch .label{padding:0 8px;font-size:10px}
+.mock-switch button{appearance:none;border:1px solid transparent;background:transparent;color:var(--text-secondary);font:500 12px/1 var(--f-ui);padding:8px 10px;cursor:pointer}
+.mock-switch button:hover{color:var(--text-primary);border-color:var(--line-subtle)}
+.mock-switch button:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:1px}
+.mock-switch button[aria-pressed="true"]{color:var(--bg-void);background:var(--accent-cyan)}
+.mock-switch button kbd{font:500 10px/1 var(--f-data);opacity:.7;margin-right:6px}
+
+@media (prefers-reduced-motion: reduce){
+  .rain,.neon.h,.dash-move,.link-draw{animation:none !important}
+  .link-draw{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div id="stage" data-state="disc">
+
+  <!-- ============ A · BARRE D'ÉTAT ============ -->
+  <header class="topbar">
+    <div class="brand"><div class="mark" aria-hidden="true"></div><b>CLEARANCE</b><span>Consortium · Contrôle d'entrée</span></div>
+    <div class="loc"><b>HALCYON GATE — GUICHET 04</b><span>JOUR 07 · MER. 19.03.2187</span></div>
+    <div class="clock">
+      <div class="label">Shift</div>
+      <div class="time">14:37</div>
+      <div class="bar" role="progressbar" aria-valuenow="58" aria-valuemin="0" aria-valuemax="100" aria-label="Progression du shift"><i></i></div>
+      <div class="end">FIN 18:00</div>
+      <div class="stat"><span class="label">Traités</span><b>08</b></div>
+      <div class="stat"><span class="label">Crédits</span><b style="color:var(--accent-yellow)">₵ 85</b></div>
+    </div>
+  </header>
+
+  <!-- ============ B · VUE GUICHET ============ -->
+  <section class="booth" aria-label="Vue du guichet">
+    <svg class="city" viewBox="0 0 1920 376" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="bld" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#121829"/><stop offset="1" stop-color="#0A0D16"/></linearGradient>
+      </defs>
+      <g fill="url(#bld)">
+        <rect x="560" y="70" width="110" height="306"/><rect x="680" y="120" width="70" height="256"/>
+        <rect x="1180" y="60" width="90" height="316"/><rect x="1280" y="110" width="80" height="266"/>
+        <rect x="760" y="160" width="60" height="216"/><rect x="1110" y="150" width="60" height="226"/>
+      </g>
+      <g fill="#FFE600" opacity=".18">
+        <rect x="574" y="96" width="6" height="3"/><rect x="590" y="96" width="6" height="3"/><rect x="574" y="120" width="6" height="3"/><rect x="622" y="144" width="6" height="3"/>
+        <rect x="1196" y="84" width="6" height="3"/><rect x="1228" y="108" width="6" height="3"/><rect x="1196" y="156" width="6" height="3"/>
+      </g>
+      <g fill="#00E5FF" opacity=".22">
+        <rect x="694" y="140" width="5" height="3"/><rect x="1296" y="132" width="5" height="3"/><rect x="1312" y="180" width="5" height="3"/><rect x="606" y="188" width="5" height="3"/>
+      </g>
+    </svg>
+    <div class="rain" aria-hidden="true"></div>
+    <div class="neon v" aria-hidden="true">HALCYON</div>
+    <div class="neon h" aria-hidden="true">TRANSIT·7</div>
+
+    <!-- Passagère (silhouette stylisée) -->
+    <svg class="passenger" viewBox="0 0 440 330" aria-label="Passagère : silhouette en manteau à col haut, implant oculaire lumineux">
+      <defs>
+        <linearGradient id="rimM" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#FF2E88" stop-opacity=".9"/><stop offset=".35" stop-color="#FF2E88" stop-opacity="0"/></linearGradient>
+        <linearGradient id="rimC" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#00E5FF" stop-opacity=".6"/><stop offset=".3" stop-color="#00E5FF" stop-opacity="0"/></linearGradient>
+        <radialGradient id="face" cx=".6" cy=".45" r=".7"><stop offset="0" stop-color="#1A2030"/><stop offset="1" stop-color="#0B0E15"/></radialGradient>
+        <filter id="glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <!-- manteau -->
+      <path d="M18 330 C30 262 98 232 158 222 L282 222 C342 232 410 262 422 330 Z" fill="#0A0C12"/>
+      <path d="M18 330 C30 262 98 232 158 222 L282 222 C342 232 410 262 422 330 Z" fill="url(#rimM)" opacity=".55"/>
+      <path d="M18 330 C30 262 98 232 158 222 L282 222 C342 232 410 262 422 330 Z" fill="url(#rimC)" opacity=".5"/>
+      <!-- col haut -->
+      <path d="M150 232 L170 168 L270 168 L292 232 L254 252 L220 236 L186 252 Z" fill="#0F131C" stroke="#232A38" stroke-width="1.5"/>
+      <!-- cou -->
+      <rect x="198" y="150" width="44" height="34" fill="#0C0F17"/>
+      <!-- tête -->
+      <ellipse cx="220" cy="104" rx="56" ry="68" fill="url(#face)"/>
+      <!-- cheveux / capuche courte -->
+      <path d="M162 100 C160 46 196 28 224 30 C258 32 282 54 280 98 C270 72 248 60 222 60 C196 60 176 74 162 100 Z" fill="#06070B"/>
+      <!-- rim light tête -->
+      <path d="M274 70 C286 92 284 128 268 150" fill="none" stroke="#FF2E88" stroke-width="2.5" opacity=".7"/>
+      <path d="M166 74 C156 96 158 128 172 148" fill="none" stroke="#00E5FF" stroke-width="1.5" opacity=".45"/>
+      <!-- yeux -->
+      <rect x="190" y="104" width="18" height="3" fill="#8A97A8" opacity=".55"/>
+      <g filter="url(#glow)">
+        <rect x="230" y="102" width="26" height="5" fill="#00E5FF"/>
+        <circle cx="243" cy="104.5" r="2" fill="#E8F1F5"/>
+      </g>
+      <path d="M258 104 L272 98" stroke="#00E5FF" stroke-width="1" opacity=".6"/>
+      <!-- bouche -->
+      <rect x="208" y="142" width="22" height="2" fill="#4E5868" opacity=".7"/>
+    </svg>
+
+    <div class="glass" aria-hidden="true"><div class="grille"></div></div>
+    <div class="ledge" aria-hidden="true"></div>
+
+    <!-- Dialogue -->
+    <div class="dialog ch">
+      <div class="who"><b>PASSAGÈRE · M. VASQUEZ-ORLOV</b><span class="label">Intercom</span></div>
+      <p class="quote">« Mon contrat chez Kessler-Ashe commence demain matin. Tout est en règle, je vous assure. »</p>
+      <div class="hint" data-show="off a conc">Aucune question débloquée. Documentez une discordance pour ouvrir l'interrogatoire.</div>
+      <div class="qcard ch" data-show="disc">
+        <svg class="ic" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L19 18 H1 Z" fill="none" stroke="#FF2E88" stroke-width="2" stroke-linejoin="miter"/><rect x="9" y="7" width="2" height="6" fill="#FF2E88"/><rect x="9" y="14.5" width="2" height="2" fill="#FF2E88"/></svg>
+        <div class="t"><span class="label">Question débloquée · Discordance ①</span><p>« Votre permis a expiré le 14 mars. Pourquoi venir seulement aujourd'hui&nbsp;? »</p></div>
+        <div class="k"><span class="kbd">Q</span><span class="kbd pad">Y</span></div>
+      </div>
+    </div>
+
+    <!-- File -->
+    <div class="queue ch" aria-label="File d'attente">
+      <div class="cell"><span class="label">Passager</span><b>09 <small>/ 14</small></b></div>
+      <div class="cell"><span class="label">En attente</span><b>23</b></div>
+      <div class="full">
+        <span class="label">Discordances</span>
+        <span class="flag mag" data-show="disc">
+          <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L19 18 H1 Z" fill="#FF2E88"/><rect x="9" y="7" width="2" height="6" fill="#07080C"/><rect x="9" y="14.5" width="2" height="2" fill="#07080C"/></svg>
+          1 documentée
+        </span>
+        <span class="flag dim" data-show="off a conc">Aucune</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ C · PLAN DE TRAVAIL ============ -->
+  <section class="bench" aria-label="Plan de travail holographique">
+    <div class="grid" aria-hidden="true"></div>
+    <div class="corners" aria-hidden="true"></div>
+    <div class="bench-head">
+      <span class="label">Plan de travail · 3 documents</span>
+      <span class="insp-flag"><i class="dot"></i><span data-show="off">MODE INSPECTION INACTIF</span><span data-show="a disc conc">MODE INSPECTION ACTIF</span></span>
+    </div>
+
+    <!-- Document 1 : Bio-scan -->
+    <article class="doc ch" style="left:32px;top:64px;width:372px" aria-label="Certificat bio-scan">
+      <header><div class="t"><span>Clinique Orbitale Meridian</span><b>Certificat bio-scan</b></div><span class="code">BS-88213</span></header>
+      <div class="body">
+        <div class="fields">
+          <div class="field wide"><span class="fl">N° ID porteur</span><span class="fv">HG-4471-K2Q9</span><i class="tag"></i></div>
+          <div class="field"><span class="fl">Groupe</span><span class="fv">O−</span><i class="tag"></i></div>
+          <div class="field"><span class="fl">Statut</span><span class="fv">SAIN</span><i class="tag"></i></div>
+          <div class="field wide"><span class="fl">Implants déclarés · 2</span>
+            <ul class="implants">
+              <li>OPT-3 <small>oculaire · civil</small></li>
+              <li>NX-12 <small>shunt neural · civil</small></li>
+            </ul><i class="tag"></i></div>
+          <div class="field wide"><span class="fl">Émis le</span><span class="fv">02.03.2187</span><i class="tag"></i></div>
+        </div>
+        <div class="bars" aria-hidden="true"></div>
+      </div>
+    </article>
+
+    <!-- Document 2 : Carte d'identité -->
+    <article class="doc ch" id="doc-id" style="left:436px;top:44px;width:476px" aria-label="Carte d'identité">
+      <header><div class="t"><span>Consortium · Citoyenneté</span><b>Carte d'identité</b></div>
+        <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L26 14 L14 26 L2 14 Z" fill="none" stroke="#FFE600" stroke-width="2"/><path d="M14 9 L19 14 L14 19 L9 14 Z" fill="#FFE600"/></svg>
+      </header>
+      <div class="body">
+        <div class="idgrid">
+          <div class="photo" aria-label="Photo d'identité">
+            <svg viewBox="0 0 120 150" width="120" height="150" aria-hidden="true">
+              <path d="M8 150 C12 120 36 108 50 106 L70 106 C84 108 108 120 112 150 Z" fill="#0A0C12"/>
+              <ellipse cx="60" cy="62" rx="24" ry="30" fill="#232A38"/>
+              <path d="M36 60 C35 36 50 28 62 29 C76 30 86 40 85 58 C80 46 72 42 60 42 C48 42 40 48 36 60 Z" fill="#07080C"/>
+              <rect x="64" y="60" width="11" height="2.5" fill="#00E5FF" opacity=".85"/>
+            </svg>
+          </div>
+          <div class="fields">
+            <div class="field wide"><span class="fl">Nom</span><span class="fv big">VASQUEZ-ORLOV</span><i class="tag"></i></div>
+            <div class="field wide"><span class="fl">Prénoms</span><span class="fv">MIRA ILSE</span><i class="tag"></i></div>
+            <div class="field wide" id="f-id-num"><span class="fl">N° ID</span><span class="fv">HG-4471-K2Q9</span><i class="tag">A</i></div>
+            <div class="field"><span class="fl">Né(e) le</span><span class="fv">02.11.2151</span><i class="tag"></i></div>
+            <div class="field"><span class="fl">Expire</span><span class="fv">08.2191</span><i class="tag"></i></div>
+          </div>
+        </div>
+        <div class="fields" style="margin-top:6px">
+          <div class="field"><span class="fl">Origine</span><span class="fv">COLONIE TYCHO</span><i class="tag"></i></div>
+          <div class="field"><span class="fl">Classe</span><span class="fv">C-3 · OUVRIER</span><i class="tag"></i></div>
+        </div>
+        <div class="mrz" aria-hidden="true">IDHGC&lt;VASQUEZ&lt;ORLOV&lt;&lt;MIRA&lt;ILSE&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;<br>HG4471K2Q9&lt;TYC5111021F9108&lt;&lt;&lt;&lt;&lt;&lt;04</div>
+      </div>
+    </article>
+
+    <!-- Document 3 : Permis d'entrée -->
+    <article class="doc ch" id="doc-permit" style="left:944px;top:76px;width:436px" aria-label="Permis d'entrée">
+      <header><div class="t"><span>Autorité de transit · Halcyon Gate</span><b>Permis d'entrée</b></div><span class="code">PE-2187-30417</span></header>
+      <div class="body">
+        <div style="display:flex;gap:16px;align-items:flex-start">
+          <div class="fields" style="flex:1">
+            <div class="field wide"><span class="fl">Titulaire</span><span class="fv">VASQUEZ-ORLOV, M.</span><i class="tag"></i></div>
+            <div class="field wide" id="f-permit-num"><span class="fl">N° ID</span><span class="fv">HG-4471-K2Q9</span><i class="tag">B</i></div>
+          </div>
+          <svg class="seal" viewBox="0 0 64 64" aria-label="Sceau officiel du Consortium">
+            <circle cx="32" cy="32" r="29" fill="none" stroke="#FFE600" stroke-width="2" opacity=".85"/>
+            <circle cx="32" cy="32" r="23" fill="none" stroke="#FFE600" stroke-width="1" stroke-dasharray="2 3" opacity=".7"/>
+            <path d="M32 16 L48 32 L32 48 L16 32 Z" fill="none" stroke="#FFE600" stroke-width="2"/>
+            <path d="M32 24 L40 32 L32 40 L24 32 Z" fill="#FFE600" opacity=".9"/>
+          </svg>
+        </div>
+        <div class="fields" style="margin-top:2px">
+          <div class="field"><span class="fl">Motif</span><span class="fv">TRAVAIL</span><i class="tag"></i></div>
+          <div class="field"><span class="fl">Durée</span><span class="fv">30 JOURS</span><i class="tag"></i></div>
+          <div class="field wide"><span class="fl">Employeur</span><span class="fv">KESSLER-ASHE ORBITAL</span><i class="tag"></i></div>
+          <div class="field"><span class="fl">Émis le</span><span class="fv">12.02.2187</span><i class="tag"></i></div>
+          <div class="field" id="f-permit-exp"><span class="fl">Valide jusqu'au</span><span class="fv big">14.03.2187</span><i class="tag">A</i>
+            <svg class="warn" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L19 18 H1 Z" fill="#FF2E88"/><rect x="9" y="7" width="2" height="6" fill="#07080C"/><rect x="9" y="14.5" width="2" height="2" fill="#07080C"/></svg>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ============ D · RULEBOOK ============ -->
+  <aside class="rulebook ch" aria-label="Rulebook du jour">
+    <div class="corners" aria-hidden="true"></div>
+    <div class="rb-head">
+      <div class="t"><b>RULEBOOK</b><span>JOUR 07</span></div>
+      <div class="r"><span class="newcount">1 NOUVEAU</span><span class="kbd">Tab</span></div>
+    </div>
+    <div class="tabs"><span class="on">Règles</span><span>Cartes</span><span>Implants</span><span>Sceaux</span></div>
+    <div class="today">
+      <div class="field" id="f-today"><span class="fl">Date du jour</span><span class="fv">19.03.2187</span><i class="tag">B</i>
+        <svg class="warn" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" style="position:static;transform:none;margin-left:8px"><path d="M10 1 L19 18 H1 Z" fill="#FF2E88"/><rect x="9" y="7" width="2" height="6" fill="#07080C"/><rect x="9" y="14.5" width="2" height="2" fill="#07080C"/></svg>
+      </div>
+    </div>
+    <ol class="rules">
+      <li class="rule"><span class="n">01</span><span>Tout entrant présente une <em>carte d'identité</em> et un <em>permis d'entrée</em> Halcyon Gate.</span></li>
+      <li class="rule" id="r-valid"><span class="n">02</span><span>Le permis d'entrée doit être <b>valide à la date du jour</b>.</span></li>
+      <li class="rule new"><span class="n">03</span><span><span class="newtag">NOUVEAU</span><br>Motif <em>TRAVAIL</em> : certificat bio-scan émis depuis <b>moins de 30 jours</b>.</span></li>
+      <li class="rule"><span class="n">04</span><span>Implants de classe militaire <em>MIL-</em> interdits sans dérogation.</span></li>
+      <li class="rule"><span class="n">05</span><span>Ressortissants de la <em>colonie Tycho</em> : interrogatoire obligatoire.</span></li>
+    </ol>
+    <div class="rb-foot"><span>PAGE 1 / 3</span><span style="display:flex;gap:4px"><span class="kbd">[</span><span class="kbd">]</span></span></div>
+  </aside>
+
+  <!-- ============ E · BARRE D'OUTILS ============ -->
+  <footer class="toolbar">
+    <div class="btn ch" id="btn-insp">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1 L17 9 L9 17 L1 9 Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="9" r="2.5" fill="currentColor"/></svg>
+      Inspection
+      <span class="keys"><span class="kbd">Espace</span><span class="kbd pad">LT</span></span>
+    </div>
+    <div class="btn ch q" id="btn-q">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2 H16 V12 H8 L4 16 V12 H2 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/></svg>
+      Interroger
+      <span class="badge" data-show="disc" aria-label="1 question débloquée">1</span>
+      <span class="keys"><span class="kbd">Q</span><span class="kbd pad">Y</span></span>
+    </div>
+
+    <div class="status" id="status">
+      <span data-show="off">Appuyez sur <b>Espace</b> pour comparer deux champs.</span>
+      <span data-show="a"><span class="cy">◆ Champ A</span> <b>Valide jusqu'au</b> — sélectionnez un second champ. <b>Échap</b> pour annuler.</span>
+      <span data-show="disc"><span class="mag">⚠ 1 discordance</span> documentée · règle 02 · question débloquée.</span>
+      <span data-show="conc"><span class="cy">✓ Concordant</span> — N° ID identiques sur les deux documents.</span>
+    </div>
+
+    <div class="tray ch">
+      <div class="lbl"><span class="label">Tampons officiels</span><div><span class="kbd">T</span><span class="kbd pad">RT</span></div></div>
+      <div class="btn ch stamp ok">
+        <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.5 13.5 L11.5 17.5 L19 9" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>
+        <span>Approuvé<span class="sub">maintenir <b>V</b> · Ⓐ</span></span>
+      </div>
+      <div class="btn ch stamp no">
+        <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M8 1.5 H18 L24.5 8 V18 L18 24.5 H8 L1.5 18 V8 Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 8.5 L17.5 17.5 M17.5 8.5 L8.5 17.5" stroke="currentColor" stroke-width="2.5"/></svg>
+        <span>Refusé<span class="sub">maintenir <b>X</b> · Ⓧ</span></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Calque des liens -->
+  <svg id="links" viewBox="0 0 1920 1080" aria-hidden="true">
+    <defs>
+      <filter id="lglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4"/></filter>
+    </defs>
+    <g id="linkG"></g>
+  </svg>
+  <div id="linkLabel" class="ch" hidden role="status"></div>
+</div>
+
+<!-- Sélecteur d'état (outil de maquette, hors jeu) -->
+<nav class="mock-switch" aria-label="État de la maquette">
+  <span class="label">Maquette</span>
+  <button data-s="off"><kbd>1</kbd>Inspection inactive</button>
+  <button data-s="a"><kbd>2</kbd>Champ A sélectionné</button>
+  <button data-s="disc"><kbd>3</kbd>Discordance détectée</button>
+  <button data-s="conc"><kbd>4</kbd>Concordant</button>
+</nav>
+
+<script>
+(function(){
+  var stage=document.getElementById('stage'), g=document.getElementById('linkG'), lab=document.getElementById('linkLabel');
+  var NS='http://www.w3.org/2000/svg', scale=1, state='disc';
+  var C={cyan:'#00E5FF',mag:'#FF2E88'};
+  var $=function(id){return document.getElementById(id)};
+
+  function fit(){
+    scale=Math.min(innerWidth/1920, innerHeight/1080);
+    var x=(innerWidth-1920*scale)/2, y=(innerHeight-1080*scale)/2;
+    stage.style.transform='translate('+x+'px,'+y+'px) scale('+scale+')';
+    draw();
+  }
+  function pt(el, side){
+    var r=el.getBoundingClientRect(), s=stage.getBoundingClientRect();
+    var x = side==='r' ? r.right : side==='l' ? r.left : (r.left+r.right)/2;
+    var y = side==='b' ? r.bottom : (r.top+r.bottom)/2;
+    return {x:(x-s.left)/scale, y:(y-s.top)/scale};
+  }
+  function el(tag, attrs){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);g.appendChild(e);return e}
+  function curve(a,b){var dx=Math.max(48,Math.abs(b.x-a.x)*.6);return 'M'+a.x+' '+a.y+' C'+(a.x+dx)+' '+a.y+' '+(b.x-dx)+' '+b.y+' '+b.x+' '+b.y}
+  function diamond(p,r,fill,stroke){return el('path',{d:'M'+p.x+' '+(p.y-r)+' L'+(p.x+r)+' '+p.y+' L'+p.x+' '+(p.y+r)+' L'+(p.x-r)+' '+p.y+' Z',fill:fill,stroke:stroke||'none','stroke-width':2})}
+  function animate(path){var L=path.getTotalLength();path.style.setProperty('--len',L);path.classList.add('link-draw')}
+  function label(cls, html, x, y, anchor){
+    lab.className='ch '+cls; lab.innerHTML=html; lab.hidden=false;
+    var w=lab.offsetWidth, h=lab.offsetHeight;
+    lab.style.left=(anchor==='center'? x-w/2 : anchor==='right'? x-w : x)+'px';
+    lab.style.top=(y-h/2)+'px';
+  }
+  var WARN='<svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L19 18 H1 Z" fill="#FF2E88"/><rect x="9" y="7" width="2" height="6" fill="#07080C"/><rect x="9" y="14.5" width="2" height="2" fill="#07080C"/></svg>';
+  var CHECK='<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 9.5 L7 13.5 L15 5" fill="none" stroke="#00E5FF" stroke-width="2.5"/></svg>';
+
+  function draw(){
+    g.innerHTML=''; lab.hidden=true;
+    if(state==='a'){
+      var a=pt($('f-permit-exp'),'r'), tl=pt($('f-today'),'l'), cur={x:tl.x+64, y:tl.y+6};
+      var p=el('path',{d:curve(a,cur),fill:'none',stroke:C.cyan,'stroke-width':2,'stroke-dasharray':'6 4',class:'dash-move',opacity:.9});
+      diamond(a,6,C.cyan);
+      // réticule du curseur
+      el('circle',{cx:cur.x,cy:cur.y,r:10,fill:'none',stroke:C.cyan,'stroke-width':1.5});
+      ['M'+(cur.x-18)+' '+cur.y+' h8','M'+(cur.x+10)+' '+cur.y+' h8','M'+cur.x+' '+(cur.y-18)+' v8','M'+cur.x+' '+(cur.y+10)+' v8'].forEach(function(d){el('path',{d:d,stroke:C.cyan,'stroke-width':1.5})});
+      el('circle',{cx:cur.x,cy:cur.y,r:2,fill:C.cyan});
+      var d=$('doc-permit').getBoundingClientRect(), s=stage.getBoundingClientRect();
+      label('cur','<span class="h">◆ CHAMP A</span><span class="d">Choisissez un champ B : document ou Rulebook · <b>Échap</b> annule</span>', (d.right-s.left)/scale, (d.bottom-s.top)/scale+34, 'right');
+    }
+    if(state==='disc'){
+      var a2=pt($('f-permit-exp'),'r'), b2=pt($('f-today'),'l');
+      el('path',{d:curve(a2,b2),fill:'none',stroke:C.mag,'stroke-width':8,opacity:.35,filter:'url(#lglow)'});
+      var p2=el('path',{d:curve(a2,b2),fill:'none',stroke:C.mag,'stroke-width':3});animate(p2);
+      diamond(a2,7,C.mag,'#07080C'); diamond(b2,7,C.mag,'#07080C');
+      var d2=$('doc-permit').getBoundingClientRect(), s2=stage.getBoundingClientRect();
+      label('mag', WARN+'<span class="h">DISCORDANCE ①</span><span class="d">Permis expiré : <code>14.03.2187</code> &lt; date du jour <code>19.03.2187</code> · règle 02</span>', (d2.right-s2.left)/scale, (d2.bottom-s2.top)/scale+34, 'right');
+    }
+    if(state==='conc'){
+      var a3=pt($('f-id-num'),'r'), b3=pt($('f-permit-num'),'l');
+      var p3=el('path',{d:curve(a3,b3),fill:'none',stroke:C.cyan,'stroke-width':1.5});animate(p3);
+      diamond(a3,5,C.cyan); diamond(b3,5,C.cyan);
+      var bench=document.querySelector('.bench').getBoundingClientRect(), s3=stage.getBoundingClientRect();
+      label('cy', CHECK+'<span class="h">CONCORDANT</span><span class="d">N° ID <code>HG-4471-K2Q9</code> identique</span>', (a3.x+b3.x)/2, (bench.top-s3.top)/scale+22, 'center');
+    }
+  }
+
+  function setState(s){
+    state=s; stage.dataset.state=s;
+    stage.classList.toggle('insp', s!=='off');
+    document.querySelectorAll('[data-show]').forEach(function(e){e.hidden=e.dataset.show.split(' ').indexOf(s)<0});
+    ['f-permit-exp','f-today','f-id-num','f-permit-num'].forEach(function(id){$(id).classList.remove('sel','bad','ok')});
+    $('r-valid').classList.toggle('cited', s==='disc');
+    if(s==='a'){$('f-permit-exp').classList.add('sel')}
+    if(s==='disc'){$('f-permit-exp').classList.add('bad');$('f-today').classList.add('bad');$('f-permit-exp').querySelector('.tag').textContent='①';$('f-today').querySelector('.tag').textContent='①'}
+    else {$('f-permit-exp').querySelector('.tag').textContent='A';$('f-today').querySelector('.tag').textContent='B'}
+    if(s==='conc'){$('f-id-num').classList.add('ok');$('f-permit-num').classList.add('ok')}
+    $('btn-insp').classList.toggle('on', s!=='off');
+    $('btn-q').classList.toggle('live', s==='disc');
+    $('btn-q').classList.toggle('dim', s!=='disc');
+    document.querySelectorAll('.mock-switch button').forEach(function(b){b.setAttribute('aria-pressed', b.dataset.s===s)});
+    draw();
+  }
+
+  document.querySelectorAll('.mock-switch button').forEach(function(b){b.addEventListener('click',function(){setState(b.dataset.s)})});
+  addEventListener('keydown',function(e){var m={'1':'off','2':'a','3':'disc','4':'conc'}[e.key];if(m)setState(m)});
+  addEventListener('resize',fit);
+  setState('disc'); fit();
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
+})();
+</script>
+</body>
+</html>
