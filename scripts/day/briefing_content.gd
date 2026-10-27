@@ -5,7 +5,8 @@
 ## narratifs (échos des dilemmes de la veille) et l'état du foyer : bulletin
 ## du Bureau de Continuité (directive de délégation, slogan), règles du jour
 ## (badge NOUVEAU), messages personnels (Okonkwo au J1, Ilan, brèves du hall) ;
-## au J1, avis de la Trésorerie : avance du Consortium (D-047, `starting_credits`).
+## au J1, avis de versement de la Trésorerie : avance du Consortium (D-047,
+## `starting_credits`, carte dédiée du briefing).
 ## Pur : aucune dépendance aux autoloads (les données sont passées).
 class_name BriefingContent
 extends RefCounted
@@ -48,7 +49,6 @@ static func build(day: DayDef, flags: Dictionary[StringName, Variant], household
 	content.rulebook = day.rule_set.build_rulebook() if day.rule_set != null else []
 	if n == 1 and advance > 0:
 		content.advance_credits = advance
-		content.add(SPEAKER_TREASURY, MSG_ADVANCE, Voice.CONSORTIUM, [advance])
 	# Échos des choix de la veille (GDD §11.1 : « écho parfois dans le bulletin »).
 	if n == 2:
 		if _is_true(flags, &"sc02_mercy"):

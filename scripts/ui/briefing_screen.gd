@@ -60,6 +60,8 @@ func _build() -> void:
 	left.add_child(_rules())
 	if content.day_number == 1:
 		left.add_child(_controls())
+	if content.advance_credits > 0:
+		left.add_child(_advance_notice())
 	var right: VBoxContainer = vbox(DS.SPACE_5)
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(right)
@@ -217,12 +219,29 @@ func _message_card(speaker_key: String, text_key: String, voice: BriefingContent
 	card.add_child(box)
 	box.add_child(eyebrow(UiText.t(speaker_key, speaker_key), accent))
 	box.add_child(wrapped(UiText.tf(text_key, args), &"BodyLabel"))
-	if text_key == BriefingContent.MSG_ADVANCE and content.advance_credits > 0:
-		var amount: HBoxContainer = hbox(DS.SPACE_2)
-		amount.add_child(label(UiText.t("br_advance_line", "AVANCE DU CONSORTIUM · CRÉDITÉE"), &"DataSmall"))
-		amount.add_child(spacer())
-		amount.add_child(label(ScreenBase.credits(content.advance_credits, true), &"DataTitle", DS.ACCENT_YELLOW))
-		box.add_child(amount)
+	return card
+
+
+## Avis de versement de la Trésorerie (J1, D-047) : avance du Consortium.
+func _advance_notice() -> Control:
+	var card: PanelContainer = panel()
+	card.add_theme_stylebox_override(&"panel", _bar_box(DS.BG_ELEVATED, DS.ACCENT_YELLOW))
+	var row: HBoxContainer = hbox(DS.SPACE_6)
+	card.add_child(row)
+	var texts: VBoxContainer = vbox(DS.SPACE_1)
+	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(texts)
+	texts.add_child(eyebrow(UiText.t(BriefingContent.SPEAKER_TREASURY, "CONSORTIUM · TRÉSORERIE DU PERSONNEL"), DS.ACCENT_YELLOW))
+	texts.add_child(wrapped(UiText.tf(BriefingContent.MSG_ADVANCE, [content.advance_credits]), &"BodySmall"))
+	var amount: VBoxContainer = vbox(0)
+	amount.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(amount)
+	var value: Label = label(ScreenBase.credits(content.advance_credits, true), &"DataTitle", DS.ACCENT_YELLOW)
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	amount.add_child(value)
+	var caption: Label = label(UiText.t("br_advance_line", "CRÉDITÉE"), &"DataSmall")
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	amount.add_child(caption)
 	return card
 
 

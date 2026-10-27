@@ -327,8 +327,8 @@ spk_okonkwo,OKONKWO · GUICHET 03
 spk_ilan,ILAN · BLOC PÉTREL
 spk_hall,BRÈVE · HALL DES GUICHETS
 spk_treasury,CONSORTIUM · TRÉSORERIE DU PERSONNEL
-msg_consortium_advance,"Avis de versement. Une avance d'installation de %d ₵ a été créditée sur votre compte Banque Aurel. Le Consortium investit dans ses agents ; il compte sur leur rendement. Les modalités de recouvrement vous seront communiquées ultérieurement."
-br_advance_line,AVANCE DU CONSORTIUM · CRÉDITÉE
+msg_consortium_advance,"Avis de versement : une avance d'installation de %d ₵ a été créditée sur votre compte Banque Aurel. Le Consortium investit dans ses agents ; il compte sur leur rendement. Les modalités de recouvrement vous seront communiquées ultérieurement."
+br_advance_line,AVANCE CRÉDITÉE
 msg_okonkwo_day01,"Bienvenue au 04, collègue. Deux règles aujourd'hui, pas une de plus. L'intercom (N) fait avancer la file ; Espace, c'est la touche Inspection : un champ, puis un autre. Une discordance épinglée, c'est ta preuve — sans preuve, pas de refus. Les tampons se maintiennent : V pour approuver, X pour refuser."
 msg_okonkwo_day02,"On regarde les visages, maintenant. Compare le passager à sa photo : une coiffure, une barbe, une casquette, ça change. Une forme de visage, des yeux, un teint, non."
 msg_okonkwo_day03,"Les quais nous refilent les permis. Les Nés-Halcyon n'en ont pas besoin, les autres si. Et les visières : fais-les relever avant d'approuver, sinon c'est pour ta pomme."

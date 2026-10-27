@@ -50,15 +50,8 @@ func test_briefing_announces_consortium_advance_on_day1_only() -> void:
 	assert_eq(advance, 20, "D-047")
 	var d1: BriefingContent = BriefingContent.build(data.get_day(1), {}, Household.new(), advance)
 	assert_eq(d1.advance_credits, advance)
-	var first_text: String = d1.messages[0]["text"]
-	var first_voice: BriefingContent.Voice = d1.messages[0]["voice"]
-	assert_eq(first_text, BriefingContent.MSG_ADVANCE, "avis de la Trésorerie en tête")
-	assert_eq(first_voice, BriefingContent.Voice.CONSORTIUM)
 	var d2: BriefingContent = BriefingContent.build(data.get_day(2), {}, Household.new(), advance)
-	assert_eq(d2.advance_credits, 0)
-	for message: Dictionary in d2.messages:
-		var text_key: String = message["text"]
-		assert_ne(text_key, BriefingContent.MSG_ADVANCE, "pas d'avance après le J1")
+	assert_eq(d2.advance_credits, 0, "pas d'avance après le J1")
 	var screen: BriefingScreen = BriefingScreen.new()
 	screen.setup(d1, Household.new(), advance, data.get_day(1))
 	add_child_autofree(screen)

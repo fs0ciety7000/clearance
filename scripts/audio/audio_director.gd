@@ -659,7 +659,7 @@ func _on_reaction(reaction: PassengerReaction.Kind) -> void:
 		bark(_current_case, "react_" + name_key, line, TessarVoice.mood_for_reaction(reaction))
 
 
-func _on_interrogation_answered(topic: StringName, line_key: String) -> void:
+func _on_interrogation_answered(_topic: StringName, line_key: String) -> void:
 	_answer_frame = Engine.get_process_frames()
 	var mood: StringName = TessarVoice.MOOD_NEUTRAL
 	if line_key == InspectionSession.LINE_CONFRONT_ANGRY or line_key.contains("_" + InspectionSession.LINE_OUTRAGE_INFIX):
