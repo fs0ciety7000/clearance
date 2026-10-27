@@ -10,14 +10,29 @@
 ## « VALIDER ET DORMIR » émet `confirmed(lines)` : la scène calcule et
 ## enregistre la soirée puis appelle `show_report()` (conséquences de la nuit),
 ## dont le bouton émet `finished(&"next" | fin)`.
+## M7 (NARRATIVE §5, I9) : **événements du soir** (`set_events`) présentés en
+## panneaux successifs (J9 : audit → aveu d'Ilan → déposition → laissez-passer) :
+## lettre, audit (résultat imposé, retenue), choix (options exclusives, coût /
+## gain, option grisée avec sa raison si les fonds manquent). Les choix
+## modifient les postes (`line_costs` : chauffage offert…) et le solde ; un
+## audit qui arrête l'agent·e (F1) clôt la séquence. « VALIDER ET DORMIR »
+## attend que chaque choix soit fait (sinon `confirm()` complète par les choix
+## par défaut, D-058 : tests, joueur pressé).
 class_name EveningScreen
 extends ScreenBase
 
 signal confirmed(lines: Array[ExpenseLine])
 signal luciole_decided(report_it: bool)
+## M7 : un choix d'événement vient d'être fait (son « ui.* », tests).
+signal event_choice_made(event_id: StringName, option_id: StringName)
 
 const LEFT_RATIO: float = 1.25
 const REPORT_WIDTH: float = 760.0
+## Couleur de liseré par événement (DS §7.10 : Lucioles magenta, Brûlants rouge).
+const EVENT_ACCENTS: Dictionary[StringName, Color] = {
+	&"d05_heat": DS.ACCENT_MAGENTA, &"d07_tag": DS.ACCENT_MAGENTA, &"d08_package": DS.STATE_RED,
+	&"d09_ilan": DS.ACCENT_MAGENTA,
+}
 
 var day_number: int = 1
 var game_date: int = 0
@@ -31,6 +46,15 @@ var lines: Array[ExpenseLine] = []
 var household: Household = null
 var luciole_pending: bool = false
 var confirm_button: Button = null
+## M7 : événements du soir (ordre d'affichage) et choix du joueur.
+var events: Array[EveningEvent] = []
+var choices: Dictionary[StringName, StringName] = {}
+## Panneau d'événement affiché (index dans `events`).
+var step: int = 0
+## Boutons d'options du panneau courant (`option_id` → bouton).
+var option_buttons: Dictionary[StringName, Button] = {}
+var next_button: Button = null
+var prev_button: Button = null
 
 var _rows: Array[Button] = []
 var _spent_label: Label = null
@@ -40,6 +64,12 @@ var _note_card: PanelContainer = null
 var _right: VBoxContainer = null
 var _report_layer: Control = null
 var _report_button: Button = null
+var _events_box: VBoxContainer = null
+var _event_card: PanelContainer = null
+var _events_label: Label = null
+var _events_row: HBoxContainer = null
+var _confirm_hint: Label = null
+var _base_costs: Dictionary[StringName, int] = {}
 
 
 func setup(p_day: DayDef, p_balance: int, p_shift_net: int, p_lines: Array[ExpenseLine], p_household: Household,
@@ -52,9 +82,22 @@ func setup(p_day: DayDef, p_balance: int, p_shift_net: int, p_lines: Array[Expen
 	household = p_household if p_household != null else Household.new()
 	luciole_pending = p_luciole_pending
 	consortium_advance = maxi(p_advance, 0)
+	_base_costs.clear()
+	for line: ExpenseLine in lines:
+		_base_costs[line.id] = line.cost
+
+
+## M7 : événements du soir (`Campaign.prepare_events`), avant l'entrée dans l'arbre.
+func set_events(p_events: Array[EveningEvent]) -> void:
+	events = p_events.duplicate()
+	choices.clear()
+	step = 0
 
 
 func _build() -> void:
+	if not events.is_empty():
+		# Présélection en tenant compte des événements imposés (retenue d'audit…).
+		EveningService.default_selection(lines, effective_balance())
 	var page: VBoxContainer = vbox(DS.SPACE_6)
 	root_box().add_child(page)
 	page.add_child(_header())
@@ -69,6 +112,11 @@ func _build() -> void:
 	_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(_right)
 	_right.add_child(_family())
+	if not events.is_empty():
+		_events_box = vbox(DS.SPACE_3)
+		_events_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_right.add_child(_events_box)
+		_show_step(0)
 	if luciole_pending:
 		_note_card = _luciole_note()
 		_right.add_child(_note_card)
@@ -125,6 +173,10 @@ func _budget() -> VBoxContainer:
 	var spent_row: HBoxContainer = _money_row(UiText.t("ev_spent", "Dépenses"), "", DS.TEXT_PRIMARY)
 	_spent_label = spent_row.get_child(spent_row.get_child_count() - 1)
 	totals_box.add_child(spent_row)
+	_events_row = _money_row(UiText.t("ev_events_total", "Événements du soir"), "", DS.TEXT_PRIMARY)
+	_events_label = _events_row.get_child(_events_row.get_child_count() - 1)
+	_events_row.visible = not events.is_empty()
+	totals_box.add_child(_events_row)
 	var after_row: HBoxContainer = _money_row(UiText.t("ev_after", "Solde après la soirée"), "", DS.TEXT_PRIMARY, &"DataTitle")
 	_after_label = after_row.get_child(after_row.get_child_count() - 1)
 	totals_box.add_child(after_row)
@@ -202,7 +254,7 @@ func _on_row_toggled(pressed: bool, row: Button) -> void:
 	if line.mandatory:
 		row.set_pressed_no_signal(true)
 		return
-	if pressed and not EveningService.can_toggle_on(lines, balance, line):
+	if pressed and not EveningService.can_toggle_on(lines, effective_balance(), line):
 		row.set_pressed_no_signal(false)
 		return
 	line.paid = pressed
@@ -221,14 +273,16 @@ func set_line_paid(id: StringName, paid: bool) -> bool:
 
 func _refresh() -> void:
 	var spent: int = EveningService.total_spent(lines)
-	var after: int = balance - spent
+	var delta: int = event_balance_delta()
+	var after: int = balance - spent + delta
 	for row: Button in _rows:
 		var line: ExpenseLine = row.get_meta(&"line")
-		var affordable: bool = EveningService.can_toggle_on(lines, balance, line)
+		var affordable: bool = EveningService.can_toggle_on(lines, effective_balance(), line)
 		var check: CheckMark = row.find_child("Check", true, false)
 		check.checked = line.paid
 		check.locked = line.mandatory
 		var cost: Label = row.find_child("Cost", true, false)
+		cost.text = credits(line.cost)
 		cost.add_theme_color_override(&"font_color", DS.TEXT_PRIMARY if line.paid else (DS.TEXT_SECONDARY if affordable else DS.TEXT_MUTED))
 		var note: Label = row.find_child("Note", true, false)
 		if not line.paid and not affordable:
@@ -238,18 +292,337 @@ func _refresh() -> void:
 			note.text = UiText.t(line.note_key, "")
 			note.remove_theme_color_override(&"font_color")
 	_spent_label.text = credits(-spent)
+	if _events_label != null:
+		_events_label.text = credits(delta, true)
+		_events_label.add_theme_color_override(&"font_color", DS.STATE_RED if delta < 0 else (DS.ACCENT_YELLOW if delta > 0 else DS.TEXT_SECONDARY))
 	_after_label.text = credits(after)
 	_after_label.add_theme_color_override(&"font_color", DS.STATE_RED if after < 0 else DS.ACCENT_YELLOW)
 	_after_hint.text = UiText.t("ev_debt_hint", "Dette : trois soirs de suite et l'Autorité de Transit vous réaffecte.") if after < 0 else ""
 	_after_hint.visible = after < 0
+	_refresh_options()
+	_refresh_confirm()
 
 
 func _family() -> Control:
 	var box: VBoxContainer = vbox(DS.SPACE_3)
 	box.add_child(section(UiText.t("ev_family", "LE FOYER"), UiIcon.Kind.INFO, DS.TEXT_SECONDARY))
+	var compact: bool = not events.is_empty()
 	for member: Household.Member in household.members:
-		box.add_child(HouseholdView.member_card(member, HouseholdView.member_note(member)))
+		box.add_child(HouseholdView.member_card(member, "" if compact else HouseholdView.member_note(member), compact))
 	return box
+
+
+# ---------------------------------------------------------------------------
+# M7 : événements du soir
+# ---------------------------------------------------------------------------
+
+## Solde disponible pour les postes, événements compris.
+func effective_balance() -> int:
+	return balance + event_balance_delta()
+
+
+## Effet net des événements (retenue d'audit, coûts et gains des options).
+func event_balance_delta(except_event: StringName = &"") -> int:
+	var delta: int = 0
+	for event: EveningEvent in events:
+		if event.id == except_event or is_skipped(event):
+			continue
+		if event.kind == EveningEventDef.Kind.AUDIT:
+			delta -= SaveService.as_int(event.audit.get("cost", 0))
+			continue
+		var chosen: StringName = choices.get(event.id, &"")
+		var option: EveningOptionDef = event.get_option(chosen)
+		if option != null:
+			delta += option.gain - option.cost
+	return delta
+
+
+## Fonds disponibles pour une option de `event` (les autres choix comptés).
+func available_for(event: EveningEvent) -> int:
+	return balance - EveningService.total_spent(lines) + event_balance_delta(event.id)
+
+
+## Un audit qui arrête l'agent·e (F1) clôt la soirée : les panneaux suivants sautent.
+func is_skipped(event: EveningEvent) -> bool:
+	var index: int = events.find(event)
+	for i: int in index:
+		if events[i].kind == EveningEventDef.Kind.AUDIT and events[i].audit.get("ending", &"") != &"":
+			return true
+	return false
+
+
+## Choix encore à faire (événements à choix non tranchés, non sautés).
+func pending_choice_count() -> int:
+	var count: int = 0
+	for event: EveningEvent in events:
+		if event.is_choice() and not is_skipped(event) and not choices.has(event.id):
+			count += 1
+	return count
+
+
+## Choisit une option ; faux si elle n'existe pas ou n'est pas finançable.
+func choose(event_id: StringName, option_id: StringName) -> bool:
+	var event: EveningEvent = get_event(event_id)
+	if event == null or not event.is_choice() or is_skipped(event) or _report_layer != null:
+		return false
+	var option: EveningOptionDef = event.get_option(option_id)
+	if option == null or not can_afford(event, option):
+		return false
+	choices[event_id] = option_id
+	_apply_choice_costs()
+	event_choice_made.emit(event_id, option_id)
+	_refresh()
+	return true
+
+
+## Option finançable : gratuite, ou couverte par les fonds restants
+## (`EveningService.can_choose`) — une option sans coût reste toujours possible,
+## même à découvert.
+func can_afford(event: EveningEvent, option: EveningOptionDef) -> bool:
+	return option != null and (option.cost <= 0 or EveningService.can_choose(option, available_for(event)))
+
+
+func get_event(event_id: StringName) -> EveningEvent:
+	for event: EveningEvent in events:
+		if event.id == event_id:
+			return event
+	return null
+
+
+## Choix du joueur, complétés par les choix par défaut (D-058) pour ceux
+## qui restent (validation sans tout trancher).
+func get_choices() -> Dictionary[StringName, StringName]:
+	var result: Dictionary[StringName, StringName] = choices.duplicate()
+	if pending_choice_count() == 0:
+		return result
+	var undecided: Array[EveningEvent] = []
+	for event: EveningEvent in events:
+		if event.is_choice() and not result.has(event.id) and not is_skipped(event):
+			undecided.append(event)
+	var defaults: Dictionary[StringName, StringName] = EveningService.default_choices(undecided,
+			balance - EveningService.total_spent(lines) + event_balance_delta())
+	for id: StringName in defaults:
+		result[id] = defaults[id]
+	return result
+
+
+## Coûts des postes : base du soir puis effets des choix (chauffage offert…).
+func _apply_choice_costs() -> void:
+	for line: ExpenseLine in lines:
+		if _base_costs.has(line.id):
+			line.cost = _base_costs[line.id]
+	EveningService.apply_line_costs(lines, events, choices)
+	for line: ExpenseLine in lines:
+		if line.cost == 0 and not line.paid:
+			line.paid = true # offert : coché d'office
+
+
+func _event_accent(event: EveningEvent) -> Color:
+	if EVENT_ACCENTS.has(event.id):
+		return EVENT_ACCENTS[event.id]
+	match event.kind:
+		EveningEventDef.Kind.AUDIT:
+			return DS.ACCENT_YELLOW
+		EveningEventDef.Kind.LETTER:
+			return DS.TEXT_SECONDARY
+	return DS.ACCENT_CYAN
+
+
+func show_step(index: int) -> void:
+	_show_step(index)
+
+
+## Panneau de l'événement `index` (séquence, J9 : audit → aveu → déposition → départ).
+func _show_step(index: int) -> void:
+	if _events_box == null or events.is_empty():
+		return
+	step = clampi(index, 0, events.size() - 1)
+	for child: Node in _events_box.get_children():
+		child.queue_free()
+	option_buttons.clear()
+	var event: EveningEvent = events[step]
+	var accent: Color = _event_accent(event)
+	_events_box.add_child(section(UiText.t("ev_events", "CE SOIR"), UiIcon.Kind.CHAT, accent,
+			UiText.tf("ev_event_step", [step + 1, events.size()], "%d / %d")))
+	_event_card = panel()
+	_event_card.name = "EventCard"
+	_event_card.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.BG_ELEVATED, accent))
+	_event_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_events_box.add_child(_event_card)
+	var box: VBoxContainer = vbox(DS.SPACE_3)
+	_event_card.add_child(box)
+	var head: HBoxContainer = hbox(DS.SPACE_2)
+	box.add_child(head)
+	head.add_child(_step_dots(accent))
+	head.add_child(spacer())
+	var kind_key: String = ["ev_kind_letter", "ev_kind_choice", "ev_kind_audit"][event.kind]
+	head.add_child(eyebrow(UiText.t(kind_key, "LETTRE"), accent))
+	if not event.title_key.is_empty():
+		var title: Label = label(UiText.t(event.title_key, String(event.id)), &"PanelTitle", DS.TEXT_PRIMARY)
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		title.custom_minimum_size.x = 120.0
+		box.add_child(title)
+	if not event.text_key.is_empty():
+		box.add_child(wrapped(UiText.t(event.text_key, ""), &"BodyLabel", DS.TEXT_PRIMARY))
+	for key: String in event.extra_keys:
+		box.add_child(wrapped(UiText.t(key, ""), &"BodySmall"))
+	if is_skipped(event):
+		box.add_child(wrapped(UiText.t("ev_event_skipped", "Cette nuit-là, vous ne rentrez pas au Bloc Pétrel."), &"BodySmall", DS.STATE_RED))
+	elif event.kind == EveningEventDef.Kind.AUDIT:
+		box.add_child(_audit_result(event))
+	elif event.is_choice():
+		var options: VBoxContainer = vbox(DS.SPACE_2)
+		box.add_child(options)
+		var group: ButtonGroup = ButtonGroup.new()
+		for option: EveningOptionDef in event.options:
+			var option_row: Button = _option_row(event, option, group)
+			option_buttons[option.id] = option_row
+			options.add_child(option_row)
+	box.add_child(spacer(false, true))
+	var nav: HBoxContainer = hbox(DS.SPACE_3)
+	box.add_child(nav)
+	prev_button = button(UiText.t("ev_event_prev", "◀ PRÉCÉDENT"), &"ButtonGhost")
+	prev_button.visible = step > 0
+	prev_button.pressed.connect(func() -> void: _show_step(step - 1))
+	nav.add_child(prev_button)
+	nav.add_child(spacer())
+	next_button = button(UiText.t("ev_event_next", "SUIVANT ▶"), &"ButtonTool")
+	next_button.visible = step < events.size() - 1
+	next_button.pressed.connect(func() -> void: _show_step(step + 1))
+	nav.add_child(next_button)
+	_refresh_options()
+	_refresh_confirm()
+
+
+func _step_dots(accent: Color) -> Control:
+	var dots: Control = Control.new()
+	dots.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dots.custom_minimum_size = Vector2(events.size() * DS.SPACE_4, DS.SPACE_3)
+	dots.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	dots.draw.connect(func() -> void:
+		for i: int in events.size():
+			var c: Vector2 = Vector2(DS.SPACE_2 + DS.SPACE_4 * i, dots.size.y * 0.5)
+			var done: bool = not events[i].is_choice() or choices.has(events[i].id)
+			var diamond: PackedVector2Array = [c + Vector2(0, -5), c + Vector2(5, 0), c + Vector2(0, 5), c + Vector2(-5, 0)]
+			if i == step:
+				dots.draw_colored_polygon(diamond, accent)
+			else:
+				diamond.append(diamond[0])
+				dots.draw_polyline(diamond, accent if done else DS.TEXT_MUTED, 1.5))
+	return dots
+
+
+func _audit_result(event: EveningEvent) -> Control:
+	var outcome: Dictionary = event.audit
+	var ending: StringName = outcome.get("ending", &"")
+	var cost: int = SaveService.as_int(outcome.get("cost", 0))
+	var color: Color = DS.STATE_RED if ending != &"" else (DS.STATE_AMBER if cost > 0 else DS.ACCENT_CYAN)
+	var card: PanelContainer = panel()
+	card.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(Color(color, 0.12), color, DS.BORDER_HAIRLINE, DS.CHAMFER_S, DS.SPACE_3))
+	var row: HBoxContainer = hbox(DS.SPACE_3)
+	card.add_child(row)
+	row.add_child(UiIcon.make(UiIcon.Kind.DENIED if ending != &"" else (UiIcon.Kind.WARNING if cost > 0 else UiIcon.Kind.CHECK), color, DS.ICON_M))
+	var text: Label = wrapped(UiText.t(str(outcome.get("result_key", "")), ""), &"BodyLabel", DS.TEXT_PRIMARY)
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(text)
+	if cost > 0:
+		var amount: Label = label(credits(-cost), &"DataTitle", color)
+		amount.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(amount)
+	return card
+
+
+## Option d'un choix : bouton exclusif, libellé, coût ou gain, raison si grisée.
+func _option_row(event: EveningEvent, option: EveningOptionDef, group: ButtonGroup) -> Button:
+	var row: Button = Button.new()
+	row.name = "Option_%s" % option.id
+	row.toggle_mode = true
+	row.button_group = group
+	row.theme_type_variation = &"ButtonQuestion"
+	row.focus_mode = Control.FOCUS_ALL
+	row.custom_minimum_size = Vector2(0, 52)
+	row.set_meta(&"option", option)
+	row.set_meta(&"event", event.id)
+	row.add_theme_stylebox_override(&"pressed", ThemeBuilder.chamfer_box(DS.BG_ELEVATED.blend(DS.CYAN_12), DS.ACCENT_CYAN,
+			DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0))
+	var margin: MarginContainer = MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_theme_constant_override("margin_left", DS.SPACE_4)
+	margin.add_theme_constant_override("margin_right", DS.SPACE_4)
+	margin.add_theme_constant_override("margin_top", DS.SPACE_1)
+	margin.add_theme_constant_override("margin_bottom", DS.SPACE_1)
+	row.add_child(margin)
+	var content: HBoxContainer = hbox(DS.SPACE_3)
+	margin.add_child(content)
+	var check: CheckMark = CheckMark.new()
+	check.name = "Check"
+	check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	content.add_child(check)
+	var texts: VBoxContainer = vbox(0)
+	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	texts.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.add_child(texts)
+	var title: Label = label(UiText.t(option.label_key, String(option.id)), &"BodyStrong")
+	title.name = "Title"
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.custom_minimum_size.x = 120.0
+	texts.add_child(title)
+	var reason: Label = label("", &"CaptionLabel", DS.STATE_AMBER)
+	reason.name = "Reason"
+	reason.visible = false
+	texts.add_child(reason)
+	if option.cost != 0 or option.gain != 0:
+		var amount: Label = label(credits(option.gain - option.cost, true), &"DataTitle")
+		amount.name = "Amount"
+		amount.custom_minimum_size.x = 72.0
+		amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		amount.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		content.add_child(amount)
+	row.pressed.connect(func() -> void:
+		if not choose(event.id, option.id):
+			_refresh_options())
+	return row
+
+
+func _refresh_options() -> void:
+	if events.is_empty() or option_buttons.is_empty():
+		return
+	var event: EveningEvent = events[step]
+	var chosen: StringName = choices.get(event.id, &"")
+	for id: StringName in option_buttons:
+		var row: Button = option_buttons[id]
+		if not is_instance_valid(row):
+			continue
+		var option: EveningOptionDef = row.get_meta(&"option")
+		var affordable: bool = can_afford(event, option)
+		row.set_pressed_no_signal(id == chosen)
+		row.disabled = not affordable and id != chosen
+		var check: CheckMark = row.find_child("Check", true, false)
+		check.checked = id == chosen
+		check.locked = row.disabled
+		var title: Label = row.find_child("Title", true, false)
+		title.add_theme_color_override(&"font_color", DS.TEXT_MUTED if row.disabled else (DS.ACCENT_CYAN if id == chosen else DS.TEXT_PRIMARY))
+		var reason: Label = row.find_child("Reason", true, false)
+		reason.visible = row.disabled
+		reason.text = UiText.tf("ev_option_insufficient", [credits(option.cost)], "Fonds insuffisants : %s requis") if row.disabled else ""
+		var amount: Label = row.find_child("Amount", true, false) as Label
+		if amount != null:
+			var net: int = option.gain - option.cost
+			amount.add_theme_color_override(&"font_color", DS.TEXT_MUTED if row.disabled else (DS.ACCENT_YELLOW if net > 0 else DS.TEXT_PRIMARY))
+	if next_button != null and is_instance_valid(next_button):
+		next_button.disabled = event.is_choice() and not choices.has(event.id) and not is_skipped(event)
+
+
+func _refresh_confirm() -> void:
+	if confirm_button == null:
+		return
+	var pending: int = pending_choice_count()
+	confirm_button.disabled = pending > 0 or _report_layer != null
+	if _confirm_hint != null:
+		_confirm_hint.text = UiText.plural("ev_events_pending", pending, "%d décision à prendre ce soir",
+				"%d décisions à prendre ce soir") if pending > 0 else UiText.t("ev_hint", "Ce qui n'est pas payé a des conséquences dès cette nuit.")
+		_confirm_hint.add_theme_color_override(&"font_color", DS.STATE_AMBER if pending > 0 else DS.TEXT_SECONDARY)
 
 
 func _luciole_note() -> PanelContainer:
@@ -265,7 +638,8 @@ func _luciole_note() -> PanelContainer:
 	box.add_child(wrapped(UiText.t("ev_note_choice", ""), &"BodySmall"))
 	var buttons: HBoxContainer = hbox(DS.SPACE_3)
 	box.add_child(buttons)
-	var report_button: Button = button(UiText.t("ev_note_report", "SIGNALER AU CONSORTIUM"))
+	var report_button: Button = button(UiText.t("ev_note_report", "SIGNALER AU CONSORTIUM") + "  " +
+			credits(DataCatalog.load_economy().report_bonus, true))
 	report_button.pressed.connect(_decide_luciole.bind(true))
 	buttons.add_child(report_button)
 	var burn_button: Button = button(UiText.t("ev_note_burn", "BRÛLER LE MOT"))
@@ -290,6 +664,7 @@ func _footer() -> Control:
 	var row: HBoxContainer = hbox(DS.SPACE_4)
 	var hint: Label = label(UiText.t("ev_hint", "Ce qui n'est pas payé a des conséquences dès cette nuit."), &"CaptionLabel")
 	hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_confirm_hint = hint
 	row.add_child(hint)
 	row.add_child(spacer())
 	confirm_button = button(UiText.t("ev_confirm", "VALIDER ET DORMIR"), &"ButtonPrimary")
@@ -308,6 +683,12 @@ func confirm() -> void:
 	for row: Button in _rows:
 		row.disabled = true
 	confirm_button.disabled = true
+	# Choix non tranchés : choix par défaut (refus / neutre, D-058).
+	choices = get_choices()
+	_apply_choice_costs()
+	for button_row: Button in option_buttons.values():
+		if is_instance_valid(button_row):
+			button_row.disabled = true
 	confirmed.emit(lines)
 
 

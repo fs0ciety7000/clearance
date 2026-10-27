@@ -64,6 +64,13 @@ var headwear_root: Node3D = null
 var head_accessory_root: Node3D = null
 var neck_wear_root: Node3D = null
 var outfit_root: Node3D = null
+## M7 : implants visibles et fil magenta (`ImplantDecor`), hors apparence :
+## jamais effacés par `AppearanceApplier` (retrait de visière compris).
+var implants_head: Node3D = null
+var implants_neck: Node3D = null
+var implants_hand: Node3D = null
+## Repère en mètres de la main droite (papiers, prothèse, poignet).
+var hand_space: Node3D = null
 
 var body_material: ShaderMaterial = null
 var face_material: ShaderMaterial = null
@@ -220,6 +227,10 @@ func _build() -> void:
 	neck_wear_root = _meter_space("NeckWear", "Neck")
 	outfit_root = _meter_space("Outfit", "UpperChest")
 	var hand: Node3D = _meter_space("HandSpace", "RightHand")
+	hand_space = hand
+	implants_head = _container(head, "Implants")
+	implants_neck = _meter_space("ImplantsNeck", "Neck")
+	implants_hand = _container(hand, "Implants")
 	papers = add_mesh(hand, "Papers", box(Vector3(0.10, 0.14, 0.012)), make_material(Color("#C9D3D8"), 0.5),
 			Vector3(0.0, 0.07, 0.03), Vector3(0, 0, 0))
 	papers.visible = false

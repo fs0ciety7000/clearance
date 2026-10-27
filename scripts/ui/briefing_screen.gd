@@ -206,20 +206,53 @@ func _messages() -> Control:
 
 
 func _message_card(speaker_key: String, text_key: String, voice: BriefingContent.Voice, args: Array = []) -> Control:
-	var accent: Color = DS.ACCENT_CYAN
+	var accent: Color = voice_color(voice)
 	var bg: Color = DS.BG_ELEVATED
 	match voice:
-		BriefingContent.Voice.CONSORTIUM:
-			accent = DS.ACCENT_YELLOW
-		BriefingContent.Voice.FAMILY:
-			accent = DS.TEXT_SECONDARY
+		BriefingContent.Voice.LUCIOLES:
+			bg = DS.BG_ELEVATED.blend(DS.MAGENTA_12) # encre magenta, sans signature
+		BriefingContent.Voice.INSPECTION:
+			bg = DS.BG_ELEVATED.blend(DS.YELLOW_12)
 	var card: PanelContainer = panel()
+	card.name = "Message_%s" % speaker_key
 	card.add_theme_stylebox_override(&"panel", _bar_box(bg, accent))
 	var box: VBoxContainer = vbox(DS.SPACE_1)
 	card.add_child(box)
-	box.add_child(eyebrow(UiText.t(speaker_key, speaker_key), accent))
+	var head: HBoxContainer = hbox(DS.SPACE_2)
+	box.add_child(head)
+	head.add_child(UiIcon.make(voice_icon(voice), accent, DS.ICON_S))
+	head.add_child(eyebrow(UiText.t(speaker_key, speaker_key), accent))
 	box.add_child(wrapped(UiText.tf(text_key, args), &"BodyLabel"))
 	return card
+
+
+## Couleur d'un locuteur (DS §7.10) : Consortium jaune, mentor cyan, famille
+## gris, Lucioles magenta (contenu rebelle), Inspection des agents ambre
+## (avertissement : l'Inspecteur Ravel surveille l'agent·e).
+static func voice_color(voice: BriefingContent.Voice) -> Color:
+	match voice:
+		BriefingContent.Voice.CONSORTIUM:
+			return DS.ACCENT_YELLOW
+		BriefingContent.Voice.FAMILY:
+			return DS.TEXT_SECONDARY
+		BriefingContent.Voice.LUCIOLES:
+			return DS.ACCENT_MAGENTA
+		BriefingContent.Voice.INSPECTION:
+			return DS.STATE_AMBER
+	return DS.ACCENT_CYAN
+
+
+static func voice_icon(voice: BriefingContent.Voice) -> UiIcon.Kind:
+	match voice:
+		BriefingContent.Voice.CONSORTIUM:
+			return UiIcon.Kind.LOGO
+		BriefingContent.Voice.FAMILY:
+			return UiIcon.Kind.INFO
+		BriefingContent.Voice.LUCIOLES:
+			return UiIcon.Kind.DISCORDANCE
+		BriefingContent.Voice.INSPECTION:
+			return UiIcon.Kind.WARNING
+	return UiIcon.Kind.CHAT
 
 
 ## Avis de versement de la Trésorerie (J1, D-047) : avance du Consortium.

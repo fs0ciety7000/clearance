@@ -18,6 +18,12 @@
 ## seulement). Captures M5 : `--screen=briefing|citation|summary|evening|end|pause|options`,
 ## `--start-case=N` (premier passager appelé), `--approve-all` (bot qui
 ## approuve tout), `--household=demo` (foyer malade / froid), `--ending=…`.
+## M7 : `--screen=shift` (briefing fermé, premier passager appelé),
+## `--screen=detain` (idem puis tampon DÉTENTION : escorte de la Garde),
+## `--rulebook-tab=wanted|origins|implants|symbols|seals` (+ `--inspect` : Mode
+## Inspection, premier avis sélectionné), `--flags=a,b:2` (drapeaux / jauges de
+## démonstration), `--item=keep|return|report` (décision sur l'objet glissé),
+## `--zoom-doc=<id>` (loupe sur un document).
 class_name DayScene
 extends Control
 
@@ -75,6 +81,10 @@ func _ready() -> void:
 		GameState.current_day = day_text.to_int()
 	if _args.get("household", "") == "demo":
 		_demo_household()
+	if _args.has("flags"):
+		_demo_flags(_arg("flags"))
+	if _args.has("credits"):
+		GameState.add_credits(_arg("credits").to_int())
 	if not _args.has("no-ui"):
 		_load_ui()
 	_overlay = Control.new()
@@ -205,15 +215,16 @@ func show_summary(summary: DaySummary) -> void:
 func show_evening(summary: DaySummary) -> void:
 	var evening: EveningScreen = EveningScreen.new()
 	evening.name = "EveningScreen"
-	# M7 : événements du soir sans écran dédié → choix par défaut (refus /
-	# neutre), résultats affichés dans le compte rendu de la nuit.
+	# M7 : événements du soir présentés par l'écran (choix du joueur) ; les
+	# choix non faits reçoivent le choix par défaut (D-058).
 	var events: Array[EveningEvent] = Campaign.prepare_events(data)
 	var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, events)
 	evening.setup(day_controller.day, GameState.credits, summary.get_total_income() if summary != null else 0, lines,
 			GameState.household, Campaign.luciole_note_pending(), consortium_advance())
+	evening.set_events(events)
 	evening.luciole_decided.connect(Campaign.decide_luciole_note)
 	evening.confirmed.connect(func(confirmed_lines: Array[ExpenseLine]) -> void:
-		var report: EveningReport = Campaign.preview_evening(data, confirmed_lines, events)
+		var report: EveningReport = Campaign.preview_evening(data, confirmed_lines, events, evening.get_choices())
 		var ending: StringName = Campaign.close_evening(data, summary, report)
 		evening.show_report(report, ending))
 	evening.finished.connect(_after_evening)
@@ -233,6 +244,8 @@ func show_final(summary: DaySummary) -> void:
 
 
 func show_end(ending: StringName) -> void:
+	# Toute fin de partie efface la sauvegarde (D-041) — idempotent.
+	SaveService.delete()
 	var end: EndScreen = EndScreen.new()
 	end.name = "EndScreen"
 	end.epilogue = Campaign.epilogue(ending)
@@ -285,9 +298,16 @@ func _debug_screen(which: String) -> void:
 				show_summary(summary)
 			elif which == "evening":
 				show_evening(summary)
+				_debug_evening.call_deferred()
 			else:
 				_simulated_history()
 				show_end(StringName(_arg("ending", "demo_complete")))
+		"shift", "detain":
+			# M7 : premier passager appelé (objets glissés, onglets, avis, escorte).
+			if briefing != null:
+				briefing.close()
+			EventBus.documents_presented.connect(_debug_shift.bind(which), CONNECT_ONE_SHOT)
+			EventBus.next_case_requested.emit.call_deferred()
 		"citation":
 			# Ticket d'infraction imprimé pendant l'inspection d'un cas (DS §7.9).
 			if briefing != null:
@@ -300,6 +320,38 @@ func _debug_screen(which: String) -> void:
 			pause_menu.open.call_deferred()
 			if which == "options":
 				pause_menu.show_options.call_deferred()
+
+
+## Mise en scène de capture M7 (après l'arrivée des documents).
+func _debug_shift(_case_id: StringName, which: String) -> void:
+	var comparison: ComparisonUI = ui as ComparisonUI
+	await get_tree().create_timer(0.9).timeout
+	if comparison == null:
+		return
+	var tab: String = _arg("rulebook-tab")
+	if not tab.is_empty():
+		comparison.rulebook.show_reference_tab(StringName(tab))
+	var zoom_id: String = _arg("zoom-doc")
+	if not zoom_id.is_empty():
+		var view: DocumentView = comparison.workbench.get_view(StringName(zoom_id))
+		if view != null:
+			comparison.workbench.zoom_view(view, 1)
+	var decision: String = _arg("item")
+	if not decision.is_empty() and day_controller.current_case != null:
+		var kinds: Dictionary[String, SlippedItem.Decision] = {"keep": SlippedItem.Decision.KEEP,
+				"return": SlippedItem.Decision.RETURN, "report": SlippedItem.Decision.REPORT}
+		var wanted_decision: SlippedItem.Decision = kinds.get(decision, SlippedItem.Decision.RETURN)
+		for item: SlippedItem in day_controller.current_case.slipped_items:
+			comparison.request_item_decision(item.id, wanted_decision)
+	if _args.has("inspect"):
+		comparison.set_inspection_active(true)
+		if not comparison.wanted_notices.is_empty() and tab == "wanted":
+			comparison.pick(comparison.wanted_notices[0].get_ref())
+	if _args.has("ask"):
+		comparison.open_question_menu()
+	if which == "detain":
+		await get_tree().create_timer(0.6).timeout
+		comparison.get_stamp_button(VerdictKind.Kind.DETAIN).begin_hold()
 
 
 func _debug_citation(_case_id: StringName) -> void:
@@ -326,7 +378,7 @@ func _simulated_summary() -> DaySummary:
 
 func _simulated_history() -> void:
 	var balance: int = GameState.credits
-	for n: int in [1, 2, 3]:
+	for n: int in range(1, 11):
 		var s: DaySummary = DaySimulator.simulate(data, n, SeededRng.day_seed(GameState.campaign_seed, n),
 				func(_c: Case, k: CaseKey, i: int) -> VerdictKind.Kind: return k.expected_verdict if i % 5 != 4 else VerdictKind.Kind.APPROVE)
 		var spent: int = 38 if n % 2 == 1 else 48
@@ -338,6 +390,29 @@ func _simulated_history() -> void:
 	GameState.set_flag(&"sc02_mercy", true)
 	GameState.set_flag(&"met_mira", true)
 	GameState.set_flag(&"lucioles_note_burned", true)
+
+
+## Captures de la soirée : `--choose=event:option,…` puis `--step=N`.
+func _debug_evening() -> void:
+	var evening: EveningScreen = screen as EveningScreen
+	if evening == null:
+		return
+	for pair: String in _arg("choose").split(",", false):
+		var parts: PackedStringArray = pair.split(":")
+		if parts.size() == 2:
+			evening.choose(StringName(parts[0]), StringName(parts[1]))
+	if _args.has("step"):
+		evening.show_step(_arg("step").to_int())
+
+
+## `--flags=lumika_learned,lucioles_trust:3` : drapeaux (vrai) ou jauges.
+func _demo_flags(spec: String) -> void:
+	for part: String in spec.split(",", false):
+		var pieces: PackedStringArray = part.split(":")
+		if pieces.size() > 1:
+			GameState.set_flag(StringName(pieces[0]), pieces[1].to_int())
+		else:
+			GameState.set_flag(StringName(pieces[0]), true)
 
 
 func _demo_household() -> void:

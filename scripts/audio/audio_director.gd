@@ -176,6 +176,10 @@ func _connect_bus() -> void:
 	EventBus.case_resolved.connect(_on_case_resolved)
 	EventBus.citation_issued.connect(_on_citation_issued)
 	EventBus.settings_changed.connect(_on_settings_changed)
+	# M7 (docs/AUDIO.md §12) : objets glissés, annonces du Hall — cues existantes.
+	EventBus.item_slipped.connect(_on_item_slipped)
+	EventBus.item_decided.connect(_on_item_decided)
+	EventBus.hall_announced.connect(_on_hall_announced)
 
 
 # ---------------------------------------------------------------------------
@@ -199,6 +203,10 @@ func _attach_booth() -> void:
 		pa.voice_started.connect(_on_voice_started)
 		pa.voice_finished.connect(_on_voice_finished)
 		passenger_audio[actor] = pa
+	if not b.glass_knocked.is_connected(_on_glass_knocked):
+		b.glass_knocked.connect(_on_glass_knocked)
+		b.escort_started.connect(_on_escort_started)
+		b.escort_finished.connect(_on_escort_finished)
 	var vp: Viewport = b.get_viewport()
 	if vp != null:
 		vp.audio_listener_enable_3d = true
@@ -521,6 +529,7 @@ func bind_ui(p_ui: ComparisonUI) -> void:
 		p_ui.hovered.connect(_on_ui_hovered)
 		p_ui.toast_shown.connect(_on_toast_shown)
 		p_ui.departure_line_shown.connect(_on_departure_line_shown)
+		p_ui.passenger_line_shown.connect(_on_passenger_line_shown)
 
 
 func _on_ui_hovered(_control: Control) -> void:
@@ -543,11 +552,16 @@ func _on_toast_shown(kind: ToastStack.Kind) -> void:
 
 func _on_departure_line_shown(line_key: String, text: String) -> void:
 	var mood: StringName = TessarVoice.MOOD_NEUTRAL
-	if line_key.contains("denied"):
+	if line_key.contains("denied") or line_key.contains("_exit_deny"):
 		mood = TessarVoice.MOOD_ANGRY
-	elif line_key.contains("detained"):
+	elif line_key.contains("detain"):
 		mood = TessarVoice.MOOD_NERVOUS
 	bark(_current_case, line_key, text, mood)
+
+
+## M7 : réplique hors interrogatoire (pot-de-vin, phrase de passe) → bark.
+func _on_passenger_line_shown(line_key: String, text: String) -> void:
+	bark(_current_case, line_key, text, TessarVoice.MOOD_NEUTRAL)
 
 
 func _find_ui() -> ComparisonUI:
@@ -692,6 +706,50 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 			play_cue(&"ui.match")
 		_:
 			play_cue(&"ui.incomparable")
+
+
+# --- M7 ------------------------------------------------------------------------
+
+## Objet glissé avec les papiers : froissement juste après la fente.
+func _on_item_slipped(_item: SlippedItem) -> void:
+	play_cue_later(&"passenger.paper_rustle", SLOT_OUT_DELAY_SEC)
+
+
+## Décision sur un objet : tiroir (froissement), fente (`booth.slot_out`) ou
+## appel de la Garde (`booth.intercom_on`).
+func _on_item_decided(_item: SlippedItem, decision: SlippedItem.Decision) -> void:
+	match decision:
+		SlippedItem.Decision.KEEP:
+			play_cue(&"passenger.paper_rustle")
+		SlippedItem.Decision.RETURN:
+			play_cue(&"booth.slot_out")
+		SlippedItem.Decision.REPORT:
+			play_cue(&"booth.intercom_on")
+
+
+## Annonce du haut-parleur du Hall (bus Ambience, voix PA existante).
+func _on_hall_announced(_text_key: String) -> void:
+	_pa_left = _rng.randf_range(PA_MIN_SEC, PA_MAX_SEC)
+	play_cue(&"amb.pa_announce")
+
+
+## Code 5 : une tape sur la vitre (émetteur du corps de l'acteur, sinon 2D).
+func _on_glass_knocked(case_id: StringName, _knock: int) -> void:
+	var pa: PassengerAudio = audio_for_case(case_id)
+	if pa != null:
+		pa.play_body(&"passenger.knock_glass")
+		_log(&"passenger.knock_glass", AudioBuses.SFX)
+	else:
+		play_cue(&"passenger.knock_glass")
+
+
+## Escorte de la Garde : porte de la station à l'entrée et à la sortie.
+func _on_escort_started(_case_id: StringName) -> void:
+	play_cue(&"station.door_open")
+
+
+func _on_escort_finished(_case_id: StringName) -> void:
+	play_cue(&"station.door_close")
 
 
 func _on_verdict_stamped(verdict: Verdict) -> void:

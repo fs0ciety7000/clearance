@@ -49,6 +49,26 @@ func show_line(speaker: String, text: String, tag: String = "") -> void:
 		get_tree().create_timer(UiText.subtitle_hold(text)).timeout.connect(_expire.bind(serial))
 
 
+## Didascalie seule (« [trois tapes sur la vitre] »), sans réplique.
+func show_tag(speaker: String, tag: String) -> void:
+	if not enabled or tag.is_empty():
+		return
+	_serial += 1
+	var serial: int = _serial
+	_tag.text = tag
+	_tag.visible = true
+	_speaker.text = speaker
+	_text.text = ""
+	visible = true
+	reset_size()
+	if is_inside_tree():
+		get_tree().create_timer(DS.SUBTITLE_MIN_HOLD + DS.DUR_DRAMATIC).timeout.connect(_expire.bind(serial))
+
+
+func get_tag() -> String:
+	return _tag.text if visible and _tag.visible else ""
+
+
 func get_text() -> String:
 	return _text.text if visible else ""
 

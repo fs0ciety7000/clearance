@@ -240,7 +240,9 @@ static func build_events(defs: Array[EveningEventDef], flags: Dictionary[StringN
 ## Vrai si l'option est finançable avec `balance` (pas de dette pour une option
 ## `requires_funds`).
 static func can_choose(option: EveningOptionDef, balance: int) -> bool:
-	return option != null and (not option.requires_funds or option.cost <= balance)
+	# Une option gratuite reste possible même à découvert (sinon, à solde
+	# négatif, le choix par défaut retombait sur la première option sans coût).
+	return option != null and (option.cost <= 0 or not option.requires_funds or option.cost <= balance)
 
 
 ## Choix par défaut (sans UI) : par événement à choix, l'option disponible de

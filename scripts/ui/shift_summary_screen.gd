@@ -6,6 +6,9 @@
 ## motif de l'erreur + règle **révélée** : violation non relevée ou refus non
 ## documenté — erreurs pédagogiques), puis les passagers non traités.
 ## Avis d'infraction du jour (tickets archivés, 40 %, 100 % au survol).
+## M7 : lignes « Divers non déclaré » (enveloppes gardées, ambre) et « Prime de
+## signalement » (objets remis à la Garde, jaune) avec le total versé ce soir ;
+## décision sur l'objet glissé rappelée dans la ligne du registre.
 ## « RENTRER AU BLOC PÉTREL » → `finished(&"evening")`.
 class_name ShiftSummaryScreen
 extends ScreenBase
@@ -84,8 +87,22 @@ func _tiles() -> Control:
 			UiText.t("sum_fines_detail", "Retenues sur salaire"), DS.STATE_RED if summary.get_fine_total() > 0 else DS.TEXT_SECONDARY,
 			UiIcon.Kind.DENIED))
 	var net: int = summary.get_net()
-	row.add_child(stat_tile(UiText.t("sum_net", "NET DU JOUR"), credits(net, true), UiText.t("sum_net_detail", "Versé ce soir par la Banque Aurel"),
-			DS.ACCENT_YELLOW, UiIcon.Kind.LOGO))
+	var bribes: int = summary.get_bribe_total()
+	var reports: int = summary.get_report_total()
+	if bribes > 0:
+		var tile: PanelContainer = stat_tile(UiText.t("sum_bribes", "DIVERS NON DÉCLARÉ"), credits(bribes, true),
+				UiText.t("sum_bribes_detail", "Enveloppes gardées · hors salaire"), DS.STATE_AMBER, UiIcon.Kind.WARNING)
+		tile.name = "BribeTile"
+		row.add_child(tile)
+	if reports > 0:
+		var report_tile: PanelContainer = stat_tile(UiText.t("sum_reports", "PRIME DE SIGNALEMENT"), credits(reports, true),
+				UiText.t("sum_reports_detail", "Objets remis à la Garde"), DS.ACCENT_YELLOW, UiIcon.Kind.LOGO)
+		report_tile.name = "ReportTile"
+		row.add_child(report_tile)
+	var total_detail: String = UiText.t("sum_net_detail", "Versé ce soir par la Banque Aurel")
+	if bribes > 0 or reports > 0:
+		total_detail = UiText.tf("sum_total_detail", [credits(summary.get_total_income(), true)], "Ce soir au total : %s")
+	row.add_child(stat_tile(UiText.t("sum_net", "NET DU JOUR"), credits(net, true), total_detail, DS.ACCENT_YELLOW, UiIcon.Kind.LOGO))
 	return row
 
 
@@ -136,6 +153,10 @@ func _ledger_row(result: CaseResult) -> Control:
 	var status_color: Color = DS.ACCENT_CYAN if result.correct else (DS.STATE_AMBER if result.verdict_correct else DS.STATE_RED)
 	var status_text: String = UiText.t("sum_ok", "Conforme") if result.correct else UiText.t(result.citation_reason_key, result.citation_reason_key)
 	line.add_child(chip(status_text, UiIcon.Kind.CHECK if result.correct else UiIcon.Kind.WARNING, status_color))
+	if result.bribe_credits > 0:
+		line.add_child(chip(UiText.tf("sum_item_bribe", [credits(result.bribe_credits, true)], "ENVELOPPE %s"), UiIcon.Kind.WARNING, DS.STATE_AMBER))
+	if result.report_credits > 0:
+		line.add_child(chip(UiText.tf("sum_item_report", [credits(result.report_credits, true)], "SIGNALÉ %s"), UiIcon.Kind.LOGO, DS.ACCENT_YELLOW))
 	var money: Label = label(credits(result.credits_delta, true), &"DocFieldValue",
 			DS.TEXT_PRIMARY if result.credits_delta > 0 else (DS.STATE_RED if result.credits_delta < 0 else DS.TEXT_MUTED))
 	money.custom_minimum_size.x = 72.0

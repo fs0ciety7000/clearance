@@ -17,6 +17,10 @@ const PURPOSE: StringName = &"purpose"
 const STAY: StringName = &"stay"
 const ORIGIN: StringName = &"origin"
 const REMOVE_VISOR: StringName = &"remove_visor"
+## M7 : « Qu'est-ce que c'est que ça ? » (une enveloppe a été glissée).
+const ABOUT_ENVELOPE: StringName = &"about_envelope"
+## M7 : réponse à la phrase de passe des Lucioles (code 4, `lucioles_trust ≥ 2`).
+const LUCIOLE_REPLY: StringName = &"luciole_reply"
 const BASE: Array[StringName] = [PURPOSE, STAY, ORIGIN]
 const ABOUT_PREFIX: String = "about_"
 const DOC_SEPARATOR: String = ":"

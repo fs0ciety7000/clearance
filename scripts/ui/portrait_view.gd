@@ -63,6 +63,8 @@ static func eye_color(app: PassengerAppearance) -> Color:
 
 func _draw() -> void:
 	var rect: Rect2 = Rect2(Vector2.ZERO, size)
+	if size.x < DS.SPACE_4 or size.y < DS.SPACE_4:
+		return # pas encore mis en page : polygones dégénérés
 	if framed:
 		draw_rect(rect, DS.BG_VOID.blend(DS.CYAN_08))
 	if texture != null:
@@ -127,8 +129,8 @@ func _draw_placeholder(rect: Rect2, app: PassengerAppearance) -> void:
 		for i: int in 17:
 			var a: float = PI + PI * i / 16.0
 			cap.append(c + Vector2(cos(a) * rx * 1.06, sin(a) * ry * 1.05 - ry * 0.05))
-		cap.append(c + Vector2(rx * 1.06, -ry * 0.25))
-		cap.append(c + Vector2(-rx * 1.06, -ry * 0.25))
+		# Arc fermé par sa corde : polygone convexe (les deux points bas
+		# ajoutés autrefois croisaient l'arc → triangulation impossible).
 		draw_colored_polygon(cap, hair_c)
 	# Yeux, nez/bouche.
 	var eye_y: float = c.y + ry * 0.05

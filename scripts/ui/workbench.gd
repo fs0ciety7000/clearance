@@ -18,6 +18,8 @@ const HEADER_H: float = 48.0
 const GRID_STEP: float = 32.0
 
 var views: Array[DocumentView] = []
+## M7 : objets glissés posés sur le plan (enveloppe, mot, carte de quai).
+var items: Array[SlippedItemView] = []
 var inspection_active: bool = false
 var reduce_motion: bool = false
 var fx_intensity: float = 1.0
@@ -103,10 +105,77 @@ func _reset_pivot(view: DocumentView) -> void:
 		view.pivot_offset = Vector2.ZERO
 
 
+## M7 : pose un objet glissé (enveloppe, mot…) : il glisse par la fente
+## après les documents puis se range dans le coin bas-droit du plan.
+func add_slipped_item(view: SlippedItemView) -> void:
+	_docs_layer.add_child(view)
+	items.append(view)
+	_empty.visible = false
+	view.grabbed.connect(_on_item_grabbed)
+	view.drag_moved.connect(_on_item_drag_moved)
+	# Largeur fixée d'abord : les textes repliés se mesurent à la bonne largeur,
+	# la hauteur est recalculée après une passe de mise en page.
+	view.size = Vector2(view.custom_minimum_size.x, 0.0)
+	view.modulate.a = 0.0
+	_place_item.call_deferred(view, items.size() - 1)
+
+
+func _place_item(view: SlippedItemView, index: int) -> void:
+	if not is_instance_valid(view) or not view.is_inside_tree():
+		return
+	view.reset_size()
+	var target: Vector2 = Vector2(size.x - view.size.x - DS.SPACE_8 - DS.SPACE_6 * index,
+			maxf(size.y - view.size.y - DS.SPACE_6 - DS.SPACE_4 * index, HEADER_H))
+	if reduce_motion:
+		view.position = target
+		view.modulate.a = 0.0
+		create_tween().tween_property(view, "modulate:a", 1.0, DS.DUR_FAST)
+		return
+	view.position = Vector2(size.x * 0.5 - view.size.x * 0.5, -view.size.y * 0.4)
+	view.modulate.a = 0.0
+	view.rotation_degrees = -3.0
+	var delay: float = DS.DOC_STAGGER * (views.size() + index)
+	var tween: Tween = create_tween().set_parallel(true)
+	tween.tween_property(view, "modulate:a", 1.0, DS.DUR_FAST).set_delay(delay)
+	tween.tween_property(view, "position", target, DS.DUR_SLOW + DS.DUR_FAST).set_delay(delay).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(view, "rotation_degrees", 2.0, DS.DUR_SLOW + DS.DUR_FAST).set_delay(delay).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+func get_slipped_view(item_id: StringName) -> SlippedItemView:
+	for view: SlippedItemView in items:
+		if is_instance_valid(view) and view.item != null and view.item.id == item_id:
+			return view
+	return null
+
+
+func _on_item_grabbed(view: SlippedItemView) -> void:
+	_docs_layer.move_child(view, _docs_layer.get_child_count() - 1)
+
+
+func _on_item_drag_moved(view: SlippedItemView, relative: Vector2) -> void:
+	view.position += relative
+	var max_pos: Vector2 = size - view.size
+	view.position = Vector2(clampf(view.position.x, 0.0, maxf(max_pos.x, 0.0)), clampf(view.position.y, 0.0, maxf(max_pos.y, 0.0)))
+
+
 ## Retire les documents (rendus par la fente si `animated`).
 func clear(animated: bool = true) -> void:
 	_hide_stamp()
 	hide_banner()
+	for item_view: SlippedItemView in items:
+		if not is_instance_valid(item_view):
+			continue
+		item_view.lock()
+		if animated and not reduce_motion:
+			var away: Vector2 = Vector2(item_view.position.x, size.y + DS.SPACE_4) \
+					if item_view.decision == SlippedItem.Decision.KEEP else Vector2(size.x * 0.5 - item_view.size.x * 0.5, -item_view.size.y)
+			var out: Tween = item_view.create_tween().set_parallel(true)
+			out.tween_property(item_view, "position", away, DS.DUR_SLOW).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+			out.tween_property(item_view, "modulate:a", 0.0, DS.DUR_SLOW * 0.7).set_delay(DS.DUR_FAST)
+			out.chain().tween_callback(item_view.queue_free)
+		else:
+			item_view.queue_free()
+	items.clear()
 	for view: DocumentView in views:
 		if animated and not reduce_motion:
 			var tween: Tween = view.create_tween().set_parallel(true)
@@ -160,10 +229,10 @@ func find_item(ref: FieldRef) -> InspectableItem:
 
 
 func get_items() -> Array[InspectableItem]:
-	var items: Array[InspectableItem] = []
+	var fields: Array[InspectableItem] = []
 	for view: DocumentView in views:
-		items.append_array(view.get_items())
-	return items
+		fields.append_array(view.get_items())
+	return fields
 
 
 func set_inspection_active(enabled: bool) -> void:
@@ -334,7 +403,7 @@ func _build_empty_state() -> void:
 func set_empty_state(title: String, text: String) -> void:
 	_empty_title.text = title
 	_empty_text.text = text
-	_empty.visible = views.is_empty()
+	_empty.visible = views.is_empty() and items.is_empty()
 
 
 func _build_banner() -> void:

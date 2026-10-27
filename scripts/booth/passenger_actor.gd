@@ -130,6 +130,11 @@ func apply_appearance(app: PassengerAppearance) -> void:
 	AppearanceApplier.apply(rig, app)
 
 
+## M7 : implants visibles et fil magenta (code 6) — conservés au retrait de visière.
+func apply_markings(implants: PackedStringArray, magenta_thread: bool) -> void:
+	ImplantDecor.apply(rig, implants, magenta_thread)
+
+
 ## Marche le long de `path` jusqu'à `snap` (arrivée) ; `arrived` à la fin.
 func walk_to_desk(path: Path3D, speed: float, start_distance: float, snap: Node3D) -> void:
 	state = State.ARRIVING

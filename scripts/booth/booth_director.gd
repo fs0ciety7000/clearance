@@ -9,8 +9,21 @@
 ## travelling visage, watchdogs locaux par étape.
 ## Ne lit que `Case.case_id`, `Case.passenger_presented.appearance` et
 ## `CaseResult.verdict_kind` : ni clé, ni règles, ni score.
+## M7 : implants visibles et fil magenta posés sur l'acteur
+## (`Passenger.implants`, code 6), trois tapes sur la vitre avant les papiers
+## (code 5 : ondes sur la vitre + `glass_knocked`), **escorte de la Garde de
+## Continuité** pour une DÉTENTION (un 3ᵉ acteur, hors pool, uniforme gris et
+## brassard jaune, entre par la porte de la station, encadre le passager puis
+## repart avec lui vers l'Anneau B).
 class_name BoothDirector
 extends Node3D
+
+## M7 : une tape du code 5 (`knock` = 1, 2, 3) — audio, tests.
+signal glass_knocked(case_id: StringName, knock: int)
+## M7 : la Garde entre pour escorter le passager détenu.
+signal escort_started(case_id: StringName)
+## M7 : la Garde a quitté le champ (fin de l'escorte).
+signal escort_finished(case_id: StringName)
 
 const ACTOR_SCENE: PackedScene = preload("res://scenes/passenger/passenger_actor.tscn")
 const POOL_SIZE: int = 2
@@ -53,6 +66,23 @@ const FACE_HALF_SIZE: Vector2 = Vector2(0.15, 0.17)
 ## Rayon de la zone cliquable « Visage » (généreuse, R17).
 const FACE_PICK_RADIUS: float = 0.17
 
+## M7 — code 5 : trois tapes sur la vitre avant `present_documents`.
+const PRESENTATION_KNOCK: StringName = &"knock_three"
+const MAGENTA_THREAD_TAG: StringName = &"magenta_thread"
+const KNOCK_COUNT: int = 3
+const KNOCK_INTERVAL_SEC: float = 0.34
+const KNOCK_LEAD_SEC: float = 0.2
+## Point d'impact sur la vitre (côté passager, hauteur de la main).
+const KNOCK_POINT: Vector3 = Vector3(0.16, 1.4, -0.03)
+## M7 — escorte de la Garde (DÉTENTION).
+const GUARD_SPEED: float = 1.35
+const GUARD_SPOT: Vector3 = Vector3(0.58, 0.0, -1.3)
+const GUARD_ENTRY: Array[Vector3] = [Vector3(2.8, 0, 0.25), Vector3(2.3, 0, -0.45), Vector3(1.6, 0, -1.0), GUARD_SPOT]
+const GUARD_EXIT: Array[Vector3] = [GUARD_SPOT, Vector3(1.6, 0, -1.05), Vector3(2.3, 0, -0.5), Vector3(2.9, 0, 0.3)]
+## Le détenu attend la Garde au plus ce délai avant de partir.
+const GUARD_WAIT_MAX_SEC: float = 4.0
+const GUARD_FOLLOW_DELAY_SEC: float = 0.55
+
 const FLAG_ARRIVED: int = 1
 const FLAG_DOCUMENTS: int = 2
 const FLAG_DEPARTED: int = 4
@@ -74,6 +104,10 @@ const FLAG_DEPARTED: int = 4
 
 var actors: Array[PassengerActor] = []
 var inspection_mode: bool = false
+## M7 : acteur de la Garde (hors pool, jamais relié à l'EventBus).
+var guard: PassengerActor = null
+## Cas escorté (vide si aucune escorte en cours).
+var escort_case_id: StringName = &""
 
 var _by_case: Dictionary[StringName, PassengerActor] = {}
 var _cases: Dictionary[StringName, Case] = {}
@@ -94,6 +128,12 @@ var _framer_pitch: float = 0.0
 var _camera_rest: Transform3D = Transform3D.IDENTITY
 var _last_mouse: Vector2 = Vector2(-1, -1)
 var _mouse_seen: bool = false
+var _escort_actor: PassengerActor = null
+var _guard_ready: bool = false
+var _guard_follow_at: float = -1.0
+var _guard_in_path: Path3D = null
+var _guard_out_path: Path3D = null
+var _guard_mark: Marker3D = null
 
 
 func _ready() -> void:
@@ -115,6 +155,7 @@ func _ready() -> void:
 	EventBus.inspection_mode_changed.connect(_on_inspection_mode_changed)
 	EventBus.inspection_target_picked.connect(_on_inspection_target_picked)
 	EventBus.day_started.connect(_on_day_started)
+	_build_guard()
 
 
 ## Acteur lié à un cas (tests, debug).
@@ -185,6 +226,7 @@ func _on_case_presented(case: Case) -> void:
 	actor.reduce_motion = reduce
 	actor.assign(case.case_id, _serial, SeededRng.hash_string(String(case.case_id)))
 	actor.apply_appearance(case.passenger_presented.appearance)
+	actor.apply_markings(case.passenger_presented.implants, has_magenta_thread(case))
 	_by_case[case.case_id] = actor
 	_cases[case.case_id] = case
 	_desk_actor = actor
@@ -217,15 +259,22 @@ func _on_case_resolved(case_id: StringName, result: CaseResult) -> void:
 	if actor == null or actor.state == PassengerActor.State.LEAVING or actor.is_free():
 		return
 	var approved: bool = result != null and result.verdict_kind == VerdictKind.Kind.APPROVE
-	_pulse_light(gate_light, DS.STATE_GREEN if approved else DS.STATE_RED, 1.4, 0.6)
+	var detained: bool = result != null and result.verdict_kind == VerdictKind.Kind.DETAIN
+	_pulse_light(gate_light, DS.STATE_GREEN if approved else (DS.ACCENT_YELLOW if detained else DS.STATE_RED),
+			0.8 if detained else 1.4, 1.2 if detained else 0.6)
 	_pulse_light(slot_glow, DS.ACCENT_CYAN, 0.8, 0.4)
 	if actor.state == PassengerActor.State.ARRIVING:
 		actor.force_finish_walk() # tampon reçu avant l'arrivée (timeouts) : calage
-	var path: Path3D = exit_approved_path if approved else exit_refused_path
+	# Détention : sortie par la porte de la station (vers l'Anneau B), escortée.
+	var path: Path3D = exit_approved_path if approved or detained else exit_refused_path
 	var speed: float = EXIT_APPROVED_SPEED if approved else EXIT_REFUSED_SPEED
 	if actor.reduce_motion:
 		speed *= REDUCED_SPEED_FACTOR
-	_pending_leave[actor] = [path, speed, _time + LEAVE_REACTION_WAIT_SEC]
+	var wait: float = LEAVE_REACTION_WAIT_SEC
+	if detained:
+		start_escort(actor)
+		wait = GUARD_WAIT_MAX_SEC
+	_pending_leave[actor] = [path, speed, _time + wait]
 	if not approved:
 		actor.set_expression(&"sad")
 
@@ -247,7 +296,14 @@ func _on_actor_arrived(actor: PassengerActor) -> void:
 	var case_id: StringName = actor.case_id
 	_watch.erase(actor)
 	_emit_once(case_id, FLAG_ARRIVED)
-	get_tree().create_timer(PRESENT_DELAY_SEC).timeout.connect(func() -> void:
+	var delay: float = PRESENT_DELAY_SEC
+	var case: Case = _cases.get(case_id, null)
+	if case != null and case.presentation == PRESENTATION_KNOCK:
+		# Code 5 : trois tapes sur la vitre, puis les papiers.
+		for i: int in KNOCK_COUNT:
+			get_tree().create_timer(KNOCK_LEAD_SEC + KNOCK_INTERVAL_SEC * i).timeout.connect(_knock.bind(actor, case_id, i + 1))
+		delay += KNOCK_LEAD_SEC + KNOCK_INTERVAL_SEC * KNOCK_COUNT
+	get_tree().create_timer(delay).timeout.connect(func() -> void:
 		if actor.case_id == case_id and actor.state == PassengerActor.State.AT_DESK and not actor.documents_slot_fired():
 			actor.present_documents()
 			_arm_watchdog(actor, &"present", actor.clip_length(&"present_documents")))
@@ -326,6 +382,159 @@ func _release(actor: PassengerActor) -> void:
 	actor.release()
 
 
+# --- M7 : codes Lucioles, escorte de la Garde --------------------------------
+
+## Code 6 : fil magenta au poignet (`magenta_thread`).
+static func has_magenta_thread(case: Case) -> bool:
+	return case != null and (case.dialogue_tags.has(MAGENTA_THREAD_TAG) or case.luciole_codes.has(6))
+
+
+## Une tape sur la vitre : onde (anneau cyan pâle qui s'élargit et s'efface).
+func _knock(actor: PassengerActor, case_id: StringName, knock: int) -> void:
+	if actor.case_id != case_id or actor.state != PassengerActor.State.AT_DESK:
+		return
+	glass_knocked.emit(case_id, knock)
+	var ring: MeshInstance3D = MeshInstance3D.new()
+	ring.name = "KnockRipple%d" % knock
+	var torus: TorusMesh = TorusMesh.new()
+	torus.inner_radius = 0.028
+	torus.outer_radius = 0.034
+	torus.rings = 24
+	torus.ring_segments = 4
+	ring.mesh = torus
+	var mat: StandardMaterial3D = StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.albedo_color = Color(GreyboxStyle.WORLD_KEY, 0.55 * Settings.fx_intensity)
+	ring.material_override = mat
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(ring)
+	ring.global_position = glass.global_position * Vector3(0, 0, 1) + KNOCK_POINT + Vector3(0.012 * (knock - 2), 0.01 * (knock % 2), 0)
+	ring.rotation_degrees = Vector3(90, 0, 0)
+	if Settings.reduce_motion:
+		get_tree().create_timer(DS.DUR_SLOW).timeout.connect(ring.queue_free)
+		return
+	var tween: Tween = ring.create_tween().set_parallel(true)
+	tween.tween_property(ring, ^"scale", Vector3.ONE * 3.2, DS.DUR_SLOW + DS.DUR_FAST).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	tween.tween_property(mat, ^"albedo_color:a", 0.0, DS.DUR_SLOW + DS.DUR_FAST)
+	tween.chain().tween_callback(ring.queue_free)
+
+
+## Acteur de la Garde (uniforme gris, visière baissée, brassard jaune) et
+## chemins d'entrée / de sortie par la porte de la station.
+func _build_guard() -> void:
+	guard = ACTOR_SCENE.instantiate()
+	guard.name = "GuardEscort"
+	passenger_slots.add_child(guard)
+	guard.collision_layer = 0
+	guard.collision_mask = 0
+	guard.arrived.connect(_on_guard_arrived)
+	guard.departed.connect(_on_guard_departed)
+	guard.release()
+	_guard_in_path = _make_path("GuardInPath", GUARD_ENTRY)
+	_guard_out_path = _make_path("GuardOutPath", GUARD_EXIT)
+	_guard_mark = Marker3D.new()
+	_guard_mark.name = "GuardMark"
+	add_child(_guard_mark)
+	_guard_mark.position = GUARD_SPOT
+	_guard_mark.basis = Basis.looking_at(Vector3(-0.55, 0, 0.75).normalized(), Vector3.UP, true)
+
+
+func _make_path(node_name: String, points: Array[Vector3]) -> Path3D:
+	var path: Path3D = Path3D.new()
+	path.name = node_name
+	var curve: Curve3D = Curve3D.new()
+	for point: Vector3 in points:
+		curve.add_point(point)
+	path.curve = curve
+	add_child(path)
+	return path
+
+
+## Apparence de la Garde de Continuité (NARRATIVE §8.3 : uniforme gris, brassard jaune).
+static func guard_appearance() -> PassengerAppearance:
+	var traits: Dictionary[StringName, StringName] = {
+		&"silhouette": &"silhouette_s1_stocky", &"face": &"face_square_e2", &"eyes": &"eyes_grey",
+		&"nose_mouth": &"nose_mouth_n2_l1", &"skin": &"skin_04", &"hair": &"hair_shaved_c01",
+		&"headwear": &"visor_down", &"outfit": &"outfit_06", &"accessory": &"none", &"palette": &"palette_11",
+	}
+	return PassengerAppearance.new(traits, 1)
+
+
+## Lance l'escorte du passager détenu (idempotent par cas).
+func start_escort(actor: PassengerActor) -> void:
+	if actor == null or guard == null:
+		return
+	if not guard.is_free():
+		guard.release()
+	escort_case_id = actor.case_id
+	_escort_actor = actor
+	_guard_ready = false
+	_guard_follow_at = -1.0
+	guard.reduce_motion = actor.reduce_motion
+	guard.assign(&"guard", 0, SeededRng.hash_string("guard"))
+	guard.apply_appearance(guard_appearance())
+	guard.apply_markings(PackedStringArray(), false)
+	_add_armband(guard)
+	var length: float = _guard_in_path.curve.get_baked_length()
+	var speed: float = GUARD_SPEED * (REDUCED_SPEED_FACTOR if actor.reduce_motion else 1.0)
+	guard.walk_to_desk(_guard_in_path, speed, length * 0.85 if actor.reduce_motion else 0.0, _guard_mark)
+	escort_started.emit(escort_case_id)
+
+
+func is_escorting() -> bool:
+	return escort_case_id != &""
+
+
+## Brassard jaune Consortium au bras gauche (os `LeftUpperArm`).
+func _add_armband(actor: PassengerActor) -> void:
+	var skeleton: Skeleton3D = actor.rig.skeleton
+	var attachment: BoneAttachment3D = skeleton.get_node_or_null(^"ArmbandAttachment") as BoneAttachment3D
+	if attachment == null:
+		attachment = BoneAttachment3D.new()
+		attachment.name = "ArmbandAttachment"
+		attachment.bone_name = "LeftUpperArm"
+		skeleton.add_child(attachment)
+		var space: Node3D = Node3D.new()
+		space.name = "Space"
+		attachment.add_child(space)
+		var band: TorusMesh = TorusMesh.new()
+		band.inner_radius = 0.05
+		band.outer_radius = 0.068
+		band.rings = 16
+		band.ring_segments = 6
+		var mat: ShaderMaterial = actor.rig.make_material(DS.ACCENT_YELLOW.darkened(0.25), 0.5)
+		mat.set_shader_parameter(&"emission_color", DS.ACCENT_YELLOW * 0.35)
+		actor.rig.add_mesh(space, "Armband", band, mat, Vector3(0, 0.12, 0), Vector3.ZERO, Vector3(1.0, 1.6, 1.0))
+	var meter: Node3D = attachment.get_node(^"Space") as Node3D
+	meter.scale = Vector3.ONE / actor.rig.armature.scale
+
+
+func _on_guard_arrived() -> void:
+	_guard_ready = true
+	guard.set_look_enabled(false)
+
+
+func _on_guard_departed() -> void:
+	var case_id: StringName = escort_case_id
+	escort_case_id = &""
+	_escort_actor = null
+	_guard_follow_at = -1.0
+	guard.release()
+	escort_finished.emit(case_id)
+
+
+func _process_guard() -> void:
+	if guard == null or guard.is_free():
+		return
+	if _escort_actor != null and is_instance_valid(_escort_actor) and _escort_actor.visible:
+		guard.set_look_target(_escort_actor.rig.head.global_position)
+	if _guard_follow_at >= 0.0 and _time >= _guard_follow_at and guard.state == PassengerActor.State.AT_DESK:
+		_guard_follow_at = -1.0
+		guard.leave_along(_guard_out_path, EXIT_APPROVED_SPEED * (REDUCED_SPEED_FACTOR if guard.reduce_motion else 1.0), -1.0)
+
+
 func _start_leave(actor: PassengerActor, path: Path3D, speed: float) -> void:
 	var clear_mark: Node3D = path.get_node_or_null(^"ClearMark")
 	var clear_distance: float = -1.0
@@ -344,6 +553,7 @@ func _process(delta: float) -> void:
 	_time += delta
 	_process_watchdogs()
 	_process_leaves()
+	_process_guard()
 	if _talk_left > 0.0:
 		_talk_left -= delta
 		if _talk_left <= 0.0 and _desk_actor != null:
@@ -384,8 +594,11 @@ func _process_leaves() -> void:
 	for actor: PassengerActor in _pending_leave.keys():
 		var entry: Array = _pending_leave[actor]
 		var wait_until: float = entry[2]
-		if actor.has_pending_reaction() and _time < wait_until:
+		var waiting_guard: bool = actor == _escort_actor and not _guard_ready
+		if (actor.has_pending_reaction() or waiting_guard) and _time < wait_until:
 			continue
+		if actor == _escort_actor:
+			_guard_follow_at = _time + GUARD_FOLLOW_DELAY_SEC
 		_pending_leave.erase(actor)
 		var path: Path3D = entry[0]
 		var speed: float = entry[1]

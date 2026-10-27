@@ -275,7 +275,8 @@ func test_departure_line_after_verdict() -> void:
 	ui.show_departure_line(case.case_id, VerdictKind.Kind.DENY)
 	assert_signal_emit_count(ui, "departure_line_shown", 1, "une seule fois par passager")
 	assert_eq(ComparisonUI.departure_key(case, VerdictKind.Kind.APPROVE), "bark_depart_ok")
-	assert_eq(ComparisonUI.departure_key(case, VerdictKind.Kind.DETAIN), "bark_depart_detained")
+	# M7 (ARCHITECTURE §7.1) : la détention a sa réplique de sortie générique.
+	assert_eq(ComparisonUI.departure_key(case, VerdictKind.Kind.DETAIN), InspectionSession.LINE_EXIT_DETAIN)
 	for key: String in ["bark_depart_ok", "bark_depart_denied", "bark_depart_detained", "tag_departing"]:
 		assert_true(UiText.has(key), key)
 
@@ -351,14 +352,18 @@ func test_releasing_early_cancels_the_stamp() -> void:
 
 
 func test_detain_stamp_only_when_day_allows_it() -> void:
-	assert_false(ui.detain_available, "J3 : aucune règle de sévérité ≥ 3")
+	assert_false(ui.detain_available, "J3 : pas de DÉTENTION")
 	assert_false(ui.get_stamp_button(VerdictKind.Kind.DETAIN).visible)
+	# M7 (D-055) : une règle de sévérité 3 ne suffit pas, le jour doit l'autoriser.
 	var rs: RuleSet = RuleSet.new()
 	var severe: Rule = CaseFactory.rule(&"r_portrait_match").duplicate() as Rule
 	severe.severity = RuleEngine.DETAIN_SEVERITY
 	rs.rules.append(severe)
 	var detain_day: DayDef = day.duplicate() as DayDef
 	detain_day.rule_set = rs
+	EventBus.day_started.emit(detain_day, rs.build_rulebook())
+	assert_false(ui.detain_available, "detain_enabled faux : verrouillé")
+	detain_day.detain_enabled = true
 	EventBus.day_started.emit(detain_day, rs.build_rulebook())
 	assert_true(ui.detain_available)
 	assert_true(ui.get_stamp_button(VerdictKind.Kind.DETAIN).visible)

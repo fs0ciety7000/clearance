@@ -129,7 +129,12 @@ func show_menu(items: Array[Dictionary]) -> void:
 		button.text = "%d   %s" % [i + 1, text]
 		var unlocked: bool = item.get("unlocked", false)
 		var asked: bool = item.get("asked", false)
-		if unlocked:
+		var luciole: bool = item.get("luciole", false)
+		if luciole:
+			# Réponse à la phrase de passe (code 4) : voix des Lucioles, magenta.
+			button.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+			button.text = "%d   ◆ %s" % [i + 1, text]
+		elif unlocked:
 			button.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
 		elif asked:
 			button.add_theme_color_override(&"font_color", DS.TEXT_SECONDARY)

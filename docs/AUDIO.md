@@ -348,6 +348,18 @@ L'`AudioDirector` (nœud de `day.tscn`) est le **seul** écouteur audio de l'Eve
 
 **Cues couvertes** : toutes celles de §4 sauf `ui.link_drag` et `ui.rebel_message` (post-MVP). Branchées lors de la passe de finition : `passenger.bark_depart` (sous-titré 1,5 s après le tampon via `ComparisonUI.departure_line_shown`), `booth.stamp_lift` (0,4 s après le tampon), `ui.hover` (signal `ComparisonUI.hovered`, 90 ms minimum entre deux) et `ui.toast_*` (signal `toast_shown(kind)`). Sondes UI sans modifier l'UI : `ComparisonUI.selection.a` (sélection A) et `tool_bar.stamps[*].is_holding()` (tampon maintenu, `ui.stamp_hold`).
 
+**M7 (interfaces J4–J10) — cues existantes réutilisées, aucun nouveau fichier** :
+
+| Événement | Cue | Doublage visuel |
+|---|---|---|
+| Objet glissé avec les papiers (`item_slipped`) | `passenger.paper_rustle` (+0,45 s) | carte de l'objet sur le plan |
+| Décision : garder / rendre / remettre à la Garde (`item_decided`) | `passenger.paper_rustle` / `booth.slot_out` / `booth.intercom_on` | puce d'état de l'objet, toast « Objet remis à la Garde » |
+| Répliques hors interrogatoire (`_bribe*`, `_password`) | bark Tessar via `ComparisonUI.passenger_line_shown` | sous-titre + bulle |
+| Trois tapes sur la vitre (code 5, `BoothDirector.glass_knocked`) | `passenger.knock_glass` ×3 (émetteur du corps) | ondes sur la vitre + didascalie |
+| Annonce du Hall (`hall_announced`) | `amb.pa_announce` (bus Ambience) ; l'annonce aléatoire suivante est repoussée | bandeau « HAUT-PARLEUR · HALL » (toast si sous-titres coupés) |
+| Escorte de la Garde (`escort_started` / `escort_finished`) | `station.door_open` / `station.door_close` | Garde 3D, lumière de porte jaune |
+| Sortie détenue / refusée scénarisée (`_exit_detain`, `_exit_deny`) | humeur nerveuse / en colère du bark de départ | sous-titre « [en partant] » |
+
 **Accessibilité vérifiée** : chaque cue critique a son doublage visuel existant (timer : barre ambre/rouge ; tampon : animation + empreinte ; discordance : lien magenta + numéro ; concordance : chip ; citation : ticket ; règle nouvelle : badge NOUVEAU ; barks : sous-titres). « Réduire les effets » (`fx_intensity < 1`) coupe `ui.timer_critical_tick` et adoucit les tampons de 4 dB.
 
 ## Changelog

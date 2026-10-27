@@ -29,6 +29,10 @@ const COMPACT_KINDS: Array[FieldDef.FieldKind] = [
 const WIDE_FIELD_IDS: Array[StringName] = [&"employer", &"origin_sector", &"mrz"]
 const MRZ_FIELD_ID: StringName = &"mrz"
 const SERIAL_PATH: StringName = &"document.serial"
+## M7 — marque « luciole » (code 1) : petit dessin magenta au coin bas-droit,
+## lisible à la loupe (`DS.DOC_ZOOM`), discret à l'échelle 1.
+const MARK_LUCIOLE: StringName = &"luciole"
+const MARK_SIZE_PX: float = 5.0
 const TOKENS: GDScript = preload("res://ui/theme/tokens.gd")
 
 var instance: DocumentInstance = null
@@ -117,6 +121,15 @@ func build(p_instance: DocumentInstance, portrait_provider: Callable = Callable(
 		_content.add_child(_build_mrz(mrz_def, portrait_provider))
 	_content.add_child(_build_footer())
 	_update_style()
+
+
+func has_luciole_mark() -> bool:
+	return instance != null and instance.marks.has(MARK_LUCIOLE)
+
+
+## Coin bas-droit, au-dessus du code-barres (repère local du document).
+func luciole_mark_position() -> Vector2:
+	return Vector2(size.x - DS.SPACE_5 - MARK_SIZE_PX, size.y - DS.SPACE_8)
 
 
 func get_document_id() -> StringName:
@@ -354,6 +367,8 @@ func _draw() -> void:
 	var corner: float = DS.SPACE_3
 	draw_polyline([Vector2(0, rect.end.y - corner), Vector2(0, rect.end.y), Vector2(corner, rect.end.y)], _tint, DS.BORDER_STRONG)
 	draw_polyline([Vector2(rect.end.x - corner, 0), Vector2(rect.end.x, 0), Vector2(rect.end.x, corner)], DS.ACCENT_CYAN, DS.BORDER_STRONG)
+	if has_luciole_mark():
+		SlippedItemView.draw_luciole(self, luciole_mark_position(), MARK_SIZE_PX, Color(DS.ACCENT_MAGENTA, 0.85))
 	# Badge « flagged » : losange magenta + compteur (DS §7.1).
 	if flag_count > 0:
 		var center: Vector2 = Vector2(rect.end.x - DS.SPACE_2, -DS.SPACE_2)

@@ -24,6 +24,9 @@ signal toast_shown(kind: ToastStack.Kind)
 ## Réplique de départ du passager sous-titrée (`passenger.bark_depart`) :
 ## `bark_depart_ok` / `_denied` / `_detained` (ou réplique scénarisée).
 signal departure_line_shown(line_key: String, text: String)
+## M7 : réplique scénarisée hors interrogatoire sous-titrée (pot-de-vin, phrase
+## de passe, réaction à l'enveloppe) — même chemin audio que le départ.
+signal passenger_line_shown(line_key: String, text: String)
 
 # --- Zones (UI_FLOW §2.2, px @1080p) -------------------------------------------
 const BAND_TOP: float = 56.0
@@ -35,6 +38,14 @@ const SIDE_PANEL_WIDTH: float = 456.0
 const QUEUE_PANEL_WIDTH: float = 440.0
 ## Visage par défaut (centre de la vitre) tant que l'intégrateur n'a rien fourni.
 const DEFAULT_FACE_RECT: Rect2 = Rect2(880, 112, 160, 196)
+## M7 — codes Lucioles (LORE §7) et *lumika* (NARRATIVE B16).
+const FLAG_LUMIKA: StringName = &"lumika_learned"
+const LUMIKA_WORD: String = "lumika"
+const UNKNOWN_WORD_FALLBACK: String = "[mot inconnu]"
+## Présentation « trois tapes sur la vitre » (code 5).
+const PRESENTATION_KNOCK: StringName = &"knock_three"
+## Annonce du haut-parleur du Hall : durée minimale d'affichage.
+const PA_MIN_HOLD: float = 6.0
 
 ## Photo des documents : `func(appearance: PassengerAppearance) -> Texture2D`.
 var portrait_provider: Callable = Callable()
@@ -59,6 +70,12 @@ var discrepancies: Array[Discrepancy] = []
 var unlocked_topics: Array[StringName] = []
 var asked_topics: Array[StringName] = []
 var detain_available: bool = false
+## M7 : objets glissés du cas courant (reçus par `item_slipped`).
+var slipped_items: Array[SlippedItem] = []
+## M7 : avis de recherche du jour (`wanted_notices_published`).
+var wanted_notices: Array[WantedNotice] = []
+## M7 : dernière annonce du Hall affichée (texte), vide sinon.
+var announcement_text: String = ""
 var fx_intensity: float = 1.0
 var reduce_motion: bool = false
 
@@ -72,6 +89,10 @@ var queue_panel: QueuePanel = null
 var subtitles: SubtitleBar = null
 var toasts: ToastStack = null
 var links: LinkLayer = null
+## M7 : bandeau discret du haut-parleur du Hall (haut de la bande B).
+var pa_strip: PanelContainer = null
+var _pa_label: Label = null
+var _pa_serial: int = 0
 var _veil: ColorRect = null
 var _next_cooldown: float = 0.0
 var _menu_items: Array[Dictionary] = []
@@ -232,6 +253,7 @@ func _build() -> void:
 	subtitles.offset_bottom = BAND_BOTTOM - DS.SPACE_10
 	subtitles.enabled = Settings.subtitles
 	add_child(subtitles)
+	_build_pa_strip()
 
 	tool_bar = ToolBar.new()
 	tool_bar.name = "ToolBar"
@@ -266,8 +288,43 @@ func _build() -> void:
 	toasts.toast_shown.connect(func(kind: ToastStack.Kind) -> void: toast_shown.emit(kind))
 
 
+## Bandeau du haut-parleur du Hall (M7, NARRATIVE I6) : sous-titre discret
+## en haut de la vitre, voix du Consortium (jaune), hors bulle passager.
+func _build_pa_strip() -> void:
+	pa_strip = PanelContainer.new()
+	pa_strip.name = "HallAnnouncement"
+	pa_strip.theme_type_variation = &"SubtitlePanel"
+	pa_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pa_strip.anchor_left = 0.5
+	pa_strip.anchor_right = 0.5
+	pa_strip.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	pa_strip.offset_top = BAND_TOP + DS.SPACE_3
+	pa_strip.visible = false
+	add_child(pa_strip)
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", DS.SPACE_3)
+	pa_strip.add_child(row)
+	row.add_child(UiIcon.make(UiIcon.Kind.LOGO, DS.ACCENT_YELLOW, DS.ICON_S))
+	var speaker: Label = Label.new()
+	speaker.theme_type_variation = &"DocIssuer"
+	speaker.uppercase = true
+	speaker.add_theme_color_override(&"font_color", DS.ACCENT_YELLOW)
+	speaker.text = UiText.t("spk_pa", "HAUT-PARLEUR · HALL")
+	speaker.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(speaker)
+	_pa_label = Label.new()
+	_pa_label.theme_type_variation = &"BodySmall"
+	_pa_label.add_theme_color_override(&"font_color", DS.TEXT_PRIMARY)
+	_pa_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_pa_label)
+
+
 func _connect_bus() -> void:
 	EventBus.day_started.connect(_on_day_started)
+	EventBus.wanted_notices_published.connect(_on_wanted_notices_published)
+	EventBus.item_slipped.connect(_on_item_slipped)
+	EventBus.item_decided.connect(_on_item_decided)
+	EventBus.hall_announced.connect(_on_hall_announced)
 	EventBus.day_phase_changed.connect(_on_day_phase_changed)
 	EventBus.day_clock_ticked.connect(_on_day_clock_ticked)
 	EventBus.case_presented.connect(_on_case_presented)
@@ -291,11 +348,10 @@ func _on_day_started(p_day: DayDef, p_rulebook: Array[RulebookEntry]) -> void:
 	rulebook_entries = p_rulebook.duplicate()
 	processed = 0
 	remaining_sec = p_day.duration_sec
-	detain_available = false
-	if p_day.rule_set != null:
-		for rule: Rule in p_day.rule_set.rules:
-			detain_available = detain_available or (rule != null and rule.severity >= RuleEngine.DETAIN_SEVERITY)
-	rulebook.set_rulebook(rulebook_entries, p_day.game_date, p_day.day_number)
+	# DÉTENTION (« mise en attente ») seulement si le jour l'autorise (J7+, D-055).
+	detain_available = p_day.detain_enabled
+	wanted_notices.clear()
+	rulebook.set_rulebook(rulebook_entries, p_day.game_date, p_day.day_number, p_day.rulebook_tabs)
 	top_bar.set_day(p_day.day_number, p_day.game_date)
 	top_bar.set_clock(remaining_sec, p_day.duration_sec)
 	top_bar.set_processed(processed)
@@ -305,7 +361,13 @@ func _on_day_started(p_day: DayDef, p_rulebook: Array[RulebookEntry]) -> void:
 
 
 func _on_day_phase_changed(p_phase: DayPhase.Kind, case_id: StringName) -> void:
+	var previous: DayPhase.Kind = phase
 	phase = p_phase
+	if p_phase == DayPhase.Kind.INSPECTING and previous == DayPhase.Kind.ARRIVING and current_case != null \
+			and case_id == current_case.case_id and current_case.presentation == PRESENTATION_KNOCK:
+		# Code 5 : trois tapes sur la vitre avant les papiers (didascalie seule).
+		subtitles.show_tag(UiText.passenger_number(current_case), UiText.t("tag_knock_three", "[trois tapes sur la vitre]"))
+		passenger_panel.set_hint(UiText.t("tag_knock_three", "[trois tapes sur la vitre]"))
 	if p_phase == DayPhase.Kind.WAITING_CASE:
 		if current_case != null and (case_id == &"" or case_id != current_case.case_id or verdict_sent):
 			_end_case(true)
@@ -327,7 +389,8 @@ func _on_case_presented(case: Case) -> void:
 	documents_shown = false
 	verdict_sent = false
 	elapsed_sec = 0.0
-	var bark: String = UiText.t(scripted_key(case, "arrival", "bark_arrival"), "Bonsoir… J'arrive, j'arrive.")
+	slipped_items.clear()
+	var bark: String = arrival_text(case)
 	passenger_panel.set_line(bark)
 	subtitles.show_line(UiText.passenger_number(case), bark, UiText.t("tag_footsteps", "[pas mouillés]"))
 	workbench.set_empty_state(UiText.t("wb_empty_title", "EN ATTENTE DES DOCUMENTS"),
@@ -341,7 +404,9 @@ func _on_documents_presented(case_id: StringName) -> void:
 	documents_shown = true
 	elapsed_sec = 0.0
 	workbench.present(current_case.documents, portrait_provider)
-	var line: String = UiText.t(scripted_key(current_case, "present", "bark_present"), "Voici mes papiers…")
+	for item: SlippedItem in slipped_items:
+		_show_slipped(item)
+	var line: String = passenger_text(UiText.t(scripted_key(current_case, "present", "bark_present"), "Voici mes papiers…"))
 	passenger_panel.set_line(line)
 	# Mot glissé entre les documents (passager scénarisé, ex. SC-05 Lucioles).
 	var note_key: String = scripted_key(current_case, "note", "")
@@ -349,7 +414,161 @@ func _on_documents_presented(case_id: StringName) -> void:
 		toasts.push(ToastStack.Kind.NARRATIVE, UiText.t("note_title", "UN MOT GLISSÉ ENTRE LES PAPIERS"), UiText.t(note_key, ""))
 	passenger_panel.set_hint("")
 	subtitles.show_line(_speaker_name(), line)
+	# Code 4 : phrase de passe dite spontanément, après les papiers.
+	if current_case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE_PASSWORD):
+		var password_key: String = scripted_key(current_case, "password", "line_password_generic")
+		get_tree().create_timer(UiText.subtitle_hold(line)).timeout.connect(say_passenger_line.bind(current_case.case_id, password_key))
 	_refresh_all()
+
+
+# ---------------------------------------------------------------------------
+# M7 : objets glissés, annonces, avis de recherche
+# ---------------------------------------------------------------------------
+
+func _on_item_slipped(item: SlippedItem) -> void:
+	if item == null or current_case == null or item.case_id != current_case.case_id:
+		return
+	for known: SlippedItem in slipped_items:
+		if known.id == item.id:
+			return
+	slipped_items.append(item)
+	# Les documents peuvent être posés juste après (ordre des écouteurs) :
+	# l'objet suit alors les documents (`_on_documents_presented`).
+	if documents_shown:
+		_show_slipped(item)
+
+
+func _show_slipped(item: SlippedItem) -> void:
+	if workbench.get_slipped_view(item.id) != null:
+		return
+	var view: SlippedItemView = SlippedItemView.create(item)
+	view.name = "Slipped_%s" % item.id
+	view.decision_requested.connect(request_item_decision)
+	workbench.add_slipped_item(view)
+	if item.kind == SlippedItem.Kind.ENVELOPE:
+		var key: String = scripted_key(current_case, "bribe", "line_bribe_generic")
+		get_tree().create_timer(DS.DUR_SLOW + DS.DOC_STAGGER * 3.0).timeout.connect(say_passenger_line.bind(item.case_id, key))
+	_refresh_all()
+
+
+## Intention du joueur sur un objet glissé (bouton GARDER / RENDRE / REMETTRE) :
+## `item_decision_requested` ; ignoré hors inspection (verdict transmis).
+func request_item_decision(item_id: StringName, decision: SlippedItem.Decision) -> bool:
+	if not _inspection_allowed() or current_case == null:
+		return false
+	var item: SlippedItem = current_case.get_item(item_id)
+	if item == null or not item.is_allowed(decision):
+		return false
+	EventBus.item_decision_requested.emit(item_id, decision)
+	return true
+
+
+func _on_item_decided(item: SlippedItem, decision: SlippedItem.Decision) -> void:
+	if item == null:
+		return
+	var view: SlippedItemView = workbench.get_slipped_view(item.id)
+	if view != null:
+		view.set_decision(decision, verdict_sent)
+	if verdict_sent or current_case == null or item.case_id != current_case.case_id:
+		return
+	if item.kind == SlippedItem.Kind.ENVELOPE:
+		var suffix: String = "bribe_kept" if decision == SlippedItem.Decision.KEEP else "bribe_returned"
+		say_passenger_line(item.case_id, scripted_key(current_case, suffix, "line_%s_generic" % suffix))
+	if decision == SlippedItem.Decision.REPORT:
+		toasts.push(ToastStack.Kind.INFO, UiText.t("wb_item_report_toast", "Objet remis à la Garde"),
+				SlippedItemView.item_label(item), ScreenBase.credits(item.report_bonus, true) if item.report_bonus > 0 else "")
+	_refresh_all()
+
+
+## Réplique hors interrogatoire du passager courant (sous-titre + bulle) ;
+## ignorée si le cas a changé entre-temps.
+func say_passenger_line(case_id: StringName, key: String) -> void:
+	if current_case == null or current_case.case_id != case_id or key.is_empty() or not UiText.has(key):
+		return
+	if verdict_sent and not key.contains("bribe_"):
+		return # réplique différée devenue caduque (verdict posé entre-temps)
+	var text: String = passenger_text(UiText.t(key, ""))
+	if text.is_empty():
+		return
+	subtitles.show_line(_speaker_name(), text)
+	passenger_panel.set_line(text)
+	passenger_line_shown.emit(key, text)
+
+
+func _on_hall_announced(text_key: String) -> void:
+	show_announcement(UiText.t(text_key, text_key))
+
+
+## Annonce du haut-parleur du Hall (sous-titre discret ; toast si les
+## sous-titres sont désactivés : aucune information par le son seul).
+func show_announcement(text: String) -> void:
+	if text.is_empty():
+		return
+	announcement_text = text
+	if not subtitles.enabled:
+		toasts.push(ToastStack.Kind.INFO, UiText.t("spk_pa", "HAUT-PARLEUR · HALL"), text)
+		return
+	_pa_serial += 1
+	var serial: int = _pa_serial
+	_pa_label.text = text
+	pa_strip.visible = true
+	pa_strip.reset_size()
+	pa_strip.modulate.a = 0.0
+	var tween: Tween = pa_strip.create_tween()
+	tween.tween_property(pa_strip, "modulate:a", 1.0, DS.DUR_BASE)
+	get_tree().create_timer(maxf(PA_MIN_HOLD, UiText.subtitle_hold(text))).timeout.connect(_hide_announcement.bind(serial))
+
+
+func _hide_announcement(serial: int) -> void:
+	if serial != _pa_serial or not is_instance_valid(pa_strip):
+		return
+	var out: Tween = pa_strip.create_tween()
+	out.tween_property(pa_strip, "modulate:a", 0.0, DS.DUR_SLOW)
+	out.tween_callback(pa_strip.hide)
+
+
+func _on_wanted_notices_published(notices: Array[WantedNotice]) -> void:
+	wanted_notices = notices.duplicate()
+	rulebook.set_wanted(wanted_notices, portrait_provider)
+
+
+## Avis de recherche par identifiant (null si inconnu).
+func find_notice(notice_id: StringName) -> WantedNotice:
+	for notice: WantedNotice in wanted_notices:
+		if notice.id == notice_id:
+			return notice
+	return null
+
+
+## Réplique d'arrivée (`<dialogue>_arrival`, sinon générique) ; un porteur du
+## code 7 glisse *lumika* dans sa phrase.
+static func arrival_text(case: Case) -> String:
+	var text: String = UiText.t(scripted_key(case, "arrival", "bark_arrival"), "Bonsoir… J'arrive, j'arrive.")
+	if case != null and case.dialogue_tags.has(CaseBuilder.TAG_LUMIKA) and not text.to_lower().contains(LUMIKA_WORD) \
+			and not text.contains(_unknown_word()):
+		text += " " + LUMIKA_WORD.capitalize() + "."
+	return passenger_text(text)
+
+
+## Sous-titre d'un passager : *lumika* reste « [mot inconnu] » tant que le mot
+## n'est pas appris (`lumika_learned`, NARRATIVE B16), puis s'affiche.
+static func passenger_text(text: String) -> String:
+	if text.is_empty():
+		return text
+	var learned: bool = GameState.get_flag(FLAG_LUMIKA, false) == true
+	return lumika_text(text, learned)
+
+
+static func lumika_text(text: String, learned: bool) -> String:
+	var unknown: String = _unknown_word()
+	if learned:
+		return text.replace(unknown, LUMIKA_WORD)
+	var regex: RegEx = RegEx.create_from_string("(?i)\\blumika\\b")
+	return regex.sub(text, unknown, true)
+
+
+static func _unknown_word() -> String:
+	return UiText.t("tag_unknown_word", UNKNOWN_WORD_FALLBACK)
 
 
 func _on_discrepancy_checked(result: Discrepancy) -> void:
@@ -391,7 +610,7 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 
 
 func _on_interrogation_answered(topic: StringName, line_key: String) -> void:
-	var text: String = UiText.t(line_key, line_key)
+	var text: String = passenger_text(UiText.t(line_key, line_key))
 	passenger_panel.set_line(text)
 	subtitles.show_line(_speaker_name(), text)
 	_answer_frame = Engine.get_process_frames()
@@ -412,7 +631,7 @@ func _on_reaction(reaction: PassengerReaction.Kind) -> void:
 		_answer_text = ""
 		passenger_panel.set_hint(tag)
 		return
-	var line: String = UiText.t("react_" + name_key, "")
+	var line: String = passenger_text(UiText.t("react_" + name_key, ""))
 	if not line.is_empty():
 		subtitles.show_line(_speaker_name(), line, tag)
 		passenger_panel.set_line(line)
@@ -456,7 +675,7 @@ func show_departure_line(case_id: StringName, kind: VerdictKind.Kind) -> void:
 		return
 	_departing_case = null
 	var key: String = departure_key(leaving, kind)
-	var text: String = UiText.t(key, "")
+	var text: String = passenger_text(UiText.t(key, ""))
 	if text.is_empty():
 		return
 	subtitles.show_line(UiText.passenger_name(leaving), text, UiText.t("tag_departing", "[en partant]"))
@@ -466,6 +685,10 @@ func show_departure_line(case_id: StringName, kind: VerdictKind.Kind) -> void:
 
 
 static func departure_key(case: Case, kind: VerdictKind.Kind) -> String:
+	# M7 : dernière réplique scénarisée (`_exit_<verdict>`, détention générique).
+	var exit_key: String = InspectionSession.exit_line_key(case, kind)
+	if not exit_key.is_empty():
+		return exit_key
 	match kind:
 		VerdictKind.Kind.APPROVE:
 			return scripted_key(case, "depart_ok", "bark_depart_ok")
@@ -635,6 +858,10 @@ func available_topics() -> Array[StringName]:
 	var topics: Array[StringName] = []
 	if current_case == null or not documents_shown:
 		return topics
+	if luciole_reply_available():
+		topics.append(InterrogationTopics.LUCIOLE_REPLY)
+	if current_case.has_envelope() and not asked_topics.has(InterrogationTopics.ABOUT_ENVELOPE):
+		topics.append(InterrogationTopics.ABOUT_ENVELOPE)
 	for topic: StringName in unlocked_topics:
 		topics.append(topic)
 	if _face_covered() and not asked_topics.has(InterrogationTopics.REMOVE_VISOR):
@@ -642,6 +869,16 @@ func available_topics() -> Array[StringName]:
 	for topic: StringName in InterrogationTopics.BASE:
 		topics.append(topic)
 	return topics
+
+
+## Réponse à la phrase de passe proposée (code 4) : étiquette du cas et
+## `lucioles_trust ≥ 2` (même condition que le DayController, GDD §4.7).
+func luciole_reply_available() -> bool:
+	if current_case == null or asked_topics.has(InterrogationTopics.LUCIOLE_REPLY):
+		return false
+	if not current_case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE_PASSWORD):
+		return false
+	return FlagCondition.gauge_value(GameState.narrative_flags, CaseConsequences.FLAG_TRUST) >= CaseConsequences.PASSWORD_TRUST
 
 
 func toggle_question_menu() -> void:
@@ -660,7 +897,8 @@ func open_question_menu() -> void:
 		_menu_items.append({
 			"topic": topic,
 			"text": InterrogationTopics.question_text(topic, current_case),
-			"unlocked": unlocked_topics.has(topic),
+			"unlocked": unlocked_topics.has(topic) or topic == InterrogationTopics.ABOUT_ENVELOPE,
+			"luciole": topic == InterrogationTopics.LUCIOLE_REPLY,
 			"asked": asked_topics.has(topic),
 		})
 	passenger_panel.show_menu(_menu_items)
@@ -703,6 +941,9 @@ func _on_stamped(kind: VerdictKind.Kind) -> void:
 	verdict.questions_asked = asked_topics.duplicate()
 	verdict.elapsed_sec = elapsed_sec
 	verdict_sent = true
+	for view: SlippedItemView in workbench.items:
+		if is_instance_valid(view):
+			view.lock()
 	set_inspection_active(false)
 	close_question_menu()
 	var caption: String = UiText.tf("stamp_caption", [day.day_number if day != null else 0], "CONSORTIUM · G04 · J%02d")
@@ -755,6 +996,8 @@ func _end_case(animated: bool) -> void:
 	documents_shown = false
 	selection.reset()
 	discrepancies.clear()
+	if phase == DayPhase.Kind.WAITING_CASE:
+		slipped_items.clear()
 	unlocked_topics.clear()
 	asked_topics.clear()
 	question_menu_open = false
@@ -781,7 +1024,12 @@ func _refresh_all() -> void:
 	tool_bar.set_stamps_locked(not allowed)
 	tool_bar.set_inspection_available(allowed)
 	tool_bar.set_interrogate_available(allowed)
-	tool_bar.set_unlocked_count(unlocked_topics.size() + (1 if allowed and _face_covered() and not asked_topics.has(InterrogationTopics.REMOVE_VISOR) else 0))
+	var extra: int = 1 if allowed and _face_covered() and not asked_topics.has(InterrogationTopics.REMOVE_VISOR) else 0
+	if allowed and current_case != null and current_case.has_envelope() and not asked_topics.has(InterrogationTopics.ABOUT_ENVELOPE):
+		extra += 1
+	if allowed and luciole_reply_available():
+		extra += 1
+	tool_bar.set_unlocked_count(unlocked_topics.size() + extra)
 	workbench.set_inspection_available(allowed, UiText.t("wb_mode_verdict", "VERDICT TRANSMIS") if verdict_sent else "")
 	match phase:
 		DayPhase.Kind.WAITING_CASE:
@@ -978,7 +1226,7 @@ func _refresh_doc_flags() -> void:
 func _find_item(ref: FieldRef) -> InspectableItem:
 	if ref == null or ref.is_passenger_face():
 		return null
-	if ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID:
+	if ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted():
 		return rulebook.find_item(ref, true)
 	return workbench.find_item(ref)
 
@@ -993,7 +1241,7 @@ func _rect_of(ref: FieldRef) -> Rect2:
 	if item == null or not item.is_visible_in_tree():
 		return Rect2()
 	var rect: Rect2 = item.get_global_rect()
-	if ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID and rulebook.collapsed:
+	if (ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted()) and rulebook.collapsed:
 		return Rect2()
 	return rect
 
@@ -1087,6 +1335,11 @@ func describe(result: Discrepancy) -> String:
 				if entry.rule_id == rule_ref.field_id:
 					title = UiText.t(entry.title_key, title)
 			return UiText.tf("disc_rule_detail", [number, title], "Règle %02d enfreinte — %s")
+		"disc_wanted_match":
+			var wanted_ref: FieldRef = result.a if result.a.is_wanted() else result.b
+			var notice: WantedNotice = find_notice(wanted_ref.field_id) if wanted_ref != null else null
+			if notice != null:
+				return UiText.tf("disc_wanted_detail", [notice.full_name().to_upper()], "Avis de recherche : %s")
 	return UiText.t(result.reason_key, result.reason_key)
 
 

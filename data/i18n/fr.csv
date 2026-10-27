@@ -1037,3 +1037,110 @@ end_eyebrow_f4_glory,CONSORTIUM · PROMOTION C-2
 end_eyebrow_f5_air,LA SOUTE · RECYCLEUR 3
 end_eyebrow_f6_drift,QUAI 6 · BASSE-MARÉE
 end_eyebrow_f7_reopens,HALL DES GUICHETS · GUICHET 04
+tag_knock_three,[trois tapes sur la vitre]
+tag_unknown_word,[mot inconnu]
+spk_pa,HAUT-PARLEUR · HALL
+wb_item_eyebrow,GLISSÉ AVEC LES PAPIERS
+wb_item_hint_envelope,"Non déclarée. Hors salaire, hors registre."
+wb_item_pending,À trancher avant le tampon — sinon rendu d'office.
+wb_item_pending_keep,À trancher avant le tampon — sinon gardé.
+wb_item_kept_envelope,Gardée dans le tiroir · %s divers non déclaré
+wb_item_kept,Gardé dans le tiroir.
+wb_item_returned,Rendu par la fente.
+wb_item_reported,Remis à la Garde · prime %s
+wb_item_reported_plain,Remis à la Garde.
+wb_item_report_toast,Objet remis à la Garde
+disc_wanted_detail,Avis de recherche : %s
+q_about_wanted_match,Vous figurez sur l'avis de recherche.
+q_about_implant_mismatch,Cet implant n'est pas déclaré.
+q_about_age_mismatch,Vous ne faites pas l'âge de votre {doc}.
+q_about_mrz_mismatch,La bande de votre {doc} ne recopie pas vos données.
+rb_bulletins,BULLETINS
+rb_tab_origins,Codes d'origine
+rb_tab_new,NOUV.
+rb_origins_intro,Le 1er chiffre du bloc ID (HG-N…) désigne l'origine du titulaire. Comparez-le au champ Origine.
+rb_origins_block,BLOC ID
+rb_implants_intro,Mode Inspection : comparez le visage du passager à « Implants déclarés » de sa carte.
+rb_implant_opt_title,Oculaire · vision augmentée
+rb_implant_opt_text,"Iris annulaire lumineux, cerclage chromé autour de l'orbite."
+rb_implant_opt_status,LÉGAL SI DÉCLARÉ
+rb_implant_nx_title,Shunt neural · interface outil
+rb_implant_nx_text,"Port circulaire derrière l'oreille ou à la nuque, LED d'état."
+rb_implant_nx_status,LÉGAL SI DÉCLARÉ
+rb_implant_kin_title,Cinétique · prothèse
+rb_implant_kin_text,"Main ou membre en polymère mat, jointures apparentes."
+rb_implant_kin_status,LÉGAL SI DÉCLARÉ
+rb_implant_der_title,Dermique · sous-cutané
+rb_implant_der_text,Lignes lumineuses sous la peau du cou. DER-19 (carré sur le dos de la main) : toujours interdit.
+rb_implant_der_status,LÉGAL SI DÉCLARÉ · SAUF DER-19
+rb_implant_mil_title,Militaire · combat
+rb_implant_mil_text,"Plaques sombres sur la tempe ou la mâchoire, œil rouge mat. Non déclaré dès le J7 : mise en attente."
+rb_implant_mil_status,INTERDIT SANS DÉROGATION
+rb_symbols_intro,Bulletin du Bureau de Continuité · symboles subversifs relevés aux quais.
+rb_symbol_luciole_title,Luciole · encre magenta
+rb_symbol_luciole_text,"Petit insecte lumineux dessiné au coin d'un document, visible à la loupe. Marque du réseau des Lucioles."
+rb_symbol_luciole_action,À SIGNALER · DÉTENTION DOCUMENTÉE
+rb_seals_intro,Sceaux en vigueur au 21.03.2187 : tout ancien modèle est refusé.
+rb_wanted_intro,Par le nom ou par le visage : mise en attente. Mode Inspection : comparez l'avis au visage du passager ou à ses papiers.
+rb_wanted_display,AVIS %02d · %s
+rb_wanted_number,AVIS N° %02d · RECHERCHÉ·E
+rb_wanted_action,MISE EN ATTENTE
+ev_events,CE SOIR
+ev_events_total,Événements du soir
+ev_event_step,%d / %d
+ev_kind_letter,RÉCIT
+ev_kind_choice,DÉCISION
+ev_kind_audit,AUDIT
+ev_event_skipped,"Cette nuit-là, vous ne rentrez pas au Bloc Pétrel."
+ev_event_prev,◀ PRÉCÉDENT
+ev_event_next,SUIVANT ▶
+ev_option_insufficient,Fonds insuffisants : %s requis
+ev_events_pending,%d décisions à prendre ce soir
+ev_events_pending_one,%d décision à prendre ce soir
+sum_bribes,DIVERS NON DÉCLARÉ
+sum_bribes_detail,Enveloppes gardées · hors salaire
+sum_reports,PRIME DE SIGNALEMENT
+sum_reports_detail,Objets remis à la Garde
+sum_total_detail,Ce soir au total : %s
+sum_item_bribe,ENVELOPPE %s
+sum_item_report,SIGNALÉ %s
+end_variant_veilleurs,VARIANTE · VEILLEURS
+end_variant_brulants,VARIANTE · BRÛLANTS
+end_date,JEUDI 22.03.2187 · GUICHET 04
+end_skip,TOUT AFFICHER
+end_trace_sc06_reunited,"Vous avez laissé Amara retrouver les siens, la deuxième fois."
+end_trace_sc07_bribe_kept,Vous avez gardé l'enveloppe du fils Valcourt.
+end_trace_sc07_bribe_returned,Vous avez rendu l'enveloppe du fils Valcourt.
+end_trace_noa_birthday_gift,Vous avez offert une orange à Noa pour ses neuf ans.
+end_trace_lucioles_heating_accepted,Vous avez accepté le chauffage payé par les Lucioles.
+end_trace_inspector_bribe_taken,Vous avez pris les trente crédits de l'inspecteur déguisé.
+end_trace_inspector_test_passed,"Vous avez refusé l'inspecteur déguisé, enveloppe rendue."
+end_trace_inspector_test_failed,Vous avez laissé passer l'inspecteur déguisé.
+end_trace_sc11_veteran_passed,Vous avez laissé passer le vétéran Mazur et sa dérogation.
+end_trace_sc13_detained,Vous avez mis en attente le sosie luciole.
+end_trace_sc13_passed,Vous avez laissé passer le sosie luciole.
+end_trace_sc14_bribe_kept,Vous avez gardé l'enveloppe de l'insuline pour Cérès.
+end_trace_sc16_hana_passed,Vous avez réuni le couple Hadid.
+end_trace_sc16_family_split,Vous avez séparé le couple Hadid.
+end_trace_sc17_detained,Vous avez mis en attente la sœur aux papiers prêtés. Kwame est resté seul.
+end_trace_sc17_passed,Vous avez laissé passer la sœur aux papiers prêtés.
+end_trace_neighbor_denounced,Vous avez signalé la cabine 12.
+end_trace_neighbor_helped,Vous avez nourri le jeune Tharsien de la cabine 12.
+end_trace_brulants_package,Vous avez caché le colis des Brûlants sous la couchette de Noa.
+end_trace_sc18_note_reported,Vous avez remis à la Garde le mot destiné à Ilan.
+end_trace_sc18_note_kept,Vous avez gardé le mot destiné à Ilan.
+end_trace_audit_retention,L'Inspecteur Ravel a ouvert un dossier à votre nom.
+end_trace_audit_clean,L'audit de Ravel n'a rien trouvé.
+end_trace_ilan_supported,Vous avez dit à Ilan : « Vas-y. Fais attention. »
+end_trace_ilan_forbidden,Vous avez retenu Ilan à la maison.
+end_trace_ilan_denounced,Vous avez dénoncé Ilan à l'Inspection.
+end_trace_okonkwo_denounced,Vous avez signé la déposition contre Okonkwo.
+end_trace_okonkwo_warned,Vous avez prévenu Okonkwo dans la nuit.
+end_trace_drift_passes_bought,Vous avez acheté trois places sur le Basse-Marée.
+end_trace_sc20_detained,Vous avez mis en attente l'homme du quai 2.
+end_trace_sc20_passed,Vous avez laissé passer l'homme du quai 2.
+end_trace_sc21_bribe_kept,Vous avez gardé les cinquante crédits pour ne pas regarder.
+end_trace_final_detained,Vous avez mis Mira en attente.
+end_trace_final_passed,Vous avez laissé passer Mira.
+end_trace_final_denied,Vous avez refusé Mira.
+end_trace_final_unprocessed,Mira n'a jamais atteint votre vitre.
