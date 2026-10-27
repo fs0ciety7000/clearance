@@ -24,9 +24,8 @@ Captures : [guichet J3](docs/mockups/m6_day3_autoplay.png) · [enveloppe J4](doc
 | [`docs/BOOTH_SCENE.md`](docs/BOOTH_SCENE.md) | Mise en scène du guichet : vitre, caméra, chorégraphie du passager, apparences |
 | [`docs/ASSETS.md`](docs/ASSETS.md) | Sources d'assets libres, pipeline personnages/animations, registre des licences |
 | [`docs/AUDIO.md`](docs/AUDIO.md) | Bus audio, liste des sons, voix courtes sous-titrées |
-| [`DECISIONS.md`](DECISIONS.md) | Journal des décisions |
-
 | [`docs/NARRATIVE.md`](docs/NARRATIVE.md) | Arcs, flags, passagers scénarisés J4–J10, soirées, 7 fins |
+| [`DECISIONS.md`](DECISIONS.md) | Journal des décisions |
 
 À venir : `docs/QA.md` (QA).
 
