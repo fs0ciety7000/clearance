@@ -233,8 +233,8 @@ func _hall() -> void:
 	# Néons d'ambiance (teintes monde désaturées) : tubes muraux.
 	_box(hall, "NeonTealTube", Vector3(0.04, 1.8, 0.04), Vector3(-4.8, 1.9, -8.6), _emissive(TEAL_DIM, 5.0))
 	_box(hall, "NeonTealTube2", Vector3(2.6, 0.035, 0.035), Vector3(-4.0, 2.85, -8.6), _emissive(TEAL_DIM, 5.0))
-	_box(hall, "NeonRoseTube", Vector3(2.2, 0.03, 0.03), Vector3(4.9, 2.0, -8.7), _emissive(ROSE_DIM, 5.0))
-	_box(hall, "NeonRoseTube2", Vector3(2.2, 0.03, 0.03), Vector3(4.9, 1.5, -8.7), _emissive(ROSE_DIM, 5.0))
+	_box(hall, "NeonRoseTube", Vector3(2.2, 0.03, 0.03), Vector3(4.9, 1.45, -8.7), _emissive(ROSE_DIM, 5.0))
+	_box(hall, "NeonRoseTube2", Vector3(2.2, 0.03, 0.03), Vector3(4.9, 0.95, -8.7), _emissive(ROSE_DIM, 5.0))
 
 
 func _pillar() -> void:
@@ -264,11 +264,11 @@ func _background() -> void:
 			Vector3(-3.4, 2.05, -8.78), 0.0022, Color(TEAL_DIM.r * 2.6, TEAL_DIM.g * 2.6, TEAL_DIM.b * 2.6, 1.0),
 			FONT_MONO, 64)
 	# Enseigne « TRANSIT·7 » en rose monde (BOOTH_SCENE §5.1).
-	_label(bg, "NeonTransit", "TRANSIT·7", Vector3(-5.4, 2.45, -8.6), 0.0035,
+	_label(bg, "NeonTransit", "TRANSIT·7", Vector3(-5.0, 1.25, -8.6), 0.0035,
 			Color(ROSE_DIM.r * 3.0, ROSE_DIM.g * 3.0, ROSE_DIM.b * 3.0, 1.0), FONT_DISPLAY, 96)
 	# Panneau du guichet (droite) en acier monde.
-	_box(bg, "BoothSignFrame", Vector3(2.0, 0.42, 0.06), Vector3(4.9, 1.75, -8.8), _mat(Color("#0B0E13"), 0.5, 0.3))
-	_label(bg, "BoothSign", "CONTRÔLE · GUICHET 04", Vector3(4.9, 1.75, -8.75), 0.0024,
+	_box(bg, "BoothSignFrame", Vector3(2.0, 0.42, 0.06), Vector3(4.9, 1.2, -8.8), _mat(Color("#0B0E13"), 0.5, 0.3))
+	_label(bg, "BoothSign", "CONTRÔLE · GUICHET 04", Vector3(4.9, 1.2, -8.75), 0.0024,
 			Color(STEEL.r * 3.2, STEEL.g * 3.2, STEEL.b * 3.2, 1.0), FONT_DISPLAY, 96)
 	# Silhouettes de la ville au-delà du quai.
 	var city: StandardMaterial3D = _mat(Color("#090B10"), 1.0)

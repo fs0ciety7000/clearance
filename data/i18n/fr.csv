@@ -230,3 +230,21 @@ line_generic_shrug,Je ne sais pas quoi vous dire.
 q_confront,Vos papiers ne sont pas en règle. Expliquez-vous.
 wb_returned_title,DOCUMENTS RENDUS
 wb_returned_text,Le passager quitte le guichet. « Suivant » se réactive à son départ.
+line_purpose_work,Je viens travailler. J'ai un contrat sur la station.
+line_purpose_family_visit,Je rends visite à ma famille.
+line_purpose_return,Je rentre chez moi. J'habite sur la station.
+line_purpose_trade,Affaires. Je livre une commande.
+line_purpose_transit,Je ne fais que passer. Correspondance pour l'Anneau B.
+line_purpose_diplomatic,Mission officielle. Mes papiers le précisent.
+line_stay_short,Quelques jours seulement.
+line_stay_long,"Plusieurs semaines, peut-être plus."
+line_origin_tyc,De Tycho. La navette du matin.
+line_origin_hal,D'ici. Je suis de Halcyon.
+line_origin_ter,De la Terre. Long voyage.
+line_about_expired,Je n'ai pas eu le temps de le renouveler… c'est l'affaire de quelques jours.
+line_about_mismatch,C'est… une erreur de l'administration.
+line_about_face_mismatch,C'est une vieille photo. J'ai changé.
+line_about_rule_violated,Personne ne m'a prévenu de ce règlement.
+briefing_eyebrow,Halcyon Gate · Guichet 04 · Directive du jour
+briefing_title,JOUR %d
+briefing_hint,Cliquez ou appuyez sur une touche pour ouvrir le guichet

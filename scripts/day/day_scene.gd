@@ -2,18 +2,24 @@
 ##
 ## Assemble la bande 3D (`SubViewportContainer` y 56→432, UI_FLOW §2), les
 ## services logiques (`DayController`, `DayClock`, `InspectionSession`,
-## `PortraitService`) et l'UI 2D : `res://scenes/ui/comparison_ui.tscn` est
-## instanciée dans `UISlot` si elle existe, et reçoit `portrait_provider`.
-## Sans UI (M4, avant intégration), des raccourcis de debug pilotent le cas ;
-## arguments utilisateur (après `--`) : `--day=N`, `--seed=N`, `--no-booth`,
-## `--autoplay` (bot de démonstration pour les captures), `--reduce-motion`,
-## `--no-ui` (bande 3D seule).
+## `PortraitService`), l'UI 2D `res://scenes/ui/comparison_ui.tscn` (instanciée
+## dans `UISlot`, **au-dessus** de la bande 3D ; sa bande B est transparente et
+## `MOUSE_FILTER_IGNORE`, les clics atteignent le booth) et le briefing du jour
+## (`DayBriefing`, ferme l'INTRO → `close_intro()`).
+## L'UI reçoit `portrait_provider` (PortraitService) et `face_rect_provider`
+## (projection du visage de l'acteur au guichet en coordonnées globales).
+## Arguments utilisateur (après `--`) : `--day=N`, `--seed=N`, `--no-booth`,
+## `--no-ui`, `--autoplay` (bot de démonstration, captures), `--reduce-motion`,
+## `--debug-keys` (raccourcis N/V/X/R/C/I, en conflit avec l'UI : debug seulement).
 class_name DayScene
 extends Control
 
 const COMPARISON_UI_PATH: String = "res://scenes/ui/comparison_ui.tscn"
-## Propriété que l'UI expose pour recevoir le fournisseur de portraits.
+## Propriétés que l'UI expose pour recevoir les fournisseurs.
 const PORTRAIT_PROVIDER_PROPERTY: StringName = &"portrait_provider"
+const FACE_RECT_PROVIDER_PROPERTY: StringName = &"face_rect_provider"
+## Autoplay : le briefing se ferme seul.
+const AUTOPLAY_BRIEFING_SEC: float = 1.5
 
 @onready var booth_container: SubViewportContainer = %BoothContainer
 @onready var booth_viewport: SubViewport = %BoothViewport
@@ -24,14 +30,17 @@ const PORTRAIT_PROVIDER_PROPERTY: StringName = &"portrait_provider"
 @onready var portrait_service: PortraitService = %PortraitService
 @onready var ui_slot: Control = %UISlot
 
-var ui: Node = null
+var ui: Control = null
+var briefing: DayBriefing = null
 var data: DataCatalog = null
+var debug_keys: bool = false
 var _autoplay: DemoAutoplay = null
 
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(DS.BG_VOID)
 	var args: Dictionary = _parse_args()
+	debug_keys = args.has("debug-keys")
 	if args.has("no-booth"):
 		_replace_booth_with_null()
 	if args.has("reduce-motion"):
@@ -52,18 +61,32 @@ func _ready() -> void:
 	if not day_controller.start_day(data, GameState.current_day, GameState.get_day_seed(), flags):
 		return
 	portrait_service.clear_cache()
-	# TODO(M5): l'écran d'intro du jour (UI) appellera close_intro().
-	day_controller.close_intro()
-	if args.has("autoplay") and ui == null:
+	_show_briefing(args.has("autoplay"))
+	if args.has("autoplay"):
 		_autoplay = DemoAutoplay.new()
 		_autoplay.name = "DemoAutoplay"
 		_autoplay.controller = day_controller
+		_autoplay.ui = ui as ComparisonUI
 		add_child(_autoplay)
 
 
 ## Fournisseur de portraits pour l'UI (`Callable(PassengerAppearance) -> Texture2D`).
 func get_portrait_provider() -> Callable:
 	return portrait_service.get_portrait
+
+
+## Rectangle global (canvas de la fenêtre) du visage de l'acteur au guichet :
+## projection caméra dans le SubViewport, mise à l'échelle et décalée par le
+## `SubViewportContainer`.
+func get_face_rect() -> Rect2:
+	if booth == null or booth_viewport.size.x <= 0 or booth_viewport.size.y <= 0:
+		return Rect2()
+	var r: Rect2 = booth.get_face_viewport_rect()
+	var scale_factor: Vector2 = booth_container.size / Vector2(booth_viewport.size)
+	var xform: Transform2D = booth_container.get_global_transform()
+	var rect: Rect2 = Rect2(xform * (r.position * scale_factor), r.size * scale_factor * xform.get_scale())
+	# Le cadre « VISAGE » reste dans la bande B (jamais sur la barre du haut).
+	return rect.intersection(booth_container.get_global_rect())
 
 
 func _load_ui() -> void:
@@ -76,7 +99,20 @@ func _load_ui() -> void:
 	ui = scene.instantiate()
 	if PORTRAIT_PROVIDER_PROPERTY in ui:
 		ui.set(PORTRAIT_PROVIDER_PROPERTY, get_portrait_provider())
+	if FACE_RECT_PROVIDER_PROPERTY in ui and booth != null:
+		ui.set(FACE_RECT_PROVIDER_PROPERTY, get_face_rect)
 	ui_slot.add_child(ui)
+
+
+## Briefing « JOUR N — directive du jour » : ferme l'INTRO au clic / à la touche.
+func _show_briefing(auto_close: bool) -> void:
+	briefing = DayBriefing.new()
+	briefing.name = "DayBriefing"
+	add_child(briefing)
+	briefing.setup(day_controller.day)
+	briefing.closed.connect(day_controller.close_intro)
+	if auto_close:
+		get_tree().create_timer(AUTOPLAY_BRIEFING_SEC).timeout.connect(briefing.close)
 
 
 func _replace_booth_with_null() -> void:
@@ -97,10 +133,9 @@ func _parse_args() -> Dictionary:
 	return result
 
 
-## Raccourcis de debug tant que l'UI n'est pas intégrée (M4) : N suivant,
-## V approuver, X refuser, R visière, C confronter, I mode Inspection.
+## Raccourcis de debug (`--debug-keys` seulement : l'UI porte les vraies actions).
 func _unhandled_key_input(event: InputEvent) -> void:
-	if ui != null:
+	if not debug_keys:
 		return
 	var key: InputEventKey = event as InputEventKey
 	if key == null or not key.pressed or key.echo:

@@ -41,16 +41,24 @@ const FACE_DOLLY: float = 0.3
 const ZOOM_IN_SEC: float = 0.4
 const ZOOM_OUT_SEC: float = 0.3
 ## Cadreur automatique (BOOTH_SCENE §3.3) : tilt vers la tête, borné, lissé.
+## Désactivé par défaut au M4 (retour Orchestrateur : caméra stable hors zoom visage).
 const FRAMER_EYE_HEIGHT: float = 1.55
 const FRAMER_DISTANCE: float = 2.6
 const FRAMER_MAX_PITCH: float = deg_to_rad(2.5)
 const FRAMER_SMOOTH: float = 2.5
 ## Vitre (quad centré) : pour le point dégagé autour du visage.
 const GLASS_SIZE: Vector2 = Vector2(2.4, 1.4)
+## Demi-taille du cadre « VISAGE » autour du centre de la tête (m).
+const FACE_HALF_SIZE: Vector2 = Vector2(0.15, 0.17)
+## Rayon de la zone cliquable « Visage » (généreuse, R17).
+const FACE_PICK_RADIUS: float = 0.17
 
 const FLAG_ARRIVED: int = 1
 const FLAG_DOCUMENTS: int = 2
 const FLAG_DEPARTED: int = 4
+
+## Active le cadreur automatique (tilt vers la tête pendant la marche).
+@export var framer_enabled: bool = false
 
 @onready var camera: Camera3D = %BoothCamera
 @onready var arrival_path: Path3D = %ArrivalPath
@@ -116,6 +124,50 @@ func get_actor(case_id: StringName) -> PassengerActor:
 
 func get_desk_actor() -> PassengerActor:
 	return _desk_actor
+
+
+## Clic sur le visage (Mode Inspection) : rayon caméra ↔ sphère de la tête.
+## Les événements souris arrivent du `SubViewportContainer` (coordonnées du
+## viewport du booth) ; test géométrique plutôt que picking physique (fiable en
+## headless et sans dépendre de la frame physique).
+func _unhandled_input(event: InputEvent) -> void:
+	var click: InputEventMouseButton = event as InputEventMouseButton
+	if click == null or not click.pressed or click.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if not inspection_mode or _desk_actor == null or _desk_actor.state != PassengerActor.State.AT_DESK:
+		return
+	if hits_face(click.position):
+		get_viewport().set_input_as_handled()
+		_desk_actor.face_clicked.emit()
+
+
+## Vrai si le point écran (viewport du booth) vise la tête de l'acteur au guichet.
+func hits_face(screen_pos: Vector2) -> bool:
+	if _desk_actor == null:
+		return false
+	var origin: Vector3 = camera.project_ray_origin(screen_pos)
+	var direction: Vector3 = camera.project_ray_normal(screen_pos)
+	var head: Vector3 = _desk_actor.rig.head.global_position
+	var along: float = (head - origin).dot(direction)
+	var closest: Vector3 = origin + direction * maxf(along, 0.0)
+	return closest.distance_to(head) <= FACE_PICK_RADIUS * _desk_actor.rig.scale.y
+
+
+## Rectangle du visage de l'acteur au guichet, en pixels du viewport du booth
+## (projection caméra ; tête à `DeskMark` si personne). Sert au cadre « VISAGE ».
+func get_face_viewport_rect() -> Rect2:
+	var head: Vector3 = desk_mark.global_position + Vector3(0, 1.62, 0)
+	var scale_y: float = 1.0
+	if _desk_actor != null and _desk_actor.visible:
+		head = _desk_actor.rig.head.global_position
+		scale_y = _desk_actor.rig.scale.y
+	if camera.is_position_behind(head):
+		return Rect2()
+	var right: Vector3 = camera.global_basis.x
+	var up: Vector3 = camera.global_basis.y
+	var top_left: Vector2 = camera.unproject_position(head - right * FACE_HALF_SIZE.x * scale_y + up * FACE_HALF_SIZE.y * scale_y)
+	var bottom_right: Vector2 = camera.unproject_position(head + right * FACE_HALF_SIZE.x * scale_y - up * FACE_HALF_SIZE.y * scale_y)
+	return Rect2(top_left, bottom_right - top_left).abs()
 
 
 # --- EventBus → 3D -----------------------------------------------------------
@@ -389,7 +441,8 @@ func _update_camera(delta: float) -> void:
 	_zoom = move_toward(_zoom, goal, delta * rate)
 	var t: float = ease(_zoom, -2.0)
 	camera.fov = lerpf(BASE_FOV, FACE_FOV, t)
-	if _desk_actor != null and _desk_actor.visible:
+	if framer_enabled and _desk_actor != null and _desk_actor.visible \
+			and _desk_actor.state == PassengerActor.State.ARRIVING:
 		var head_y: float = _desk_actor.rig.head.global_position.y
 		var wanted: float = clampf(atan((head_y - FRAMER_EYE_HEIGHT) / FRAMER_DISTANCE), -FRAMER_MAX_PITCH, FRAMER_MAX_PITCH)
 		if Settings.reduce_motion:

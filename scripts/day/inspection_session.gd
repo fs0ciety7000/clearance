@@ -3,8 +3,11 @@
 ## - Mode Inspection : `discrepancy_check_requested(a, b)` →
 ##   `DiscrepancyChecker.check()` → `discrepancy_checked(result)` ; les
 ##   discordances confirmées sont mémorisées (preuves du verdict).
-## - Interrogatoire minimal (`interrogation_requested(topic)`) : retrait de la
-##   visière (D-021), confrontation à une discordance, question générique.
+## - Interrogatoire minimal (`interrogation_requested(topic)`, sujets de
+##   `InterrogationTopics` côté UI) : `purpose` / `stay` / `origin` (réponse
+##   tirée de ce que *dit* le passager présenté), `remove_visor` (D-021),
+##   `about_<raison>[:<doc>]` = confrontation à une discordance confirmée
+##   (NERVOUS si elle a bien été constatée, ANGRY sinon), `confront` (générique).
 ## - Réactions du passager (`passenger_reaction_triggered`) : comparaison de
 ##   visages discordante, confrontation, verdict. Elles ne dépendent **jamais**
 ##   de la vérité cachée (`CaseKey`), seulement de ce que le joueur a constaté.
@@ -15,12 +18,24 @@ extends Node
 ## Sujets d'interrogatoire reconnus en M4 (le Scénariste les étend en M5).
 const TOPIC_REMOVE_VISOR: StringName = &"remove_visor"
 const TOPIC_CONFRONT: StringName = &"confront"
+const TOPIC_PURPOSE: StringName = &"purpose"
+const TOPIC_STAY: StringName = &"stay"
+const TOPIC_ORIGIN: StringName = &"origin"
+const ABOUT_PREFIX: String = "about_"
+const DOC_SEPARATOR: String = ":"
+## Au-delà, la réponse « séjour » est longue.
+const SHORT_STAY_DAYS: int = 7
 ## Répliques (clés de traduction, sous-titrées par l'UI).
 const LINE_VISOR_REMOVED: String = "line_visor_removed"
 const LINE_VISOR_NONE: String = "line_visor_none"
 const LINE_CONFRONT_NERVOUS: String = "line_confront_nervous"
 const LINE_CONFRONT_ANGRY: String = "line_confront_angry"
 const LINE_GENERIC_SHRUG: String = "line_generic_shrug"
+const LINE_PURPOSE_PREFIX: String = "line_purpose_"
+const LINE_STAY_SHORT: String = "line_stay_short"
+const LINE_STAY_LONG: String = "line_stay_long"
+const LINE_ORIGIN_PREFIX: String = "line_origin_"
+const LINE_ABOUT_PREFIX: String = "line_about_"
 
 var case: Case = null
 var ctx: RuleContext = null
@@ -121,9 +136,44 @@ func _on_interrogation_requested(topic: StringName) -> void:
 			else:
 				EventBus.interrogation_answered.emit(topic, LINE_CONFRONT_NERVOUS)
 				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
+		TOPIC_PURPOSE:
+			EventBus.interrogation_answered.emit(topic, LINE_PURPOSE_PREFIX + String(case.passenger_presented.purpose))
+		TOPIC_STAY:
+			var short: bool = case.passenger_presented.stay_days <= SHORT_STAY_DAYS
+			EventBus.interrogation_answered.emit(topic, LINE_STAY_SHORT if short else LINE_STAY_LONG)
+		TOPIC_ORIGIN:
+			EventBus.interrogation_answered.emit(topic, LINE_ORIGIN_PREFIX + String(case.passenger_presented.faction_id))
 		_:
-			EventBus.interrogation_answered.emit(topic, LINE_GENERIC_SHRUG)
-			EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.SHRUG)
+			if String(topic).begins_with(ABOUT_PREFIX):
+				_confront_about(topic)
+			else:
+				EventBus.interrogation_answered.emit(topic, LINE_GENERIC_SHRUG)
+				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.SHRUG)
+
+
+## `about_<raison>[:<doc>]` : confrontation à une discordance précise. Réelle
+## (constatée dans cette session) → réplique dédiée + NERVOUS ; sinon ANGRY.
+func _confront_about(topic: StringName) -> void:
+	var body: String = String(topic).trim_prefix(ABOUT_PREFIX)
+	var reason: String = body.get_slice(DOC_SEPARATOR, 0)
+	var doc: StringName = StringName(body.get_slice(DOC_SEPARATOR, 1)) if body.contains(DOC_SEPARATOR) else &""
+	if has_confirmed(reason, doc):
+		EventBus.interrogation_answered.emit(topic, LINE_ABOUT_PREFIX + reason)
+		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
+	else:
+		EventBus.interrogation_answered.emit(topic, LINE_CONFRONT_ANGRY)
+		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.ANGRY)
+
+
+## Vrai si une discordance confirmée a cette raison (`expired`, `mismatch`…)
+## et touche le document `doc` (si précisé).
+func has_confirmed(reason: String, doc: StringName = &"") -> bool:
+	for d: Discrepancy in confirmed:
+		if d.reason_key.trim_prefix("disc_") != reason:
+			continue
+		if doc == &"" or (d.a != null and d.a.document_id == doc) or (d.b != null and d.b.document_id == doc):
+			return true
+	return false
 
 
 func _already_confirmed(result: Discrepancy) -> bool:

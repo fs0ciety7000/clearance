@@ -147,3 +147,41 @@ func test_reaction_for_verdict() -> void:
 	assert_eq(InspectionSession.reaction_for_verdict(VerdictKind.Kind.APPROVE), PassengerReaction.Kind.RELIEVED)
 	assert_eq(InspectionSession.reaction_for_verdict(VerdictKind.Kind.DENY), PassengerReaction.Kind.ANGRY)
 	assert_eq(InspectionSession.reaction_for_verdict(VerdictKind.Kind.DETAIN), PassengerReaction.Kind.NERVOUS)
+
+
+func test_base_topics_answer_from_presented_passenger() -> void:
+	var c: Case = _begin(0)
+	EventBus.documents_presented.emit(c.case_id)
+	EventBus.interrogation_requested.emit(InspectionSession.TOPIC_PURPOSE)
+	assert_eq(_last_line(), InspectionSession.LINE_PURPOSE_PREFIX + String(c.passenger_presented.purpose))
+	EventBus.interrogation_requested.emit(InspectionSession.TOPIC_STAY)
+	var short: bool = c.passenger_presented.stay_days <= InspectionSession.SHORT_STAY_DAYS
+	assert_eq(_last_line(), InspectionSession.LINE_STAY_SHORT if short else InspectionSession.LINE_STAY_LONG)
+	EventBus.interrogation_requested.emit(InspectionSession.TOPIC_ORIGIN)
+	assert_eq(_last_line(), InspectionSession.LINE_ORIGIN_PREFIX + String(c.passenger_presented.faction_id))
+	assert_eq(reactions.size(), 0, "questions neutres : pas de réaction")
+	for line: String in [_last_line(), InspectionSession.LINE_STAY_SHORT, InspectionSession.LINE_STAY_LONG]:
+		assert_true(UiText.has(line), "réplique traduite : %s" % line)
+
+
+func test_about_topic_confronts_real_discrepancy_only() -> void:
+	var generated: GeneratedCase = builder.build_with(4, [AnomalyType.Kind.EXPIRED_DOCUMENT])
+	var c: Case = generated.case
+	session.begin(c, builder.ctx)
+	EventBus.documents_presented.emit(c.case_id)
+	# Non constatée : accusation sans preuve.
+	EventBus.interrogation_requested.emit(&"about_expired")
+	assert_eq(_last_line(), InspectionSession.LINE_CONFRONT_ANGRY)
+	assert_eq(_last_reaction(), PassengerReaction.Kind.ANGRY)
+	var doc: StringName = &""
+	for ref: FieldRef in c.find_refs_by_truth_path(DiscrepancyChecker.EXPIRY_PATH):
+		EventBus.discrepancy_check_requested.emit(ref, FieldRef.today())
+		if _last_check().confirmed:
+			doc = ref.document_id
+	assert_ne(doc, &"", "expiration constatée")
+	EventBus.interrogation_requested.emit(StringName("about_expired:%s" % doc))
+	assert_eq(_last_line(), InspectionSession.LINE_ABOUT_PREFIX + "expired")
+	assert_eq(_last_reaction(), PassengerReaction.Kind.NERVOUS)
+	assert_true(UiText.has(_last_line()))
+	EventBus.interrogation_requested.emit(&"about_expired:other_doc")
+	assert_eq(_last_reaction(), PassengerReaction.Kind.ANGRY, "autre document : non constaté")

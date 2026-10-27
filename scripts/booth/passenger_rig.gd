@@ -190,7 +190,8 @@ func _build() -> void:
 	head_area.collision_layer = FACE_PICK_LAYER
 	head_area.collision_mask = 0
 	head_area.monitoring = false
-	head_area.input_ray_pickable = true
+	# Le clic « Visage » est testé par BoothDirector (rayon ↔ tête) : pas de picking physique.
+	head_area.input_ray_pickable = false
 	var shape: CollisionShape3D = CollisionShape3D.new()
 	var sphere_shape: SphereShape3D = SphereShape3D.new()
 	sphere_shape.radius = 0.17
