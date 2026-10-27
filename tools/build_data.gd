@@ -54,13 +54,15 @@ func _build() -> void:
 
 func _build_economy() -> void:
 	var e: EconomyDef = EconomyDef.new()
-	e.starting_credits = 0
+	# D-047 (équilibrage du foyer, `tools/balance_sim.gd`) : avance du Consortium
+	# à la prise de poste, chauffage 8 → 6 ₵, réaffectation au 3ᵉ loyer impayé.
+	e.starting_credits = 20
 	e.rent = 15
 	e.rent_raised = 20
 	e.rent_raise_day = 8
 	e.air_tax = 5
 	e.food = 10
-	e.heating = 8
+	e.heating = 6
 	e.oxygen = 10
 	e.oxygen_every_n_days = 2
 	e.medicine_per_member = 15
@@ -68,7 +70,7 @@ func _build_economy() -> void:
 	e.deprivation_sick_evenings = 2
 	e.untreated_worsen_evenings = 2
 	e.oxygen_grave_misses = 2
-	e.eviction_unpaid_rent = 2
+	e.eviction_unpaid_rent = 3
 	e.debt_evenings_limit = 3
 	e.detain_bonus = 5
 	_save(e, ECONOMY_DIR, "economy")

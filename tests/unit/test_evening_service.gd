@@ -26,10 +26,10 @@ func test_lines_follow_gdd() -> void:
 	var home: Household = Household.new()
 	var d1: Array[ExpenseLine] = _lines(1, home)
 	assert_eq(_all_ids(d1), [&"rent", &"air_tax", &"food", &"heating"] as Array[StringName])
-	assert_eq(EveningService.total_spent(_pay(d1, _all_ids(d1))), 38, "base quotidienne 38 ₵")
+	assert_eq(EveningService.total_spent(_pay(d1, _all_ids(d1))), 36, "base quotidienne 36 ₵ (D-047)")
 	var d2: Array[ExpenseLine] = _lines(2, home)
 	assert_true(_all_ids(d2).has(&"oxygen"), "oxygène de Dora les soirs pairs")
-	assert_eq(EveningService.total_spent(_pay(d2, _all_ids(d2))), 48)
+	assert_eq(EveningService.total_spent(_pay(d2, _all_ids(d2))), 46)
 	assert_eq(_lines(8, home)[0].cost, 20, "loyer à 20 ₵ au J8")
 	home.get_member(Household.NOA).health = Household.Health.SICK
 	var meds: Array[ExpenseLine] = _lines(3, home)
@@ -55,14 +55,14 @@ func test_default_selection_leaves_heating_last() -> void:
 			paid.append(line.id)
 	assert_eq(paid, [&"rent", &"air_tax", &"food"] as Array[StringName], "32 ₵ : pas de chauffage (GDD §5.3)")
 	EveningService.default_selection(lines, 40)
-	assert_eq(EveningService.total_spent(lines), 38, "40 ₵ : tout est payé")
+	assert_eq(EveningService.total_spent(lines), 36, "40 ₵ : tout est payé")
 	assert_false(EveningService.can_toggle_on(_pay(_lines(1, Household.new()), [&"rent", &"food"]), 32, _lines(1, Household.new())[3]))
 
 
 func test_full_payment_keeps_family_well() -> void:
 	var lines: Array[ExpenseLine] = _pay(_lines(1, Household.new()), [&"rent", &"food", &"heating"])
 	var report: EveningReport = EveningService.apply(economy, 1, Household.new(), lines, 40, 7)
-	assert_eq(report.balance_after, 2)
+	assert_eq(report.balance_after, 4)
 	assert_eq(report.ending, EveningReport.ENDING_NONE)
 	for member: Household.Member in report.household.members:
 		assert_eq(member.health, Household.Health.WELL)
@@ -129,7 +129,9 @@ func test_rent_and_debt_endings() -> void:
 	var a: EveningReport = EveningService.apply(economy, 1, home, _pay(_lines(1, home), [&"food", &"heating"]), 40, 1)
 	assert_eq(a.ending, EveningReport.ENDING_NONE)
 	var b: EveningReport = EveningService.apply(economy, 2, a.household, _pay(_lines(2, a.household), [&"food", &"heating", &"oxygen"]), 40, 1)
-	assert_eq(b.ending, EveningReport.ENDING_REASSIGNED, "2 loyers impayés consécutifs → F2")
+	assert_eq(b.ending, EveningReport.ENDING_NONE, "2 loyers impayés : avertissement seulement (D-047)")
+	var c: EveningReport = EveningService.apply(economy, 3, b.household, _pay(_lines(3, b.household), [&"food", &"heating"]), 40, 1)
+	assert_eq(c.ending, EveningReport.ENDING_REASSIGNED, "3 loyers impayés consécutifs → F2")
 	var state: Household = Household.new()
 	var endings: Array[StringName] = []
 	for day: int in [1, 3, 5]:

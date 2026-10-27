@@ -189,20 +189,20 @@ Valeurs : `penalty_per_error = 5` (3ᵉ citation) ; `free_citations_per_day = 2`
 
 ### 5.3 Dépenses du soir (écran Foyer)
 
-Solde de départ : **0 ₵**. Chaque poste est cochable, sauf la taxe d'air ; ce qui n'est pas payé a une conséquence (§5.4).
+Solde de départ : **20 ₵** — « avance du Consortium » versée à la prise de poste (D-047 ; non remboursée au MVP, retenue possible post-MVP). Chaque poste est cochable, sauf la taxe d'air ; ce qui n'est pas payé a une conséquence (§5.4).
 
 | Poste | Coût | Fréquence | Notes |
 |---|---|---|---|
 | **Loyer** (cabine du Bloc Pétrel) | **15 ₵** | chaque soir | **20 ₵** à partir du J8 (« ajustement sectoriel ») |
 | **Taxe d'air** (quota respiratoire du foyer) | **5 ₵** | chaque soir | **prélevée d'office** (non cochable) ; peut creuser la dette |
 | **Nourriture** | **10 ₵** | chaque soir | nourrit tout le foyer |
-| **Chauffage** | **8 ₵** | chaque soir | Noa tousse quand il est coupé |
+| **Chauffage** | **6 ₵** (D-047, était 8) | chaque soir | Noa tousse quand il est coupé |
 | **Oxygène d'appoint de Dora** | **10 ₵** | soirs pairs (J2, J4, J6, J8, J10) | non payé → Dora `MALADE` le lendemain |
 | **Médicaments** | **15 ₵ par proche malade** | si quelqu'un est `MALADE` / `GRAVEMENT MALADE` | Clinique Orbitale Meridian |
 | **Bio-scan de Noa** | **25 ₵** | J6 (événement) | suspicion de Fièvre grise ; non payé → Noa `MALADE`, puis l'événement revient au J8 |
 | Extras narratifs | 5–40 ₵ | ponctuels | cadeau, faux laissez-passer de dérive (Lucioles, J9 : 40 ₵)… |
 
-Base quotidienne : **38 ₵** (loyer + taxe + nourriture + chauffage) ; 48 ₵ les soirs pairs. Revenus : J1 max 40 ₵ (8 × 5), médiane ~30–35 ₵ → la plupart des joueurs ne peuvent pas payer le chauffage le premier soir (amorce dramatique, UI_FLOW §7). J10 : max 80 ₵, médiane ~60–65 ₵, coûts 43–58 ₵ + soins. **Intention** : un joueur moyen sacrifie un poste **1 soir sur 3** ; un joueur parfait et intègre survit juste ; les pots-de-vin rendent la vie confortable mais font monter la Suspicion.
+Base quotidienne : **36 ₵** (loyer + taxe + nourriture + chauffage) ; 46 ₵ les soirs pairs. Revenus : J1 max 40 ₵ (8 × 5), ~30 ₵ à 80 % de réussite (amendes comprises). Avec l'avance, le joueur correct chauffe le premier soir ; le **J2** (première facture d'oxygène de Dora, 46 ₵ + soins) devient le soir de l'arbitrage ; le chauffage du premier soir reste impayable pour un joueur en difficulté (≤ 60 % : 4 fois sur 10). J10 : max 80 ₵, médiane ~60–65 ₵, coûts 41–56 ₵ + soins (à revalider avec l'avance au J4+). **Intention** : un joueur correct (75–85 %) sacrifie un poste **1 soir sur 3 à 1 sur 5** sans perdre le foyer ; un joueur excellent (≥ 95 %) paie presque tout ; un joueur médiocre (≤ 60 %) voit le foyer se dégrader nettement (D-047) ; les pots-de-vin rendent la vie confortable mais font monter la Suspicion.
 
 ### 5.4 Foyer : états et conséquences
 
@@ -220,7 +220,7 @@ Foyer (LORE §11, à confirmer par le Scénariste) : **Ilan** (conjoint·e, tech
 | `MALADE` sans médicaments 2 soirs | → `GRAVEMENT MALADE` |
 | `GRAVEMENT MALADE` sans médicaments 2 soirs | → `PERDU` |
 | Médicaments payés | `MALADE` → `BIEN` le lendemain ; `GRAVEMENT MALADE` → `MALADE` |
-| Loyer impayé | dette ; **2 loyers impayés consécutifs → « réaffectation »** (expulsion, fin F2) |
+| Loyer impayé | dette ; **3 loyers impayés consécutifs → « réaffectation »** (expulsion, fin F2 ; D-047, était 2) |
 | Solde < 0 trois soirs consécutifs | réaffectation (licenciement, fin F2) |
 
 ### 5.5 Pots-de-vin (J4+)
@@ -300,7 +300,7 @@ Onglets Rulebook : Règles (J1), Origines (J4 : code, bloc ID, documents attendu
 
 | Jour | Date | Nouvelles règles | Nouveau document / outil | Nouveaux types d'anomalies | `passenger_count` | `duration_sec` | `anomaly_count_weights` [0,1,2,3] | Événement narratif |
 |---|---|---|---|---|---|---|---|---|
-| **J1** | mar. 13.03.2187 | R01, R02 | Carte d'identité | `EXPIRED_DOCUMENT`, `MISSING_DOCUMENT` | 8 | 540 | [0.55, 0.45, 0.00, 0.00] | Prise de poste ; tutoriel diégétique d'**Okonkwo** (Guichet 03) ; le soir, chauffage impayable pour la plupart des joueurs |
+| **J1** | mar. 13.03.2187 | R01, R02 | Carte d'identité | `EXPIRED_DOCUMENT`, `MISSING_DOCUMENT` | 8 | 540 | [0.55, 0.45, 0.00, 0.00] | Prise de poste ; tutoriel diégétique d'**Okonkwo** (Guichet 03) ; le soir, chauffage impayable pour un joueur en difficulté (avance du Consortium : 20 ₵) |
 | **J2** | mer. 14.03.2187 | R03 | champ **Visage** | `PORTRAIT_MISMATCH` | 10 | 570 | [0.50, 0.45, 0.05, 0.00] | Noa tousse ; première facture d'oxygène de Dora ; bulletin : « Un document exact est un citoyen en sécurité. » |
 | **J3** | jeu. 15.03.2187 | R04, R05, R06, R07 | Permis d'entrée (contrôle transféré des quais) ; visière | `ID_MISMATCH`, `NAME_MISMATCH` | 11 | 600 | [0.45, 0.45, 0.10, 0.00] | Premier contact **Lucioles** (dessin de luciole, *lumika*) — **fin du MVP** |
 | **J4** | ven. 16.03.2187 | R08, R09, R10 | onglet Origines ; **Ceinturiers** dans la file | `ORIGIN_ID_MISMATCH`, `PURPOSE_MISMATCH` | 12 | 600 | [0.45, 0.45, 0.10, 0.00] | *Respiration* ; licenciés Kessler-Ashe de Tycho par la Transit-7 ; premier **pot-de-vin** |
@@ -427,7 +427,7 @@ Au J3, les Nés-Halcyon (`HAL`, ~25 %) n'ont pas de Permis d'entrée : c'est la 
 | # | Fin | Condition |
 |---|---|---|
 | F1 | **Arrestation** | Audit J9 avec Suspicion ≥ 4 ; **ou** double jeu découvert le J10 (`lucioles_trust ≥ 3` et `loyalty ≥ 3`) |
-| F2 | **Réaffectation** (anticipée) | 2 loyers impayés consécutifs ; ou solde < 0 trois soirs consécutifs |
+| F2 | **Réaffectation** (anticipée) | 3 loyers impayés consécutifs ; ou solde < 0 trois soirs consécutifs |
 | F3 | **Famille perdue** (anticipée) | Ilan, Noa et Dora tous `PERDU` |
 | F4 | **Gloire au Consortium** | J10 : l'agent recherché est détenu, `loyalty ≥ 3`, conformité ≥ 85 %, ≥ 2 proches en vie → promotion `C-2`, appartement chauffé dans les Anneaux ; la station se ferme un peu plus |
 | F5 | **Rendre l'air** | J10 : l'agent recherché passe, `lucioles_trust ≥ 4` → les Lucioles prennent les recycleurs (variante Veilleurs / Brûlants selon les choix du J9, à écrire par le Scénariste) ; l'agent·e disparaît dans la Soute avec sa famille |
@@ -466,7 +466,27 @@ Cas contraints du tutoriel (sans dialogue dédié, J1) : index 2 sans anomalie (
 - 5 passagers scénarisés (§12) ; code Luciole 1 et 7 (SC-05 uniquement) ; sauvegarde entre jours ; options d'accessibilité du temps.
 - PC + Steam Deck (manette, 1280×800).
 
-**État M5 (implémenté, Gameplay Systems)** : tout le « Dedans » ci-dessus sauf les fins F1/F4–F7 (hors MVP) ; valeurs de §5 et §10 **inchangées** (aucun rééquilibrage). Précisions de lecture : Noa malade à 50 % au 1ᵉʳ soir sans chauffage (aléa seedé) ; un poste facultatif ne peut pas rendre le solde négatif (seule la taxe d'air le peut) ; amendes retenues au fil du shift (ticket immédiat) ; refus d'un dossier à document manquant documenté d'office (D-032). Mesuré (simulation, graine 20 871 315) : joueur parfait J1/J2/J3 = 40/50/55 ₵, solde 2/4/21 ₵, foyer en bonne santé ; bot « approuve tout » → réaffectation (F2) au soir du J2 ; joueur à ~80 % → foyer malade dès le J2 (à surveiller en playtest : §14 « sacrifier 1 poste sur 3 » paraît plus dur que prévu).
+**État M5 (implémenté, Gameplay Systems)** : tout le « Dedans » ci-dessus sauf les fins F1/F4–F7 (hors MVP) ; valeurs de §5 et §10 inchangées à la livraison M5, puis rééquilibrage du foyer D-047 (ci-dessous). Précisions de lecture : Noa malade à 50 % au 1ᵉʳ soir sans chauffage (aléa seedé) ; un poste facultatif ne peut pas rendre le solde négatif (seule la taxe d'air le peut) ; amendes retenues au fil du shift (ticket immédiat) ; refus d'un dossier à document manquant documenté d'office (D-032). Mesuré avant D-047 (graine 20 871 315) : joueur parfait J1/J2/J3 = 40/50/55 ₵, solde 2/4/21 ₵ ; joueur à ~80 % → foyer entier malade dès le J2 (64 % des graines).
+
+**Rééquilibrage du foyer (D-047, Game Designer)** — trois leviers de données (`tools/build_data.gd` → `data/economy/economy.tres`) :
+
+| Levier | Avant | Après | Raison |
+|---|---|---|---|
+| `starting_credits` (« avance du Consortium ») | 0 ₵ | **20 ₵** | Le J1 est structurellement déficitaire (36–38 ₵ de frais pour ~30 ₵ gagnés à 80 %) : sans réserve, le chauffage saute au J1 **et** au J2 → 2 soirs de froid → foyer entier malade. |
+| `heating` | 8 ₵ | **6 ₵** | Poste le plus sacrifié et seul à rendre tout le foyer malade ; le rendre payable au J2 garde l'oxygène de Dora comme vrai dilemme. |
+| `eviction_unpaid_rent` | 2 | **3** | Pas de réaffectation au J2 pour un joueur médiocre (fines escaladées) ; F2 seulement après 3 loyers impayés d'affilée (= négligence répétée). |
+
+Inchangés : loyer, taxe d'air, nourriture, oxygène, soins 15 ₵, Noa 50 %, privation 2 soirs, aggravation 2 soirs, dette 3 soirs, salaire 5 ₵/cas, amendes.
+
+Cibles vs mesuré (`godot --headless --script res://tools/balance_sim.gd -- --seeds=200`, graine 1, politique « raisonnable » : loyer > taxe > nourriture > oxygène > soins urgents > chauffage > autres soins ; « entièrement malade » = aucun proche en bonne santé) :
+
+| Profil | Cible | Avant D-047 | Après D-047 |
+|---|---|---|---|
+| 60 % | foyer nettement dégradé, pas de fin avant la fin du J3 sauf négligence | entièrement malade J2 97 %, J3 97 % ; fin anticipée **51 %** (F2 dès le J2 : 29 %) | entièrement malade J2 38 %, J3 **79 %** ; ≥ 1 malade J3 89 % ; fin anticipée **6,5 %** (toutes au soir du J3, 3 loyers impayés) |
+| 80 % | foyer globalement debout, ~1 sacrifice sur 3 soirs | entièrement malade J2 **65 %**, J3 58 % ; malades J3 1,9 / 3 ; sacrifice 85–89 % des soirs ; fin 3,5 % | entièrement malade J2 **5 %**, J3 8,5 % ; malades J3 0,4 / 3 ; ≥ 1 poste sacrifié J1/J2/J3 6/35/26 % (~1 soir sur 4–5) ; fin 0 % |
+| 95 % | paie presque tout | sacrifice J1/J2 33/46 % ; entièrement malade J2 6,5 % | sacrifice ≤ 0,5 % ; foyer sain ; solde J3 ~39 ₵ |
+
+Joueur parfait (graine 20 871 315) : 40/50/55 ₵ gagnés, solde 24/28/47 ₵, tout payé. Points de vigilance : le surplus des bons joueurs croît (à revoir avec les pots-de-vin J4+ et le loyer à 20 ₵ au J8 ; option : retenue de l'avance) ; l'avance doit être annoncée à l'écran (briefing J1 / soirée, UI_FLOW + Scénariste). Non-régression : `tests/integration/test_balance.gd` (30 graines).
 
 **Dehors (post-MVP)**
 - Tampon DÉTENTION et prime (J7) — le code prévoit néanmoins `VerdictKind.DETAIN`.

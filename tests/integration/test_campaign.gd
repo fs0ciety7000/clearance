@@ -107,6 +107,7 @@ func _expected_approve_all(day_number: int) -> Dictionary:
 
 func test_perfect_bot_three_days_null_booth() -> void:
 	var expected_totals: Array[int] = []
+	assert_eq(GameState.credits, data.get_economy().starting_credits, "avance du Consortium (D-047)")
 	for day_number: int in [1, 2, 3]:
 		assert_eq(GameState.current_day, day_number)
 		var credits_before: int = GameState.credits
@@ -127,6 +128,10 @@ func test_perfect_bot_three_days_null_booth() -> void:
 			assert_eq(result[0], Campaign.ENDING_DEMO_COMPLETE, "fin de la démo après J3")
 			assert_false(SaveService.has_save(0, DIR))
 		assert_eq(report.ending, EveningReport.ENDING_NONE, "un joueur parfait survit (GDD §5.3)")
+		for line: ExpenseLine in report.lines:
+			assert_true(line.paid, "J%d : un joueur parfait paie tout (%s, D-047)" % [day_number, line.id])
+		for member: Household.Member in report.household.members:
+			assert_eq(member.state_key(), "hh_state_well", "J%d : %s en bonne santé" % [day_number, member.id])
 	assert_eq(expected_totals, [40, 50, 55] as Array[int])
 	assert_eq(GameState.score_total, 145)
 	assert_eq(GameState.day_history.size(), 3)
