@@ -585,8 +585,9 @@ func _build_days(sets: Array[RuleSet]) -> void:
 		_scripted(&"sc_01", 0, {&"faction_id": &"hal", &"citizen_class": &"C-3", &"purpose": Passenger.PURPOSE_RETURN,
 				&"origin_sector": "Anneau C — logements de service"}, [], &"sc01_returning_technician"),
 		# M7 (NARRATIVE §4.1, D-052) : Amara Diallo, revue au J4 (SC-06) ; approuver = suspicion +1.
+		# Naissance fixée (NARRATIVE §4.1) : SC-06 la reprend au J4 via la mémoire des cas (D-057).
 		_scripted(&"sc_02", 1, {&"faction_id": &"ter", &"sex": Passenger.SEX_F, &"citizen_class": &"C-4",
-				&"given_name": "Amara", &"family_name": "Diallo"},
+				&"given_name": "Amara", &"family_name": "Diallo", &"birth_date": GameDate.from_ymd(2154, 6, 8)},
 				[K.EXPIRED_DOCUMENT], &"sc02_hurried_mother", {&"document_id": &"id_card", &"expired_days": 3},
 				{&"sc02_mercy": 0, &"suspicion": 1}, {&"sc02_turned_away": 0}),
 		_scripted(&"tuto_concordant", 2, {}, [], &""),
@@ -826,7 +827,7 @@ func _day6(rs: RuleSet, factions: Dictionary[StringName, float]) -> DayDef:
 			factions, 0.15, 0.25, 0.05, 0.06, ["origins", "implants"])
 	var mazur: ScriptedCaseDef = _scripted(&"sc_11", 2, {&"faction_id": &"thr", &"given_name": "Dariusz",
 			&"family_name": "Mazur", &"sex": Passenger.SEX_M, &"citizen_class": &"C-4",
-			&"birth_date": GameDate.from_ymd(2125, 10, 14), &"purpose": Passenger.PURPOSE_FAMILY_VISIT, &"stay_days": 10,
+			&"birth_date": GameDate.from_ymd(2120, 10, 14), &"purpose": Passenger.PURPOSE_FAMILY_VISIT, &"stay_days": 10,
 			&"implants": PackedStringArray(["MIL-9"])},
 			[], &"sc11_mazur", {}, {&"sc11_veteran_passed": 0}, {&"sc11_veteran_refused": 0})
 	mazur.extra_documents = [&"mil_waiver"]
@@ -934,12 +935,13 @@ func _day8(rs: RuleSet, factions: Dictionary[StringName, float]) -> DayDef:
 		split.condition = _all([&"sc15_idris_passed"])
 		split.flags = {&"sc16_family_split": 0}
 		hana.extra_effects.append(split)
+	# NARRATIVE §4.5 : Fatou 29 ans (tranche 18–29), Ngozi 38 ans (tranche 30–54) — R18 lit l'écart de tranche.
 	var fatou: ScriptedCaseDef = _scripted(&"sc_17", 7, {&"faction_id": &"ter", &"given_name": "Fatou",
 			&"family_name": "Mensah", &"sex": Passenger.SEX_F, &"citizen_class": &"C-4",
-			&"birth_date": GameDate.from_ymd(2159, 6, 12), &"purpose": Passenger.PURPOSE_WORK,
+			&"birth_date": GameDate.from_ymd(2157, 6, 12), &"purpose": Passenger.PURPOSE_WORK,
 			&"employer": "Hydroponie Ceres-Verte", &"implants": PackedStringArray()},
 			[K.RELATIVE_DOCUMENTS], &"sc17_fatou",
-			{&"relative_given_name": "Ngozi", &"relative_birth": GameDate.from_ymd(2146, 2, 4)},
+			{&"relative_given_name": "Ngozi", &"relative_birth": GameDate.from_ymd(2149, 2, 4)},
 			{&"sc17_passed": 0}, {&"sc17_turned_back": 0})
 	fatou.flags_on_detain = {&"sc17_detained": 0, &"loyalty": 1}
 	d.scripted_cases = [idris, hana, fatou]

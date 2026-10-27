@@ -318,7 +318,7 @@ script = ExtResource("8_0q78k")
 id = &"sc_17"
 at_index = 7
 passenger_overrides = {
-&"birth_date": 21711,
+&"birth_date": 20981,
 &"citizen_class": &"C-4",
 &"employer": "Hydroponie Ceres-Verte",
 &"faction_id": &"ter",
@@ -330,7 +330,7 @@ passenger_overrides = {
 }
 forced_anomalies = Array[int]([12])
 injection_params = {
-&"relative_birth": 16835,
+&"relative_birth": 17931,
 &"relative_given_name": "Ngozi"
 }
 dialogue_id = &"sc17_fatou"

@@ -121,7 +121,7 @@ script = ExtResource("8_xqv62")
 id = &"sc_11"
 at_index = 2
 passenger_overrides = {
-&"birth_date": 9417,
+&"birth_date": 7591,
 &"citizen_class": &"C-4",
 &"faction_id": &"thr",
 &"family_name": "Mazur",

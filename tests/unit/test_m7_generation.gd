@@ -134,7 +134,7 @@ func test_scripted_case_details() -> void:
 	for g: GeneratedCase in _scripted(8, &"sc_17"):
 		assert_eq(g.key.truth.given_name, "Fatou")
 		assert_eq(Gen.doc_value(g.case, &"id_card", &"given_name"), "Ngozi")
-		assert_eq(Gen.doc_value(g.case, &"id_card", &"birth_date"), GameDate.from_ymd(2146, 2, 4))
+		assert_eq(Gen.doc_value(g.case, &"id_card", &"birth_date"), GameDate.from_ymd(2149, 2, 4))
 	for g: GeneratedCase in _scripted(9, &"sc_18"):
 		var note: SlippedItem = g.case.slipped_items[0]
 		assert_eq(note.kind, SlippedItem.Kind.NOTE)

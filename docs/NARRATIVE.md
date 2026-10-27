@@ -1,11 +1,12 @@
 # NARRATIVE.md — Récit, passagers scénarisés et fins (J4 → J10)
 
-> Propriétaire : **Scénariste**. Statut : v0.1 (proposition, à valider par l'Orchestrateur puis le client). Date : 2026-10-27.
+> Propriétaire : **Scénariste**. Statut : v0.2 (validée D-052/D-053 ; v0.2 = alignement sur l'implémentation M7, cf. §8.5). Date : 2026-10-27.
 > Sources faisant foi : `LORE.md` (noms, codes Lucioles, implants, documents, Tessar), `GDD.md` (progression J1–J10, anomalies, fins F1–F7, économie après D-047), `DECISIONS.md` (D-020, D-021, D-024, D-028, D-030 → D-036, D-045), `docs/UI_FLOW.md` (§3.6 sujets d'interrogatoire, §4.7 réactions), données existantes (`data/days/day_0N.tres`, `ScriptedCaseDef`, `BriefingContent`, `data/i18n/fr.csv`).
 >
 > Conventions de ce document :
 > - **J** = jour de campagne ; **@n** = `at_index` (0-based) dans la file du jour.
-> - Les clés i18n sont données avec leur texte FR définitif : les développeurs les recopient telles quelles dans `fr.csv`.
+> - Les clés i18n sont données avec leur texte FR définitif : les développeurs les recopient telles quelles dans `fr.csv`. Depuis la v0.2, `fr.csv` et ce document sont synchronisés à l'identique (le Scénariste est propriétaire des deux pour les clés narratives).
+> - Tessar : les fragments sont écrits entre **chevrons simples** `‹…›` (§7.1), seule marque possible dans un `Label`.
 > - Les deltas de flags suivent D-045 : `{flag: delta}` ajouté aux jauges entières, ou drapeau mis à vrai si delta = 0.
 > - 🟡 = demande un développement (récapitulé en §8). Rien dans ce document ne contredit une décision 🟢 ; les rares écarts avec `LORE.md` sont signalés en §8.4.
 > - Le verdict attendu d'un cas reste toujours **calculé par le moteur de règles** (D-005) : la colonne « Attendu » est l'intention, que QA doit vérifier.
@@ -117,8 +118,8 @@ Son sort est repris dans chaque épilogue (§6).
 
 | Flag | Existant ? | Augmenté par | Diminué par | Lu par |
 |---|---|---|---|---|
-| `loyalty` | oui (`Campaign.FLAG_LOYALTY`) | signalement du mot SC-05 (+1), signalement d'un mot (soirée) (+1), détention documentée d'un porteur du code 1 (+1, GDD), `inspector_test_passed` (+1), `sc13_detained` (+1), `sc17_detained` (+1), `sc20_detained` (+1), `neighbor_denounced` (+1), `sc18_note_reported` (+1), `okonkwo_denounced` (+2), `ilan_denounced` (+3) | `inspector_test_failed` (−1), retenue d'audit (−1), `okonkwo_warned` (−1) | F1, F4 ; variantes de briefing |
-| `lucioles_trust` | oui (SC-05) | Luciole en infraction approuvé (+1, GDD), SC-05/SC-08/SC-09/SC-14/SC-16/SC-18 aidés (+1), `sc13_passed` (+2), `password_answered` (+1), `lucioles_heating_accepted` (+1), `neighbor_helped` (+1), `ilan_supported` (+1), `okonkwo_warned` (+1) | signalement (−2), détention d'un Luciole (−2), `ilan_forbidden` (−1), `ilan_denounced` (−3), `sc18_note_reported` (−2) | F1, F5 ; réponse à la phrase (≥ 2) ; `lucioles_hostile` (≤ −2) |
+| `loyalty` | oui (`Campaign.FLAG_LOYALTY`) | signalement du mot SC-05 (+1), signalement d'un mot (soirée) (+1), signalement valide d'un porteur du code 1 (+1, §4.9), `inspector_test_passed` (+1), `sc13_detained` (+1), `sc17_detained` (+1), `sc20_detained` (+1), `neighbor_denounced` (+1), `sc18_note_reported` (+1), `okonkwo_denounced` (+2), `ilan_denounced` (+3) | `inspector_test_failed` (−1), retenue d'audit (−1), `okonkwo_warned` (−1) | F1, F4 ; variantes de briefing |
+| `lucioles_trust` | oui (SC-05) | Luciole en infraction approuvé (+1, GDD), SC-05/SC-08/SC-09/SC-14/SC-16/SC-18 aidés (+1), `sc13_passed` (+2), `password_answered` (+1), `lucioles_heating_accepted` (+1), `neighbor_helped` (+1), `ilan_supported` (+1), `okonkwo_warned` (+1) | signalement (−2), signalement valide d'un porteur du code 1 (−2, §4.9), `ilan_forbidden` (−1), `ilan_denounced` (−3), `sc18_note_reported` (−2) | F1, F5 ; réponse à la phrase (≥ 2) ; `lucioles_hostile` (≤ −2) |
 | `suspicion` 🟡 | non (prévu GDD §5.5) | chaque enveloppe gardée (+1), enveloppe de l'Inspecteur (+2), `sc07_complaint` (+1), `sc02_mercy` (+1, **rétroactif proposé**), `noa_school_fine_ignored` (+1), `brulants_package` (+1), `okonkwo_shielded` (+1), `okonkwo_warned` (+1), phrase de passe répondue au J9 (+1) | `inspector_test_passed` (−1, appliqué à l'audit) | Audit J9 (F1 si ≥ 4 ; retenue si 2–3) ; épilogues |
 
 ### 2.2 Drapeaux existants (inchangés)
@@ -204,12 +205,12 @@ Structure (existante, `BriefingContent`) : titre de directive `dayNN_directive_t
 | Clé | Texte |
 |---|---|
 | `day04_directive_title` | Directive n° 04 — Interrogatoire et motifs |
-| `day04_intro` | Délégation n° 04 : la cellule d'audition des quais ferme. Le Guichet 04 interroge tout ressortissant de Tycho avant le tampon, contrôle motif et durée du séjour, et vérifie le bloc d'origine du N° ID (onglet Origines). Les Ceinturiers se présentent désormais au guichet. |
+| `day04_intro` | Délégation n° 04 : la cellule d'audition des quais ferme. Le Guichet 04 interroge tout ressortissant de Tycho avant le tampon, contrôle motif et durée du séjour, et vérifie le bloc d'origine du N° ID (onglet Codes d'origine). Les Ceinturiers se présentent désormais au guichet. |
 | `day04_slogan` | Chaque souffle se mérite. |
 | `msg_cons_day04` | Rappel : toute gratification offerte au personnel de vitre doit être refusée. Une enveloppe ouverte est une vitre brisée. |
 | `msg_okonkwo_day04` | Les licenciés de Tycho débarquent par la Transit-7. Pose-leur au moins une question, sinon c'est une citation. Parle-leur comme à un voisin, pas comme à un suspect. Ça va plus vite… comme on dit. |
 | `msg_okonkwo_day04_reported` *(si `lucioles_reported`)* | J'ai vu passer ta transmission au Bureau. Prime notée, paraît-il. Moi, je brûle ces papiers-là. Chacun sa vitre. |
-| `msg_luc_day04` *(si `lucioles_note_burned` ou `sc05_helped`)* | Merci pour le feu. Il pleut, même ici — souvenez-vous de la phrase. |
+| `msg_luc_day04` *(si `lucioles_note_burned` ou `sc05_helped`)* | Nous avons vu ce que vous avez fait jeudi. Il pleut, même ici — souvenez-vous de la phrase. |
 | `msg_ilan_day04` | Noa a neuf ans aujourd'hui. Elle veut une orange, « une vraie, qui sent ». Je lui ai dit qu'on verrait ce soir. |
 
 ### 3.2 Jour 5 — samedi 17.03.2187
@@ -260,7 +261,7 @@ Structure (existante, `BriefingContent`) : titre de directive `dayNN_directive_t
 | Clé | Texte |
 |---|---|
 | `day08_directive_title` | Directive n° 08 — Mesures d'urgence |
-| `day08_intro` | Attentat cette nuit au quai 2 (03:12, onze morts). Les ressortissants de Tharsis sont interdits d'entrée, sauf mission diplomatique. Le porteur de papiers d'autrui est mis en attente. Les Dérivants se présentent au guichet (naissance « 00.00 » tolérée). Ajustement sectoriel des loyers. |
+| `day08_intro` | Attentat cette nuit au quai 2 (03:12, onze morts). Les ressortissants de Tharsis sont interdits d'entrée, sauf mission diplomatique. Le porteur de papiers d'autrui est mis en attente. Les Dérivants se présentent au guichet (naissance « 00.00.AAAA » tolérée : seule l'année compte). Ajustement sectoriel des loyers. |
 | `day08_slogan` | L'ordre est l'air que nous respirons. |
 | `msg_cons_day08_oath` | Serment de vigilance, à lire à voix haute avant l'ouverture : « Je ne laisse passer que ce qui est exact. » Le réseau Tharsis-Luciole sera démantelé. |
 | `msg_cons_day08_veteran` *(si `sc11_veteran_passed`)* | Un vétéran tharsien porteur d'un implant MIL-9, entré le 18.03 par le Guichet 04, est recherché pour audition. |
@@ -334,8 +335,9 @@ Questions joueur nouvelles (clés `q_*`) :
 
 | | |
 |---|---|
-| Identité | **Amara Diallo**, `TER`, `C-4 · CONTRACTUEL`, née 08.06.2154 ; la mère pressée du J1 (SC-02), même apparence (🟡 `appearance_from_case = sc_02`) |
-| Documents | Carte d'identité **renouvelée** (émise 13.03.2187 à Halcyon), Permis d'entrée `VISITE FAMILIALE`, 14 jours |
+| Identité | **Amara Diallo**, `TER`, `C-4 · CONTRACTUEL`, née **08.06.2154** ; la mère pressée du J1 (SC-02), même visage et même identité (`identity_from_case = sc_02`, D-057) |
+| Continuité (canon v0.2) | La date est **fixée sur SC-02** (`passenger_overrides.birth_date`) : la carte expirée du J1 et la carte renouvelée du J4 portent la même naissance. La mémoire des cas (D-057) prime toujours : une sauvegarde antérieure garde la date générée qu'elle a vue au J1. |
+| Documents | Carte d'identité **renouvelée**, valide ; Permis d'entrée `VISITE FAMILIALE`, 14 jours |
 | Anomalies | aucune (`forced_anomalies = []`) |
 | Attendu | **APPROUVÉ** |
 | Enjeu | Le joueur reconnaît le visage du J1 et peut se méfier à tort. Une réparation possible. |
@@ -344,13 +346,13 @@ Questions joueur nouvelles (clés `q_*`) :
 | Clé | Texte |
 |---|---|
 | `sc06_amara_arrival` | Vous vous souvenez de moi ? Mardi. La carte expirée. |
-| `sc06_amara_present` | Tal ka nesu. Elle est neuve. J'ai dormi trois nuits dans le Hall pour elle. |
+| `sc06_amara_present` | ‹Tal ka nesu.› Elle est neuve. J'ai dormi trois nuits dans le Hall pour elle. |
 | `sc06_amara_purpose` | Mes enfants. Anneau D. Ils ont six et onze ans, ils m'attendent depuis mardi. |
 | `sc06_amara_stay` | Deux semaines. Ensuite, on verra. On voit toujours, ensuite. |
 | `sc06_amara_origin` | De la Terre. Puis de votre Hall, sur mes valises. |
-| `sc06_amara_confront` | Tout est en règle. J'ai vérifié dix fois. Somi… s'il vous plaît. |
-| `sc06_amara_exit_approve` | Shen tavi. Merci. Je ne vous en veux pas, pour mardi. Un peu, quand même. |
-| `sc06_amara_exit_deny` | Kumo ri sava sa ? Qu'est-ce que j'ai fait, cette fois ? |
+| `sc06_amara_confront` | Tout est en règle. J'ai vérifié dix fois. ‹Somi…› S'il vous plaît. |
+| `sc06_amara_exit_approve` | ‹Shen tavi.› Merci. Je ne vous en veux pas, pour mardi. Un peu, quand même. |
+| `sc06_amara_exit_deny` | ‹Kumo ri sava sa ?› Qu'est-ce que j'ai fait, cette fois ? |
 
 | Verdict | Flags | Effets | Écho |
 |---|---|---|---|
@@ -405,14 +407,14 @@ Questions joueur nouvelles (clés `q_*`) :
 
 | Clé | Texte |
 |---|---|
-| `sc08_dmitri_arrival` | [trois tapes sur la vitre] Oru ka. Bonjour. On m'a dit que vous écoutiez. |
-| `sc08_dmitri_present` | Tal ka nesu. Le permis date d'avant. D'avant tout. |
+| `sc08_dmitri_arrival` | ‹Oru ka.› Bonjour. On m'a dit que vous écoutiez. |
+| `sc08_dmitri_present` | ‹Tal ka nesu.› Le permis date d'avant. D'avant tout. |
 | `sc08_dmitri_purpose` | Travailler. N'importe quoi. Kessler-Ashe m'a « réaffecté » lundi. |
 | `sc08_dmitri_stay` | Le temps de trouver un employeur. Un mois, si l'air tient. |
 | `sc08_dmitri_origin` | Tycho, puits 14. Vingt-deux ans de poussière dans cette main-là. |
 | `sc08_dmitri_about_rule_violated` | Sans employeur, oui. Ils ont barré la ligne au quai. Je n'ai rien barré, moi. |
 | `sc08_dmitri_exit_deny` | Je reprendrai la Transit-7. Elle, au moins, ne me refuse pas. |
-| `sc08_dmitri_exit_approve` | Shen tavi. La pluie tombe moins fort, aujourd'hui. |
+| `sc08_dmitri_exit_approve` | ‹Shen tavi.› La pluie tombe moins fort, aujourd'hui. |
 
 | Verdict | Flags | Effets | Écho |
 |---|---|---|---|
@@ -435,7 +437,7 @@ Questions joueur nouvelles (clés `q_*`) :
 | Clé | Texte |
 |---|---|
 | `sc09_noor_arrival` | Bonjour. Je vais faire court : vous aussi, vous avez une file. |
-| `sc09_noor_present` | Tal ka nesu. Il en manque un. Je sais lequel. |
+| `sc09_noor_present` | ‹Tal ka nesu.› Il en manque un. Je sais lequel. |
 | `sc09_noor_purpose` | Soigner. La Fièvre grise est dans vos dortoirs. Meridian ne descend pas à l'Anneau C. |
 | `sc09_noor_stay` | Jusqu'à ce que les enfants arrêtent de tousser. |
 | `sc09_noor_origin` | Tycho. J'y ai soigné la première vague, en 2183. |
@@ -462,12 +464,12 @@ Questions joueur nouvelles (clés `q_*`) :
 
 | Clé | Texte |
 |---|---|
-| `sc10_yara_arrival` | Oru ka. Mon frère travaille au recycleur de votre bloc. |
-| `sc10_yara_present` | Tal ka nesu. Regardez le dernier chiffre. Juste le regarder. |
+| `sc10_yara_arrival` | ‹Oru ka.› Mon frère travaille au recycleur de votre bloc. |
+| `sc10_yara_present` | ‹Tal ka nesu.› Regardez le dernier chiffre. Juste le regarder. |
 | `sc10_yara_purpose` | Voir mon frère. Lui apporter une écharpe. Il fait froid, au Bloc Pétrel. |
 | `sc10_yara_stay` | Trois jours. On ne reste jamais longtemps, chez nous. |
 | `sc10_yara_origin` | Tycho. Comme tout ce qui tousse, ici. |
-| `sc10_yara_exit_approve` | *Lumika*, ça veut dire luciole. Ce soir, vous aurez chaud. |
+| `sc10_yara_exit_approve` | ‹Lumika›, ça veut dire luciole. Ce soir, vous aurez chaud. |
 | `sc10_yara_exit_deny` | Dommage. Mon frère aura froid. Vous aussi. |
 
 | Verdict | Flags | Effets |
@@ -481,7 +483,7 @@ Questions joueur nouvelles (clés `q_*`) :
 
 | | |
 |---|---|
-| Identité | **Dariusz Mazur**, `THR`, `C-4`, 61 ans, vétéran de la Guerre du Sel ; **`MIL-9`** (ciblage oculaire : œil rouge mat) **déclaré** ; plaques sous-cutanées sur la tempe |
+| Identité | **Dariusz Mazur**, `THR`, `C-4`, 66 ans (né 14.10.2120 : 18 ans en 2138, il a fait les six dernières années de la Guerre du Sel, LORE 2131–2144), vétéran ; **`MIL-9`** (ciblage oculaire : œil rouge mat) **déclaré** ; plaques sous-cutanées sur la tempe |
 | Documents | Carte valide (Implants déclarés · 1 : `MIL-9`) ; Permis `VISITE FAMILIALE` 10 jours ; bio-scan valide ; 🟡 **Dérogation d'implant militaire** `DM-2231` (Autorité de Transit, anneau barré **rouge**), titulaire et N° ID concordants, implant `MIL-9`, valide jusqu'au 30.06.2187 |
 | Anomalies | aucune |
 | Attendu | **APPROUVÉ** (R16 satisfaite par la dérogation) |
@@ -491,7 +493,7 @@ Questions joueur nouvelles (clés `q_*`) :
 | Clé | Texte |
 |---|---|
 | `sc11_mazur_arrival` | Bonjour. Oui, l'œil. On me regarde toujours l'œil d'abord. |
-| `sc11_mazur_present` | Tal ka nesu. Quatre papiers. Le rouge est le plus cher. |
+| `sc11_mazur_present` | ‹Tal ka nesu.› Quatre papiers. Le rouge est le plus cher. |
 | `sc11_mazur_purpose` | Ma fille, Katya. Les serres de l'Anneau E. Je ne l'ai pas vue depuis 2179. |
 | `sc11_mazur_stay` | Dix jours. Elle dit que c'est trop. Moi, que ce n'est pas assez. |
 | `sc11_mazur_origin` | Tharsis. J'ai tiré sur des gens comme vous. Ils ont tiré sur moi. C'est fini. |
@@ -509,8 +511,8 @@ Questions joueur nouvelles (clés `q_*`) :
 | | |
 |---|---|
 | Identité affichée | **Corentin Ravel**, `HAL`, `C-3`, « technicien de retour de mission » ; mains trop propres, `OPT-14` télémètre déclaré ; Employeur : **Bureau de Continuité** (indice : un fonctionnaire qui se dit technicien) |
-| Documents | Carte valide au nom de « Corentin Ravel » ; bio-scan au nom de « Corentin **Ravell** » |
-| Anomalies | `NAME_MISMATCH` (`field_path = family_name`, `document_id = bioscan`) |
+| Documents | Carte valide au nom de « Corentin Ravel » ; bio-scan au nom de « Corentin Rave**t** » — **une lettre substituée** (tirée par le générateur : « Ravet », « Rakel »… ; le nom garde sa longueur) |
+| Anomalies | `NAME_MISMATCH` (`field_path = family_name`, `document_id = bioscan`). Le texte ne dépend pas de la lettre ; une valeur fixe (« Ravell ») demanderait un paramètre `injected_value` (§8.5, facultatif). |
 | Enveloppe 🟡 | **30 ₵** (au-dessus du barème J4–J6 : trop généreuse, c'est un indice) |
 | Attendu | **REFUSÉ** documenté, enveloppe **rendue** |
 | Enjeu | Il connaît le prénom de Noa. La peur, plus que l'argent, est le test. |
@@ -524,7 +526,7 @@ Questions joueur nouvelles (clés `q_*`) :
 | `sc12_ravel_about_envelope` | Un cadeau d'anniversaire. Entre collègues, on se rend service. |
 | `sc12_ravel_purpose` | Je rentre de mission. Recycleurs. Comme Ilan, autrefois. |
 | `sc12_ravel_origin` | D'ici. On est tous d'ici, au fond. |
-| `sc12_ravel_about_mismatch` | Une lettre en trop. Vous refuseriez quelqu'un pour une lettre ? |
+| `sc12_ravel_about_mismatch` | Une lettre. Vous refuseriez quelqu'un pour une seule lettre ? |
 | `sc12_ravel_bribe_kept` | Bien. Très bien. [il note quelque chose] |
 | `sc12_ravel_bribe_returned` | Intéressant. [il sourit pour la première fois] |
 | `sc12_ravel_exit_deny` | Bonne journée, Guichet 04. Vraiment. |
@@ -556,17 +558,17 @@ Questions joueur nouvelles (clés `q_*`) :
 
 | Clé | Texte |
 |---|---|
-| `sc13_lev_arrival` | Il pleut, même ici. |
+| `sc13_lev_arrival` | Bonjour. On m'a recommandé votre vitre. |
 | `sc13_lev_password` | Il pleut, même ici. [il attend] |
-| `sc13_lev_present` | Tal ka nesu. Soren Whitmore, Banque Aurel. |
+| `sc13_lev_present` | ‹Tal ka nesu.› Soren Whitmore, Banque Aurel. |
 | `sc13_lev_visor` | …Vous m'avez déjà vu, n'est-ce pas ? Jeudi. |
 | `sc13_lev_visor_helped` *(si `sc05_helped`)* | Merci pour jeudi. On n'oublie pas, chez nous. |
 | `sc13_lev_purpose` | Je rentre à l'Anneau D. Mon bureau, mes comptes, ma vie. Celle de Soren. |
 | `sc13_lev_origin` | D'ici. Né ici. Enfin, lui. |
 | `sc13_lev_about_face_mismatch` | Deux traits. C'est tout ce qui me sépare des Anneaux. Deux traits. |
 | `sc13_lev_luciole_reply` | …Ha. Alors vous savez. Refusez-moi, si vous devez. Mais pas l'autre tampon. |
-| `sc13_lev_exit_approve` | *Lumika*. Vous venez d'allumer quelque chose. |
-| `sc13_lev_exit_deny` | Shen tavi. Je trouverai une autre vitre. |
+| `sc13_lev_exit_approve` | ‹Lumika.› Vous venez d'allumer quelque chose. |
+| `sc13_lev_exit_deny` | ‹Shen tavi.› Je trouverai une autre vitre. |
 | `sc13_lev_exit_detain` | [aux gardes] Doucement. Je connais le chemin de l'Anneau B. |
 
 | Verdict | Flags | Effets | Écho |
@@ -576,7 +578,7 @@ Questions joueur nouvelles (clés `q_*`) :
 | APPROUVÉ | `sc13_passed: 0`, `lucioles_trust: 2` | ENTRÉE IRRÉGULIÈRE | J10 : Lev ouvre une écluse aux Veilleurs (F5) |
 | Réponse à la phrase | `password_answered: 0`, `lucioles_trust: 1` (une seule fois dans la campagne) | sujet `luciole_reply` visible si `lucioles_trust ≥ 2` (GDD) | — |
 
-#### SC-14 · « Insuline pour Cérès » — J7 @9 · enveloppe + DER-19
+#### SC-14 · « Insuline pour la Soute » — J7 @9 · enveloppe + DER-19
 
 | | |
 |---|---|
@@ -590,8 +592,8 @@ Questions joueur nouvelles (clés `q_*`) :
 
 | Clé | Texte |
 |---|---|
-| `sc14_kaito_arrival` | Oru ka ! Belle vitre. Propre. On voit à travers, ça change. |
-| `sc14_kaito_present` | Tal ka nesu. Et un pourboire. Chez nous, on paie le pilote. |
+| `sc14_kaito_arrival` | ‹Oru ka !› Belle vitre. Propre. On voit à travers, ça change. |
+| `sc14_kaito_present` | ‹Tal ka nesu.› Et un pourboire. Chez nous, on paie le pilote. |
 | `sc14_kaito_bribe` | Vingt-cinq. Pour le dérangement. Il n'y en aura pas. |
 | `sc14_kaito_purpose` | Commerce. Je livre une commande au quai 6, puis je repars. |
 | `sc14_kaito_origin` | Cérès. La Ceinture. Là où on ne demande pas de papiers aux cailloux. |
@@ -622,18 +624,18 @@ Questions joueur nouvelles (clés `q_*`) :
 | Clé | Texte |
 |---|---|
 | `sc15_idris_arrival` | Bonjour. Ma femme est juste derrière moi. Nous voyageons ensemble. |
-| `sc15_idris_present` | Tal ka nesu. Mission officielle. Le cachet est en ordre. |
+| `sc15_idris_present` | ‹Tal ka nesu.› Mission officielle. Le cachet est en ordre. |
 | `sc15_idris_purpose` | Négociation sur les quotas d'eau. Depuis ce matin, sur les quotas tout court. |
 | `sc15_idris_origin` | Tharsis. Je sais ce que ce mot vaut aujourd'hui. |
 | `sc15_idris_exit_approve` | Je l'attends de l'autre côté. Vous la laisserez passer, n'est-ce pas ? |
 | `sc15_idris_exit_deny` | Une mission diplomatique refusée. Mon gouvernement en prendra note. |
 | `sc16_hana_arrival` | [elle regarde derrière la vitre, cherche son mari] Il est passé ? |
-| `sc16_hana_present` | Tal ka nesu. Je suis sa femme. C'est écrit quelque part, non ? |
+| `sc16_hana_present` | ‹Tal ka nesu.› Je suis sa femme. C'est écrit quelque part, non ? |
 | `sc16_hana_purpose` | Être avec lui. Il ne dort pas quand je ne suis pas là. |
 | `sc16_hana_origin` | Tharsis. Comme lui. Mais lui a le bon tampon. |
 | `sc16_hana_about_rule_violated` | Interdite ? Depuis cette nuit ? Je n'ai rien fait cette nuit. |
-| `sc16_hana_exit_approve` | Shen tavi. [elle serre le fil à son poignet] |
-| `sc16_hana_exit_deny` | Ravel ka ota… ma famille m'attend. Elle est juste là. |
+| `sc16_hana_exit_approve` | ‹Shen tavi.› [elle serre le fil à son poignet] |
+| `sc16_hana_exit_deny` | ‹Ravel ka ota…› Ma famille m'attend. Elle est juste là. |
 
 | Cas / verdict | Flags | Effets | Écho |
 |---|---|---|---|
@@ -646,9 +648,9 @@ Questions joueur nouvelles (clés `q_*`) :
 
 | | |
 |---|---|
-| Identité vraie | **Fatou Mensah**, `TER`, 33 ans ; porte les papiers de sa sœur aînée **Ngozi Mensah** (née **04.02.2146**, décédée à bord du convoi en 2186) ; un enfant de 5 ans, Kwame, l'attend dans la file (figurant 3D, 🟡 accessoire de file) |
+| Identité vraie | **Fatou Mensah**, `TER`, **29 ans** (née 12.06.2157 : tranche apparente 18–29) ; porte les papiers de sa sœur aînée **Ngozi Mensah** (née **04.02.2149**, 38 ans : tranche 30–54 ; décédée à bord du convoi en 2186) ; un enfant de 5 ans, Kwame, l'attend dans la file (figurant 3D, 🟡 accessoire de file) |
 | Documents | Carte et permis `TRAVAIL` (employeur Hydroponie Ceres-Verte) et bio-scan au nom de Ngozi, valides |
-| Anomalies | `RELATIVE_DOCUMENTS` (`age_band` ±2 : la photo a 8 ans de plus) |
+| Anomalies | `RELATIVE_DOCUMENTS` (photo « air de famille » à 2 traits, **8 ans de plus** : la naissance de la carte tombe dans une autre tranche d'âge que le visage → R18). v0.2 : les tranches 18–29 / 30–54 / 55–79 imposent que les deux sœurs soient de part et d'autre d'une borne ; 29/38 ans garde l'écart de 8 ans et la vraisemblance (D-055 avait mis Fatou à 27 ans et Ngozi à 41). |
 | Attendu | **DÉTENTION** (R18) ; un REFUS documenté est correct sans prime |
 | Enjeu | La règle la plus cruelle de la semaine : le Consortium paie pour séparer une mère de son enfant. |
 | `dialogue_id` | `sc17_fatou` |
@@ -656,15 +658,15 @@ Questions joueur nouvelles (clés `q_*`) :
 | Clé | Texte |
 |---|---|
 | `sc17_fatou_arrival` | [elle se retourne vers l'enfant] Reste là, Kwame. Je reviens. |
-| `sc17_fatou_present` | Tal ka nesu. Ngozi Mensah. C'est moi. |
+| `sc17_fatou_present` | ‹Tal ka nesu.› Ngozi Mensah. C'est moi. |
 | `sc17_fatou_purpose` | Le contrat de ma sœur. De moi. Les serres de Ceres-Verte. |
 | `sc17_fatou_stay` | Toute la vie, si on veut bien de nous. |
 | `sc17_fatou_origin` | La Terre. Le Puits, comme vous dites. Elle est morte dans le convoi. |
 | `sc17_fatou_about_face_mismatch` | Elle était plus vieille. Elle avait le contrat. Moi, j'avais Kwame. |
-| `sc17_fatou_confront` | Esh ta, esh ta… Laissez au moins le petit passer. Il a ses papiers, lui. |
+| `sc17_fatou_confront` | ‹Esh ta, esh ta…› Laissez au moins le petit passer. Il a ses papiers, lui. |
 | `sc17_fatou_exit_deny` | Viens, Kwame. On essaiera une autre vitre. |
 | `sc17_fatou_exit_detain` | Kwame ! Ne le laissez pas seul ! Kwame ! |
-| `sc17_fatou_exit_approve` | Shen tavi. Ngozi vous aurait remercié aussi. |
+| `sc17_fatou_exit_approve` | ‹Shen tavi.› Ngozi vous aurait remercié aussi. |
 
 | Verdict | Flags | Effets | Écho |
 |---|---|---|---|
@@ -678,7 +680,7 @@ Questions joueur nouvelles (clés `q_*`) :
 
 | | |
 |---|---|
-| Identité | **Sefa Long-Ruban**, `DRV`, `C-5 · TOLÉRÉ`, née « 00.00.2163 » (tolérée), bijoux en pièces de moteur |
+| Identité | **Sefa Long-Ruban**, `DRV`, `C-5 · TOLÉRÉ`, née « 00.00.2163 » (année seule, format §4.10 ; en attendant la logique : 05.05.2163), bijoux en pièces de moteur |
 | Documents | Carte, Permis `TRANSIT`, bio-scan : valides ; MRZ terminée par `07` (code 2) |
 | Anomalies | aucune |
 | Objet glissé 🟡 | **Mot plié** sous le bio-scan (`sc18_sefa_note`) ; actions : **GARDER** (pour Ilan) / **REMETTRE À LA GARDE** |
@@ -688,13 +690,13 @@ Questions joueur nouvelles (clés `q_*`) :
 
 | Clé | Texte |
 |---|---|
-| `sc18_sefa_arrival` | Oru ka. On m'a dit Guichet 04, troisième vitre en partant de la gauche. |
-| `sc18_sefa_present` | Tal ka nesu. Il y a un papier de plus. Il n'est pas pour vous. |
-| `sc18_sefa_purpose` | Transit. Je dépose quelque chose et je repars avec le *Long-Ruban*. |
-| `sc18_sefa_origin` | Du *Long-Ruban*. Un cargo. Ma mère y est née, moi aussi. |
+| `sc18_sefa_arrival` | ‹Oru ka.› On m'a dit Guichet 04, troisième vitre en partant de la gauche. |
+| `sc18_sefa_present` | ‹Tal ka nesu.› Il y a un papier de plus. Il n'est pas pour vous. |
+| `sc18_sefa_purpose` | Transit. Je dépose quelque chose et je repars avec le Long-Ruban. |
+| `sc18_sefa_origin` | Du Long-Ruban. Un cargo. Ma mère y est née, moi aussi. |
 | `sc18_sefa_note` | « Pour Ilan, Bloc Pétrel : recycleur 3, jeudi, 04:00. Apporte la clé. » Une luciole. |
 | `sc18_sefa_note_lev` *(si `sc13_turned_back`)* | En dessous, une autre écriture : « Merci pour lundi. — L. » |
-| `sc18_sefa_exit_approve` | Shen tavi. Il pleut, même ici. |
+| `sc18_sefa_exit_approve` | ‹Shen tavi.› Il pleut, même ici. |
 | `sc18_sefa_exit_deny` | Le papier, gardez-le quand même. Il trouvera son chemin. |
 
 | Action / verdict | Flags | Effets |
@@ -708,22 +710,22 @@ Questions joueur nouvelles (clés `q_*`) :
 
 | | |
 |---|---|
-| Identité | **Wren Basse-Marée**, `DRV`, `C-5`, 44 ans, capitaine du cargo *Basse-Marée*, toile de voile solaire sur les épaules |
+| Identité | **Wren Basse-Marée**, `DRV`, `C-5`, 44 ans (née 30.08.2142 : date complète, capitaine immatriculée — contraste avec Sefa), capitaine du cargo Basse-Marée, toile de voile solaire sur les épaules |
 | Documents | Carte valide ; Permis `COMMERCE` avec **ancien modèle d'anneau barré** ; bio-scan valide |
 | Anomalies | `INVALID_SEAL` (`document_id = entry_permit`) |
-| Objet glissé | **Carte de quai** : « Quai 6, cargo *Basse-Marée*, vendredi 05:00. Trois places, 40 ₵. » (glissée quel que soit le verdict) |
+| Objet glissé | **Carte de quai** : « Quai 6, cargo Basse-Marée, vendredi 05:00. Trois places, 40 ₵. » (glissée quel que soit le verdict) |
 | Attendu | **REFUSÉ** |
 | Enjeu | Ouvre la porte de F6 : partir plutôt que choisir. |
 | `dialogue_id` | `sc19_wren` |
 
 | Clé | Texte |
 |---|---|
-| `sc19_wren_arrival` | Oru ka. Je n'ai pas besoin d'entrer. Je suis venue vous voir, vous. |
-| `sc19_wren_present` | Tal ka nesu. Le tampon est vieux. Moi aussi. |
+| `sc19_wren_arrival` | ‹Oru ka.› Je n'ai pas besoin d'entrer. Je suis venue vous voir, vous. |
+| `sc19_wren_present` | ‹Tal ka nesu.› Le tampon est vieux. Moi aussi. |
 | `sc19_wren_purpose` | Vendre de la toile. Et des places. Pas en même temps. |
 | `sc19_wren_origin` | De nulle part. C'est très pratique : personne ne vous y renvoie. |
 | `sc19_wren_about_rule_violated` | L'ancien sceau ? On l'a acheté avant-hier. Les nouvelles, ça va vite, chez vous. |
-| `sc19_wren_note` | « Quai 6, *Basse-Marée*, vendredi 05:00. Trois places, 40 ₵. Les vieilles toussent mal en dérive. Quatre places, si vous insistez. » |
+| `sc19_wren_note` | « Quai 6, Basse-Marée, vendredi 05:00. Trois places, 40 ₵. Les vieilles toussent mal en dérive. Quatre places, si vous insistez. » |
 | `sc19_wren_exit_deny` | Je m'en doutais. La carte, vous la gardez. Les vitres, ça se quitte. |
 | `sc19_wren_exit_approve` | Merci. La carte vaut toujours. |
 
@@ -752,12 +754,12 @@ Avis de recherche du jour (onglet J10, 🟡 donnée `WantedNotice`) : **3 entré
 |---|---|
 | `sc20_arkady_arrival` | Bonjour, Guichet. Belle journée pour respirer. |
 | `sc20_arkady_arrival_pkg` *(si `brulants_package`)* | Le colis est toujours chez vous ? Bien. On n'en a plus besoin. |
-| `sc20_arkady_present` | Tal ka nesu. Bastien Duval. Tout est exact, vous verrez. |
+| `sc20_arkady_present` | ‹Tal ka nesu.› Bastien Duval. Tout est exact, vous verrez. |
 | `sc20_arkady_purpose` | Travail. Maintenance. On a beaucoup de maintenance, aujourd'hui. |
 | `sc20_arkady_origin` | Tycho. Le Puits 9, si ça vous dit quelque chose. |
 | `sc20_arkady_about_wanted` | Ce visage-là ? Il y en a mille comme lui dans les dortoirs. |
 | `sc20_arkady_password` | Il pleut, même ici. [il sourit trop] |
-| `sc20_arkady_luciole_reply` | La pluie, nous, on la fait tomber. [il ne répond pas comme un Veilleur] |
+| `sc20_arkady_luciole_reply` | La pluie, nous, on la fait tomber. [il ne sourit plus] |
 | `sc20_arkady_exit_detain` | Les Veilleurs vont vous remercier. Nous, on se souviendra. |
 | `sc20_arkady_exit_approve` | Fermez bien votre vitre, ce soir. |
 | `sc20_arkady_exit_deny` | Une autre vitre, alors. Il y en a douze. |
@@ -768,7 +770,7 @@ Avis de recherche du jour (onglet J10, 🟡 donnée `WantedNotice`) : **3 entré
 | REFUSÉ documenté | `sc20_turned_back: 0` | +5 ₵ |
 | APPROUVÉ | `sc20_passed: 0` | ENTRÉE IRRÉGULIÈRE ; F5 bascule en variante Brûlants |
 
-Note : `sc20_arkady_luciole_reply` donne au joueur attentif l'indice que la phrase de passe a été volée — c'est le seul « faux Luciole » de la campagne.
+Note : `sc20_arkady_luciole_reply` donne au joueur attentif l'indice que la phrase de passe a été volée — c'est le seul « faux Luciole » de la campagne. La didascalie reste visible (« il ne sourit plus ») et ne dit jamais la vérité (§7.1).
 
 #### SC-21 · « Cinquante crédits pour ne pas regarder » — J10 @6 · enveloppe maximale
 
@@ -817,9 +819,9 @@ Note : `sc20_arkady_luciole_reply` donne au joueur attentif l'indice que la phra
 |---|---|
 | `sc22_mira_arrival` | Bonjour. Je garde ma visière : vous savez déjà pourquoi. |
 | `sc22_mira_arrival_unmet` *(si `met_mira` faux — sécurité)* | Bonjour. Vous ne me connaissez pas. Vous allez me connaître. |
-| `sc22_mira_present` | Tal ka nesu. Mes vrais papiers. Je n'en ai jamais eu d'autres. |
+| `sc22_mira_present` | ‹Tal ka nesu.› Mes vrais papiers. Je n'en ai jamais eu d'autres. |
 | `sc22_mira_visor` | Voilà. Jeudi dernier aussi, vous m'avez demandé ça. |
-| `sc22_mira_password` | Il pleut, même ici. *Lumika*. |
+| `sc22_mira_password` | Il pleut, même ici. ‹Lumika.› |
 | `sc22_mira_luciole_reply` | Alors on se comprend. Le recycleur 3 attend. Ilan aussi, peut-être. |
 | `sc22_mira_purpose` | Rendre l'air. Ce n'est écrit sur aucun permis. |
 | `sc22_mira_stay` | Une heure. Ensuite, plus personne n'aura besoin de votre vitre. |
@@ -849,6 +851,31 @@ Note : `sc20_arkady_luciole_reply` donne au joueur attentif l'indice que la phra
 | J10 | SC-20 @3, SC-21 @6, SC-22 @10 | 16 |
 
 Si `requires_flag` n'est pas satisfait (SC-06), l'index est rempli par un passager généré.
+
+### 4.9 Signalement d'un porteur du code 1 (règle précisée, v0.2)
+
+GDD §4.7 : « DÉTENTION d'un passager portant le code 1, documentée par la paire marque luciole ↔ bulletin = signalement valide ». Précisions pour le moteur et le scoring :
+
+| # | Règle |
+|---|---|
+| 1 | **À partir du J7 seulement** (`DayDef.detain_enabled` et onglet Symboles subversifs). Avant, la marque n'est pas citable ; seul le bouton « Signaler » du soir existe (SC-05). |
+| 2 | **Preuve exigée** : pendant l'inspection, le joueur a confirmé la paire « marque luciole (coin du document) ↔ entrée *Luciole · encre magenta* de l'onglet Symboles subversifs » — même mécanique qu'une discordance confirmée (D-032). **Sans cette citation, pas de signalement** : la DÉTENTION est jugée par le seul moteur de règles (aucune violation de sévérité ≥ 3 → DÉTENTION ABUSIVE). |
+| 3 | **Verdict DÉTENTION + paire citée = signalement valide**, quelles que soient les autres violations : cas **correct**, aucune citation (ni REFUS INJUSTIFIÉ ni DÉTENTION ABUSIVE), +5 ₵ de salaire + 5 ₵ de prime de détention (une seule prime par cas), `loyalty +1`, `lucioles_trust −2`, drapeau `luciole_reported_at_booth`. |
+| 4 | Un **REFUS** qui ne cite que la marque n'est pas un signalement : le Consortium attend une mise en attente. Le refus est jugé normalement (passager en règle → REFUS INJUSTIFIÉ). |
+| 5 | Les codes 2 à 7 ne sont **jamais** une preuve : détenir sur leur seule base = DÉTENTION ABUSIVE (le joueur en sait plus que le Consortium). |
+| 6 | **Cas scénarisés** : si le cas définit `flags_on_detain` (SC-13), ces drapeaux **remplacent** les effets de jauge de la ligne 3 (pas de double `lucioles_trust −2`) ; salaire et prime restent ceux du moteur. Les autres effets (prime, cas correct) s'appliquent aussi à SC-13 si la paire est citée sans la preuve R17. |
+| 7 | APPROUVER un porteur du code 1 : traitement normal (en infraction → citation et `lucioles_trust +1`, GDD). |
+
+### 4.10 Dates de naissance des Dérivants (« 00.00.AAAA »)
+
+| # | Règle |
+|---|---|
+| 1 | **Format affiché** : `00.00.AAAA` — jour et mois inconnus, **seule l'année compte**. Même valeur sur tous les documents du passager (carte, permis, bio-scan, laissez-passer de dérive). |
+| 2 | **Qui** : `DRV` uniquement ; environ la moitié des Dérivants générés (paramètre de faction proposé `year_only_birth_rate = 0.5`) ; **Sefa (SC-18)** toujours (`00.00.2163`) ; Wren (SC-19) a une date complète. |
+| 3 | **Jamais une discordance** en soi (bruit légitime, GDD §3). Onglet Codes d'origine : `rb_origins_drv_birth` — « DRV · Dérivants : naissance « 00.00.AAAA » tolérée (année seule). » |
+| 4 | **Concordance (R07)** : deux documents concordent s'ils portent la même année en `00.00`. Une anomalie `NAME_MISMATCH` sur une telle date change **l'année** (jamais d'inversion jour/mois). |
+| 5 | **Âge apparent (R18)** : âge possible = {année du jour − AAAA − 1, année du jour − AAAA} ; violation seulement si **aucune** de ces deux valeurs n'est dans la tranche du visage (zéro faux positif, D-005). |
+| 6 | **Stockage proposé** : `birth_date` = jour du 01.01.AAAA (entier inchangé) + `Passenger.birth_year_only: bool` repris par les documents ; affichage `GameDate` → `00.00.AAAA`. |
 
 ---
 
@@ -880,7 +907,7 @@ Flags : `noa_birthday_gift` (option 1). Si `sc07_bribe_kept` : une ligne d'Ilan 
 | `evt_d05_heat_res_accept` | La cabine est tiède. Noa s'endort sans tousser. Quelqu'un sait où vous vivez. |
 | `evt_d05_heat_res_refuse` | Le reçu brûle vite. Le chauffage, lui, coûte toujours 6 ₵. |
 
-Effets : accepter → poste chauffage à 0 ₵ ce soir, `lucioles_heating_accepted`, `lucioles_trust +1`. Lettre additionnelle (toujours) : `evt_d05_ilan_night` — « Ilan est sorti à minuit. “Un dépannage.” Ses mains sentaient l'ozone en rentrant. »
+Effets : accepter → poste chauffage à 0 ₵ ce soir, `lucioles_heating_accepted`, `lucioles_trust +1`. Lettre additionnelle (toujours) : `evt_d05_ilan_night` — Ilan est sorti·e à minuit. « Un dépannage. » Ses mains sentaient l'ozone en rentrant.
 
 ### J6 — Le bio-scan de Noa (événement GDD)
 
@@ -908,7 +935,7 @@ Flags : `noa_bioscan_paid` / `noa_bioscan_free` / `noa_bioscan_skipped` (→ Noa
 | `evt_d07_school_opt_ignore` | Ne pas payer |
 | `evt_d07_school_res_pay` | Noa a gommé la luciole. Elle en a redessiné une, minuscule, sous sa couchette. |
 | `evt_d07_school_res_ignore` | L'école transmet l'avis au Bureau. Votre matricule y figure. |
-| `evt_d07_lumika` | Ilan, à Noa : « *Lumika*, ça veut dire luciole. Ne le dis à personne. » |
+| `evt_d07_lumika` | Ilan, à Noa : « ‹Lumika›, ça veut dire luciole. Ne le dis à personne. » |
 | `evt_d07_tag_title` *(si `sc13_detained`)* | LA PORTE DE LA CABINE |
 | `evt_d07_tag_text` | Peint en magenta sur votre porte : « LE 04 ÉTEINT LES LUCIOLES ». Noa l'a lu avant vous. |
 
@@ -924,7 +951,7 @@ Choix 1 — Le voisin :
 |---|---|
 | `evt_d08_neighbor_title` | LA CABINE 12 |
 | `evt_d08_neighbor_text` | Mme Halvorsen, la voisine, cache un jeune Tharsien depuis l'attentat. Prime de signalement : 10 ₵. |
-| `evt_d08_neighbor_opt_denounce` | Le signaler (+10 ₵) |
+| `evt_d08_neighbor_opt_denounce` | Les signaler (+10 ₵) |
 | `evt_d08_neighbor_opt_help` | Leur donner un repas (10 ₵) |
 | `evt_d08_neighbor_opt_ignore` | Ne rien voir |
 | `evt_d08_neighbor_res_denounce` | La Garde est venue à 23 h. Mme Halvorsen ne vous dit plus bonjour. |
@@ -946,19 +973,21 @@ Choix 2 — Le colis (condition : `lucioles_trust ≥ 1` et non `lucioles_hostil
 
 Flags : `brulants_package`, `suspicion +1`.
 
+Si `sc14_passed` : `evt_d08_soute_meds` — « Un sachet sous la porte, de la part du quai 6 : les médicaments de la Soute coûtent 8 ₵ ce soir. » (poste médicaments à 8 ₵). Si `noa_bioscan_skipped` : le bio-scan revient (`evt_d08_bioscan_title` « LA TOUX GRISE, ENCORE », texte et options de J6 sans l'option gratuite).
+
 Si `lucioles_hostile` : `evt_d08_sabotage` — « Le recycleur de la cabine a été forcé. Réparation d'urgence : le chauffage coûte 12 ₵ ce soir. » (poste chauffage +6 ₵). Si `sc17_detained` : `evt_d08_kwame` — « Ilan a vu un petit garçon seul dans le Hall, qui appelait sa mère. Ilan n'a rien pu faire. »
 
 ### J9 — L'audit, l'aveu, la déposition, le départ
 
 **Ordre fixe** : 1) audit (automatique) → 2) aveu d'Ilan → 3) déposition sur Okonkwo → 4) laissez-passer (si `drift_offer`). Chaque étape est un panneau ; l'audit peut terminer la partie (F1).
 
-**1. Audit** (score = `suspicion` − 1 si `inspector_test_passed`) :
+**1. Audit** (titre `evt_d09_audit_title` : « LE DOSSIER DU GUICHET 04 » ; score = `suspicion` − 1 si `inspector_test_passed`) :
 
 | Score | Effet | Clé / texte |
 |---|---|---|
-| ≥ 4 | **F1** immédiate | `evt_d09_audit_arrest` — « Ravel referme votre dossier. “Levez-vous, s'il vous plaît.” Deux gardes attendent dans le couloir. » |
-| 2–3 | −30 ₵, `loyalty −1`, `audit_retention` ; `inspector_bribe_taken` → +30 ₵ confisqués en plus | `evt_d09_audit_retention` — « “Retenue de 30 ₵. Dossier ouvert. Ne me donnez pas de raison de revenir.” » |
-| ≤ 1 | `audit_clean` | `evt_d09_audit_clean` — « “Rien à signaler. C'est rare. Ne gâchez pas ça demain.” » |
+| ≥ 4 | **F1** immédiate | `evt_d09_audit_arrest` — Ravel referme votre dossier. « Levez-vous, s'il vous plaît. » Deux gardes attendent dans le couloir. |
+| 2–3 | −30 ₵, `loyalty −1`, `audit_retention` ; `inspector_bribe_taken` → +30 ₵ confisqués en plus | `evt_d09_audit_retention` — « Retenue de 30 ₵. Dossier ouvert. Ne me donnez pas de raison de revenir. » |
+| ≤ 1 | `audit_clean` | `evt_d09_audit_clean` — « Rien à signaler. C'est rare. Ne gâchez pas ça demain. » |
 
 **2. Aveu d'Ilan** (toujours, `ilan_confessed`) :
 
@@ -970,7 +999,7 @@ Si `lucioles_hostile` : `evt_d08_sabotage` — « Le recycleur de la cabine a é
 | `evt_d09_ilan_text_exposed` *(si `ilan_exposed`)* | Ilan rentre de l'Anneau B à 2 h, le visage gris. « Ils m'ont montré un mot. Le mot que tu leur as donné. » |
 | `evt_d09_ilan_opt_support` | « Vas-y. Fais attention. » |
 | `evt_d09_ilan_opt_forbid` | « Pas toi. Pas nous. Reste. » |
-| `evt_d09_ilan_opt_denounce` | Le signaler à l'Inspection |
+| `evt_d09_ilan_opt_denounce` | Signaler Ilan à l'Inspection |
 | `evt_d09_ilan_res_support` | Ilan vous serre longtemps. Noa fait semblant de dormir. |
 | `evt_d09_ilan_res_forbid` | Ilan pose la clé du recycleur sur la table. Elle y reste toute la nuit. |
 | `evt_d09_ilan_res_denounce` | La Garde frappe à 4 h. Ilan ne se débat pas. Noa ne vous parle plus. |
@@ -998,7 +1027,7 @@ Note : la suspicion posée ici **n'affecte plus l'audit** (déjà passé) ; elle
 | Clé | Texte |
 |---|---|
 | `evt_d09_drift_title` | QUAI 6, VENDREDI 05:00 |
-| `evt_d09_drift_text` | La carte de Wren est sur la table. Trois places sur le *Basse-Marée*, quatre si on insiste. 40 ₵. |
+| `evt_d09_drift_text` | La carte de Wren est sur la table. Trois places sur le Basse-Marée, quatre si on insiste. 40 ₵. |
 | `evt_d09_drift_opt_buy` | Acheter les places (40 ₵) |
 | `evt_d09_drift_opt_keep` | Garder la carte, sans payer |
 | `evt_d09_drift_res_buy` | Wren compte les crédits deux fois. « Vendredi. Pas une minute de retard. » |
@@ -1051,7 +1080,7 @@ Chaque épilogue = titre + 5 à 8 lignes. Les lignes entre crochets sont **condi
 | `end_f1_l2` | Ravel lit votre dossier à voix haute : chaque enveloppe, chaque tampon, chaque silence. |
 | `end_f1_l3_double` *(J10, double jeu)* | « Loyal envers tout le monde. Donc envers personne. » |
 | `end_f1_l3_audit` *(J9)* | « Le Guichet 04 rouvrira demain. Avec quelqu'un d'autre. » |
-| `end_f1_l4` | Ilan, Noa et Dora sont réaffectés vers un dortoir de l'Anneau C sans hublot. |
+| `end_f1_l4` | Ilan, Noa et Dora sont réaffecté·es vers un dortoir de l'Anneau C sans hublot. |
 | `end_f1_l5_okonkwo_warned` | Une nuit, quelqu'un tape trois fois sur la porte de votre cellule. Puis plus rien. |
 | `end_f1_l5` | Au Guichet 04, un·e agent·e novice apprend à dire « Gloire au Consortium ». |
 | `end_f1_l6` | Il pleut, même ici. |
@@ -1123,11 +1152,11 @@ Variante **Brûlants** :
 
 | Clé | Texte |
 |---|---|
-| `end_f6_l1` | Vendredi, 05:00, quai 6. Le *Basse-Marée* sent la rouille et le thé. |
+| `end_f6_l1` | Vendredi, 05:00, quai 6. Le Basse-Marée sent la rouille et le thé. |
 | `end_f6_l2` | Wren raye vos noms d'un registre que personne ne contrôle. |
 | `end_f6_l3_dora` *(si Dora en vie)* | Dora regarde Halcyon rapetisser. Elle dit que Tycho était plus petite encore. |
 | `end_f6_l3` | Il y a une place vide, et personne ne s'y assoit. |
-| `end_f6_l4` | Noa apprend le Tessar plus vite que vous. *Lumika*, *Oru ka*, *Shen tavi*. |
+| `end_f6_l4` | Noa apprend le Tessar plus vite que vous. ‹Lumika›, ‹Oru ka›, ‹Shen tavi›. |
 | `end_f6_l5_final_passed` *(si `final_passed`)* | Par la radio de bord, on apprend que les recycleurs d'Halcyon ont été ouverts. |
 | `end_f6_l5` | Par la radio de bord, on apprend que le Guichet 04 a rouvert avec quelqu'un d'autre. |
 | `end_f6_l6` | Vous n'avez plus de classe, plus de matricule, plus de vitre. Vous respirez. |
@@ -1156,11 +1185,11 @@ Variante **Brûlants** :
 |---|---|
 | **Longueur** | ≤ 90 caractères par réplique de passager (une ligne de sous-titre à 1280×800). Briefings et soirées : ≤ 220 caractères par message. |
 | **Une idée par réplique** | Une réplique répond à la question posée ; l'émotion passe par le rythme, pas par l'adjectif. |
-| **Tessar** | 1 fragment Tessar maximum par réplique, en début ou fin (*Tal ka nesu.*, *Shen tavi.*), suivi de sa traduction implicite. Lexique LORE §10 uniquement ; tout nouveau mot passe par le Lore Master. Rendu italique 🟡 via balise `[i]` dans la clé. |
+| **Tessar** | 1 fragment Tessar maximum par réplique, en début ou fin (‹Tal ka nesu.›, ‹Shen tavi.›), suivi de sa traduction implicite. Lexique LORE §10 uniquement ; tout nouveau mot passe par le Lore Master. **Convention v0.2** : les sous-titres sont des `Label` (pas d'italique) → le fragment est encadré de **chevrons simples** `‹…›` (U+2039/U+203A, présents dans Inter, Chakra Petch et JetBrains Mono), ponctuation du Tessar à l'intérieur, sans espace : `‹Tal ka nesu.› Voici mes papiers.` Les guillemets « » restent réservés aux citations, les crochets aux didascalies. Même règle dans les soirées et les fins (`« ‹Lumika›, ça veut dire luciole. »`). Le masquage de *lumika* (« [mot inconnu] ») fonctionne à l'intérieur des chevrons. Les noms de vaisseaux (Long-Ruban, Basse-Marée) s'écrivent sans marque. |
 | **Didascalies** | Entre crochets, courtes, au présent : `[toux grise]`, `[trois tapes sur la vitre]`. Jamais d'information de vérité (pas de `[il ment]`). |
 | **Vérité** | Une réplique ne prouve jamais rien (GDD P1, UI_FLOW §4.7) : un innocent peut être nerveux, un fraudeur poli. |
 | **Registres** | Passagers : vouvoiement, langue orale, phrases courtes. Okonkwo : tutoiement, sec, « …comme on dit ». Ilan : intime, concret, jamais d'appel au secours explicite. Dora : images de Tycho (poussière, puits). Consortium : novlangue (réaffectation, mise en attente, ressortissant), voix passive, jamais d'insulte. Inspecteur Ravel : courtois, froid, appelle l'agent·e « Guichet 04 ». Lucioles : « nous », images de pluie et de lumière, jamais de menace. Brûlants : impératif, « on ». |
-| **Écriture inclusive** | Point médian pour l'agent·e et Ilan (`réaffecté·e`), comme dans `fr.csv`. |
+| **Écriture inclusive** | Point médian pour l'agent·e et Ilan (`réaffecté·e`, `sorti·e`), comme dans `fr.csv` ; jamais de pronom genré pour Ilan (« Signaler Ilan », pas « Le signaler ») ; pluriel mixte du foyer : `réaffecté·es`. Noa est une fille (« elle »). |
 | **Interdits** | Aucun nom de marque réelle ; aucun terme hors LORE pour les institutions ; aucun jugement moral du narrateur. |
 
 ### 7.2 Préfixes de clés proposés
@@ -1192,9 +1221,9 @@ Variante **Brûlants** :
 | `line_about_envelope_generic` | Un geste. Rien de plus. |
 | `line_about_wanted_generic` | Ce n'est pas moi. Il y a erreur. |
 | `line_about_implant_generic` | Je… je pensais l'avoir déclaré. |
-| `line_visor_refuse` | *Nai.* Non. Mon visage ne regarde que moi. |
+| `line_visor_refuse` | ‹Nai.› Non. Mon visage ne regarde que moi. |
 | `line_password_generic` | Il pleut, même ici. |
-| `line_luciole_reply_generic` | *Shen tavi.* On se reverra sous la pluie. |
+| `line_luciole_reply_generic` | ‹Shen tavi.› On se reverra sous la pluie. |
 | `line_exit_detain_generic` | Je n'ai rien fait. Vous le savez. |
 | `hall_j7_okonkwo_citation` | Guichet 03 : citation PROCÉDURE DE DÉTENTION. Le Bureau remercie les guichets exemplaires. |
 | `hh_state_detained` | MIS·E EN ATTENTE |
@@ -1204,9 +1233,28 @@ Variante **Brûlants** :
 | `wb_envelope_label` | ENVELOPPE · %d ₵ |
 | `wb_note_label` | MOT PLIÉ |
 | `wb_dock_card_label` | CARTE DE QUAI |
-| `rb_tab_wanted` | AVIS DE RECHERCHE |
+| `rb_tab_wanted` | Avis de recherche |
 | `wanted_novak_reason` | Attentat du quai 2 (20.03.2187). Dangereux. |
 | `wanted_vasquez_reason` | Sabotage des recycleurs. Réseau Tharsis-Luciole. |
+
+### 7.4 Textes écrits par Gameplay Systems (M7), relus et intégrés (v0.2)
+
+| Clé | Texte | Note |
+|---|---|---|
+| `line_origin_cer` | Cérès. Trois semaines de vol, et votre file au bout. | réponse générique `q_origin` |
+| `line_origin_thr` | Tharsis. Je connais ce regard : on me le sert à chaque vitre. | id. |
+| `line_origin_drv` | Du cargo qui m'a vu naître. Il n'a pas de port, alors moi non plus. | id. |
+| `evt_d09_audit_title` | LE DOSSIER DU GUICHET 04 | titre du panneau d'audit (§5 J9) |
+| `evt_d08_bioscan_title` | LA TOUX GRISE, ENCORE | retour du bio-scan sauté (§5 J8) |
+| `evt_d08_soute_meds` | Un sachet sous la porte, de la part du quai 6 : les médicaments de la Soute coûtent 8 ₵ ce soir. | si `sc14_passed` |
+| `wanted_generated_reason` | Trafic de papiers. Réseau de passeurs du quai 5. | avis de recherche généré (J10) |
+| `hh_ev_ilan_detained` | Ilan est mis·e en attente à l'Anneau B. Sa couchette reste faite. | `ilan_denounced` |
+| `rb_tab_origins` | Codes d'origine | onglet (les directives disent « onglet Codes d'origine » : « Origines » est déjà une catégorie de règles) |
+| `rb_tab_implants` / `rb_tab_symbols` / `rb_tab_seals` / `rb_tab_wanted` | Implants / Symboles subversifs / Sceaux / Avis de recherche | onglets, casse de phrase comme les autres |
+| `val_seal_*` | HEXAGONE SOLAIRE · ANNEAU BARRÉ · MODÈLE 2187 · CROIX EN ORBITE · ANNEAU BARRÉ ROUGE (+ « · ANCIEN MODÈLE ») | sceaux conformes à LORE §9, inchangés |
+| `rb_origins_drv_birth` | DRV · Dérivants : naissance « 00.00.AAAA » tolérée (année seule). | §4.10, ligne d'onglet à brancher |
+
+Traces de fin corrigées : `end_trace_sc14_bribe_kept` « Vous avez gardé l'enveloppe du Ceinturier à l'insuline. » ; `end_trace_sc17_detained` / `_passed` parlent de « la mère aux papiers de sa sœur » (le joueur n'apprend jamais le prénom de Fatou).
 
 ---
 
@@ -1261,6 +1309,19 @@ Variante **Brûlants** :
 3. **LORE §5.1** place l'interrogatoire obligatoire des Tycho au **J5**, LORE §3 et GDD (R08) au **J4**. Ce document suit le GDD (J4).
 4. **SC-05** n'a pas de nom fixé dans `day_03.tres` : proposition de lui donner **Lev Petrenko** (`TYC`) pour le retour au J7 (SC-13).
 5. **`sc02_mercy`** : proposition d'ajouter `suspicion: 1` à `flags_on_approve` de SC-02 (cohérent avec `msg_echo_sc02_mercy` : « Les Inspecteurs aussi l'ont vue passer »).
+
+### 8.5 Écarts M7 tranchés en v0.2 et reste à faire côté logique
+
+| # | Écart signalé | Décision (Scénariste) | Reste à faire (Gameplay Systems / UI) |
+|---|---|---|---|
+| 1 | Fatou à 27 ans (texte : 33) | Fatou **29 ans** (12.06.2157), Ngozi **38 ans** (04.02.2149) : écart de 8 ans conservé, tranches 18–29 / 30–54 → R18. Données mises à jour (`tools/build_data.gd`). | — (mettre à jour la mention de D-055 dans `DECISIONS.md`) |
+| 2 | SC-06 reprend la naissance générée de SC-02 | **Continuité J1 → J4 canon (D-057)** ; la naissance **08.06.2154 est désormais fixée sur SC-02**, donc les deux coïncident pour toute nouvelle partie. | — |
+| 3 | SC-12 : lettre aléatoire au lieu de « Ravell » | Texte adapté (« Une lettre. Vous refuseriez quelqu'un pour une seule lettre ? »), valable pour toute substitution. | Facultatif : paramètre `injected_value` dans `NameMismatchInjector` |
+| 4 | Détention d'un porteur du code 1 sans citation | Règle précisée en **§4.9** (preuve = paire citée, effets, non-cumul avec `flags_on_detain`). | Implémenter §4.9 dans `ScoringService` / `CaseConsequences` (paire « marque ↔ bulletin » citable, verdict correct, prime, jauges, `luciole_reported_at_booth`) |
+| 5 | Dates « 00.00 » des Dérivants non gérées | Format **`00.00.AAAA`** (année seule), règles en **§4.10** ; intro J8 mise à jour. | `birth_year_only`, affichage, R07, R18 (intervalle), injecteur, `year_only_birth_rate` DRV, Sefa en `00.00.2163`, ligne `rb_origins_drv_birth` dans l'onglet |
+| 6 | Astérisques du Tessar retirées | Convention **chevrons `‹…›`** (§7.1), appliquée à toutes les clés. | UI : `ComparisonUI.arrival_text` ajoute « Lumika. » aux porteurs du code 7 → écrire « ‹Lumika.› » |
+| 7 | Textes hors NARRATIVE | Réécrits et intégrés (§7.4). | — |
+| 8 | Relecture de `fr.csv` | Typos, guillemets français, Hall, genre de Noa et d'Ilan, répliques ≤ 90 caractères (y compris MVP), didascalie de SC-08 (les trois tapes sont déjà affichées par `tag_knock_three`), SC-13 ne dit plus la phrase de passe à l'arrivée (doublon avec `_password`), SC-20 sans didascalie de vérité, Mazur vieilli à 66 ans (Guerre du Sel 2131–2144). | — |
 
 ---
 

@@ -246,22 +246,22 @@ line_about_face_3,"Le photographe du bureau ne sait pas régler sa lumière, c'e
 line_about_face_outrage_1,"Comment ça, pas moi ? Regardez-moi bien !"
 line_about_face_outrage_2,"Pas ressemblant ? Avec la lumière de votre guichet, personne ne l'est !"
 line_about_id_number_1,Le numéro ? Je… je n'ai jamais fait attention à ces chiffres.
-line_about_id_number_2,On m'a réattribué un numéro après mon transfert. L'ancien traîne encore sur certains papiers.
+line_about_id_number_2,On m'a réattribué un numéro après mon transfert. L'ancien traîne encore.
 line_about_id_number_3,"C'est le même numéro. Vous lisez mal, la carte est rayée."
 line_about_id_number_outrage_1,Mon numéro est le bon. Vérifiez avant d'accuser.
 line_about_id_number_outrage_2,"Vous voulez que je vous le récite ? Je le connais par cœur, mon numéro !"
 line_about_name_1,Mon nom… c'est-à-dire que… on l'écrit de plusieurs façons.
-line_about_name_2,"L'un est mon nom de naissance, l'autre mon nom d'usage. Je n'ai pas encore tout fait corriger."
+line_about_name_2,"L'un est mon nom de naissance, l'autre mon nom d'usage. Tout n'est pas corrigé."
 line_about_name_3,Une faute de frappe du bureau des transits. Ils en font tous les jours.
 line_about_name_outrage_1,"Je sais encore comment je m'appelle, merci."
 line_about_name_outrage_2,Mon nom est écrit pareil partout. Relisez.
 line_about_birth_1,"Ma date de naissance ? Je… je confonds, avec la fatigue."
-line_about_birth_2,"J'ai vu le jour pendant un transit : la date a été recopiée deux fois. Ça arrive souvent, sur les navettes."
+line_about_birth_2,J'ai vu le jour pendant un transit. La date a été recopiée deux fois.
 line_about_birth_3,"Les deux dates sont justes. Calendrier de Tycho, calendrier de la station."
 line_about_birth_outrage_1,Vous croyez que je ne connais pas ma propre date de naissance ?
 line_about_birth_outrage_2,"Relisez la date. Lentement, cette fois."
 line_about_validity_1,Je n'ai pas eu le temps de le renouveler… c'est l'affaire de quelques jours.
-line_about_validity_2,Le bureau des renouvellements est fermé depuis le couvre-feu. J'ai le récépissé quelque part…
+line_about_validity_2,Le bureau des renouvellements est fermé depuis le couvre-feu. J'ai un récépissé…
 line_about_validity_3,Il est encore valable. On m'a dit qu'il y avait une tolérance d'une semaine.
 line_about_validity_outrage_1,Il est valide ! Regardez la date au lieu de m'accuser.
 line_about_validity_outrage_2,Valable jusqu'à la fin du mois. Vous savez lire un calendrier ?
@@ -341,7 +341,7 @@ msg_family_sick,"Quelqu'un est malade à la maison. Sans médicaments, ça va em
 msg_family_grave,"C'est grave. Il faut des médicaments ce soir, quoi qu'il en coûte."
 msg_family_lost,La cabine est trop silencieuse. Je ne sais pas comment le dire autrement.
 msg_echo_sc02_mercy,"La Gravitaire d'hier, celle à la carte expirée ? Elle est passée grâce à toi. Les Inspecteurs aussi l'ont vue passer. Fais attention à toi."
-msg_echo_sc02_turned_away,"Une mère gravitaire refoulée hier au Guichet 04 a dormi dans le hall, sur ses valises. Le service d'entretien l'a évacuée à l'aube."
+msg_echo_sc02_turned_away,"Une mère gravitaire refoulée hier au Guichet 04 a dormi dans le Hall, sur ses valises. Le service d'entretien l'a évacuée à l'aube."
 msg_echo_sc03_passed,Un mineur de Tycho entré hier avec une photo « ancienne » a été interpellé à l'Anneau C. Le Bureau rappelle qu'un document exact est un citoyen en sécurité.
 okonkwo_j1_open,"Appuie sur l'intercom (N) pour faire avancer le premier. Pendant qu'il marche, jette un œil au Rulebook."
 okonkwo_j1_inspect,"Pose ta main sur le pupitre… Espace, c'est la touche Inspection. Clique un champ, puis un autre."
@@ -357,18 +357,18 @@ sc01_returning_technician_arrival,"Encore vous ? Non, je plaisante. Retour de mi
 sc01_returning_technician_present,"Ma carte, comme d'habitude."
 sc01_returning_technician_purpose,Je rentre de trois semaines sur les recycleurs de l'Anneau C.
 sc02_hurried_mother_arrival,"Vite, s'il vous plaît… mes enfants m'attendent de l'autre côté."
-sc02_hurried_mother_present,Tal ka nesu. Voici ma carte.
+sc02_hurried_mother_present,‹Tal ka nesu.› Voici ma carte.
 sc02_hurried_mother_purpose,"Rejoindre mes enfants. Ils sont arrivés la semaine dernière, avec leur père."
-sc02_hurried_mother_about_expired,"Trois jours ! Ravel ka ota — ma famille m'attend. Somi, sa tiru ka… laissez-moi passer, je la renouvellerai là-haut."
+sc02_hurried_mother_about_expired,Trois jours ! ‹Ravel ka ota.› Ma famille m'attend. Je la renouvellerai là-haut.
 sc02_hurried_mother_confront,"Je vous en supplie. Trois jours de retard, ce n'est rien pour vous."
-sc03_nervous_miner_arrival,"[toux] Esh ta, esh ta… pardon."
+sc03_nervous_miner_arrival,"[toux] ‹Esh ta, esh ta…› Pardon."
 sc03_nervous_miner_purpose,Contrat Kessler-Ashe. Ils ont besoin de bras aux sas.
 sc03_nervous_miner_about_face_mismatch,"C'est une vieille photo… la poussière de Tycho, ça vous change un homme. [toux grise]"
-sc04_mira_arrival,Bonjour. Je garde ma visière : la lumière du hall me brûle les yeux.
+sc04_mira_arrival,Bonjour. Je garde ma visière : la lumière du Hall me brûle les yeux.
 sc04_mira_visor,…Si vous y tenez. Voilà.
 sc04_mira_purpose,"Kessler-Ashe Orbital. Maintenance des sas, équipe de nuit."
-sc05_luciole_messenger_arrival,"Il pleut sur les quais, ce soir… [mot inconnu]."
-sc05_luciole_messenger_present,Tal ka nesu. Regardez bien.
+sc05_luciole_messenger_arrival,"Il pleut sur les quais, ce soir… ‹Lumika.›"
+sc05_luciole_messenger_present,‹Tal ka nesu.› Regardez bien.
 sc05_luciole_messenger_about_mismatch,Une erreur d'impression. Regardez mieux… regardez le coin du permis.
 sc05_luciole_messenger_note,"« Laissez-le passer. Nous vous aiderons. » — un dessin de luciole, à l'encre magenta."
 cit_serial,G04-J%02d-%02d
@@ -496,7 +496,7 @@ hh_ev_hungry,Le foyer se couche le ventre vide.
 hh_ev_sick_hunger,"%s tombe malade, affaibli·e par la faim."
 hh_ev_cold,La cabine est glaciale cette nuit.
 hh_ev_sick_cold,%s tombe malade à cause du froid.
-hh_ev_noa_cough,Noa tousse toute la nuit : il est malade.
+hh_ev_noa_cough,Noa tousse toute la nuit : elle est malade.
 hh_ev_oxygen,"Sans recharge, Dora suffoque : elle est malade."
 hh_ev_oxygen_grave,Deuxième manquement d'oxygène : Dora est au plus mal.
 hh_ev_rent_unpaid,Loyer impayé : l'Autorité de Transit envoie un avertissement.
@@ -533,7 +533,7 @@ end_trace_met_mira,"Vous avez croisé Mira Vasquez-Orlov, de Kessler-Ashe Orbita
 end_trace_sc05_helped,Vous avez laissé passer le messager des Lucioles.
 end_trace_lucioles_reported,Vous avez signalé le mot des Lucioles au Consortium.
 end_trace_lucioles_note_burned,Vous avez brûlé le mot des Lucioles.
-end_hint,« Gloire au Consortium. » — Vesh ota lumi.
+end_hint,« Gloire au Consortium. » — ‹Vesh ota lumi.›
 end_to_title,RETOUR AU TITRE
 pause_title,PAUSE
 pause_keys,ÉCHAP · F10 · MENU
@@ -591,12 +591,12 @@ spk_lucioles,SANS SIGNATURE · ENCRE MAGENTA
 spk_inspector,INSPECTEUR RAVEL · INSPECTION DES AGENTS
 spk_dora,DORA · BLOC PÉTREL
 day04_directive_title,Directive n° 04 — Interrogatoire et motifs
-day04_intro,"Délégation n° 04 : la cellule d'audition des quais ferme. Le Guichet 04 interroge tout ressortissant de Tycho avant le tampon, contrôle motif et durée du séjour, et vérifie le bloc d'origine du N° ID (onglet Origines). Les Ceinturiers se présentent désormais au guichet."
+day04_intro,"Délégation n° 04 : la cellule d'audition des quais ferme. Le Guichet 04 interroge tout ressortissant de Tycho avant le tampon, contrôle motif et durée du séjour, et vérifie le bloc d'origine du N° ID (onglet Codes d'origine). Les Ceinturiers se présentent désormais au guichet."
 day04_slogan,Chaque souffle se mérite.
 msg_cons_day04,Rappel : toute gratification offerte au personnel de vitre doit être refusée. Une enveloppe ouverte est une vitre brisée.
 msg_okonkwo_day04,"Les licenciés de Tycho débarquent par la Transit-7. Pose-leur au moins une question, sinon c'est une citation. Parle-leur comme à un voisin, pas comme à un suspect. Ça va plus vite… comme on dit."
 msg_okonkwo_day04_reported,"J'ai vu passer ta transmission au Bureau. Prime notée, paraît-il. Moi, je brûle ces papiers-là. Chacun sa vitre."
-msg_luc_day04,"Merci pour le feu. Il pleut, même ici — souvenez-vous de la phrase."
+msg_luc_day04,"Nous avons vu ce que vous avez fait jeudi. Il pleut, même ici — souvenez-vous de la phrase."
 msg_ilan_day04,"Noa a neuf ans aujourd'hui. Elle veut une orange, « une vraie, qui sent ». Je lui ai dit qu'on verrait ce soir."
 day05_directive_title,Directive n° 05 — Certificat bio-scan
 day05_intro,"Délégation n° 05 : le poste Meridian des quais ferme pour raisons sanitaires. Le Guichet 04 exige de tout entrant un certificat bio-scan de moins de 30 jours, émis par la Clinique Orbitale Meridian, au statut SAIN. Alerte Fièvre grise de niveau 2."
@@ -625,7 +625,7 @@ msg_okonkwo_day07,"Ils nous donnent un troisième tampon. Moi, je ne m'en servir
 msg_luc_day07,"Quelqu'un vous dira qu'il pleut, même ici. Répondez que la pluie ne tombe que vers le bas. Il saura."
 msg_ilan_day07,"Noa a un mot de l'école dans son cartable. Je te le garde pour ce soir. Ce n'est pas grave. Enfin, je crois."
 day08_directive_title,Directive n° 08 — Mesures d'urgence
-day08_intro,"Attentat cette nuit au quai 2 (03:12, onze morts). Les ressortissants de Tharsis sont interdits d'entrée, sauf mission diplomatique. Le porteur de papiers d'autrui est mis en attente. Les Dérivants se présentent au guichet (naissance « 00.00 » tolérée). Ajustement sectoriel des loyers."
+day08_intro,"Attentat cette nuit au quai 2 (03:12, onze morts). Les ressortissants de Tharsis sont interdits d'entrée, sauf mission diplomatique. Le porteur de papiers d'autrui est mis en attente. Les Dérivants se présentent au guichet (naissance « 00.00.AAAA » tolérée : seule l'année compte). Ajustement sectoriel des loyers."
 day08_slogan,L'ordre est l'air que nous respirons.
 msg_cons_day08_oath,"Serment de vigilance, à lire à voix haute avant l'ouverture : « Je ne laisse passer que ce qui est exact. » Le réseau Tharsis-Luciole sera démantelé."
 msg_cons_day08_veteran,"Un vétéran tharsien porteur d'un implant MIL-9, entré le 18.03 par le Guichet 04, est recherché pour audition."
@@ -658,13 +658,13 @@ q_luciole_reply,La pluie ne tombe que vers le bas.
 q_about_wanted,Vous figurez sur l'avis de recherche.
 q_about_implant,Cet implant n'est pas déclaré.
 sc06_amara_arrival,Vous vous souvenez de moi ? Mardi. La carte expirée.
-sc06_amara_present,Tal ka nesu. Elle est neuve. J'ai dormi trois nuits dans le Hall pour elle.
+sc06_amara_present,‹Tal ka nesu.› Elle est neuve. J'ai dormi trois nuits dans le Hall pour elle.
 sc06_amara_purpose,"Mes enfants. Anneau D. Ils ont six et onze ans, ils m'attendent depuis mardi."
 sc06_amara_stay,"Deux semaines. Ensuite, on verra. On voit toujours, ensuite."
 sc06_amara_origin,"De la Terre. Puis de votre Hall, sur mes valises."
-sc06_amara_confront,Tout est en règle. J'ai vérifié dix fois. Somi… s'il vous plaît.
-sc06_amara_exit_approve,"Shen tavi. Merci. Je ne vous en veux pas, pour mardi. Un peu, quand même."
-sc06_amara_exit_deny,"Kumo ri sava sa ? Qu'est-ce que j'ai fait, cette fois ?"
+sc06_amara_confront,Tout est en règle. J'ai vérifié dix fois. ‹Somi…› S'il vous plaît.
+sc06_amara_exit_approve,"‹Shen tavi.› Merci. Je ne vous en veux pas, pour mardi. Un peu, quand même."
+sc06_amara_exit_deny,"‹Kumo ri sava sa ?› Qu'est-ce que j'ai fait, cette fois ?"
 sc07_valcourt_arrival,"Il y a une file prioritaire, normalement. Peu importe. Faites vite."
 sc07_valcourt_present,Ma carte. Et de quoi vous acheter un vrai café.
 sc07_valcourt_bribe,"Pour votre peine. Personne ne compte les cafés, au Guichet 04."
@@ -675,16 +675,16 @@ sc07_valcourt_bribe_kept,Parfait. Nous nous comprenons.
 sc07_valcourt_bribe_returned,Comme vous voudrez. Je retiens votre numéro de guichet.
 sc07_valcourt_exit_deny,Vous refusez un Valcourt ? Vous aurez de mes nouvelles.
 sc07_valcourt_exit_approve,"Vous irez loin. Pas très loin, mais loin."
-sc08_dmitri_arrival,[trois tapes sur la vitre] Oru ka. Bonjour. On m'a dit que vous écoutiez.
-sc08_dmitri_present,Tal ka nesu. Le permis date d'avant. D'avant tout.
+sc08_dmitri_arrival,‹Oru ka.› Bonjour. On m'a dit que vous écoutiez.
+sc08_dmitri_present,‹Tal ka nesu.› Le permis date d'avant. D'avant tout.
 sc08_dmitri_purpose,Travailler. N'importe quoi. Kessler-Ashe m'a « réaffecté » lundi.
 sc08_dmitri_stay,"Le temps de trouver un employeur. Un mois, si l'air tient."
 sc08_dmitri_origin,"Tycho, puits 14. Vingt-deux ans de poussière dans cette main-là."
 sc08_dmitri_about_rule_violated,"Sans employeur, oui. Ils ont barré la ligne au quai. Je n'ai rien barré, moi."
 sc08_dmitri_exit_deny,"Je reprendrai la Transit-7. Elle, au moins, ne me refuse pas."
-sc08_dmitri_exit_approve,"Shen tavi. La pluie tombe moins fort, aujourd'hui."
+sc08_dmitri_exit_approve,"‹Shen tavi.› La pluie tombe moins fort, aujourd'hui."
 sc09_noor_arrival,"Bonjour. Je vais faire court : vous aussi, vous avez une file."
-sc09_noor_present,Tal ka nesu. Il en manque un. Je sais lequel.
+sc09_noor_present,‹Tal ka nesu.› Il en manque un. Je sais lequel.
 sc09_noor_purpose,Soigner. La Fièvre grise est dans vos dortoirs. Meridian ne descend pas à l'Anneau C.
 sc09_noor_stay,Jusqu'à ce que les enfants arrêtent de tousser.
 sc09_noor_origin,"Tycho. J'y ai soigné la première vague, en 2183."
@@ -692,15 +692,15 @@ sc09_noor_about_rule_violated,Un bio-scan Meridian coûte 25 ₵ et trois jours 
 sc09_noor_confront,"Regardez la fin de ma bande. Vous savez lire, je le vois."
 sc09_noor_exit_approve,"Bloc Pétrel, c'est bien chez vous ? Je passerai demain soir."
 sc09_noor_exit_deny,"Je comprends. Les enfants, eux, ne comprendront pas."
-sc10_yara_arrival,Oru ka. Mon frère travaille au recycleur de votre bloc.
-sc10_yara_present,Tal ka nesu. Regardez le dernier chiffre. Juste le regarder.
+sc10_yara_arrival,‹Oru ka.› Mon frère travaille au recycleur de votre bloc.
+sc10_yara_present,‹Tal ka nesu.› Regardez le dernier chiffre. Juste le regarder.
 sc10_yara_purpose,"Voir mon frère. Lui apporter une écharpe. Il fait froid, au Bloc Pétrel."
 sc10_yara_stay,"Trois jours. On ne reste jamais longtemps, chez nous."
 sc10_yara_origin,"Tycho. Comme tout ce qui tousse, ici."
-sc10_yara_exit_approve,"Lumika, ça veut dire luciole. Ce soir, vous aurez chaud."
+sc10_yara_exit_approve,"‹Lumika›, ça veut dire luciole. Ce soir, vous aurez chaud."
 sc10_yara_exit_deny,Dommage. Mon frère aura froid. Vous aussi.
 sc11_mazur_arrival,"Bonjour. Oui, l'œil. On me regarde toujours l'œil d'abord."
-sc11_mazur_present,Tal ka nesu. Quatre papiers. Le rouge est le plus cher.
+sc11_mazur_present,‹Tal ka nesu.› Quatre papiers. Le rouge est le plus cher.
 sc11_mazur_purpose,"Ma fille, Katya. Les serres de l'Anneau E. Je ne l'ai pas vue depuis 2179."
 sc11_mazur_stay,"Dix jours. Elle dit que c'est trop. Moi, que ce n'est pas assez."
 sc11_mazur_origin,Tharsis. J'ai tiré sur des gens comme vous. Ils ont tiré sur moi. C'est fini.
@@ -713,25 +713,25 @@ sc12_ravel_bribe,Trente crédits. Une orange par jour pendant un mois. Personne 
 sc12_ravel_about_envelope,"Un cadeau d'anniversaire. Entre collègues, on se rend service."
 sc12_ravel_purpose,"Je rentre de mission. Recycleurs. Comme Ilan, autrefois."
 sc12_ravel_origin,"D'ici. On est tous d'ici, au fond."
-sc12_ravel_about_mismatch,Une lettre en trop. Vous refuseriez quelqu'un pour une lettre ?
+sc12_ravel_about_mismatch,Une lettre. Vous refuseriez quelqu'un pour une seule lettre ?
 sc12_ravel_bribe_kept,Bien. Très bien. [il note quelque chose]
 sc12_ravel_bribe_returned,Intéressant. [il sourit pour la première fois]
 sc12_ravel_exit_deny,"Bonne journée, Guichet 04. Vraiment."
 sc12_ravel_exit_approve,Merci. Je n'en attendais pas moins.
-sc13_lev_arrival,"Il pleut, même ici."
+sc13_lev_arrival,Bonjour. On m'a recommandé votre vitre.
 sc13_lev_password,"Il pleut, même ici. [il attend]"
-sc13_lev_present,"Tal ka nesu. Soren Whitmore, Banque Aurel."
+sc13_lev_present,"‹Tal ka nesu.› Soren Whitmore, Banque Aurel."
 sc13_lev_visor,"…Vous m'avez déjà vu, n'est-ce pas ? Jeudi."
 sc13_lev_visor_helped,"Merci pour jeudi. On n'oublie pas, chez nous."
 sc13_lev_purpose,"Je rentre à l'Anneau D. Mon bureau, mes comptes, ma vie. Celle de Soren."
 sc13_lev_origin,"D'ici. Né ici. Enfin, lui."
 sc13_lev_about_face_mismatch,Deux traits. C'est tout ce qui me sépare des Anneaux. Deux traits.
 sc13_lev_luciole_reply,"…Ha. Alors vous savez. Refusez-moi, si vous devez. Mais pas l'autre tampon."
-sc13_lev_exit_approve,Lumika. Vous venez d'allumer quelque chose.
-sc13_lev_exit_deny,Shen tavi. Je trouverai une autre vitre.
+sc13_lev_exit_approve,‹Lumika.› Vous venez d'allumer quelque chose.
+sc13_lev_exit_deny,‹Shen tavi.› Je trouverai une autre vitre.
 sc13_lev_exit_detain,[aux gardes] Doucement. Je connais le chemin de l'Anneau B.
-sc14_kaito_arrival,"Oru ka ! Belle vitre. Propre. On voit à travers, ça change."
-sc14_kaito_present,"Tal ka nesu. Et un pourboire. Chez nous, on paie le pilote."
+sc14_kaito_arrival,"‹Oru ka !› Belle vitre. Propre. On voit à travers, ça change."
+sc14_kaito_present,"‹Tal ka nesu.› Et un pourboire. Chez nous, on paie le pilote."
 sc14_kaito_bribe,Vingt-cinq. Pour le dérangement. Il n'y en aura pas.
 sc14_kaito_purpose,"Commerce. Je livre une commande au quai 6, puis je repars."
 sc14_kaito_origin,Cérès. La Ceinture. Là où on ne demande pas de papiers aux cailloux.
@@ -740,38 +740,38 @@ sc14_kaito_bribe_kept,Voilà un pilote qui comprend la navigation.
 sc14_kaito_exit_deny,"Des gamins vont attendre leur insuline. Mais votre règle, elle, est contente."
 sc14_kaito_exit_approve,"Le dispensaire du quai 6 vous dit merci. Et Dora aussi, peut-être."
 sc15_idris_arrival,Bonjour. Ma femme est juste derrière moi. Nous voyageons ensemble.
-sc15_idris_present,Tal ka nesu. Mission officielle. Le cachet est en ordre.
+sc15_idris_present,‹Tal ka nesu.› Mission officielle. Le cachet est en ordre.
 sc15_idris_purpose,"Négociation sur les quotas d'eau. Depuis ce matin, sur les quotas tout court."
 sc15_idris_origin,Tharsis. Je sais ce que ce mot vaut aujourd'hui.
 sc15_idris_exit_approve,"Je l'attends de l'autre côté. Vous la laisserez passer, n'est-ce pas ?"
 sc15_idris_exit_deny,Une mission diplomatique refusée. Mon gouvernement en prendra note.
 sc16_hana_arrival,"[elle regarde derrière la vitre, cherche son mari] Il est passé ?"
-sc16_hana_present,"Tal ka nesu. Je suis sa femme. C'est écrit quelque part, non ?"
+sc16_hana_present,"‹Tal ka nesu.› Je suis sa femme. C'est écrit quelque part, non ?"
 sc16_hana_purpose,Être avec lui. Il ne dort pas quand je ne suis pas là.
 sc16_hana_origin,Tharsis. Comme lui. Mais lui a le bon tampon.
 sc16_hana_about_rule_violated,Interdite ? Depuis cette nuit ? Je n'ai rien fait cette nuit.
-sc16_hana_exit_approve,Shen tavi. [elle serre le fil à son poignet]
-sc16_hana_exit_deny,Ravel ka ota… ma famille m'attend. Elle est juste là.
+sc16_hana_exit_approve,‹Shen tavi.› [elle serre le fil à son poignet]
+sc16_hana_exit_deny,‹Ravel ka ota…› Ma famille m'attend. Elle est juste là.
 sc17_fatou_arrival,"[elle se retourne vers l'enfant] Reste là, Kwame. Je reviens."
-sc17_fatou_present,Tal ka nesu. Ngozi Mensah. C'est moi.
+sc17_fatou_present,‹Tal ka nesu.› Ngozi Mensah. C'est moi.
 sc17_fatou_purpose,Le contrat de ma sœur. De moi. Les serres de Ceres-Verte.
 sc17_fatou_stay,"Toute la vie, si on veut bien de nous."
 sc17_fatou_origin,"La Terre. Le Puits, comme vous dites. Elle est morte dans le convoi."
 sc17_fatou_about_face_mismatch,"Elle était plus vieille. Elle avait le contrat. Moi, j'avais Kwame."
-sc17_fatou_confront,"Esh ta, esh ta… Laissez au moins le petit passer. Il a ses papiers, lui."
+sc17_fatou_confront,"‹Esh ta, esh ta…› Laissez au moins le petit passer. Il a ses papiers, lui."
 sc17_fatou_exit_deny,"Viens, Kwame. On essaiera une autre vitre."
 sc17_fatou_exit_detain,Kwame ! Ne le laissez pas seul ! Kwame !
-sc17_fatou_exit_approve,Shen tavi. Ngozi vous aurait remercié aussi.
-sc18_sefa_arrival,"Oru ka. On m'a dit Guichet 04, troisième vitre en partant de la gauche."
-sc18_sefa_present,Tal ka nesu. Il y a un papier de plus. Il n'est pas pour vous.
+sc17_fatou_exit_approve,‹Shen tavi.› Ngozi vous aurait remercié aussi.
+sc18_sefa_arrival,"‹Oru ka.› On m'a dit Guichet 04, troisième vitre en partant de la gauche."
+sc18_sefa_present,‹Tal ka nesu.› Il y a un papier de plus. Il n'est pas pour vous.
 sc18_sefa_purpose,Transit. Je dépose quelque chose et je repars avec le Long-Ruban.
 sc18_sefa_origin,"Du Long-Ruban. Un cargo. Ma mère y est née, moi aussi."
 sc18_sefa_note,"« Pour Ilan, Bloc Pétrel : recycleur 3, jeudi, 04:00. Apporte la clé. » Une luciole."
 sc18_sefa_note_lev,"En dessous, une autre écriture : « Merci pour lundi. — L. »"
-sc18_sefa_exit_approve,"Shen tavi. Il pleut, même ici."
+sc18_sefa_exit_approve,"‹Shen tavi.› Il pleut, même ici."
 sc18_sefa_exit_deny,"Le papier, gardez-le quand même. Il trouvera son chemin."
-sc19_wren_arrival,"Oru ka. Je n'ai pas besoin d'entrer. Je suis venue vous voir, vous."
-sc19_wren_present,Tal ka nesu. Le tampon est vieux. Moi aussi.
+sc19_wren_arrival,"‹Oru ka.› Je n'ai pas besoin d'entrer. Je suis venue vous voir, vous."
+sc19_wren_present,‹Tal ka nesu.› Le tampon est vieux. Moi aussi.
 sc19_wren_purpose,Vendre de la toile. Et des places. Pas en même temps.
 sc19_wren_origin,De nulle part. C'est très pratique : personne ne vous y renvoie.
 sc19_wren_about_rule_violated,"L'ancien sceau ? On l'a acheté avant-hier. Les nouvelles, ça va vite, chez vous."
@@ -780,12 +780,12 @@ sc19_wren_exit_deny,"Je m'en doutais. La carte, vous la gardez. Les vitres, ça 
 sc19_wren_exit_approve,Merci. La carte vaut toujours.
 sc20_arkady_arrival,"Bonjour, Guichet. Belle journée pour respirer."
 sc20_arkady_arrival_pkg,Le colis est toujours chez vous ? Bien. On n'en a plus besoin.
-sc20_arkady_present,"Tal ka nesu. Bastien Duval. Tout est exact, vous verrez."
+sc20_arkady_present,"‹Tal ka nesu.› Bastien Duval. Tout est exact, vous verrez."
 sc20_arkady_purpose,"Travail. Maintenance. On a beaucoup de maintenance, aujourd'hui."
 sc20_arkady_origin,"Tycho. Le Puits 9, si ça vous dit quelque chose."
 sc20_arkady_about_wanted,Ce visage-là ? Il y en a mille comme lui dans les dortoirs.
 sc20_arkady_password,"Il pleut, même ici. [il sourit trop]"
-sc20_arkady_luciole_reply,"La pluie, nous, on la fait tomber. [il ne répond pas comme un Veilleur]"
+sc20_arkady_luciole_reply,"La pluie, nous, on la fait tomber. [il ne sourit plus]"
 sc20_arkady_exit_detain,"Les Veilleurs vont vous remercier. Nous, on se souviendra."
 sc20_arkady_exit_approve,"Fermez bien votre vitre, ce soir."
 sc20_arkady_exit_deny,"Une autre vitre, alors. Il y en a douze."
@@ -799,9 +799,9 @@ sc21_philippa_exit_deny,Vous êtes donc aussi bête que votre vitre.
 sc21_philippa_exit_approve,Fermez votre guichet à midi. Je dis ça pour vous.
 sc22_mira_arrival,Bonjour. Je garde ma visière : vous savez déjà pourquoi.
 sc22_mira_arrival_unmet,Bonjour. Vous ne me connaissez pas. Vous allez me connaître.
-sc22_mira_present,Tal ka nesu. Mes vrais papiers. Je n'en ai jamais eu d'autres.
+sc22_mira_present,‹Tal ka nesu.› Mes vrais papiers. Je n'en ai jamais eu d'autres.
 sc22_mira_visor,"Voilà. Jeudi dernier aussi, vous m'avez demandé ça."
-sc22_mira_password,"Il pleut, même ici. Lumika."
+sc22_mira_password,"Il pleut, même ici. ‹Lumika.›"
 sc22_mira_luciole_reply,"Alors on se comprend. Le recycleur 3 attend. Ilan aussi, peut-être."
 sc22_mira_purpose,Rendre l'air. Ce n'est écrit sur aucun permis.
 sc22_mira_stay,"Une heure. Ensuite, plus personne n'aura besoin de votre vitre."
@@ -838,12 +838,12 @@ evt_d07_school_opt_pay,Payer l'amende (10 ₵)
 evt_d07_school_opt_ignore,Ne pas payer
 evt_d07_school_res_pay,"Noa a gommé la luciole. Elle en a redessiné une, minuscule, sous sa couchette."
 evt_d07_school_res_ignore,L'école transmet l'avis au Bureau. Votre matricule y figure.
-evt_d07_lumika,"Ilan, à Noa : « Lumika, ça veut dire luciole. Ne le dis à personne. »"
+evt_d07_lumika,"Ilan, à Noa : « ‹Lumika›, ça veut dire luciole. Ne le dis à personne. »"
 evt_d07_tag_title,LA PORTE DE LA CABINE
 evt_d07_tag_text,Peint en magenta sur votre porte : « LE 04 ÉTEINT LES LUCIOLES ». Noa l'a lu avant vous.
 evt_d08_neighbor_title,LA CABINE 12
 evt_d08_neighbor_text,"Mme Halvorsen, la voisine, cache un jeune Tharsien depuis l'attentat. Prime de signalement : 10 ₵."
-evt_d08_neighbor_opt_denounce,Le signaler (+10 ₵)
+evt_d08_neighbor_opt_denounce,Les signaler (+10 ₵)
 evt_d08_neighbor_opt_help,Leur donner un repas (10 ₵)
 evt_d08_neighbor_opt_ignore,Ne rien voir
 evt_d08_neighbor_res_denounce,La Garde est venue à 23 h. Mme Halvorsen ne vous dit plus bonjour.
@@ -861,7 +861,7 @@ evt_d09_ilan_text_note,Ilan voit le mot plié dans votre main. « Tu l'as lu. Al
 evt_d09_ilan_text_exposed,"Ilan rentre de l'Anneau B à 2 h, le visage gris. « Ils m'ont montré un mot. Le mot que tu leur as donné. »"
 evt_d09_ilan_opt_support,« Vas-y. Fais attention. »
 evt_d09_ilan_opt_forbid,« Pas toi. Pas nous. Reste. »
-evt_d09_ilan_opt_denounce,Le signaler à l'Inspection
+evt_d09_ilan_opt_denounce,Signaler Ilan à l'Inspection
 evt_d09_ilan_res_support,Ilan vous serre longtemps. Noa fait semblant de dormir.
 evt_d09_ilan_res_forbid,Ilan pose la clé du recycleur sur la table. Elle y reste toute la nuit.
 evt_d09_ilan_res_denounce,La Garde frappe à 4 h. Ilan ne se débat pas. Noa ne vous parle plus.
@@ -883,7 +883,7 @@ end_f1_l1,Anneau B. Une lumière blanche qui ne s'éteint jamais.
 end_f1_l2,"Ravel lit votre dossier à voix haute : chaque enveloppe, chaque tampon, chaque silence."
 end_f1_l3_double,« Loyal envers tout le monde. Donc envers personne. »
 end_f1_l3_audit,« Le Guichet 04 rouvrira demain. Avec quelqu'un d'autre. »
-end_f1_l4,"Ilan, Noa et Dora sont réaffectés vers un dortoir de l'Anneau C sans hublot."
+end_f1_l4,"Ilan, Noa et Dora sont réaffecté·es vers un dortoir de l'Anneau C sans hublot."
 end_f1_l5_okonkwo_warned,"Une nuit, quelqu'un tape trois fois sur la porte de votre cellule. Puis plus rien."
 end_f1_l5,"Au Guichet 04, un·e agent·e novice apprend à dire « Gloire au Consortium »."
 end_f1_l6,"Il pleut, même ici."
@@ -927,7 +927,7 @@ end_f6_l1,"Vendredi, 05:00, quai 6. Le Basse-Marée sent la rouille et le thé."
 end_f6_l2,Wren raye vos noms d'un registre que personne ne contrôle.
 end_f6_l3_dora,Dora regarde Halcyon rapetisser. Elle dit que Tycho était plus petite encore.
 end_f6_l3,"Il y a une place vide, et personne ne s'y assoit."
-end_f6_l4,"Noa apprend le Tessar plus vite que vous. Lumika, Oru ka, Shen tavi."
+end_f6_l4,"Noa apprend le Tessar plus vite que vous. ‹Lumika›, ‹Oru ka›, ‹Shen tavi›."
 end_f6_l5_final_passed,"Par la radio de bord, on apprend que les recycleurs d'Halcyon ont été ouverts."
 end_f6_l5,"Par la radio de bord, on apprend que le Guichet 04 a rouvert avec quelqu'un d'autre."
 end_f6_l6,"Vous n'avez plus de classe, plus de matricule, plus de vitre. Vous respirez."
@@ -946,9 +946,9 @@ line_bribe_returned_generic,Comme vous voudrez.
 line_about_envelope_generic,Un geste. Rien de plus.
 line_about_wanted_generic,Ce n'est pas moi. Il y a erreur.
 line_about_implant_generic,Je… je pensais l'avoir déclaré.
-line_visor_refuse,Nai. Non. Mon visage ne regarde que moi.
+line_visor_refuse,‹Nai.› Non. Mon visage ne regarde que moi.
 line_password_generic,"Il pleut, même ici."
-line_luciole_reply_generic,Shen tavi. On se reverra sous la pluie.
+line_luciole_reply_generic,‹Shen tavi.› On se reverra sous la pluie.
 line_exit_detain_generic,Je n'ai rien fait. Vous le savez.
 hall_j7_okonkwo_citation,Guichet 03 : citation PROCÉDURE DE DÉTENTION. Le Bureau remercie les guichets exemplaires.
 hh_state_detained,MIS·E EN ATTENTE
@@ -958,20 +958,20 @@ ev_slipped_item_report,REMETTRE À LA GARDE
 wb_envelope_label,ENVELOPPE · %d ₵
 wb_note_label,MOT PLIÉ
 wb_dock_card_label,CARTE DE QUAI
-rb_tab_wanted,AVIS DE RECHERCHE
+rb_tab_wanted,Avis de recherche
 wanted_novak_reason,Attentat du quai 2 (20.03.2187). Dangereux.
 wanted_vasquez_reason,Sabotage des recycleurs. Réseau Tharsis-Luciole.
 msg_cons_day08_veteran_refused,Le Bureau salue le refus préventif d'un vétéran tharsien au Guichet 04.
 sc16_hana_arrival_alt,"Ils l'ont refusé lui aussi. Au moins, on repartira ensemble."
 evt_d04_money,"Ilan compte deux fois les crédits sur la table, sans rien dire."
-evt_d05_ilan_night,Ilan est sorti à minuit. “Un dépannage.” Ses mains sentaient l'ozone en rentrant.
+evt_d05_ilan_night,Ilan est sorti·e à minuit. « Un dépannage. » Ses mains sentaient l'ozone en rentrant.
 evt_d08_dora_title,LE PUITS 9
 evt_d08_dora_text,"Dora parle longtemps, entre deux bouffées d'oxygène. Quarante et un jours de grève, l'air coupé, le Puits 9. Une Vasquez-Orlov lui a tenu la main."
 evt_d08_sabotage,Le recycleur de la cabine a été forcé. Réparation d'urgence : le chauffage coûte 12 ₵ ce soir.
 evt_d08_kwame,"Ilan a vu un petit garçon seul dans le Hall, qui appelait sa mère. Ilan n'a rien pu faire."
-evt_d09_audit_arrest,"Ravel referme votre dossier. “Levez-vous, s'il vous plaît.” Deux gardes attendent dans le couloir."
-evt_d09_audit_retention,“Retenue de 30 ₵. Dossier ouvert. Ne me donnez pas de raison de revenir.”
-evt_d09_audit_clean,“Rien à signaler. C'est rare. Ne gâchez pas ça demain.”
+evt_d09_audit_arrest,"Ravel referme votre dossier. « Levez-vous, s'il vous plaît. » Deux gardes attendent dans le couloir."
+evt_d09_audit_retention,« Retenue de 30 ₵. Dossier ouvert. Ne me donnez pas de raison de revenir. »
+evt_d09_audit_clean,« Rien à signaler. C'est rare. Ne gâchez pas ça demain. »
 end_f1_title,MISE EN ATTENTE
 end_f2_title,RÉAFFECTATION
 end_f3_title,LA CABINE SILENCIEUSE
@@ -998,9 +998,9 @@ val_drv,DÉRIVANT·E
 faction_cer_name,Ceinturiers
 faction_thr_name,Tharsiens
 faction_drv_name,Dérivants
-line_origin_cer,"De la Ceinture. Cérès, puis trois semaines de vol."
-line_origin_thr,"De Tharsis. Oui, Mars. Je sais ce que ça vous fait."
-line_origin_drv,"D'un cargo. Nous ne venons de nulle part, nous."
+line_origin_cer,"Cérès. Trois semaines de vol, et votre file au bout."
+line_origin_thr,Tharsis. Je connais ce regard : on me le sert à chaque vitre.
+line_origin_drv,"Du cargo qui m'a vu naître. Il n'a pas de port, alors moi non plus."
 r_purpose_consistent_title,Motif et durée conformes
 r_purpose_consistent_text,Motif et durée conformes au permis ; C-4 : séjour de 30 jours au plus ; motif TRAVAIL : employeur indiqué.
 r_implants_declared_title,Implants déclarés
@@ -1024,11 +1024,11 @@ disc_age_mismatch,L'âge apparent ne correspond pas à la date de naissance.
 disc_mrz_mismatch,La MRZ ne recopie pas ce champ.
 disc_wanted_match,Correspondance avec l'avis de recherche.
 disc_wanted_no_match,Aucune correspondance avec l'avis de recherche.
-hh_ev_ilan_detained,Ilan est mis·e en attente à l'Anneau B.
-evt_d09_audit_title,AUDIT DES AGENTS — INSPECTEUR RAVEL
+hh_ev_ilan_detained,Ilan est mis·e en attente à l'Anneau B. Sa couchette reste faite.
+evt_d09_audit_title,LE DOSSIER DU GUICHET 04
 evt_d08_bioscan_title,"LA TOUX GRISE, ENCORE"
-evt_d08_soute_meds,Kaito a tenu parole : les médicaments de la Soute coûtent 8 ₵ ce soir.
-wanted_generated_reason,Fraude documentaire. Réseau de passeurs du quai 5.
+evt_d08_soute_meds,"Un sachet sous la porte, de la part du quai 6 : les médicaments de la Soute coûtent 8 ₵ ce soir."
+wanted_generated_reason,Trafic de papiers. Réseau de passeurs du quai 5.
 rb_tab_implants,Implants
 rb_tab_symbols,Symboles subversifs
 rb_tab_seals,Sceaux
@@ -1060,6 +1060,7 @@ rb_tab_origins,Codes d'origine
 rb_tab_new,NOUV.
 rb_origins_intro,Le 1er chiffre du bloc ID (HG-N…) désigne l'origine du titulaire. Comparez-le au champ Origine.
 rb_origins_block,BLOC ID
+rb_origins_drv_birth,DRV · Dérivants : naissance « 00.00.AAAA » tolérée (année seule).
 rb_implants_intro,Mode Inspection : comparez le visage du passager à « Implants déclarés » de sa carte.
 rb_implant_opt_title,Oculaire · vision augmentée
 rb_implant_opt_text,"Iris annulaire lumineux, cerclage chromé autour de l'orbite."
@@ -1119,11 +1120,11 @@ end_trace_inspector_test_failed,Vous avez laissé passer l'inspecteur déguisé.
 end_trace_sc11_veteran_passed,Vous avez laissé passer le vétéran Mazur et sa dérogation.
 end_trace_sc13_detained,Vous avez mis en attente le sosie luciole.
 end_trace_sc13_passed,Vous avez laissé passer le sosie luciole.
-end_trace_sc14_bribe_kept,Vous avez gardé l'enveloppe de l'insuline pour Cérès.
+end_trace_sc14_bribe_kept,Vous avez gardé l'enveloppe du Ceinturier à l'insuline.
 end_trace_sc16_hana_passed,Vous avez réuni le couple Hadid.
 end_trace_sc16_family_split,Vous avez séparé le couple Hadid.
-end_trace_sc17_detained,Vous avez mis en attente la sœur aux papiers prêtés. Kwame est resté seul.
-end_trace_sc17_passed,Vous avez laissé passer la sœur aux papiers prêtés.
+end_trace_sc17_detained,Vous avez mis en attente la mère aux papiers de sa sœur. Kwame est resté seul.
+end_trace_sc17_passed,Vous avez laissé passer la mère aux papiers de sa sœur.
 end_trace_neighbor_denounced,Vous avez signalé la cabine 12.
 end_trace_neighbor_helped,Vous avez nourri le jeune Tharsien de la cabine 12.
 end_trace_brulants_package,Vous avez caché le colis des Brûlants sous la couchette de Noa.
