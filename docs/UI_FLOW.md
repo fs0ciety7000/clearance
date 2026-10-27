@@ -46,7 +46,7 @@ flowchart TD
     NX -->|oui| P
     NX -->|non : sirène fin de shift| END
 
-    END[Fin de shift<br/>bilan : traités · erreurs · pénalités · pots-de-vin] --> SAL[Salaire & dépenses<br/>loyer · nourriture · chauffage · médicaments · implant de l'enfant]
+    END[Fin de shift<br/>bilan : traités · erreurs · pénalités · pots-de-vin] --> SAL[Salaire & dépenses<br/>loyer · nourriture · chauffage · médicaments · oxygène de Dora]
     SAL --> FAM[État du foyer<br/>conséquences narratives]
     FAM --> SAV[(Sauvegarde auto)]
     SAV --> BR
