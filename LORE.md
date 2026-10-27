@@ -124,7 +124,7 @@ La **Continuité** : l'humanité a survécu à la Terre grâce à l'ordre, au ca
 - **Code** `TYC` · **Bloc ID** `4NNN` (ex. `HG-4471-K2Q9`).
 - **Description** : colonie minière du cratère Tycho, propriété de fait de Kessler-Ashe. Familles de mineurs, solidaires, abîmées par la poussière lunaire (toux, peau grise). Noms de famille souvent **composés** (fusion des équipages fondateurs : Vasquez-Orlov).
 - **Documents typiques** : Carte d'identité `C-3 · OUVRIER`, Permis d'entrée (motif : travail), Bio-scan Meridian (**obligatoire**, à cause de la Fièvre grise), plus tard contrat Kessler-Ashe.
-- **Statut légal évolutif** : J1 entrée normale → J3 bio-scan obligatoire → J5 **interrogatoire obligatoire** → arc possible : quota Tycho fermé, puis réouverture après grève.
+- **Statut légal évolutif** : J1 entrée normale → J4 **interrogatoire obligatoire** → J5 bio-scan obligatoire au guichet (délégation progressive, cf. §3) → arc possible : quota Tycho fermé, puis réouverture après grève.
 - **Tensions** : grève de 2151 (Puits 9), Fièvre grise, licenciements de 2186. Vivier principal des Lucioles.
 - **Implants fréquents** : `OPT-3`, `NX-12`, `KIN-` (prothèses d'accident).
 - **Prénoms** : Mira, Ilse, Tomás, Anouk, Dmitri, Yara, Lev, Rosalind, Bastien, Noor, Kasimir, Elena, Joaquín, Sabine, Arkady
