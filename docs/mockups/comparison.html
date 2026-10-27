@@ -73,11 +73,40 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
 .neon.h{right:572px;top:52px;font-size:22px;color:rgba(255,46,136,.6);text-shadow:0 0 10px rgba(255,46,136,.7),0 0 28px rgba(255,46,136,.4);animation:flick 7s steps(1) infinite}
 @keyframes flick{0%,100%{opacity:1}43%{opacity:.55}44%{opacity:1}71%{opacity:.7}72%{opacity:1}}
 .glass{position:absolute;left:520px;right:520px;top:16px;bottom:22px;pointer-events:none;
-  background:linear-gradient(115deg, rgba(232,241,245,.05) 0 18%, transparent 18% 26%, rgba(232,241,245,.03) 26% 30%, transparent 30%);
-  border:10px solid #0C0F16;outline:1px solid var(--line-subtle);box-shadow:inset 0 0 60px rgba(0,0,0,.6)}
-.glass::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg, rgba(0,229,255,.035) 0 1px, transparent 1px 4px)} /* scanlines : vitre uniquement */
-.glass .grille{position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);width:160px;height:10px;background:repeating-linear-gradient(90deg,#232A38 0 3px,#0C0F16 3px 7px)}
-.passenger{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:440px;height:330px}
+  background:
+    linear-gradient(112deg, transparent 0 9%, rgba(232,241,245,.075) 9% 17%, transparent 17% 21%, rgba(232,241,245,.045) 21% 23.5%, transparent 23.5% 70%, rgba(232,241,245,.035) 70% 76%, transparent 76%),
+    radial-gradient(640px 90px at 50% 104%, rgba(0,229,255,.10), transparent 70%),
+    linear-gradient(0deg, rgba(190,205,218,.13) 0, rgba(190,205,218,.05) 16%, transparent 30%);
+  border:12px solid;border-image:linear-gradient(180deg,#465165 0%,#1C2230 18%,#2A3242 55%,#141922 85%,#3A4456 100%) 1;
+  outline:1px solid #05060A;box-shadow:inset 0 0 0 1px rgba(232,241,245,.10),inset 0 0 60px rgba(0,0,0,.55)}
+.glass::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg, rgba(0,229,255,.03) 0 1px, transparent 1px 4px)} /* scanlines : vitre uniquement */
+.glass .drops{position:absolute;inset:0;width:100%;height:100%}
+.glass .rivet{position:absolute;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#8A97A8,#232A38 70%)}
+.glass .rivet.tl{left:-9px;top:-9px}.glass .rivet.tr{right:-9px;top:-9px}.glass .rivet.bl{left:-9px;bottom:-9px}.glass .rivet.br{right:-9px;bottom:-9px}
+.glass .slot{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);width:240px;height:12px;background:#030407;box-shadow:inset 0 3px 4px rgba(0,0,0,.9),0 -1px 0 rgba(232,241,245,.18)}
+.glass .slot::after{content:"";position:absolute;left:12px;right:12px;bottom:2px;height:1px;background:rgba(0,229,255,.35)}
+.glass .slot-lbl{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);font:600 9px/1 var(--f-ui);letter-spacing:.2em;color:rgba(138,151,168,.55);white-space:nowrap}
+.hygia{position:absolute;left:28px;bottom:26px;width:76px;height:76px;border-radius:50%;
+  background:radial-gradient(circle,#05060A 0 1.6px,transparent 2.2px) 0 0/8px 8px,radial-gradient(circle at 40% 35%,#2A3242,#11151D 70%);
+  box-shadow:0 0 0 4px #1C2230,0 0 0 5px #465165,0 6px 14px rgba(0,0,0,.6)}
+.hygia i{position:absolute;right:-14px;top:-6px;width:7px;height:7px;border-radius:50%;background:#232A38}
+[data-state="arr"] .hygia i{background:var(--accent-cyan);box-shadow:0 0 8px var(--accent-cyan)}
+.passenger{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);transform-origin:50% 100%;width:440px;height:330px;transition:transform .5s,filter .5s}
+[data-state="arr"] .passenger{transform:translateX(-50%) translate(-210px,-64px) scale(.46);filter:brightness(.62) blur(.5px)}
+[data-state="arr"] .passenger .bob{animation:bob .55s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-6px)}}
+.floormark{position:absolute;left:50%;bottom:90px;width:280px;height:24px;transform:translateX(-50%) perspective(240px) rotateX(58deg);border:3px solid rgba(255,230,0,.55);background:repeating-linear-gradient(135deg,rgba(255,230,0,.22) 0 8px,transparent 8px 18px)}
+.floorpath{position:absolute;left:560px;bottom:104px;width:260px;height:3px;background:repeating-linear-gradient(90deg,rgba(255,230,0,.4) 0 18px,transparent 18px 34px);transform:rotate(-8deg);transform-origin:100% 50%}
+.facebox{position:absolute;left:888px;top:44px;width:144px;height:166px;pointer-events:none;--l:18px;--w:2px;--col:rgba(0,229,255,.75);
+  background:linear-gradient(var(--col),var(--col)) 0 0/var(--l) var(--w),linear-gradient(var(--col),var(--col)) 0 0/var(--w) var(--l),
+   linear-gradient(var(--col),var(--col)) 100% 0/var(--l) var(--w),linear-gradient(var(--col),var(--col)) 100% 0/var(--w) var(--l),
+   linear-gradient(var(--col),var(--col)) 0 100%/var(--l) var(--w),linear-gradient(var(--col),var(--col)) 0 100%/var(--w) var(--l),
+   linear-gradient(var(--col),var(--col)) 100% 100%/var(--l) var(--w),linear-gradient(var(--col),var(--col)) 100% 100%/var(--w) var(--l);background-repeat:no-repeat}
+.facebox span{position:absolute;left:calc(100% + 8px);top:0;padding:3px 8px;background:rgba(7,8,12,.85);font:600 10px/1 var(--f-ui);letter-spacing:.16em;color:var(--accent-cyan);white-space:nowrap}
+.subtitle{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);max-width:760px;padding:10px 18px;background:rgba(7,8,12,.85);display:flex;gap:12px;align-items:baseline;white-space:nowrap}
+.subtitle b{font:600 13px/1 var(--f-display);letter-spacing:.14em;color:var(--accent-cyan)}
+.subtitle span{font:400 18px/1.3 var(--f-ui);color:var(--text-primary)}
+.subtitle i{font:400 14px/1 var(--f-ui);font-style:normal;color:var(--text-secondary)}
 .ledge{position:absolute;left:0;right:0;bottom:0;height:22px;background:linear-gradient(180deg,#161B26,#0E1118);border-top:1px solid #2c3446}
 .ledge::after{content:"";position:absolute;left:50%;top:6px;width:260px;height:6px;transform:translateX(-50%);background:var(--bg-void);box-shadow:0 0 0 1px var(--line-subtle)}
 
@@ -187,6 +216,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
 .rule.new .newtag{display:inline-flex;margin-bottom:4px;padding:3px 6px;font:700 10px/1 var(--f-ui);letter-spacing:.14em;color:var(--bg-void);background:var(--state-amber)}
 .rule.cited{box-shadow:inset 3px 0 0 var(--accent-magenta);background:rgba(255,46,136,.06)}
 .rule.cited .n{color:var(--accent-magenta)}
+.bench-empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.bench-empty .slotico{width:120px;height:6px;background:var(--bg-void);box-shadow:0 0 0 1px var(--line-subtle),0 -6px 18px rgba(0,229,255,.08)}
+.bench-empty b{font:600 15px/1 var(--f-display);letter-spacing:.16em;color:var(--text-secondary);text-transform:uppercase}
+.bench-empty p{font:400 14px/1.5 var(--f-ui);color:var(--text-muted)}
 .rb-foot{display:flex;justify-content:space-between;align-items:center;padding:10px 20px 14px 24px;border-top:1px solid var(--line-subtle);font:500 12px/1 var(--f-data);color:var(--text-secondary)}
 
 /* ===== E · Barre d'outils ===== */
@@ -209,6 +242,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
 .stamp .sub{display:block;font:500 11px/1 var(--f-ui);letter-spacing:.08em;text-transform:none;color:var(--text-secondary);margin-top:6px}
 .stamp.ok{--bc:var(--state-green);--bg:rgba(46,255,154,.08);color:var(--state-green)}
 .stamp.no{--bc:var(--state-red);--bg:rgba(255,59,59,.08);color:var(--state-red)}
+[data-state="arr"] .stamp{--bc:var(--line-subtle);--bg:var(--bg-panel);color:var(--text-muted)}
+[data-state="arr"] .tray .lbl .label{color:var(--text-muted)}
+.btn.dis{color:var(--text-muted)}
+.btn.next{--bc:var(--state-amber);--bg:rgba(255,163,26,.06);color:var(--state-amber);font-size:13px}
 
 /* ===== Liens holographiques ===== */
 #links{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none;z-index:20;overflow:visible}
@@ -236,7 +273,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
 .mock-switch button kbd{font:500 10px/1 var(--f-data);opacity:.7;margin-right:6px}
 
 @media (prefers-reduced-motion: reduce){
-  .rain,.neon.h,.dash-move,.link-draw{animation:none !important}
+  .rain,.neon.h,.dash-move,.link-draw,.passenger .bob{animation:none !important}
   .link-draw{stroke-dashoffset:0}
 }
 </style>
@@ -289,6 +326,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
         <radialGradient id="face" cx=".6" cy=".45" r=".7"><stop offset="0" stop-color="#1A2030"/><stop offset="1" stop-color="#0B0E15"/></radialGradient>
         <filter id="glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
+      <g class="bob">
       <!-- manteau -->
       <path d="M18 330 C30 262 98 232 158 222 L282 222 C342 232 410 262 422 330 Z" fill="#0A0C12"/>
       <path d="M18 330 C30 262 98 232 158 222 L282 222 C342 232 410 262 422 330 Z" fill="url(#rimM)" opacity=".55"/>
@@ -308,20 +346,34 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
       <rect x="190" y="104" width="18" height="3" fill="#8A97A8" opacity=".55"/>
       <g filter="url(#glow)">
         <rect x="230" y="102" width="26" height="5" fill="#00E5FF"/>
-        <circle cx="243" cy="104.5" r="2" fill="#E8F1F5"/>
+        <circle id="pupil" cx="243" cy="104.5" r="2" fill="#E8F1F5"/>
       </g>
       <path d="M258 104 L272 98" stroke="#00E5FF" stroke-width="1" opacity=".6"/>
       <!-- bouche -->
       <rect x="208" y="142" width="22" height="2" fill="#4E5868" opacity=".7"/>
+      </g>
     </svg>
 
-    <div class="glass" aria-hidden="true"><div class="grille"></div></div>
+    <div class="floorpath" data-show="arr" aria-hidden="true"></div>
+    <div class="floormark" data-show="arr" aria-hidden="true"></div>
+    <div class="glass" aria-hidden="true">
+      <svg class="drops" id="drops" aria-hidden="true"></svg>
+      <div class="hygia" title="Hygiaphone"><i></i></div>
+      <i class="rivet tl"></i><i class="rivet tr"></i><i class="rivet bl"></i><i class="rivet br"></i>
+      <div class="slot"></div><span class="slot-lbl">FENTE À DOCUMENTS</span>
+    </div>
     <div class="ledge" aria-hidden="true"></div>
+    <!-- Champ comparable « Visage » (Mode Inspection) -->
+    <div class="facebox" data-show="a disc conc" aria-label="Champ comparable : visage du passager"><span>◆ VISAGE</span></div>
+    <!-- Sous-titre de bark -->
+    <div class="subtitle" data-show="arr" role="status"><i>[pas mouillés]</i><b>PASSAGÈRE 09</b><span>« Bonsoir… J'arrive, j'arrive. »</span></div>
 
     <!-- Dialogue -->
     <div class="dialog ch">
-      <div class="who"><b>PASSAGÈRE · M. VASQUEZ-ORLOV</b><span class="label">Intercom</span></div>
-      <p class="quote">« Mon contrat chez Kessler-Ashe commence demain matin. Tout est en règle, je vous assure. »</p>
+      <div class="who"><b data-show="off a disc conc">PASSAGÈRE · M. VASQUEZ-ORLOV</b><b data-show="arr">PASSAGÈRE 09 · IDENTITÉ NON VÉRIFIÉE</b><span class="label">Intercom</span></div>
+      <p class="quote" data-show="off a disc conc">« Mon contrat chez Kessler-Ashe commence demain matin. Tout est en règle, je vous assure. »</p>
+      <p class="quote" data-show="arr" style="color:var(--text-secondary)">« Bonsoir… J'arrive, j'arrive. »</p>
+      <div class="hint" data-show="arr">La passagère s'approche du guichet. Ses documents glisseront par la fente de la vitre à son arrivée.</div>
       <div class="hint" data-show="off a conc">Aucune question débloquée. Documentez une discordance pour ouvrir l'interrogatoire.</div>
       <div class="qcard ch" data-show="disc">
         <svg class="ic" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L19 18 H1 Z" fill="none" stroke="#FF2E88" stroke-width="2" stroke-linejoin="miter"/><rect x="9" y="7" width="2" height="6" fill="#FF2E88"/><rect x="9" y="14.5" width="2" height="2" fill="#FF2E88"/></svg>
@@ -341,6 +393,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
           1 documentée
         </span>
         <span class="flag dim" data-show="off a conc">Aucune</span>
+        <span class="flag dim" data-show="arr" style="color:var(--state-amber)">◆ En approche</span>
       </div>
     </div>
   </section>
@@ -350,12 +403,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
     <div class="grid" aria-hidden="true"></div>
     <div class="corners" aria-hidden="true"></div>
     <div class="bench-head">
-      <span class="label">Plan de travail · 3 documents</span>
-      <span class="insp-flag"><i class="dot"></i><span data-show="off">MODE INSPECTION INACTIF</span><span data-show="a disc conc">MODE INSPECTION ACTIF</span></span>
+      <span class="label" data-show="off a disc conc">Plan de travail · 3 documents</span><span class="label" data-show="arr">Plan de travail · vide</span>
+      <span class="insp-flag"><i class="dot"></i><span data-show="arr">INSPECTION INDISPONIBLE · AUCUN DOCUMENT</span><span data-show="off">MODE INSPECTION INACTIF</span><span data-show="a disc conc">MODE INSPECTION ACTIF</span></span>
+    </div>
+
+ <div class="bench-empty" data-show="arr">
+      <div class="slotico" aria-hidden="true"></div>
+      <b>En attente des documents</b>
+      <p>Ils glisseront par la fente de la vitre à l'arrivée du passager.<br>En attendant : <span class="kbd">Tab</span> Rulebook</p>
     </div>
 
     <!-- Document 1 : Bio-scan -->
-    <article class="doc ch" style="left:32px;top:64px;width:372px" aria-label="Certificat bio-scan">
+    <article class="doc ch" data-show="off a disc conc" style="left:32px;top:64px;width:372px" aria-label="Certificat bio-scan">
       <header><div class="t"><span>Clinique Orbitale Meridian</span><b>Certificat bio-scan</b></div><span class="code">BS-88213</span></header>
       <div class="body">
         <div class="fields">
@@ -374,7 +433,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
     </article>
 
     <!-- Document 2 : Carte d'identité -->
-    <article class="doc ch" id="doc-id" style="left:436px;top:44px;width:476px" aria-label="Carte d'identité">
+    <article class="doc ch" data-show="off a disc conc" id="doc-id" style="left:436px;top:44px;width:476px" aria-label="Carte d'identité">
       <header><div class="t"><span>Consortium · Citoyenneté</span><b>Carte d'identité</b></div>
         <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L26 14 L14 26 L2 14 Z" fill="none" stroke="#FFE600" stroke-width="2"/><path d="M14 9 L19 14 L14 19 L9 14 Z" fill="#FFE600"/></svg>
       </header>
@@ -405,7 +464,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
     </article>
 
     <!-- Document 3 : Permis d'entrée -->
-    <article class="doc ch" id="doc-permit" style="left:944px;top:76px;width:436px" aria-label="Permis d'entrée">
+    <article class="doc ch" data-show="off a disc conc" id="doc-permit" style="left:944px;top:76px;width:436px" aria-label="Permis d'entrée">
       <header><div class="t"><span>Autorité de transit · Halcyon Gate</span><b>Permis d'entrée</b></div><span class="code">PE-2187-30417</span></header>
       <div class="body">
         <div style="display:flex;gap:16px;align-items:flex-start">
@@ -470,7 +529,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
       <span class="keys"><span class="kbd">Q</span><span class="kbd pad">Y</span></span>
     </div>
 
+    <div class="btn ch next" data-show="arr" aria-disabled="true">Suivant · en approche</div>
     <div class="status" id="status">
+      <span data-show="arr"><span style="color:var(--state-amber);font-weight:600">◆ Passager en approche</span> — lisez le Rulebook en attendant. Tampons verrouillés jusqu'à la présentation des documents.</span>
       <span data-show="off">Appuyez sur <b>Espace</b> pour comparer deux champs.</span>
       <span data-show="a"><span class="cy">◆ Champ A</span> <b>Valide jusqu'au</b> — sélectionnez un second champ. <b>Échap</b> pour annuler.</span>
       <span data-show="disc"><span class="mag">⚠ 1 discordance</span> documentée · règle 02 · question débloquée.</span>
@@ -478,14 +539,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
     </div>
 
     <div class="tray ch">
-      <div class="lbl"><span class="label">Tampons officiels</span><div><span class="kbd">T</span><span class="kbd pad">RT</span></div></div>
+      <div class="lbl"><span class="label" data-show="off a disc conc">Tampons officiels</span><span class="label" data-show="arr">Tampons verrouillés</span><div><span class="kbd">T</span><span class="kbd pad">RT</span></div></div>
       <div class="btn ch stamp ok">
         <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.5 13.5 L11.5 17.5 L19 9" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>
-        <span>Approuvé<span class="sub">maintenir <b>V</b> · Ⓐ</span></span>
+        <span>Approuvé<span class="sub" data-show="off a disc conc">maintenir <b>V</b> · Ⓐ</span><span class="sub" data-show="arr">aucun document</span></span>
       </div>
       <div class="btn ch stamp no">
         <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M8 1.5 H18 L24.5 8 V18 L18 24.5 H8 L1.5 18 V8 Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 8.5 L17.5 17.5 M17.5 8.5 L8.5 17.5" stroke="currentColor" stroke-width="2.5"/></svg>
-        <span>Refusé<span class="sub">maintenir <b>X</b> · Ⓧ</span></span>
+        <span>Refusé<span class="sub" data-show="off a disc conc">maintenir <b>X</b> · Ⓧ</span><span class="sub" data-show="arr">aucun document</span></span>
       </div>
     </div>
   </footer>
@@ -503,6 +564,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
 <!-- Sélecteur d'état (outil de maquette, hors jeu) -->
 <nav class="mock-switch" aria-label="État de la maquette">
   <span class="label">Maquette</span>
+  <button data-s="arr"><kbd>0</kbd>Arrivée</button>
   <button data-s="off"><kbd>1</kbd>Inspection inactive</button>
   <button data-s="a"><kbd>2</kbd>Champ A sélectionné</button>
   <button data-s="disc"><kbd>3</kbd>Discordance détectée</button>
@@ -573,7 +635,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
 
   function setState(s){
     state=s; stage.dataset.state=s;
-    stage.classList.toggle('insp', s!=='off');
+    stage.classList.toggle('insp', s!=='off' && s!=='arr');
     document.querySelectorAll('[data-show]').forEach(function(e){e.hidden=e.dataset.show.split(' ').indexOf(s)<0});
     ['f-permit-exp','f-today','f-id-num','f-permit-num'].forEach(function(id){$(id).classList.remove('sel','bad','ok')});
     $('r-valid').classList.toggle('cited', s==='disc');
@@ -581,7 +643,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
     if(s==='disc'){$('f-permit-exp').classList.add('bad');$('f-today').classList.add('bad');$('f-permit-exp').querySelector('.tag').textContent='①';$('f-today').querySelector('.tag').textContent='①'}
     else {$('f-permit-exp').querySelector('.tag').textContent='A';$('f-today').querySelector('.tag').textContent='B'}
     if(s==='conc'){$('f-id-num').classList.add('ok');$('f-permit-num').classList.add('ok')}
-    $('btn-insp').classList.toggle('on', s!=='off');
+    $('btn-insp').classList.toggle('on', s!=='off' && s!=='arr');
+    $('btn-insp').classList.toggle('dis', s==='arr');
     $('btn-q').classList.toggle('live', s==='disc');
     $('btn-q').classList.toggle('dim', s!=='disc');
     document.querySelectorAll('.mock-switch button').forEach(function(b){b.setAttribute('aria-pressed', b.dataset.s===s)});
@@ -589,8 +652,27 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-void);color
   }
 
   document.querySelectorAll('.mock-switch button').forEach(function(b){b.addEventListener('click',function(){setState(b.dataset.s)})});
-  addEventListener('keydown',function(e){var m={'1':'off','2':'a','3':'disc','4':'conc'}[e.key];if(m)setState(m)});
+  addEventListener('keydown',function(e){var m={'0':'arr','1':'off','2':'a','3':'disc','4':'conc'}[e.key];if(m)setState(m)});
   addEventListener('resize',fit);
+  // Gouttes / condensation (aléatoire déterministe, visage dégagé)
+  (function(){
+    var svg=$('drops'), W=856, H=314, seed=7, out='';
+    function r(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}
+    function nearFace(x,y){var dx=(x-428)/120, dy=(y-110)/120;return dx*dx+dy*dy<1}
+    for(var i=0;i<130;i++){
+      var x=r()*W, y=Math.pow(r(),.6)*H; if(nearFace(x,y))continue;
+      var rad=.8+r()*2.2;
+      out+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+rad.toFixed(1)+'" fill="rgba(232,241,245,'+(.10+r()*.18).toFixed(2)+'"/>';
+      if(rad>2.4 && r()>.5) out+='<path d="M'+x.toFixed(1)+' '+(y-rad).toFixed(1)+' v-'+(10+r()*40).toFixed(0)+'" stroke="rgba(232,241,245,.10)" stroke-width="1"/>';
+    }
+    svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.setAttribute('preserveAspectRatio','none'); svg.innerHTML=out;
+  })();
+  // Regard qui suit le curseur (implant oculaire)
+  addEventListener('mousemove',function(e){
+    var p=$('pupil'), s=stage.getBoundingClientRect(), x=(e.clientX-s.left)/scale, y=(e.clientY-s.top)/scale;
+    var dx=Math.max(-1,Math.min(1,(x-960)/700)), dy=Math.max(-1,Math.min(1,(y-160)/700));
+    p.setAttribute('cx',(243+dx*9).toFixed(1)); p.setAttribute('cy',(104.5+dy*1.5).toFixed(1));
+  });
   setState('disc'); fit();
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
 })();
