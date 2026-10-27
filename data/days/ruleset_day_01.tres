@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RuleSet" format=3 uid="uid://c1l7t2rj64wav"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_qr4tc"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_required.tres" id="2_8751j"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_valid.tres" id="3_vffsd"]
+[ext_resource type="Script" path="res://scripts/rules/rule_set.gd" id="4_a8xe4"]
+
+[resource]
+script = ExtResource("4_a8xe4")
+id = &"rs_day01"
+rules = Array[ExtResource("1_qr4tc")]([ExtResource("2_8751j"), ExtResource("3_vffsd")])
+new_rule_ids = Array[StringName]([&"r_id_card_required", &"r_id_card_valid"])
+required_document_ids = Array[StringName]([&"id_card"])

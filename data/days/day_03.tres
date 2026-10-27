@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="DayDef" format=3 uid="uid://0x3ehtavx8ha"]
+
+[ext_resource type="Resource" path="res://data/days/ruleset_day_03.tres" id="1_axu43"]
+[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="2_dd2l1"]
+[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="3_iudbu"]
+
+[sub_resource type="Resource" id="scripted_sc_04"]
+script = ExtResource("3_iudbu")
+id = &"sc_04"
+at_index = 2
+passenger_overrides = {
+&"birth_date": 18932,
+&"citizen_class": &"C-3",
+&"citizen_id": "HG-4471-K2Q9",
+&"employer": "Kessler-Ashe Orbital",
+&"faction_id": &"tyc",
+&"family_name": "Vasquez-Orlov",
+&"given_name": "Mira",
+&"purpose": &"work",
+&"sex": &"F"
+}
+appearance_overrides = Dictionary[StringName, StringName]({
+&"headwear": &"visor_down"
+})
+dialogue_id = &"sc04_mira"
+sets_flag = &"met_mira"
+
+[sub_resource type="Resource" id="scripted_sc_05"]
+script = ExtResource("3_iudbu")
+id = &"sc_05"
+at_index = 7
+passenger_overrides = {
+&"citizen_class": &"C-3",
+&"faction_id": &"tyc"
+}
+forced_anomalies = Array[int]([3])
+dialogue_id = &"sc05_luciole_messenger"
+sets_flag = &"lucioles_contact"
+
+[resource]
+script = ExtResource("2_dd2l1")
+day_number = 3
+game_date = 31849
+rule_set = ExtResource("1_axu43")
+duration_sec = 600.0
+passenger_count = 11
+anomaly_count_weights = PackedFloat32Array(0.45, 0.45, 0.1, 0)
+anomaly_weights = Dictionary[int, float]({
+0: 0.25,
+1: 0.15,
+2: 0.2,
+3: 0.2,
+4: 0.2
+})
+scripted_cases = Array[ExtResource("3_iudbu")]([SubResource("scripted_sc_04"), SubResource("scripted_sc_05")])
+intro_text_key = "day03_intro"
+faction_weights = Dictionary[StringName, float]({
+&"hal": 0.25,
+&"ter": 0.3,
+&"tyc": 0.45
+})
+visor_down_rate = 0.15
+legit_noise_rate = 0.2

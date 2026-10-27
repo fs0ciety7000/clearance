@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RequireDocumentRule" format=3 uid="uid://phhgcuhrwakx"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/require_document_rule.gd" id="1_po3nu"]
+
+[resource]
+script = ExtResource("1_po3nu")
+document_id = &"id_card"
+id = &"r_id_card_required"
+title_key = "r_id_card_required_title"
+rulebook_text_key = "r_id_card_required_text"

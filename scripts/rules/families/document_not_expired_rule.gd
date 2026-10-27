@@ -1,0 +1,59 @@
+## Famille « Document non expiré » (R02, R05, R12).
+##
+## Par défaut : violation si `expiry_date < today` (valide le jour même de
+## l'expiration). Avec `max_age_days > 0` (R12 « bio-scan émis il y a moins de
+## 30 jours ») : violation si `today − issue_date ≥ max_age_days`.
+## Un document absent n'est pas une violation ici (cf. `RequireDocumentRule`).
+## Anomalie détectée : `EXPIRED_DOCUMENT`.
+class_name DocumentNotExpiredRule
+extends Rule
+
+const EXPIRY_PATH: StringName = &"document.expiry_date"
+const ISSUE_PATH: StringName = &"document.issue_date"
+
+@export var document_id: StringName = &""
+## 0 = date d'expiration imprimée ; > 0 = âge maximal depuis l'émission, en jours.
+@export var max_age_days: int = 0
+
+
+## Champ qui prouve la violation (expiration, ou émission si `max_age_days`).
+func get_evidence_path() -> StringName:
+	return ISSUE_PATH if max_age_days > 0 else EXPIRY_PATH
+
+
+func is_expired(doc: DocumentInstance, today: int) -> bool:
+	if max_age_days > 0:
+		return today - doc.issue_date >= max_age_days
+	return doc.expiry_date < today
+
+
+func evaluate(case: Case, ctx: RuleContext) -> Array[Violation]:
+	var violations: Array[Violation] = []
+	var doc: DocumentInstance = case.get_document(document_id)
+	if doc == null or not is_expired(doc, ctx.today):
+		return violations
+	var refs: Array[FieldRef] = []
+	var evidence: FieldRef = Rule.find_ref(case, document_id, get_evidence_path())
+	if evidence != null:
+		refs.append(evidence)
+	refs.append(get_ref())
+	violations.append(make_violation(refs, "viol_document_expired"))
+	return violations
+
+
+func get_detectable_anomalies() -> Array[AnomalyType.Kind]:
+	return [AnomalyType.Kind.EXPIRED_DOCUMENT]
+
+
+func check_against(case: Case, ref: FieldRef, ctx: RuleContext) -> Discrepancy.Result:
+	if ref.document_id != document_id:
+		return Discrepancy.Result.INCOMPARABLE
+	var field: FieldDef = case.get_field_def(ref)
+	if field == null or field.truth_path != get_evidence_path():
+		return Discrepancy.Result.INCOMPARABLE
+	var doc: DocumentInstance = case.get_document(document_id)
+	return Discrepancy.Result.DISCORDANT if is_expired(doc, ctx.today) else Discrepancy.Result.CONCORDANT
+
+
+func get_referenced_truth_paths() -> Dictionary[StringName, Array]:
+	return {document_id: [get_evidence_path()]}

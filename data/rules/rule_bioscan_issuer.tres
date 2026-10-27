@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="IssuerAllowedRule" format=3 uid="uid://ir5ewqfuj6qc"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/issuer_allowed_rule.gd" id="1_h65xm"]
+
+[resource]
+script = ExtResource("1_h65xm")
+document_id = &"bioscan"
+allowed_issuer_ids = Array[StringName]([&"clinique_meridian"])
+id = &"r_bioscan_issuer"
+title_key = "r_bioscan_issuer_title"
+rulebook_text_key = "r_bioscan_issuer_text"

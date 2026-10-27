@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RequireDocumentRule" format=3 uid="uid://peq5feh733c3"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/require_document_rule.gd" id="1_4ntw8"]
+
+[resource]
+script = ExtResource("1_4ntw8")
+document_id = &"entry_permit"
+exempt_faction_ids = Array[StringName]([&"hal"])
+id = &"r_permit_required"
+title_key = "r_permit_required_title"
+rulebook_text_key = "r_permit_required_text"

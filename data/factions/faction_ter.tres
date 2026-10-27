@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="FactionDef" format=3 uid="uid://dqrwlh6vrqq8g"]
+
+[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="1_toolv"]
+
+[resource]
+script = ExtResource("1_toolv")
+id = &"ter"
+name_key = "faction_ter_name"
+code = "TER"
+id_prefix = "HG-2"
+origin_sectors = PackedStringArray("Terre — Concordat des Zones Sèches")

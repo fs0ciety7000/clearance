@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PortraitMatchRule" format=3 uid="uid://cfj5043vfyks"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/portrait_match_rule.gd" id="1_io3cp"]
+
+[resource]
+script = ExtResource("1_io3cp")
+id = &"r_portrait_match"
+title_key = "r_portrait_match_title"
+rulebook_text_key = "r_portrait_match_text"
+category = 1

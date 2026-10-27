@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ProcedureRule" format=3 uid="uid://cwkwu5e22ahuc"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/procedure_rule.gd" id="1_phoi8"]
+
+[resource]
+script = ExtResource("1_phoi8")
+procedure_id = &"tycho_interview"
+applies_to_faction_ids = Array[StringName]([&"tyc"])
+id = &"r_tycho_interview"
+title_key = "r_tycho_interview_title"
+rulebook_text_key = "r_tycho_interview_text"
+category = 4
+severity = 1

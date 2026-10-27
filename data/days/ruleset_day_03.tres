@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RuleSet" format=3 uid="uid://dy6d6etswi0rt"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_ynxlk"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_required.tres" id="2_ummw6"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_valid.tres" id="3_uf88e"]
+[ext_resource type="Resource" path="res://data/rules/rule_portrait_match.tres" id="4_awm0q"]
+[ext_resource type="Resource" path="res://data/rules/rule_permit_required.tres" id="5_nv5wk"]
+[ext_resource type="Resource" path="res://data/rules/rule_permit_valid.tres" id="6_jrkup"]
+[ext_resource type="Resource" path="res://data/rules/rule_face_uncovered.tres" id="7_ih52h"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fields_match.tres" id="8_ba5gg"]
+[ext_resource type="Script" path="res://scripts/rules/rule_set.gd" id="9_suuxr"]
+
+[resource]
+script = ExtResource("9_suuxr")
+id = &"rs_day03"
+rules = Array[ExtResource("1_ynxlk")]([ExtResource("2_ummw6"), ExtResource("3_uf88e"), ExtResource("4_awm0q"), ExtResource("5_nv5wk"), ExtResource("6_jrkup"), ExtResource("7_ih52h"), ExtResource("8_ba5gg")])
+new_rule_ids = Array[StringName]([&"r_permit_required", &"r_permit_valid", &"r_face_uncovered", &"r_identity_fields_match"])
+required_document_ids = Array[StringName]([&"id_card", &"entry_permit"])

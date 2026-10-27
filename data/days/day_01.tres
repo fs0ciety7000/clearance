@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="DayDef" format=3 uid="uid://cs1npyw7nlavn"]
+
+[ext_resource type="Resource" path="res://data/days/ruleset_day_01.tres" id="1_u3syi"]
+[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="2_bn2or"]
+[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="3_2bme4"]
+
+[sub_resource type="Resource" id="scripted_sc_01"]
+script = ExtResource("3_2bme4")
+id = &"sc_01"
+passenger_overrides = {
+&"citizen_class": &"C-3",
+&"faction_id": &"hal",
+&"origin_sector": "Anneau C — logements de service",
+&"purpose": &"return"
+}
+dialogue_id = &"sc01_returning_technician"
+
+[sub_resource type="Resource" id="scripted_sc_02"]
+script = ExtResource("3_2bme4")
+id = &"sc_02"
+at_index = 1
+passenger_overrides = {
+&"citizen_class": &"C-4",
+&"faction_id": &"ter",
+&"sex": &"F"
+}
+forced_anomalies = Array[int]([0])
+dialogue_id = &"sc02_hurried_mother"
+
+[sub_resource type="Resource" id="scripted_tuto_concordant"]
+script = ExtResource("3_2bme4")
+id = &"tuto_concordant"
+at_index = 2
+
+[sub_resource type="Resource" id="scripted_tuto_missing_document"]
+script = ExtResource("3_2bme4")
+id = &"tuto_missing_document"
+at_index = 3
+forced_anomalies = Array[int]([1])
+
+[resource]
+script = ExtResource("2_bn2or")
+game_date = 31847
+rule_set = ExtResource("1_u3syi")
+anomaly_count_weights = PackedFloat32Array(0.55, 0.45, 0, 0)
+anomaly_weights = Dictionary[int, float]({
+0: 0.6,
+1: 0.4
+})
+scripted_cases = Array[ExtResource("3_2bme4")]([SubResource("scripted_sc_01"), SubResource("scripted_sc_02"), SubResource("scripted_tuto_concordant"), SubResource("scripted_tuto_missing_document")])
+intro_text_key = "day01_intro"
+faction_weights = Dictionary[StringName, float]({
+&"hal": 0.25,
+&"ter": 0.3,
+&"tyc": 0.45
+})
+legit_noise_rate = 0.1

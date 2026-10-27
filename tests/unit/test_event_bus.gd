@@ -70,3 +70,29 @@ func test_event_bus_has_no_state() -> void:
 	assert_eq(script.get_script_property_list().filter(
 		func(p: Dictionary) -> bool: return (int(p["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE) != 0
 	).size(), 0, "EventBus ne porte aucun état")
+
+
+## M2 : les types provisoires sont remplacés par les classes du modèle.
+func test_model_types_resolved_in_m2() -> void:
+	var expected: Dictionary = {
+		&"day_started": ["DayDef", "Array"],
+		&"case_presented": ["Case"],
+		&"document_focused": ["DocumentInstance"],
+		&"inspection_target_picked": ["FieldRef"],
+		&"discrepancy_check_requested": ["FieldRef", "FieldRef"],
+		&"discrepancy_checked": ["Discrepancy"],
+		&"verdict_stamped": ["Verdict"],
+	}
+	var script: Script = EventBus.get_script()
+	for info: Dictionary in script.get_script_signal_list():
+		var signal_name: StringName = str(info["name"])
+		if not expected.has(signal_name):
+			continue
+		var args: Array = info["args"]
+		var classes: Array = expected[signal_name]
+		for i: int in classes.size():
+			var arg: Dictionary = args[i]
+			var arg_type: int = arg["type"]
+			var actual: String = str(arg["class_name"]) if classes[i] != "Array" else type_string(arg_type)
+			var wanted: String = classes[i]
+			assert_eq(actual, wanted, "%s arg %d" % [signal_name, i])

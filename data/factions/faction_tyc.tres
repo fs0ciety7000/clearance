@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="FactionDef" format=3 uid="uid://d3okkbg4l7y0b"]
+
+[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="1_vwr3u"]
+
+[resource]
+script = ExtResource("1_vwr3u")
+id = &"tyc"
+name_key = "faction_tyc_name"
+code = "TYC"
+id_prefix = "HG-4"
+origin_sectors = PackedStringArray("Colonie Tycho (Lune)", "Cratère Tycho — dortoirs Kessler-Ashe")

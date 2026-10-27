@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FieldValueAllowedRule" format=3 uid="uid://wadudc0d2pxf"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/field_value_allowed_rule.gd" id="1_yqfy0"]
+
+[resource]
+script = ExtResource("1_yqfy0")
+document_id = &"bioscan"
+truth_path = &"health_status"
+allowed_values = Array[StringName]([&"fit"])
+detected_anomalies = Array[int]([8])
+id = &"r_bioscan_fit"
+title_key = "r_bioscan_fit_title"
+rulebook_text_key = "r_bioscan_fit_text"
+category = 4

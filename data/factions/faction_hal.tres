@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="FactionDef" format=3 uid="uid://d05enylanmg6q"]
+
+[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="1_of5us"]
+
+[resource]
+script = ExtResource("1_of5us")
+id = &"hal"
+name_key = "faction_hal_name"
+code = "HAL"
+id_prefix = "HG-1"
+origin_sectors = PackedStringArray("Anneaux D–F", "Anneau C — logements de service", "Coursives d\'Halcyon Gate")
