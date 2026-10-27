@@ -2,9 +2,11 @@
 
 > Propriétaire : **Godot Architect** · Statut : 🟢 validé par le client · Cible : **Godot 4.7.2**, GDScript typé, renderer Forward+
 >
-> Documents liés : [`AGENTS.md`](../AGENTS.md) · [`DECISIONS.md`](../DECISIONS.md) · [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) · [`docs/UI_FLOW.md`](UI_FLOW.md) · [`docs/BOOTH_SCENE.md`](BOOTH_SCENE.md) (visuel du guichet, 3D Designer) · [`docs/ASSETS.md`](ASSETS.md) (rigs, clips, atlas, licences) · [`docs/AUDIO.md`](AUDIO.md) (Audio Designer)
+> Documents liés : [`AGENTS.md`](../AGENTS.md) · [`DECISIONS.md`](../DECISIONS.md) · [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) · [`docs/UI_FLOW.md`](UI_FLOW.md) · [`docs/BOOTH_SCENE.md`](BOOTH_SCENE.md) (visuel du guichet, 3D Designer) · [`docs/ASSETS.md`](ASSETS.md) (rigs, clips, atlas, licences) · [`docs/AUDIO.md`](AUDIO.md) (Audio Designer) · [`docs/NARRATIVE.md`](NARRATIVE.md) (Scénariste)
 >
-> **Révision 2** (2026-10-27) : passager 3D animé qui arrive au guichet (D-009, D-010, D-013) et apparences uniques/modulaires comparables (D-012). Sections touchées : §2, §3, §5, §7, §8, **§8 bis (nouvelle)**, §9.3 (nouvelle), §12, §13, §14. La numérotation existante est conservée pour ne pas casser les renvois des autres documents.
+> **Révision 3** (2026-10-27, passe documentaire après M7 — jeu complet J1–J10, 414 tests GUT) : le document décrit désormais **le code réel**. Les notes « Implémenté en Mx » des révisions précédentes ont été fondues dans les sections concernées. Sections réécrites : §2–§14 ; **nouvelles** : §15 « Outils et pipelines », §16 « Export et distribution ». La numérotation §1–§14 est conservée (renvois des autres documents).
+>
+> **Légende** : sans mention = **état réel** (vérifié dans le code). 🎯 **Intention** = prévu mais non implémenté (ou implémenté autrement, l'écart est alors décrit). ⚠️ = incohérence connue, à corriger dans le code (liste en §13).
 
 ---
 
@@ -12,14 +14,14 @@
 
 | # | Principe | Conséquence concrète |
 |---|---|---|
-| P1 | **Données plutôt que code** | Types de documents, champs, factions, règles, jours = Resources `.tres` dans `res://data/`. Ajouter une règle « classique » ou un jour ne demande aucun code. |
-| P2 | **Le cœur ne connaît pas l'UI** | `scripts/core|documents|rules|generation` n'étendent jamais `Node`/`Control` et ne chargent jamais de scène. Ils tournent en headless → testables par GUT. |
-| P3 | **Vérité terrain** | Chaque cas est généré valide puis corrompu de façon contrôlée. Le jeu connaît la réponse attendue *et* les discordances attendues. |
-| P4 | **Déterminisme** | Toute aléa passe par un `SeededRng` injecté (jamais `randi()` global). Même seed ⇒ même cas, bit à bit. |
-| P5 | **Communication par signaux** | Logique ↔ UI via l'autoload `EventBus`. Aucune référence directe d'une scène UI vers un service. |
-| P6 | **Autoloads minimaux** | 3 autoloads (EventBus, GameState, Settings). Tout le reste est instancié par la scène de jour, donc remplaçable et testable. |
-| P7 | **Un script = une responsabilité** | Pas de « GameManager » fourre-tout. |
-| P8 | **La logique ne dépend pas de l'animation** | Le jeu doit avancer même si une animation ne rend jamais la main (timeouts de sécurité, `NullBooth` en test). La 3D *met en scène* des faits, elle ne les décide pas. |
+| P1 | **Données plutôt que code** | Documents, champs, origines, règles, jours, économie, apparences, cas scénarisés, briefings, soirées = Resources `.tres` dans `res://data/`, **produites par `tools/build_data.gd`** (D-029). Ajouter une règle d'une famille existante ou un jour ne demande aucun code de jeu. |
+| P2 | **Le cœur ne connaît pas l'UI** | `scripts/core|documents|rules|generation` n'étendent jamais `Node`/`Control`, ne chargent aucune scène, n'accèdent à aucun autoload (vérifié : aucune référence hors commentaires). Ils tournent en headless → testables par GUT. |
+| P3 | **Vérité terrain** | Chaque cas est généré valide puis corrompu de façon contrôlée ; la réponse attendue est **recalculée par le `RuleEngine`** sur le cas final (§6). |
+| P4 | **Déterminisme** | Toute aléa logique passe par un `SeededRng` (SplitMix64 maison). Même graine ⇒ même cas, bit à bit (`CaseSerializer`). Les seuls `RandomNumberGenerator` libres sont cosmétiques (audio, clignements), eux aussi seedés. |
+| P5 | **Communication par signaux** | Logique ↔ UI ↔ 3D via l'autoload `EventBus` (§7). Exceptions documentées : deux `Callable` injectés dans l'UI (D-038) et la lecture directe de `ComparisonUI` par l'`AudioDirector` (§8 bis.8). |
+| P6 | **Autoloads minimaux** | 3 autoloads (`EventBus`, `Settings`, `GameState`). Services de jour, booth, audio, portraits = nœuds de `day.tscn`, remplaçables et testables. |
+| P7 | **Un script = une responsabilité** | Pas de « GameManager ». ⚠️ Deux scripts dépassent largement le seuil d'alerte : `BoothDirector` (≈ 700 lignes) et `ComparisonUI` (≈ 1 400 lignes) — §13 R19. |
+| P8 | **La logique ne dépend pas de l'animation** | Le jour avance même si une animation ne rend jamais la main : watchdogs du booth + timeouts du `DayController` ; `NullBooth`/`SilentBooth` en test (§8 bis.6). |
 
 ---
 
@@ -27,26 +29,23 @@
 
 ```mermaid
 graph TD
-    subgraph DATA["res://data/ — Resources .tres (éditées dans l'inspecteur)"]
-        D1[DocumentTypeDef / FieldDef]
-        D2[FactionDef / NamePool]
-        D3[Rule* / RuleSet]
-        D4[DayDef]
-        D5[AppearanceCatalog / AppearanceSlotDef]
+    subgraph DATA["res://data/ — .tres générés par tools/build_data.gd"]
+        D1[documents / factions / names]
+        D2[rules / days : RuleSet, DayDef, ScriptedCaseDef]
+        D3[appearance / economy]
+        D4[i18n/fr.csv]
     end
 
-    subgraph CORE["Cœur logique — RefCounted / Resource, sans Node (testé GUT)"]
-        C1[Modèle runtime<br/>Passenger, PassengerAppearance, DocumentInstance, Case, CaseKey,<br/>enums DayPhase, PassengerReaction]
-        C2[Moteur de règles<br/>RuleEngine → Violation, FaceComparator]
-        C3[Générateur<br/>PassengerGenerator, AppearanceGenerator, DocumentFactory, AnomalyInjector]
-        C4[Scoring<br/>ScoringService → CaseResult]
-        C5[Utilitaires<br/>SeededRng, GameDate, Ids]
+    subgraph CORE["Cœur pur — RefCounted / Resource, sans Node (GUT)"]
+        C1[core : modèle runtime + défs, SeededRng, GameDate, SaveService]
+        C2[documents : FieldDef, DocumentTypeDef, DocumentInstance, Mrz, DataCatalog]
+        C3[rules : Rule + 16 familles, RuleEngine, DiscrepancyChecker, FaceComparator,<br/>ScoringService, CaseConsequences, EveningService, EndingService]
+        C4[generation : CaseBuilder, PassengerGenerator, AppearanceGenerator,<br/>DocumentFactory, 17 injecteurs]
     end
 
-    subgraph SERVICES["Services de jour — Node, enfants de DayScene"]
-        S1[DayController<br/>machine à états du jour]
-        S2[DayClock]
-        S3[InspectionSession]
+    subgraph DAYS["scripts/day — services de jour et campagne"]
+        S1[Node : DayController, DayClock, InspectionSession,<br/>OkonkwoIntercom, DemoAutoplay, DayScene]
+        S2[RefCounted : Campaign, BriefingContent,<br/>DaySimulator, BalanceSimulator, SimProfile]
     end
 
     subgraph AUTO["Autoloads"]
@@ -56,114 +55,116 @@ graph TD
     end
 
     subgraph PRES["Présentation"]
-        subgraph BOOTH["Booth 3D — scenes/booth, scenes/passenger, scripts/booth"]
-            P1[BoothDirector<br/>seul pont EventBus ↔ 3D]
-            P4[PassengerActor<br/>CharacterBody3D, AnimationTree,<br/>LookAtModifier3D, expressions, audio 3D]
-            P5[AppearanceApplier / PortraitRenderer]
-        end
-        P2[UI Control 2D<br/>scenes/ui, scenes/documents]
-        P3[ui/theme — DS + clearance_theme.tres]
+        B1[scripts/booth : BoothDirector, PassengerActor, PassengerRig,<br/>AppearanceApplier, PortraitService, QueueImpostors, NullBooth/SilentBooth]
+        B2[scripts/audio : AudioDirector, PassengerAudio, TessarVoice…]
+        U1[scripts/ui : ComparisonUI + écrans ScreenBase]
+        U2[ui/theme : DS tokens + ThemeBuilder]
     end
 
     DATA --> CORE
-    CORE --> SERVICES
-    SERVICES -- émet / écoute --> A1
-    P1 -- émet / écoute --> A1
-    P2 -- émet / écoute --> A1
-    P1 -- pilote (appels directs) --> P4
-    P4 -- signaux locaux anim_event --> P1
-    P1 --> P5
-    P2 -. portrait .-> P5
-    SERVICES --> A2
-    P2 --> P3
-    P2 -. lit Settings .-> A3
-    P1 -. lit Settings .-> A3
+    CORE --> DAYS
+    S1 -- émet / écoute --> A1
+    S2 --> A2
+    B1 -- émet / écoute --> A1
+    B2 -- écoute --> A1
+    U1 -- émet / écoute --> A1
+    S1 -. Callable portrait_provider / face_rect_provider .-> U1
+    B2 -. lit l'état public .-> U1
+    U1 --> U2
+    A2 --> C1
 ```
 
-**Règle de dépendance** : les flèches ne remontent jamais. `CORE` ne référence ni `SERVICES`, ni `AUTO`, ni `PRES`. Les services sont la seule couche qui touche à la fois au cœur et à l'EventBus. L'UI ne voit que des objets « présentés » (`Case`, `DocumentInstance`), jamais la clé de réponse (`CaseKey`).
+**Règle de dépendance** : `CORE` ne référence ni `scripts/day`, ni les autoloads, ni la présentation. `Campaign` (RefCounted, `scripts/day/`) est la seule couche statique qui manipule `GameState` et `SaveService` ensemble. L'UI et le booth ne reçoivent que des objets « présentés » (`Case`, `DocumentInstance`, `CaseResult` après verdict), **jamais `CaseKey`** (gardée par `DayController`).
 
-**Règle du booth** : `PassengerActor` ne connaît **ni l'EventBus ni `Case`**. Il expose une API impérative (`walk_path()`, `present_documents()`, `play_reaction()`, `set_look_target()`, `set_expression()`, `apply_appearance()`) et émet des signaux **locaux** (`arrived`, `anim_event(name)`, `departed`). `BoothDirector` (script racine de `booth.tscn`) est le **seul** nœud 3D qui écoute et émet sur l'EventBus. Conséquence : l'acteur est testable isolément dans une scène de démo, et remplaçable par un placeholder capsule sans toucher à la logique.
+**Règle du booth** : `PassengerActor` ne connaît **ni l'EventBus ni `Case`** — API impérative (`assign`, `apply_appearance`, `apply_markings`, `walk_to_desk`, `present_documents`, `play_reaction`, `remove_visor`, `leave_along`, `set_look_target`, `set_expression`, `release`) et signaux **locaux**. `BoothDirector` est le **seul** nœud 3D branché sur l'EventBus. `AudioDirector` ajoute un `PassengerAudio` à chaque acteur sans modifier le booth.
 
 ---
 
-## 3. Arborescence `res://`
+## 3. Arborescence `res://` (état réel)
 
 ```
 res://
-├── project.godot               # Config moteur (Godot Architect)
-├── icon.svg
-├── addons/
-│   └── gut/                    # GUT 9.x — VERSIONNÉ (CI reproductible, pas de téléchargement)
-├── assets/                     # Assets bruts importés (Asset Lead) — licences dans docs/ASSETS.md
-│   ├── models/                 # .glb (guichet, station, passagers) ; models/passenger/ = rigs + passenger_anims.res (AnimationLibrary « passenger »)
-│   ├── textures/               # albedo, normal, ORM, décals, atlas de visages (face_atlas_*.png)
-│   ├── materials/              # .tres StandardMaterial3D / ShaderMaterial
-│   ├── shaders/                # .gdshader (hologramme, scanlines, glitch, CRT, face_dither, impostor)
-│   ├── fonts/                  # Chakra Petch, Inter, JetBrains Mono (OFL)
-│   ├── audio/                  # sfx/, voice/, ambience/, music/ — détail dans docs/AUDIO.md
-│   └── icons/                  # icônes UI (SVG)
-├── data/                       # CONTENU data-driven (.tres) — aucune logique
-│   ├── documents/              # doc_passport.tres, doc_entry_permit.tres… (DocumentTypeDef + FieldDef sous-ressources)
-│   ├── rules/                  # rule_passport_not_expired.tres, rule_ban_faction_x.tres… (instances de sous-classes de Rule)
-│   ├── days/                   # day_01.tres… (DayDef) + ruleset_day_01.tres (RuleSet)
-│   ├── factions/               # faction_consortium.tres… (FactionDef) — propriété Lore Master
-│   ├── names/                  # namepool_<culture>.tres (NamePool)
-│   └── appearance/             # appearance_catalog.tres + slot_<slot>.tres (AppearanceSlotDef/AppearanceOptionDef) — 3D Designer + Lore Master
-├── scenes/                     # .tscn uniquement (+ scripts de vue attachés si triviaux)
-│   ├── main/                   # main.tscn (bootstrap, menu), day.tscn (DayScene : services + booth + UI)
-│   ├── booth/                  # booth.tscn : guichet, vitre, caméra, éclairage, ArrivalPath, DeskMark, Exit*Path, LookTargetPlane, file d'attente (imposteurs)
-│   ├── passenger/              # passenger_actor.tscn (PassengerActor), passenger_placeholder.tscn (capsule M4), portrait_studio.tscn (rendu des portraits)
-│   ├── documents/              # une scène de vue par gabarit de document (passport_view.tscn…)
-│   └── ui/                     # HUD, Rulebook, tampon, panneau de comparaison, résumé de jour
+├── project.godot               # autoloads, actions d'entrée, avertissements de typage (Godot Architect)
+├── icon.svg                    # seule icône (pas encore de .ico/.icns, §16)
+├── default_bus_layout.tres     # bus audio, GÉNÉRÉ par tools/build_audio.gd (D-049)
+├── .gutconfig.json             # tests/unit + tests/integration, préfixe test_
+├── addons/gut/                 # GUT 9.7.1 — VERSIONNÉ (D-008)
+├── art_src/                    # sources d'art, .gdignore (invisible pour Godot, jamais exporté)
+│   ├── kenney_skins/           # 8 skins Kenney CC0 versionnées (entrée de build_passenger_skins)
+│   └── downloads/              # packs bruts (fetch_assets.sh) + _audio_build/ — IGNORÉ par git
+├── assets/                     # ressources importées et versionnées (licences : docs/ASSETS.md §10)
+│   ├── audio/                  # ambience/, music/ (OGG), sfx/{passenger,booth,station}/, ui/, voice/pa/ (WAV) — générés (§15)
+│   ├── fonts/                  # Chakra Petch, Inter, JetBrains Mono (+ OFL-*.txt)
+│   ├── models/passenger/       # chr_kenney_medium.fbx, anim_ual1_standard.glb, bonemap_*.tres,
+│   │                           # passenger_anims.res, imp_silhouette.res (générés), License_*.txt
+│   ├── shaders/                # booth_glass, rain_sheet, impostor_silhouette, chr_toon, passenger_body, face_dither, ui_backdrop_blur
+│   ├── textures/passenger/     # tex_chr_zones_<skin>.png (générés)
+│   └── icons/, materials/      # vides (icônes UI dessinées en code : UiIcon)
+├── data/                       # CONTENU (.tres générés, sauf i18n)
+│   ├── documents/              # doc_id_card, doc_entry_permit, doc_bioscan, doc_mil_waiver
+│   ├── factions/               # faction_{tyc,hal,ter,cer,thr,drv}.tres
+│   ├── names/                  # namepool_<faction>.tres
+│   ├── rules/                  # 22 rule_*.tres (§6)
+│   ├── days/                   # day_01..10.tres (DayDef) + ruleset_day_01..10.tres
+│   ├── appearance/             # appearance_catalog.tres (10 slots en sous-ressources, pas de slot_*.tres)
+│   ├── economy/                # economy.tres (EconomyDef)
+│   └── i18n/                   # fr.csv (+ .import ; fr.fr.translation généré, ignoré par git, D-040)
+├── scenes/
+│   ├── main/                   # main.tscn + main.gd (titre), day.tscn (DayScene)
+│   ├── booth/                  # booth.tscn — GÉNÉRÉ par tools/build_booth_greybox.gd
+│   ├── passenger/              # passenger_actor.tscn ; passenger_demo.tscn (bac à sable / captures)
+│   ├── ui/                     # comparison_ui.tscn ; comparison_ui_demo.tscn (bac à sable)
+│   └── documents/              # vide : DocumentView générique construite en code
 ├── scripts/
-│   ├── autoload/               # event_bus.gd, game_state.gd, settings.gd
-│   ├── core/                   # modèle runtime transverse + utilitaires (SeededRng, GameDate, Case, Verdict…)
-│   ├── documents/              # FieldDef, DocumentTypeDef, DocumentInstance, FieldRef, formatage des valeurs
-│   ├── rules/                  # Rule (base) + sous-classes, RuleSet, RuleEngine, Violation, RuleContext
-│   ├── generation/             # PassengerGenerator, AppearanceGenerator, DocumentFactory, AnomalyInjector(s), CaseBuilder, NamePool
-│   ├── booth/                  # BoothDirector, PassengerActor, PassengerLocomotion, ExpressionController, AppearanceApplier, PortraitService, QueueImpostors, NullBooth
-│   ├── day/                    # services de jour (Node) : DayController, DayClock, InspectionSession, DayScene
-│   └── ui/                     # contrôleurs de vue (Control), sans règle métier
-├── ui/
-│   └── theme/                  # tokens.gd (class_name DS) + clearance_theme.tres — propriété Design System
+│   ├── autoload/               # event_bus.gd, settings.gd, game_state.gd
+│   ├── core/                   # modèle runtime, Resources de définition, SeededRng, GameDate, SaveService, Household…
+│   ├── documents/              # FieldDef, DocumentTypeDef, DocumentInstance, FieldRef, FieldValue, Mrz, DataCatalog
+│   ├── rules/                  # Rule, families/ (16), RuleSet, RuleEngine, RuleContext, DiscrepancyChecker,
+│   │                           # FaceComparator, ScoringService, CaseConsequences, EveningService, EndingService…
+│   ├── generation/             # CaseBuilder, PassengerGenerator, AppearanceGenerator/Roster, DocumentFactory,
+│   │                           # CaseSerializer, NamePool, ScriptedCaseDef, injectors/ (17 + registre + état)
+│   ├── day/                    # DayController, DayClock, InspectionSession, DayScene, Campaign, BriefingContent,
+│   │                           # OkonkwoIntercom, DemoAutoplay, DaySimulator, BalanceSimulator, SimProfile
+│   ├── booth/                  # BoothDirector, PassengerActor/Rig/Locomotion/Anims, AppearanceApplier, ExpressionController,
+│   │                           # FaceAtlas, HeadScaleModifier, ImplantDecor, GreyboxStyle, PortraitService, QueueImpostors,
+│   │                           # NullBooth, SilentBooth, PassengerDemo
+│   ├── audio/                  # AudioDirector, AudioBuses, AudioCueBank, AudioDsp, PassengerAudio, TessarVoice, VoicePool
+│   └── ui/                     # ComparisonUI, Workbench, DocumentView, RulebookPanel, écrans (ScreenBase)…, UiText, UiIcon
+├── ui/theme/                   # tokens.gd (class_name DS), theme_builder.gd (D-025) — rien d'autre
 ├── tests/
-│   ├── unit/                   # test_rule_*.gd, test_generator_*.gd, test_seeded_rng.gd…
-│   ├── integration/            # boucle de jour simulée sans UI (DayController + faux joueur + NullBooth/SilentBooth)
-│   └── manual/                 # bacs à sable hors CI (booth_sandbox.tscn) — créé en M4
-└── docs/                       # ARCHITECTURE.md, UI_FLOW.md, QA.md, ASSETS.md…
+│   ├── unit/                   # 35 suites (347 tests)
+│   ├── integration/            # 9 suites (67 tests)
+│   ├── helpers/                # case_factory.gd, day_harness.gd, generation_fixtures.gd (preload, pas de class_name)
+│   └── manual/                 # vide (🎯 booth_sandbox jamais créé : remplacé par les scènes *_demo)
+├── tools/                      # générateurs et outils headless (§15)
+└── docs/                       # documentation + mockups/ (PNG importés : à exclure de l'export, §16)
 ```
 
-> ⚠️ **Point d'attention** : `ui/theme/` (Design System) vit à la racine alors que les vues sont dans `scenes/ui/` et `scripts/ui/`. C'est acceptable (le thème est une ressource partagée, pas une vue), mais à valider pour éviter qu'on y range des scènes par erreur. Règle : **`res://ui/` ne contient que `theme/`.**
-
-**Pourquoi `scripts/booth/`** (nouveau, `.gitkeep` créé) : les scripts du guichet 3D ne sont pas « triviaux » (machine d'animation, suivi de chemin, regard, watchdogs, application d'apparence) et ne sont ni des `Control` (`scripts/ui/` est réservé aux vues 2D) ni du cœur headless (ils étendent `Node3D`/`CharacterBody3D`). Un dossier dédié garde la règle « `scripts/ui` = Control, `scripts/core…generation` = sans Node ». `NullBooth` y vit aussi (pas dans `tests/`) car il sert également au mode debug `--no-booth` du jeu.
-
-**Pourquoi `data/appearance/`** (nouveau, `.gitkeep` créé) : les catalogues de traits sont du contenu éditable (P1) au même titre que les factions ; le générateur ne lit que leurs `id`/poids/tags, la présentation lit leurs références visuelles.
-
-Dossiers techniques ignorés : `.godot/` (cache). Les `*.import` sont **versionnés** (paramètres d'import).
+- **`scripts/day/`** mélange des `Node` (services de la scène de jour) et des `RefCounted` statiques (campagne, simulateurs) : ils partagent le même domaine (le jour / la campagne) et dépendent tous de `GameState` ou de services de jour, donc ni de `core` ni de `ui`.
+- **`scripts/booth/`** : scripts 3D (ni `Control`, ni cœur headless). `NullBooth`/`SilentBooth` y vivent car ils servent aussi au mode `--no-booth`.
+- **`res://ui/`** ne contient que `theme/` (R10 résolu).
+- Fichiers générés versionnés : `*.import`, `*.uid` (D-027), `.tres` de `data/`, `booth.tscn`, assets audio et passager. Ignorés : `.godot/`, `*.translation`, `art_src/downloads/`, `export_presets.cfg` (⚠️ §16).
 
 ---
 
 ## 4. Autoloads
 
-Non déclarés dans `project.godot` tant que les scripts n'existent pas (Godot refuse de démarrer proprement avec un autoload manquant). À ajouter en M1 :
+Déclarés dans `project.godot`, dans cet ordre (pas de `class_name` sur un autoload) :
 
 ```ini
-; project.godot — à décommenter en M1, dans cet ordre
-; [autoload]
-; EventBus="*res://scripts/autoload/event_bus.gd"
-; Settings="*res://scripts/autoload/settings.gd"
-; GameState="*res://scripts/autoload/game_state.gd"
+[autoload]
+EventBus="*res://scripts/autoload/event_bus.gd"
+Settings="*res://scripts/autoload/settings.gd"
+GameState="*res://scripts/autoload/game_state.gd"
 ```
 
-| Autoload | Rôle | Ne fait PAS |
+| Autoload | Rôle (état réel) | Ne fait PAS |
 |---|---|---|
-| `EventBus` | Déclare uniquement des `signal` typés (catalogue §7). Aucun état, aucune méthode métier. | Logique, stockage |
-| `Settings` | Préférences joueur (volumes par bus, langue, taille de texte, daltonisme, sensibilité, « réduire les effets », **« réduire les animations »** `reduce_motion: bool`, cf. §8 bis.7). Persistées dans `user://settings.cfg` (`ConfigFile`). Émet `EventBus.settings_changed`. | État de partie |
-| `GameState` | État de **campagne** : `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags: Dictionary[StringName, Variant]`, historique résumé des jours. Sauvegarde/chargement (§9). | État du jour en cours (porté par `DayController`) |
+| `EventBus` | 31 signaux typés (catalogue §7). Aucun état, aucune méthode. | Logique, stockage |
+| `Settings` | Préférences dans `user://settings.cfg` (`ConfigFile`) : `volume_{master,music,ambience,sfx,voice,ui}` (appliqués aux bus `Master/Music/Ambience/SFX/Voice/UI`), `fx_intensity` (1 / 0,5 / 0), `reduce_motion`, `text_scale` (0,9–1,5, D-026), `subtitles`, `clock_slow_accessibility` (horloge ×0,5), `audio_mono`. `set_value()` valide (`_sanitize`), applique et émet `settings_changed`. 🎯 Langue, daltonisme, sensibilité manette : non implémentés. | État de partie |
+| `GameState` | État de **campagne** : `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags: Dictionary[StringName, Variant]` (drapeaux et jauges `loyalty` / `lucioles_trust` / `suspicion`), `day_history: Array[Dictionary]`, `household: Household`, `case_memory` (§9.4). `to_save_dict()` / `apply_save_dict()` / `save_to_slot()` / `load_from_slot()` (§10), `get_day_seed()`, `add_to_flag()`, `get_true_flags()`, `remember_case()`. Émet `credits_changed`, `narrative_flag_changed`, `game_saved`, `game_loaded`. | État du jour en cours (porté par `DayController`) |
 
-**Pièges Godot** :
-- Un script autoload **ne doit pas** avoir de `class_name` identique au nom d'autoload (conflit de symbole global). Convention : pas de `class_name` sur les autoloads.
-- Ordre : `EventBus` en premier (les autres s'y connectent dans `_ready`).
+`EventBus` est chargé en premier : les autres s'y connectent dans `_ready`.
 
 ---
 
@@ -174,311 +175,205 @@ Non déclarés dans `project.godot` tant que les scripts n'existent pas (Godot r
 ```mermaid
 classDiagram
     direction LR
-    class FieldDef {
-      <<Resource>>
-      +id: StringName
-      +label_key: String
-      +kind: FieldKind
-      +truth_path: StringName
-      +comparable: bool
-      +display_order: int
-      +format: String
-    }
-    class DocumentTypeDef {
-      <<Resource>>
-      +id: StringName
-      +title_key: String
-      +fields: Array~FieldDef~
-      +issuer_faction_ids: Array~StringName~
-      +validity_days: Vector2i
-      +view_scene: PackedScene
-      +holo_tint_token: StringName
-    }
-    class FactionDef {
-      <<Resource>>
-      +id: StringName
-      +name_key: String
-      +code: String
-      +id_prefix: String
-      +origin_sectors: PackedStringArray
-      +name_pool: NamePool (M3)
-      +seal_texture: Texture2D
-    }
-    class Rule {
-      <<Resource, abstract>>
-      +id: StringName
-      +title_key: String
-      +rulebook_text_key: String
-      +category: RuleCategory
-      +severity: int
-      +evaluate(case, ctx) Array~Violation~
-      +get_detectable_anomalies() Array~AnomalyType~
-    }
-    class RuleSet {
-      <<Resource>>
-      +id: StringName
-      +rules: Array~Rule~
-      +new_rule_ids: Array~StringName~
-      +required_document_ids: Array~StringName~
-    }
-    class DayDef {
-      <<Resource>>
-      +day_number: int
-      +game_date: int
-      +rule_set: RuleSet
-      +duration_sec: float
-      +passenger_count: int
-      +anomaly_count_weights: PackedFloat32Array
-      +anomaly_weights: Dictionary~AnomalyType, float~
-      +scripted_cases: Array~ScriptedCaseDef~
-      +faction_weights, visor_down_rate… (GDD)
-    }
-    class Passenger {
-      <<RefCounted>>
-      +id: StringName
-      +given_name / family_name: String
-      +birth_date: int
-      +sex: StringName
-      +faction_id: StringName
-      +origin_sector: String
-      +citizen_id: String
-      +appearance_seed: int
-      +appearance: PassengerAppearance
-      +purpose: StringName
-      +stay_days: int
-    }
-    class PassengerAppearance {
-      <<RefCounted>>
-      +traits: Dictionary~StringName, StringName~
-      +palette_id: StringName
-      +height_step: int
-      +age_band: int
-      +distance(other, slots) int
-      +derive(overrides) PassengerAppearance
-    }
-    class PortraitValue {
-      <<RefCounted — valeur d'un champ PORTRAIT>>
-      +appearance: PassengerAppearance
-      +photo_seed: int
-      +years_before_issue: int
-    }
-    class AppearanceCatalog {
-      <<Resource>>
-      +slots: Array~AppearanceSlotDef~
-    }
-    class DocumentInstance {
-      <<RefCounted>>
-      +type_def: DocumentTypeDef
-      +serial: String
-      +issue_date: int
-      +expiry_date: int
-      +values: Dictionary~StringName, Variant~
-      +get_value(field_id) Variant
-    }
-    class Case {
-      <<RefCounted — vu par l'UI>>
-      +case_id: StringName
-      +index: int
-      +case_seed: int
-      +passenger_presented: Passenger
-      +documents: Array~DocumentInstance~
-      +dialogue_tags: Array~StringName~
-    }
-    class CaseKey {
-      <<RefCounted — clé de réponse>>
-      +truth: Passenger
-      +anomalies: Array~Anomaly~
-      +expected_violations: Array~Violation~
-      +expected_verdict: VerdictKind
-    }
-    class Anomaly {
-      <<RefCounted>>
-      +type: AnomalyType
-      +document_id: StringName
-      +field_id: StringName
-      +original_value: Variant
-      +injected_value: Variant
-    }
-    class Violation {
-      <<RefCounted>>
-      +rule_id: StringName
-      +refs: Array~FieldRef~
-      +reason_key: String
-    }
-    class Verdict {
-      <<RefCounted>>
-      +case_id: StringName
-      +kind: VerdictKind
-      +flagged: Array~Discrepancy~
-      +questions_asked: Array~StringName~
-      +elapsed_sec: float
-    }
-    DocumentTypeDef "1" *-- "n" FieldDef
-    RuleSet "1" o-- "n" Rule
+    class DocumentTypeDef { <<Resource>> id; fields; issuer_id; seal_id; serial_pattern; validity_days }
+    class FieldDef { <<Resource>> id; kind: FieldKind; truth_path; comparable; format }
+    class FactionDef { <<Resource>> id; code; id_prefix; name_pool; purpose_weights; implant_rate }
+    class Rule { <<Resource abstract>> id; category; severity; evaluate(); check_against() }
+    class RuleSet { <<Resource>> rules; new_rule_ids; required_document_ids }
+    class DayDef { <<Resource>> day_number; game_date; rule_set; passenger_count; weights; scripted_cases; M7… }
+    class ScriptedCaseDef { <<Resource>> id; at_index; overrides; forced_anomalies; flags_on_*; slipped_item }
+    class Passenger { <<RefCounted>> identité; appearance; implants }
+    class PassengerAppearance { <<RefCounted>> traits; palette_id; height_step; age_band }
+    class DocumentInstance { <<RefCounted>> values; serial; dates; issuer_id; seal_id; mrz; marks }
+    class Case { <<RefCounted vu par l'UI>> passenger_presented; documents; slipped_items; luciole_codes }
+    class CaseKey { <<RefCounted clé>> truth; anomalies; expected_violations; expected_verdict }
+    class CaseResult { <<RefCounted après verdict>> verdict_kind; correct; wage; fine; citation; bribe/report }
+    DocumentTypeDef *-- FieldDef
+    RuleSet o-- Rule
     DayDef --> RuleSet
+    DayDef *-- ScriptedCaseDef
     DocumentInstance --> DocumentTypeDef
-    Case "1" *-- "n" DocumentInstance
+    Case *-- DocumentInstance
     Case --> Passenger
     CaseKey --> Passenger
-    CaseKey "1" *-- "n" Anomaly
-    CaseKey "1" *-- "n" Violation
     Passenger --> PassengerAppearance
-    PortraitValue --> PassengerAppearance
-    DocumentInstance ..> PortraitValue : values[portrait]
-    PassengerAppearance ..> AppearanceCatalog : ids de
 ```
 
 ### 5.2 Définitions (Resources, `res://data/`)
 
-| Classe (`class_name`) | Script | Champs principaux | Notes |
+| Classe | Script | Champs principaux (état réel) | Notes |
 |---|---|---|---|
-| `FieldDef` | `scripts/documents/field_def.gd` | `id: StringName`, `label_key: String`, `kind: FieldDef.FieldKind` (`TEXT, DATE, ID_CODE, ENUM, PORTRAIT, NUMBER, BOOL`), `truth_path: StringName`, `comparable: bool` (activable en mode Inspection), `display_order: int`, `format: String` (ex. `"DD.MM.YYYY"`) | Sous-ressource embarquée dans le `.tres` du document. `truth_path` est **le** lien qui permet au générateur de remplir les champs et aux règles de comparer « même donnée sur deux documents ». **M2** : deux espaces de noms — une propriété de `Passenger` (`&"family_name"`, `&"appearance"`… cf. `Passenger.TRUTH_PATHS`) ou `document.<propriété>` pour une donnée propre au document (`document.serial`, `document.issue_date`, `document.expiry_date`, `document.issuer_id`, `document.seal_id`), résolue par `DocumentInstance.get_value()`. |
-| `DocumentTypeDef` | `scripts/documents/document_type_def.gd` | `id`, `title_key`, `fields: Array[FieldDef]`, `issuer_faction_ids: Array[StringName]` (vide = toutes), `validity_days: Vector2i` (durée min/max), `view_scene: PackedScene`, `holo_tint_token: StringName` (nom d'un token `DS`, jamais une couleur) ; **ajouts M2** : `issuer_id` (émetteur légitime), `seal_id` (sceau légitime), `serial_pattern` (`PE-YYYY-NNNNN`…) | Un fichier par type. MVP : `doc_id_card` (Carte d'identité), `doc_entry_permit` (Permis d'entrée), `doc_bioscan` (Certificat bio-scan). MRZ et « Implants déclarés » ne sont pas encore des champs (J6/J9). |
-| `FactionDef` | `scripts/core/faction_def.gd` | `id` (`&"tyc"`), `name_key`, **`code`** (`"TYC"`, ajout M2), `id_prefix` (`"HG-4"` : préfixe du N° ID, le chiffre encode l'origine), `origin_sectors: PackedStringArray`, `seal_texture: Texture2D` ; `name_pool: NamePool` **ajouté en M3** avec `NamePool` ; **ajouts M3 (générateur)** : `citizen_class_weights`, `purpose_weights` (`Dictionary[StringName, float]`), `employers: PackedStringArray` | Contenu fourni par le Lore Master. MVP : `tyc`, `hal`, `ter`. `matches_citizen_id()` sert à R10. |
-| `NamePool` | `scripts/generation/name_pool.gd` | `id`, `given_names_f/m/x: PackedStringArray` (**M3** : `x` = prénoms épicènes, tirables pour tous les sexes), `family_names: PackedStringArray`, **`reserved_names`** (jamais tirés : Okonkwo, LORE §5.3) | Une par culture : `data/names/namepool_<faction>.tres`, référencée par `FactionDef.name_pool`. |
-| `Rule` (abstraite, `@abstract`) | `scripts/rules/rule.gd` | `id`, `title_key`, `rulebook_text_key`, `category: Rule.RuleCategory` (`DOCUMENTS, IDENTITY, FACTION, PURPOSE, SPECIAL`), `severity: int` (1 procédure, 2 refus, ≥ 3 détention) | Voir §6. Méthodes virtuelles `evaluate()`, `get_detectable_anomalies() -> Array[AnomalyType.Kind]`, `get_rulebook_entry()`, **ajouts M2** : `check_against(case, ref, ctx) -> Discrepancy.Result` (comparaison champ ↔ règle du mode Inspection), `get_required_document_ids()`, `get_referenced_truth_paths()` (validation des données). **Familles M2** (`scripts/rules/families/`) : `RequireDocumentRule`, `DocumentNotExpiredRule` (option `max_age_days`), `FieldsMatchRule`, `PortraitMatchRule`, `ProcedureRule` (R06/R08 : jamais de violation, vérifiée par le `ScoringService`), `IssuerAllowedRule`, `FieldValueAllowedRule`, `OriginIdBlockRule` (R10). |
-| `RuleSet` | `scripts/rules/rule_set.gd` | `id`, `rules: Array[Rule]`, `new_rule_ids: Array[StringName]` (badge « NOUVEAU » au Rulebook), `required_document_ids: Array[StringName]` (dérivé de `compute_required_document_ids()`, vérifié par test) | Liste **explicite** par jour (pas d'héritage entre jours en MVP : plus lisible, diffable). Les `Rule` sont des `.tres` partagés référencés par plusieurs RuleSets. Helpers : `build_rulebook()`, `get_detectable_anomalies()`, `can_detect()`. |
-| `DayDef` | `scripts/core/day_def.gd` | `day_number`, `game_date: int` (jour absolu, cf. `GameDate`), `rule_set`, `duration_sec`, `passenger_count`, `anomaly_count_weights: PackedFloat32Array` (proba de 0,1,2,3 anomalies), `anomaly_weights: Dictionary[AnomalyType.Kind, float]`, `scripted_cases: Array[ScriptedCaseDef]`, `intro_text_key`, `credit_per_correct`, `penalty_per_error` ; **ajouts GDD §8.3 (M2)** : `faction_weights: Dictionary[StringName, float]`, `visor_down_rate`, `legit_noise_rate`, `bribe_rate`, `luciole_rate`, `free_citations_per_day`, `penalty_escalated` | Le Game Designer règle la difficulté uniquement ici. `day_01..03.tres` + `ruleset_day_01..03.tres` dans `data/days/`. |
-| `ScriptedCaseDef` | `scripts/generation/scripted_case_def.gd` | **`id: StringName`** (ajout M2 : `&"sc_04"`…), `at_index: int`, `passenger_overrides: Dictionary` (clés = `Passenger.TRUTH_PATHS`), `appearance_overrides: Dictionary[StringName, StringName]` (traits imposés, ex. personnage récurrent), `forced_anomalies: Array[AnomalyType.Kind]` (liste **exacte** ; vide = cas propre), **`injection_params: Dictionary`** (M3 : `document_id`, `expired_days`, `trait_count`, `char_count`, `field_path`, `photo_noise` — ex. SC-02 « expirée de 3 jours »), `dialogue_id: StringName`, `sets_flag / requires_flag: StringName` | Passagers narratifs (Scénariste) injectés à un index donné, générés par la même chaîne (M3). SC-01…SC-05 et les 2 cas tutoriels du J1 sont saisis dans les `DayDef`. |
-| `AppearanceCatalog` | `scripts/core/appearance_catalog.gd` | `slots: Array[AppearanceSlotDef]`, `min_distance: int` (anti-répétition, défaut 5), `window_size: int` (défaut 15) ; **ajouts M3** : `max_attempts` (12), `age_band_weights`, `height_step_range` ; `get_identity_slots()` | `data/appearance/appearance_catalog.tres`. Une seule instance. **M3 : placeholder** (identifiants seulement, 10 slots de BOOTH_SCENE §12.2 ; coiffes `visor_down`/`visor_up` de poids 0, jamais tirées). |
-| `AppearanceSlotDef` | `scripts/core/appearance_slot_def.gd` | `id: StringName` (`silhouette, face, eyes, nose_mouth, hair, headwear, skin, outfit, accessory, palette`), `identity: bool` (trait de la personne vs trait changeable : tenue, coiffe, accessoire), `visible_in_portrait: bool`, `options: Array[AppearanceOptionDef]` | Les slots `identity && visible_in_portrait` sont ceux que compare `FaceComparator`. |
-| `AppearanceOptionDef` | `scripts/core/appearance_option_def.gd` | `id: StringName`, `weight: float`, `faction_weights: Dictionary[StringName, float]`, `tags: PackedStringArray` (ex. `&"family:round_face"`), **références visuelles** : `mesh: Mesh`, `atlas_cell: int`, `material: Material`, `portrait_layer: Texture2D` | Le générateur ne lit **que** `id`, poids et tags ; `AppearanceApplier`/`PortraitRenderer` lisent les références visuelles. En headless (tests), les meshes se chargent sur le renderer factice : acceptable ; si les tests ralentissent, scinder en `AppearanceVisualDef` séparé. |
+| `FieldDef` | `documents/field_def.gd` | `id`, `label_key`, `kind: FieldKind` (`TEXT, DATE, ID_CODE, ENUM, PORTRAIT, NUMBER, BOOL, LIST`), `truth_path`, `comparable`, `display_order`, `format` | `truth_path` = propriété de `Passenger` (`Passenger.TRUTH_PATHS`) ou `document.<prop>` (`serial`, `issue_date`, `expiry_date`, `issuer_id`, `seal_id`, `mrz`) résolue par `DocumentInstance.get_value()`. `LIST` = `PackedStringArray` (implants). |
+| `DocumentTypeDef` | `documents/document_type_def.gd` | `id`, `title_key`, `fields`, `issuer_faction_ids`, `validity_days: Vector2i`, `holo_tint_token` (token `DS`), `issuer_id`, `seal_id`, `serial_pattern` | 4 types : `id_card` (dont `implants`, `seal`, `mrz`), `entry_permit`, `bioscan`, `mil_waiver`. ⚠️ `view_scene` n'est ni rempli ni lu (vue générique `DocumentView`). |
+| `FactionDef` | `core/faction_def.gd` | `id`, `name_key`, `code`, `id_prefix`, `origin_sectors`, `name_pool`, `citizen_class_weights`, `purpose_weights`, `employers`, `implant_rate`, `implant_weights` | 6 origines : TYC, HAL, TER, CER, THR, DRV. ⚠️ `seal_texture` non rempli, non lu. |
+| `NamePool` | `generation/name_pool.gd` | `given_names_f/m/x`, `family_names`, `reserved_names` (jamais tirés : Okonkwo…) | Une par origine. |
+| `Rule` (abstraite) | `rules/rule.gd` | `id`, `title_key`, `rulebook_text_key`, `category` (`DOCUMENTS, IDENTITY, FACTION, PURPOSE, SPECIAL`), `severity` 1–3 | §6. |
+| `RuleSet` | `rules/rule_set.gd` | `id`, `rules`, `new_rule_ids` (badge « NOUVEAU »), `required_document_ids` | Liste **explicite et cumulative** par jour (pas d'héritage). Règles partagées entre RuleSets, **jamais mutées**. |
+| `DayDef` | `core/day_def.gd` | `day_number`, `game_date`, `rule_set`, `duration_sec`, `passenger_count`, `anomaly_count_weights`, `anomaly_weights: Dictionary[AnomalyType.Kind, float]`, `scripted_cases`, `intro_text_key`, `credit_per_correct`, `penalty_per_error` ; GDD : `faction_weights`, `visor_down_rate`, `legit_noise_rate`, `bribe_rate`, `luciole_rate`, `free_citations_per_day`, `penalty_escalated` ; M7 : `detain_enabled`, `has_evening`, `bribe_amounts`, `wanted_notices`, `briefing_messages`, `evening_events`, `hall_announcements: Dictionary[int, String]`, `rulebook_tabs` | J1–J10 : 8→16 passagers, 540→720 s ; DÉTENTION dès J7 ; pas de soirée au J10. |
+| `ScriptedCaseDef` | `generation/scripted_case_def.gd` | `id`, `at_index`, `passenger_overrides`, `appearance_overrides`, `forced_anomalies` (liste exacte), `injection_params`, `dialogue_id`, `sets_flag`, `requires_flag`, `flags_on_approve/deny` ; M7 : `flags_on_detain`, `flags_if_unprocessed`, `extra_effects: Array[CaseEffectDef]`, `forbids_flags`, `appearance_from_case`, `identity_from_case`, `truth_overrides`, `extra_documents`, `slipped_item: SlippedItemDef`, `luciole_codes`, `extra_tags` | SC-01 → SC-22 + tutoriels J1, saisis dans les `DayDef`. |
+| `AppearanceCatalog` | `core/appearance_catalog.gd` | `slots`, `min_distance` (5), `window_size` (15), `max_attempts` (12), `age_band_weights`, `height_step_range` | Slots : `silhouette, face, eyes, nose_mouth, skin, hair, headwear, outfit, accessory, palette`. Coiffes `visor_down/visor_up` de poids 0. |
+| `AppearanceSlotDef` / `AppearanceOptionDef` | `core/appearance_*.gd` | slot : `id`, `identity`, `visible_in_portrait`, `options` ; option : `id`, `weight`, `faction_weights`, `tags` | Le rendu est déduit des **identifiants** (`AppearanceApplier` + `GreyboxStyle`). ⚠️ Les champs visuels `mesh`, `atlas_cell`, `material`, `portrait_layer` ne sont ni remplis ni lus. |
+| `EconomyDef` | `core/economy_def.gd` | loyer / taxe d'air (et hausses datées), nourriture, chauffage, oxygène, soins, règles de santé du foyer, expulsion, `detain_bonus`, `report_bonus`, seuils d'audit, seuils F4/F6 | `data/economy/economy.tres` (D-044, D-047, D-059). |
+| `SlippedItemDef` | `core/slipped_item_def.gd` | `kind`, `amount`, `label_key`, `text_key`, `extra_text_keys`, `allowed`, `default_decision`, `report_bonus`, `effects` | Objets glissés des cas scénarisés (D-054). |
+| `WantedNoticeDef` | `core/wanted_notice_def.gd` | `id`, `scripted_case_id` ou `at_index`, noms, `reason_key` | Avis liés à des passagers du jour (D-056). |
+| `BriefingMessageDef` | `core/briefing_message_def.gd` | `speaker_key`, `text_key`, `voice`, `condition`, `group`, `family_slot`, `priority` | Table conditionnelle (≤ 4 messages / jour). |
+| `EveningEventDef` / `EveningOptionDef` | `core/evening_*_def.gd` | événement : `id`, `kind`, `order`, `condition`, textes, `options`, `flags`, `line_costs` ; option : `id`, `label_key`, `result_key`, `cost`, `gain`, `requires_funds`, `flags`, `line_costs`, `household`, `condition`, `default_rank` | Soirées J4–J9 (D-058, D-061). |
+| `FlagCondition`, `ConditionalKey`, `CaseEffectDef` | `core/` | `all_of`, `any_of`, `none_of`, `gauges_min/max` ; clé conditionnelle ; effet `verdict × condition → flags` | Conditions narratives réutilisées partout. |
 
-### 5.3 Objets runtime (RefCounted, produits par le générateur)
+### 5.3 Objets runtime (RefCounted)
 
 | Classe | Rôle | Champs principaux |
 |---|---|---|
-| `Passenger` | Identité (vraie ou présentée) | voir diagramme ; `appearance_seed: int` (traçabilité), `appearance: PassengerAppearance` (résolue par `AppearanceGenerator`, §9.3). **`portrait_seed` est supprimé** (D-012) : la photo n'est plus une graine indépendante. **Ajouts M2** : `citizen_class: StringName` (`&"C-3"`), `employer: String`, `health_status: StringName` (`fit/quarantine/review`, bio-scan) ; `TRUTH_PATHS` (liste des `truth_path` valides), `copy()`, `apply_overrides()`. Codes ENUM en constantes (`PURPOSE_WORK`, `HEALTH_FIT`…). |
-| `PassengerAppearance` | Apparence modulaire d'une personne (`scripts/core/passenger_appearance.gd`) | `traits: Dictionary[StringName, StringName]` (slot → option id), `palette_id`, `height_step: int` (−2..+2, quantifié), `age_band: int` ; `distance(other, slots) -> int` = nombre de slots différents ; `derive(overrides) -> PassengerAppearance` (copie modifiée, pour sosies/parents/vieillissement) ; `serialize()`. **Pur** : que des identifiants, aucune ressource visuelle. Jamais de lien vers `CaseKey`. **M2** : structure, `distance`, `derive`, `copy`, `serialize`, `is_face_covered()` (coiffe `visor_down`) ; le générateur et le catalogue restent M3. |
-| `PortraitValue` | Valeur d'un champ `PORTRAIT` | `appearance: PassengerAppearance` (la personne *sur la photo*), `photo_seed` (cadrage, éclairage, grain), `years_before_issue` (photo plus ancienne = bruit légitime). Rendu par `PortraitRenderer` (§8 bis.5). |
-| `PassengerReaction` | Enum des réactions (`scripts/core/passenger_reaction.gd`) | `class_name PassengerReaction` + `enum Kind { NERVOUS, ANGRY, SHRUG, RELIEVED }` (GDScript n'a pas d'enum global : le type exposé est `PassengerReaction.Kind`) |
-| `DayPhase` | Enum des états du jour (`scripts/core/day_phase.gd`) | `class_name DayPhase` + `enum Kind { INTRO, WAITING_CASE, ARRIVING, INSPECTING, RESOLVING, DEPARTING, SUMMARY }` — dans `core/` pour que l'EventBus ne dépende pas de `DayController` |
-| `DocumentInstance` | Un document tendu par le passager | `type_def`, `serial`, `issue_date`, `expiry_date`, **`issuer_id`, `seal_id`** (ajouts M2, recopiés du type), `values: Dictionary[StringName, Variant]` (clé = `FieldDef.id`, données issues du passager ; un champ `PORTRAIT` contient un `PortraitValue`) ; `get_value(field_id)` / `set_value()` résolvent uniformément `values` et les propriétés `document.*` ; `copy()` profond |
-| `FieldRef` | Pointeur vers un champ affiché | `document_id: StringName`, `field_id: StringName`. GDScript n'admettant pas de constante objet, `FieldRef.PASSENGER_FACE` devient la fabrique **`FieldRef.passenger_face()`** = `(&"__passenger__", &"face")` : le visage de l'acteur 3D, résolu par `DiscrepancyChecker` vers `case.passenger_presented.appearance`. Pseudo-références M2 du Rulebook : **`FieldRef.today()`** = `(&"__rulebook__", &"__today__")` (date du jour) et **`FieldRef.rulebook_rule(rule_id)`** = `(&"__rulebook__", rule_id)`. |
-| `Case` | **Ce que voit le joueur** | `case_id`, `index`, **`case_seed`** (renommé : `seed` masque la fonction globale), `passenger_presented`, `documents`, `dialogue_tags` ; helpers `get_document`, `get_field_def(ref)`, `get_value(ref)`, `find_refs_by_truth_path`, `find_refs_by_kind`. Hypothèse M2 : un document au plus par type. |
-| `CaseKey` | **Clé de réponse**, jamais transmise à l'UI | `truth`, `anomalies`, `expected_violations`, `expected_verdict: VerdictKind.Kind` — construite par `RuleEngine.build_case_key()` sur le cas final |
-| `Anomaly` | Corruption injectée | `type: AnomalyType` (`EXPIRED_DOCUMENT, PORTRAIT_MISMATCH, IMPOSTOR_LOOKALIKE, RELATIVE_DOCUMENTS, ID_MISMATCH, NAME_MISMATCH, MISSING_DOCUMENT, BANNED_FACTION, WRONG_ISSUER, INVALID_SEAL, PURPOSE_MISMATCH…`), cible, valeur avant/après. Visages : `PORTRAIT_MISMATCH` = photo d'une autre personne (≥ 3 traits d'identité différents, jours faciles) ; `IMPOSTOR_LOOKALIKE` = photo dérivée du passager avec **1–2** traits d'identité visibles modifiés ; `RELATIVE_DOCUMENTS` = papiers d'un parent (§9.3). **M2** : enum `AnomalyType.Kind` (`scripts/core/anomaly_type.gd`) à valeurs **explicites et figées** (sérialisées en entier dans les `.tres` ; on ajoute à la fin), incluant les types 🟡 du GDD (`ORIGIN_ID_MISMATCH`, `BIOSCAN_UNFIT`, `UNDECLARED_IMPLANT`, `BANNED_IMPLANT`, `MRZ_MISMATCH`, `WANTED_PERSON`) ; `Anomaly.cosmetic: bool`. |
-| `Violation` | Sortie d'une règle | `rule_id`, `refs: Array[FieldRef]` (champs qui prouvent la violation ; une règle « document requis » a pour preuve sa propre référence Rulebook), `reason_key`, **`severity`** (copiée de la règle) ; `is_documented_by(discrepancy)` = discordance confirmée ∩ `refs` ≠ ∅ (D-024) |
-| `Discrepancy` | Résultat d'une comparaison A ↔ B | `a: FieldRef`, `b: FieldRef`, **`result: Discrepancy.Result`** (`CONCORDANT, DISCORDANT, INCOMPARABLE`), `confirmed: bool` (= `DISCORDANT`), `differing_traits: Array[StringName]` (comparaison de visages : surlignage/feedback), **`reason_key`** (ex. `disc_face_masked`). Produit par `DiscrepancyChecker.check(case, a, b, ctx) -> Discrepancy` (M2 : renvoie l'objet au lieu d'un `bool`, et prend le `RuleContext` pour la date du jour et les règles actives). |
-| `Verdict` | Décision du joueur | `case_id`, `kind: VerdictKind.Kind` (`APPROVE, DENY, DETAIN` — `scripts/core/verdict_kind.gd` ; `DETAIN` utilisé à partir du J7), `flagged: Array[Discrepancy]`, `questions_asked`, `elapsed_sec` (mesuré depuis `documents_presented`) |
-| `CaseResult` | Sortie du scoring | `correct: bool`, **`verdict_kind: VerdictKind`** (ajout : le booth choisit la sortie sans écouter `verdict_stamped`), `missed_violations`, `false_flags`, `credits_delta`, `citation: bool` |
-| `RuleContext` | Contexte d'évaluation | `today: int`, `day_def`, `faction_db: Dictionary[StringName, FactionDef]`, `document_db: Dictionary[StringName, DocumentTypeDef]` ; **ajouts M2** : `rule_set` (règles actives, pour le mode Inspection), `identity_slots` (slots comparés par `FaceComparator`, liste par défaut jusqu'au catalogue M3) ; `RuleContext.for_day(day, factions, documents)` |
-| `RulebookEntry` (M2) | Ligne du Rulebook (`scripts/rules/rulebook_entry.gd`) | `rule_id`, `title_key`, `text_key`, `category`, `severity`, `is_new`, `ref: FieldRef` (sélectionnable en mode Inspection) — construite par `Rule.get_rulebook_entry()` / `RuleSet.build_rulebook()` |
-| `DataCatalog` (M2) | Chargement indexé de `res://data/` (`scripts/documents/data_catalog.gd`) | `factions`, `documents`, `rules`, `rule_sets`, `days`, `errors` (doublons, ressources illisibles) ; `make_context(day_number)`. Pur (DirAccess + `load`), gère les `.remap` d'export. Utilisé par les tests de données et, en M5, par la scène de jour. |
+| `Passenger` | Identité (vraie ou présentée) | `id`, `given_name`, `family_name`, `birth_date`, `sex`, `faction_id`, `origin_sector`, `citizen_id`, `citizen_class`, `appearance_seed`, `appearance`, `purpose`, `stay_days`, `employer`, `health_status`, `implants` (visibles sur le corps) ; `TRUTH_PATHS`, `copy()`, `apply_overrides()` |
+| `PassengerAppearance` | Apparence modulaire, **pure** (identifiants seulement) | `traits`, `palette_id`, `height_step` (−2..+2), `age_band` ; `distance()`, `derive()`, `copy()`, `serialize()`, `is_face_covered()`, `without_visor()` |
+| `PortraitValue` | Valeur d'un champ `PORTRAIT` | `appearance` (la personne sur la photo), `photo_seed`, `years_before_issue` |
+| `DocumentInstance` | Document tendu | `type_def`, `serial`, `issue_date`, `expiry_date`, `issuer_id`, `seal_id`, `mrz` (bande `Mrz`), `marks` (`&"luciole"`), `values` ; `get_value()` / `set_value()` / `copy()` |
+| `FieldRef` | Pointeur vers un champ affiché | `document_id`, `field_id` ; pseudo-références : `passenger_face()`, `today()`, `rulebook_rule(id)`, `wanted(id)` |
+| `Case` | **Ce que voit le joueur** | `case_id`, `index`, `case_seed`, `passenger_presented`, `documents`, `dialogue_tags`, `slipped_items`, `luciole_codes`, `presentation` (`&"knock_three"`) ; `remove_visor()`, `get_value(ref)`, `find_refs_by_*` |
+| `CaseKey` | **Clé de réponse** (jamais transmise) | `truth`, `anomalies`, `expected_violations`, `expected_verdict` |
+| `Anomaly` / `AnomalyType.Kind` | Corruption injectée | 17 valeurs **figées** (D-033) : `EXPIRED_DOCUMENT`… `WANTED_PERSON = 16` ; `cosmetic` |
+| `Violation`, `Discrepancy`, `Verdict`, `VerdictKind` | Sorties règle / comparaison / décision | `Discrepancy.result` (`CONCORDANT, DISCORDANT, INCOMPARABLE`), `differing_traits`, `reason_key` ; `Verdict.kind` (`APPROVE, DENY, DETAIN`), `flagged`, `elapsed_sec` |
+| `CaseResult` | Sortie du scoring (§8) | `verdict_kind`, `expected_verdict`, `correct`, `verdict_correct`, `documented`, `expected_violations` / `missed_violations` (révélées après verdict), `wage`, `fine`, `credits_delta`, `citation_*`, `procedure_missed`, `scripted_id`, `narrative_changes`, `item_decisions`, `bribe_credits`, `report_credits`, `password_answered` |
+| `DaySummary` | Bilan du jour | résultats, non traités, `time_expired`, `unprocessed_changes` ; `get_wage_total()`, `get_fine_total()`, `get_net()`, `get_bribe_total()`, `get_report_total()`, `get_total_income()` |
+| `RuleContext` | Contexte d'évaluation | `today`, `day_def`, `rule_set`, `faction_db`, `document_db`, `identity_slots`, `wanted` |
+| `RulebookEntry` | Ligne du Rulebook | `rule_id`, `title_key`, `text_key`, `category`, `severity`, `is_new`, `ref` |
+| `SlippedItem`, `WantedNotice`, `CaseMemory`, `Household`, `EveningEvent`, `EveningReport`, `ExpenseLine` | M5/M7 | objet glissé et sa décision ; avis (`get_ref()`) ; mémoire des cas scénarisés ; foyer (Ilan, Noa, Dora : santé, faim, froid, `detained`) ; soirée |
+| `DataCatalog` | Chargement indexé de `res://data/` | `factions`, `documents`, `rules`, `rule_sets`, `days`, `errors` ; `load_from()`, `get_day()`, `get_economy()`, `make_context()` ; liste les fichiers par `DirAccess` et suit les `.remap` d'export (§16) |
 
-**Dates** : jamais `Time`/OS. `GameDate` = entier « jours depuis l'epoch de la station » + helpers de formatage. Évite fuseaux horaires et rend les règles d'expiration triviales (`expiry_date < ctx.today`).
-
-**Séparation `Case` / `CaseKey`** (ajout par rapport à l'orientation) : le cas « connaît sa réponse », mais si cette réponse voyage avec le cas dans l'EventBus, n'importe quelle vue peut tricher par erreur (afficher un indice, colorer un champ). On sépare donc physiquement ce que l'UI reçoit de ce que seuls `DayController`/`ScoringService` détiennent.
-
-**Apparence et vérité terrain** : l'acteur 3D affiche `case.passenger_presented.appearance`, qui est **toujours** l'apparence physique réelle (`CaseKey.truth.appearance`) — invariant : aucun injecteur ne modifie l'apparence du passager, seulement celle des `PortraitValue` des documents. Le booth n'a donc jamais besoin de `CaseKey`.
+- **Dates** : `GameDate` = entier « jours depuis 01.01.2100 » ; jamais `Time`/OS dans la logique.
+- **`Case` / `CaseKey` séparés** physiquement : l'UI ne peut pas tricher par erreur.
+- **Invariant d'apparence** : l'acteur 3D affiche `case.passenger_presented.appearance`, toujours égale à l'apparence physique réelle ; aucun injecteur ne la modifie (seulement les `PortraitValue`). Exception assumée : la visière (état physique, posée sur la vérité *et* le présenté).
 
 ---
 
 ## 6. Moteur de règles
 
 ```gdscript
-# Contrat (illustratif — implémentation en M2)
-class_name Rule extends Resource
-func evaluate(case: Case, ctx: RuleContext) -> Array[Violation]: return []
-func get_detectable_anomalies() -> Array[int]: return []   # AnomalyType couvertes
-func get_rulebook_entry() -> RulebookEntry: ...
+class_name Rule extends Resource   # @abstract
+func evaluate(case: Case, ctx: RuleContext) -> Array[Violation]
+func get_detectable_anomalies() -> Array[AnomalyType.Kind]
+func check_against(case: Case, ref: FieldRef, ctx: RuleContext) -> Discrepancy.Result  # mode Inspection : règle ↔ champ
+func get_required_document_ids() -> Array[StringName]
+func get_referenced_truth_paths() -> Dictionary[StringName, Array]                       # validation des données
+func get_rulebook_entry() -> RulebookEntry
 ```
 
-- **Paramétrage par `.tres`, comportement par sous-classe.** Chaque *famille* de règle = une sous-classe (`RequireDocumentRule(document_id)`, `DocumentNotExpiredRule(document_id)`, `FieldsMatchRule(field_id, document_ids)`, `PortraitMatchRule`, `FactionBannedRule(faction_ids)`, `IssuerAllowedRule`, `PurposeRequiresDocumentRule(purpose, document_id)`). Chaque *règle concrète* = un `.tres` qui instancie la sous-classe avec ses `@export`. Les designers créent de nouvelles règles sans code ; une nouvelle famille demande un script (acceptable, revue par Godot Architect).
-- **`evaluate` ajoute `ctx: RuleContext`** (par rapport à `evaluate(case)`) : les règles ont besoin de la date du jour et des bases de données factions/documents ; on les passe explicitement plutôt que de lire un autoload → règles pures, testables.
-- **Règles pures** : pas d'état, pas d'aléa, pas d'accès à l'arbre de scène. Une `Resource` partagée entre RuleSets ne doit **jamais** être mutée au runtime.
-- **`RuleEngine.validate(case, rule_set, ctx) -> Array[Violation]`** : simple boucle, agrège. Verdict attendu = `DENY` si au moins une violation, sinon `APPROVE`.
-- **Rulebook** : l'UI construit le Rulebook à partir de `rule_set.rules[i].get_rulebook_entry()` → une seule source de vérité pour le texte affiché et la logique.
-- **Vérification de discordance** (mode Inspection) : `DiscrepancyChecker.check(case, a: FieldRef, b: FieldRef) -> bool` compare les valeurs normalisées des deux champs **affichés** (même `truth_path`, ou couple déclaré comparable : photo ↔ passager 3D, date d'expiration ↔ date du jour). Il ne consulte pas `CaseKey` : il répond comme le ferait un agent humain, à partir de ce qui est visible.
-- **Comparateur de visages** : `FaceComparator.compare(a: PassengerAppearance, b: PassengerAppearance, catalog) -> Array[StringName]` (`scripts/rules/face_comparator.gd`, pur) renvoie les slots **d'identité visibles en portrait** qui diffèrent. Les slots changeables (coiffe, tenue, accessoires) et `age_band` ±1 sont ignorés (bruit légitime). Il est utilisé par `PortraitMatchRule` (photo ↔ `passenger_presented.appearance`, et photo ↔ photo entre deux documents) et par `DiscrepancyChecker` dès qu'un des `FieldRef` est `PASSENGER_FACE` ou un champ `PORTRAIT`. Discordance ⇔ au moins 1 slot différent.
+- **Comportement par famille (script), paramètres par `.tres`.** Règles pures : pas d'état, pas d'aléa, pas d'arbre de scène ; contexte passé explicitement (`RuleContext`).
+- **`RuleEngine`** : `validate(case, rule_set, ctx)`, `expected_verdict(violations)` — **DÉTENTION** si une violation a une sévérité ≥ 3, sinon **REFUS** s'il y en a au moins une, sinon **APPROBATION** (D-030) —, `build_case_key()`.
+- **Vérité terrain** (R1 résolu) : la réponse attendue est recalculée sur le cas final ; invariants vérifiés par `CaseBuilder.check_invariants()` et par les tests : cas propre ⇒ 0 violation (8 re-tirages max), chaque anomalie prouvée par une règle active (sauf `cosmetic`), seuls les types détectables du jour sont tirés.
+- **Procédures** (R06, R08) : `ProcedureRule` ne produit jamais de violation ; vérifiées par le `ScoringService` (D-031).
 
-### ⚠️ Ajustement recommandé à l'orientation « vérité terrain »
+### 6.1 Familles (16, `scripts/rules/families/`)
 
-L'orientation dit : « le cas connaît sa réponse grâce aux anomalies injectées ». Deux problèmes concrets :
-1. **Anomalie hors règle** : une faction « interdite » n'est interdite que certains jours ; une photo différente n'est une violation que si `PortraitMatchRule` est active. L'anomalie seule ne dit pas la réponse.
-2. **Violation accidentelle** : un tirage aléatoire « valide » peut tomber sur une date d'expiration < aujourd'hui, un doublon, etc.
+| Famille | Paramètres `@export` | Règles |
+|---|---|---|
+| `RequireDocumentRule` | `document_id`, `exempt_faction_ids` | R01, R04, R11 |
+| `DocumentNotExpiredRule` | `document_id`, `max_age_days` | R02, R05, R12 |
+| `PortraitMatchRule` | `check_passenger_face`, `check_between_documents`, `max_differing_traits`, `detected_anomalies` | R03, R17 |
+| `ProcedureRule` | `procedure_id`, `applies_to_faction_ids` | R06, R08 |
+| `FieldsMatchRule` | `truth_paths`, `document_ids`, `detected_anomalies` | R07 |
+| `PurposeConsistentRule` | `permit_id`, `card_id`, `work_purpose`, `no_employer_values`, `short_stay_*` | R09 |
+| `OriginIdBlockRule` | — | R10 |
+| `IssuerAllowedRule` | `document_id`, `allowed_issuer_ids` | R13 |
+| `FieldValueAllowedRule` | `document_id`, `truth_path`, `allowed_values`, `detected_anomalies` | R14 |
+| `ImplantsDeclaredRule` | `document_id`, `escalated_prefixes`, `escalated_from_day`, `escalated_severity` | R15 |
+| `BannedImplantsRule` | `document_id`, `always_banned`, `waiver_prefixes`, `waiver_document_id` | R16 |
+| `ApparentAgeRule` | `document_id` | R18 |
+| `FactionBannedRule` | `banned_faction_ids`, `exempt_purposes`, `card_id`, `permit_id` | R19 |
+| `SealValidRule` | — | R20 |
+| `MrzConsistentRule` | `document_id` | R21 |
+| `WantedRule` | `document_id` (lit `RuleContext.wanted`) | R22 |
 
-**Proposition** : la **réponse attendue est calculée par le `RuleEngine`** sur le cas final (`expected_violations = RuleEngine.validate(...)`), et les anomalies servent à *provoquer* ces violations. Invariants vérifiés par le générateur (assert en debug) et par les tests :
-- cas avant injection ⇒ `validate()` renvoie `[]` (sinon on retire au sort, max N essais, puis erreur explicite) ;
-- chaque anomalie injectée est détectée par ≥ 1 règle active (`get_detectable_anomalies()`), **sauf** si elle est marquée `cosmetic` (leurre volontaire, ex. faute de frappe tolérée) ;
-- le générateur ne tire que des `AnomalyType` couvertes par le RuleSet du jour (filtrage de `anomaly_weights`).
+### 6.2 Les 22 règles (`data/rules/`, introduites cumulativement)
 
-On garde tous les bénéfices (scoring juste, tests déterministes, discordances attendues connues) sans risque de divergence entre « ce que le générateur croit » et « ce que les règles disent ».
+| Jour | Règles (id, sévérité) |
+|---|---|
+| J1 | R01 `r_id_card_required` (2), R02 `r_id_card_valid` (2) |
+| J2 | R03 `r_portrait_match` (2) |
+| J3 | R04 `r_permit_required`, R05 `r_permit_valid`, R07 `r_identity_fields_match` (2) ; R06 `r_face_uncovered` (procédure, 1) |
+| J4 | R08 `r_tycho_interview` (procédure, 1), R09 `r_purpose_consistent`, R10 `r_origin_block` (2) |
+| J5 | R11 `r_bioscan_required`, R12 `r_bioscan_valid`, R13 `r_bioscan_issuer`, R14 `r_bioscan_fit` (2) |
+| J6 | R15 `r_implants_declared` (2 ; 3 pour un `MIL-` non déclaré dès J7), R16 `r_banned_implants` (2) |
+| J7 | R17 `r_identity_fraud_detain` (sosie 1–2 traits, **3**) |
+| J8 | R18 `r_apparent_age` (**3**), R19 `r_tharsis_banned` (2) |
+| J9 | R20 `r_seals_valid`, R21 `r_mrz_valid` (2) |
+| J10 | R22 `r_wanted_detain` (**3**) |
+
+### 6.3 Comparaison (mode Inspection)
+
+- **`DiscrepancyChecker.check(case, a, b, ctx) -> Discrepancy`** compare ce qui est **affiché** (jamais `CaseKey`). Paires : même `truth_path` entre documents ; photo ↔ visage (`FieldRef.passenger_face()`) et photo ↔ photo ; date ↔ `FieldRef.today()` ; règle ↔ champ (`Rule.check_against`, R09, R15, R16, R19, R20, R21) ; visage ↔ `implants` (`disc_implant_mismatch`) ; visage ↔ naissance (`disc_age_mismatch`) ; MRZ ↔ N° ID / origine / nom / prénoms de la même carte (`disc_mrz_mismatch`) ; avis ↔ visage ou nom (`disc_wanted_match` / `disc_wanted_no_match`). Visage masqué ⇒ `INCOMPARABLE` (`disc_face_masked`).
+- **`FaceComparator.compare(a, b, identity_slots)`** renvoie les slots d'identité visibles en portrait qui diffèrent ; tenue, coiffe, accessoire et `age_band` ±1 ignorés. `identity_slots_of(catalog)` alimente `RuleContext.identity_slots`.
 
 ---
 
 ## 7. Catalogue des signaux `EventBus`
 
-Convention : nom au **passé** pour un fait (`*_started`, `*_stamped`), `*_requested` pour une intention de l'UI vers la logique. Tous les paramètres typés.
+Source : `scripts/autoload/event_bus.gd` (31 signaux, tous typés). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
 
-| Signal | Paramètres | Émetteur → Écouteurs |
+| Signal | Paramètres | Émetteurs → Écouteurs (état réel) |
 |---|---|---|
 | **Jour** | | |
-| `day_started` | `day: DayDef, rulebook: Array[RulebookEntry]` | DayController → HUD, Rulebook, Booth |
-| `day_clock_ticked` | `remaining_sec: float` | DayClock → HUD |
+| `day_started` | `day: DayDef, rulebook: Array[RulebookEntry]` | DayController → ComparisonUI, BoothDirector (graine de la file), AudioDirector, OkonkwoIntercom |
+| `day_clock_ticked` | `remaining_sec: float` | DayClock → ComparisonUI, AudioDirector (musique « tension ») |
 | `day_time_expired` | — | DayClock → DayController |
-| `day_ended` | `summary: DaySummary` | DayController → UI résumé, GameState |
-| `day_phase_changed` 🆕 | `phase: DayPhase.Kind, case_id: StringName` | DayController → UI (active/désactive tampon et « Suivant »), BoothDirector (debug) |
+| `day_ended` | `summary: DaySummary` | DayController → DayScene (sirène puis bilan), AudioDirector |
+| `day_phase_changed` | `phase: DayPhase.Kind, case_id: StringName` | DayController → ComparisonUI (tampon, « Suivant »), AudioDirector, OkonkwoIntercom |
+| `wanted_notices_published` | `notices: Array[WantedNotice]` | DayController (juste après `day_started`) → ComparisonUI (onglet Avis du Rulebook) |
+| `hall_announced` | `text_key: String` | DayController (après le n-ième cas) → ComparisonUI (sous-titre haut-parleur), AudioDirector (carillon) |
 | **Passager** | | |
-| `next_case_requested` | — | UI (bouton « Suivant ») → DayController (ignoré hors `WAITING_CASE`) |
-| `case_presented` | `case: Case` | DayController → BoothDirector (applique l'apparence, lance la marche), UI (prépare les documents **sans les afficher**) |
-| `passenger_arrived` 🆕 | `case_id: StringName` | BoothDirector (acteur sur `DeskMark`) → DayController (`ARRIVING → INSPECTING`) |
-| `documents_presented` 🆕 | `case_id: StringName` | BoothDirector (marqueur `documents_slot` du clip `present_documents`) → UI documents (les documents glissent par la fente), InspectionSession (démarre `elapsed_sec`), audio (hologramme qui s'allume) |
-| ~~`document_handed`~~ | — | **Supprimé** — remplacé par `documents_presented` (voir ci-dessous) |
-| `document_focused` | `doc: DocumentInstance` | UI → InspectionSession (télémétrie, tuto) |
-| `passenger_reaction_triggered` 🆕 | `reaction: PassengerReaction.Kind` | InspectionSession (réponses d'interrogation, réaction au verdict selon `dialogue_tags`) / dialogue → BoothDirector (OneShot + expression + bark) |
-| `passenger_departed` 🆕 | `case_id: StringName` | BoothDirector (le sortant a **libéré le guichet** — il finit sa sortie en parallèle, pool de 2, §8 bis.1) → DayController (`DEPARTING → WAITING_CASE \| SUMMARY`, autorise « Suivant ») |
-| `inspection_target_picked` 🆕 | `ref: FieldRef` | BoothDirector (clic sur le visage de l'acteur en mode Inspection → `FieldRef.PASSENGER_FACE`) → UI comparaison (même chemin qu'un clic sur un champ de document) |
-| **Inspection / comparaison** | | |
-| `inspection_mode_changed` | `enabled: bool` | UI → InspectionSession, Booth (FX) |
-| `discrepancy_check_requested` | `a: FieldRef, b: FieldRef` | UI → InspectionSession |
-| `discrepancy_checked` | `result: Discrepancy` | InspectionSession → UI (surlignage magenta / « aucune discordance ») |
-| `interrogation_requested` | `topic: StringName` | UI → InspectionSession |
-| `interrogation_answered` | `topic: StringName, line_key: String` | InspectionSession → UI dialogue, Booth (anim) |
+| `next_case_requested` | — | ComparisonUI (« Suivant »), DemoAutoplay, DayScene (debug) → DayController (ignoré hors `WAITING_CASE`) |
+| `case_presented` | `case: Case` | DayController → BoothDirector, ComparisonUI, AudioDirector, OkonkwoIntercom, NullBooth/SilentBooth |
+| `passenger_arrived` | `case_id` | BoothDirector / NullBooth → DayController, AudioDirector |
+| `documents_presented` | `case_id` | BoothDirector / NullBooth, **ou DayController sur timeout** → ComparisonUI, InspectionSession, DayController (objets glissés), AudioDirector, OkonkwoIntercom, DemoAutoplay, DayScene (captures) |
+| `document_focused` | `doc: DocumentInstance` | ComparisonUI → ⚠️ **aucun écouteur** (prévu : télémétrie / tutoriel) |
+| `passenger_reaction_triggered` | `reaction: PassengerReaction.Kind` | InspectionSession → BoothDirector, ComparisonUI, AudioDirector |
+| `passenger_departed` | `case_id` | BoothDirector (guichet libéré, `ClearMark`) / NullBooth → DayController, AudioDirector |
+| `inspection_target_picked` | `ref: FieldRef` | BoothDirector (clic visage) → ComparisonUI, BoothDirector (travelling visage) |
+| `item_slipped` | `item: SlippedItem` | DayController (au premier `documents_presented`) → ComparisonUI, AudioDirector |
+| `item_decision_requested` | `item_id, decision: SlippedItem.Decision` | ComparisonUI → DayController (ignoré hors `INSPECTING` ou si non autorisé) |
+| `item_decided` | `item, decision` | DayController (décision, ou **défaut au tampon**) → ComparisonUI, AudioDirector |
+| **Inspection** | | |
+| `inspection_mode_changed` | `enabled: bool` | ComparisonUI, DayScene (debug) → InspectionSession, BoothDirector, AudioDirector |
+| `discrepancy_check_requested` | `a: FieldRef, b: FieldRef` | ComparisonUI, DemoAutoplay → InspectionSession, AudioDirector |
+| `discrepancy_checked` | `result: Discrepancy` | InspectionSession → ComparisonUI, AudioDirector, OkonkwoIntercom, DemoAutoplay |
+| `interrogation_requested` | `topic: StringName` | ComparisonUI, DemoAutoplay, DayScene (debug) → InspectionSession |
+| `interrogation_answered` | `topic, line_key: String` | InspectionSession → ComparisonUI (sous-titres), BoothDirector (parole, visière), AudioDirector (voix Tessar) |
 | **Verdict / score** | | |
-| `verdict_stamped` | `verdict: Verdict` | UI tampon → DayController |
-| `case_resolved` | `case_id: StringName, result: CaseResult` | DayController (via ScoringService) → HUD, BoothDirector (départ : `ExitApprovedPath` si `result.verdict_kind == APPROVE`, sinon `ExitRefusedPath`) |
-| `citation_issued` | `reason_key: String` | DayController → HUD (impression du ticket) |
-| `credits_changed` | `credits: int, delta: int` | GameState → HUD |
+| `verdict_stamped` | `verdict: Verdict` | ComparisonUI (tampon maintenu), DemoAutoplay, DayScene (debug) → DayController, AudioDirector |
+| `case_resolved` | `case_id, result: CaseResult` | DayController → ComparisonUI, BoothDirector (sortie selon `verdict_kind`), NullBooth, AudioDirector, OkonkwoIntercom |
+| `citation_issued` | `reason_key: String` | DayController (après `case_resolved`) → ComparisonUI (ticket), AudioDirector, OkonkwoIntercom |
+| `credits_changed` | `credits: int, delta: int` | GameState → ComparisonUI |
 | **Méta** | | |
-| `narrative_flag_changed` | `flag: StringName, value: Variant` | GameState → systèmes narratifs |
-| `settings_changed` | `key: StringName, value: Variant` | Settings → UI, audio, FX |
-| `game_saved` / `game_loaded` | `slot: int` | GameState → UI |
-| **M7** | | |
-| `wanted_notices_published` 🆕 | `notices: Array[WantedNotice]` | DayController (juste après `day_started`) → Rulebook (onglet Avis de recherche) |
-| `item_slipped` 🆕 | `item: SlippedItem` | DayController (au premier `documents_presented` du cas) → UI plan de travail, booth |
-| `item_decision_requested` 🆕 | `item_id: StringName, decision: SlippedItem.Decision` | UI (GARDER / RENDRE / REMETTRE À LA GARDE) → DayController (ignoré hors `INSPECTING` ou si la décision n'est pas dans `item.allowed`) |
-| `item_decided` 🆕 | `item: SlippedItem, decision: SlippedItem.Decision` | DayController → UI, booth (aussi émis **au tampon** pour une décision par défaut) |
-| `hall_announced` 🆕 | `text_key: String` | DayController (après le n-ième cas, `DayDef.hall_announcements`) → UI sous-titres, audio (carillon) |
+| `narrative_flag_changed` | `flag, value: Variant` | GameState → ⚠️ **aucun écouteur** (les drapeaux sont relus à la demande) |
+| `settings_changed` | `key, value: Variant` | Settings → ComparisonUI, ScreenBase, PauseMenu, AudioDirector, main.gd |
+| `game_saved` / `game_loaded` | `slot: int` | GameState → ⚠️ **aucun écouteur** |
 
-`case_presented` transporte `Case` (jamais `CaseKey`). `case_resolved` peut révéler les violations manquées pour le feedback (`CaseResult.missed_violations`) **après** le verdict ; le booth n'en lit que `verdict_kind`.
+**Robustesse** : tous les signaux du booth portent `case_id` ; `DayController` ignore un signal d'un autre cas ou hors de l'état attendu ; `BoothDirector._emit_once()` n'émet chaque fait qu'une fois par cas, dans l'ordre `passenger_arrived → documents_presented → passenger_departed`. Seule exception à « un émetteur par fait » : le timeout `documents_presented` du `DayController`. `document_handed` a été supprimé au profit de `documents_presented(case_id)` (D-014).
 
-**Décision `documents_presented` vs `document_handed`** : on garde **uniquement `documents_presented(case_id)`**. Raisons : (1) il n'y a qu'un clip `present_documents` et donc un seul instant de remise — un signal par document inventerait une synchronisation qui n'existe pas dans l'animation ; (2) l'UI a déjà les `DocumentInstance` via `case_presented` : l'ordre et l'échelonnement de l'arrivée des documents sont une animation 2D (DS), pas un fait logique ; (3) `case_id` permet d'ignorer un événement tardif d'un cas précédent, ce que `doc` seul ne permettait pas. Le catalogue n'étant pas encore implémenté (M1), la suppression ne coûte rien. Si un jour le passager tend les documents un par un (post-MVP), on rajoutera `document_handed(case_id, doc)`.
+**Signaux locaux hors EventBus** (contrats de composants) : `PassengerActor` (`arrived`, `departed`, `cleared`, `anim_event`, `reaction_finished`, `face_clicked`) ; `BoothDirector` (`glass_knocked`, `escort_started`, `escort_finished`) ; `ComparisonUI` (`hovered`, `toast_shown`, `departure_line_shown`, `passenger_line_shown`) ; `PortraitService.portrait_ready` ; `AudioDirector.cue_played` ; écrans (`closed`, `finished`, `confirmed`…).
 
-**Règles de robustesse des signaux du booth** : tous portent `case_id` ; `DayController` ignore tout signal dont le `case_id` n'est pas le cas courant **ou** qui arrive dans un état inattendu (idempotence). L'UI ignore un second `documents_presented` pour le même cas. Seule exception à « un émetteur par signal » : en cas de **timeout de sécurité**, `DayController` émet lui-même `documents_presented` (§8 bis.6) pour que l'UI n'attende jamais indéfiniment.
+### 7.1 Contrat UI M7 — comportement réel avec et sans UI
 
-### 7.1 Contrat UI M7 (jours 4–10) — à l'usage de l'agent UI/UX
+Depuis la partie B de M7 (D-061), les comportements « par défaut » du contrat initial ne s'appliquent plus que **sans UI** : tests headless (`DayHarness`, `NullBooth`/`SilentBooth`), simulateurs (`DaySimulator`, `BalanceSimulator`, `SimProfile`) et `--no-ui`. La logique (DayController, Campaign) est identique dans les deux cas : seule la source des décisions change.
 
-Tout ce qui suit existe côté logique et données (M7 partie A). **Comportement actuel sans écran dédié** entre crochets : le jeu reste jouable de J1 à J10 avec l'UI M5/M6.
+| Sujet | API logique | UI présente (`day.tscn` normal) | Sans UI (headless, simulateurs, `--no-ui`) |
+|---|---|---|---|
+| **Objets glissés** (enveloppe, mot, carte de quai) | `Case.slipped_items`, `SlippedItem` (`allowed`, `default_decision`, `credits_for()`), `item_slipped` / `item_decision_requested` / `item_decided` | `SlippedItemView` sur le plan de travail : GARDER / RENDRE / REMETTRE À LA GARDE, modifiable jusqu'au tampon ; réplique de pot-de-vin sous-titrée, sujet `about_envelope`. Un objet non tranché reçoit **quand même** la décision par défaut au tampon. | Décision par défaut au tampon (refus automatique : enveloppe et mot rendus, carte de quai gardée, D-054) ; `SimProfile.decision_for()` dans les simulateurs. Effets : `CaseResult.bribe_credits` (crédités immédiatement, hors salaire), `report_credits`. |
+| **Tampon DÉTENTION** | `DayDef.detain_enabled` (J7+), `VerdictKind.DETAIN`, `CaseResult.verdict_kind` | 3ᵉ tampon visible à partir du J7 ; sortie escortée par la Garde (§8 bis.1). | Les bots/simulateurs peuvent détenir dès J7 ; une DÉTENTION avant J7 est lue comme REFUS par le DayController. Avec `NullBooth`, pas d'escorte (départ immédiat). |
+| **Avis de recherche** (J10) | `wanted_notices_published`, `WantedNotice.get_ref()` = `FieldRef.wanted(id)`, `DiscrepancyChecker` avis ↔ visage/nom | Onglet « Avis » du Rulebook (`WantedCardView`), sélectionnable en mode Inspection. | R22 évaluée normalement ; aucune preuve sélectionnée par défaut. |
+| **Onglets du Rulebook** | `DayDef.rulebook_tabs` (cumulatif : `origins` J4, `implants` J6, `symbols` J7, `seals` J9, `wanted` J10) | Seconde rangée « BULLETINS » (`RulebookReference`). | — |
+| **Champs M7** | `implants` (LIST), `seal`, `mrz`, `DocumentInstance.marks`, `Passenger.implants`, document `mil_waiver` | `DocumentView` (MRZ en bande, marque luciole dessinée au coin) ; implants visibles sur l'acteur (`ImplantDecor`) et fil magenta (code 6). | Valeurs présentes dans `Case` ; rien n'est rendu. |
+| **Codes Lucioles** | `Case.luciole_codes`, `Case.presentation`, étiquettes `luciole`, `luciole_password`, `magenta_thread`, `lumika` | Code 5 : trois tapes sur la vitre (booth + étiquette sous-titrée) ; code 7 : *lumika* affiché « [mot inconnu] » jusqu'à `lumika_learned`. | Effets narratifs calculés (`CaseConsequences`), aucune mise en scène. |
+| **Phrase de passe** | `InspectionSession.luciole_reply_allowed` (étiquette + `lucioles_trust ≥ 2`), sujet `luciole_reply`, `CaseResult.password_answered` | Sujet proposé dans le menu de questions quand autorisé. | Jamais répondue (sauf profil simulé qui le prévoit). |
+| **Répliques scénarisées** | `<dialogue>_arrival/_present/_password/_bribe/_exit_*…` (`fr.csv`), `InspectionSession.scripted_line()`, `exit_line_key()` | Sous-titrées (arrivée, présentation, pot-de-vin, départ), voix Tessar synthétisée. | Seules les clés `interrogation_answered` sont produites. |
+| **Annonces du Hall** | `hall_announced(text_key)` | Sous-titre « haut-parleur » (≥ 6 s) + carillon. | Signal émis, sans effet. |
+| **Briefings J4–J10** | `BriefingContent.build()` (≤ 4 messages conditionnels), voix `LUCIOLES` (magenta), `INSPECTION` (ambre, D-061) | `BriefingScreen`. | Non construits (simulateurs). |
+| **Soirées à choix** (J4–J9) | `Campaign.prepare_events/prepare_evening/preview_evening/close_evening`, `EveningService.can_choose()` (option gratuite toujours possible), `default_choices()` | `EveningScreen` **attend tous les choix** ; `confirm()` complète par les défauts (D-061). Mot des Lucioles du J3 : SIGNALER (prime `report_bonus` affichée) / BRÛLER. | Choix par défaut `EveningOptionDef.default_rank` (refus / neutre, soins payés si finançables, jamais de dénonciation, D-058) ou choix du `SimProfile`. |
+| **Foyer** | `Household.Member.detained` | `HouseholdView` (état « MIS·E EN ATTENTE »). | — |
+| **Fin de campagne** | `Campaign.close_final_day()`, `EndingService` (F1–F7, audit J9), `Campaign.epilogue()` | `EndScreen` : épilogue révélé ligne à ligne (*skippable*), traces des choix, récapitulatif ; sauvegarde effacée (D-041). | `BalanceSimulator` : fin évaluée par `EndingService.evaluate_final`. |
+| **Bilan** | `DaySummary.get_bribe_total()`, `get_report_total()`, `get_total_income()` | Tuile « DIVERS NON DÉCLARÉ », puces par cas. | Lu par la soirée / les simulateurs. |
 
-| Sujet | Objets / méthodes publiques | Comportement par défaut actuel |
-|---|---|---|
-| **Objets glissés** (enveloppe, mot plié, carte de quai) | `Case.slipped_items: Array[SlippedItem]` (aussi dans `case_presented`) ; `SlippedItem` : `id`, `kind` (`ENVELOPE`, `NOTE`, `DOCK_CARD`), `amount`, `label_key` (`wb_envelope_label` « ENVELOPPE · %d ₵ », `wb_note_label`, `wb_dock_card_label`), `text_key` + `extra_text_keys` (mot, carte ; `sc18_sefa_note_lev`), `allowed: Array[Decision]`, `default_decision`, `decision`, `is_allowed()`, `credits_for()` ; signaux `item_slipped` / `item_decision_requested` / `item_decided` (§7) ; libellés `ev_slipped_item_keep/return/report` ; sujet d'interrogatoire `about_envelope` (`q_about_envelope`) | [Aucun affichage : au tampon, **refus automatique** — enveloppe et mot rendus / laissés (`RETURN`), carte de quai gardée ; `item_decided` est émis à ce moment.] Effets : `CaseResult.item_decisions`, `bribe_credits` (enveloppe gardée, créditée immédiatement, hors salaire et score), `report_credits` (mot remis à la Garde, prime 10 ₵) ; `DaySummary.get_bribe_total()`, `get_report_total()`, `get_total_income()` |
-| **Tampon DÉTENTION** | `DayDef.detain_enabled` (J7+) ; `Verdict.kind = VerdictKind.Kind.DETAIN` ; `CaseResult.verdict_kind` choisit la sortie (escorte de la Garde, I2) ; `InspectionSession.exit_line_key(case, kind)` → `<dialogue>_exit_<approve\|deny\|detain>` ou `line_exit_detain_generic` | [Pas de tampon : le joueur ne peut que REFUSER — correct sans prime. Une DÉTENTION tamponnée avant le J7 est lue comme un REFUS.] |
-| **Avis de recherche** (Rulebook, J10) | `wanted_notices_published(notices)` ; `WantedNotice` : `id`, `given_name`, `family_name`, `full_name()`, `appearance` (portrait : `portrait_provider`), `reason_key` (`wanted_*_reason`), `get_ref()` = `FieldRef.wanted(id)` (pseudo-champ sélectionnable : `(__wanted__, id)`) ; `DiscrepancyChecker` : avis ↔ visage (masqué → `disc_face_masked`) ou ↔ nom/prénoms d'un document → DISCORDANT `disc_wanted_match` / CONCORDANT `disc_wanted_no_match` ; onglet `rb_tab_wanted` | [Aucun onglet : la règle R22 figure au Rulebook ; la preuve « visage ↔ avis » n'est pas sélectionnable dans l'UI.] |
-| **Onglets du Rulebook** | `DayDef.rulebook_tabs` (cumulatif : `origins` J4, `implants` J6, `symbols` J7, `seals` J9, `wanted` J10) ; clés `rb_tab_implants`, `rb_tab_symbols`, `rb_tab_seals`, `rb_tab_wanted` | [Onglets par catégorie existants seulement.] |
-| **Nouveaux champs et documents** | Carte : `implants` (`FieldKind.LIST`, `PackedStringArray`, `FieldValue.to_display` → « OPT-3, KIN-5 » ou « — »), `seal` (ENUM `val_seal_*`), `mrz` (ID_CODE, `DocumentInstance.mrz`, format `Mrz`) ; permis et bio-scan : `seal` ; document `mil_waiver` (Dérogation d'implant militaire : `authorized_implants`…) ; `DocumentInstance.marks` (`&"luciole"` : code 1, visible au zoom) ; `Passenger.implants` (implants **visibles** sur le corps, à poser sur le modèle 3D) ; paires du mode Inspection : visage ↔ `implants` (`disc_implant_mismatch`), visage ↔ date de naissance (`disc_age_mismatch`), MRZ ↔ N° ID / origine / nom / prénoms de la même carte (`disc_mrz_mismatch`), règle ↔ champ pour R09, R15, R16, R19, R20, R21 | [Vue générique : les champs s'affichent (`DocumentView`, MRZ en ligne pleine) ; `marks` et implants visibles ne sont pas rendus.] |
-| **Codes Lucioles** | `Case.luciole_codes: PackedInt32Array`, `Case.presentation` (`&"knock_three"` : code 5, trois tapes avant `present_documents`), étiquettes `luciole`, `luciole_password` (code 4), `magenta_thread` (code 6), `lumika` (code 7) ; MRZ en `07` (code 2) ; N° de permis terminé par 7 (code 3) ; drapeau `lumika_learned` (sous-titre « [mot inconnu] » → *lumika*, B16) | [Aucune mise en scène ; seuls les textes des répliques scénarisées passent.] |
-| **Phrase de passe** | Sujet `luciole_reply` (`q_luciole_reply`), proposé seulement si `InspectionSession.luciole_reply_allowed` (étiquette `luciole_password` **et** `lucioles_trust ≥ 2`, posé par le DayController) ; `InspectionSession.luciole_replied` ; réplique `<dialogue>_luciole_reply` ou `line_luciole_reply_generic` ; `CaseResult.password_answered` | [Sujet absent de la roue : jamais répondu.] |
-| **Répliques scénarisées** | `<dialogue>_arrival`, `_present`, `_password`, `_bribe`, `_bribe_kept/_returned`, `_about_envelope`, `_exit_*`, `_arrival_unmet`, `_origin_dora`… (NARRATIVE §4, toutes dans `fr.csv`) ; `InspectionSession.scripted_line(suffix, fallback)` | [Seules les réponses aux questions existantes sont lues (`_purpose`, `_stay`, `_origin`, `_confront`, `_about_*`, `_visor`).] |
-| **Annonces du Hall** | `hall_announced(text_key)` (`hall_j7_okonkwo_citation` après le 5ᵉ cas du J7) | [Non affichée.] |
-| **Briefings J4–J10** | `BriefingContent.build()` lit `DayDef.briefing_messages` (`BriefingMessageDef`, conditions `FlagCondition`) ; voix `Voice.LUCIOLES` (magenta) et `Voice.INSPECTION` (jaune) ajoutées à la fin ; locuteurs `spk_consortium`, `spk_lucioles`, `spk_inspector`, `spk_dora` ; au plus 4 messages | [Affichés par `BriefingScreen` ; les deux nouvelles voix ont la couleur cyan par défaut.] |
-| **Soirées à choix** (J4–J9) | `Campaign.prepare_events(data) -> Array[EveningEvent]` (`title_key`, `text_key`, `extra_keys`, `options: Array[EveningOptionDef]` : `id`, `label_key`, `result_key`, `cost`, `gain`, `requires_funds`, `default_option`, `audit` pour l'audit du J9) ; `EveningService.can_choose(option, solde)` (option grisée) ; `Campaign.prepare_evening(data, events, choices)` (coûts de postes imposés : chauffage offert, sabotage, médicaments de la Soute) ; `Campaign.default_choices(events, lines)` ; `Campaign.preview_evening(data, lines, events, choices)` → `EveningReport` (`gained`, `event_spent`, `choices`, `flag_changes`, `event_texts`) ; ordre d'affichage `order` (J9 : audit → aveu → déposition → laissez-passer) ; au plus 2 événements par soir (I9) | [**Choix par défaut** (`EveningOptionDef.default_rank`) : refus / neutre — pas de cadeau, chauffage offert refusé, bio-scan gratuit sinon payé si finançable sinon sauté, amende de l'école payée si finançable, voisin ignoré, colis refusé, Ilan : « Reste » (`forbid`), Okonkwo : refus de signer, laissez-passer non achetés ; jamais de dénonciation par défaut. Les textes des lettres et les résultats s'affichent dans le compte rendu de la nuit (`EveningReport.events`).] |
-| **Mot des Lucioles du J3** | `Campaign.decide_luciole_note(report)` : signaler = `loyalty +1`, `lucioles_trust −2`, prime 10 ₵ | [Bouton existant ; la prime n'est pas encore affichée.] |
-| **Foyer** | `Household.Member.detained` (Ilan dénoncé·e : `LOST` + `hh_state_detained`), `Household.alive_count()` ; `hh_ev_ilan_detained` | [La carte d'état affiche « MIS·E EN ATTENTE ».] |
-| **Fin de campagne** | `Campaign.has_evening(data)` (faux au J10) ; `Campaign.close_final_day(data, summary)` → fin (`EndingService.F1_ARRESTED` … `F7_REOPENS`, F2/F3 anticipées le soir, F1 aussi à l'audit) ; `Campaign.epilogue(ending)` → `{ending, title_key, eyebrow_key, lines: PackedStringArray, variant}` (lignes conditionnelles NARRATIVE §6.2) ; la sauvegarde est effacée (D-041) | [`DayScene` enchaîne bilan → `show_final` → `EndScreen` qui affiche le titre et les lignes de l'épilogue en un seul bloc de texte (pas de défilement lent, I10).] |
-| **Bilan du shift** | `DaySummary.get_bribe_total()`, `get_report_total()`, `get_total_income()`, `unprocessed_changes` | [Le bilan affiche salaire et amendes ; la soirée reçoit `get_total_income()`.] |
-| **Accessibilité / sous-titres** | NARRATIVE §7.1 : les fragments Tessar en italique (`*Lumika*`) ont été recopiés **sans** astérisques dans `fr.csv` (rendu italique `[i]` à décider par UI/UX). | — |
+🎯 Restent à trancher côté UI/UX : rendu italique des fragments Tessar (NARRATIVE §7.1, recopiés sans astérisques dans `fr.csv`).
 
 ---
 
@@ -488,237 +383,168 @@ Tout ce qui suit existe côté logique et données (M7 partie A). **Comportement
 sequenceDiagram
     autonumber
     actor J as Joueur
-    participant UI as UI (Control)
+    participant UI as ComparisonUI
     participant EB as EventBus
     participant DC as DayController
-    participant GEN as CaseBuilder
+    participant CB as CaseBuilder
     participant IS as InspectionSession
-    participant RE as RuleEngine
-    participant SC as ScoringService
-    participant GS as GameState
     participant BD as BoothDirector
     participant PA as PassengerActor
 
-    J->>UI: clic « Suivant »
+    J->>UI: « Suivant »
     UI->>EB: next_case_requested
-    EB->>DC: next_case_requested
-    DC->>GEN: build(day, index, seed(day,index))
-    GEN->>RE: validate(cas propre) == [] ?
-    GEN->>GEN: injecter anomalies
-    GEN->>RE: validate(cas final) → expected_violations
-    GEN-->>DC: Case + CaseKey
-    DC->>IS: begin(case)
+    EB->>DC: (WAITING_CASE seulement)
+    DC->>CB: build(next_index)
+    CB-->>DC: GeneratedCase (Case + CaseKey)
+    DC->>IS: begin(case, ctx) + luciole_reply_allowed
     DC->>EB: case_presented(case) + day_phase_changed(ARRIVING)
-    EB->>UI: prépare les documents (cachés), tampon inactif
-    EB->>BD: case_presented(case)
-    BD->>PA: apply_appearance(case.passenger_presented.appearance)
-    BD->>PA: walk_path(ArrivalPath, DeskMark)
-    Note over PA: walk (pas : marqueurs footstep → AudioStreamPlayer3D)
+    EB->>BD: acteur libre : assign, apply_appearance, apply_markings, walk_to_desk
     PA-->>BD: arrived
-    BD->>EB: passenger_arrived(case_id)
-    EB->>DC: ARRIVING → INSPECTING + day_phase_changed(INSPECTING)
-    BD->>PA: present_documents()
-    PA-->>BD: anim_event(&"documents_slot")
-    BD->>EB: documents_presented(case_id)
-    EB->>UI: documents glissent par la fente (holo ON)
-    EB->>IS: démarre elapsed_sec
-
-    loop Inspection (acteur en idle, regard suit la souris)
-        J->>UI: active mode Inspection, choisit champ A puis B
-        UI->>EB: discrepancy_check_requested(A, B)
-        EB->>IS: 
-        IS->>IS: DiscrepancyChecker.check(case, A, B)
-        IS->>EB: discrepancy_checked(result)
-        EB->>UI: surlignage / déblocage question
-        opt Interrogation
-            J->>UI: pose une question
-            UI->>EB: interrogation_requested(topic)
-            IS->>EB: interrogation_answered(topic, réplique)
-            EB->>BD: talk (blend) + bark
-            opt Réaction
-                IS->>EB: passenger_reaction_triggered(NERVOUS…)
-                EB->>BD: PA.play_reaction() (OneShot, regard coupé)
-            end
-        end
+    BD->>EB: passenger_arrived(id)
+    EB->>DC: ARRIVING → INSPECTING
+    Note over BD,PA: (code 5 : trois tapes) puis present_documents
+    PA-->>BD: anim_event(documents_slot)
+    BD->>EB: documents_presented(id)
+    EB->>UI: documents glissent par la fente
+    EB->>DC: item_slipped(item)… pour chaque objet glissé
+    loop Inspection
+        UI->>EB: discrepancy_check_requested / interrogation_requested / item_decision_requested
+        IS->>EB: discrepancy_checked / interrogation_answered / passenger_reaction_triggered
     end
-
-    J->>UI: tamponne APPROUVÉ / REFUSÉ (actif seulement en INSPECTING)
+    J->>UI: maintient un tampon (actif en INSPECTING)
     UI->>EB: verdict_stamped(verdict)
-    EB->>DC: INSPECTING → RESOLVING
-    DC->>SC: score(verdict, case_key, day)
-    SC-->>DC: CaseResult (+ verdict_kind)
-    DC->>GS: apply(result)  (crédits, citations)
-    opt Réaction au verdict
-        IS->>EB: passenger_reaction_triggered(RELIEVED | ANGRY | SHRUG)
-    end
-    DC->>EB: case_resolved(id, result) + day_phase_changed(DEPARTING)
-    EB->>UI: feedback, documents rendus
-    EB->>BD: case_resolved
-    BD->>PA: (réaction en file) puis leave() + walk_path(ExitApproved|ExitRefusedPath)
-    PA-->>BD: departed
-    BD->>EB: passenger_departed(case_id)
-    EB->>DC: DEPARTING → WAITING_CASE (ou SUMMARY) + day_phase_changed
-    EB->>UI: « Suivant » actif
+    EB->>DC: RESOLVING : ScoringService.score, citation, objets (défauts), conséquences, GameState
+    DC->>EB: case_resolved(id, result) [+ citation_issued] [+ hall_announced] + DEPARTING
+    EB->>BD: sortie (approuvé : porte de la station ; refusé : demi-tour ; détenu : escorte)
+    PA-->>BD: cleared (ClearMark)
+    BD->>EB: passenger_departed(id)
+    EB->>DC: WAITING_CASE ou SUMMARY (day_ended)
 ```
 
 ### Machine à états du `DayController`
 
 ```mermaid
 stateDiagram-v2
-    [*] --> INTRO
-    INTRO --> WAITING_CASE : intro fermée (day_started)
-    WAITING_CASE --> ARRIVING : next_case_requested / build + case_presented
+    [*] --> INTRO : start_day() / day_started + wanted_notices_published
+    INTRO --> WAITING_CASE : close_intro() (briefing fermé, horloge lancée)
+    WAITING_CASE --> ARRIVING : next_case_requested
     WAITING_CASE --> SUMMARY : temps écoulé
-    ARRIVING --> INSPECTING : passenger_arrived(case_id)\nou timeout ARRIVE (secours)
+    ARRIVING --> INSPECTING : passenger_arrived ou timeout 15 s
     INSPECTING --> RESOLVING : verdict_stamped
-    RESOLVING --> DEPARTING : scoring fait / case_resolved
-    DEPARTING --> WAITING_CASE : passenger_departed(case_id)\nou timeout DEPART — reste du temps
-    DEPARTING --> SUMMARY : idem — temps écoulé ou dernier passager
+    RESOLVING --> DEPARTING : case_resolved (synchrone)
+    DEPARTING --> WAITING_CASE : passenger_departed ou timeout 12 s
+    DEPARTING --> SUMMARY : temps écoulé ou file vide
     SUMMARY --> [*] : day_ended
 ```
 
-| État | Tampon | « Suivant » | Horloge de shift | Timeout de sécurité (défaut, `@export`) |
+| État | Tampon | « Suivant » | Horloge | Timeout de sécurité (`@export`) |
 |---|---|---|---|---|
 | `INTRO` | ✗ | ✗ | arrêtée | — |
-| `WAITING_CASE` | ✗ | ✓ | **tourne** | — |
-| `ARRIVING` | ✗ | ✗ | **tourne** (🟡 à valider client) | `arrive_timeout_sec = 15` → passe en `INSPECTING` + `push_warning` |
-| `INSPECTING` | ✓ | ✗ | tourne | `present_timeout_sec = 6` après l'entrée : si `documents_presented` absent, DayController l'émet lui-même |
-| `RESOLVING` | ✗ | ✗ | tourne | instantané (synchrone) |
-| `DEPARTING` | ✗ | ✗ | tourne | `depart_timeout_sec = 12` → passe à l'état suivant |
+| `WAITING_CASE` | ✗ | ✓ | tourne | — |
+| `ARRIVING` | ✗ | ✗ | tourne (D-019) | `arrive_timeout_sec = 15` → `INSPECTING` + `push_warning` |
+| `INSPECTING` | ✓ | ✗ | tourne | `present_timeout_sec = 6` : `documents_presented` émis par le DayController |
+| `RESOLVING` | ✗ | ✗ | tourne | synchrone |
+| `DEPARTING` | ✗ | ✗ | tourne | `depart_timeout_sec = 12` → état suivant |
 | `SUMMARY` | ✗ | ✗ | arrêtée | — |
 
-- **Fin du temps** (`day_time_expired`) : le cas en cours se termine normalement (le joueur peut encore tamponner) ; après `DEPARTING`, on va en `SUMMARY` au lieu de `WAITING_CASE`. En `ARRIVING`, le passager finit d'arriver (cas jouable) — à valider avec le Game Designer.
-- Le tampon est refusé avant `passenger_arrived` **côté logique** (DayController ignore `verdict_stamped` hors `INSPECTING`) **et** côté UI (désactivé via `day_phase_changed`) : l'UI n'est pas la seule garde.
-- Les timeouts sont des `Timer` enfants de DayController, désactivables en test (`process_callback` + `DayClock` simulé). Ils ne remplacent pas les watchdogs locaux du booth (§8 bis.6) : ce sont le dernier filet.
+- Les timeouts sont pilotés par `advance(delta)` (appelé par `_process`, ou à la main en test) — pas de `Timer`.
+- Le tampon est refusé hors `INSPECTING` **côté logique** (pas seulement côté UI). Une DÉTENTION avant `detain_enabled` devient un REFUS.
+- Fin du temps : le cas en cours se termine normalement, puis `SUMMARY`. Les cas scénarisés restés dans la file appliquent `flags_if_unprocessed`.
+- Enchaînement de la scène (`DayScene`) : briefing → shift (tutoriel `OkonkwoIntercom` au J1) → sirène (1,2 s) → `ShiftSummaryScreen` → `EveningScreen` (J1–J9) ou `show_final` (J10) → rechargement de la scène / `EndScreen` ; `PauseMenu` au-dessus.
 
 ---
 
 ## 8 bis. Booth & PassengerActor
 
-> Visuel (modélisation, éclairage, vitre, cadrage, liste des assets et licences) : [`docs/BOOTH_SCENE.md`](BOOTH_SCENE.md) et [`docs/ASSETS.md`](ASSETS.md) (3D Designer). Sons : [`docs/AUDIO.md`](AUDIO.md) (Audio Designer). Cette section ne fixe que la **structure technique** et les contrats.
+> Visuel : [`BOOTH_SCENE.md`](BOOTH_SCENE.md), [`ASSETS.md`](ASSETS.md) ; sons : [`AUDIO.md`](AUDIO.md). Cette section fixe la structure technique et les contrats.
 
-### 8 bis.1 Scène `res://scenes/booth/booth.tscn`
-
-```
-Booth (Node3D)                         scripts/booth/booth_director.gd  (class_name BoothDirector)
-├── Camera3D (%BoothCamera)            # vue de l'agent, fixe (léger sway optionnel)
-├── Desk / Glass / Slot …              # décor : cf. BOOTH_SCENE.md — la vitre est un mesh transparent SANS collision sur le calque « look »
-├── ArrivalPath (Path3D)               # de la file d'attente jusqu'à DeskMark (dernier point = DeskMark)
-├── DeskMark (Marker3D)                # position + orientation finale du passager face à la vitre
-├── ExitApprovedPath (Path3D)          # vers le portail du secteur
-├── ExitRefusedPath (Path3D)           # demi-tour vers le hall
-├── LookTargetPlane (Marker3D)         # plan de la vitre : origine = centre, -Z = normale vers l'agent
-├── PassengerSlots (Node3D)            # parent du pool de 2 PassengerActor (A/B), créés au chargement du jour
-├── QueueImpostors (Node3D)            # scripts/booth/queue_impostors.gd — file d'attente en imposteurs
-├── HoloEmitter (AudioStreamPlayer3D)  # « hologramme qui s'allume » sur documents_presented (bus SFX)
-└── WatchdogTimer (Timer)
-```
-
-Responsabilités de `BoothDirector` (≈ 200 lignes max, sinon extraire) :
-1. Écouter `case_presented`, `passenger_reaction_triggered`, `interrogation_answered`, `case_resolved`, `inspection_mode_changed`, `settings_changed`.
-2. Piloter l'acteur (API impérative) et convertir ses signaux locaux en signaux EventBus (`passenger_arrived`, `documents_presented`, `passenger_departed`, `inspection_target_picked`).
-3. Calculer la cible du regard (projection souris, §8 bis.4) chaque frame.
-4. Watchdogs locaux par étape (§8 bis.6).
-5. **Pool de 2 acteurs** (arbitrage Orchestrateur, BOOTH_SCENE §15.1) : `Dictionary[StringName, PassengerActor]` case_id → acteur. Sur `case_presented`, il prend l'acteur libre, le ré-habille et lance la marche, même si l'autre acteur est encore sur un `Exit*Path`. `passenger_departed(case_id)` est émis quand le sortant **libère le guichet** (marqueur `ClearMark` / ≈ 1 s après la fin de `leave`), pas quand il disparaît : le sortant finit son trajet hors-champ en parallèle, puis repasse « libre » (masqué). La machine à états du DayController ne change pas ; l'idempotence par `case_id` (§7) évite toute confusion entre les deux acteurs. Si aucun acteur n'est libre (sortant bloqué), le plus ancien est caché de force.
-6. Il ne connaît ni `CaseKey`, ni les règles, ni le score : il ne lit que `Case.case_id`, `Case.passenger_presented.appearance`, `Case.dialogue_tags` (voix) et `CaseResult.verdict_kind`.
-
-### 8 bis.2 Scène `res://scenes/passenger/passenger_actor.tscn`
+### 8 bis.1 Scène `scenes/booth/booth.tscn` (générée, §15)
 
 ```
-PassengerActor (CharacterBody3D)       scripts/booth/passenger_actor.gd  (class_name PassengerActor)
-├── CollisionShape3D                   # CapsuleShape3D h≈1.75 m, calque « passenger » (clic visage en mode Inspection via HeadArea)
-├── Locomotion (Node)                  scripts/booth/passenger_locomotion.gd — suivi de Path3D (§8 bis.3)
-├── Visual (Node3D)                    # rig instancié depuis le .glb (ou capsule placeholder en M4)
-│   └── Armature
-│       └── Skeleton3D                 # profil SkeletonProfileHumanoid (retarget Quaternius UAL / Mixamo, D-011)
-│           ├── Body / Outfit / Hair / Headwear / Accessory (MeshInstance3D)   # swappés par AppearanceApplier
-│           ├── HeadAttachment (BoneAttachment3D → "Head")
-│           │   ├── Face (MeshInstance3D)          # quad/visière, ShaderMaterial face_dither.gdshader
-│           │   ├── HeadArea (Area3D + CollisionShape3D)   # cible du clic « Visage »
-│           │   └── VoicePlayer (AudioStreamPlayer3D)      # bus Voice — barks
-│           ├── ChestAttachment (BoneAttachment3D → "Chest")
-│           │   └── BreathPlayer (AudioStreamPlayer3D)     # bus SFX — souffle (boucle, volume selon état)
-│           ├── NeckLook (LookAtModifier3D)    # os "Neck", influence 0.35 (optionnel, naturel)
-│           └── HeadLook (LookAtModifier3D)    # os "Head", cible = LookTarget
-├── FootstepPlayer (AudioStreamPlayer3D)       # bus SFX, au niveau du sol
-├── AnimationPlayer                    # libraries = { "passenger": passenger_anims.res }
-├── AnimationTree                      # §8 bis.3 ; anim_player = ../AnimationPlayer
-├── LookTarget (Marker3D, top_level = true)    # déplacée par BoothDirector via set_look_target()
-├── ExpressionController (Node)        scripts/booth/expression_controller.gd
-├── AppearanceApplier (Node)           scripts/booth/appearance_applier.gd
-└── StepWatchdog (Timer)
+Booth (Node3D, BoothDirector)
+├── WorldEnvironment, CameraRig/BoothCamera (FOV 14°), Lights/ (KeyLight, rims, SlotGlow, GateLight…)
+├── Hall/, Pillar/, Background/, Rain/          # décor greybox stylisé (M4)
+├── Queue/ + QueueImpostors (MultiMeshInstance3D) # file d'attente en imposteurs (imp_silhouette.res)
+├── StationDoor/, BoothFront/ (Glass booth_glass.gdshader, DocumentSlot, Counter, Hygiaphone…)
+├── ArrivalPath (Path3D) → DeskMark (Marker3D)
+├── ExitApprovedPath (Path3D) / ClearMark       # vers la porte de la station (approuvé ET détenu)
+├── ExitRefusedPath (Path3D) / ClearMark        # demi-tour vers le hall
+├── LookTargetPlane (Marker3D)
+└── PassengerSlots (Node3D)                     # PassengerA, PassengerB (pool), GuardEscort — créés au _ready
+                                                # + GuardInPath, GuardOutPath, GuardMark créés en code
 ```
 
-Signaux **locaux** de `PassengerActor` : `arrived`, `departed`, `anim_event(name: StringName)`, `reaction_finished(reaction: PassengerReaction.Kind)`, `face_clicked`.
+Les noms `ArrivalPath`, `DeskMark`, `Exit*Path`, `ClearMark`, `LookTargetPlane`, `PassengerSlots`, `QueueImpostors`, `BoothCamera` sont **contractuels**. 🎯 Écart à l'intention initiale : pas de `HoloEmitter` ni de `WatchdogTimer` dans la scène — l'audio est porté par l'`AudioDirector` (§8 bis.8) et les watchdogs sont un dictionnaire d'échéances traité dans `_process`. 🎯 Le décor reste le **greybox M4** ; le kit modulaire final (BOOTH_SCENE) n'est pas livré.
+
+`BoothDirector` :
+1. Écoute `day_started`, `case_presented`, `passenger_reaction_triggered`, `interrogation_answered`, `case_resolved`, `inspection_mode_changed`, `inspection_target_picked`. Il lit `Settings.reduce_motion` à chaque `case_presented` (pas d'écoute de `settings_changed`).
+2. **Pool de 2 acteurs** (D-017) : `_by_case: case_id → acteur` ; l'acteur libre est ré-habillé même si l'autre finit sa sortie ; si aucun n'est libre, le plus ancien est libéré de force. `passenger_departed` part au `ClearMark` (guichet libéré), pas à la disparition.
+3. **Garde d'escorte (M7, D-061)** : 3ᵉ `PassengerActor` hors pool (`GuardEscort`, uniforme gris + brassard jaune, sans collision). Sur `case_resolved` avec `DETAIN` : la Garde entre par `GuardInPath`, encadre le détenu, puis repart avec lui (`GuardOutPath`) ; signaux locaux `escort_started` / `escort_finished`.
+4. M7 : implants visibles et fil magenta (`apply_markings`), trois tapes sur la vitre (code 5) avant `present_documents`.
+5. Regard (projection souris), clic visage (test rayon ↔ sphère de tête dans `_unhandled_input`, pas de picking physique), travelling visage (FOV 14° → 6,5°), cadreur automatique désactivé (`framer_enabled`).
+6. Ne lit que `Case.case_id`, `passenger_presented.appearance/.implants`, `presentation`, `dialogue_tags` et `CaseResult.verdict_kind`.
+7. API pour l'intégration : `get_face_viewport_rect()` (cadre « VISAGE »), `get_desk_actor()`, `get_actor(case_id)`, `actors` (lu par l'AudioDirector).
+
+### 8 bis.2 Scène `scenes/passenger/passenger_actor.tscn`
+
+```
+PassengerActor (CharacterBody3D, passenger_actor.gd)
+├── CollisionShape3D
+├── Locomotion (Node, PassengerLocomotion)      # échantillonnage de Path3D + move_and_slide (D-015)
+├── Visual (Node3D, PassengerRig)               # échelle = taille (±3 %/pas)
+│   └── Armature → Skeleton3D (Kenney characterMedium retargeté, pistes « Visual/Armature/Skeleton3D:<Os> »)
+│       ├── Body (MeshInstance3D, chr_toon.gdshader + carte de zones de la tenue)
+│       ├── HeadAttachment → Head (repère en mètres) : Face (plaque ditherée), Nose, EarL/R, Hair,
+│       │                                              Headwear, HeadAccessory, HeadArea, implants
+│       ├── NeckAttachment → NeckWear · UpperChestAttachment → Outfit · RightHandAttachment → HandSpace/Papers
+│       ├── HeadScale (HeadScaleModifier : tête ×0,45, cou ×0,55, forme du visage — D-051)
+│       └── NeckLook / HeadLook (LookAtModifier3D, cou 30 %, tête 100 %)
+├── AnimationPlayer (bibliothèque « passenger ») + AnimationTree (construit par PassengerAnims)
+├── LookTarget (Marker3D, top_level)
+└── ExpressionController (Node)
+```
+
+Les pièces variables sont des `MeshInstance3D` **attachées aux os** (pas de meshes skinnés par slot). `AppearanceApplier` est un `RefCounted` (pas un nœud). `PassengerAudio` est ajouté à l'exécution par l'`AudioDirector`. Signaux locaux : `arrived`, `departed`, `cleared`, `anim_event(name)`, `reaction_finished(kind)`, `face_clicked`.
 
 ### 8 bis.3 Animation et déplacement
 
-**AnimationLibrary `passenger`** (`assets/models/passenger/passenger_anims.res`) : `walk` (boucle, *in place*), `idle` (boucle), `present_documents`, `leave` (demi-tour + premier pas), `react_angry`, `react_nervous`, `shrug`, `talk` (boucle, haut du corps). Source : **Quaternius Universal Animation Library (CC0) en priorité**, Mixamo en complément pour les clips manquants. Les clips sont importés « in place » (pas de root motion) et retargetés sur `SkeletonProfileHumanoid` ; la bibliothèque est **sauvegardée en fichier** à l'import avec *Keep Custom Tracks* pour que les pistes de méthodes ajoutées à la main (marqueurs) survivent à un ré-import.
-
-**AnimationTree** (racine `AnimationNodeBlendTree`) :
-
-```
-[Main: StateMachine] ──► [TalkBlend: Blend2, filtre = colonne+bras+tête] ──► [Reaction: OneShot] ──► Output
-                                   ▲ blend                                        ▲ shot
-                             [talk: Animation]                       [ReactionSelect: Transition]
-                                                                       ├─ angry   → react_angry
-                                                                       ├─ nervous → react_nervous
-                                                                       └─ shrug   → shrug
-
-Main (StateMachine) :
-  Start → walk ⇄ idle (xfade 0.25 s)
-  idle → present_documents (travel) → idle (switch AT_END, auto-advance)
-  idle → leave (travel) → walk (AT_END, auto-advance)
-```
-
-- Paramètres pilotés par l'acteur uniquement : `parameters/Main/playback.travel(...)`, `parameters/TalkBlend/blend_amount` (0 → 1 en 0.15 s pendant un bark), `parameters/ReactionSelect/transition_request`, `parameters/Reaction/request = ONE_SHOT_REQUEST_FIRE`.
-- Les réactions ne sont jouées qu'en `idle` (ou juste avant `leave`) ; reçues pendant la marche, elles sont **mises en file** (1 max, la dernière gagne). `RELIEVED` n'a pas de clip (D-014) : expression `relieved` + voix (bark) seulement au MVP.
-- **Déplacement** : `PassengerLocomotion` échantillonne la `Curve3D` du `Path3D` (`sample_baked(distance, true)`), avance `distance += speed * delta`, vise un point « carotte » 0,3 m devant, fixe `velocity` vers ce point et appelle `move_and_slide()`. Arrivé à `curve.get_baked_length()` et à < 5 cm de `DeskMark`, il **cale** position et orientation sur `DeskMark` (interpolation 0,2 s) puis émet `arrived`. `AnimationTree` : `walk` avec `speed_scale = speed / WALK_NOMINAL_SPEED` (anti-glissement des pieds).
-- **Pourquoi pas `PathFollow3D`** : il impose le `transform` directement (téléportation, pas de `move_and_slide`, pas de sol ni de collision) et oblige à re-parenter l'acteur sous chaque `Path3D`. L'échantillonnage garde un vrai `CharacterBody3D` (gravité, `floor_snap`, collisions avec la file/porte) avec un seul parent stable (`PassengerSlot`).
-- **Pourquoi pas `NavigationAgent3D` au MVP** : les trajets sont **auteurés** (mise en scène, cadrage caméra), courts et sans obstacle dynamique ; un navmesh ajouterait un bake, du non-déterminisme visuel et du debug pour zéro gain. À reconsidérer si le hall devient dynamique (post-MVP).
+- **Bibliothèque `passenger`** (`assets/models/passenger/passenger_anims.res`, générée, §15) — **9 clips** : `walk`, `idle`, `present_documents`, `leave`, `react_angry`, `react_nervous`, `shrug`, `talk`, `remove_visor`. Source : Quaternius UAL (CC0) retargeté sur `SkeletonProfileHumanoid`, gestes manquants en couches procédurales (D-050). Pas de Mixamo. Repères (« Call Method » → `_on_anim_marker`) : `footstep_l/r`, `documents_slot` (0,75 s), `papers_show/hide`, `glass_hit`, `visor_off`. Métadonnée `walk_v_ref` (0,724 m/s à l'échelle 1).
+- **`PassengerAnims`** : contrat des clips, construction de l'`AnimationTree` (StateMachine `walk ⇄ idle`, `present_documents`, `leave` ; `TalkBlend` haut du corps ; `Reaction` OneShot) et **bibliothèque de secours** sans pistes si le `.res` manque.
+- `speed_scale = v / walk_v_ref / échelle des jambes`. Réactions reçues pendant la marche mises en file (1 max). `RELIEVED` = expression + hochement procédural, sans clip (D-014).
+- Pourquoi pas `PathFollow3D` ni `NavigationAgent3D` : D-015 (trajets auteurés, un seul parent stable).
 
 ### 8 bis.4 Regard (`LookAtModifier3D`)
 
-- **Cible** : chaque frame, `BoothDirector` projette la souris : `ray = camera.project_ray_origin/normal(mouse_pos)` ∩ `Plane(LookTargetPlane.global_basis.z, LookTargetPlane.global_position)` → point monde, **clampé** dans un rectangle de la vitre (±0,6 m × ±0,4 m) puis passé à `actor.set_look_target(point)`. Hors vitre ou sans souris (manette/clavier) : cible = caméra (le passager regarde l'agent).
-- **Modificateur** : `HeadLook` (`bone_name = "Head"`, `target_node = LookTarget`, `use_angle_limitation = true`, `primary_limit_angle ≈ 50°`, `secondary_limit_angle ≈ 30°`, `duration = 0.25`, transition `TRANS_SINE`) ; `NeckLook` mêmes réglages avec `influence = 0.35`. Lissage double : interpolation interne du modificateur + `LookTarget` lerpée (≈ 8 /s) pour éviter les saccades de souris.
-- **Désactivation** : pendant `walk`, `present_documents`, `leave` et les OneShot de réaction, l'acteur tween `influence` → 0 (0,2 s) puis → 1 à la fin (`reaction_finished`). Jamais `active = false` brutal (pop visuel).
-- Le regard est purement cosmétique : aucun état logique n'en dépend.
+`BoothDirector` projette la souris sur le plan de `LookTargetPlane`, bornée (x ±0,6 m, y 0,85–1,8 m : le passager peut baisser les yeux vers le comptoir) ; hors vitre ou sans souris : la caméra. L'acteur borne encore la cible (lacet ±40°, tangage −25°/+15°), la lisse, fond l'influence sur 0,2 s pendant marche / présentation / réactions (jamais `active = false`) et la **réactive après `present_documents`** ; les pupilles finissent le mouvement (décalage UV de l'atlas). Purement cosmétique.
 
-### 8 bis.5 Apparence, visage et micro-expressions
+### 8 bis.5 Apparence, visage, portraits
 
-- **Application** : `AppearanceApplier.apply(appearance: PassengerAppearance, catalog: AppearanceCatalog)` remplace meshes/matériaux par slot, règle `height_step` (échelle du `Visual`, ±3 % par pas) et la palette via **`instance uniform`** (pas de duplication de matériaux par passager). Appelé à chaque `case_presented` sur l'acteur libre du pool.
-- **Visage** : atlas de textures (grille, une cellule par expression × variante de visage ; format fixé dans ASSETS.md). Shader `face_dither.gdshader` : `instance uniform int expression_from`, `expression_to`, `float blend` → transition par **dithering ordonné (Bayer 4×4)** entre deux cellules, cohérente avec la DA holo/rétro ; `face_variant` choisit la ligne de l'atlas selon les traits `face`/`eyes`/`nose_mouth`.
-- **`ExpressionController`** : expose `set_expression(id: StringName, hold_sec := 0.0)` ; gère le clignement (intervalle tiré d'un RNG seedé par `case_id` — cosmétique, mais reproductible pour les captures), l'alternance bouche `talk_a/talk_b` pendant un bark, et les micro-expressions (flash 120–250 ms de `suspicious`/`nervous`/`contempt`) déclenchées par : réaction, question d'interrogation sensible (tag de dialogue), ou regard insistant de la souris sur le visage > 2 s en mode Inspection. Expressions de base : `neutral, blink, talk_a, talk_b, nervous, angry, relieved, suspicious, contempt, sad`.
-- **Portraits des documents** : `PortraitRenderer` (scène `portrait_studio.tscn`, `SubViewport` 256×320, `UPDATE_ONCE`) rend un `PortraitValue` avec **le même `AppearanceApplier`** que l'acteur (même source de vérité, D-012), puis applique filtre photo (`photo_seed`) ; cache `Dictionary[hash(appearance+photo_seed), ImageTexture]` vidé à chaque jour. Fallback headless/tests : pas de rendu, la comparaison est faite sur les traits.
-- **Clic sur le visage** : en mode Inspection, un clic sur `HeadArea` émet `face_clicked` → `BoothDirector` → `inspection_target_picked(FieldRef.PASSENGER_FACE)`. Accessibilité : la même cible existe dans l'UI comme vignette « Visage » sélectionnable au clavier/manette (UI_FLOW).
+- **`AppearanceApplier.apply()`** — même code pour l'acteur et le studio portrait (D-012/D-018) : tenue = carte de zones d'une des 8 skins Kenney recolorée par `chr_toon.gdshader`, silhouette = échelle du squelette, forme du visage = échelle de l'os `Head`, pièces low-poly par identifiant. Couleurs : **matériaux dupliqués par acteur** (pas d'`instance uniform`) ; palettes en hex dans `GreyboxStyle`.
+- **Visage** : plaque `face_dither.gdshader` (transition Bayer 4×4 entre cellules), atlas dessiné en code par `FaceAtlas` ; `ExpressionController` gère clignements (RNG seedé par cas), alternance `talk_a/b`, micro-expressions.
+- **`PortraitService`** (nœud de `day.tscn`) : `get_portrait(appearance) -> Texture2D`, studio `SubViewport` 256×320 `UPDATE_ONCE` construit en code (pas de `portrait_studio.tscn`), même rig posé sur `idle` ; renvoie tout de suite une esquisse CPU puis met la texture à jour sur place (`portrait_ready`) ; cache par signature, vidé chaque jour. En headless : esquisse seule.
+- **Intégration UI** (D-038) : `DayScene` injecte `portrait_provider` et `face_rect_provider` dans `ComparisonUI`.
 
-### 8 bis.6 Synchronisation anim ↔ logique et timeouts
+### 8 bis.6 Synchronisation et timeouts
 
-- **Marqueurs** : pistes de méthode dans les clips appelant `PassengerActor._on_anim_marker(name: StringName)` : `footstep_l`/`footstep_r` (walk, leave), `documents_slot` (present_documents, à l'instant où les papiers passent la fente), `breath_in` (idle, optionnel). L'acteur ré-émet `anim_event(name)`.
-- **Dédoublonnage** : une piste de méthode peut ne pas se déclencher (fondu, frame sautée à bas FPS) ou se déclencher deux fois (blend). `documents_slot` est donc **verrouillé une fois par cas** côté acteur ; les pas, eux, sont tolérés.
-- **Watchdogs à deux niveaux** :
-  1. **Local (BoothDirector)** : à chaque étape, `StepWatchdog` = durée attendue + 1,5 s (marche : `longueur / vitesse`, présentation : longueur du clip). À l'échéance, l'acteur est **calé** sur l'état final (téléport sur `DeskMark`, ou masqué en fin de sortie) et le signal EventBus est émis normalement + `push_warning`.
-  2. **Global (DayController)** : timeouts du tableau §8 — couvre l'absence totale de booth ou un booth bloqué. Seul cas où un autre émetteur que BoothDirector émet `documents_presented`.
-- **Ordre garanti** pour un cas : `case_presented` → `passenger_arrived` → `documents_presented` → (`case_resolved`) → `passenger_departed`. Un signal du booth hors séquence ou d'un autre `case_id` est ignoré.
-- **NullBooth** (`scripts/booth/null_booth.gd`, `extends Node`) : écoute les mêmes signaux que `BoothDirector` et émet `passenger_arrived` + `documents_presented` sur `case_presented`, `passenger_departed` sur `case_resolved`, chacun via `call_deferred` (préserve l'asynchronisme réel, évite la réentrance dans DayController). Variante `SilentBooth` (n'émet rien) pour tester les timeouts. Utilisé par les tests d'intégration et par l'argument debug `--no-booth`.
+- `documents_slot` verrouillé une fois par cas (`documents_slot_fired()`, `force_documents_slot()` pour les watchdogs).
+- **Watchdogs à deux niveaux** : (1) `BoothDirector` arme une échéance par étape (durée attendue + 1,5 s) et cale l'acteur sur l'état final à l'échéance ; (2) timeouts du `DayController` (§8).
+- **`NullBooth`** : `passenger_arrived` puis `documents_presented` sur `case_presented`, `passenger_departed` sur `case_resolved`, chacun en `call_deferred` ; journal `emitted`. **`SilentBooth`** : n'émet rien (teste les timeouts). Utilisés par `DayHarness` et `--no-booth`.
 
 ### 8 bis.7 Horloge, accessibilité
 
-- L'horloge de shift **continue pendant la marche** (🟡 proposition à valider client) : la file d'attente fait partie de la pression temporelle. Marche d’arrivée cible : ≤ 3–4 s (≈ 2,75 s dans BOOTH_SCENE).
-- **« Réduire les animations »** (`Settings.reduce_motion`) : vitesse de marche ×2,5, départ de `ArrivalPath` à 70 % de la courbe (arrivée ≤ 1,5 s), sortie coupée après 1 s (fondu), OneShots de réaction raccourcis (expression seule), sway caméra coupé. Les timings logiques (timeouts) se calculent à partir des durées effectives. Indépendant de « réduire les effets » (FX holo, D-001/UI_FLOW).
+- Horloge continue pendant la marche (D-019) ; `Settings.clock_slow_accessibility` la ralentit ×0,5.
+- `Settings.reduce_motion` : marche ×2,5, départ à 70 % de `ArrivalPath`, sortie coupée après 1 s, réactions = expression seule, Garde accélérée.
 
-### 8 bis.8 Audio (structure seulement — détail dans `docs/AUDIO.md`)
+### 8 bis.8 Audio (structure — détail dans `AUDIO.md`)
 
-- Bus (`default_bus_layout.tres`) : `Master` → `SFX`, `Voice`, `UI`, `Ambience`, `Music`. Volumes par bus dans `Settings`.
-- Sur l'acteur : `FootstepPlayer` (déclenché par marqueurs `footstep_*`, `AudioStreamRandomizer`, surface du sol en option), `BreathPlayer` (boucle, intensité selon expression/réaction), `VoicePlayer` (barks courts sur `interrogation_answered` et réactions, **toujours sous-titrés** côté UI). Sur le booth : `HoloEmitter` sur `documents_presented`.
-- `AudioListener3D` = caméra de l'agent. L'atténuation « derrière la vitre » (filtre passe-bas sur `Voice`) est un choix de l'Audio Designer.
+- Bus générés (`default_bus_layout.tres`, D-049) : `Master` → `Music`, `Ambience`, `SFX`, `SFX_World`, `Voice`, `UI` ; ducking par effets de bus ; `Settings.audio_mono`.
+- **`AudioDirector`** (nœud de `day.tscn`, pas un autoload) : seul écouteur audio de l'EventBus ; pools 2D (`VoicePool`), ambiance, musique par état, `AudioListener3D` côté agent ; ajoute un `PassengerAudio` (pas, souffle, voix 3D) à chaque acteur ; voix Tessar synthétisées à l'exécution (`TessarVoice`, thread de travail, cache — D-048). Il lit l'état public de `ComparisonUI` (signaux `hovered`, `toast_shown`, `departure_line_shown`, `passenger_line_shown`, `selection`, `tool_bar.stamps`) : couplage accepté, documenté ici.
 
 ### 8 bis.9 Performance
 
-- **Au plus 2 acteurs animés** simultanément (squelette + AnimationTree), et seulement pendant le chevauchement départ/arrivée (≈ 1–1,5 s par cas) ; le reste du temps un seul. **Pool de 2** créé au chargement du jour, ré-habillé à chaque cas → pas d'instanciation ni de compilation de shader en plein jeu. Le sortant a ses `LookAtModifier3D` à `influence = 0` et son `ExpressionController` en pause (seul l'acteur au guichet regarde/s'exprime). Budgets à tenir **pour 2 acteurs** : 2 × ≤ 15 k tris, 2 AnimationTree, audio de pas sur les deux (voix/souffle seulement pour l'acteur au guichet).
-- **File d'attente en imposteurs** : `QueueImpostors` = `MultiMeshInstance3D` de silhouettes low-poly non riggées (ou billboards), 4–8 instances, teinte/silhouette par `instance custom data` tirées d'un RNG cosmétique seedé par le jour (MVP : génériques, le booth ne connaît pas les cas futurs ; l'imposteur de tête est masqué quand l'acteur entre en scène). Avance d'un cran à chaque `passenger_departed` (tween, pas d'animation squelettale).
-- Budgets indicatifs : acteur ≤ 15 k tris, 1 matériau principal + visage ; atlas visage ≤ 1024² ; préchauffage des shaders (acteur, visage, holo) pendant l'écran d'intro du jour.
-- `AnimationTree.callback_mode_process = IDLE` ; `LookAtModifier3D` coût négligeable pour 2 os.
+- Au plus 3 acteurs animés (2 du pool pendant le chevauchement + la Garde lors d'une détention) ; pool et Garde créés au chargement du jour.
+- File en imposteurs `MultiMesh` (silhouette ≤ 400 tris, teinte par `INSTANCE_COLOR`).
+- Budgets cibles : acteur ≤ 15 k tris (réel : ≈ 1,6 k corps + ≤ 2 k pièces) ; décor ≤ 40 draws (⚠️ greybox mesuré à 56). **FPS GPU non mesurés** sur PC d'entrée de gamme ni Steam Deck (BOOTH_SCENE §14 : mesures en rendu logiciel seulement) → §13 R27.
 
 ---
 
@@ -727,61 +553,55 @@ Main (StateMachine) :
 ### 9.1 Graines
 
 ```
-campaign_seed  (tiré au « Nouvelle partie », stocké dans GameState)
-  └─ day_seed  = mix(campaign_seed, day_number)
-       └─ case_seed = mix(day_seed, case_index)
+campaign_seed (GameState, « Nouvelle partie » ou --seed)
+  └─ day_seed  = SeededRng.day_seed(campaign_seed, day_number)   # mix SplitMix64
+       ├─ case_seed = SeededRng.case_seed(day_seed, index)        # cas indépendants
+       │    └─ sous-flux fork(SALT_PASSENGER | DOCUMENTS | INJECTION | PRESENTATION | IMPLANTS | BRIBE | LUCIOLE)
+       └─ roster d'apparences du jour, avis de recherche           # dépendent de day_seed seul
+evening_seed = mix_string(day_seed…, "evening") (Campaign)          # aléa du foyer
 ```
-- `mix` = fonction de hachage entière **maison** (type SplitMix64) implémentée dans `SeededRng`, plutôt que `hash()` de Godot dont la stabilité entre versions n'est pas garantie.
-- Chaque cas a son propre `RandomNumberGenerator` seedé → générer le cas 7 ne dépend pas d'avoir généré les cas 0..6. Seule exception contrôlée : l'**anti-répétition des apparences** (§9.3), qui dépend d'une liste du jour calculée uniquement depuis `day_seed`. Permet : rejouer un cas, reproduire un bug depuis son `case_seed`, reprendre un jour en cours.
-- **Interdits** : `randi()`, `randf()`, `Array.shuffle()`, `Array.pick_random()` (RNG global). Utiliser `SeededRng.pick()`, `SeededRng.shuffle()`.
 
-### 9.2 Pipeline `CaseBuilder.build(day, index, seed)`
+Interdits : `randi()`, `randf()`, `Array.shuffle()`, `Array.pick_random()` globaux (vérifié : aucun usage).
 
-1. **Cas scénarisé ?** Si `day.scripted_cases` a une entrée à `index` (et ses `requires_flag` sont satisfaits), on part de ses overrides.
-2. **Passager vrai** (`PassengerGenerator`) : faction (pondérée), nom (`NamePool` de la faction), date de naissance, secteur d'origine, `citizen_id` (préfixe faction + checksum), motif de visite, durée ; `appearance` = `roster[index]` de l'`AppearanceRoster` du jour (§9.3), `appearance_seed` recopié pour traçabilité.
-3. **Documents valides** (`DocumentFactory`) : pour chaque document requis par le RuleSet (+ documents optionnels « bruit » selon le motif), remplir chaque champ via `FieldDef.truth_path`, dates d'émission/expiration cohérentes avec `today` et `validity_days`, émetteur autorisé, sceau correct.
-4. **Contrôle** : `RuleEngine.validate()` doit renvoyer `[]`. Sinon re-tirage (max 8), puis `push_error` avec la seed.
-5. **Injection** : tirer le nombre d'anomalies (`anomaly_count_weights`), puis leurs types (`anomaly_weights` filtrés sur les types détectables par le RuleSet). Chaque type a un `AnomalyInjector` (strategy, RefCounted) : `ExpiredDocumentInjector`, `PortraitMismatchInjector` (photo d'une autre apparence, ≥ 3 traits d'identité), `ImpostorLookalikeInjector` et `RelativeDocumentsInjector` (§9.3), `IdMismatchInjector` (altère 1–2 caractères), `MissingDocumentInjector`, `BannedFactionInjector` (change la faction *vraie*, cohérente sur tous les documents — la fraude n'est pas une discordance mais une règle), etc.
-6. **Clé** : `expected_violations = RuleEngine.validate(final)`, `expected_verdict`, vérification des invariants (§6).
-7. **Présentation** : `passenger_presented` = vérité + éventuel mensonge (anomalies qui touchent ce que dit le passager), `dialogue_tags` pour l'interrogation.
+### 9.2 Pipeline `CaseBuilder`
 
-**Bruit légitime** : pour éviter que « différence visible = refus », le générateur ajoute des variations *valides* (photo plus ancienne de la même apparence, coiffe ou accessoires différents, nom translittéré autorisé par une règle, etc.) — à doser par le Game Designer.
+`CaseBuilder.new(data, day, day_seed, flags, memory)` est **une instance par jour** : roster, avis du jour, continuité. `build(index)` / `build_clean(index)` / `build_with(index, anomalies, params)` / `build_day()` renvoient un `GeneratedCase` (`case`, `key`, `scripted_id`, diagnostics : `clean_attempts`, `photo_noise`, `visor_down`, `invariant_errors`).
 
-**Portraits** (révisé, D-012) : il n'y a plus de `portrait_seed`. Le champ `PORTRAIT` d'un document contient un `PortraitValue` qui **référence une `PassengerAppearance`** ; photo et modèle 3D sont rendus depuis la même structure (§8 bis.5). Par défaut `PortraitValue.appearance` = l'apparence du titulaire (éventuellement vieillie : `age_band` −1, coiffe/accessoires différents = bruit légitime).
+1. **Cas scénarisé** à cet index (si `requires_flag` satisfait et aucun `forbids_flags`) : overrides, identité/visage repris d'un cas antérieur (`identity_from_case`, `appearance_from_case`, via `CaseMemory`).
+2. **Passager vrai** (`PassengerGenerator`) : origine (lue dans le roster), nom (`NamePool`), naissance, secteur, N° ID `HG-#NNN-XXXX` (sans checksum), classe, motif, durée, employeur, implants civils les jours où R15 est active.
+3. **Documents valides** (`DocumentFactory`) : documents exigés par les `RequireDocumentRule` actives pour l'origine (+ `extra_documents`) ; MRZ, sceau et implants déclarés présents dès J1 (jamais discordants avant leurs règles) ; photo officielle sans coiffe ni accessoire ; bruit légitime (`legit_noise_rate` : autre coupe, photo ancienne).
+4. **Contrôle** : `RuleEngine.validate() == []`, sinon re-tirage (8 max).
+5. **Visière** : `visor_down_rate` (×1,5 si anomalie de visage, plafond 0,40), sur la vérité et le présenté (D-035).
+6. **Injection** : nombre (`anomaly_count_weights`) puis types (`anomaly_weights` filtrés sur les types détectables du jour) ; un injecteur ne modifie rien s'il échoue. **17 injecteurs** (`InjectorRegistry`, état partagé `InjectionState`) : un par `AnomalyType` ; `WANTED_PERSON` n'est produit que via les avis (D-056). MRZ recalculée après injection.
+7. **Extras M7** : codes Lucioles (`luciole_rate`, `luciole_codes` scénarisés), enveloppes (`bribe_rate`, sur un cas en infraction), objets glissés scénarisés.
+8. **Clé** : `RuleEngine.build_case_key()` + `check_invariants()`.
 
-> **Implémentation M3** (écarts au pipeline ci-dessus) : `CaseBuilder` est une **instance par jour** — `CaseBuilder.new(data: DataCatalog, day, day_seed, flags)` calcule le roster, puis `build(index)` / `build_day()` / `build_with(index, anomalies, params)` (liste exacte, tests et outils) renvoient un `GeneratedCase` (`case`, `key`, diagnostics : `clean_attempts`, `clean_violation_count`, `photo_noise`, `visor_down`, `invariant_errors`). Sous-flux RNG indépendants par étape (`fork`). Documents produits = documents exigés par les `RequireDocumentRule` actives pour l'origine (pas de document « bruit »). N° ID `HG-#NNN-XXXX` **sans checksum** (absent du LORE) ; le numéro de la carte d'identité est le N° ID. Photo officielle = apparence du titulaire sans coiffe ni accessoire ; bruit légitime (`legit_noise_rate`) = autre coupe et/ou photo ancienne (`age_band` −1). **Visière** : posée par le `CaseBuilder` (`visor_down_rate`, ×1,5 si anomalie de visage, plafond 0,40) sur la vérité *et* le passager présenté (état physique) ou par `appearance_overrides` (SC-04) ; `Case.remove_visor()` / `PassengerAppearance.without_visor()` (coiffe `visor_up`) rendent le visage comparable. Injecteurs (`scripts/generation/injectors/`, état partagé `InjectionState`, table `InjectorRegistry`) : `EXPIRED_DOCUMENT`, `MISSING_DOCUMENT`, `PORTRAIT_MISMATCH`, `IMPOSTOR_LOOKALIKE`, `ID_MISMATCH`, `NAME_MISMATCH`, `ORIGIN_ID_MISMATCH`, `WRONG_ISSUER`, `BIOSCAN_UNFIT` ; un injecteur ne cible que ce qu'une règle **active** détecte et ne modifie rien s'il échoue. `CaseSerializer` : sérialisation stable (déterminisme, futurs golden files). Outil `tools/gen_stats.gd`.
+Sérialisation stable : `CaseSerializer` (tests de déterminisme). 🎯 Golden files : non réalisés.
 
-### 9.3 Apparences : unicité, ressemblances, anomalies de visage
+### 9.3 Apparences
 
-**`AppearanceGenerator`** (`scripts/generation/appearance_generator.gd`, pur) :
-- `generate(rng: SeededRng, catalog, faction_id) -> PassengerAppearance` : un tirage pondéré par slot (`weight` × `faction_weights`), palette, `height_step`, `age_band`.
-- `build_day_roster(day_seed, passenger_count, catalog, scripted) -> AppearanceRoster` : liste des apparences du jour, **calculée une fois au `day_started`** et dépendant **uniquement de `day_seed`** (+ catalogue et cas scénarisés du `DayDef`). Pour chaque index `i` : sous-graine `mix(day_seed, i, attempt)`, tirage, rejet si `distance(candidat, roster[j]) < catalog.min_distance` (distance = nombre de slots différents, tous slots confondus) pour un des `window_size` (15) précédents ; max 12 essais, puis on garde le candidat le plus éloigné (jamais d'échec). Les `appearance_overrides` des cas scénarisés sont posés d'abord.
-- **Déterminisme** : `roster[i]` = f(`day_seed`, `i`, données) ; rejouer le cas 7 reconstruit le roster (≈ quelques ms pour 60 passagers, pur) puis prend `roster[7]`. Le roster n'est pas sauvegardé (reconstructible).
-- **Faction** : le roster ne connaît pas la faction de chaque cas (elle est tirée dans le pipeline du cas). Pour garder l'indépendance, la faction de l'index `i` est tirée **dans le roster** depuis `mix(day_seed, i, &"faction")` et relue par `PassengerGenerator` (une seule source).
-- **Ressemblances occasionnelles tolérées** : `min_distance` (5 sur 10 slots) laisse partager jusqu’à la moitié des traits ; en dehors de la fenêtre, deux passagers peuvent se ressembler fortement. Ce n'est jamais une violation : seule la comparaison photo ↔ porteur compte.
+- **`AppearanceGenerator.new(catalog)`** (cache des poids par origine, catalogue jamais muté) : `generate()`, `reroll_slot()`, `derive_identity()`, `build_day_roster(day_seed, count, scripted, faction_weights, today) -> AppearanceRoster` (entrées `faction_id`, `appearance_seed`, `fallback`).
+- Anti-répétition : rejet si `distance < min_distance` (5/10) avec l'un des 15 précédents, 12 essais puis meilleur candidat (D-037) ; signatures entières. L'origine de l'index `i` est tirée **dans le roster** (`roster_faction`).
+- Anomalies de visage : `PORTRAIT_MISMATCH` (≥ 3 traits ⇒ R03), `IMPOSTOR_LOOKALIKE` (1–2 traits ⇒ R03 + R17 dès J7, D-055 ; `truth` = usurpateur, D-036), `RELATIVE_DOCUMENTS` (papiers d'un parent ; âge apparent ⇒ R18).
+- Invariant : un injecteur de visage ne touche jamais `passenger_presented.appearance`.
 
-**Anomalies de visage** (injecteurs, `scripts/generation/injectors/`) :
+### 9.4 Continuité, avis, objets (M7)
 
-| Anomalie | Ce que fait l'injecteur | Vérité terrain (`CaseKey`) | Règle qui détecte |
-|---|---|---|---|
-| `PORTRAIT_MISMATCH` | `PortraitValue.appearance` = apparence tirée à distance ≥ 3 du passager | `anomalies[]` avec slots différents | `PortraitMatchRule` |
-| `IMPOSTOR_LOOKALIKE` | `PortraitValue.appearance = passenger.appearance.derive(1–2 slots d'identité visibles modifiés)` ; le passager présenté usurpe l'identité du document | `truth` = vraie identité de l'usurpateur ; `Anomaly.original_value/injected_value` = traits modifiés | `PortraitMatchRule` (≥ 1 slot différent) |
-| `RELATIVE_DOCUMENTS` (🟡 optionnel MVP) | Documents d'un parent : même `family_name`, prénom/naissance/`citizen_id` du parent, cohérents entre eux ; photo = `derive()` « familiale » (garde silhouette/peau/1 trait de visage, change ≥ 2 traits d'identité, `age_band` ±2) | `truth` = passager réel ; parent généré par le même pipeline | `PortraitMatchRule` + éventuellement âge vs date de naissance |
-
-> **Implémentation M3** : `AppearanceGenerator` est une **instance** liée au catalogue (`AppearanceGenerator.new(catalog)` : cache des poids cumulés par origine ; le catalogue partagé n'est jamais modifié) ; `build_day_roster(day_seed, count, scripted, faction_weights, today)` renvoie un `AppearanceRoster` (`scripts/generation/appearance_roster.gd`, entrées `faction_id`, `appearance_seed`, `fallback`) ; distance anti-répétition calculée sur des signatures entières (`signature_of()`), identique à `PassengerAppearance.distance()` ; les cas scénarisés sont aussi soumis au rejet vis-à-vis des entrées déjà posées ; la tranche d'âge d'un cas scénarisé suit sa `birth_date` imposée. `FaceComparator.identity_slots_of(catalog)` / `compare_in()` ; `DataCatalog.make_context()` et `CaseBuilder` posent `RuleContext.identity_slots` depuis le catalogue.
-
-Invariants (debug + tests) : un injecteur de visage ne touche **jamais** `passenger_presented.appearance` ; `FaceComparator.compare(photo, porteur)` renvoie `[]` sans anomalie de visage et ≥ 1 slot avec.
+- **`CaseMemory`** : identité présentée, visage et verdict des passagers scénarisés, stockés dans `GameState.case_memory` (sauvegarde v3) ; **recalcul déterministe** si absente (`CaseMemory.resolve`, `Campaign.memory_for_day`) — D-057.
+- **Avis de recherche** : calculés au début du jour (avant le premier passager) depuis les `WantedNoticeDef` ; les autres visages du jour sont rendus différents de l'avis et les homonymes évités ; ignorés par le contrôle « cas propre ».
+- **Conséquences narratives** : `CaseConsequences.compute()` (verdict × objets × phrase de passe × codes) → `CaseResult.narrative_changes`, appliquées au `GameState` par le DayController.
 
 ---
 
 ## 10. Sauvegarde
 
-- **Quand** : entre deux jours uniquement (comme *Papers, Please*). Le jour en cours n'est pas sauvegardé en MVP (mais il serait reconstructible grâce aux seeds).
-- **Où / format** : `user://saves/slot_<n>.json` — JSON texte, champ `"version": int` pour migrations. Préférences séparées dans `user://settings.cfg` (`ConfigFile`).
-- **Contenu** : `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags`, `day_history: [{day, correct, errors, credits}]`, horodatage réel, version du jeu.
-- **Pas de `ResourceSaver`/`.tres` dans `user://`** : charger une Resource arbitraire peut exécuter un script embarqué (risque si un joueur partage une sauvegarde). JSON + validation de schéma à la lecture.
-- **Écriture atomique** : écrire `slot_n.json.tmp` puis renommer.
-- Responsable : `GameState` (méthodes `save_to_slot`, `load_from_slot`), sérialisation dans `scripts/core/save_codec.gd`.
+- **Quand** : automatiquement à la validation de la soirée (`Campaign.close_evening`), jamais en plein shift (D-041). Toute fin efface la sauvegarde (`SaveService.delete()`, idempotent).
+- **Où / format** : `user://saves/slot_0.json` (un seul emplacement utilisé), JSON texte ; préférences séparées dans `user://settings.cfg`. Jamais de `.tres` dans `user://` (D-008).
+- **Format v3** (`SaveService.VERSION = 3`, `GAME_VERSION = "0.7.0-m7"`) : `version`, `game_version`, `saved_at`, `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags`, `day_history` (détail par jour : traités, corrects, citations, salaire, amendes, dépenses, solde), `household`, `case_memory`.
+- **Migrations** (`SaveService.migrate`, en chaîne) : v1 → v2 (foyer par défaut, historique complété) ; v2 → v3 (`case_memory` vide, `suspicion +1` rétroactif si SC-02 approuvée, D-052/D-057). Version inconnue ou future ⇒ refus.
+- **Lecture** : JSON → migrations → validation de schéma (`SCHEMA`, jour ≥ 1) ; nombres JSON lus par `as_int()`. **Écriture atomique** (`.tmp` puis renommage).
+- Responsables : `SaveService` (pur, dossier paramétrable pour les tests) ; `GameState.save_to_slot()` / `load_from_slot()` ; écran titre « Continuer ».
+- ⚠️ `GAME_VERSION` est une constante isolée (pas de `application/config/version` dans `project.godot`) — §16.
 
 ---
 
@@ -789,99 +609,177 @@ Invariants (debug + tests) : un injecteur de visage ne touche **jamais** `passen
 
 | Sujet | Règle |
 |---|---|
-| Fichiers / dossiers | `snake_case` : `rule_engine.gd`, `passport_view.tscn` |
-| Classes | `class_name PascalCase` pour toute classe réutilisée (sauf autoloads) |
-| Données `.tres` | préfixe de type : `doc_`, `rule_`, `ruleset_`, `day_`, `faction_`, `namepool_`, `appearance_`, `slot_` ; `day_01.tres` (2 chiffres) |
-| Identifiants | `StringName` littéraux `&"passport"` ; jamais de chaîne magique dupliquée — constantes dans la classe concernée |
-| Membres | `snake_case` ; privés préfixés `_` ; constantes `UPPER_SNAKE` ; enums `PascalCase` / valeurs `UPPER_SNAKE` |
-| Signaux | passé (`case_resolved`) ou `*_requested` ; toujours typés |
-| **Typage statique** | **Obligatoire** : `var x: int`, `func f(a: Case) -> bool`, `Array[Rule]`, `Dictionary[StringName, Variant]` (Godot 4.4+). `project.godot` met `untyped_declaration` en **erreur** et les accès non sûrs (`unsafe_*`) en avertissement. `:=` autorisé quand le type est évident. |
-| Responsabilité | 1 script = 1 responsabilité ; > ~300 lignes = signal d'alerte |
-| Couches | `core/documents/rules/generation` : `extends RefCounted` ou `Resource`, **jamais** `Node`, pas de `get_tree()`, pas de `preload` de `.tscn`, pas d'accès aux autoloads |
-| Nœuds | `%UniqueName` pour les enfants ; pas de `get_node("../../..")` ; références injectées par `@export` |
-| UI | Aucune valeur visuelle en dur → `DS.*` ou thème ; textes via `tr()` sur des clés |
-| Erreurs | `assert()` pour invariants de dev, `push_error()` + valeur de repli pour les données invalides |
-| Docs | `##` (doc-comments Godot) sur classes et méthodes publiques |
+| Fichiers / dossiers | `snake_case` |
+| Classes | `class_name PascalCase` pour toute classe réutilisée (sauf autoloads, helpers de test et outils : `preload`) |
+| Données `.tres` | préfixes `doc_`, `rule_`, `ruleset_`, `day_`, `faction_`, `namepool_`, `appearance_` ; `day_01.tres` |
+| Identifiants | `StringName` littéraux ; constantes dans la classe concernée |
+| Membres | `snake_case`, privés `_`, constantes `UPPER_SNAKE`, enums `PascalCase` / `UPPER_SNAKE` ; valeurs d'enum sérialisées **figées** (D-033) |
+| Signaux | passé ou `*_requested`, toujours typés |
+| **Typage statique** | Obligatoire. `project.godot` : `untyped_declaration` = erreur ; `unsafe_property_access`, `unsafe_method_access`, `unsafe_cast`, `unsafe_call_argument` = avertissement |
+| Responsabilité | 1 script = 1 responsabilité ; > ~300 lignes = alerte (⚠️ `BoothDirector`, `ComparisonUI`, `EveningScreen`, `CaseBuilder`, `AudioDirector`) |
+| Couches | `core/documents/rules/generation` : `RefCounted`/`Resource`, jamais `Node`, pas de `get_tree()`, pas de scène, pas d'autoload |
+| Nœuds | `%UniqueName`, références injectées par `@export` / `node_paths` |
+| UI | aucune valeur visuelle en dur → `DS.*` ou thème (`ThemeBuilder`) ; textes via `UiText.t(key, fallback)` |
+| Erreurs | `assert()` pour invariants de dev, `push_error()` + repli pour données invalides, `push_warning()` pour les timeouts |
+| Docs | `##` sur classes et méthodes publiques ; en-tête de script = rôle + renvoi au § de ce document |
 
 ---
 
 ## 12. Stratégie de test
 
-- **Outil** : GUT 9.7.1 (branche godot_4_7), versionné dans `addons/gut/`.
-- **Exécution CI / locale** : `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` (config dans `.gutconfig.json`, ajoutée en M1).
-- **Unitaires (`tests/unit/`)** :
-  - `test_seeded_rng.gd` : même seed ⇒ même suite ; indépendance des cas.
-  - `test_game_date.gd` : formatage, comparaisons, années bissextiles éventuelles du calendrier de jeu.
-  - `test_rule_<famille>.gd` : pour chaque famille, un cas conforme (0 violation) et un cas fautif par branche (fixtures construites à la main via un `CaseFixtureBuilder`).
-  - `test_generator_*.gd` — **tests de propriétés** sur 1 000 seeds :
-    1. un cas sans anomalie ⇒ `validate() == []` et `APPROVE` ;
-    2. chaque anomalie injectée ⇒ au moins une violation de la règle attendue ;
-    3. déterminisme : `serialize(build(seed)) == serialize(build(seed))` ;
-    4. distribution : sur N jours, fréquence des anomalies ≈ poids du `DayDef` (tolérance).
-  - `test_appearance_*.gd` — **propriétés des apparences** (1 000 `day_seed`) :
-    1. **unicité sur fenêtre** : pour tout `i`, `distance(roster[i], roster[j]) ≥ min_distance` pour les `window_size` précédents (sauf repli « meilleur candidat », compté et < 1 %) ;
-    2. **déterminisme** : `build_day_roster(seed)` sérialisé identique sur deux appels ; `roster[i]` identique qu'on génère le cas `i` seul ou après les cas `0..i-1` ;
-    3. **`IMPOSTOR_LOOKALIKE`** : `FaceComparator.compare(photo, porteur)` renvoie **1 à 2** slots, tous `identity && visible_in_portrait` ; **`PORTRAIT_MISMATCH`** ≥ 3 ; aucun cas sans anomalie de visage n'a de différence de visage ;
-    4. aucun injecteur ne modifie `passenger_presented.appearance` (égal à `CaseKey.truth.appearance`).
-  - `test_face_comparator.gd` (slots changeables ignorés, `age_band` ±1 toléré), `test_discrepancy_checker.gd` (dont `FieldRef.PASSENGER_FACE`), `test_scoring.gd`.
-  - `test_day_controller_states.gd` : transitions valides/invalides de la machine à états (§8), `verdict_stamped` ignoré hors `INSPECTING`, signaux d'un autre `case_id` ignorés.
-- **Intégration (`tests/integration/`)** — sans booth, avec **`NullBooth`** (§8 bis.6) : `DayController` + `DayClock` simulé + « bot parfait » (lit `CaseKey`) ⇒ score max, 0 citation ; « bot qui approuve tout » ⇒ score attendu ; séquence de signaux par cas vérifiée (`case_presented → passenger_arrived → documents_presented → case_resolved → passenger_departed`). Avec **`SilentBooth`** : les timeouts font avancer le jour jusqu'au `SUMMARY` (horloge des timeouts simulée, pas d'attente réelle).
-- **Scène de démo du booth** (`tests/manual/booth_sandbox.tscn`, hors CI) : boutons pour déclencher chaque étape/réaction, slider d'apparence — sert aux playtests anim/regard/expressions.
-- **Validation des données** : un test parcourt `res://data/**.tres` et vérifie la cohérence (ids uniques, `truth_path` existants, règles référençant des documents existants, chaque `DayDef` a ≥ 1 règle).
-- **Golden files** (optionnel M3+) : snapshot JSON de 20 cas de référence pour détecter les changements involontaires du générateur.
-- Hors périmètre GUT : rendu 3D, animations, regard, feel UI → playtests (QA, `docs/QA.md`). Un test GUT léger instancie néanmoins `passenger_actor.tscn` en headless pour vérifier que l'`AnimationLibrary` contient les 8 clips attendus et que `present_documents` porte le marqueur `documents_slot` (garde-fou contre un ré-import qui perd les pistes).
+- **Outil** : GUT 9.7.1, versionné dans `addons/gut/`. **414 tests** : 35 suites unitaires (347) + 9 suites d'intégration (67).
+- **Commande** (README) : `godot --headless --import` puis `godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json -gexit` (`.gutconfig.json` : `tests/unit/` + `tests/integration/`, préfixe `test_`).
+- **Helpers** (`tests/helpers/`, par `preload`) : `case_factory.gd` (cas construits à la main sur les vraies données), `generation_fixtures.gd` (catalogue réel, jour « toutes règles », collecte sur N graines), `day_harness.gd` (DayController + DayClock + InspectionSession + booth au choix, `set_process(false)`, temps piloté par `advance()`, journal des signaux).
+
+| Domaine | Suites |
+|---|---|
+| Fondations | `test_seeded_rng`, `test_game_date`, `test_event_bus`, `test_settings`, `test_game_state`, `test_theme_builder` |
+| Données | `test_data_integrity` (chargement, comptes attendus, origines, documents, règles, RuleSets, jours, progression GDD), `test_document_model` |
+| Règles | `test_rule_<famille>` (8 familles M2), `test_rule_m7_families`, `test_rule_engine`, `test_discrepancy_checker`, `test_scoring_service` |
+| Générateur | `test_generator_properties` (**1 000 graines** : déterminisme, cas propre, verdict, N° ID, noms, Okonkwo, visages, visière), `test_generator_injectors`, `test_generator_units`, `test_generator_scripted`, `test_appearance_generator`, `test_m7_generation` |
+| Jour / campagne | `test_day_controller_states`, `test_inspection_session`, `test_evening_service`, `test_save_service`, `test_m7_narrative` (dont sauvegarde v3 et migration v2 → v3) ; intégration : `test_day_flow` (NullBooth + SilentBooth, ordre des signaux, timeouts), `test_campaign`, `test_m7_campaign` (J1–J10 de bout en bout, fins F1–F7 atteignables, déterminisme), `test_balance` (non-régression d'équilibrage) |
+| Présentation | `test_booth_actor` (clips, repères `documents_slot`, pistes résolues sur le squelette, options du catalogue, atlas, portraits headless, palettes, cartes de zones), `test_booth_director`, `test_audio_core`, `test_audio_director`, `test_comparison_ui`, `test_m5_screens`, `test_m7_ui`, `test_day_scene`, `test_m7_day_scene` |
+
+- **Outils de mesure hors GUT** (§15) : `tools/gen_stats.gd` (distribution des anomalies, verdicts, visière, replis du roster) et `tools/balance_sim.gd` (fins par profil). Leurs conclusions sont consignées dans `DECISIONS.md` (D-037, D-047, D-059, D-060).
+- **Conventions** : un test par branche de règle ; propriétés sur graines plutôt qu'exemples ; temps simulé (jamais d'attente réelle) ; aucune dépendance au GPU (portraits en esquisse CPU) ; nouvelles données ⇒ `test_data_integrity` mis à jour ; tout outil qui change une valeur d'équilibrage met à jour `test_balance`.
+- **Bacs à sable** (hors CI) : `scenes/passenger/passenger_demo.tscn`, `scenes/ui/comparison_ui_demo.tscn` ; captures via les arguments de `DayScene` (`--screen=…`, `--autoplay`…).
+- **Hors GUT** : rendu, animation, feel, perf → playtests QA.
+- 🎯 Non couverts : golden files du générateur ; test de **non-mutation** des Resources partagées (R7) ; smoke test d'un build exporté (§16).
 
 ---
 
 ## 13. Risques et questions ouvertes
 
-| # | Sujet | Risque / question | Proposition |
+| # | Sujet | Statut | Note |
 |---|---|---|---|
-| R1 | Vérité terrain vs règles | Divergence anomalie ↔ verdict (§6) | Verdict attendu calculé par le RuleEngine + invariants — **à valider** |
-| R2 | UI « projetée » sur la 3D | Documents rendus dans des `SubViewport` sur des meshes = texte flou, input complexe, coût GPU | **Documents et Rulebook en `CanvasLayer` 2D** au-dessus de la scène 3D (lisibilité, thème DS, accessibilité) ; `SubViewport` réservé aux écrans décoratifs du guichet — **à valider avec UI/UX et client** |
-| R3 | Portraits procéduraux | Coût art élevé, lisibilité des différences ; photo et modèle 3D doivent correspondre (D-012) | **Arbitré** : portrait = **rendu `SubViewport` du même modèle** (`PortraitRenderer`, `UPDATE_ONCE` + cache), plus de couches 2D indépendantes ; **dès M4 en greybox** (capsule + couleurs/formes par trait), modèle final en M6 ; coût : 1 rendu par photo distincte à la présentation du cas (cache par jour) ; chaque option de slot d'identité doit être **lisible en 256×320** (contrainte pour le 3D Designer, ASSETS.md) sinon `IMPOSTOR_LOOKALIKE` est injouable |
-| R4 | Localisation | Ajouter `tr()` après coup coûte cher | Clés dès M1 (`*_key`), table CSV FR uniquement en MVP — **à valider** |
-| R5 | Équilibrage | Difficulté uniquement par poids : peut être opaque | Outil de debug : générer 100 cas d'un jour et afficher les stats (scène d'outil, M3) |
-| R6 | Version moteur | `Dictionary` typés requis (≥ 4.4) | Figer 4.7.2 dans le README et la CI |
-| R7 | Resources partagées | Muter une `Rule`/`DocumentTypeDef` au runtime contamine tous les jours | Règle « définitions en lecture seule » + test de non-mutation |
-| R8 | Interrogation | Format des dialogues non défini | Dépend du Scénariste : proposer `DialogueDef` (.tres) en M4 |
-| R9 | Temps | Temps réel vs horloge in-game accélérée | Horloge in-game affichée (DayClock), `duration_sec` réel en données — à confirmer par le Game Designer |
-| R10 | `res://ui/theme/` hors `scenes/ui` | Confusion de rangement | `res://ui/` réservé au thème (§3) |
-| R11 | Retarget Quaternius UAL / Mixamo → Kenney | Proportions différentes (pieds qui glissent, mains qui traversent le bureau), noms d'os, échelle, clips « in place » oubliés, pistes de méthode perdues au ré-import | `SkeletonProfileHumanoid` + `BoneMap` versionné ; clips téléchargés *in place* ; bibliothèque sauvegardée en fichier avec *Keep Custom Tracks* ; test GUT des clips/marqueurs (§12) ; capsule placeholder tant que le retarget n'est pas validé |
-| R12 | Désync animation ↔ logique | Marqueur `documents_slot` sauté/doublé, anim bloquée, booth absent → jour figé | Logique pilotée par signaux idempotents avec `case_id` ; watchdog local + timeouts DayController ; `NullBooth`/`SilentBooth` en CI (§8 bis.6, P8) |
-| R13 | Horloge pendant la marche | Temps « perdu » à regarder marcher = frustration | 🟡 Horloge continue (proposition), marche ≤ 3–4 s, option « réduire les animations » — **à valider client / Game Designer** |
-| R14 | Contrat `PassengerReaction` | (a) GDScript n'a pas d'enum global : le type est `PassengerReaction.Kind` ; (b) `RELIEVED` n'a **pas de clip** dans la liste | (a) adopté ; (b) **arbitré (D-014)** : MVP = expression + voix, pas de clip ; `react_relieved` éventuel post-MVP |
-| R15 | Choix de la sortie | `case_resolved` ne portait pas le verdict | Ajout de `CaseResult.verdict_kind` (signature du signal inchangée) — **à valider Orchestrateur** |
-| R16 | Anti-répétition vs indépendance des cas | Une fenêtre glissante rend le cas `i` dépendant des précédents | Roster du jour dépendant uniquement de `day_seed` (§9.3) ; testé (§12) |
-| R17 | Clic sur le visage | Cible 3D petite, inaccessible clavier/manette | Vignette « Visage » équivalente dans l'UI ; `HeadArea` généreuse — à caler avec UI/UX (UI_FLOW) |
+| R1 | Vérité terrain vs règles | ✅ Résolu | Verdict recalculé par le RuleEngine + invariants (§6) |
+| R2 | UI projetée sur la 3D | ✅ Résolu | UI `Control` 2D au-dessus d'un `SubViewport` 3D (bande B transparente) |
+| R3 | Portraits procéduraux | ✅ Résolu | Rendu du même rig (`PortraitService`, D-018) |
+| R4 | Localisation | ✅ Résolu (FR) | Clés partout, `fr.csv`, `UiText` (D-040). 🎯 Autres langues : non prévues |
+| R5 | Équilibrage opaque | ✅ Résolu | `gen_stats`, `balance_sim`, `test_balance` |
+| R6 | Version moteur | 🟡 Partiel | 4.7.2 figé (D-003, `install_godot.sh`) ; pas de CI (§16) |
+| R7 | Resources partagées mutées | 🟡 Ouvert | Règle respectée par convention ; aucun test de non-mutation |
+| R8 | Format des dialogues | ✅ Résolu autrement | Pas de `DialogueDef` : clés `<dialogue_id>_<suffixe>` dans `fr.csv` |
+| R9 | Temps réel vs horloge | ✅ Résolu | `duration_sec` réel + ralenti d'accessibilité |
+| R10 | `res://ui/` | ✅ Résolu | Thème seulement |
+| R11 | Retarget UAL → Kenney | ✅ Résolu | D-050 + `test_booth_actor` |
+| R12 | Désync anim ↔ logique | ✅ Résolu | Signaux idempotents, watchdogs, timeouts, NullBooth/SilentBooth |
+| R13 | Horloge pendant la marche | ✅ Résolu | D-019 |
+| R14 | `PassengerReaction` | ✅ Résolu | `.Kind` ; RELIEVED sans clip |
+| R15 | Choix de la sortie | ✅ Résolu | `CaseResult.verdict_kind` |
+| R16 | Anti-répétition vs indépendance | ✅ Résolu | Roster du jour = f(`day_seed`) |
+| R17 | Clic visage accessible | ✅ Résolu | Action `inspect_face` (F / manette) + vignette UI |
+| R18 | Arguments de debug actifs en build final | ⚠️ Ouvert | `DayScene` accepte `--day`, `--seed`, `--debug-keys`, `--screen`… sans garde `OS.is_debug_build()`. De plus, `--seed` (nouvelle partie) et `--day` sont réappliqués à **chaque** `reload_current_scene()` : une campagne lancée avec eux ne progresse pas d'un jour à l'autre |
+| R19 | Scripts trop gros | ⚠️ Ouvert | `BoothDirector` (escorte, codes, regard, zoom à extraire), `ComparisonUI` |
+| R20 | `build_booth_greybox` non déterministe | 🟡 Connu | Godot 4.7 tire des `unique_id` au hasard : régénérer = diff complet de `booth.tscn` |
+| R21 | Champs de Resource morts | ⚠️ Ouvert | `DocumentTypeDef.view_scene`, `FactionDef.seal_texture`, `AppearanceOptionDef.mesh/atlas_cell/material/portrait_layer` |
+| R22 | Signaux sans écouteur | 🟡 Ouvert | `document_focused`, `narrative_flag_changed`, `game_saved`, `game_loaded` (garder si un usage est prévu, sinon retirer) |
+| R23 | Version du jeu dispersée | ⚠️ Ouvert | `SaveService.GAME_VERSION`, libellé titre `title_version` (« Vertical slice M5 — Jours 1 à 3 », obsolète), rien dans `project.godot` |
+| R24 | Données et traductions dans un build exporté | 🟡 À vérifier | `DataCatalog` liste `res://data` par `DirAccess` (+ `.remap`) ; `UiText` charge `fr.fr.translation` à la demande — à valider sur un export réel |
+| R25 | Mockups exportés | ⚠️ Ouvert | `docs/mockups/*.png` sont importés (≈ 11 Mo) : `.gdignore` dans `docs/` ou filtre d'export |
+| R26 | Décor du guichet | 🟡 Ouvert | Toujours greybox M4 ; 56 draws > budget 40 |
+| R27 | Performance cible | 🟡 Ouvert | Aucune mesure GPU (PC d'entrée de gamme, Steam Deck 1280×800) |
 
 ---
 
-## 14. Plan d'implémentation
+## 14. Jalons
 
-| Jalon | Contenu | Propriétaires | Définition de « terminé » |
-|---|---|---|---|
-| **M1 — Fondations** | Autoloads (`EventBus` avec tout le catalogue, `GameState`, `Settings`), déclaration dans `project.godot`, GUT + `.gutconfig.json`, `SeededRng`, `GameDate`, `main.tscn` (bootstrap), branchement du thème DS | Godot Architect, QA | Projet s'ouvre sans erreur ; `gut` headless vert ; tests RNG/date |
-| **M2 — Documents & règles** | `FieldDef`, `DocumentTypeDef`, `FactionDef`, `DocumentInstance`, `Case`, `CaseKey`, `Rule` + 5 familles, `RuleSet`, `RuleEngine`, `DiscrepancyChecker`, `RulebookEntry` ; 3 types de documents, 2 factions, 8 règles en `.tres` | Gameplay Systems, Lore Master | Tests unitaires par famille de règles ; test de validation des données |
-| **M3 — Générateur** | `PassengerGenerator`, `DocumentFactory`, `NamePool`, injecteurs (≥ 6 types), `CaseBuilder`, invariants, outil de stats | Gameplay Systems, QA | Tests de propriétés sur 1 000 seeds verts ; déterminisme prouvé |
-| **M3 (ext.) — Apparences** | `PassengerAppearance`, `AppearanceCatalog`/slots (catalogue placeholder : ids seulement), `AppearanceGenerator` + roster, `FaceComparator`, injecteurs `PORTRAIT_MISMATCH` / `IMPOSTOR_LOOKALIKE` | Gameplay Systems, QA | Tests de propriétés apparences (§12) verts |
-| **M4 — Interface de comparaison + booth greybox** | Vues de documents (gabarits DS), drag/zoom, mode Inspection A↔B (dont `PASSENGER_FACE`), surlignage, interrogation minimale, tampon, Rulebook ; **`booth.tscn` greybox** (vitre, `ArrivalPath`, `DeskMark`, `Exit*Path`, `LookTargetPlane`), **`BoothDirector`** (pool de 2), **`PassengerActor` capsule placeholder** animée, **`PortraitRenderer` greybox** (capsule + couleurs) (AnimationTree complet avec clips placeholder : bob de marche, inclinaison pour `present_documents`, secousse pour les réactions), regard sur un os/nœud tête factice, face quad avec shader de dithering et atlas provisoire, signaux booth + `NullBooth` | UI/UX, Design System, Godot Architect, 3D Designer | Un cas jouable de bout en bout : arrivée → documents → verdict → départ, à la souris et au clavier ; revue DS |
-| **M5 — Boucle de jour** | `DayController` (machine à états §8 + timeouts), `DayClock`, `InspectionSession` (réactions), `ScoringService`, résumé de jour, 3 `DayDef`, sauvegarde entre jours, 1 passager scénarisé, option « réduire les animations » | Gameplay Systems, Game Designer, Scénariste | *Vertical slice* : 3 jours jouables, sauvegarde/chargement, tests d'intégration `NullBooth` + `SilentBooth` |
-| **M7 — Jours 4–10** | A (logique, données) : documents et règles J4–J10, injecteurs, objets glissés, continuité, jauges, briefings, soirées, fins, équilibrage, contrat UI (§7.1). B (interfaces) : écrans et interactions de §7.1 | Gameplay Systems, Game Designer, Godot Architect ; puis UI/UX, Design System, 3D, Audio | A : tests GUT verts (règles, injecteurs, objets, continuité, migration, chaque fin, campagne J1–J10 `NullBooth`), outils lancés ; B : playtest J1–J10 |
-| **M6 — Passager final** | Rig Kenney + clips Quaternius UAL / Mixamo retargetés (8 clips, marqueurs), pool de 2 acteurs réglé (chevauchement départ/arrivée), catalogue d'apparence réel (meshes, atlas visages, palettes), `PortraitRenderer` final, micro-expressions, `LookAtModifier3D` réglé, file en imposteurs, audio (pas, souffle, holo, barks, bus) selon AUDIO.md, budgets perf vérifiés | 3D Designer, Audio Designer, Godot Architect | Playtest QA : aucune désync sur 3 jours, 60 FPS sur la config cible, IMPOSTOR_LOOKALIKE détectable à l'œil (taux de réussite testeurs ≥ seuil Game Designer) |
+| Jalon | Livré (état réel) | Commit |
+|---|---|---|
+| **M1 — Fondations** | Autoloads, `SeededRng`, `GameDate` (epoch 01.01.2100), `ThemeBuilder` (D-025), écran titre, GUT versionné | 53 tests |
+| **M2 — Documents & règles** | Modèle §5, `Rule` + 8 familles, `RuleEngine`, `DiscrepancyChecker`, `DataCatalog`, `build_data.gd` (J1–J3, 13 règles) | 145 |
+| **M3 — Générateur + apparences** | `CaseBuilder`, 9 injecteurs, apparences uniques, visière, `gen_stats.gd` | 190 |
+| **M4 — Comparaison + booth greybox** | `ComparisonUI`, `booth.tscn` généré, `BoothDirector` (pool de 2), `PassengerActor` capsule, `PortraitService`, services de jour, `day.tscn` | 265 |
+| **M5 — Boucle de jour** | Scoring complet et citations, bilan, soirée et foyer, `Campaign`, sauvegarde v2, briefing, pause/options, 3 jours jouables, `balance_sim.gd` | 311 → 316 |
+| **M6 — Passager final + audio** | Rig Kenney + UAL retargeté, `LookAtModifier3D`, tenues recolorables, portraits et file finaux ; `AudioDirector`, bus, ~40 cues, voix Tessar | 342 → 356 |
+| **M7 — Jours 4–10** | A : 22 règles, 17 injecteurs, DÉTENTION, objets glissés, avis, continuité, jauges, soirées, 7 fins, sauvegarde v3. B : interfaces (§7.1), escorte de la Garde, épilogue | 395 → 414 |
 
-> **Implémenté en M7 — partie A, logique et données des jours 4–10** (2026-10-27, Gameplay Systems / Game Designer / Godot Architect) : **modèle** — `Passenger.implants` (visibles), `FieldKind.LIST`, `DocumentInstance.mrz` / `marks`, `Mrz` (bande MRZ : composition, analyse, comparaison hors 2 derniers caractères), `Case.slipped_items` / `luciole_codes` / `presentation`, `SlippedItem` / `SlippedItemDef`, `WantedNotice` / `WantedNoticeDef`, `FlagCondition`, `ConditionalKey`, `BriefingMessageDef`, `EveningEventDef` / `EveningOptionDef`, `CaseEffectDef`, `CaseMemory` ; `DayDef` (`detain_enabled`, `has_evening`, `bribe_amounts`, `wanted_notices`, `briefing_messages`, `evening_events`, `hall_announcements`, `rulebook_tabs`), `ScriptedCaseDef` (`flags_on_detain`, `flags_if_unprocessed`, `extra_effects`, `forbids_flags`, `appearance_from_case`, `identity_from_case`, `truth_overrides`, `extra_documents`, `slipped_item`, `luciole_codes`, `extra_tags`), `EconomyDef` (prime de signalement, audit, seuils F4/F6, taxe d'air relevée au J8), `FactionDef.implant_rate/implant_weights`, `Household.Member.detained`. **Règles** (`scripts/rules/families/`) : `PurposeConsistentRule` (R09), `ImplantsDeclaredRule` (R15, sévérité 3 pour un `MIL-` non déclaré dès le J7), `BannedImplantsRule` (R16, dérogation `mil_waiver`), `PortraitMatchRule.max_differing_traits` (R17 sosie ≤ 2 traits, sévérité 3), `ApparentAgeRule` (R18), `FactionBannedRule` (R19), `SealValidRule` (R20), `MrzConsistentRule` (R21), `WantedRule` (R22, `RuleContext.wanted`) ; `DiscrepancyChecker` : visage ↔ implants, visage ↔ naissance, MRZ ↔ champ, avis ↔ visage/nom. **Générateur** : 8 injecteurs (les 17 `AnomalyType` sont injectables ; `WANTED_PERSON` seulement via l'avis), `CaseBuilder` (mémoire et continuité, avis du jour calculé au début du jour et ignoré par le contrôle « cas propre », visages des autres passagers rendus différents de l'avis, homonymes évités, implants civils les jours R15, motif DIPLOMATIQUE pour une origine interdite, MRZ recalculée après injection, codes Lucioles, enveloppes `bribe_rate`, `truth_overrides`). **Services** : `CaseConsequences` (verdict × objets × phrase de passe × porteurs de codes générés), `DayController` (objets glissés, DÉTENTION selon le jour, mémoire, avis, annonces, cas non traités), `InspectionSession` (`about_envelope`, `luciole_reply`, `exit_line_key`), `BriefingContent` (table conditionnelle, 4 messages), `EveningService` (événements, choix par défaut, coûts imposés, audit, aveu d'Ilan, `lucioles_hostile`), `EndingService` (audit, F1–F7, épilogues), `Campaign` (événements, `close_final_day`, `epilogue`, `memory_for_day`), sauvegarde **v3** (`case_memory`, migration v2 → v3), `GameState.case_memory`. **Données** (`tools/build_data.gd`) : origines CER/THR/DRV et réserves de noms, 22 règles, RuleSets et `DayDef` J4–J10, SC-06 → SC-22, 3 avis de recherche, briefings et soirées de NARRATIVE §3–§5. **Équilibrage** : `SimProfile`, `DaySimulator.play_day`, `BalanceSimulator` J1–J10 (fins), `tools/balance_sim.gd -- --presets=…`. **Glue UI minimale** : `DayScene` (mémoire, événements par défaut, J10 → `show_final`), `EndScreen.epilogue`. Contrat pour l'UI : §7.1. **Écarts** : (1) avis de recherche liés à des passagers du jour (2 scénarisés + 1 index généré) au lieu d'un tirage `WANTED_PERSON` pondéré ; (2) R17 = « ≤ 2 traits différents » et R18 = tranches d'âge (3 tranches) : Fatou (SC-17) a 27 ans au lieu de 33 pour que l'âge apparent la trahisse ; (3) la DÉTENTION d'un porteur du code 1 n'est pas un « signalement valide » sans citation (GDD §4.7) : un porteur généré détenu donne `lucioles_trust −2` / `loyalty +1` avec la notation ordinaire ; (4) date de naissance « 00.00 » des Dérivants non gérée ; (5) MRZ, sceau et implants déclarés figurent sur les documents dès le J1 (jamais discordants avant leurs règles).
-
-> **Implémenté en M6 — passager final (partie visuelle)** (2026-10-27, 3D Designer / Godot Architect) : rig **Kenney `characterMedium` retargeté** (`SkeletonProfileHumanoid`, `BoneMap` par source : `assets/models/passenger/bonemap_kenney.tres` / `bonemap_ual.tres`) ; bibliothèque `passenger_anims.res` (9 clips, clips **Quaternius UAL** + couches procédurales, repères) construite par `tools/build_passenger_anims.gd` ; `PassengerAnims` (ex-`PlaceholderAnims` : contrat, arbre, bibliothèque de secours sans pistes si le fichier manque, `walk_v_ref()` lu dans la métadonnée de la bibliothèque) ; `PassengerRig` réécrit : `Visual/Armature/Skeleton3D` (pistes `Visual/Armature/Skeleton3D:<Os>`), `HeadAttachment/Head` (repère en mètres : visage, nez, oreilles, cheveux, coiffe, `HeadArea`), `NeckAttachment/NeckWear`, `UpperChestAttachment/Outfit`, `RightHandAttachment/HandSpace/Papers`, `HeadScale` (`HeadScaleModifier`, tête réduite + forme du visage, réappliquée après l'animation), **`NeckLook`/`HeadLook` = `LookAtModifier3D`** (fin de l'écart M4 n° 1) ; `chr_toon.gdshader` + cartes de zones `tex_chr_zones_*.png` (`tools/build_passenger_skins.gd`) ; `AppearanceApplier` réécrit (tenue = skin Kenney, silhouette = échelle du squelette, forme du visage = échelle de l'os `Head`, pièces low-poly) ; portrait = même rig posé sur `idle` ; file = `imp_silhouette.res` (`tools/build_passenger_impostor.gd`) ; démo/captures `scenes/passenger/passenger_demo.tscn`. **Écarts** : (1) arborescence §8 bis.2 : les pièces sont sous des `BoneAttachment3D` (pas de `Body/Outfit/Hair…` swappés en `MeshInstance3D` skinnés) ; `ChestAttachment` vise `UpperChest` ; (2) `speed_scale = v / walk_v_ref / leg_scale` (v_ref mesurée = 0,724 m/s à l'échelle 1) ; (3) le regard est borné par l'acteur (cible recalculée) puis confié aux modificateurs ; il est **réactivé après `present_documents`** ; (4) couleurs toujours par matériau dupliqué par acteur (3 matériaux corps : 2 acteurs + portrait) ; (5) correctif : `GreyboxStyle.PALETTES` (constante `Array[PackedColorArray]`) s'évaluait à des couleurs nulles en 4.7.2 → palettes en hex ; (6) pas d'implants (slot non créé). Signaux et API de `PassengerActor` inchangés (`anim_event` stable).
-
-> **Implémenté en M5 — boucle de jour** (2026-10-27, Gameplay Systems avec Game Designer, Scénariste, UI/UX) : *vertical slice* J1–J3 jouable de bout en bout (titre → briefing → shift → bilan → soirée → sauvegarde → jour suivant → fin de démo). **Logique** : `ScoringService` complet (preuve D-024/D-032, procédures R06/R08 D-031, 7 citations GDD §4.6 dont la plus grave l'emporte, prime de détention, amendes 0/0/5/10 par rang `fine_for`/`apply_citation`), `CaseResult` détaillé (`verdict_correct`, `documented`, `expected_violations` révélées après verdict, `wage`/`fine`/`credits_delta`, `citation_number`, `citation_rule_id`, `narrative_changes`), `DaySummary` (non traités, salaire, amendes, net, conformité) ; `DayController` : rang des citations, `citation_issued` **après** `case_resolved`, drapeaux narratifs des cas scénarisés (`ScriptedCaseDef.flags_on_approve/flags_on_deny`, ajout M5), crédits/citations appliqués au `GameState` (`apply_to_game_state`). Économie du foyer : `EconomyDef` (`data/economy/economy.tres`, D-029), `Household` (Ilan/Noa/Dora, santé + faim/froid, compteurs), `EveningService` / `ExpenseLine` / `EveningReport` (postes GDD §5.3, transitions §5.4, fins F2/F3, aléa seedé). `Campaign` (`scripts/day/`) enchaîne soirée → historique → sauvegarde auto ou fin (`demo_complete` après le dernier `DayDef`). **Sauvegarde** (§10) : `SaveService` (`scripts/core/`, JSON v2, écriture atomique `.tmp`, migration v1→v2, validation de schéma, `as_int`) ; `GameState.to_save_dict/apply_save_dict/save_to_slot/load_from_slot`, `household`, `add_to_flag`, `get_true_flags`, `record_day_entry` (**petits ajouts dans un autoload du Godot Architect**). **Écrans** (`scripts/ui/`, base `ScreenBase`) : `BriefingScreen` (remplace `DayBriefing` ; contenu `BriefingContent`), `CitationTicket` (DS §7.9), `ShiftSummaryScreen`, `EveningScreen`, `EndScreen`, `PauseMenu` + `OptionsPanel`, `HouseholdView` ; tutoriel diégétique `OkonkwoIntercom` (J1) ; écran titre « Continuer / Nouvelle partie / Options / Quitter » (`scenes/main/main.gd`). `DaySimulator` (jour simulé sans scène, captures/équilibrage). **Écarts** : (1) un document manquant (violation sans champ de document) documente le refus d'office (lecture de D-032) ; (2) amendes appliquées au fil du shift (ticket immédiat), pas en fin de shift ; (3) `ComparisonUI.cancel()` renvoie `bool` : Échap non consommé → pause ; (4) pas de bus audio créés (les curseurs écrivent `Settings`, appliqués si les bus existent). Debug/captures : `-- --screen=briefing|citation|summary|evening|end|pause|options`, `--start-case=N`, `--approve-all`, `--household=demo`, `--ending=…`.
-
-> **Implémenté en M4 — partie 3D + flux** (2026-10-27, Godot Architect / 3D Designer ; l'UI 2D est livrée à part) : `booth.tscn` greybox **généré** par `tools/build_booth_greybox.gd` (noms de nœuds contractuels, positions BOOTH_SCENE §2, caméra FOV 14°, vitre `booth_glass.gdshader` avec zone dégagée du visage, pluie en nappes `rain_sheet.gdshader`, file `QueueImpostors` en MultiMesh) ; `BoothDirector` (pool de 2, signaux idempotents par `case_id`, watchdogs locaux, regard par projection souris bornée, clic visage en Mode Inspection, travelling visage, cadreur automatique) ; `PassengerActor` + `PassengerLocomotion` (D-015) ; `NullBooth` / `SilentBooth` ; `PortraitService` (`get_portrait(appearance) -> Texture2D`, contrat `Callable portrait_provider` pour l'UI) ; `DayController`, `DayClock`, `InspectionSession` minimale, `ScoringService` minimal, `CaseResult` et `DaySummary` (signaux EventBus typés) dans `scripts/day/` (nouveau dossier : services de jour, `Node`) ; `day.tscn` (`DayScene`). **Écarts M4** : (1) rig capsule **sans squelette** (`PassengerRig`) : le regard tourne un nœud `HeadLook` par script (limites et lissage de §8 bis.4) au lieu de `LookAtModifier3D` — M6 ; (2) clips et `AnimationTree` construits en code (`PlaceholderAnims`, + clip `remove_visor`, 9 clips) ; `passenger_anims.res` sera chargé s'il existe ; (3) couleurs par matériau dupliqué par acteur (pas d'`instance uniform`, compatible renderer GL des captures) ; (4) studio portrait construit en code dans `PortraitService` (pas de `portrait_studio.tscn`), texture renvoyée immédiatement (esquisse CPU, seule sortie en headless) puis mise à jour sur place après le rendu ; (5) signal local supplémentaire `PassengerActor.cleared` (marque `ClearMark`) ; (6) atlas d'expressions dessiné en code (`FaceAtlas`, canal « couverture seule » = sclère) ; (7) InspectionSession : sujets `remove_visor`, `confront`, générique ; réactions jamais tirées de `CaseKey` ; (8) INTRO fermée par un briefing minimal `DayBriefing` (« JOUR N — directive du jour », clic/touche/manette → `close_intro()`) en attendant l'écran d'intro M5 ; (9) **intégration UI** : `comparison_ui.tscn` instanciée au-dessus de la bande 3D, reçoit `portrait_provider` et `face_rect_provider` (`DayScene.get_face_rect()`, projection caméra du SubViewport bornée à la bande B) ; le clic « Visage » est un test rayon ↔ tête dans `BoothDirector._unhandled_input` (pas de picking physique), reçu à travers la bande B transparente de l'UI ; (10) sujets d'interrogatoire UI : `purpose`/`stay`/`origin` (répliques `line_purpose_*`, `line_stay_*`, `line_origin_*`), `about_<raison>[:<doc>]` = confrontation (NERVOUS + `line_about_<raison>` si la discordance a été constatée, sinon ANGRY) ; (11) cadreur automatique désactivé (`framer_enabled`, caméra fixe hors zoom visage). Debug : `--debug-keys` (N/V/X/R/C/I), arguments `-- --day=N --seed=N --no-ui --no-booth --autoplay --reduce-motion`.
-
-> **Implémenté en M3 + M3 (ext.)** (2026-10-27, Gameplay Systems) : `NamePool` (3 réserves LORE, Okonkwo réservé), `PassengerGenerator`, `DocumentFactory`, 9 injecteurs (§9.2), `CaseBuilder` + `GeneratedCase` + `CaseSerializer`, application des `ScriptedCaseDef` (SC-01…SC-05, tutoriels, `requires_flag`), `AppearanceCatalog`/`AppearanceSlotDef`/`AppearanceOptionDef` + catalogue placeholder, `AppearanceGenerator` + `AppearanceRoster`, `FaceComparator` branché sur le catalogue, visière (INCOMPARABLE puis comparable), `tools/gen_stats.gd`. Tests de propriétés sur 1 000 graines (cas, injecteurs, rosters). Écarts notés « M3 » en §5.2, §9.2, §9.3. Non implémentés (pas de règle/document) : `PURPOSE_MISMATCH`, `RELATIVE_DOCUMENTS`, implants, `BANNED_FACTION`, `INVALID_SEAL`, `MRZ_MISMATCH`, `WANTED_PERSON`.
-
-> **Implémenté en M2** (2026-10-27, Gameplay Systems) : modèle §5 (`FieldDef`, `DocumentTypeDef`, `FactionDef`, `DocumentInstance`, `Case`, `CaseKey`, `FieldRef`, `Discrepancy`, `Verdict`/`VerdictKind`, `Anomaly`/`AnomalyType`, `RulebookEntry`, `DayDef`, `ScriptedCaseDef`, `PassengerReaction`, `DayPhase`, `Passenger`, `PassengerAppearance`, `PortraitValue`), moteur §6 (`Rule` + 8 familles, `RuleSet`, `RuleContext`, `RuleEngine`, `DiscrepancyChecker`, `FaceComparator` minimal), `DataCatalog` ; données générées par `tools/build_data.gd` : 3 documents, 3 origines MVP (TYC/HAL/TER), 13 règles (R01–R08, R10–R14), RuleSets et `DayDef` J1–J3 avec SC-01…SC-05 ; `EventBus` typé (restent `DaySummary`/`CaseResult`, M5). Écarts au contrat ci-dessus marqués « M2 » dans les tables §5.2/§5.3.
-
-> **Implémenté en M1** (2026-10-27, Godot 4.7.2 / GUT 9.7.1) : `EventBus` (catalogue §7 complet, types du modèle provisoires `# TODO(M2)`), `Settings`, `GameState` (sans sauvegarde : M5), `SeededRng`, `GameDate` (epoch 01.01.2100 = jour 0), `ThemeBuilder` (thème construit en code depuis `DS`, à la place du `.tres` manuel — D-025 proposée), `main.tscn` (écran titre), GUT versionné + `.gutconfig.json`, 53 tests unitaires verts.
+**Reste à faire** (proposition de découpage) :
+- **M8 — Export et distribution** (§16) : presets, icônes, filtres, version, garde des arguments de debug, smoke test exporté, CI.
+- **Finitions techniques** : corrections ⚠️ de §13 (R18, R19, R21–R25), test de non-mutation (R7), golden files.
+- **Contenu visuel** : kit modulaire du guichet (R26), mesures de performance sur config cible et Steam Deck (R27).
+- **QA** : playtest J1–J10 complet, plan de test (`docs/QA.md`, propriété QA).
 
 Chaque jalon passe par la revue Orchestrateur + une entrée `DECISIONS.md` si un contrat change.
+
+---
+
+## 15. Outils et pipelines
+
+Tous les outils sont des scripts `extends SceneTree` lancés en headless depuis la racine (`godot --headless --script res://tools/<outil>.gd [-- args]`), sauf les `.sh`. Aucun n'est utilisé à l'exécution du jeu ; tous sont **à exclure de l'export** (§16).
+
+| Outil | Génère / fait | Quand le relancer | Déterminisme | Prérequis |
+|---|---|---|---|---|
+| `install_godot.sh` | Installe Godot 4.7.2 (Linux x86_64) dans `/opt/godot` + lien `/usr/local/bin/godot` ; clone GUT 9.7.1 dans `/opt/gut` | Nouvelle machine / CI | Versions figées | `curl`, `unzip`, `git`, droits root. Note : le clone `/opt/gut` est redondant avec `addons/gut` versionné |
+| `fetch_assets.sh` | Télécharge les packs CC0 (Kenney Animated Characters ×3, Sci-fi / Interface / Impact Sounds ; Quaternius UAL Standard via itch.io) dans `art_src/downloads/` (ignoré par git) | Avant `build_audio.sh` ou une mise à jour des sources personnage | Dépend des sites (liens résolus à la volée) | `curl`, `unzip`, `python3`, réseau |
+| `build_data.gd` | **Tous les `.tres` de `data/`** : documents, origines, réserves de noms, catalogue d'apparences, économie, 22 règles, RuleSets et `DayDef` J1–J10 (cas scénarisés, briefings, soirées, avis) | À chaque changement de contenu (Game Designer, Scénariste, Lore) — jamais d'édition manuelle durable (D-029) | **Oui** : UID conservés, identifiants de sous-ressources stables (`_tag_subresources`) | `godot --headless --import` fait au préalable ; puis `test_data_integrity` |
+| `build_booth_greybox.gd` | `scenes/booth/booth.tscn` (décor greybox, nœuds contractuels §8 bis.1) | Seulement pour modifier le décor | **Non** pour les `unique_id` des nœuds (diff complet à chaque régénération) ; géométrie identique | Autoloads chargés (attend une frame) |
+| `build_passenger_bonemaps.gd` | `assets/models/passenger/bonemap_kenney.tres`, `bonemap_ual.tres` (étape 1) | Changement de rig source | Oui | Puis `godot --headless --import` (les `.import` les référencent) |
+| `build_passenger_anims.gd` | `passenger_anims.res` : 9 clips UAL retargetés + couches procédurales, repères, `walk_v_ref` (étape 2) | Changement de clips, de repères ou de rig | Oui (rééchantillonnage fixe 30 i/s) | Étape 1 + import ; `chr_kenney_medium.fbx` et `anim_ual1_standard.glb` versionnés |
+| `build_passenger_skins.gd` | `assets/textures/passenger/tex_chr_zones_<skin>.png` (8 cartes de zones) depuis `art_src/kenney_skins/` (étape 3) | Nouvelle tenue / réglage des zones | Oui (sans perte) | Skins Kenney versionnées |
+| `build_passenger_impostor.gd` | `imp_silhouette.res` (≤ 400 tris, étape 4) | Après un changement de proportions du rig | Oui (simplification meshoptimizer) | `passenger_actor.tscn` fonctionnel |
+| `build_audio.sh` (+ `build_audio.gd`) | Décode les packs Kenney en WAV, synthétise et traite les sons (`build_audio.gd`), écrit `assets/audio/**` (WAV 48 kHz) et `default_bus_layout.tres`, encode ambiances/musiques en OGG Vorbis, réimporte et pose les boucles dans les `.import` | Changement de cue sheet / de mix (`--only=ui,booth,…` pour une partie) | Graines fixes ; l'OGG dépend de la version de `ffmpeg`/libvorbis | `fetch_assets.sh` fait, **`ffmpeg` avec `libvorbis`**, `sed`, Godot 4.7 (`GODOT=` pour un autre binaire) |
+| `gen_stats.gd` | Rapport console par jour : nombre/types d'anomalies (observé vs poids), verdicts, visière, bruit, re-tirages, invariants, anti-répétition | Après un changement de poids du générateur ou du catalogue (`-- --campaigns=200 --seed=1`) | Oui (même graine ⇒ même rapport) ; code retour ≠ 0 si invariant violé | Données à jour |
+| `qa_campaign.gd` *(QA, en cours d'ajout)* | Campagne J1–J10 dans la **vraie** `day.tscn` jouée par `--autoplay`, accélérée (`Engine.time_scale`) ; contrôle à chaque soir sauvegarde relue = `GameState`, solde affiché ; lignes `QA_DAY` / `QA_END` | Avant une livraison, après un changement de flux de jour | Oui à graine fixe (`--qa-seed`) | Rendu (pas de `--headless` strict pour le booth, sinon `--no-booth`) ; détail dans `docs/QA.md` |
+| `balance_sim.gd` | Rapport console : par profil (précision) et par soir, revenu, solde, foyer, fins F1–F7 ; `--set=champ=valeur` surcharge l'`EconomyDef` en mémoire | Après un changement d'économie, de paie ou de soirées (`-- --seeds=200 --profiles=0.6,0.8,0.95 --presets=…`) | Oui | Données à jour ; reporter les valeurs retenues dans `build_data.gd` puis `test_balance` |
+
+**Ordre type d'une régénération complète** : `install_godot.sh` → `fetch_assets.sh` → `godot --headless --import` → `build_passenger_bonemaps` → import → `build_passenger_anims` → `build_passenger_skins` → `build_passenger_impostor` → `build_audio.sh` → `build_data` → (`build_booth_greybox` si besoin) → import → suite GUT.
+
+---
+
+## 16. Export et distribution (préparatoire — jalon M8)
+
+> Plan seulement : rien n'est implémenté. Cibles validées : PC d'entrée de gamme et **Steam Deck** (D-023).
+
+### 16.1 Prérequis
+
+- **Modèles d'export 4.7.2-stable** (`Godot_v4.7.2-stable_export_templates.tpz`) installés dans `<données Godot>/export_templates/4.7.2.stable/` (Linux : `~/.local/share/godot/…`, Windows : `%APPDATA%\Godot\…`, macOS : `~/Library/Application Support/Godot/…`). À ajouter à `install_godot.sh` (CI).
+- **Version du jeu** : définir `application/config/version` dans `project.godot` (ex. `0.8.0`) et en dériver `SaveService.GAME_VERSION` et le libellé de l'écran titre (R23).
+- `godot --headless --import` avant tout export (génère notamment `fr.fr.translation`).
+
+### 16.2 Presets
+
+| Preset | Plateforme | Notes |
+|---|---|---|
+| `Windows Desktop` | x86_64 | `.exe` + `.pck` (ou PCK embarqué) ; icône `.ico` ; signature Authenticode optionnelle (SmartScreen) |
+| `Linux` | x86_64 | **Couvre le Steam Deck** (SteamOS natif, Vulkan / Forward+) ; tester en 1280×800, manette (actions déjà mappées dans `project.godot`) |
+| `macOS` | universel (x86_64 + arm64) | `.app` / `.dmg` ; icône `.icns` ; signature + notarisation (16.5) |
+
+### 16.3 `export_presets.cfg` : stratégie
+
+État actuel : le fichier est ignoré par `.gitignore`, dont le commentaire annonce un `export_presets.example.cfg` **qui n'existe pas**. Proposition :
+1. **Versionner `export_presets.cfg`** (retirer la ligne de `.gitignore`) : depuis Godot 4.3, les données sensibles (mots de passe, clé de chiffrement) sont écrites à part dans `.godot/export_credentials.cfg`, déjà ignoré avec `.godot/`. Vérifier avant le premier commit qu'aucun chemin local ni identifiant ne s'y trouve.
+2. **Secrets par variables d'environnement** (CI) — noms à vérifier dans la doc 4.7 : `GODOT_SCRIPT_ENCRYPTION_KEY` (si chiffrement), `GODOT_MACOS_CODESIGN_CERTIFICATE_FILE` / `_PASSWORD`, `GODOT_MACOS_NOTARIZATION_API_UUID` / `_API_KEY` / `_API_KEY_ID`, `GODOT_WINDOWS_CODESIGN_IDENTITY` / `_PASSWORD`. Secrets GitHub côté CI, jamais dans le dépôt.
+3. Chemins de sortie relatifs (`build/<plateforme>/`, déjà ignoré).
+4. Consigner la décision dans `DECISIONS.md` et corriger le commentaire de `.gitignore`.
+
+### 16.4 Contenu exporté
+
+- Mode `export_filter="all_resources"` avec `exclude_filter` :
+  `tests/*, tools/*, addons/gut/*, docs/*, scenes/passenger/passenger_demo.tscn, scenes/ui/comparison_ui_demo.tscn, scripts/booth/passenger_demo.gd, scripts/ui/comparison_ui_demo.gd, scripts/ui/demo_booth_backdrop.gd`.
+- `art_src/` est déjà invisible (`.gdignore`). Ajouter un `.gdignore` dans `docs/` évite aussi l'import des mockups (R25).
+- `include_filter` pour les fichiers non-ressources à distribuer : licences `assets/fonts/OFL-*.txt` (obligatoire OFL) et `assets/models/passenger/License_*.txt` (+ un fichier `CREDITS` généré depuis `docs/ASSETS.md`).
+- `DemoAutoplay` et `NullBooth` restent (référencés par `DayScene`), mais les arguments de debug doivent être neutralisés en build final (`OS.is_debug_build()` ou une fonctionnalité d'export `debug_args`) — R18.
+- Le plugin éditeur GUT est déclaré dans `project.godot` ; il n'est pas chargé à l'exécution, l'exclure de l'export est sans effet de bord (à confirmer par le smoke test).
+- Vérifier sur un build réel : chargement de `res://data` par `DataCatalog` (`.tres` convertis en binaire + `.remap`), traduction `fr.fr.translation`, `passenger_anims.res`, sauvegarde dans `user://` (R24). **Smoke test** proposé : lancer le binaire exporté en headless avec `--day=10 --no-booth --autoplay` (en build debug) et vérifier l'absence d'erreur.
+
+### 16.5 Signature macOS
+
+| Option | Coût | Effet | Usage |
+|---|---|---|---|
+| **Ad hoc** (`codesign -s -`, ou `rcodesign` depuis Linux) | Gratuit | Exigée sur Apple Silicon ; Gatekeeper bloque au premier lancement (clic droit → Ouvrir, ou `xattr -dr com.apple.quarantine`) | Tests internes, playtests |
+| **Developer ID + notarisation** (`notarytool`, ou `rcodesign notary-submit`) | Compte Apple Developer (99 $/an) | Lancement sans avertissement ; *hardened runtime* + *entitlements* minimaux (pas de JIT, pas de micro) | Distribution publique (Steam, itch.io) |
+
+Recommandation : ad hoc dès M8 pour itérer, Developer ID avant toute diffusion publique (décision client : coût du compte).
+
+### 16.6 Icônes
+
+`icon.svg` (seule source) → `icon.ico` multi-résolution (16, 32, 48, 64, 128, 256) pour Windows et `icon.icns` (jusqu'à 1024) pour macOS, via un futur `tools/build_icons.sh` (`rsvg-convert` + ImageMagick / `png2icns`), sorties versionnées dans `assets/icons/` et référencées par les presets (`application/icon`). Windows : vérifier si l'exportateur 4.7.2 modifie les ressources PE sans outil externe, sinon configurer `rcedit`. Linux / Steam Deck : icône fournie par Steam (bibliothèque), pas de `.desktop` requis.
+
+### 16.7 CI GitHub Actions (proposition)
+
+1. **`test`** (à chaque push / PR) : conteneur Ubuntu, `install_godot.sh`, cache `.godot/`, `godot --headless --import`, suite GUT (code retour), en option `gen_stats --campaigns=20` (invariants).
+2. **`export`** (tag `v*` ou manuel) : matrice Windows / Linux / macOS depuis Linux (modèles d'export en cache) ; exclusions §16.4 ; artefacts `build/<plateforme>/`.
+3. **`sign-macos`** (tag, runner `macos-latest` ou `rcodesign` sur Linux) : signature Developer ID + notarisation avec les secrets §16.3.
+4. **`release`** : archives + empreintes ; plus tard `steamcmd` (dépôts Windows / Linux / macOS, branche bêta).
+Les outils de génération (§15) ne tournent **pas** en CI (sorties versionnées) ; un job manuel peut vérifier que `build_data.gd` ne produit aucun diff.
