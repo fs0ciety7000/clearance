@@ -1,6 +1,6 @@
 # ARCHITECTURE — CLEARANCE
 
-> Propriétaire : **Godot Architect** · Statut : 🟡 proposé (à valider par le client) · Cible : **Godot 4.4+**, GDScript typé, renderer Forward+
+> Propriétaire : **Godot Architect** · Statut : 🟢 validé par le client · Cible : **Godot 4.7.2**, GDScript typé, renderer Forward+
 >
 > Documents liés : [`AGENTS.md`](../AGENTS.md) · [`DECISIONS.md`](../DECISIONS.md) · [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) · [`docs/UI_FLOW.md`](UI_FLOW.md) · [`docs/BOOTH_SCENE.md`](BOOTH_SCENE.md) (visuel du guichet, 3D Designer) · [`docs/ASSETS.md`](ASSETS.md) (rigs, clips, atlas, licences) · [`docs/AUDIO.md`](AUDIO.md) (Audio Designer)
 >
@@ -643,7 +643,7 @@ Main (StateMachine) :
 - **Pourquoi pas `PathFollow3D`** : il impose le `transform` directement (téléportation, pas de `move_and_slide`, pas de sol ni de collision) et oblige à re-parenter l'acteur sous chaque `Path3D`. L'échantillonnage garde un vrai `CharacterBody3D` (gravité, `floor_snap`, collisions avec la file/porte) avec un seul parent stable (`PassengerSlot`).
 - **Pourquoi pas `NavigationAgent3D` au MVP** : les trajets sont **auteurés** (mise en scène, cadrage caméra), courts et sans obstacle dynamique ; un navmesh ajouterait un bake, du non-déterminisme visuel et du debug pour zéro gain. À reconsidérer si le hall devient dynamique (post-MVP).
 
-### 8 bis.4 Regard (`LookAtModifier3D`, Godot 4.4)
+### 8 bis.4 Regard (`LookAtModifier3D`)
 
 - **Cible** : chaque frame, `BoothDirector` projette la souris : `ray = camera.project_ray_origin/normal(mouse_pos)` ∩ `Plane(LookTargetPlane.global_basis.z, LookTargetPlane.global_position)` → point monde, **clampé** dans un rectangle de la vitre (±0,6 m × ±0,4 m) puis passé à `actor.set_look_target(point)`. Hors vitre ou sans souris (manette/clavier) : cible = caméra (le passager regarde l'agent).
 - **Modificateur** : `HeadLook` (`bone_name = "Head"`, `target_node = LookTarget`, `use_angle_limitation = true`, `primary_limit_angle ≈ 50°`, `secondary_limit_angle ≈ 30°`, `duration = 0.25`, transition `TRANS_SINE`) ; `NeckLook` mêmes réglages avec `influence = 0.35`. Lissage double : interpolation interne du modificateur + `LookTarget` lerpée (≈ 8 /s) pour éviter les saccades de souris.
@@ -757,7 +757,7 @@ Invariants (debug + tests) : un injecteur de visage ne touche **jamais** `passen
 | Identifiants | `StringName` littéraux `&"passport"` ; jamais de chaîne magique dupliquée — constantes dans la classe concernée |
 | Membres | `snake_case` ; privés préfixés `_` ; constantes `UPPER_SNAKE` ; enums `PascalCase` / valeurs `UPPER_SNAKE` |
 | Signaux | passé (`case_resolved`) ou `*_requested` ; toujours typés |
-| **Typage statique** | **Obligatoire** : `var x: int`, `func f(a: Case) -> bool`, `Array[Rule]`, `Dictionary[StringName, Variant]` (Godot 4.4). `project.godot` met `untyped_declaration` en **erreur** et les accès non sûrs (`unsafe_*`) en avertissement. `:=` autorisé quand le type est évident. |
+| **Typage statique** | **Obligatoire** : `var x: int`, `func f(a: Case) -> bool`, `Array[Rule]`, `Dictionary[StringName, Variant]` (Godot 4.4+). `project.godot` met `untyped_declaration` en **erreur** et les accès non sûrs (`unsafe_*`) en avertissement. `:=` autorisé quand le type est évident. |
 | Responsabilité | 1 script = 1 responsabilité ; > ~300 lignes = signal d'alerte |
 | Couches | `core/documents/rules/generation` : `extends RefCounted` ou `Resource`, **jamais** `Node`, pas de `get_tree()`, pas de `preload` de `.tscn`, pas d'accès aux autoloads |
 | Nœuds | `%UniqueName` pour les enfants ; pas de `get_node("../../..")` ; références injectées par `@export` |
@@ -769,7 +769,7 @@ Invariants (debug + tests) : un injecteur de visage ne touche **jamais** `passen
 
 ## 12. Stratégie de test
 
-- **Outil** : GUT 9.x (compatible Godot 4.4 — version exacte figée à l'installation), versionné dans `addons/gut/`.
+- **Outil** : GUT 9.7.1 (branche godot_4_7), versionné dans `addons/gut/`.
 - **Exécution CI / locale** : `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` (config dans `.gutconfig.json`, ajoutée en M1).
 - **Unitaires (`tests/unit/`)** :
   - `test_seeded_rng.gd` : même seed ⇒ même suite ; indépendance des cas.
@@ -804,7 +804,7 @@ Invariants (debug + tests) : un injecteur de visage ne touche **jamais** `passen
 | R3 | Portraits procéduraux | Coût art élevé, lisibilité des différences ; photo et modèle 3D doivent correspondre (D-012) | **Arbitré** : portrait = **rendu `SubViewport` du même modèle** (`PortraitRenderer`, `UPDATE_ONCE` + cache), plus de couches 2D indépendantes ; **dès M4 en greybox** (capsule + couleurs/formes par trait), modèle final en M6 ; coût : 1 rendu par photo distincte à la présentation du cas (cache par jour) ; chaque option de slot d'identité doit être **lisible en 256×320** (contrainte pour le 3D Designer, ASSETS.md) sinon `IMPOSTOR_LOOKALIKE` est injouable |
 | R4 | Localisation | Ajouter `tr()` après coup coûte cher | Clés dès M1 (`*_key`), table CSV FR uniquement en MVP — **à valider** |
 | R5 | Équilibrage | Difficulté uniquement par poids : peut être opaque | Outil de debug : générer 100 cas d'un jour et afficher les stats (scène d'outil, M3) |
-| R6 | Godot 4.4 minimum | `Dictionary` typés requis | Figer 4.4.x dans le README et la CI |
+| R6 | Version moteur | `Dictionary` typés requis (≥ 4.4) | Figer 4.7.2 dans le README et la CI |
 | R7 | Resources partagées | Muter une `Rule`/`DocumentTypeDef` au runtime contamine tous les jours | Règle « définitions en lecture seule » + test de non-mutation |
 | R8 | Interrogation | Format des dialogues non défini | Dépend du Scénariste : proposer `DialogueDef` (.tres) en M4 |
 | R9 | Temps | Temps réel vs horloge in-game accélérée | Horloge in-game affichée (DayClock), `duration_sec` réel en données — à confirmer par le Game Designer |

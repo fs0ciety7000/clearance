@@ -25,7 +25,7 @@
 | Entrée du passager | Il **sort de derrière le pilier « HALCYON »** (à gauche du cadre) | Le changement « silhouette de file → acteur animé » se fait hors de vue, sans pop. |
 | Sorties | Approuvé : à droite vers la porte de la station (sort du cadre en ~1,5 s). Refusé : demi-tour vers la file, derrière le pilier. | Lecture spatiale immédiate du verdict, rythme court. |
 | Visage | **Plaque visage** (mesh fin sur l'os `Head`) + **atlas d'expressions par type de visage**, shader de dithering en espace UV | Moins cher que des blendshapes, pas de scintillement, cohérent avec la DA holo, compatible avec le rendu du portrait. |
-| Regard | `LookAtModifier3D` (Godot 4.4) sur `Neck` (30 %) + `Head` (100 %), angles limités, + décalage des pupilles dans l'atlas | Présence forte pour un coût quasi nul. |
+| Regard | `LookAtModifier3D` (Godot 4.4+, cible 4.7.2) sur `Neck` (30 %) + `Head` (100 %), angles limités, + décalage des pupilles dans l'atlas | Présence forte pour un coût quasi nul. |
 | Apparence | **Système modulaire combinatoire** (`PassengerAppearance`, slots du catalogue) piloté par `appearance_seed` + traits issus du gameplay (implants, âge) ; anti-répétition sur 15 passagers ; sosies/familles intentionnels (§12) | Demande client : chaque passager différent, ressemblances utiles au gameplay. |
 | Portrait des documents | **Rendu `SubViewport` du même modèle 3D** par `PortraitRenderer` (option A, **acceptée**) | Comparaison Visage ↔ Photo juste par construction (§12.6). |
 | Vitre | Shader unique `booth_glass.gdshader` : teinte, faux reflet, gouttes, salissures, condensation, **zone dégagée autour du visage** | Lisibilité garantie du visage, coût maîtrisé (pas de SSR sur transparents dans Godot). |
@@ -262,7 +262,7 @@ Seuils à placer dans une ressource réglable par le Game Designer (pas en dur).
 ## 9. Regard
 
 ### 9.1 Mécanique
-- Deux `LookAtModifier3D` (Godot 4.4) enfants du `Skeleton3D` : `Neck` (influence 0,3) et `Head` (influence 1,0), cible commune = un `Marker3D` `LookTarget` déplacé par le script. Angles limités : **lacet ±40°, tangage −25° / +15°**, `duration` 0,25 s, transition `ease.out`. *(Noms exacts des propriétés à vérifier dans la doc 4.4 : `target_node`, `bone_name`, `forward_axis`, `use_angle_limitation`, `primary_limit_angle`, `secondary_limit_angle`, `duration`…)*
+- Deux `LookAtModifier3D` (Godot 4.4+, cible 4.7.2) enfants du `Skeleton3D` : `Neck` (influence 0,3) et `Head` (influence 1,0), cible commune = un `Marker3D` `LookTarget` déplacé par le script. Angles limités : **lacet ±40°, tangage −25° / +15°**, `duration` 0,25 s, transition `ease.out`. *(Noms exacts des propriétés à vérifier dans la doc 4.7 : `target_node`, `bone_name`, `forward_axis`, `use_angle_limitation`, `primary_limit_angle`, `secondary_limit_angle`, `duration`…)*
 - **Pupilles** : décalage UV dans l'atlas (±2 texels) proportionnel à l'angle restant → les yeux « finissent » le mouvement que la tête ne fait pas.
 - Projection de la souris (calculée par `BoothDirector`, ARCHITECTURE §8 bis.4) : rayon caméra → plan de `LookTargetPlane`. Une souris **sous la bande 3D** (plan de travail) donne un rayon qui tombe sous la vitre : on borne y à 0,85 m (comptoir) → le passager **baisse les yeux vers ses papiers**, exactement l'effet voulu par UI_FLOW §4.6. Souris sur le visage (ou champ « Visage » survolé) → **contact visuel** (cible = caméra).
 - Manette : la cible suit le document ou le champ focalisé (position écran → même projection).

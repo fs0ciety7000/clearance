@@ -2,7 +2,7 @@
 
 > Version 0.1 · Propriétaire : Audio Designer · Statut : **brouillon à valider**
 > Cohérent avec `DESIGN_SYSTEM.md` §9 (Audio-UI), §11 (Assets libres) et `docs/ARCHITECTURE.md` §7 (catalogue `EventBus`).
-> Moteur : Godot 4.4. Dossier cible : `res://assets/audio/{sfx,ambience,music,voice}/`.
+> Moteur : Godot 4.7.2. Dossier cible : `res://assets/audio/{sfx,ambience,music,voice}/`.
 
 ---
 
