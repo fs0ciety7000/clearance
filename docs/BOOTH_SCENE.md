@@ -463,3 +463,22 @@ Objectif : **code définitif, contenu provisoire** — tous les noms de nœuds, 
 6. **Durée de marche** : ✅ harmonisée : ≤ 3–4 s (≈ 2,75 s ici), ARCHITECTURE mis à jour.
 7. **Plateforme cible** pour les budgets (§13) : PC entrée de gamme ? Steam Deck ?
 8. Masques et visières **non couvrants** au guichet (visage toujours comparable) : OK client, ou geste « retire sa visière » (clip supplémentaire) ?
+
+---
+
+## 16. Implémenté en M6 — passager final (2026-10-27, 3D Designer / Godot Architect)
+
+Captures réelles (xvfb, `opengl3`) : `docs/mockups/m6_walk.png`, `m6_desk.png`, `m6_visor_down.png`, `m6_visor_up.png`, `m6_react_angry.png`, `m6_leave_queue.png`, `m6_lineup.png` (8 passagers), `m6_portraits.png` (8 photos), `m6_day3_autoplay.png` (jeu complet). Scène de démo : `scenes/passenger/passenger_demo.tscn` (`-- --mode=booth|lineup|portraits --state=desk|visor_down|visor_up|react|nervous|shrug|leave|empty --shot=… --at=… --fps`).
+
+| Sujet | Réalisé | Écart / remarque |
+|---|---|---|
+| Modèle | Kenney `characterMedium` (1 604 tris) **retargeté** (`SkeletonProfileHumanoid`), échelle 0,58, **tête réduite ×0,45 et cou raccourci ×0,55** (`HeadScaleModifier`, réappliqué chaque frame après l'animation) : ≈ 1,75 m, centre de tête ≈ 1,57–1,62 m au `DeskMark` | Pas de tête/tenue modélisées dans Blender (§6.1) : la variété vient des 8 skins Kenney converties en cartes de zones + pièces low-poly en code |
+| Clips | 9 clips (ASSETS §5.4), UAL + couches procédurales, repères posés par outil | `idle` 2,5 s (pas 6–8 s) |
+| Matériau | `chr_toon.gdshader` : zones (peau, haut, bas, accent « chrome usé », chaussures, cheveux) × détail de la skin d'origine (usure, imprimés), toon, rim Fresnel teal/rose désaturé | Palettes relevées en valeur (plafond de saturation 0,34) : la DS reste désaturée |
+| Visage | Plaque d'atlas ditheré existante ancrée sur l'os `Head` (`HeadAttachment/Head`, repère en mètres) ; formes de visage = échelle de l'os `Head` ; oreilles, nez, lèvres, yeux par pièces/uniformes | Pas d'atlas par type de tête (un atlas commun) |
+| Visière | Bandeau fixe + écran articulé : baissée = yeux masqués (lisible : écran noir + fente teal) ; relevée = écran à plat sur le crâne (−150°) au repère `visor_off` du geste `remove_visor` | — |
+| Accessoires | Capuche, casquette, bonnet, coupes (longs, chignon, tresses, bouclés, crête, rasé = zone cheveux en chaume), demi-visière translucide, masque respiratoire **au cou**, écharpe, tatouages holo, col montant, liseré émissif (tenues « tech ») | Implants : pas de slot au catalogue (proposition §12.2 toujours en attente) |
+| Regard | `NeckLook` (30 %) + `HeadLook` (100 %) = `LookAtModifier3D` (lacet ±40°, tangage ±25° en garde-fou) ; la cible est bornée en amont (−25°/+15°) par l'acteur ; influence fondue 0,2 s, **0 pendant marche / présentation / réactions / sortie** | Corrigé : le regard revient après `present_documents` (il restait coupé en M4) |
+| Portrait | Même rig + `AppearanceApplier`, posé sur la 1ʳᵉ image d'`idle`, recul 1,75 m (épaules → crâne) | — |
+| File | `imp_silhouette.res` : modèle posé en `idle`, simplifié à 400 tris, orienté vers la place suivante | — |
+| Perf (llvmpipe, rendu logiciel, 1920×376) | Guichet vide 13,1 FPS / 56 draws ; avec passager 12,1 FPS / 74 draws (+18 dont ombres), ≈ +3,7 k primitives ; acteur ≈ 1,6 k tris corps + ≤ 2 k pièces (≤ 8 k) | **FPS GPU non mesurable ici** (pas de GPU) : à vérifier sur la config cible. Le décor greybox dépasse déjà le budget de 40 draws (56) |

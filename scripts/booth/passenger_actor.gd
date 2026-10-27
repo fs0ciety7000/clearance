@@ -1,10 +1,10 @@
 ## Acteur 3D du passager (ARCHITECTURE §8 bis.2, D-009/D-010/D-021).
 ##
 ## Ne connaît **ni l'EventBus ni `Case`** : API impérative pilotée par
-## `BoothDirector`, signaux locaux. Greybox M4 : rig capsule (`PassengerRig`),
-## clips placeholder (`PlaceholderAnims`), regard sur le nœud tête factice
-## `HeadLook` (le `LookAtModifier3D` arrivera avec le squelette en M6),
-## plaque visage ditherée (`ExpressionController`).
+## `BoothDirector`, signaux locaux. M6 : rig Kenney retargeté (`PassengerRig`),
+## bibliothèque `passenger` (clips Quaternius UAL, `PassengerAnims`), regard par
+## deux `LookAtModifier3D` (cou 30 %, tête 100 %) dont la cible est bornée ici,
+## plaque visage ditherée ancrée sur l'os `Head` (`ExpressionController`).
 class_name PassengerActor
 extends CharacterBody3D
 
@@ -16,7 +16,8 @@ signal anim_event(event_name: StringName)
 signal reaction_finished(reaction: PassengerReaction.Kind)
 signal face_clicked()
 
-## Vitesse de référence du clip `walk` (m/s) : `speed_scale = v / v_ref`.
+## Vitesse de marche nominale (m/s) ; la vitesse de référence du clip `walk`
+## (`PassengerAnims.walk_v_ref()`, mesurée à l'import) donne `speed_scale = v / v_ref`.
 const WALK_NOMINAL_SPEED: float = 1.15
 ## Limites du regard (BOOTH_SCENE §9.1) : lacet ±40°, tangage −25° (bas) / +15° (haut).
 const LOOK_YAW_LIMIT: float = deg_to_rad(40.0)
@@ -66,14 +67,16 @@ var _look_enabled: bool = false
 var _look_weight: float = 0.0
 var _look_angles: Vector2 = Vector2.ZERO
 var _nod_left: float = 0.0
+## Temps restant de `present_documents` (le regard revient ensuite, §8 bis.4).
+var _present_left: float = 0.0
 var _playback: AnimationNodeStateMachinePlayback = null
 
 
 func _ready() -> void:
-	if not anim_player.has_animation_library(PlaceholderAnims.LIBRARY_NAME):
-		anim_player.add_animation_library(PlaceholderAnims.LIBRARY_NAME, PlaceholderAnims.load_library())
+	if not anim_player.has_animation_library(PassengerAnims.LIBRARY_NAME):
+		anim_player.add_animation_library(PassengerAnims.LIBRARY_NAME, PassengerAnims.load_library())
 	if anim_tree.tree_root == null:
-		anim_tree.tree_root = PlaceholderAnims.build_tree()
+		anim_tree.tree_root = PassengerAnims.build_tree()
 	anim_tree.anim_player = anim_tree.get_path_to(anim_player)
 	anim_tree.active = true
 	_playback = anim_tree.get(&"parameters/Main/playback")
@@ -82,6 +85,8 @@ func _ready() -> void:
 	locomotion.clear_reached.connect(_on_clear_reached)
 	rig.head_area.input_event.connect(_on_head_input_event)
 	look_target.top_level = true
+	for look: LookAtModifier3D in [rig.neck_look, rig.head_look]:
+		look.target_node = look.get_path_to(look_target)
 	release()
 
 
@@ -97,6 +102,7 @@ func assign(p_case_id: StringName, serial: int, expression_seed: int) -> void:
 	_reaction_left = 0.0
 	_visor_app = null
 	_nod_left = 0.0
+	_present_left = 0.0
 	rig.papers.visible = false
 	expression.paused = false
 	expression.instant = reduce_motion
@@ -144,6 +150,7 @@ func leave_along(path: Path3D, speed: float, clear_distance: float) -> void:
 
 func present_documents() -> void:
 	set_look_enabled(false)
+	_present_left = clip_length(&"present_documents")
 	_playback.travel(&"present_documents")
 
 
@@ -153,7 +160,7 @@ func remaining_walk_time() -> float:
 
 
 func clip_length(clip: StringName) -> float:
-	var anim: Animation = anim_player.get_animation(PlaceholderAnims.clip_path(clip))
+	var anim: Animation = anim_player.get_animation(PassengerAnims.clip_path(clip))
 	return anim.length if anim != null else 1.0
 
 
@@ -208,7 +215,7 @@ func set_look_enabled(enabled: bool) -> void:
 
 
 func _set_walk_speed(speed: float) -> void:
-	anim_tree.set(&"parameters/Main/walk/speed/scale", speed / WALK_NOMINAL_SPEED / maxf(rig.scale.y, 0.01))
+	anim_tree.set(&"parameters/Main/walk/speed/scale", speed / PassengerAnims.walk_v_ref() / maxf(rig.leg_scale(), 0.01))
 
 
 func _physics_process(delta: float) -> void:
@@ -236,6 +243,10 @@ func _update_reaction(delta: float) -> void:
 		_start_reaction(kind)
 	if _nod_left > 0.0:
 		_nod_left = maxf(_nod_left - delta, 0.0)
+	if _present_left > 0.0:
+		_present_left -= delta
+		if _present_left <= 0.0 and state == State.AT_DESK and not _reacting:
+			set_look_enabled(true)
 
 
 func _start_reaction(kind: PassengerReaction.Kind) -> void:
@@ -248,7 +259,7 @@ func _start_reaction(kind: PassengerReaction.Kind) -> void:
 		return
 	_fire_one_shot(REACTION_INPUT[kind])
 	_reacting = true
-	_reaction_left = clip_length(StringName(PlaceholderAnims.REACTION_INPUTS[REACTION_INPUT[kind]])) + REACTION_COOLDOWN_SEC
+	_reaction_left = clip_length(StringName(PassengerAnims.REACTION_INPUTS[REACTION_INPUT[kind]])) + REACTION_COOLDOWN_SEC
 	set_look_enabled(false)
 
 
@@ -263,14 +274,17 @@ func _apply_visor_removed() -> void:
 		_visor_app = null
 
 
-## Regard : rotation du nœud `HeadLook` vers la cible, bornée et lissée ;
-## les pupilles finissent le mouvement (décalage UV de l'atlas).
+## Regard (BOOTH_SCENE §9) : la cible est bornée ici (lacet ±40°, tangage
+## −25°/+15° autour de l'avant du corps) puis confiée aux `LookAtModifier3D`
+## (influence fondue sur 0,2 s) ; les pupilles finissent le mouvement (décalage
+## UV de l'atlas) ; hochement procédural (RELIEVED) par décalage de la cible.
 func _update_look(delta: float) -> void:
 	var goal_weight: float = 1.0 if _look_enabled and state == State.AT_DESK else 0.0
 	_look_weight = move_toward(_look_weight, goal_weight, delta / LOOK_FADE_SEC)
-	look_target.global_position = look_target.global_position.lerp(_look_goal, clampf(LOOK_SMOOTH * delta, 0.0, 1.0))
-	var neck: Node3D = rig.neck
-	var local: Vector3 = neck.global_transform.affine_inverse() * look_target.global_position - rig.head_look.position
+	rig.set_look_weight(_look_weight)
+	var head: Vector3 = rig.head.global_position
+	var body: Basis = global_basis.orthonormalized()
+	var local: Vector3 = body.inverse() * (_look_goal - head)
 	var horizontal: float = Vector2(local.x, local.z).length()
 	var yaw: float = atan2(local.x, local.z)
 	var pitch: float = -atan2(local.y, maxf(horizontal, 0.001))
@@ -278,7 +292,11 @@ func _update_look(delta: float) -> void:
 	var wanted: Vector2 = clamped * _look_weight
 	_look_angles = _look_angles.lerp(wanted, clampf(10.0 * delta, 0.0, 1.0))
 	var nod: float = sin((1.0 - _nod_left / NOD_SEC) * TAU) * deg_to_rad(9.0) if _nod_left > 0.0 else 0.0
-	rig.head_look.rotation = Vector3(_look_angles.x + nod, _look_angles.y, 0.0)
+	# Direction bornée dans le repère du corps (+Z = avant, MODEL_FRONT ; tangage + = vers le bas).
+	var p: float = clamped.x + nod
+	var dir: Vector3 = Vector3(sin(clamped.y) * cos(p), -sin(p), cos(clamped.y) * cos(p))
+	var goal: Vector3 = head + body * (dir * maxf(local.length(), 0.5))
+	look_target.global_position = look_target.global_position.lerp(goal, clampf(LOOK_SMOOTH * delta, 0.0, 1.0))
 	var residual: Vector2 = Vector2(clampf(yaw - clamped.y, -0.5, 0.5), clampf(pitch - clamped.x, -0.5, 0.5)) * _look_weight
 	rig.face_material.set_shader_parameter(&"pupil_offset", Vector2(-residual.x * 0.03 - _look_angles.y * 0.04,
 			residual.y * 0.03 + _look_angles.x * 0.03))
@@ -287,7 +305,7 @@ func _update_look(delta: float) -> void:
 ## Repères des clips (pistes « Call Method »).
 func _on_anim_marker(marker: StringName) -> void:
 	match marker:
-		PlaceholderAnims.DOCUMENTS_SLOT:
+		PassengerAnims.DOCUMENTS_SLOT:
 			# Verrouillé une fois par cas (une piste de méthode peut se doubler).
 			if _documents_slot_fired:
 				return
@@ -296,14 +314,14 @@ func _on_anim_marker(marker: StringName) -> void:
 			rig.papers.visible = true
 		&"papers_hide":
 			rig.papers.visible = false
-		PlaceholderAnims.VISOR_OFF:
+		PassengerAnims.VISOR_OFF:
 			_apply_visor_removed()
 	anim_event.emit(marker)
 
 
 ## Émet `documents_slot` même si le repère n'a pas été joué (watchdog).
 func force_documents_slot() -> void:
-	_on_anim_marker(PlaceholderAnims.DOCUMENTS_SLOT)
+	_on_anim_marker(PassengerAnims.DOCUMENTS_SLOT)
 	rig.papers.visible = false
 
 

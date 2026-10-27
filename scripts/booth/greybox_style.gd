@@ -36,20 +36,22 @@ const EYE_COLORS: Dictionary[StringName, Color] = {
 }
 ## Œil droit de l'hétérochromie.
 const HETEROCHROMIA_RIGHT: Color = Color("#4A2E1C")
-## 12 palettes (haut, bas, accent), désaturées.
-const PALETTES: Array[PackedColorArray] = [
-	[Color("#3B4252"), Color("#23272F"), Color("#8C7B5E")],
-	[Color("#5B4A3F"), Color("#2C2622"), Color("#9A9284")],
-	[Color("#2F4A4C"), Color("#1E2526"), Color("#7F9A92")],
-	[Color("#4C3A4F"), Color("#221C25"), Color("#8E7A8F")],
-	[Color("#6B6355"), Color("#34312B"), Color("#3E4C5E")],
-	[Color("#2E3A55"), Color("#1A1F2C"), Color("#A07E64")],
-	[Color("#55524C"), Color("#2A2928"), Color("#6E8571")],
-	[Color("#3F4F3A"), Color("#20261D"), Color("#9C8C6A")],
-	[Color("#5C3F3A"), Color("#2B1F1D"), Color("#7C8794")],
-	[Color("#38383D"), Color("#1C1C1F"), Color("#8A6F80")],
-	[Color("#4E5C66"), Color("#262D33"), Color("#B0A58F")],
-	[Color("#61574B"), Color("#2F2A25"), Color("#58707A")],
+## 12 palettes (haut, bas, accent), désaturées. Hex en chaînes : une constante
+## `Array[PackedColorArray]` littérale est évaluée à des couleurs nulles (noir)
+## par GDScript 4.7 — constaté en M6 ; conversion à la demande dans `palette()`.
+const PALETTES: Array[Array] = [
+	["#3B4252", "#23272F", "#8C7B5E"],
+	["#5B4A3F", "#2C2622", "#9A9284"],
+	["#2F4A4C", "#1E2526", "#7F9A92"],
+	["#4C3A4F", "#221C25", "#8E7A8F"],
+	["#6B6355", "#34312B", "#3E4C5E"],
+	["#2E3A55", "#1A1F2C", "#A07E64"],
+	["#55524C", "#2A2928", "#6E8571"],
+	["#3F4F3A", "#20261D", "#9C8C6A"],
+	["#5C3F3A", "#2B1F1D", "#7C8794"],
+	["#38383D", "#1C1C1F", "#8A6F80"],
+	["#4E5C66", "#262D33", "#B0A58F"],
+	["#61574B", "#2F2A25", "#58707A"],
 ]
 const INK: Color = Color("#121012")
 const VISOR_GLASS: Color = Color("#0B0F16")
@@ -83,7 +85,10 @@ static func eye_colors(app: PassengerAppearance) -> PackedColorArray:
 static func palette(app: PassengerAppearance) -> PackedColorArray:
 	var id: String = String(app.palette_id if app.palette_id != &"" else app.get_trait(PassengerAppearance.SLOT_PALETTE))
 	var index: int = clampi(id.trim_prefix("palette_").to_int() - 1, 0, PALETTES.size() - 1)
-	return PALETTES[index]
+	var colors: PackedColorArray = []
+	for hex: String in PALETTES[index]:
+		colors.append(Color(hex))
+	return colors
 
 
 ## `face_<forme>_eN` → forme (round, square, oval, angular).

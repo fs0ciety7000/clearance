@@ -1,6 +1,9 @@
 ## File d'attente en imposteurs (ARCHITECTURE §8 bis.9, BOOTH_SCENE §11).
 ##
-## Un `MultiMeshInstance3D` de silhouettes (capsules greybox) posées sur les
+## M6 : silhouette = modèle Kenney du passager posé en `idle`, simplifié à
+## 400 triangles (`imp_silhouette.res`, tools/build_passenger_impostor.gd),
+## orientée vers la place suivante. Repli : capsule greybox de la scène.
+## Un `MultiMeshInstance3D` de silhouettes posées sur les
 ## places du zigzag, teintées par un RNG cosmétique (graine du jour). La tête
 ## de file est masquée quand l'acteur entre en scène ; la file avance d'une
 ## place à chaque `passenger_departed` (interpolation 1,2 s, pas de squelette).
@@ -8,6 +11,7 @@ class_name QueueImpostors
 extends MultiMeshInstance3D
 
 const ADVANCE_SEC: float = 1.2
+const SILHOUETTE_PATH: String = "res://assets/models/passenger/imp_silhouette.res"
 
 ## Places au sol (x, z), de la tête de file (derrière le pilier) vers la queue.
 @export var slots: PackedVector2Array = PackedVector2Array([
@@ -25,6 +29,8 @@ var _hidden: Array[bool] = []
 var _scales: PackedFloat32Array = []
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _tween: Tween = null
+## Hauteur du pivot du maillage (capsule centrée : 0,85 m ; silhouette M6 : pieds à 0).
+var _pivot_y: float = 0.85
 
 
 func _ready() -> void:
@@ -37,6 +43,12 @@ func setup(p_seed: int) -> void:
 	var count: int = slots.size() - 1
 	if multimesh == null:
 		multimesh = MultiMesh.new()
+	if ResourceLoader.exists(SILHOUETTE_PATH):
+		var mesh: Mesh = load(SILHOUETTE_PATH) as Mesh
+		if mesh != null and multimesh.mesh != mesh:
+			multimesh.instance_count = 0
+			multimesh.mesh = mesh
+			_pivot_y = 0.0
 	multimesh.instance_count = 0
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.use_colors = true
@@ -93,7 +105,10 @@ func _update() -> void:
 	for i: int in _places.size():
 		var p: Vector2 = _point_at(_places[i])
 		var s: float = 0.0 if _hidden[i] else _scales[i]
-		var xf: Transform3D = Transform3D(Basis.from_scale(Vector3(s, s, s)), Vector3(p.x, 0.85 * s, p.y))
+		# Face à la place suivante (vers la tête de file), MODEL_FRONT = +Z.
+		var ahead: Vector2 = _point_at(_places[i] - 0.5) - p
+		var yaw: float = atan2(ahead.x, ahead.y) if ahead.length() > 0.01 else 0.0
+		var xf: Transform3D = Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3(s, s, s)), Vector3(p.x, _pivot_y * s, p.y))
 		multimesh.set_instance_transform(i, xf)
 
 

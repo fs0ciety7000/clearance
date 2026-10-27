@@ -147,17 +147,25 @@ art_src/  (racine du dépôt, contient un fichier .gdignore : Godot l'ignore)
 5. Importer comme en §5.2 avec **le même `bonemap_humanoid.tres`** (l'auto-mapping Godot reconnaît le squelette Mixamo ; vérifier le mapping des doigts, inutiles ici → os non mappés supprimés).
 6. Toute personne qui clone le dépôt **sans** les ressources Mixamo refait les étapes 1–5 à partir du registre ; tant que ce n'est pas fait, la bibliothèque utilise les **clips de repli CC0/greybox** du même nom.
 
-### 5.4 Registre technique des clips
+### 5.4 Registre technique des clips — **implémenté en M6**
+
+**Choix de rig** : on garde le **squelette Kenney** (le maillage, 1 604 triangles, et ses poids ne bougent pas) et on retargete les clips **Quaternius UAL** dessus. Les deux sources passent à l'import par un `BoneMap` au profil commun **`SkeletonProfileHumanoid`** (`bonemap_kenney.tres`, `bonemap_ual.tres` — un BoneMap par squelette source, le *profil* est partagé ; écrits par `tools/build_passenger_bonemaps.gd`) : os renommés `Hips`, `Neck`, `Head`…, repos normalisés (*Rest Fixer* : Apply Node Transforms, Normalize Position Tracks, Fix Silhouette). L'inverse (re-skinner le maillage Kenney sur le squelette UAL) aurait exigé un re-pondérage : proportions trop différentes (tête « chibi », jambes courtes). Le mannequin UAL (13,7 k triangles, sans vêtements) est écarté.
+
+Bibliothèque `passenger_anims.res` construite par **`tools/build_passenger_anims.gd`** (reproductible) : rééchantillonnage 30 i/s, pistes de rotation des 22 os mappés (sans doigts) + position de `Hips` ; décalage du parent non mappé `HipsCtrl` retiré ; **tête redressée de 31,6°** (écart de retarget mesuré sur `Idle`, compensé moitié cou / moitié tête sur tous les clips) ; gestes absents d'UAL = **couches procédurales** (rotations « espace personnage » clé par clé, converties en rotations locales par cinématique directe sur le squelette Kenney) posées sur `Idle`.
+
 | Clip | Source retenue | Boucle | Durée | v_ref (m/s) | Repères | Pose de fin = idle |
 |---|---|---|---|---|---|---|
-| `walk` | | oui | | | footstep_l/r | — |
-| `idle` | | oui | | — | — | — |
-| `present_documents` | maison | non | 1,2 s | — | documents_slot @0,75 | ☐ |
-| `leave` | | non (enchaîne sur `walk`) | ≈ 0,8 s | | footstep_l/r | = début de `walk` |
-| `react_angry` | | non | | — | glass_hit | ☐ |
-| `react_nervous` | | non | | — | — | ☐ |
-| `shrug` | | non | | — | — | ☐ |
-| `talk` | | oui | | — | — | — |
+| `walk` | UAL `Walk_Loop` (sans root motion) | oui | 1,333 s | **0,724** (rig ×1 ; mesurée sur le pied d'appui, métadonnée `walk_v_ref`) | `footstep_l` 0,00 · `footstep_r` 0,667 (pied le plus en avant) | — |
+| `idle` | UAL `Idle_Loop` | oui | 2,5 s (*écart* : 6–8 s demandés, la désynchronisation reste assurée par la phase/`speed_scale`) | — | — | — |
+| `present_documents` | `Idle` + couche (veste → penché, main vers la fente → retour) | non | 1,2 s | — | `papers_show` 0,30 · **`documents_slot` 0,75** · `papers_hide` 0,85 | ☑ (couches → 0) |
+| `leave` | UAL `Walk_Loop` [0 ; 0,8 s] (le quart/demi-tour est fait par la locomotion) | non (enchaîne `walk`) | 0,8 s | idem `walk` | `footstep_l` 0,00 · `footstep_r` 0,667 | = début de `walk` |
+| `react_angry` | `Idle` + couche (buste en avant, mains au comptoir, secousse de tête) | non | 1,2 s | — | `glass_hit` 0,45 | ☑ |
+| `react_nervous` | `Idle` + couche (main à la nuque, regard fuyant) | non | 1,3 s | — | — | ☑ |
+| `shrug` | `Idle` + couche (épaules, avant-bras ouverts, paumes) | non | 0,9 s | — | — | ☑ |
+| `talk` | UAL `Idle_Talking_Loop` (filtre haut du corps dans l'`AnimationTree`) | oui | 2,933 s | — | — | — |
+| `remove_visor` | `Idle` + couche (main au front, écran relevé) | non | 1,1 s | — | `visor_off` 0,55 | ☑ |
+
+Autres clips UAL utilisables plus tard : `Walk_Formal_Loop` (sortie approuvée), `Hit_Chest`/`Hit_Head` (sursaut), `Interact`, `PickUp_Table`, `Push_Loop`, `Sitting_*`.
 
 ### 5.5 Vérifications (checklist avant commit)
 - [ ] Hauteur mesurée conforme (1,55–1,85 m selon échelle) ; pieds au sol (y = 0) en `idle`.
@@ -256,6 +264,10 @@ Spécifiés dans BOOTH_SCENE §4.2, §6 et §11. Tous lisent l'uniform global `f
 
 Les fichiers `*.import` sont **versionnés** (ARCHITECTURE §3).
 
+**Réglages effectifs M6** (passager) : `chr_kenney_medium.fbx` — LOD ✗, Light Baking Disabled, animations ✗, `retarget/bone_map` = `bonemap_kenney.tres`, squelette renommé `GeneralSkeleton`, Rest Fixer (Apply Node Transforms, Normalize Position Tracks, Fix Silhouette). `anim_ual1_standard.glb` — mêmes réglages de retarget avec `bonemap_ual.tres`, *Remove Immutable Tracks* ✗ ; **écart** : les options *Remove Tracks* (`except_bone_transform`, `unimportant_positions`, `unmapped_bones`) sont **désactivées** — en Godot 4.7.2 elles produisent des erreurs `Index p_track out of bounds` à l'import et vident les clips ; le filtrage (os mappés sans doigts, position de `Hips` seule) est fait par `tools/build_passenger_anims.gd`. Cartes de zones : *Lossless*, mipmaps ✗, `detect_3d/compress_to` = 0, échantillonnage *nearest* dans `chr_toon.gdshader`.
+
+**Régénération complète** : `bash tools/fetch_assets.sh` (sources) → `godot --headless --script res://tools/build_passenger_bonemaps.gd` → `godot --headless --import` → `build_passenger_anims.gd` → `build_passenger_skins.gd` → `build_passenger_impostor.gd`.
+
 ---
 
 ## 9. Hygiène du dépôt
@@ -277,10 +289,10 @@ Les fichiers `*.import` sont **versionnés** (ARCHITECTURE §3).
 | Inter (variable) | github.com/google/fonts (ofl/inter), 2026-10-27 | SIL OFL 1.1 | The Inter Project Authors | non (renommé `Inter-Variable.ttf`) | `assets/fonts/Inter-Variable.ttf` + `OFL-Inter.txt` |
 | JetBrains Mono (variable) | github.com/google/fonts (ofl/jetbrainsmono), 2026-10-27 | SIL OFL 1.1 | The JetBrains Mono Project Authors | non (renommé `JetBrainsMono-Variable.ttf`) | `assets/fonts/JetBrainsMono-Variable.ttf` + `OFL-JetBrainsMono.txt` |
 | GUT 9.7.1 (outil de test, hors jeu) | github.com/bitwes/Gut tag v9.7.1, 2026-10-27 | MIT | bitwes | non | `addons/gut/` |
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| | | | | | |
+| Kenney **Animated Characters** (Protagonists, Survivors, Retro) — modèle `characterMedium` | kenney.nl/assets/animated-characters-protagonists · -survivors · -retro, 2026-10-27 (`tools/fetch_assets.sh`) | CC0 1.0 | Kenney (kenney.nl) | oui : retarget `SkeletonProfileHumanoid` à l'import ; tête réduite (×0,45) et cou raccourci au rendu | `assets/models/passenger/chr_kenney_medium.fbx` (+ `.import`, `bonemap_kenney.tres`, `License_Kenney.txt`) |
+| Kenney Animated Characters — **skins** (8 : criminalMaleA, cyborgFemaleA, skaterFemaleA, skaterMaleA, survivorFemaleA, survivorMaleB, humanFemaleA, humanMaleA ; zombies écartés) | idem | CC0 1.0 | Kenney | oui : converties en **cartes de zones** recolorables (visage peint effacé) par `tools/build_passenger_skins.gd` | sources `art_src/kenney_skins/*.png` (versionnées, non importées) → `assets/textures/passenger/tex_chr_zones_*.png` |
+| Quaternius **Universal Animation Library [Standard]** (`UAL1_Standard.glb`, sans root motion) | quaternius.itch.io/universal-animation-library (0 $), 2026-10-27 | CC0 1.0 | Quaternius | oui : retarget profil humanoïde, découpes, redressement de la tête, couches procédurales, repères | `assets/models/passenger/anim_ual1_standard.glb` (+ `.import`, `bonemap_ual.tres`, `License_Quaternius_UAL.txt`) → `passenger_anims.res` |
+| Silhouette de file (dérivée du modèle Kenney posé en `idle`, 400 triangles) | généré (`tools/build_passenger_impostor.gd`) | CC0 (dérivé) | Kenney / studio | oui (pose figée + simplification meshoptimizer) | `assets/models/passenger/imp_silhouette.res` |
 
 ---
 
@@ -288,7 +300,7 @@ Les fichiers `*.import` sont **versionnés** (ARCHITECTURE §3).
 
 1. Le dépôt est-il (ou sera-t-il) **public** ? Conditionne le versionnage des ressources dérivées de Mixamo (§3).
 2. **Git LFS** : oui / non ?
-3. Base personnage : **Kenney** (recommandée, CC0, style low-poly cohérent) **ou Quaternius** si les proportions Kenney ne tiennent pas en cadrage buste → trancher après le test greybox.
+3. ~~Base personnage~~ → **tranché en M6** : Kenney (squelette + maillage) + clips Quaternius UAL retargetés ; tête Kenney réduite pour tenir le cadrage buste (§5.4).
 4. Implants en cyan émissif (= information) et palette monde désaturée des rims : **à valider Design System**.
 
 *Acquis* : animations Quaternius UAL (CC0) en priorité, Mixamo en complément (Orchestrateur ; D-011 à mettre à jour) ; portrait par rendu du modèle 3D (`PortraitRenderer`).

@@ -254,7 +254,7 @@ func _on_actor_arrived(actor: PassengerActor) -> void:
 
 
 func _on_actor_anim_event(event_name: StringName, actor: PassengerActor) -> void:
-	if event_name == PlaceholderAnims.DOCUMENTS_SLOT:
+	if event_name == PassengerAnims.DOCUMENTS_SLOT:
 		_watch.erase(actor)
 		_pulse_light(slot_glow, DS.ACCENT_CYAN, 0.8, 0.4)
 		_emit_once(actor.case_id, FLAG_DOCUMENTS)

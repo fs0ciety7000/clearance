@@ -1,7 +1,8 @@
 ## Portraits des documents (ARCHITECTURE §8 bis.5, D-012/D-018, BOOTH_SCENE §12.6).
 ##
 ## `get_portrait(appearance) -> Texture2D` rend la `PassengerAppearance` avec le
-## **même** `PassengerRig` + `AppearanceApplier` que l'acteur du guichet, dans
+## **même** `PassengerRig` (modèle Kenney final, M6) + `AppearanceApplier` que
+## l'acteur du guichet, posé sur la 1ʳᵉ image d'`idle`, dans
 ## un studio `SubViewport` 256×320 (`UPDATE_ONCE`) : éclairage plat, fond uni,
 ## sans rim néon, expression neutre, ligne des yeux à hauteur fixe. L'apparence
 ## est rendue **telle quelle** (la photo officielle sans coiffe ni accessoire est
@@ -22,7 +23,7 @@ const SIZE: Vector2i = Vector2i(256, 320)
 const BACKDROP: Color = Color("#2A3140")
 ## Champ vertical et recul de la caméra portrait (épaules → haut du crâne).
 const FOV: float = 18.0
-const DISTANCE: float = 1.25
+const DISTANCE: float = 1.75
 ## Ligne des yeux à 42 % de la hauteur depuis le haut.
 const EYE_LINE: float = 0.42
 
@@ -33,6 +34,7 @@ var _headless: bool = false
 var _viewport: SubViewport = null
 var _camera: Camera3D = null
 var _rig: PassengerRig = null
+var _pose_player: AnimationPlayer = null
 
 
 func _ready() -> void:
@@ -139,10 +141,21 @@ func _build_studio() -> void:
 	fill.light_energy = 0.35
 	_viewport.add_child(fill)
 
+	# Le modèle posé sur la première image d'`idle` (bibliothèque `passenger`) :
+	# l'AnimationPlayer vise « Visual/Armature/Skeleton3D », comme sur l'acteur.
+	var sitter: Node3D = Node3D.new()
+	sitter.name = "Sitter"
+	_viewport.add_child(sitter)
 	_rig = PassengerRig.new()
-	_rig.name = "Sitter"
+	_rig.name = "Visual"
 	_rig.set_rim_enabled(false)
-	_viewport.add_child(_rig)
+	sitter.add_child(_rig)
+	_pose_player = AnimationPlayer.new()
+	sitter.add_child(_pose_player)
+	_pose_player.add_animation_library(PassengerAnims.LIBRARY_NAME, PassengerAnims.load_library())
+	_pose_player.play(PassengerAnims.clip_path(&"idle"))
+	_pose_player.seek(0.0, true)
+	_pose_player.pause()
 
 	_camera = Camera3D.new()
 	_camera.fov = FOV
@@ -160,6 +173,8 @@ func _pump() -> void:
 	var texture: ImageTexture = job[1]
 	AppearanceApplier.apply(_rig, appearance)
 	_neutral_face()
+	_pose_player.seek(0.0, true)
+	_rig.skeleton.force_update_all_bone_transforms()
 	# Ligne des yeux à hauteur fixe dans le cadre, quelle que soit la taille.
 	var eyes_y: float = _rig.head.global_position.y + 0.02 * _rig.scale.y
 	var half_height: float = DISTANCE * tan(deg_to_rad(FOV * 0.5))
