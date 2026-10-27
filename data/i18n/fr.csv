@@ -166,7 +166,7 @@ weekday_6,DIM.
 rb_title,RULEBOOK
 rb_day,JOUR %02d
 rb_today,DATE DU JOUR
-rb_new_count,%d NOUVEAU
+rb_new_count,%d NOUVEAUX
 rb_page,ONGLET %d / %d
 rb_tab_all,Règles
 rb_tab_documents,Documents
@@ -202,8 +202,7 @@ stamp_caption,CONSORTIUM · G04 · J%02d
 st_idle,Guichet ouvert — appelez le passager suivant à l'intercom (N).
 st_verdict,Verdict transmis — documents rendus par la fente.
 st_arriving_title,◆ Passager en approche
-st_arriving," — lisez le Rulebook en attendant.
-Tampons verrouillés jusqu'à la présentation des documents."
+st_arriving, — lisez le Rulebook en attendant.
 st_discordances_title,⚠ %d discordances
 st_discordances, documentées%s · questions débloquées.
 st_rule, · règle %02d
@@ -219,9 +218,9 @@ st_discordance_one, documentée%s · question débloquée.
 conc_valid_detail,Valide jusqu'au %s ≥ date du jour %s
 conc_generic,Aucune discordance constatée.
 conc_detail,%s : %s = %s
-qp_documented_one,1 DOCUMENTÉE
+qp_documented_one,%d DOCUMENTÉE
 res_case_detail,Tampon %s
-res_missed,%d infraction(s) non relevée(s)
+res_missed,%d infractions non relevées
 line_visor_removed,…D'accord. Voilà.
 line_visor_none,Je ne porte pas de visière.
 line_confront_nervous,Je… je peux vous expliquer.
@@ -248,3 +247,7 @@ line_about_rule_violated,Personne ne m'a prévenu de ce règlement.
 briefing_eyebrow,Halcyon Gate · Guichet 04 · Directive du jour
 briefing_title,JOUR %d
 briefing_hint,Cliquez ou appuyez sur une touche pour ouvrir le guichet
+wb_title_count_one,PLAN DE TRAVAIL · %d DOCUMENT
+rb_new_count_one,%d NOUVEAU
+res_missed_one,%d infraction non relevée
+conc_face,Visage conforme à la photo.

@@ -283,7 +283,7 @@ func _refresh_header() -> void:
 	if views.is_empty():
 		_title.text = UiText.t("wb_title_empty", "PLAN DE TRAVAIL · VIDE")
 	else:
-		_title.text = UiText.tf("wb_title_count", [views.size()], "PLAN DE TRAVAIL · %d DOCUMENTS")
+		_title.text = UiText.plural("wb_title_count", views.size(), "PLAN DE TRAVAIL · %d DOCUMENT", "PLAN DE TRAVAIL · %d DOCUMENTS")
 	if inspection_active:
 		_mode_label.text = UiText.t("wb_mode_active", "MODE INSPECTION ACTIF")
 		_mode_label.add_theme_color_override(&"font_color", DS.ACCENT_CYAN)

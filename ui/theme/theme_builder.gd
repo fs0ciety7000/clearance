@@ -20,12 +20,17 @@ const WEIGHT_BOLD: int = 700
 
 ## Échelle du texte de la construction en cours (`Settings.text_scale`).
 static var _scale: float = 1.0
+## Plancher de taille (px logiques) : garantit ≥ 12 px **effectifs** quand la
+## fenêtre est plus petite que 1920×1080 (Steam Deck 1280×800, D-023).
+static var _min_px: int = 0
+const MIN_PX_MAX_SCALE: float = 1.5
 
 
 ## Construit un nouveau Theme complet. `text_scale` (0,9–1,5, UI_FLOW §6)
 ## multiplie toutes les tailles de police ; espacements et formes sont fixes.
-static func build(text_scale: float = 1.0) -> Theme:
+static func build(text_scale: float = 1.0, min_px: int = 0) -> Theme:
 	_scale = clampf(text_scale, 0.5, 2.0)
+	_min_px = maxi(min_px, 0)
 	var theme: Theme = Theme.new()
 	var fonts: Dictionary[StringName, Font] = _load_fonts()
 
@@ -40,12 +45,23 @@ static func build(text_scale: float = 1.0) -> Theme:
 	_build_variations(theme, fonts)
 	_build_m4_variations(theme, fonts)
 	_scale = 1.0
+	_min_px = 0
 	return theme
 
 
 ## Taille de police mise à l'échelle de la construction en cours.
 static func fs(size: int) -> int:
-	return maxi(roundi(size * _scale), 1)
+	return maxi(maxi(roundi(size * _scale), _min_px), 1)
+
+
+## Plancher de taille pour un facteur d'affichage `screen_scale` (taille de
+## la fenêtre / taille de référence) : `DS.FS_CAPTION` px effectifs minimum.
+static func min_px_for(screen_scale: float) -> int:
+	if screen_scale >= 1.0 or screen_scale <= 0.0:
+		return 0
+	# Plafonné à l'échelle UI maximale (150 %, DS §1.7) : au-delà, la mise en
+	# page ne tient plus (fenêtres minuscules, headless).
+	return mini(ceili(DS.FS_CAPTION / screen_scale), ceili(DS.FS_CAPTION * MIN_PX_MAX_SCALE))
 
 
 # ---------------------------------------------------------------------------

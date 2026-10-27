@@ -48,6 +48,19 @@ func setup(p_kind: VerdictKind.Kind, p_hint: String, p_locked_hint: String) -> v
 	focus_exited.connect(queue_redraw)
 
 
+## Largeur ajustée au texte (échelle du texte, plancher Steam Deck).
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_THEME_CHANGED:
+		var font: Font = get_theme_font(&"font", &"StampLabel")
+		var small: Font = get_theme_font(&"font", &"CaptionLabel")
+		var caption_size: int = get_theme_font_size(&"font_size", &"CaptionLabel")
+		var text_w: float = font.get_string_size(StampMark.label_of(kind), HORIZONTAL_ALIGNMENT_LEFT, -1,
+				get_theme_font_size(&"font_size", &"StampLabel")).x
+		for caption: String in [hint, locked_hint]:
+			text_w = maxf(text_w, small.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, caption_size).x)
+		custom_minimum_size.x = maxf(WIDTH, DS.SPACE_4 + DS.ICON_L + DS.SPACE_3 + text_w + DS.SPACE_4)
+
+
 func is_holding() -> bool:
 	return _holding
 

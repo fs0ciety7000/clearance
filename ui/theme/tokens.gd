@@ -63,7 +63,7 @@ const SCRIM := Color("#07080CB8") # voile modal (72 %)
 const DISABLED_FG := Color("#4E5868")
 const DISABLED_BG := Color("#0E111880")
 # 0.2 — surfaces posées sur la vue 3D (DS §5 règle 5 : voile ≥ 85 % derrière le texte)
-const PANEL_VEIL := Color("#0E1118E6") # bg.panel 90 % : bulle, compteurs, toasts sur la vitre
+const PANEL_VEIL := Color("#0E1118F2") # bg.panel 95 % : bulle, compteurs, toasts sur la vitre
 const SUBTITLE_BG := Color("#07080CD9") # bg.void 85 % : sous-titres (UI_FLOW §4.8)
 const INSPECTION_VEIL := Color("#07080C14") # bg.void 8 % : voile de la vue 3D en Mode Inspection
 

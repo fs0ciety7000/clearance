@@ -66,15 +66,18 @@ var links: LinkLayer = null
 var _veil: ColorRect = null
 var _next_cooldown: float = 0.0
 var _menu_items: Array[Dictionary] = []
+var _applied_min_px: int = 0
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_read_settings()
-	theme = ThemeBuilder.build(_text_scale())
+	theme = ThemeBuilder.build(_text_scale(), _min_text_px())
+	_applied_min_px = _min_text_px()
 	_build()
 	_connect_bus()
+	get_viewport().size_changed.connect(_on_viewport_resized)
 	_refresh_all()
 
 
@@ -85,6 +88,27 @@ func _read_settings() -> void:
 
 func _text_scale() -> float:
 	return Settings.text_scale
+
+
+## Plancher de taille de texte selon le facteur d'étirement de la fenêtre
+## (`canvas_items` : 1280×800 → ×0,67, le texte passe à ≥ 18 px logiques).
+func _min_text_px() -> int:
+	if not is_inside_tree():
+		return 0
+	return ThemeBuilder.min_px_for(get_viewport().get_final_transform().get_scale().x)
+
+
+func _rebuild_theme(text_scale: float) -> void:
+	theme = ThemeBuilder.build(text_scale, _min_text_px())
+	if tool_bar != null:
+		tool_bar.refresh_fonts()
+
+
+func _on_viewport_resized() -> void:
+	var min_px: int = _min_text_px()
+	if min_px != _applied_min_px:
+		_applied_min_px = min_px
+		_rebuild_theme(_text_scale())
 
 
 # ---------------------------------------------------------------------------
@@ -141,6 +165,7 @@ func _build() -> void:
 	passenger_panel.position = Vector2(DS.SPACE_8, BAND_TOP + DS.SPACE_6)
 	passenger_panel.custom_minimum_size.x = SIDE_PANEL_WIDTH
 	passenger_panel.size.x = SIDE_PANEL_WIDTH
+	add_child(BlurBackdrop.create(passenger_panel))
 	add_child(passenger_panel)
 	passenger_panel.question_chosen.connect(ask)
 
@@ -151,6 +176,7 @@ func _build() -> void:
 	queue_panel.offset_left = -(QUEUE_PANEL_WIDTH + DS.SPACE_8)
 	queue_panel.offset_right = -DS.SPACE_8
 	queue_panel.offset_top = BAND_TOP + DS.SPACE_6
+	add_child(BlurBackdrop.create(queue_panel))
 	add_child(queue_panel)
 
 	subtitles = SubtitleBar.new()
@@ -367,7 +393,7 @@ func _on_settings_changed(key: StringName, value: Variant) -> void:
 	match key:
 		Settings.KEY_TEXT_SCALE:
 			var text_scale: float = value
-			theme = ThemeBuilder.build(text_scale)
+			_rebuild_theme(text_scale)
 		Settings.KEY_FX_INTENSITY:
 			fx_intensity = value
 			workbench.set_fx_intensity(fx_intensity)
@@ -515,7 +541,6 @@ func ask(topic: StringName) -> void:
 		asked_topics.append(topic)
 	unlocked_topics.erase(topic)
 	var question: String = InterrogationTopics.question_text(topic, current_case)
-	subtitles.show_line(UiText.t("speaker_agent", "AGENT"), question)
 	passenger_panel.set_hint(UiText.t("speaker_agent", "AGENT") + " : « " + question + " »")
 	question_menu_open = false
 	_refresh_all()
@@ -555,7 +580,7 @@ func _show_result(result: CaseResult) -> void:
 	var side: String = ("+%d ₵" if result.credits_delta >= 0 else "%d ₵") % result.credits_delta
 	var message: String = UiText.tf("res_case_detail", [verdict_name], "Tampon %s")
 	if not result.correct and not result.missed_violations.is_empty():
-		message += " · " + UiText.tf("res_missed", [result.missed_violations.size()], "%d infraction(s) non relevée(s)")
+		message += " · " + UiText.plural("res_missed", result.missed_violations.size(), "%d infraction non relevée", "%d infractions non relevées")
 	if result.correct:
 		toasts.push(ToastStack.Kind.SUCCESS, UiText.t("res_case_ok", "Dossier conforme"), message, side)
 	else:
@@ -677,7 +702,7 @@ func _status_text() -> String:
 		return UiText.t("st_verdict", "Verdict transmis — documents rendus par la fente.")
 	if not documents_shown:
 		return _bb(UiText.t("st_arriving_title", "◆ Passager en approche"), DS.STATE_AMBER) \
-				+ UiText.t("st_arriving", " — lisez le Rulebook en attendant.\nTampons verrouillés jusqu'à la présentation des documents.")
+				+ UiText.t("st_arriving", " — lisez le Rulebook en attendant.")
 	var count: int = discrepancies.size()
 	if count > 0:
 		var last: Discrepancy = discrepancies.back()
@@ -707,7 +732,9 @@ func _describe_concordant(result: Discrepancy) -> String:
 			valid_text = UiText.date(valid_days)
 		return UiText.tf("conc_valid_detail", [valid_text, UiText.date(day.game_date) if day != null else "—"],
 				"Valide jusqu'au %s ≥ date du jour %s")
-	if result.a.is_passenger_face() or result.b.is_passenger_face() or not result.a.is_document_field():
+	if result.a.is_passenger_face() or result.b.is_passenger_face():
+		return UiText.t("conc_face", "Visage conforme à la photo.")
+	if not result.a.is_document_field():
 		return UiText.t("conc_generic", "Aucune discordance constatée.")
 	var field: FieldDef = current_case.get_field_def(result.a)
 	var shown: String = UiText.value_text(field, current_case.get_value(result.a))
@@ -751,6 +778,7 @@ func _face_covered() -> bool:
 
 func _refresh_face() -> void:
 	links.face_rect = _face_rect() if current_case != null and documents_shown else Rect2()
+	links.band_rect = band_rect()
 	links.face_masked = _face_covered()
 	var flagged: bool = false
 	for d: Discrepancy in discrepancies:
@@ -768,13 +796,28 @@ func _flag_face(result: Discrepancy) -> void:
 		links.face_state = 2
 
 
+## Rectangle global du visage, **contraint à la bande B** (y 56 → 432) : le
+## cadre « VISAGE » ne déborde jamais sur la barre d'état ni sur le plan.
 func _face_rect() -> Rect2:
-	if face_rect_provider.is_valid():
-		var provided: Variant = face_rect_provider.call()
-		if provided is Rect2:
-			return provided
+	var rect: Rect2 = Rect2()
+	var provided: Variant = face_rect_provider.call() if face_rect_provider.is_valid() else null
+	if provided is Rect2:
+		rect = provided
+	else:
+		var xform: Transform2D = get_global_transform()
+		rect = Rect2(xform * DEFAULT_FACE_RECT.position, DEFAULT_FACE_RECT.size * xform.get_scale())
+	if rect.size == Vector2.ZERO:
+		return rect
+	var band: Rect2 = band_rect().grow(-DS.SPACE_2)
+	return rect.intersection(band) if rect.intersects(band) else Rect2()
+
+
+## Bande B (vue 3D) en coordonnées globales.
+func band_rect() -> Rect2:
 	var xform: Transform2D = get_global_transform()
-	return Rect2(xform * DEFAULT_FACE_RECT.position, DEFAULT_FACE_RECT.size * xform.get_scale())
+	var top_left: Vector2 = xform * Vector2(0.0, BAND_TOP)
+	var bottom_right: Vector2 = xform * Vector2(size.x, BAND_BOTTOM)
+	return Rect2(top_left, bottom_right - top_left)
 
 
 func _refresh_doc_flags() -> void:

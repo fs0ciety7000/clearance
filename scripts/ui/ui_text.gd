@@ -53,6 +53,15 @@ static func t(key: String, fallback: String = "") -> String:
 	return translated
 
 
+## Accord singulier / pluriel : `<key>_one` si `count` ≤ 1, `<key>` sinon
+## (les deux formats reçoivent `count`).
+static func plural(key: String, count: int, fallback_one: String, fallback_many: String) -> String:
+	if absi(count) <= 1:
+		var one: String = t(key + "_one", fallback_one)
+		return one % count if one.contains("%d") else one
+	return tf(key, [count], fallback_many)
+
+
 ## Vrai si la clé a une traduction chargée.
 static func has(key: String) -> bool:
 	ensure_translations()

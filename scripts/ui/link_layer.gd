@@ -26,6 +26,8 @@ class Link:
 var rect_provider: Callable = Callable()
 ## Rectangle global du visage du passager (zone B), taille nulle = aucun.
 var face_rect: Rect2 = Rect2()
+## Bande B (globale) : le libellé « VISAGE » y reste contenu.
+var band_rect: Rect2 = Rect2()
 var face_label: String = "VISAGE"
 var face_state: int = 0 # 0 normal, 1 sélectionné (A), 2 discordance
 var face_masked: bool = false
@@ -288,6 +290,10 @@ func _draw_face_frame() -> void:
 	var font_size: int = get_theme_font_size(&"font_size", &"DocFieldLabel")
 	var tw: float = font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	var chip: Rect2 = Rect2(Vector2(rect.get_center().x - (tw + DS.SPACE_6) * 0.5, rect.position.y - DS.SPACE_6), Vector2(tw + DS.SPACE_6, DS.SPACE_5))
+	# Pas de place au-dessus du cadre dans la bande : libellé à l'intérieur.
+	var band_top: float = (inv * band_rect.position).y if band_rect.size != Vector2.ZERO else -INF
+	if chip.position.y < band_top:
+		chip.position.y = rect.position.y + DS.SPACE_1
 	draw_rect(chip, DS.SUBTITLE_BG)
 	_diamond(chip.position + Vector2(DS.SPACE_2, chip.size.y * 0.5), 3.0, color)
 	draw_string(font, Vector2(chip.position.x + DS.SPACE_4, chip.get_center().y + font.get_ascent(font_size) * 0.4), label,

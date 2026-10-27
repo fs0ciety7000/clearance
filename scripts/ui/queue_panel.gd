@@ -88,8 +88,7 @@ func set_status(status: Status, discrepancies: int) -> void:
 		Status.INSPECTING when discrepancies > 0:
 			_status_icon.kind = UiIcon.Kind.WARNING
 			_status_icon.color = DS.ACCENT_MAGENTA
-			_status_label.text = UiText.t("qp_documented_one", "1 DOCUMENTÉE") if discrepancies == 1 \
-					else UiText.tf("qp_documented", [discrepancies], "%d DOCUMENTÉES")
+			_status_label.text = UiText.plural("qp_documented", discrepancies, "%d DOCUMENTÉE", "%d DOCUMENTÉES")
 			_status_label.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
 		Status.INSPECTING:
 			_status_icon.kind = UiIcon.Kind.DIAMOND

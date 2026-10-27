@@ -47,8 +47,14 @@ func _ready() -> void:
 	org.uppercase = true
 	org.text = UiText.t("bar_org", "CONSORTIUM · CONTRÔLE D'ENTRÉE")
 	org.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# Libellé secondaire compressible : à 1280×800 (Steam Deck), il cède la
+	# place à l'horloge et aux compteurs plutôt que de pousser la barre hors champ.
+	org.clip_text = true
+	org.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	org.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	org.custom_minimum_size.x = DS.SPACE_16
+	org.size_flags_stretch_ratio = 4.0 # prend l'essentiel de l'espace libre à 1080p
 	row.add_child(org)
-	row.add_child(_spacer())
 	# Lieu, jour, date.
 	_location = Label.new()
 	_location.theme_type_variation = &"PanelTitle"

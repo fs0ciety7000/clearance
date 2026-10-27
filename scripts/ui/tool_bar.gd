@@ -76,10 +76,8 @@ func _ready() -> void:
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_status.add_theme_font_size_override(&"normal_font_size", get_theme_font_size(&"font_size", &"BodySmall"))
-	_status.add_theme_font_size_override(&"bold_font_size", get_theme_font_size(&"font_size", &"BodySmall"))
-	_status.add_theme_font_override(&"bold_font", get_theme_font(&"font", &"BodyStrong"))
 	_status.add_theme_color_override(&"default_color", DS.TEXT_SECONDARY)
+	refresh_fonts()
 	row.add_child(_status)
 
 	var drawer: PanelContainer = PanelContainer.new()
@@ -114,6 +112,15 @@ func _ready() -> void:
 	set_detain_available(false)
 	set_stamps_locked(true)
 	set_unlocked_count(0)
+
+
+## Recopie les polices du thème (BodySmall / BodyStrong) dans la ligne d'état
+## (RichTextLabel) ; rappelé quand le thème est reconstruit.
+func refresh_fonts() -> void:
+	_status.add_theme_font_size_override(&"normal_font_size", get_theme_font_size(&"font_size", &"BodySmall"))
+	_status.add_theme_font_size_override(&"bold_font_size", get_theme_font_size(&"font_size", &"BodySmall"))
+	_status.add_theme_font_override(&"normal_font", get_theme_font(&"font", &"BodySmall"))
+	_status.add_theme_font_override(&"bold_font", get_theme_font(&"font", &"BodyStrong"))
 
 
 ## Bouton d'outil : icône + libellé + touches, dans un `ButtonTool`.

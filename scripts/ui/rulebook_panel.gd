@@ -148,7 +148,7 @@ func set_rulebook(p_entries: Array[RulebookEntry], p_today: int, p_day_number: i
 		if entry.is_new:
 			new_count += 1
 	_new_badge.visible = new_count > 0
-	_new_label.text = UiText.tf("rb_new_count", [new_count], "%d NOUVEAU")
+	_new_label.text = UiText.plural("rb_new_count", new_count, "%d NOUVEAU", "%d NOUVEAUX")
 	_collapsed_count.text = "%d\nNEW" % new_count if new_count > 0 else ""
 	_build_tabs()
 	_show_tab(TAB_ALL)

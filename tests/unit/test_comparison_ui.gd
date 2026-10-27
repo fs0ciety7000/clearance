@@ -211,7 +211,7 @@ func test_discordance_flags_fields_and_unlocks_question() -> void:
 	var topic: StringName = InterrogationTopics.topic_for(result)
 	assert_eq(topic, &"about_expired:entry_permit")
 	assert_true(ui.available_topics().has(topic), "question débloquée")
-	assert_eq(ui.queue_panel.get_status_text(), UiText.t("qp_documented_one", "1 DOCUMENTÉE"))
+	assert_eq(ui.queue_panel.get_status_text(), UiText.plural("qp_documented", 1, "%d DOCUMENTÉE", "%d DOCUMENTÉES"))
 	assert_true(ui.workbench.is_banner_visible())
 	# Un résultat qui ne correspond à aucune demande est ignoré.
 	var stray: Discrepancy = DiscrepancyChecker.check(case, FieldRef.new(CaseFactory.ID_CARD, &"family_name"),
