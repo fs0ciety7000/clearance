@@ -101,7 +101,7 @@ Légende priorité : **P1** critique (jamais volé, jamais coupé) · **P2** imp
 |---|---|---|---|---|---|
 | `booth.slot_in` | `documents_presented` (+ marqueur `present_docs` frame de dépôt) | `SFX` | 3D (fente, proche) | 4 samples : clapet métal + glissement | P1 |
 | `booth.slot_out` | `case_resolved` (documents rendus) | `SFX` | 3D | 4 samples (clapet inverse) | P2 |
-| `booth.holo_on` | `document_handed(doc)` (doc projeté) | `SFX` | 2D | Swell filtré 300 ms + grain ; pitch ±3 % ; 3 variantes | P1 |
+| `booth.holo_on` | `documents_presented(case_id)` (chaque doc projeté, échelonné par l’UI) | `SFX` | 2D | Swell filtré 300 ms + grain ; pitch ±3 % ; 3 variantes | P1 |
 | `booth.holo_off` | `case_resolved` / fermeture d'un doc | `SFX` | 2D | Swell inversé 150 ms, 2 variantes | P2 |
 | `booth.holo_hum` | Boucle tant qu'au moins un doc est ouvert | `SFX` | 2D | Boucle −28 dB, modulée par `inspection_mode_changed` (+4 dB, LPF ouvert) | P3 |
 | `booth.inspect_mode_on` / `_off` | `inspection_mode_changed(enabled)` | `UI` | 2D | 1 sample chacun (scanner qui s'arme / se coupe) | P2 |
