@@ -6,9 +6,9 @@ Jeu 3D stylisé cyberpunk inspiré de *Papers, Please*, développé avec **Godot
 
 ## État du projet
 
-**Phase : production — démo jouable (jours 1 à 3).** Jalons livrés : M1 Fondations · M2 Documents & règles · M3 Générateur & apparences · M4 Interface de comparaison + guichet 3D greybox · M5 Boucle de jour (scoring, soirée, sauvegarde). En cours : M6 Passager final (personnages Kenney + animations Quaternius) et audio, équilibrage du foyer.
+**Phase : production — campagne complète jouable (jours 1 à 10, 7 fins).** Jalons livrés : M1 Fondations · M2 Documents & règles · M3 Générateur & apparences · M4 Interface de comparaison + guichet 3D · M5 Boucle de jour (scoring, soirée, sauvegarde) · M6 Passager final (Kenney + Quaternius) et audio · M7 Jours 4–10 (détention, objets glissés, avis de recherche, Lucioles, soirées à choix, fins).
 
-Captures : [interface](docs/mockups/m4_day.png) · [Steam Deck](docs/mockups/m4_day_deck.png) · [briefing](docs/mockups/m5_briefing.png) · [soirée](docs/mockups/m5_evening.png)
+Captures : [guichet J3](docs/mockups/m6_day3_autoplay.png) · [enveloppe J4](docs/mockups/m7_envelope.png) · [fin « Rendre l'air »](docs/mockups/m7_end_f5.png) · [interface](docs/mockups/m4_day.png) · [Steam Deck](docs/mockups/m4_day_deck.png) · [briefing](docs/mockups/m5_briefing.png) · [soirée](docs/mockups/m5_evening.png)
 
 ## Documentation
 
@@ -26,7 +26,9 @@ Captures : [interface](docs/mockups/m4_day.png) · [Steam Deck](docs/mockups/m4_
 | [`docs/AUDIO.md`](docs/AUDIO.md) | Bus audio, liste des sons, voix courtes sous-titrées |
 | [`DECISIONS.md`](DECISIONS.md) | Journal des décisions |
 
-À venir : `docs/NARRATIVE.md` (Scénariste), `docs/QA.md` (QA).
+| [`docs/NARRATIVE.md`](docs/NARRATIVE.md) | Arcs, flags, passagers scénarisés J4–J10, soirées, 7 fins |
+
+À venir : `docs/QA.md` (QA).
 
 ## Démarrage
 
