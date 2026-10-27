@@ -79,7 +79,7 @@ func test_face_masked_then_comparable_after_visor_removal() -> void:
 	EventBus.documents_presented.emit(c.case_id)
 	EventBus.interrogation_requested.emit(InspectionSession.TOPIC_REMOVE_VISOR)
 	assert_eq(_last_topic(), InspectionSession.TOPIC_REMOVE_VISOR)
-	assert_eq(_last_line(), InspectionSession.LINE_VISOR_REMOVED)
+	assert_eq(_last_line(), session.scripted_line("visor", InspectionSession.LINE_VISOR_REMOVED))
 	assert_false(c.passenger_presented.appearance.is_face_covered())
 	EventBus.discrepancy_check_requested.emit(FieldRef.passenger_face(), photo)
 	assert_eq(_last_check().result, Discrepancy.Result.CONCORDANT)
@@ -171,7 +171,8 @@ func test_about_topic_confronts_real_discrepancy_only() -> void:
 	EventBus.documents_presented.emit(c.case_id)
 	# Non constatée : accusation sans preuve.
 	EventBus.interrogation_requested.emit(&"about_expired")
-	assert_eq(_last_line(), InspectionSession.LINE_CONFRONT_ANGRY)
+	assert_string_starts_with(_last_line(), InspectionSession.about_stem(InspectionSession.FAMILY_VALIDITY, false),
+			"indignation propre à la validité")
 	assert_eq(_last_reaction(), PassengerReaction.Kind.ANGRY)
 	var doc: StringName = &""
 	for ref: FieldRef in c.find_refs_by_truth_path(DiscrepancyChecker.EXPIRY_PATH):
@@ -180,8 +181,126 @@ func test_about_topic_confronts_real_discrepancy_only() -> void:
 			doc = ref.document_id
 	assert_ne(doc, &"", "expiration constatée")
 	EventBus.interrogation_requested.emit(StringName("about_expired:%s" % doc))
-	assert_eq(_last_line(), InspectionSession.LINE_ABOUT_PREFIX + "expired")
+	assert_string_starts_with(_last_line(), InspectionSession.about_stem(InspectionSession.FAMILY_VALIDITY, true))
 	assert_eq(_last_reaction(), PassengerReaction.Kind.NERVOUS)
 	assert_true(UiText.has(_last_line()))
 	EventBus.interrogation_requested.emit(&"about_expired:other_doc")
 	assert_eq(_last_reaction(), PassengerReaction.Kind.ANGRY, "autre document : non constaté")
+
+
+# --- Répliques de confrontation par famille de discordance -------------------
+
+## Contexte du J3 où **toutes** les règles des données sont actives (les
+## familles émetteur / origine / santé n'apparaissent qu'après la démo).
+func _ctx_all_rules() -> RuleContext:
+	var rule_set: RuleSet = RuleSet.new()
+	for file: String in DirAccess.get_files_at("res://data/rules"):
+		if file.ends_with(".tres"):
+			rule_set.rules.append(load("res://data/rules/" + file) as Rule)
+	var ctx: RuleContext = RuleContext.new(builder.ctx.today, rule_set)
+	ctx.faction_db = builder.ctx.faction_db
+	return ctx
+
+
+func _ref(c: Case, path: StringName) -> FieldRef:
+	var refs: Array[FieldRef] = c.find_refs_by_truth_path(path)
+	return refs[0] if not refs.is_empty() else null
+
+
+func _disc(a: FieldRef, b: FieldRef, reason: String) -> Discrepancy:
+	return Discrepancy.new(a, b).set_result(Discrepancy.Result.DISCORDANT, reason)
+
+
+## Chaque type de discordance → une réplique de sa famille (réelle : NERVOUS),
+## puis l'indignation quand rien n'a été constaté (ANGRY).
+func test_about_line_matches_discrepancy_family() -> void:
+	var c: Case = builder.build(0).case
+	var ctx: RuleContext = _ctx_all_rules()
+	var id_ref: FieldRef = _ref(c, &"citizen_id")
+	var name_ref: FieldRef = _ref(c, &"family_name")
+	var birth_ref: FieldRef = _ref(c, &"birth_date")
+	var expiry_ref: FieldRef = _ref(c, DiscrepancyChecker.EXPIRY_PATH)
+	var issuer_ref: FieldRef = _ref(c, &"document.issuer_id")
+	var photo: FieldRef = c.find_refs_by_kind(FieldDef.FieldKind.PORTRAIT)[0]
+	for ref: FieldRef in [id_ref, name_ref, birth_ref, expiry_ref, issuer_ref]:
+		assert_not_null(ref, "champ présent sur les documents du J3")
+	var other_doc: StringName = &"entry_permit" if id_ref.document_id != &"entry_permit" else &"id_card"
+	var cases: Array[Array] = [
+		[_disc(FieldRef.passenger_face(), photo, Discrepancy.REASON_FACE_MISMATCH), InspectionSession.FAMILY_FACE],
+		[_disc(expiry_ref, FieldRef.today(), Discrepancy.REASON_EXPIRED), InspectionSession.FAMILY_VALIDITY],
+		[_disc(id_ref, FieldRef.new(other_doc, &"citizen_id"), Discrepancy.REASON_MISMATCH), InspectionSession.FAMILY_ID_NUMBER],
+		[_disc(name_ref, FieldRef.new(other_doc, &"family_name"), Discrepancy.REASON_MISMATCH), InspectionSession.FAMILY_NAME],
+		[_disc(birth_ref, FieldRef.new(other_doc, &"birth_date"), Discrepancy.REASON_MISMATCH), InspectionSession.FAMILY_BIRTH],
+		[_disc(FieldRef.rulebook_rule(&"r_permit_required"), id_ref, Discrepancy.REASON_RULE_VIOLATED), InspectionSession.FAMILY_MISSING],
+		[_disc(FieldRef.rulebook_rule(&"r_bioscan_issuer"), issuer_ref, Discrepancy.REASON_RULE_VIOLATED), InspectionSession.FAMILY_ISSUER],
+		[_disc(FieldRef.rulebook_rule(&"r_origin_block"), id_ref, Discrepancy.REASON_RULE_VIOLATED), InspectionSession.FAMILY_ORIGIN],
+		[_disc(FieldRef.rulebook_rule(&"r_bioscan_fit"), issuer_ref, Discrepancy.REASON_RULE_VIOLATED), InspectionSession.FAMILY_HEALTH],
+		[_disc(FieldRef.rulebook_rule(&"r_id_card_valid"), expiry_ref, Discrepancy.REASON_RULE_VIOLATED), InspectionSession.FAMILY_VALIDITY],
+		[_disc(FieldRef.rulebook_rule(&"r_portrait_match"), photo, Discrepancy.REASON_RULE_VIOLATED), InspectionSession.FAMILY_FACE],
+		[_disc(FieldRef.rulebook_rule(&"r_identity_fields_match"), name_ref, Discrepancy.REASON_RULE_VIOLATED), InspectionSession.FAMILY_NAME],
+	]
+	for entry: Array in cases:
+		var d: Discrepancy = entry[0]
+		var family: String = entry[1]
+		var topic: StringName = InterrogationTopics.topic_for(d)
+		session.begin(c, ctx)
+		EventBus.documents_presented.emit(c.case_id)
+		session.confirmed.append(d)
+		EventBus.interrogation_requested.emit(topic)
+		assert_string_starts_with(_last_line(), InspectionSession.about_stem(family, true), "%s → %s" % [topic, family])
+		assert_false(_last_line().contains(InspectionSession.LINE_OUTRAGE_INFIX), "%s : réplique de discordance réelle" % topic)
+		assert_true(UiText.has(_last_line()), "traduite : %s" % _last_line())
+		assert_eq(_last_reaction(), PassengerReaction.Kind.NERVOUS)
+		# Même sujet sans discordance constatée : indignation, colère.
+		session.begin(c, ctx)
+		EventBus.documents_presented.emit(c.case_id)
+		EventBus.interrogation_requested.emit(topic)
+		assert_string_starts_with(_last_line(), InspectionSession.LINE_ABOUT_PREFIX, "indignation : %s" % topic)
+		assert_true(_last_line().contains(InspectionSession.LINE_OUTRAGE_INFIX), "indignation : %s" % _last_line())
+		assert_true(UiText.has(_last_line()))
+		assert_eq(_last_reaction(), PassengerReaction.Kind.ANGRY)
+
+
+func test_about_line_variant_is_deterministic_per_case_seed() -> void:
+	var c: Case = builder.build(0).case
+	session.begin(c, builder.ctx)
+	var first: String = session.about_line(InspectionSession.FAMILY_ID_NUMBER, true)
+	assert_eq(session.about_line(InspectionSession.FAMILY_ID_NUMBER, true), first, "même graine → même réplique")
+	var seen: Dictionary[String, bool] = {}
+	for s: int in 24:
+		c.case_seed = 1000 + s
+		seen[session.about_line(InspectionSession.FAMILY_ID_NUMBER, true)] = true
+	assert_gt(seen.size(), 1, "les graines varient les répliques")
+	assert_eq(session.about_line("unknown_family", true).begins_with(
+			InspectionSession.about_stem(InspectionSession.FAMILY_OTHER, true)), true, "repli : famille « autre »")
+
+
+func test_scripted_passenger_visor_line_replaces_generic() -> void:
+	var c: Case = _begin(2) # SC-04 : Mira, visière baissée
+	assert_true(c.dialogue_tags.has(&"sc04_mira"), "étiquette de dialogue de SC-04")
+	EventBus.documents_presented.emit(c.case_id)
+	EventBus.interrogation_requested.emit(InspectionSession.TOPIC_REMOVE_VISOR)
+	assert_eq(_last_line(), "sc04_mira_visor", "réplique scénarisée de la visière")
+	assert_true(UiText.has(_last_line()))
+	assert_false(c.passenger_presented.appearance.is_face_covered())
+	EventBus.interrogation_requested.emit(InspectionSession.TOPIC_REMOVE_VISOR)
+	assert_eq(_last_line(), InspectionSession.LINE_VISOR_NONE, "plus rien à retirer")
+
+
+func test_every_family_has_real_and_outrage_variants() -> void:
+	for family: String in InspectionSession.FAMILIES:
+		for real: bool in [true, false]:
+			var stem: String = InspectionSession.about_stem(family, real)
+			assert_true(UiText.has(stem + "1") and UiText.has(stem + "2"), "%s : au moins 2 variantes" % stem)
+		assert_true(UiText.has(InspectionSession.about_stem(family, true) + "3"), "%s : 3 variantes réelles" % family)
+
+
+func test_scripted_passenger_keeps_dedicated_about_line() -> void:
+	var c: Case = builder.build(0).case
+	c.dialogue_tags = [&"sc03_nervous_miner"] as Array[StringName]
+	session.begin(c, builder.ctx)
+	EventBus.documents_presented.emit(c.case_id)
+	var photo: FieldRef = c.find_refs_by_kind(FieldDef.FieldKind.PORTRAIT)[0]
+	session.confirmed.append(_disc(FieldRef.passenger_face(), photo, Discrepancy.REASON_FACE_MISMATCH))
+	EventBus.interrogation_requested.emit(&"about_face_mismatch")
+	assert_eq(_last_line(), "sc03_nervous_miner_about_face_mismatch")

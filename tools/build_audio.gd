@@ -46,6 +46,8 @@ func _initialize() -> void:
 		_build_passenger()
 	if _want("booth"):
 		_build_booth()
+	if _want("booth") or _want("stamp_lift"):
+		_build_stamp_lift()
 	if _want("station"):
 		_build_station()
 	if _want("ui"):
@@ -266,6 +268,26 @@ func _build_passenger() -> void:
 # ---------------------------------------------------------------------------
 # Guichet
 # ---------------------------------------------------------------------------
+
+## Remontée du tampon (`booth.stamp_lift`) : frottement court + ressort qui
+## se détend (partiels métalliques, glissando montant). Synthèse pure.
+func _build_stamp_lift() -> void:
+	for i: int in 2:
+		var rng: RandomNumberGenerator = rng_for("stamp_lift", i)
+		var n: int = n_of(0.26)
+		var rub_n: int = n_of(0.05)
+		var rub: PackedFloat32Array = AudioDsp.filter(AudioDsp.white(rub_n, rng), AudioDsp.Filter.BANDPASS, 2600.0 + 300.0 * i, 0.9, SR)
+		rub = AudioDsp.mul(rub, AudioDsp.env_ad(rub_n, 0.004, 0.03, SR))
+		var spring: PackedFloat32Array = AudioDsp.chirp(320.0 + 30.0 * i, 560.0 + 40.0 * i, 0.09, SR)
+		spring = AudioDsp.mul(spring, AudioDsp.env_ad(spring.size(), 0.004, 0.06, SR))
+		var buf: PackedFloat32Array = AudioDsp.silence(n)
+		buf = AudioDsp.mix_into(buf, rub, 0, 0.6)
+		buf = AudioDsp.mix_into(buf, spring, n_of(0.01), 0.5)
+		var base: float = 1450.0 * rng.randf_range(0.97, 1.03)
+		buf = AudioDsp.mix_into(buf, AudioDsp.ping(base, 0.2, 0.05, SR), n_of(0.02), 0.25)
+		buf = AudioDsp.mix_into(buf, AudioDsp.ping(base * 2.76, 0.12, 0.025, SR), n_of(0.02), 0.12)
+		save("sfx/booth/sfx_booth_stamp_lift_%02d.wav" % (i + 1), buf, -6.0)
+
 
 func _build_booth() -> void:
 	for i: int in 4:

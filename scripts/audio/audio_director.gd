@@ -11,8 +11,9 @@
 ## Branchements sans modifier le booth : un `PassengerAudio` est ajouté comme
 ## enfant de chaque acteur du pool (`BoothDirector.actors`) et un
 ## `AudioListener3D` est placé côté agent, derrière la vitre (le viewport du
-## booth active son écoute 3D). Côté UI : signaux `EventBus` + lecture de
-## l'état public de `ComparisonUI` (`selection.a`, `tool_bar.stamps`).
+## booth active son écoute 3D). Côté UI : signaux `EventBus`, signaux publics
+## de `ComparisonUI` (`hovered`, `toast_shown`, `departure_line_shown`) et
+## lecture de son état public (`selection.a`, `tool_bar.stamps`).
 class_name AudioDirector
 extends Node
 
@@ -44,6 +45,10 @@ const SLOT_OUT_DELAY_SEC: float = 0.45
 const DOOR_CLOSE_DELAY_SEC: float = 2.5
 const HOLO_STAGGER_SEC: float = 0.12
 const KNOCK_CHANCE: float = 0.3
+## `ui.hover` : au plus un tick tous les 90 ms (balayage rapide de la souris).
+const HOVER_MIN_INTERVAL_MSEC: int = 90
+## Le tampon remonte après l'impact (`booth.stamp_lift`).
+const STAMP_LIFT_DELAY_SEC: float = DS.DUR_SLOW
 const PA_MIN_SEC: float = 60.0
 const PA_MAX_SEC: float = 150.0
 const DROP_MIN_SEC: float = 4.0
@@ -96,6 +101,12 @@ var _bark_cache: Dictionary[String, AudioStreamWAV] = {}
 var _pending_barks: Array[Array] = []
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _paused_fx: bool = false
+## UI dont les signaux publics sont branchés.
+var _bound_ui: ComparisonUI = null
+var _last_hover_msec: int = -HOVER_MIN_INTERVAL_MSEC
+## Image de la dernière réponse d'interrogatoire (la réaction qui la suit
+## ne déclenche pas de second bark).
+var _answer_frame: int = -1
 
 
 func _ready() -> void:
@@ -482,6 +493,8 @@ func _poll_ui() -> void:
 		ui = _find_ui()
 		if ui == null:
 			return
+	if ui != _bound_ui:
+		bind_ui(ui)
 	var a: FieldRef = ui.selection.a
 	if a != null and (_last_a == null or not a.equals(_last_a)):
 		play_cue(&"ui.field_select_a")
@@ -496,6 +509,45 @@ func _poll_ui() -> void:
 		elif not holding and _holding.get(kind, false):
 			ui_pool.stop_cue(&"ui.stamp_hold")
 		_holding[kind] = holding
+
+
+## Branche les signaux publics de l'UI (survol, toasts, réplique de départ).
+func bind_ui(p_ui: ComparisonUI) -> void:
+	ui = p_ui
+	_bound_ui = p_ui
+	if p_ui == null:
+		return
+	if not p_ui.hovered.is_connected(_on_ui_hovered):
+		p_ui.hovered.connect(_on_ui_hovered)
+		p_ui.toast_shown.connect(_on_toast_shown)
+		p_ui.departure_line_shown.connect(_on_departure_line_shown)
+
+
+func _on_ui_hovered(_control: Control) -> void:
+	var now: int = Time.get_ticks_msec()
+	if now - _last_hover_msec < HOVER_MIN_INTERVAL_MSEC:
+		return
+	_last_hover_msec = now
+	play_cue(&"ui.hover")
+
+
+func _on_toast_shown(kind: ToastStack.Kind) -> void:
+	match kind:
+		ToastStack.Kind.SUCCESS:
+			play_cue(&"ui.toast_success")
+		ToastStack.Kind.ERROR, ToastStack.Kind.WARNING:
+			play_cue(&"ui.toast_error")
+		_:
+			play_cue(&"ui.toast_info")
+
+
+func _on_departure_line_shown(line_key: String, text: String) -> void:
+	var mood: StringName = TessarVoice.MOOD_NEUTRAL
+	if line_key.contains("denied"):
+		mood = TessarVoice.MOOD_ANGRY
+	elif line_key.contains("detained"):
+		mood = TessarVoice.MOOD_NERVOUS
+	bark(_current_case, line_key, text, mood)
 
 
 func _find_ui() -> ComparisonUI:
@@ -599,16 +651,18 @@ func _on_reaction(reaction: PassengerReaction.Kind) -> void:
 		PassengerReaction.Kind.ANGRY:
 			if pa != null and _rng.randf() < KNOCK_CHANCE:
 				pa.play_body(&"passenger.knock_glass")
+	if _answer_frame == Engine.get_process_frames():
+		_answer_frame = -1 # réaction d'une réponse : la réplique est déjà dite
+		return
 	var line: String = UiText.t("react_" + name_key, "")
 	if not line.is_empty(): # même condition que le sous-titre (ComparisonUI)
 		bark(_current_case, "react_" + name_key, line, TessarVoice.mood_for_reaction(reaction))
 
 
 func _on_interrogation_answered(topic: StringName, line_key: String) -> void:
-	if topic == InterrogationTopics.REMOVE_VISOR and line_key == InspectionSession.LINE_VISOR_REMOVED:
-		line_key = ComparisonUI.scripted_key(_current_case, "visor", line_key)
+	_answer_frame = Engine.get_process_frames()
 	var mood: StringName = TessarVoice.MOOD_NEUTRAL
-	if line_key == InspectionSession.LINE_CONFRONT_ANGRY:
+	if line_key == InspectionSession.LINE_CONFRONT_ANGRY or line_key.contains("_" + InspectionSession.LINE_OUTRAGE_INFIX):
 		mood = TessarVoice.MOOD_ANGRY
 	elif line_key == InspectionSession.LINE_CONFRONT_NERVOUS or line_key.begins_with(InspectionSession.LINE_ABOUT_PREFIX):
 		mood = TessarVoice.MOOD_NERVOUS
@@ -644,6 +698,7 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 	ui_pool.stop_cue(&"ui.stamp_hold")
 	var approved: bool = verdict != null and verdict.kind == VerdictKind.Kind.APPROVE
 	play_cue(&"booth.stamp_approved" if approved else &"booth.stamp_denied")
+	play_cue_later(&"booth.stamp_lift", STAMP_LIFT_DELAY_SEC)
 	_stamp_duck_left = DUCK_STAMP_HOLD_SEC
 
 

@@ -126,7 +126,7 @@ tag_angry,[en colère]
 tag_shrug,[hausse les épaules]
 tag_relieved,[soulagé]
 tag_relieved_f,[soulagée]
-react_nervous,Je… c'est une vieille photo.
+react_nervous,Il y a… il y a un problème ?
 react_angry,Vous n'avez pas le droit !
 react_shrug,Je ne sais pas quoi vous dire.
 react_relieved,Merci… merci.
@@ -240,10 +240,60 @@ line_stay_long,"Plusieurs semaines, peut-être plus."
 line_origin_tyc,De Tycho. La navette du matin.
 line_origin_hal,D'ici. Je suis de Halcyon.
 line_origin_ter,De la Terre. Long voyage.
-line_about_expired,Je n'ai pas eu le temps de le renouveler… c'est l'affaire de quelques jours.
-line_about_mismatch,C'est… une erreur de l'administration.
-line_about_face_mismatch,C'est une vieille photo. J'ai changé.
-line_about_rule_violated,Personne ne m'a prévenu de ce règlement.
+line_about_face_1,C'est une vieille photo… j'ai beaucoup maigri depuis la mine.
+line_about_face_2,J'étais malade le jour de la photo. Tout le monde me le dit.
+line_about_face_3,"Le photographe du bureau ne sait pas régler sa lumière, c'est tout."
+line_about_face_outrage_1,"Comment ça, pas moi ? Regardez-moi bien !"
+line_about_face_outrage_2,"Pas ressemblant ? Avec la lumière de votre guichet, personne ne l'est !"
+line_about_id_number_1,Le numéro ? Je… je n'ai jamais fait attention à ces chiffres.
+line_about_id_number_2,On m'a réattribué un numéro après mon transfert. L'ancien traîne encore sur certains papiers.
+line_about_id_number_3,"C'est le même numéro. Vous lisez mal, la carte est rayée."
+line_about_id_number_outrage_1,Mon numéro est le bon. Vérifiez avant d'accuser.
+line_about_id_number_outrage_2,"Vous voulez que je vous le récite ? Je le connais par cœur, mon numéro !"
+line_about_name_1,Mon nom… c'est-à-dire que… on l'écrit de plusieurs façons.
+line_about_name_2,"L'un est mon nom de naissance, l'autre mon nom d'usage. Je n'ai pas encore tout fait corriger."
+line_about_name_3,Une faute de frappe du bureau des transits. Ils en font tous les jours.
+line_about_name_outrage_1,"Je sais encore comment je m'appelle, merci."
+line_about_name_outrage_2,Mon nom est écrit pareil partout. Relisez.
+line_about_birth_1,"Ma date de naissance ? Je… je confonds, avec la fatigue."
+line_about_birth_2,"J'ai vu le jour pendant un transit : la date a été recopiée deux fois. Ça arrive souvent, sur les navettes."
+line_about_birth_3,"Les deux dates sont justes. Calendrier de Tycho, calendrier de la station."
+line_about_birth_outrage_1,Vous croyez que je ne connais pas ma propre date de naissance ?
+line_about_birth_outrage_2,"Relisez la date. Lentement, cette fois."
+line_about_validity_1,Je n'ai pas eu le temps de le renouveler… c'est l'affaire de quelques jours.
+line_about_validity_2,Le bureau des renouvellements est fermé depuis le couvre-feu. J'ai le récépissé quelque part…
+line_about_validity_3,Il est encore valable. On m'a dit qu'il y avait une tolérance d'une semaine.
+line_about_validity_outrage_1,Il est valide ! Regardez la date au lieu de m'accuser.
+line_about_validity_outrage_2,Valable jusqu'à la fin du mois. Vous savez lire un calendrier ?
+line_about_missing_1,Je… je l'avais en partant. Il a dû tomber dans la navette.
+line_about_missing_2,"Personne ne m'a dit qu'il fallait ce papier. Au départ, on ne m'a rien demandé."
+line_about_missing_3,Je l'ai déjà montré au guichet d'à côté. Ils l'ont gardé.
+line_about_missing_outrage_1,"Il est là, sous vos yeux, ce document !"
+line_about_missing_outrage_2,Il ne manque rien. J'ai tout glissé par la fente.
+line_about_issuer_1,"Le tampon ? C'est… c'est celui qu'on m'a donné, je n'ai pas choisi."
+line_about_issuer_2,C'est la clinique de mon quartier. Les autres n'avaient pas de rendez-vous avant un mois.
+line_about_issuer_3,Cet émetteur est agréé depuis ce matin. Vos listes ne sont pas à jour.
+line_about_issuer_outrage_1,Cet émetteur est parfaitement en règle. Renseignez-vous.
+line_about_issuer_outrage_2,C'est un tampon officiel. Vous voulez le nom du directeur ?
+line_about_origin_1,Mon origine ? J'ai… beaucoup déménagé. Je ne sais plus ce qu'ils ont noté.
+line_about_origin_2,"J'ai changé de colonie l'an dernier. Le numéro, lui, n'a pas suivi."
+line_about_origin_3,Il n'y a pas d'erreur. Tous les numéros de chez moi commencent comme ça.
+line_about_origin_outrage_1,Je viens d'où c'est écrit. Point.
+line_about_origin_outrage_2,Vous mettez en doute d'où je viens ? Sur quelle base ?
+line_about_health_1,"Je vais bien. Je… je vais bien, je vous assure."
+line_about_health_2,"C'est la poussière des quais. Ce n'est pas contagieux, le médecin l'a dit."
+line_about_health_3,"L'appareil s'est trompé. Il était mal calibré, tout le monde est sorti en rouge."
+line_about_health_outrage_1,Je suis en parfaite santé ! C'est écrit noir sur blanc.
+line_about_health_outrage_2,« Sain ». C'est le mot sur le papier. Sain.
+line_about_other_1,Je… je peux vous expliquer. Laissez-moi une minute.
+line_about_other_2,"Une erreur de saisie, sûrement. Ces formulaires changent tout le temps."
+line_about_other_3,Tout est en règle. C'est votre machine qui lit mal.
+line_about_other_outrage_1,Vous m'accusez sans preuve ?
+line_about_other_outrage_2,Il n'y a rien d'anormal. Vous inventez.
+bark_depart_ok,Gloire au Consortium.
+bark_depart_denied,Vous n'avez pas de cœur.
+bark_depart_detained,Attendez… où est-ce qu'on m'emmène ?
+tag_departing,[en partant]
 briefing_eyebrow,Halcyon Gate · Guichet 04 · Directive du jour
 briefing_title,JOUR %d
 briefing_hint,Cliquez ou appuyez sur une touche pour ouvrir le guichet
@@ -270,11 +320,15 @@ br_msg_count,%d REÇUS
 br_msg_count_one,%d REÇU
 br_household,FOYER · BLOC PÉTREL
 br_balance,SOLDE %s
+br_balance_advance,SOLDE %s · AVANCE INCLUSE
 br_hint,Lecture libre : l'horloge du shift démarre à la prise de poste.
 br_start,PRENDRE SON POSTE
 spk_okonkwo,OKONKWO · GUICHET 03
 spk_ilan,ILAN · BLOC PÉTREL
 spk_hall,BRÈVE · HALL DES GUICHETS
+spk_treasury,CONSORTIUM · TRÉSORERIE DU PERSONNEL
+msg_consortium_advance,"Avis de versement. Une avance d'installation de %d ₵ a été créditée sur votre compte Banque Aurel. Le Consortium investit dans ses agents ; il compte sur leur rendement. Les modalités de recouvrement vous seront communiquées ultérieurement."
+br_advance_line,AVANCE DU CONSORTIUM · CRÉDITÉE
 msg_okonkwo_day01,"Bienvenue au 04, collègue. Deux règles aujourd'hui, pas une de plus. L'intercom (N) fait avancer la file ; Espace, c'est la touche Inspection : un champ, puis un autre. Une discordance épinglée, c'est ta preuve — sans preuve, pas de refus. Les tampons se maintiennent : V pour approuver, X pour refuser."
 msg_okonkwo_day02,"On regarde les visages, maintenant. Compare le passager à sa photo : une coiffure, une barbe, une casquette, ça change. Une forme de visage, des yeux, un teint, non."
 msg_okonkwo_day03,"Les quais nous refilent les permis. Les Nés-Halcyon n'en ont pas besoin, les autres si. Et les visières : fais-les relever avant d'approuver, sinon c'est pour ta pomme."
@@ -377,6 +431,7 @@ ev_title,SOIRÉE — %s
 ev_budget,BUDGET DU FOYER
 ev_bank,BANQUE AUREL
 ev_morning,Solde du matin
+ev_advance,Avance du Consortium (prise de poste)
 ev_shift_net,Net du shift (salaire − amendes)
 ev_available,Disponible ce soir
 ev_lines,DÉPENSES DU SOIR — COCHEZ CE QUE VOUS PAYEZ
@@ -384,7 +439,7 @@ ev_spent,Dépenses
 ev_after,Solde après la soirée
 ev_debt_hint,Découvert : trois soirs de suite et l'Autorité de Transit vous réaffecte.
 ev_line_rent,Loyer de la cabine
-ev_note_rent,Deux loyers impayés de suite : réaffectation.
+ev_note_rent,Trois loyers impayés de suite : réaffectation.
 ev_line_air_tax,Taxe d'air
 ev_note_air_tax,Quota respiratoire du foyer.
 ev_line_food,Nourriture
@@ -507,6 +562,8 @@ opt_volume_ambience,Ambiance
 opt_volume_sfx,Effets
 opt_volume_voice,Voix
 opt_volume_ui,Interface
+opt_audio_mono,Son mono
+opt_audio_mono_hint,"Gauche et droite mélangées : aucun son ne se perd d'une seule oreille."
 opt_saved,Réglages enregistrés automatiquement.
 opt_back,RETOUR
 opt_on,ACTIVÉ

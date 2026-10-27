@@ -205,7 +205,7 @@ func _on_interrogation_answered(topic: StringName, line_key: String) -> void:
 		return
 	_desk_actor.set_talking(true)
 	_talk_left = TALK_SEC
-	if topic == InspectionSession.TOPIC_REMOVE_VISOR and line_key == InspectionSession.LINE_VISOR_REMOVED:
+	if topic == InspectionSession.TOPIC_REMOVE_VISOR and line_key != InspectionSession.LINE_VISOR_NONE:
 		var case: Case = _cases.get(_desk_actor.case_id, null)
 		if case != null:
 			_desk_actor.remove_visor(case.passenger_presented.appearance)

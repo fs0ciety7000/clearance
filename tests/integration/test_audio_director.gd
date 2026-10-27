@@ -89,6 +89,44 @@ func test_bark_on_voice_bus_ducks_music_and_ambience() -> void:
 	assert_almost_eq(director.duck_db(AudioBuses.MUSIC), 0.0, 0.01, "relâché")
 
 
+func test_answer_reaction_is_not_barked_twice() -> void:
+	EventBus.case_presented.emit(_case())
+	var before: int = director.played_cues().count(&"passenger.bark")
+	EventBus.interrogation_answered.emit(&"about_mismatch:id_card", "line_about_id_number_outrage_1")
+	EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.ANGRY)
+	assert_eq(director.played_cues().count(&"passenger.bark"), before + 1, "la réaction n'écrase pas la réplique")
+
+
+func test_ui_signals_play_hover_toasts_and_departure_bark() -> void:
+	var ui: ComparisonUI = (load("res://scenes/ui/comparison_ui.tscn") as PackedScene).instantiate() as ComparisonUI
+	add_child_autofree(ui)
+	director.bind_ui(ui)
+	ui.hovered.emit(ui)
+	assert_eq(_last(), [&"ui.hover", AudioBuses.UI])
+	var hovers: int = director.played_cues().count(&"ui.hover")
+	ui.hovered.emit(ui)
+	ui.hovered.emit(ui)
+	assert_eq(director.played_cues().count(&"ui.hover"), hovers, "survol limité en fréquence")
+	ui.toast_shown.emit(ToastStack.Kind.SUCCESS)
+	assert_eq(_last(), [&"ui.toast_success", AudioBuses.UI])
+	ui.toast_shown.emit(ToastStack.Kind.ERROR)
+	assert_eq(_last(), [&"ui.toast_error", AudioBuses.UI])
+	ui.toast_shown.emit(ToastStack.Kind.INFO)
+	assert_eq(_last(), [&"ui.toast_info", AudioBuses.UI])
+	EventBus.case_presented.emit(_case())
+	ui.departure_line_shown.emit("bark_depart_ok", UiText.t("bark_depart_ok"))
+	assert_eq(_last(), [&"passenger.bark", AudioBuses.VOICE])
+
+
+func test_stamp_lift_follows_the_stamp() -> void:
+	assert_true(AudioCueBank.has_cue(&"booth.stamp_lift"))
+	assert_not_null(AudioCueBank.stream_of(&"booth.stamp_lift"))
+	EventBus.verdict_stamped.emit(Verdict.new(&"c1", VerdictKind.Kind.APPROVE))
+	assert_does_not_have(director.played_cues(), &"booth.stamp_lift")
+	await wait_seconds(AudioDirector.STAMP_LIFT_DELAY_SEC + 0.1)
+	assert_has(director.played_cues(), &"booth.stamp_lift")
+
+
 func test_ui_voice_limit() -> void:
 	for i: int in 12:
 		director.play_cue(&"ui.toast_info" if i % 2 == 0 else &"ui.match")

@@ -4,7 +4,8 @@
 ## Assemble des **clés** de texte (`fr.csv`) selon le jour, les drapeaux
 ## narratifs (échos des dilemmes de la veille) et l'état du foyer : bulletin
 ## du Bureau de Continuité (directive de délégation, slogan), règles du jour
-## (badge NOUVEAU), messages personnels (Okonkwo au J1, Ilan, brèves du hall).
+## (badge NOUVEAU), messages personnels (Okonkwo au J1, Ilan, brèves du hall) ;
+## au J1, avis de la Trésorerie : avance du Consortium (D-047, `starting_credits`).
 ## Pur : aucune dépendance aux autoloads (les données sont passées).
 class_name BriefingContent
 extends RefCounted
@@ -12,6 +13,8 @@ extends RefCounted
 const SPEAKER_OKONKWO: String = "spk_okonkwo"
 const SPEAKER_ILAN: String = "spk_ilan"
 const SPEAKER_HALL: String = "spk_hall"
+const SPEAKER_TREASURY: String = "spk_treasury"
+const MSG_ADVANCE: String = "msg_consortium_advance"
 ## Nature du message (couleur du locuteur, DS §7.10) : Consortium, mentor, famille.
 enum Voice { CONSORTIUM, MENTOR, FAMILY }
 
@@ -23,11 +26,16 @@ var directive_title_key: String = ""
 var directive_key: String = ""
 var slogan_key: String = ""
 var rulebook: Array[RulebookEntry] = []
-## `{speaker: String (clé), text: String (clé), voice: Voice}` dans l'ordre.
+## `{speaker: String (clé), text: String (clé), voice: Voice, args: Array}`
+## dans l'ordre (`args` : valeurs du gabarit `%s`, souvent vide).
 var messages: Array[Dictionary] = []
+## Avance du Consortium versée à la prise de poste (J1 seulement, 0 sinon).
+var advance_credits: int = 0
 
 
-static func build(day: DayDef, flags: Dictionary[StringName, Variant], household: Household) -> BriefingContent:
+## `advance` : avance du Consortium du barème (`EconomyDef.starting_credits`),
+## annoncée au J1 seulement.
+static func build(day: DayDef, flags: Dictionary[StringName, Variant], household: Household, advance: int = 0) -> BriefingContent:
 	var content: BriefingContent = BriefingContent.new()
 	if day == null:
 		return content
@@ -38,6 +46,9 @@ static func build(day: DayDef, flags: Dictionary[StringName, Variant], household
 	content.directive_key = day.intro_text_key
 	content.slogan_key = "day%02d_slogan" % n
 	content.rulebook = day.rule_set.build_rulebook() if day.rule_set != null else []
+	if n == 1 and advance > 0:
+		content.advance_credits = advance
+		content.add(SPEAKER_TREASURY, MSG_ADVANCE, Voice.CONSORTIUM, [advance])
 	# Échos des choix de la veille (GDD §11.1 : « écho parfois dans le bulletin »).
 	if n == 2:
 		if _is_true(flags, &"sc02_mercy"):
@@ -52,8 +63,8 @@ static func build(day: DayDef, flags: Dictionary[StringName, Variant], household
 	return content
 
 
-func add(speaker_key: String, text_key: String, voice: Voice) -> void:
-	messages.append({"speaker": speaker_key, "text": text_key, "voice": voice})
+func add(speaker_key: String, text_key: String, voice: Voice, args: Array = []) -> void:
+	messages.append({"speaker": speaker_key, "text": text_key, "voice": voice, "args": args})
 
 
 func get_new_entries() -> Array[RulebookEntry]:

@@ -230,6 +230,55 @@ func test_interrogation_request_and_answer() -> void:
 	assert_string_contains(ui.passenger_panel.get_line(), UiText.t("ans_purpose"))
 
 
+func test_reaction_after_answer_keeps_the_answer_subtitle() -> void:
+	_present_case()
+	EventBus.interrogation_answered.emit(&"about_mismatch:id_card", "line_about_id_number_1")
+	EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
+	assert_string_contains(ui.subtitles.get_text(), UiText.t("line_about_id_number_1"), "la réplique reste affichée")
+	assert_false(ui.subtitles.get_text().contains(UiText.t("react_nervous")))
+	assert_string_contains(ui.passenger_panel.get_line(), UiText.t("line_about_id_number_1"))
+	# Réaction suivante (déjà « consommée » par la réponse) : sa propre réplique.
+	EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
+	assert_string_contains(ui.subtitles.get_text(), UiText.t("react_nervous"))
+
+
+func test_public_feedback_signals() -> void:
+	watch_signals(ui)
+	ui.toasts.push(ToastStack.Kind.SUCCESS, "ok", "")
+	assert_signal_emitted_with_parameters(ui, "toast_shown", [ToastStack.Kind.SUCCESS])
+	var next_button: BaseButton = ui.tool_bar.find_children("*", "BaseButton", true, false)[0] as BaseButton
+	next_button.disabled = false
+	next_button.mouse_entered.emit()
+	assert_signal_emitted(ui, "hovered", "survol d'un bouton actif")
+	var late: Button = Button.new()
+	ui.passenger_panel.add_child(late)
+	late.mouse_entered.emit()
+	assert_signal_emit_count(ui, "hovered", 2, "boutons créés après coup branchés aussi")
+	late.disabled = true
+	late.mouse_entered.emit()
+	assert_signal_emit_count(ui, "hovered", 2, "bouton inactif : pas de son")
+
+
+func test_departure_line_after_verdict() -> void:
+	_present_case()
+	watch_signals(ui)
+	EventBus.day_phase_changed.emit(DayPhase.Kind.RESOLVING, case.case_id)
+	var result: CaseResult = CaseResult.new(case.case_id)
+	result.verdict_kind = VerdictKind.Kind.DENY
+	EventBus.case_resolved.emit(case.case_id, result)
+	EventBus.day_phase_changed.emit(DayPhase.Kind.DEPARTING, case.case_id)
+	assert_signal_not_emitted(ui, "departure_line_shown", "après la réaction au tampon")
+	ui.show_departure_line(case.case_id, VerdictKind.Kind.DENY)
+	assert_signal_emitted_with_parameters(ui, "departure_line_shown", ["bark_depart_denied", UiText.t("bark_depart_denied")])
+	assert_string_contains(ui.subtitles.get_text(), UiText.t("bark_depart_denied"))
+	ui.show_departure_line(case.case_id, VerdictKind.Kind.DENY)
+	assert_signal_emit_count(ui, "departure_line_shown", 1, "une seule fois par passager")
+	assert_eq(ComparisonUI.departure_key(case, VerdictKind.Kind.APPROVE), "bark_depart_ok")
+	assert_eq(ComparisonUI.departure_key(case, VerdictKind.Kind.DETAIN), "bark_depart_detained")
+	for key: String in ["bark_depart_ok", "bark_depart_denied", "bark_depart_detained", "tag_departing"]:
+		assert_true(UiText.has(key), key)
+
+
 func test_visor_question_only_when_face_covered() -> void:
 	_present_case()
 	assert_false(ui.available_topics().has(InterrogationTopics.REMOVE_VISOR))

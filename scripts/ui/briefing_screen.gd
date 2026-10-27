@@ -198,11 +198,12 @@ func _messages() -> Control:
 		var voice: BriefingContent.Voice = message["voice"]
 		var speaker: String = message["speaker"]
 		var text: String = message["text"]
-		box.add_child(_message_card(speaker, text, voice))
+		var args: Array = message.get("args", [])
+		box.add_child(_message_card(speaker, text, voice, args))
 	return box
 
 
-func _message_card(speaker_key: String, text_key: String, voice: BriefingContent.Voice) -> Control:
+func _message_card(speaker_key: String, text_key: String, voice: BriefingContent.Voice, args: Array = []) -> Control:
 	var accent: Color = DS.ACCENT_CYAN
 	var bg: Color = DS.BG_ELEVATED
 	match voice:
@@ -215,14 +216,22 @@ func _message_card(speaker_key: String, text_key: String, voice: BriefingContent
 	var box: VBoxContainer = vbox(DS.SPACE_1)
 	card.add_child(box)
 	box.add_child(eyebrow(UiText.t(speaker_key, speaker_key), accent))
-	box.add_child(wrapped(UiText.t(text_key, ""), &"BodyLabel"))
+	box.add_child(wrapped(UiText.tf(text_key, args), &"BodyLabel"))
+	if text_key == BriefingContent.MSG_ADVANCE and content.advance_credits > 0:
+		var amount: HBoxContainer = hbox(DS.SPACE_2)
+		amount.add_child(label(UiText.t("br_advance_line", "AVANCE DU CONSORTIUM · CRÉDITÉE"), &"DataSmall"))
+		amount.add_child(spacer())
+		amount.add_child(label(ScreenBase.credits(content.advance_credits, true), &"DataTitle", DS.ACCENT_YELLOW))
+		box.add_child(amount)
 	return card
 
 
 func _household() -> Control:
 	var box: VBoxContainer = vbox(DS.SPACE_3)
-	box.add_child(section(UiText.t("br_household", "FOYER · BLOC PÉTREL"), UiIcon.Kind.INFO, DS.TEXT_SECONDARY,
-			UiText.tf("br_balance", [ScreenBase.credits(credits_balance)], "SOLDE %s")))
+	var balance_text: String = UiText.tf("br_balance", [ScreenBase.credits(credits_balance)], "SOLDE %s")
+	if content.advance_credits > 0:
+		balance_text = UiText.tf("br_balance_advance", [ScreenBase.credits(credits_balance)], "SOLDE %s · AVANCE INCLUSE")
+	box.add_child(section(UiText.t("br_household", "FOYER · BLOC PÉTREL"), UiIcon.Kind.INFO, DS.TEXT_SECONDARY, balance_text))
 	var home: Household = household if household != null else Household.new()
 	for member: Household.Member in home.members:
 		box.add_child(HouseholdView.member_card(member, HouseholdView.member_note(member)))

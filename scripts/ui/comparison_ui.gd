@@ -16,6 +16,15 @@
 class_name ComparisonUI
 extends Control
 
+# --- Signaux publics (retours sonores, docs/AUDIO.md §4) ----------------------
+## Survol (souris ou focus) d'un bouton actif de l'UI (`ui.hover`).
+signal hovered(control: Control)
+## Un toast vient d'apparaître (`ui.toast_*`).
+signal toast_shown(kind: ToastStack.Kind)
+## Réplique de départ du passager sous-titrée (`passenger.bark_depart`) :
+## `bark_depart_ok` / `_denied` / `_detained` (ou réplique scénarisée).
+signal departure_line_shown(line_key: String, text: String)
+
 # --- Zones (UI_FLOW §2.2, px @1080p) -------------------------------------------
 const BAND_TOP: float = 56.0
 const BAND_BOTTOM: float = 432.0
@@ -69,6 +78,12 @@ var _menu_items: Array[Dictionary] = []
 var _applied_min_px: int = 0
 ## Dernier résultat reçu (`case_resolved`) : détail du ticket de citation.
 var _last_result: CaseResult = null
+## Réponse d'interrogatoire de cette image : la réaction émise juste après
+## (NERVOUS / ANGRY) ne remplace pas la réplique, elle n'ajoute que l'étiquette.
+var _answer_frame: int = -1
+var _answer_text: String = ""
+## Passager qui quitte le guichet (réplique de départ), null sinon.
+var _departing_case: Case = null
 
 
 func _ready() -> void:
@@ -80,7 +95,33 @@ func _ready() -> void:
 	_build()
 	_connect_bus()
 	get_viewport().size_changed.connect(_on_viewport_resized)
+	_wire_hover(self)
+	get_tree().node_added.connect(_on_node_added)
 	_refresh_all()
+
+
+## Boutons créés plus tard (menu de questions, onglets…) : même branchement.
+func _on_node_added(node: Node) -> void:
+	if node is BaseButton and is_ancestor_of(node):
+		_wire_button(node as BaseButton)
+
+
+func _wire_hover(node: Node) -> void:
+	if node is BaseButton:
+		_wire_button(node as BaseButton)
+	for child: Node in node.get_children():
+		_wire_hover(child)
+
+
+func _wire_button(button: BaseButton) -> void:
+	if not button.mouse_entered.is_connected(_on_button_hovered):
+		button.mouse_entered.connect(_on_button_hovered.bind(button))
+		button.focus_entered.connect(_on_button_hovered.bind(button))
+
+
+func _on_button_hovered(button: BaseButton) -> void:
+	if is_instance_valid(button) and not button.disabled and button.is_visible_in_tree():
+		hovered.emit(button)
 
 
 func _read_settings() -> void:
@@ -222,6 +263,7 @@ func _build() -> void:
 	toasts.offset_right = -DS.SPACE_8
 	toasts.offset_top = BAND_TOP + DS.SPACE_6 + 132.0
 	add_child(toasts)
+	toasts.toast_shown.connect(func(kind: ToastStack.Kind) -> void: toast_shown.emit(kind))
 
 
 func _connect_bus() -> void:
@@ -280,6 +322,7 @@ func _on_day_clock_ticked(p_remaining: float) -> void:
 
 func _on_case_presented(case: Case) -> void:
 	_end_case(false)
+	_departing_case = null
 	current_case = case
 	documents_shown = false
 	verdict_sent = false
@@ -348,13 +391,11 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 
 
 func _on_interrogation_answered(topic: StringName, line_key: String) -> void:
-	# Visière : la clé reste `line_visor_removed` (contrat booth) ; un passager
-	# scénarisé a sa propre réplique (`<dialogue_id>_visor`).
-	if topic == InterrogationTopics.REMOVE_VISOR and line_key == InspectionSession.LINE_VISOR_REMOVED:
-		line_key = scripted_key(current_case, "visor", line_key)
 	var text: String = UiText.t(line_key, line_key)
 	passenger_panel.set_line(text)
 	subtitles.show_line(_speaker_name(), text)
+	_answer_frame = Engine.get_process_frames()
+	_answer_text = text
 	if topic == InterrogationTopics.REMOVE_VISOR:
 		_refresh_face()
 	_refresh_all()
@@ -365,11 +406,23 @@ func _on_reaction(reaction: PassengerReaction.Kind) -> void:
 	var feminine: bool = current_case != null and current_case.passenger_presented != null \
 			and current_case.passenger_presented.sex == Passenger.SEX_F
 	var tag: String = UiText.t("tag_%s%s" % [name_key, "_f" if feminine else ""], UiText.t("tag_" + name_key, "[%s]" % name_key))
+	if is_answer_reaction():
+		# Réaction qui accompagne une réponse : la réplique reste, l'étiquette s'ajoute.
+		subtitles.show_line(_speaker_name(), _answer_text, tag)
+		_answer_text = ""
+		passenger_panel.set_hint(tag)
+		return
 	var line: String = UiText.t("react_" + name_key, "")
 	if not line.is_empty():
 		subtitles.show_line(_speaker_name(), line, tag)
 		passenger_panel.set_line(line)
 	passenger_panel.set_hint(tag)
+
+
+## Vrai si une réponse d'interrogatoire vient d'être affichée (même image) et
+## qu'aucune réaction ne l'a encore accompagnée.
+func is_answer_reaction() -> bool:
+	return not _answer_text.is_empty() and _answer_frame == Engine.get_process_frames()
 
 
 func _on_inspection_target_picked(ref: FieldRef) -> void:
@@ -389,6 +442,36 @@ func _on_case_resolved(case_id: StringName, result: CaseResult) -> void:
 	_show_result(result)
 	_return_documents()
 	_refresh_all()
+	# Réplique de départ, après la réaction au tampon (lisible à son tour).
+	_departing_case = current_case
+	var kind: VerdictKind.Kind = result.verdict_kind if result != null else VerdictKind.Kind.DENY
+	get_tree().create_timer(DS.SUBTITLE_MIN_HOLD).timeout.connect(show_departure_line.bind(case_id, kind))
+
+
+## Sous-titre de départ du passager (`bark_depart_*`, AUDIO.md §5.2) ; ignoré
+## si un autre passager est déjà appelé.
+func show_departure_line(case_id: StringName, kind: VerdictKind.Kind) -> void:
+	var leaving: Case = _departing_case
+	if leaving == null or leaving.case_id != case_id or (current_case != null and current_case != leaving):
+		return
+	_departing_case = null
+	var key: String = departure_key(leaving, kind)
+	var text: String = UiText.t(key, "")
+	if text.is_empty():
+		return
+	subtitles.show_line(UiText.passenger_name(leaving), text, UiText.t("tag_departing", "[en partant]"))
+	if current_case == leaving:
+		passenger_panel.set_line(text)
+	departure_line_shown.emit(key, text)
+
+
+static func departure_key(case: Case, kind: VerdictKind.Kind) -> String:
+	match kind:
+		VerdictKind.Kind.APPROVE:
+			return scripted_key(case, "depart_ok", "bark_depart_ok")
+		VerdictKind.Kind.DETAIN:
+			return scripted_key(case, "depart_detained", "bark_depart_detained")
+	return scripted_key(case, "depart_denied", "bark_depart_denied")
 
 
 ## Avis d'infraction imprimé (DS §7.9) : détail tiré du `CaseResult` du cas

@@ -45,10 +45,56 @@ func test_briefing_content_day1_and_echoes() -> void:
 	assert_eq(BriefingContent.family_message_key(3, Household.new()), "msg_family_ok")
 
 
+func test_briefing_announces_consortium_advance_on_day1_only() -> void:
+	var advance: int = data.get_economy().starting_credits
+	assert_eq(advance, 20, "D-047")
+	var d1: BriefingContent = BriefingContent.build(data.get_day(1), {}, Household.new(), advance)
+	assert_eq(d1.advance_credits, advance)
+	var first_text: String = d1.messages[0]["text"]
+	var first_voice: BriefingContent.Voice = d1.messages[0]["voice"]
+	assert_eq(first_text, BriefingContent.MSG_ADVANCE, "avis de la Trésorerie en tête")
+	assert_eq(first_voice, BriefingContent.Voice.CONSORTIUM)
+	var d2: BriefingContent = BriefingContent.build(data.get_day(2), {}, Household.new(), advance)
+	assert_eq(d2.advance_credits, 0)
+	for message: Dictionary in d2.messages:
+		var text_key: String = message["text"]
+		assert_ne(text_key, BriefingContent.MSG_ADVANCE, "pas d'avance après le J1")
+	var screen: BriefingScreen = BriefingScreen.new()
+	screen.setup(d1, Household.new(), advance, data.get_day(1))
+	add_child_autofree(screen)
+	await wait_process_frames(2)
+	var text: String = _texts_of(screen)
+	assert_string_contains(text, UiText.tf(BriefingContent.MSG_ADVANCE, [advance]))
+	assert_string_contains(text, "+20 ₵")
+	assert_string_contains(text, UiText.tf("br_balance_advance", [ScreenBase.credits(advance)]))
+
+
+func test_evening_day1_shows_consortium_advance() -> void:
+	var advance: int = data.get_economy().starting_credits
+	var net: int = 26
+	var balance: int = advance + net
+	var lines: Array[ExpenseLine] = EveningService.build_lines(data.get_economy(), 1, Household.new())
+	EveningService.default_selection(lines, balance)
+	var screen: EveningScreen = EveningScreen.new()
+	screen.setup(data.get_day(1), balance, net, lines, Household.new(), false, advance)
+	add_child_autofree(screen)
+	await wait_process_frames(2)
+	var text: String = _texts_of(screen)
+	assert_string_contains(text, UiText.t("ev_advance"))
+	assert_string_contains(text, "+20 ₵")
+	assert_false(text.contains(UiText.t("ev_morning")), "solde du matin = l'avance : une seule ligne")
+	assert_string_contains(text, ScreenBase.credits(balance), "disponible = avance + net du shift")
+	# Cohérence avec EveningService : le solde de départ de la soirée inclut l'avance.
+	var report: EveningReport = EveningService.apply(data.get_economy(), 1, Household.new(), lines, balance, 1)
+	assert_eq(report.balance_before, advance + net)
+	assert_eq(report.balance_after, advance + net - EveningService.total_spent(lines))
+
+
 func test_all_briefing_keys_are_translated() -> void:
 	var keys: Array[String] = ["msg_echo_sc02_mercy", "msg_echo_sc02_turned_away", "msg_echo_sc03_passed",
 			"msg_family_day01", "msg_family_ok", "msg_family_cold", "msg_family_hungry", "msg_family_noa_sick",
-			"msg_family_sick", "msg_family_grave", "msg_family_lost", "spk_okonkwo", "spk_ilan", "spk_hall"]
+			"msg_family_sick", "msg_family_grave", "msg_family_lost", "spk_okonkwo", "spk_ilan", "spk_hall",
+			"spk_treasury", BriefingContent.MSG_ADVANCE, "br_advance_line", "br_balance_advance", "ev_advance"]
 	for n: int in [1, 2, 3]:
 		var content: BriefingContent = BriefingContent.build(data.get_day(n), {}, Household.new())
 		keys.append_array([content.directive_key, content.directive_title_key, content.slogan_key, "msg_okonkwo_day%02d" % n])
@@ -230,6 +276,20 @@ func test_options_panel_drives_settings() -> void:
 	slider.value = 1.2
 	assert_almost_eq(Settings.text_scale, 1.2, 0.001)
 	for key: StringName in [Settings.KEY_REDUCE_MOTION, Settings.KEY_SUBTITLES, Settings.KEY_CLOCK_SLOW_ACCESSIBILITY,
-			Settings.KEY_FX_INTENSITY] + OptionsPanel.VOLUME_KEYS:
+			Settings.KEY_FX_INTENSITY, Settings.KEY_AUDIO_MONO] + OptionsPanel.VOLUME_KEYS:
 		assert_true(panel.controls.has(key), "réglage %s présent" % key)
 	Settings.set_value(Settings.KEY_TEXT_SCALE, before, false)
+
+
+func test_options_mono_toggle_drives_setting() -> void:
+	var before: bool = Settings.get_bool(Settings.KEY_AUDIO_MONO)
+	Settings.set_value(Settings.KEY_AUDIO_MONO, false, false)
+	var panel: OptionsPanel = OptionsPanel.new()
+	add_child_autofree(panel)
+	await wait_process_frames(1)
+	var toggle: Button = panel.controls[Settings.KEY_AUDIO_MONO] as Button
+	assert_false(toggle.button_pressed)
+	toggle.button_pressed = true
+	assert_true(Settings.get_bool(Settings.KEY_AUDIO_MONO), "Son mono activé")
+	assert_true(UiText.has("opt_audio_mono") and UiText.has("opt_audio_mono_hint"))
+	Settings.set_value(Settings.KEY_AUDIO_MONO, before, false)

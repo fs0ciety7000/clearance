@@ -4,7 +4,8 @@
 ## (`text_scale`, D-026), effets visuels Complets / Réduits / Désactivés
 ## (`fx_intensity`), « Réduire les animations » (`reduce_motion` : marche du
 ## passager ≤ 1 s dès le passager suivant), sous-titres, horloge ralentie.
-## Puis **Audio** : un volume par bus (docs/AUDIO.md §2). Chaque réglage passe
+## Puis **Audio** : un volume par bus (docs/AUDIO.md §2) et « Son mono »
+## (`audio_mono`, audition unilatérale, AUDIO.md §9). Chaque réglage passe
 ## par `Settings.set_value()` (persisté dans `user://settings.cfg`).
 class_name OptionsPanel
 extends VBoxContainer
@@ -37,6 +38,8 @@ func _ready() -> void:
 	add_child(ScreenBase.section(UiText.t("opt_audio", "AUDIO"), UiIcon.Kind.CHAT, DS.TEXT_SECONDARY))
 	for key: StringName in VOLUME_KEYS:
 		_add_slider(key, UiText.t("opt_%s" % key, String(key)), 0.0, 1.0, 0.05, true)
+	_add_toggle(Settings.KEY_AUDIO_MONO, UiText.t("opt_audio_mono", "Son mono"),
+			UiText.t("opt_audio_mono_hint", "Gauche et droite mélangées : aucun son ne se perd d'une seule oreille."))
 	var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_3)
 	add_child(row)
 	row.add_child(ScreenBase.label(UiText.t("opt_saved", "Réglages enregistrés automatiquement."), &"CaptionLabel"))

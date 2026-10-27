@@ -32,6 +32,7 @@ const CUES: Dictionary[StringName, Array] = {
 	&"booth.holo_hum": [&"SFX", "sfx/booth/sfx_booth_holo_hum_loop.wav", 1, P3, -32.0, 1.0, 1],
 	&"booth.stamp_approved": [&"SFX", "sfx/booth/sfx_booth_stamp_approved_%02d.wav", 3, P1, -2.0, 1.02, 1],
 	&"booth.stamp_denied": [&"SFX", "sfx/booth/sfx_booth_stamp_denied_%02d.wav", 3, P1, -2.0, 1.02, 1],
+	&"booth.stamp_lift": [&"SFX", "sfx/booth/sfx_booth_stamp_lift_%02d.wav", 2, P3, -14.0, 1.04, 1],
 	&"booth.intercom_on": [&"SFX", "sfx/booth/sfx_booth_intercom_on_%02d.wav", 2, P2, -8.0, 1.02, 1],
 	&"booth.intercom_off": [&"SFX", "sfx/booth/sfx_booth_intercom_off_%02d.wav", 2, P2, -8.0, 1.02, 1],
 	&"booth.printer_citation": [&"SFX", "sfx/booth/sfx_booth_printer_citation_%02d.wav", 2, P1, -8.0, 1.0, 1],

@@ -3,6 +3,9 @@
 class_name ToastStack
 extends VBoxContainer
 
+## Un toast simple vient d'être empilé (retour sonore `ui.toast_*`).
+signal toast_shown(kind: Kind)
+
 enum Kind { INFO, SUCCESS, WARNING, ERROR, NARRATIVE }
 
 const MAX_VISIBLE: int = 3
@@ -86,6 +89,7 @@ func push(kind: Kind, title: String, message: String, side: String = "") -> Pane
 		text.text = message
 		column.add_child(text)
 	_add(panel, title.length() + message.length())
+	toast_shown.emit(kind)
 	return panel
 
 

@@ -8,9 +8,17 @@
 ##   tirée de ce que *dit* le passager présenté), `remove_visor` (D-021),
 ##   `about_<raison>[:<doc>]` = confrontation à une discordance confirmée
 ##   (NERVOUS si elle a bien été constatée, ANGRY sinon), `confront` (générique).
+##   La réplique dépend de la **famille** de la discordance (visage, N° ID, nom,
+##   naissance, validité, document manquant, émetteur, origine, santé, autre ;
+##   `family_of()`) : `line_about_<famille>_<n>` si elle est constatée (gêne,
+##   excuse plausible ou mensonge), `line_about_<famille>_outrage_<n>` sinon
+##   (indignation). Variante tirée de la graine du cas (déterministe).
 ## - Réactions du passager (`passenger_reaction_triggered`) : comparaison de
 ##   visages discordante, confrontation, verdict. Elles ne dépendent **jamais**
 ##   de la vérité cachée (`CaseKey`), seulement de ce que le joueur a constaté.
+## - `remove_visor` : `LINE_VISOR_NONE` s'il n'y a rien à retirer, sinon la
+##   réplique de retrait (`<dialogue_id>_visor` ou `LINE_VISOR_REMOVED`) — tout
+##   autre `line_key` que `LINE_VISOR_NONE` signifie « visière retirée ».
 ## - M5 : répliques des passagers scénarisés — si le cas porte une étiquette de
 ##   dialogue (`ScriptedCaseDef.dialogue_id`) et que la clé
 ##   `<dialogue_id>_<sujet>` existe dans `fr.csv`, elle remplace la réplique
@@ -41,6 +49,36 @@ const LINE_STAY_SHORT: String = "line_stay_short"
 const LINE_STAY_LONG: String = "line_stay_long"
 const LINE_ORIGIN_PREFIX: String = "line_origin_"
 const LINE_ABOUT_PREFIX: String = "line_about_"
+const LINE_OUTRAGE_INFIX: String = "outrage_"
+## Variantes cherchées par famille (`_1` … `_MAX_VARIANTS`).
+const MAX_VARIANTS: int = 6
+## Familles de discordance (suffixes des répliques `line_about_<famille>_…`).
+const FAMILY_FACE: String = "face"
+const FAMILY_ID_NUMBER: String = "id_number"
+const FAMILY_NAME: String = "name"
+const FAMILY_BIRTH: String = "birth"
+const FAMILY_VALIDITY: String = "validity"
+const FAMILY_MISSING: String = "missing"
+const FAMILY_ISSUER: String = "issuer"
+const FAMILY_ORIGIN: String = "origin"
+const FAMILY_HEALTH: String = "health"
+const FAMILY_OTHER: String = "other"
+const FAMILIES: Array[String] = [FAMILY_FACE, FAMILY_ID_NUMBER, FAMILY_NAME, FAMILY_BIRTH, FAMILY_VALIDITY,
+		FAMILY_MISSING, FAMILY_ISSUER, FAMILY_ORIGIN, FAMILY_HEALTH, FAMILY_OTHER]
+## `truth_path` d'un champ → famille de réplique.
+const TRUTH_PATH_FAMILIES: Dictionary[StringName, String] = {
+	&"appearance": FAMILY_FACE,
+	&"citizen_id": FAMILY_ID_NUMBER,
+	&"document.serial": FAMILY_ID_NUMBER,
+	&"family_name": FAMILY_NAME,
+	&"given_name": FAMILY_NAME,
+	&"birth_date": FAMILY_BIRTH,
+	&"document.expiry_date": FAMILY_VALIDITY,
+	&"document.issue_date": FAMILY_VALIDITY,
+	&"document.issuer_id": FAMILY_ISSUER,
+	&"faction_id": FAMILY_ORIGIN,
+	&"health_status": FAMILY_HEALTH,
+}
 
 var case: Case = null
 var ctx: RuleContext = null
@@ -133,7 +171,8 @@ func _on_interrogation_requested(topic: StringName) -> void:
 		TOPIC_REMOVE_VISOR:
 			# Le cas est muté avant la réponse : le booth relit l'apparence.
 			var removed: bool = case.remove_visor()
-			EventBus.interrogation_answered.emit(topic, LINE_VISOR_REMOVED if removed else LINE_VISOR_NONE)
+			# Passager scénarisé : sa réplique (`<dialogue_id>_visor`, ex. `sc04_mira_visor`).
+			EventBus.interrogation_answered.emit(topic, scripted_line("visor", LINE_VISOR_REMOVED) if removed else LINE_VISOR_NONE)
 		TOPIC_CONFRONT:
 			if confirmed.is_empty():
 				EventBus.interrogation_answered.emit(topic, LINE_CONFRONT_ANGRY)
@@ -157,17 +196,99 @@ func _on_interrogation_requested(topic: StringName) -> void:
 
 
 ## `about_<raison>[:<doc>]` : confrontation à une discordance précise. Réelle
-## (constatée dans cette session) → réplique dédiée + NERVOUS ; sinon ANGRY.
+## (constatée dans cette session) → réplique de sa famille + NERVOUS ; sinon
+## indignation + ANGRY. Un passager scénarisé garde sa réplique dédiée.
 func _confront_about(topic: StringName) -> void:
 	var body: String = String(topic).trim_prefix(ABOUT_PREFIX)
 	var reason: String = body.get_slice(DOC_SEPARATOR, 0)
 	var doc: StringName = StringName(body.get_slice(DOC_SEPARATOR, 1)) if body.contains(DOC_SEPARATOR) else &""
-	if has_confirmed(reason, doc):
-		EventBus.interrogation_answered.emit(topic, scripted_line("about_" + reason, LINE_ABOUT_PREFIX + reason))
+	var found: Discrepancy = find_confirmed(reason, doc)
+	if found != null:
+		var family: String = family_of(found, case, ctx)
+		EventBus.interrogation_answered.emit(topic, scripted_line("about_" + reason, about_line(family, true)))
 		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
 	else:
-		EventBus.interrogation_answered.emit(topic, LINE_CONFRONT_ANGRY)
+		EventBus.interrogation_answered.emit(topic, about_line(family_of_reason(reason), false))
 		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.ANGRY)
+
+
+## Réplique d'une famille de discordance : `line_about_<famille>_<n>` (réelle)
+## ou `line_about_<famille>_outrage_<n>` (non constatée) ; variante choisie par
+## la graine du cas. Repli : famille « autre », puis réplique générique.
+func about_line(family: String, real: bool) -> String:
+	for fam: String in [family, FAMILY_OTHER]:
+		var stem: String = about_stem(fam, real)
+		var count: int = 0
+		while count < MAX_VARIANTS and UiText.has(stem + str(count + 1)):
+			count += 1
+		if count > 0:
+			var case_seed: int = case.case_seed if case != null else 0
+			return stem + str(posmod(hash("%d|%s" % [case_seed, fam]), count) + 1)
+	return LINE_CONFRONT_NERVOUS if real else LINE_CONFRONT_ANGRY
+
+
+static func about_stem(family: String, real: bool) -> String:
+	return LINE_ABOUT_PREFIX + family + "_" + ("" if real else LINE_OUTRAGE_INFIX)
+
+
+## Famille d'une discordance constatée (visible seulement : jamais `CaseKey`).
+static func family_of(d: Discrepancy, p_case: Case, p_ctx: RuleContext) -> String:
+	if d == null:
+		return FAMILY_OTHER
+	var reason: String = d.reason_key.trim_prefix("disc_")
+	match reason:
+		"face_mismatch":
+			return FAMILY_FACE
+		"expired":
+			return FAMILY_VALIDITY
+		"rule_violated":
+			var rule_ref: FieldRef = d.a if d.a != null and d.a.is_rule() else d.b
+			var other: FieldRef = d.b if rule_ref == d.a else d.a
+			var rule: Rule = p_ctx.find_active_rule(rule_ref.field_id) if p_ctx != null and rule_ref != null else null
+			if rule is RequireDocumentRule:
+				return FAMILY_MISSING
+			if rule is IssuerAllowedRule:
+				return FAMILY_ISSUER
+			if rule is OriginIdBlockRule:
+				return FAMILY_ORIGIN
+			if rule is DocumentNotExpiredRule:
+				return FAMILY_VALIDITY
+			if rule is PortraitMatchRule:
+				return FAMILY_FACE
+			if rule is FieldValueAllowedRule:
+				var allowed: FieldValueAllowedRule = rule as FieldValueAllowedRule
+				return family_of_truth_path(allowed.truth_path)
+			return _family_of_ref(other, p_case)
+	# Deux champs de documents (`mismatch`) : la donnée comparée.
+	var family: String = _family_of_ref(d.a, p_case)
+	return family if family != FAMILY_OTHER else _family_of_ref(d.b, p_case)
+
+
+## Famille déductible du seul sujet (discordance non constatée).
+static func family_of_reason(reason: String) -> String:
+	match reason:
+		"face_mismatch":
+			return FAMILY_FACE
+		"expired":
+			return FAMILY_VALIDITY
+	return FAMILY_OTHER
+
+
+static func family_of_truth_path(path: StringName) -> String:
+	return TRUTH_PATH_FAMILIES.get(path, FAMILY_OTHER)
+
+
+static func _family_of_ref(ref: FieldRef, p_case: Case) -> String:
+	if ref == null:
+		return FAMILY_OTHER
+	if ref.is_passenger_face():
+		return FAMILY_FACE
+	var field: FieldDef = p_case.get_field_def(ref) if p_case != null else null
+	if field == null:
+		return FAMILY_OTHER
+	if field.kind == FieldDef.FieldKind.PORTRAIT:
+		return FAMILY_FACE
+	return family_of_truth_path(field.truth_path)
 
 
 ## Réplique dédiée du passager scénarisé (`<dialogue_id>_<suffixe>`) si elle
@@ -185,12 +306,17 @@ func scripted_line(suffix: String, fallback: String) -> String:
 ## Vrai si une discordance confirmée a cette raison (`expired`, `mismatch`…)
 ## et touche le document `doc` (si précisé).
 func has_confirmed(reason: String, doc: StringName = &"") -> bool:
+	return find_confirmed(reason, doc) != null
+
+
+## Première discordance confirmée de cette raison touchant `doc` (null sinon).
+func find_confirmed(reason: String, doc: StringName = &"") -> Discrepancy:
 	for d: Discrepancy in confirmed:
 		if d.reason_key.trim_prefix("disc_") != reason:
 			continue
 		if doc == &"" or (d.a != null and d.a.document_id == doc) or (d.b != null and d.b.document_id == doc):
-			return true
-	return false
+			return d
+	return null
 
 
 func _already_confirmed(result: Discrepancy) -> bool:

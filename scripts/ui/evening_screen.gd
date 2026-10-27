@@ -1,6 +1,7 @@
 ## Soirée au Bloc Pétrel (UI_FLOW §8 « Foyer », GDD §5.3, §5.4).
 ##
-## Budget : solde du matin + net du shift = disponible ; postes cochables
+## Budget : solde du matin (+ avance du Consortium au J1, D-047) + net du
+## shift = disponible ; postes cochables
 ## (loyer, nourriture, chauffage, oxygène de Dora les soirs pairs, médicaments
 ## par proche malade) — la taxe d'air est prélevée d'office ; un poste
 ## facultatif ne se coche que si le solde reste ≥ 0 (« fonds insuffisants »).
@@ -24,6 +25,8 @@ var game_date: int = 0
 var balance: int = 0
 ## Net du shift (affichage du détail du solde).
 var shift_net: int = 0
+## Avance du Consortium déjà comprise dans `balance` (J1 ; 0 sinon).
+var consortium_advance: int = 0
 var lines: Array[ExpenseLine] = []
 var household: Household = null
 var luciole_pending: bool = false
@@ -40,7 +43,7 @@ var _report_button: Button = null
 
 
 func setup(p_day: DayDef, p_balance: int, p_shift_net: int, p_lines: Array[ExpenseLine], p_household: Household,
-		p_luciole_pending: bool) -> void:
+		p_luciole_pending: bool, p_advance: int = 0) -> void:
 	day_number = p_day.day_number if p_day != null else 1
 	game_date = p_day.game_date if p_day != null else 0
 	balance = p_balance
@@ -48,6 +51,7 @@ func setup(p_day: DayDef, p_balance: int, p_shift_net: int, p_lines: Array[Expen
 	lines = p_lines
 	household = p_household if p_household != null else Household.new()
 	luciole_pending = p_luciole_pending
+	consortium_advance = maxi(p_advance, 0)
 
 
 func _build() -> void:
@@ -99,7 +103,12 @@ func _budget() -> VBoxContainer:
 	box.add_child(head)
 	var head_box: VBoxContainer = vbox(DS.SPACE_1)
 	head.add_child(head_box)
-	head_box.add_child(_money_row(UiText.t("ev_morning", "Solde du matin"), credits(balance - shift_net), DS.TEXT_SECONDARY))
+	var morning: int = balance - shift_net - consortium_advance
+	if consortium_advance == 0 or morning != 0:
+		head_box.add_child(_money_row(UiText.t("ev_morning", "Solde du matin"), credits(morning), DS.TEXT_SECONDARY))
+	if consortium_advance > 0:
+		head_box.add_child(_money_row(UiText.t("ev_advance", "Avance du Consortium (prise de poste)"),
+				credits(consortium_advance, true), DS.ACCENT_YELLOW))
 	head_box.add_child(_money_row(UiText.t("ev_shift_net", "Net du shift (salaire − amendes)"), credits(shift_net, true), DS.TEXT_SECONDARY))
 	head_box.add_child(rule_line())
 	head_box.add_child(_money_row(UiText.t("ev_available", "Disponible ce soir"), credits(balance), DS.ACCENT_YELLOW, &"DataTitle"))

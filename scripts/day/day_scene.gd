@@ -155,12 +155,21 @@ func _load_ui() -> void:
 func _show_briefing(auto_close: bool) -> void:
 	briefing = BriefingScreen.new()
 	briefing.name = "BriefingScreen"
-	var content: BriefingContent = BriefingContent.build(day_controller.day, GameState.narrative_flags, GameState.household)
+	var content: BriefingContent = BriefingContent.build(day_controller.day, GameState.narrative_flags, GameState.household,
+			consortium_advance())
 	briefing.setup(content, GameState.household, GameState.credits, day_controller.day)
 	briefing.closed.connect(_on_briefing_closed)
 	_open(briefing, &"briefing")
 	if auto_close:
 		get_tree().create_timer(AUTOPLAY_BRIEFING_SEC).timeout.connect(briefing.close)
+
+
+## Avance du Consortium (D-047) versée à la prise de poste : comptée au J1
+## seulement (briefing, détail du solde de la soirée).
+func consortium_advance() -> int:
+	if data == null or day_controller.day == null or day_controller.day.day_number != 1:
+		return 0
+	return data.get_economy().starting_credits
 
 
 func _on_briefing_closed() -> void:
@@ -193,7 +202,7 @@ func show_evening(summary: DaySummary) -> void:
 	evening.name = "EveningScreen"
 	var lines: Array[ExpenseLine] = Campaign.prepare_evening(data)
 	evening.setup(day_controller.day, GameState.credits, summary.get_net() if summary != null else 0, lines,
-			GameState.household, Campaign.luciole_note_pending())
+			GameState.household, Campaign.luciole_note_pending(), consortium_advance())
 	evening.luciole_decided.connect(Campaign.decide_luciole_note)
 	evening.confirmed.connect(func(confirmed_lines: Array[ExpenseLine]) -> void:
 		var report: EveningReport = Campaign.preview_evening(data, confirmed_lines)
