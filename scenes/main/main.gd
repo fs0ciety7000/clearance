@@ -1,8 +1,11 @@
-## Bootstrap (M1) : applique le thème DS et affiche l'écran titre placeholder.
-## Le lancement du shift sera branché en M5 (chargement de `day.tscn`).
+## Bootstrap : applique le thème DS et affiche l'écran titre.
+## « Commencer le shift » démarre une campagne (si aucune) et charge
+## `day.tscn` (jour courant, J1 pour une nouvelle partie).
 extends Control
 
-## Émis quand le joueur demande à commencer le shift (placeholder M1).
+const DAY_SCENE_PATH: String = "res://scenes/main/day.tscn"
+
+## Émis quand le joueur demande à commencer le shift.
 signal shift_start_requested()
 
 @onready var _background: ColorRect = %Background
@@ -24,5 +27,7 @@ func _ready() -> void:
 
 
 func _on_start_pressed() -> void:
-	print_rich("[CLEARANCE] Commencer le shift — à brancher en M5 (DayController).")
 	shift_start_requested.emit()
+	if GameState.current_day <= 0:
+		GameState.new_campaign()
+	get_tree().change_scene_to_file(DAY_SCENE_PATH)

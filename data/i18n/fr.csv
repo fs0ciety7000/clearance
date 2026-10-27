@@ -1,0 +1,232 @@
+keys,fr
+doc_id_card_title,Carte d'identité
+doc_entry_permit_title,Permis d'entrée
+doc_bioscan_title,Certificat bio-scan
+issuer_bureau_continuite,Consortium · Bureau de Continuité
+issuer_autorite_transit,Autorité de Transit · Halcyon Gate
+issuer_clinique_meridian,Clinique Orbitale Meridian
+field_portrait,Photo
+field_family_name,Nom
+field_given_name,Prénoms
+field_birth_date,Né(e) le
+field_sex,Sexe
+field_origin,Origine
+field_citizen_id,N° ID
+field_citizen_class,Classe
+field_issue_date,Émis le
+field_expiry_date,Valide jusqu'au
+field_issuer,Émetteur
+field_serial,N° de document
+field_purpose,Motif
+field_stay_days,Durée
+field_employer,Employeur
+field_health_status,Statut sanitaire
+unit_days,%d JOURS
+val_f,F
+val_m,M
+val_x,X
+val_tyc,COLONIE TYCHO
+val_hal,NÉ·E HALCYON
+val_ter,TERRE
+val_work,TRAVAIL
+val_family_visit,VISITE FAMILIALE
+val_return,RETOUR
+val_trade,COMMERCE
+val_transit,TRANSIT
+val_diplomatic,DIPLOMATIQUE
+val_fit,SAIN
+val_quarantine,QUARANTAINE
+val_review,EXAMEN REQUIS
+val_bureau_continuite,BUR. CONTINUITÉ
+val_autorite_transit,AUT. TRANSIT
+val_clinique_meridian,CLIN. MERIDIAN
+val_yes,OUI
+val_no,NON
+faction_tyc_name,Colonie Tycho
+faction_hal_name,Nés-Halcyon
+faction_ter_name,Terre
+r_id_card_required_title,Carte d'identité obligatoire
+r_id_card_required_text,Tout entrant présente une carte d'identité du Bureau de Continuité.
+r_id_card_valid_title,Carte d'identité valide
+r_id_card_valid_text,La carte d'identité doit être valide à la date du jour.
+r_portrait_match_title,Photo conforme
+r_portrait_match_text,La photo de la carte doit correspondre au visage du porteur.
+r_permit_required_title,Permis d'entrée obligatoire
+r_permit_required_text,Ressortissants (sauf Nés-Halcyon) : permis d'entrée Halcyon Gate obligatoire.
+r_permit_valid_title,Permis d'entrée valide
+r_permit_valid_text,Le permis d'entrée doit être valide à la date du jour.
+r_face_uncovered_title,Visage découvert
+r_face_uncovered_text,Le visage doit être découvert pour le contrôle : faites retirer les visières.
+r_identity_fields_match_title,Identité cohérente
+r_identity_fields_match_text,"Nom, date de naissance et N° ID identiques sur tous les documents."
+r_tycho_interview_title,Interrogatoire Tycho
+r_tycho_interview_text,Ressortissants de la colonie Tycho : interrogatoire obligatoire.
+r_origin_block_title,Bloc ID d'origine
+r_origin_block_text,Le 1er chiffre du bloc ID correspond à l'origine (onglet Origines).
+r_bioscan_required_title,Bio-scan obligatoire
+r_bioscan_required_text,Certificat bio-scan obligatoire pour tout entrant.
+r_bioscan_valid_title,Bio-scan récent
+r_bioscan_valid_text,Le bio-scan doit avoir été émis il y a moins de 30 jours.
+r_bioscan_issuer_title,Émetteur agréé
+r_bioscan_issuer_text,Bio-scan : émetteur agréé Clinique Orbitale Meridian uniquement.
+r_bioscan_fit_title,Statut sanitaire
+r_bioscan_fit_text,Statut bio-scan : SAIN uniquement.
+day01_intro,Premier jour au Guichet 04. Une seule exigence : une carte d'identité valide.
+day02_intro,Nouvelle directive : la photo doit correspondre au porteur.
+day03_intro,Délégation des quais : permis d'entrée exigé des ressortissants.
+disc_concordant,Valeurs concordantes.
+disc_mismatch,Les valeurs diffèrent.
+disc_expired,Document expiré à la date du jour.
+disc_face_mismatch,Le visage ne correspond pas à la photo.
+disc_face_masked,VISAGE MASQUÉ — demandez le retrait de la visière (Q).
+disc_rule_violated,Règle du jour enfreinte.
+disc_rule_inactive,Cette règle n'est pas en vigueur aujourd'hui.
+disc_same_field,Choisissez un second champ différent.
+disc_unknown_field,Champ indisponible.
+disc_incomparable,Choisissez un champ de même type.
+disc_expired_detail,%s expiré : %s < date du jour %s
+disc_mismatch_detail,%s : %s ≠ %s
+disc_face_detail,Visage ≠ photo : %s
+disc_rule_detail,Règle %02d enfreinte — %s
+trait_face,forme du visage
+trait_eyes,yeux
+trait_nose_mouth,nez / bouche
+trait_skin,teint
+trait_silhouette,silhouette
+trait_age_band,âge apparent
+res_discordance,Discordance %d
+res_concordant,Concordant
+res_incomparable,Incomparable
+res_case_ok,Dossier conforme
+res_case_error,Erreur de contrôle
+face_label,VISAGE
+face_masked,MASQUÉ
+q_purpose,Quel est le motif de votre visite ?
+q_stay,Combien de temps comptez-vous rester ?
+q_origin,D'où venez-vous ?
+q_remove_visor,"Retirez votre visière, s'il vous plaît."
+q_about_expired,Votre {doc} a expiré. Pourquoi venir seulement aujourd'hui ?
+q_about_mismatch,Les informations de votre {doc} ne concordent pas. Expliquez-vous.
+q_about_face_mismatch,Ce n'est pas vous sur cette photo.
+q_about_rule_violated,Votre {doc} n'est pas conforme au règlement du jour.
+ans_purpose,Je viens travailler. Mon contrat commence demain matin.
+ans_stay,"Trente jours, c'est écrit sur le permis."
+ans_origin,"De Tycho. Le cratère, les dortoirs Kessler-Ashe."
+ans_remove_visor,…D'accord. Voilà.
+ans_about_expired,Je… le renouvellement a pris du retard. Ma famille m'attend.
+ans_about_mismatch,"Une erreur du bureau, sûrement. Ce sont bien mes papiers."
+ans_about_face_mismatch,"C'est une vieille photo, j'ai changé depuis."
+ans_about_rule_violated,Personne ne m'a prévenu de ce changement.
+bark_arrival,"Bonsoir… J'arrive, j'arrive."
+bark_present,Voici mes papiers…
+tag_footsteps,[pas mouillés]
+tag_nervous,[nerveux]
+tag_nervous_f,[nerveuse]
+tag_angry,[en colère]
+tag_shrug,[hausse les épaules]
+tag_relieved,[soulagé]
+tag_relieved_f,[soulagée]
+react_nervous,Je… c'est une vieille photo.
+react_angry,Vous n'avez pas le droit !
+react_shrug,Je ne sais pas quoi vous dire.
+react_relieved,Merci… merci.
+speaker_passenger,PASSAGER
+speaker_passenger_f,PASSAGÈRE
+speaker_agent,AGENT
+pp_intercom,INTERCOM
+pp_menu_title,INTERROGER · CHOISISSEZ UNE QUESTION
+pp_unlocked,QUESTION DÉBLOQUÉE · DISCORDANCE %d
+pp_idle,GUICHET OUVERT · FILE D'ATTENTE
+pp_idle_hint,Appuyez sur l'intercom (N) pour faire avancer le passager suivant.
+pp_unverified,IDENTITÉ NON VÉRIFIÉE
+pp_arriving_hint,Le passager s'approche du guichet. Ses documents glisseront par la fente de la vitre à son arrivée.
+pp_visor_hint,Visage masqué : demandez le retrait de la visière (Q).
+qp_passenger,PASSAGER
+qp_waiting,EN ATTENTE
+qp_discrepancies,DISCORDANCES
+qp_approaching,EN APPROCHE
+qp_documented,%d DOCUMENTÉES
+qp_none,AUCUNE
+bar_brand,CLEARANCE
+bar_org,CONSORTIUM · CONTRÔLE D'ENTRÉE
+bar_location,HALCYON GATE — GUICHET 04
+bar_shift,SHIFT
+bar_day,JOUR %02d
+bar_shift_end,FIN %s
+bar_shift_ending,FIN DE SHIFT PROCHE
+bar_processed,TRAITÉS
+bar_credits,CRÉDITS
+weekday_0,LUN.
+weekday_1,MAR.
+weekday_2,MER.
+weekday_3,JEU.
+weekday_4,VEN.
+weekday_5,SAM.
+weekday_6,DIM.
+rb_title,RULEBOOK
+rb_day,JOUR %02d
+rb_today,DATE DU JOUR
+rb_new_count,%d NOUVEAU
+rb_page,ONGLET %d / %d
+rb_tab_all,Règles
+rb_tab_documents,Documents
+rb_tab_identity,Identité
+rb_tab_faction,Origines
+rb_tab_purpose,Motifs
+rb_tab_special,Procédures
+badge_new,NOUVEAU
+wb_empty_title,EN ATTENTE DES DOCUMENTS
+wb_empty_waiting,Appelez le passager suivant à l'intercom.
+wb_empty_arriving,Ils glisseront par la fente de la vitre à l'arrivée du passager. En attendant : Tab · Rulebook.
+wb_title_empty,PLAN DE TRAVAIL · VIDE
+wb_title_count,PLAN DE TRAVAIL · %d DOCUMENTS
+wb_mode_active,MODE INSPECTION ACTIF
+wb_mode_unavailable,INSPECTION INDISPONIBLE · AUCUN DOCUMENT
+wb_mode_hint,ESPACE · MODE INSPECTION
+tb_inspection,INSPECTION
+tb_interrogate,INTERROGER
+tb_next,SUIVANT
+tb_next_approaching,SUIVANT · EN APPROCHE
+tb_next_departing,SUIVANT · DÉPART
+tb_hold,maintien %.1f s
+tb_hint_approve,maintenir V · RT
+tb_hint_deny,maintenir X · (X)
+tb_hint_detain,maintenir D · ↓
+tb_locked_hint,aucun document
+tb_stamps,TAMPONS OFFICIELS
+tb_stamps_locked,TAMPONS VERROUILLÉS
+stamp_approve,APPROUVÉ
+stamp_deny,REFUSÉ
+stamp_detain,DÉTENTION
+stamp_caption,CONSORTIUM · G04 · J%02d
+st_idle,Guichet ouvert — appelez le passager suivant à l'intercom (N).
+st_verdict,Verdict transmis — documents rendus par la fente.
+st_arriving_title,◆ Passager en approche
+st_arriving," — lisez le Rulebook en attendant.
+Tampons verrouillés jusqu'à la présentation des documents."
+st_discordances_title,⚠ %d discordances
+st_discordances, documentées%s · questions débloquées.
+st_rule, · règle %02d
+st_pick_a,"Mode Inspection — cliquez un premier champ à comparer (document, règle, date du jour ou visage)."
+st_pick_b,Champ A sélectionné — choisissez le champ B. Échap : annuler.
+st_inspect,Documents posés — Espace : Mode Inspection · maintenez V / X pour tamponner.
+cit_header,CONSORTIUM · AVIS D'INFRACTION
+cit_warning,AVERTISSEMENT
+ui_discordance,DISCORDANCE
+wb_mode_verdict,VERDICT TRANSMIS
+st_discordance_one_title,⚠ 1 discordance
+st_discordance_one, documentée%s · question débloquée.
+conc_valid_detail,Valide jusqu'au %s ≥ date du jour %s
+conc_generic,Aucune discordance constatée.
+conc_detail,%s : %s = %s
+qp_documented_one,1 DOCUMENTÉE
+res_case_detail,Tampon %s
+res_missed,%d infraction(s) non relevée(s)
+line_visor_removed,…D'accord. Voilà.
+line_visor_none,Je ne porte pas de visière.
+line_confront_nervous,Je… je peux vous expliquer.
+line_confront_angry,Vous m'accusez sans preuve ?
+line_generic_shrug,Je ne sais pas quoi vous dire.
+q_confront,Vos papiers ne sont pas en règle. Expliquez-vous.
+wb_returned_title,DOCUMENTS RENDUS
+wb_returned_text,Le passager quitte le guichet. « Suivant » se réactive à son départ.

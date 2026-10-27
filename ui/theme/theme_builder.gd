@@ -18,21 +18,34 @@ const WEIGHT_SEMIBOLD: int = 600
 const WEIGHT_BOLD: int = 700
 
 
-## Construit un nouveau Theme complet.
-static func build() -> Theme:
+## Échelle du texte de la construction en cours (`Settings.text_scale`).
+static var _scale: float = 1.0
+
+
+## Construit un nouveau Theme complet. `text_scale` (0,9–1,5, UI_FLOW §6)
+## multiplie toutes les tailles de police ; espacements et formes sont fixes.
+static func build(text_scale: float = 1.0) -> Theme:
+	_scale = clampf(text_scale, 0.5, 2.0)
 	var theme: Theme = Theme.new()
 	var fonts: Dictionary[StringName, Font] = _load_fonts()
 
 	# --- Défauts globaux : Inter 400, 16 px, text.primary (DS §10.2) -------
 	if fonts.has(&"ui"):
 		theme.default_font = fonts[&"ui"]
-	theme.default_font_size = DS.FS_BODY
+	theme.default_font_size = fs(DS.FS_BODY)
 
 	_build_label(theme)
 	_build_panels(theme)
 	_build_buttons(theme, fonts)
 	_build_variations(theme, fonts)
+	_build_m4_variations(theme, fonts)
+	_scale = 1.0
 	return theme
+
+
+## Taille de police mise à l'échelle de la construction en cours.
+static func fs(size: int) -> int:
+	return maxi(roundi(size * _scale), 1)
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +76,22 @@ static func _load_fonts() -> Dictionary[StringName, Font]:
 	var mono: Font = _font_variant(DS.FONT_MONO_PATH, WEIGHT_MEDIUM, 0.0)
 	if mono != null:
 		fonts[&"mono"] = mono
+	var mono_regular: Font = _font_variant(DS.FONT_MONO_PATH, WEIGHT_REGULAR, 0.0)
+	if mono_regular != null:
+		fonts[&"mono_regular"] = mono_regular
+	var mono_bold: Font = _font_variant(DS.FONT_MONO_PATH, WEIGHT_BOLD, 0.0)
+	if mono_bold != null:
+		fonts[&"mono_bold"] = mono_bold
+	# Display en capitales (titres de documents, Rulebook) : tracking +2 %… +4 %.
+	var display_caps: Font = _font_variant(DS.FONT_DISPLAY_PATH, 0, DS.TRACKING_DISPLAY * 2.0 * DS.FS_TITLE)
+	if display_caps != null:
+		fonts[&"display_caps"] = display_caps
+	var display_bold_caps: Font = _font_variant(DS.FONT_DISPLAY_BOLD_PATH, 0, DS.TRACKING_DISPLAY * 2.0 * DS.FS_TITLE)
+	if display_bold_caps != null:
+		fonts[&"display_bold_caps"] = display_bold_caps
+	var ui_button: Font = _font_variant(DS.FONT_UI_PATH, WEIGHT_SEMIBOLD, DS.TRACKING_LABEL * 0.5 * DS.FS_BODY)
+	if ui_button != null:
+		fonts[&"ui_button"] = ui_button
 	return fonts
 
 
@@ -145,7 +174,7 @@ static func _build_panels(theme: Theme) -> void:
 static func _build_buttons(theme: Theme, fonts: Dictionary[StringName, Font]) -> void:
 	# Bouton par défaut = ButtonSecondary (bordure text.secondary, hover cyan.12).
 	_set_font_if(theme, &"Button", fonts, &"ui_semibold")
-	theme.set_font_size(&"font_size", &"Button", DS.FS_BODY)
+	theme.set_font_size(&"font_size", &"Button", fs(DS.FS_BODY))
 	_set_button_colors(theme, &"Button", DS.TEXT_PRIMARY, DS.TEXT_PRIMARY)
 	var margin_h: int = DS.SPACE_4
 	var margin_v: int = DS.SPACE_3
@@ -224,34 +253,210 @@ static func _build_variations(theme: Theme, fonts: Dictionary[StringName, Font])
 	# (`uppercase = true` à poser sur le Label : ce n'est pas une propriété de thème).
 	theme.set_type_variation(&"DocFieldLabel", &"Label")
 	_set_font_if(theme, &"DocFieldLabel", fonts, &"ui_label")
-	theme.set_font_size(&"font_size", &"DocFieldLabel", DS.FS_LABEL)
+	theme.set_font_size(&"font_size", &"DocFieldLabel", fs(DS.FS_LABEL))
 	theme.set_color(&"font_color", &"DocFieldLabel", DS.TEXT_SECONDARY)
 
 	# DocFieldValue : JetBrains Mono 500, 16 px, text.primary.
 	theme.set_type_variation(&"DocFieldValue", &"Label")
 	_set_font_if(theme, &"DocFieldValue", fonts, &"mono")
-	theme.set_font_size(&"font_size", &"DocFieldValue", DS.FS_DATA)
+	theme.set_font_size(&"font_size", &"DocFieldValue", fs(DS.FS_DATA))
 	theme.set_color(&"font_color", &"DocFieldValue", DS.TEXT_PRIMARY)
 
 	# DisplayLabel : Chakra Petch 700, 40 px.
 	theme.set_type_variation(&"DisplayLabel", &"Label")
 	_set_font_if(theme, &"DisplayLabel", fonts, &"display_bold")
-	theme.set_font_size(&"font_size", &"DisplayLabel", DS.FS_DISPLAY_L)
+	theme.set_font_size(&"font_size", &"DisplayLabel", fs(DS.FS_DISPLAY_L))
 	theme.set_color(&"font_color", &"DisplayLabel", DS.TEXT_PRIMARY)
 
 	# TitleLabel : Chakra Petch 600, 20 px.
 	theme.set_type_variation(&"TitleLabel", &"Label")
 	_set_font_if(theme, &"TitleLabel", fonts, &"display")
-	theme.set_font_size(&"font_size", &"TitleLabel", DS.FS_TITLE)
+	theme.set_font_size(&"font_size", &"TitleLabel", fs(DS.FS_TITLE))
 	theme.set_color(&"font_color", &"TitleLabel", DS.TEXT_PRIMARY)
 
 	# CaptionLabel : Inter 500, 12 px, text.secondary.
 	theme.set_type_variation(&"CaptionLabel", &"Label")
 	_set_font_if(theme, &"CaptionLabel", fonts, &"ui_medium")
-	theme.set_font_size(&"font_size", &"CaptionLabel", DS.FS_CAPTION)
+	theme.set_font_size(&"font_size", &"CaptionLabel", fs(DS.FS_CAPTION))
 	theme.set_color(&"font_color", &"CaptionLabel", DS.TEXT_SECONDARY)
 
 	# ButtonPrimary : jaune plein, texte #07080C, chamfer.m.
 	_build_filled_button(theme, &"ButtonPrimary", DS.ACCENT_YELLOW, DS.YELLOW_60)
 	# ButtonDanger : rouge plein, texte #07080C.
 	_build_filled_button(theme, &"ButtonDanger", DS.STATE_RED, DS.RED_60)
+
+
+# ---------------------------------------------------------------------------
+# Variations M4 — interface de comparaison (DS §7, §10.3 ; UI_FLOW §2–§4)
+# ---------------------------------------------------------------------------
+
+static func _label_variation(theme: Theme, type_name: StringName, fonts: Dictionary[StringName, Font],
+		font_key: StringName, size: int, color: Color) -> void:
+	theme.set_type_variation(type_name, &"Label")
+	_set_font_if(theme, type_name, fonts, font_key)
+	theme.set_font_size(&"font_size", type_name, fs(size))
+	theme.set_color(&"font_color", type_name, color)
+
+
+static func _panel_variation(theme: Theme, type_name: StringName, box: StyleBox) -> void:
+	theme.set_type_variation(type_name, &"PanelContainer")
+	theme.set_stylebox(&"panel", type_name, box)
+
+
+static func _build_m4_variations(theme: Theme, fonts: Dictionary[StringName, Font]) -> void:
+	# --- Libellés -------------------------------------------------------------
+	_label_variation(theme, &"DocTitle", fonts, &"display_caps", DS.FS_TITLE, DS.TEXT_PRIMARY)
+	_label_variation(theme, &"DocIssuer", fonts, &"ui_label", DS.FS_LABEL, DS.ACCENT_CYAN)
+	_label_variation(theme, &"DataSmall", fonts, &"mono_regular", DS.FS_DATA_S, DS.TEXT_SECONDARY)
+	_label_variation(theme, &"DataTitle", fonts, &"mono", DS.FS_TITLE, DS.TEXT_PRIMARY)
+	_label_variation(theme, &"TimerLabel", fonts, &"mono_bold", DS.FS_TIMER, DS.TEXT_PRIMARY)
+	_label_variation(theme, &"TimerCompact", fonts, &"mono_bold", DS.FS_TIMER_COMPACT, DS.TEXT_PRIMARY)
+	_label_variation(theme, &"BodyLabel", fonts, &"ui", DS.FS_BODY, DS.TEXT_PRIMARY)
+	_label_variation(theme, &"BodyStrong", fonts, &"ui_semibold", DS.FS_BODY, DS.TEXT_PRIMARY)
+	_label_variation(theme, &"BodySmall", fonts, &"ui", DS.FS_BODY_S, DS.TEXT_SECONDARY)
+	_label_variation(theme, &"SubtitleText", fonts, &"ui_medium", DS.FS_SUBTITLE, DS.TEXT_PRIMARY)
+	_label_variation(theme, &"PanelTitle", fonts, &"display_bold_caps", DS.FS_TITLE, DS.TEXT_PRIMARY)
+	_label_variation(theme, &"StampLabel", fonts, &"display_bold_caps", DS.FS_TITLE, DS.TEXT_PRIMARY)
+	_label_variation(theme, &"BrandLabel", fonts, &"display_bold_caps", DS.FS_TITLE, DS.TEXT_PRIMARY)
+	_label_variation(theme, &"KeyCapLabel", fonts, &"mono", DS.FS_CAPTION, DS.TEXT_SECONDARY)
+	_label_variation(theme, &"BadgeLabel", fonts, &"ui_label", DS.FS_LABEL, DS.TEXT_ON_ACCENT)
+	theme.set_constant(&"line_spacing", &"BodyLabel", roundi(DS.FS_BODY * (DS.LINE_HEIGHT_READ - 1.2)))
+	theme.set_constant(&"line_spacing", &"BodySmall", roundi(DS.FS_BODY_S * (DS.LINE_HEIGHT_READ - 1.2)))
+	theme.set_constant(&"line_spacing", &"SubtitleText", roundi(DS.FS_SUBTITLE * (DS.LINE_HEIGHT_UI - 1.2)))
+
+	# --- Panneaux -------------------------------------------------------------
+	_panel_variation(theme, &"ElevatedCard", chamfer_box(DS.BG_ELEVATED, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_M, DS.SPACE_4))
+	# Panneaux posés sur la vitre : voile ≥ 85 % (DS §5 règle 5).
+	_panel_variation(theme, &"VeilPanel", chamfer_box(DS.PANEL_VEIL, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_M, DS.SPACE_5))
+	_panel_variation(theme, &"BarPanel", _flat_box(DS.BG_PANEL, DS.LINE_SUBTLE, 0, DS.BORDER_HAIRLINE))
+	_panel_variation(theme, &"ToolbarPanel", _flat_box(DS.BG_VOID, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, 0))
+	_panel_variation(theme, &"SubtitlePanel", chamfer_box(DS.SUBTITLE_BG, Color(0, 0, 0, 0), 0, DS.CHAMFER_S, DS.SPACE_3, true))
+	_panel_variation(theme, &"KeyCap", _keycap_box())
+	_panel_variation(theme, &"BadgeNew", chamfer_box(DS.STATE_AMBER, DS.STATE_AMBER, 0, DS.CHAMFER_S, DS.SPACE_1))
+	_panel_variation(theme, &"BadgeMagenta", chamfer_box(DS.ACCENT_MAGENTA, DS.ACCENT_MAGENTA, 0, DS.CHAMFER_S, DS.SPACE_1))
+	_panel_variation(theme, &"RuleCard", _rule_card_box(Color(0, 0, 0, 0), Color(0, 0, 0, 0)))
+	_panel_variation(theme, &"RuleCardNew", _rule_card_box(DS.AMBER_12, DS.STATE_AMBER))
+	_panel_variation(theme, &"DialogueQuestion", _left_bar_box(DS.MAGENTA_12, DS.ACCENT_MAGENTA))
+	for pair: Array in [[&"ToastInfo", DS.ACCENT_CYAN], [&"ToastSuccess", DS.STATE_GREEN], [&"ToastWarning", DS.STATE_AMBER],
+			[&"ToastError", DS.STATE_RED], [&"ToastNarrative", DS.ACCENT_MAGENTA]]:
+		var toast_name: StringName = pair[0]
+		var toast_color: Color = pair[1]
+		_panel_variation(theme, toast_name, _left_bar_box(DS.BG_ELEVATED, toast_color, 3))
+	_panel_variation(theme, &"CitationTicket", chamfer_box(DS.BG_ELEVATED, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_M, 0))
+
+	# --- Boutons --------------------------------------------------------------
+	# ButtonGhost : texte seul (DS §7.7).
+	theme.set_type_variation(&"ButtonGhost", &"Button")
+	_set_button_colors(theme, &"ButtonGhost", DS.TEXT_SECONDARY, DS.TEXT_PRIMARY)
+	theme.set_color(&"font_pressed_color", &"ButtonGhost", DS.ACCENT_CYAN)
+	var empty: StyleBoxEmpty = StyleBoxEmpty.new()
+	empty.set_content_margin_all(DS.SPACE_2)
+	for state: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled"]:
+		theme.set_stylebox(state, &"ButtonGhost", empty)
+	# ToggleTab : sélectionné = cyan.12 + barre basse 2 px (DS §7.7).
+	theme.set_type_variation(&"ToggleTab", &"Button")
+	_set_font_if(theme, &"ToggleTab", fonts, &"ui_semibold")
+	theme.set_font_size(&"font_size", &"ToggleTab", fs(DS.FS_BODY_S))
+	_set_button_colors(theme, &"ToggleTab", DS.TEXT_SECONDARY, DS.TEXT_PRIMARY)
+	theme.set_color(&"font_pressed_color", &"ToggleTab", DS.TEXT_PRIMARY)
+	var tab_normal: StyleBoxFlat = _flat_box(Color(0, 0, 0, 0), DS.LINE_SUBTLE, 0, DS.BORDER_HAIRLINE)
+	var tab_hover: StyleBoxFlat = _flat_box(DS.CYAN_08, DS.LINE_SUBTLE, 0, DS.BORDER_HAIRLINE)
+	var tab_pressed: StyleBoxFlat = _flat_box(DS.CYAN_12, DS.ACCENT_CYAN, 0, DS.BORDER_STRONG)
+	for box: StyleBoxFlat in [tab_normal, tab_hover, tab_pressed]:
+		_set_button_margins(box, DS.SPACE_3, DS.SPACE_2)
+	theme.set_stylebox(&"normal", &"ToggleTab", tab_normal)
+	theme.set_stylebox(&"hover", &"ToggleTab", tab_hover)
+	theme.set_stylebox(&"pressed", &"ToggleTab", tab_pressed)
+	theme.set_stylebox(&"hover_pressed", &"ToggleTab", tab_pressed)
+	theme.set_stylebox(&"disabled", &"ToggleTab", tab_normal)
+	theme.set_stylebox(&"focus", &"ToggleTab", focus_box(0))
+	# ButtonTool : bouton secondaire haut de la barre d'outils (capitales, tracking).
+	theme.set_type_variation(&"ButtonTool", &"Button")
+	_set_font_if(theme, &"ButtonTool", fonts, &"ui_button")
+	theme.set_font_size(&"font_size", &"ButtonTool", fs(DS.FS_BODY))
+	_set_button_colors(theme, &"ButtonTool", DS.TEXT_PRIMARY, DS.TEXT_PRIMARY)
+	theme.set_color(&"font_pressed_color", &"ButtonTool", DS.ACCENT_CYAN)
+	theme.set_color(&"font_hover_pressed_color", &"ButtonTool", DS.ACCENT_CYAN)
+	var tool_normal: StyleBoxFlat = chamfer_box(DS.BG_PANEL, DS.TEXT_MUTED, DS.BORDER_DEFAULT, DS.CHAMFER_M, 0)
+	var tool_hover: StyleBoxFlat = _with_glow(chamfer_box(DS.CYAN_12, DS.ACCENT_CYAN, DS.BORDER_DEFAULT, DS.CHAMFER_M, 0), DS.CYAN_24, DS.GLOW_1)
+	var tool_pressed: StyleBoxFlat = chamfer_box(DS.BG_PANEL.blend(DS.CYAN_12), DS.ACCENT_CYAN, DS.BORDER_STRONG, DS.CHAMFER_M, 0)
+	var tool_disabled: StyleBoxFlat = chamfer_box(DS.DISABLED_BG, DS.LINE_SUBTLE, DS.BORDER_DEFAULT, DS.CHAMFER_M, 0)
+	for box: StyleBoxFlat in [tool_normal, tool_hover, tool_pressed, tool_disabled]:
+		_set_button_margins(box, DS.SPACE_5, DS.SPACE_3)
+	theme.set_stylebox(&"normal", &"ButtonTool", tool_normal)
+	theme.set_stylebox(&"hover", &"ButtonTool", tool_hover)
+	theme.set_stylebox(&"pressed", &"ButtonTool", tool_pressed)
+	theme.set_stylebox(&"hover_pressed", &"ButtonTool", tool_pressed)
+	theme.set_stylebox(&"disabled", &"ButtonTool", tool_disabled)
+	theme.set_stylebox(&"focus", &"ButtonTool", focus_box(DS.CHAMFER_M))
+	theme.set_constant(&"h_separation", &"ButtonTool", DS.SPACE_3)
+	# ButtonQuestion : option de réponse/question numérotée (DS §7.10).
+	theme.set_type_variation(&"ButtonQuestion", &"Button")
+	_set_font_if(theme, &"ButtonQuestion", fonts, &"ui")
+	theme.set_font_size(&"font_size", &"ButtonQuestion", fs(DS.FS_BODY_S))
+	_set_button_colors(theme, &"ButtonQuestion", DS.TEXT_PRIMARY, DS.TEXT_PRIMARY)
+	var q_normal: StyleBoxFlat = chamfer_box(DS.BG_ELEVATED, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0)
+	var q_hover: StyleBoxFlat = chamfer_box(DS.BG_ELEVATED.blend(DS.CYAN_12), DS.ACCENT_CYAN, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0)
+	var q_disabled: StyleBoxFlat = chamfer_box(DS.DISABLED_BG, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0)
+	for box: StyleBoxFlat in [q_normal, q_hover, q_disabled]:
+		_set_button_margins(box, DS.SPACE_3, DS.SPACE_2)
+	theme.set_stylebox(&"normal", &"ButtonQuestion", q_normal)
+	theme.set_stylebox(&"hover", &"ButtonQuestion", q_hover)
+	theme.set_stylebox(&"pressed", &"ButtonQuestion", q_hover)
+	theme.set_stylebox(&"hover_pressed", &"ButtonQuestion", q_hover)
+	theme.set_stylebox(&"disabled", &"ButtonQuestion", q_disabled)
+	theme.set_stylebox(&"focus", &"ButtonQuestion", focus_box(DS.CHAMFER_S))
+
+	# --- Défilement discret (Rulebook) ------------------------------------------
+	var grabber: StyleBoxFlat = _flat_box(DS.LINE_SUBTLE, DS.LINE_SUBTLE, 0, 0)
+	var grabber_hot: StyleBoxFlat = _flat_box(DS.CYAN_40, DS.CYAN_40, 0, 0)
+	var track: StyleBoxFlat = _flat_box(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, 0)
+	track.content_margin_left = DS.SPACE_1
+	theme.set_stylebox(&"grabber", &"VScrollBar", grabber)
+	theme.set_stylebox(&"grabber_highlight", &"VScrollBar", grabber_hot)
+	theme.set_stylebox(&"grabber_pressed", &"VScrollBar", grabber_hot)
+	theme.set_stylebox(&"scroll", &"VScrollBar", track)
+	theme.set_stylebox(&"scroll_focus", &"VScrollBar", track)
+	theme.set_color(&"font_color", &"TooltipLabel", DS.TEXT_PRIMARY)
+	theme.set_stylebox(&"panel", &"TooltipPanel", chamfer_box(DS.BG_ELEVATED, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_S, DS.SPACE_2, true))
+
+
+## Boîte rectangulaire (pas de chanfrein) avec bordure haute/basse optionnelle.
+static func _flat_box(bg: Color, border: Color, top: int, bottom: int) -> StyleBoxFlat:
+	var box: StyleBoxFlat = StyleBoxFlat.new()
+	box.bg_color = bg
+	box.border_color = border
+	box.border_width_top = top
+	box.border_width_bottom = bottom
+	return box
+
+
+static func _keycap_box() -> StyleBoxFlat:
+	var box: StyleBoxFlat = chamfer_box(DS.BG_VOID, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0, true)
+	box.content_margin_left = DS.SPACE_2
+	box.content_margin_right = DS.SPACE_2
+	box.content_margin_top = DS.SPACE_1
+	box.content_margin_bottom = DS.SPACE_1
+	return box
+
+
+## Carte avec liseré gauche (RuleCard « NOUVEAU », toasts, questions).
+static func _left_bar_box(bg: Color, bar: Color, width: int = DS.BORDER_STRONG) -> StyleBoxFlat:
+	var box: StyleBoxFlat = StyleBoxFlat.new()
+	box.bg_color = bg
+	box.border_color = bar
+	box.border_width_left = width
+	box.content_margin_left = DS.SPACE_4
+	box.content_margin_right = DS.SPACE_4
+	box.content_margin_top = DS.SPACE_3
+	box.content_margin_bottom = DS.SPACE_3
+	return box
+
+
+static func _rule_card_box(bg: Color, bar: Color) -> StyleBoxFlat:
+	var box: StyleBoxFlat = _left_bar_box(bg, bar, DS.BORDER_STRONG if bar.a > 0.0 else 0)
+	box.content_margin_left = DS.SPACE_3
+	box.content_margin_right = DS.SPACE_3
+	box.content_margin_top = DS.SPACE_2
+	box.content_margin_bottom = DS.SPACE_2
+	return box

@@ -62,6 +62,10 @@ const TEXT_ON_ACCENT := Color("#07080C") # texte sur fond jaune/cyan/vert/ambre 
 const SCRIM := Color("#07080CB8") # voile modal (72 %)
 const DISABLED_FG := Color("#4E5868")
 const DISABLED_BG := Color("#0E111880")
+# 0.2 — surfaces posées sur la vue 3D (DS §5 règle 5 : voile ≥ 85 % derrière le texte)
+const PANEL_VEIL := Color("#0E1118E6") # bg.panel 90 % : bulle, compteurs, toasts sur la vitre
+const SUBTITLE_BG := Color("#07080CD9") # bg.void 85 % : sous-titres (UI_FLOW §4.8)
+const INSPECTION_VEIL := Color("#07080C14") # bg.void 8 % : voile de la vue 3D en Mode Inspection
 
 # ---------------------------------------------------------------------------
 # TYPOGRAPHIE — familles (chemins prévus) et tailles en px @1080p
@@ -82,6 +86,8 @@ const FS_DATA := 16 # valeurs de champs (mono)
 const FS_DATA_S := 14 # données denses (mono)
 const FS_TIMER := 44 # horloge de service (mono)
 const FS_CAPTION := 12 # mentions, légendes (taille minimale absolue)
+const FS_SUBTITLE := 18 # sous-titres des barks (UI_FLOW §4.8) — 0.2
+const FS_TIMER_COMPACT := 28 # horloge de la barre d'état 56 px (UI_FLOW §2.2) — 0.2
 
 const LINE_HEIGHT_TIGHT := 1.1 # display
 const LINE_HEIGHT_UI := 1.4 # UI / labels
@@ -162,3 +168,14 @@ const STAGGER := 0.03 # décalage entre champs à l'apparition
 const TOAST_HOLD := 4.0
 const TIMER_WARN_SECONDS := 60
 const TIMER_CRITICAL_SECONDS := 15
+# 0.2 — rythmes du Mode Inspection et du poste (UI_FLOW §3.2, §3.5, §4.3, §4.10)
+const STAMP_HOLD := 0.4 # maintien d'un tampon avant verdict
+const DOC_STAGGER := 0.12 # décalage d'arrivée des documents par la fente
+const CONCORDANT_HOLD := 1.2 # fil « CONCORDANT » avant dissolution
+const INCOMPARABLE_HOLD := 0.6 # fil « INCOMPARABLE » avant rétraction
+const NEXT_DEBOUNCE := 0.5 # anti-rebond du bouton « Suivant »
+const SUBTITLE_MIN_HOLD := 1.5 # durée mini d'un sous-titre
+const SUBTITLE_PER_CHAR := 0.06 # + 60 ms par caractère
+const DOC_ZOOM := 1.5 # zoom de lecture d'un document
+const STAMP_TILT_MAX_DEG := 4.0 # rotation aléatoire de l'empreinte
+const FX_LINK_DASH_SPEED := 20.0 # px/s, défilement des pointillés (≤ 20 px/s, DS §5)

@@ -201,6 +201,16 @@ stateDiagram-v2
 
 Le maintien de 0,4 s sur les tampons évite les verdicts accidentels (désactivable). En manette, le curseur est remplacé par un **focus magnétique** qui saute de champ en champ : on n'a jamais à viser un champ au pixel près.
 
+### 3.6 Implémentation M4 — précisions de comportement
+
+Capture de référence : [`docs/mockups/m4_comparison.png`](mockups/m4_comparison.png) (démo `scenes/ui/comparison_ui_demo.tscn`).
+
+- **Sujets d'interrogatoire** (`interrogation_requested(topic)`) : questions de base `purpose`, `stay`, `origin` ; `remove_visor` tant que le visage présenté est masqué ; **une question par discordance confirmée** : `about_<raison>[:<document>]` (`about_expired:entry_permit`, `about_mismatch:id_card`, `about_face_mismatch`, `about_rule_violated:…`). Texte de la question : clé `q_<sujet sans suffixe>` (`{doc}` remplacé par le titre du document). La réponse est affichée telle que reçue (`interrogation_answered(topic, line_key)` → `tr(line_key)`).
+- **Déverrouillage** : tampons, Inspection et Interroger exigent `phase == INSPECTING` **et** `documents_presented` reçu pour le cas courant, et aucun verdict déjà posé ; « Suivant » n'est actif qu'en `WAITING_CASE` (anti-rebond 0,5 s), libellé « EN APPROCHE » / « DÉPART » sinon.
+- **Tampon DÉTENTION** affiché seulement si le RuleSet du jour contient une règle de sévérité ≥ `RuleEngine.DETAIN_SEVERITY` (donnée, pas de numéro de jour en dur).
+- **Concordant** : pas d'étiquette sur le fil (elle masquerait des valeurs) ; le bandeau du plan de travail et les coches des deux champs portent le « ✓ ».
+- **Raccourcis manette retenus en M4** (en attendant le tiroir à tampons) : APPROUVÉ = RT maintenu, REFUSÉ = Ⓧ maintenu, DÉTENTION = croix ↓ maintenue ; Visage = clic stick droit ; onglets du Rulebook = LB / RB. Actions déclarées dans `project.godot` : `inspect_toggle`, `interrogate`, `stamp_approve`, `stamp_deny`, `stamp_detain`, `rulebook_toggle`, `next_case`, `cancel`, `inspect_face`, `rulebook_prev`, `rulebook_next`.
+
 ---
 
 ## 4. Le passager et la vitre

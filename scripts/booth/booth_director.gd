@@ -1,0 +1,436 @@
+## Seul pont EventBus ↔ 3D du guichet (ARCHITECTURE §8 bis.1).
+##
+## Pool de 2 `PassengerActor` (D-017) : sur `case_presented`, l'acteur libre est
+## habillé et marche le long d'`ArrivalPath` jusqu'à `DeskMark` ; ses signaux
+## locaux deviennent `passenger_arrived`, `documents_presented` (repère
+## `documents_slot`) et `passenger_departed` (au `ClearMark` de la sortie),
+## **une seule fois par `case_id`**. Réactions, retrait de visière, regard
+## (projection souris sur `LookTargetPlane`), clic visage en Mode Inspection,
+## travelling visage, watchdogs locaux par étape.
+## Ne lit que `Case.case_id`, `Case.passenger_presented.appearance` et
+## `CaseResult.verdict_kind` : ni clé, ni règles, ni score.
+class_name BoothDirector
+extends Node3D
+
+const ACTOR_SCENE: PackedScene = preload("res://scenes/passenger/passenger_actor.tscn")
+const POOL_SIZE: int = 2
+
+const WALK_SPEED: float = 1.15
+const EXIT_APPROVED_SPEED: float = 1.2
+const EXIT_REFUSED_SPEED: float = 1.0
+## Réduire les animations (§8 bis.7) : marche ×2,5, départ à 70 % du chemin,
+## sortie coupée après 1 s.
+const REDUCED_SPEED_FACTOR: float = 2.5
+const REDUCED_START_RATIO: float = 0.7
+const REDUCED_EXIT_CUT_SEC: float = 1.0
+const PRESENT_DELAY_SEC: float = 0.3
+const WATCHDOG_MARGIN_SEC: float = 1.5
+## Attente maximale de la fin d'une réaction avant `leave`.
+const LEAVE_REACTION_WAIT_SEC: float = 1.6
+const TALK_SEC: float = 1.4
+
+## Rectangle de projection du regard dans le plan de la vitre (m, repère monde) :
+## le bas descend jusqu'au comptoir (le passager baisse les yeux, BOOTH_SCENE §9.1).
+const LOOK_X_LIMIT: float = 0.6
+const LOOK_Y_MIN: float = 0.85
+const LOOK_Y_MAX: float = 1.8
+## Travelling visage (BOOTH_SCENE §3.4).
+const BASE_FOV: float = 14.0
+const FACE_FOV: float = 6.5
+const FACE_DOLLY: float = 0.3
+const ZOOM_IN_SEC: float = 0.4
+const ZOOM_OUT_SEC: float = 0.3
+## Cadreur automatique (BOOTH_SCENE §3.3) : tilt vers la tête, borné, lissé.
+const FRAMER_EYE_HEIGHT: float = 1.55
+const FRAMER_DISTANCE: float = 2.6
+const FRAMER_MAX_PITCH: float = deg_to_rad(2.5)
+const FRAMER_SMOOTH: float = 2.5
+## Vitre (quad centré) : pour le point dégagé autour du visage.
+const GLASS_SIZE: Vector2 = Vector2(2.4, 1.4)
+
+const FLAG_ARRIVED: int = 1
+const FLAG_DOCUMENTS: int = 2
+const FLAG_DEPARTED: int = 4
+
+@onready var camera: Camera3D = %BoothCamera
+@onready var arrival_path: Path3D = %ArrivalPath
+@onready var desk_mark: Marker3D = %DeskMark
+@onready var exit_approved_path: Path3D = %ExitApprovedPath
+@onready var exit_refused_path: Path3D = %ExitRefusedPath
+@onready var look_target_plane: Marker3D = %LookTargetPlane
+@onready var passenger_slots: Node3D = %PassengerSlots
+@onready var queue: QueueImpostors = %QueueImpostors
+@onready var slot_glow: OmniLight3D = %SlotGlow
+@onready var gate_light: OmniLight3D = %GateLight
+@onready var glass: MeshInstance3D = %Glass
+
+var actors: Array[PassengerActor] = []
+var inspection_mode: bool = false
+
+var _by_case: Dictionary[StringName, PassengerActor] = {}
+var _cases: Dictionary[StringName, Case] = {}
+var _emitted: Dictionary[StringName, int] = {}
+## Acteur au guichet (ou en route vers lui).
+var _desk_actor: PassengerActor = null
+var _serial: int = 0
+var _time: float = 0.0
+## Watchdog par acteur : [étape, échéance].
+var _watch: Dictionary[PassengerActor, Array] = {}
+## Départs en attente de la fin d'une réaction : acteur → [chemin, vitesse, échéance].
+var _pending_leave: Dictionary[PassengerActor, Array] = {}
+var _cut_at: Dictionary[PassengerActor, float] = {}
+var _talk_left: float = 0.0
+var _face_zoom: bool = false
+var _zoom: float = 0.0
+var _framer_pitch: float = 0.0
+var _camera_rest: Transform3D = Transform3D.IDENTITY
+var _last_mouse: Vector2 = Vector2(-1, -1)
+var _mouse_seen: bool = false
+
+
+func _ready() -> void:
+	_camera_rest = camera.transform
+	for i: int in POOL_SIZE:
+		var actor: PassengerActor = ACTOR_SCENE.instantiate()
+		actor.name = "Passenger%s" % ["A", "B"][i]
+		passenger_slots.add_child(actor)
+		actor.arrived.connect(_on_actor_arrived.bind(actor))
+		actor.anim_event.connect(_on_actor_anim_event.bind(actor))
+		actor.cleared.connect(_on_actor_cleared.bind(actor))
+		actor.departed.connect(_on_actor_departed.bind(actor))
+		actor.face_clicked.connect(_on_actor_face_clicked.bind(actor))
+		actors.append(actor)
+	EventBus.case_presented.connect(_on_case_presented)
+	EventBus.passenger_reaction_triggered.connect(_on_reaction_triggered)
+	EventBus.interrogation_answered.connect(_on_interrogation_answered)
+	EventBus.case_resolved.connect(_on_case_resolved)
+	EventBus.inspection_mode_changed.connect(_on_inspection_mode_changed)
+	EventBus.inspection_target_picked.connect(_on_inspection_target_picked)
+	EventBus.day_started.connect(_on_day_started)
+
+
+## Acteur lié à un cas (tests, debug).
+func get_actor(case_id: StringName) -> PassengerActor:
+	return _by_case.get(case_id, null)
+
+
+func get_desk_actor() -> PassengerActor:
+	return _desk_actor
+
+
+# --- EventBus → 3D -----------------------------------------------------------
+
+func _on_day_started(day: DayDef, _rulebook: Array[RulebookEntry]) -> void:
+	queue.setup(SeededRng.mix(day.day_number, day.game_date))
+
+
+func _on_case_presented(case: Case) -> void:
+	if case == null or _by_case.has(case.case_id):
+		return # idempotence
+	var actor: PassengerActor = _take_actor()
+	_serial += 1
+	var reduce: bool = Settings.reduce_motion
+	actor.reduce_motion = reduce
+	actor.assign(case.case_id, _serial, SeededRng.hash_string(String(case.case_id)))
+	actor.apply_appearance(case.passenger_presented.appearance)
+	_by_case[case.case_id] = actor
+	_cases[case.case_id] = case
+	_desk_actor = actor
+	var length: float = arrival_path.curve.get_baked_length()
+	var speed: float = WALK_SPEED * (REDUCED_SPEED_FACTOR if reduce else 1.0)
+	actor.walk_to_desk(arrival_path, speed, length * REDUCED_START_RATIO if reduce else 0.0, desk_mark)
+	_arm_watchdog(actor, &"arrive", actor.remaining_walk_time())
+	queue.hide_head()
+
+
+func _on_reaction_triggered(reaction: PassengerReaction.Kind) -> void:
+	if _desk_actor != null:
+		_desk_actor.play_reaction(reaction)
+
+
+func _on_interrogation_answered(topic: StringName, line_key: String) -> void:
+	if _desk_actor == null:
+		return
+	_desk_actor.set_talking(true)
+	_talk_left = TALK_SEC
+	if topic == InspectionSession.TOPIC_REMOVE_VISOR and line_key == InspectionSession.LINE_VISOR_REMOVED:
+		var case: Case = _cases.get(_desk_actor.case_id, null)
+		if case != null:
+			_desk_actor.remove_visor(case.passenger_presented.appearance)
+
+
+func _on_case_resolved(case_id: StringName, result: CaseResult) -> void:
+	var actor: PassengerActor = _by_case.get(case_id, null)
+	_set_face_zoom(false)
+	if actor == null or actor.state == PassengerActor.State.LEAVING or actor.is_free():
+		return
+	var approved: bool = result != null and result.verdict_kind == VerdictKind.Kind.APPROVE
+	_pulse_light(gate_light, DS.STATE_GREEN if approved else DS.STATE_RED, 1.4, 0.6)
+	_pulse_light(slot_glow, DS.ACCENT_CYAN, 0.8, 0.4)
+	if actor.state == PassengerActor.State.ARRIVING:
+		actor.force_finish_walk() # tampon reçu avant l'arrivée (timeouts) : calage
+	var path: Path3D = exit_approved_path if approved else exit_refused_path
+	var speed: float = EXIT_APPROVED_SPEED if approved else EXIT_REFUSED_SPEED
+	if actor.reduce_motion:
+		speed *= REDUCED_SPEED_FACTOR
+	_pending_leave[actor] = [path, speed, _time + LEAVE_REACTION_WAIT_SEC]
+	if not approved:
+		actor.set_expression(&"sad")
+
+
+func _on_inspection_mode_changed(enabled: bool) -> void:
+	inspection_mode = enabled
+	if not enabled:
+		_set_face_zoom(false)
+
+
+func _on_inspection_target_picked(ref: FieldRef) -> void:
+	if ref != null and ref.is_passenger_face() and inspection_mode:
+		_set_face_zoom(true)
+
+
+# --- Acteurs → EventBus ------------------------------------------------------
+
+func _on_actor_arrived(actor: PassengerActor) -> void:
+	var case_id: StringName = actor.case_id
+	_watch.erase(actor)
+	_emit_once(case_id, FLAG_ARRIVED)
+	get_tree().create_timer(PRESENT_DELAY_SEC).timeout.connect(func() -> void:
+		if actor.case_id == case_id and actor.state == PassengerActor.State.AT_DESK and not actor.documents_slot_fired():
+			actor.present_documents()
+			_arm_watchdog(actor, &"present", actor.clip_length(&"present_documents")))
+
+
+func _on_actor_anim_event(event_name: StringName, actor: PassengerActor) -> void:
+	if event_name == PlaceholderAnims.DOCUMENTS_SLOT:
+		_watch.erase(actor)
+		_pulse_light(slot_glow, DS.ACCENT_CYAN, 0.8, 0.4)
+		_emit_once(actor.case_id, FLAG_DOCUMENTS)
+
+
+func _on_actor_cleared(actor: PassengerActor) -> void:
+	_watch.erase(actor)
+	_emit_once(actor.case_id, FLAG_DEPARTED)
+
+
+func _on_actor_departed(actor: PassengerActor) -> void:
+	_emit_once(actor.case_id, FLAG_DEPARTED)
+	_release(actor)
+
+
+func _on_actor_face_clicked(actor: PassengerActor) -> void:
+	if inspection_mode and actor == _desk_actor and actor.state == PassengerActor.State.AT_DESK:
+		EventBus.inspection_target_picked.emit(FieldRef.passenger_face())
+
+
+## Émet un signal du booth une seule fois par cas, dans l'ordre du contrat.
+func _emit_once(case_id: StringName, flag: int) -> void:
+	if case_id == &"":
+		return
+	var flags: int = _emitted.get(case_id, 0)
+	if (flags & flag) != 0:
+		return
+	_emitted[case_id] = flags | flag
+	match flag:
+		FLAG_ARRIVED:
+			EventBus.passenger_arrived.emit(case_id)
+		FLAG_DOCUMENTS:
+			if (flags & FLAG_ARRIVED) == 0:
+				_emit_once(case_id, FLAG_ARRIVED)
+			EventBus.documents_presented.emit(case_id)
+		FLAG_DEPARTED:
+			if _desk_actor != null and _desk_actor.case_id == case_id:
+				_desk_actor = null
+			queue.advance()
+			EventBus.passenger_departed.emit(case_id)
+
+
+# --- Pool --------------------------------------------------------------------
+
+func _take_actor() -> PassengerActor:
+	for actor: PassengerActor in actors:
+		if actor.is_free():
+			return actor
+	# Aucun libre (sortant bloqué) : le plus ancien est caché de force.
+	var oldest: PassengerActor = actors[0]
+	for actor: PassengerActor in actors:
+		if actor.assigned_serial < oldest.assigned_serial:
+			oldest = actor
+	push_warning("BoothDirector: pool plein, %s libéré de force" % oldest.case_id)
+	_emit_once(oldest.case_id, FLAG_DEPARTED)
+	_release(oldest)
+	return oldest
+
+
+func _release(actor: PassengerActor) -> void:
+	_watch.erase(actor)
+	_pending_leave.erase(actor)
+	_cut_at.erase(actor)
+	if actor.case_id != &"":
+		_by_case.erase(actor.case_id)
+		_cases.erase(actor.case_id)
+	if _desk_actor == actor:
+		_desk_actor = null
+	actor.release()
+
+
+func _start_leave(actor: PassengerActor, path: Path3D, speed: float) -> void:
+	var clear_mark: Node3D = path.get_node_or_null(^"ClearMark")
+	var clear_distance: float = -1.0
+	if clear_mark != null:
+		clear_distance = path.curve.get_closest_offset(path.to_local(clear_mark.global_position))
+	actor.leave_along(path, speed, clear_distance)
+	var to_clear: float = (clear_distance if clear_distance >= 0.0 else path.curve.get_baked_length()) / speed
+	_arm_watchdog(actor, &"clear", to_clear + actor.clip_length(&"leave"))
+	if actor.reduce_motion:
+		_cut_at[actor] = _time + REDUCED_EXIT_CUT_SEC
+
+
+# --- Boucle ------------------------------------------------------------------
+
+func _process(delta: float) -> void:
+	_time += delta
+	_process_watchdogs()
+	_process_leaves()
+	if _talk_left > 0.0:
+		_talk_left -= delta
+		if _talk_left <= 0.0 and _desk_actor != null:
+			_desk_actor.set_talking(false)
+	_update_look()
+	_update_camera(delta)
+	_update_glass()
+
+
+func _arm_watchdog(actor: PassengerActor, step: StringName, expected_sec: float) -> void:
+	_watch[actor] = [step, _time + expected_sec + WATCHDOG_MARGIN_SEC]
+
+
+func _process_watchdogs() -> void:
+	for actor: PassengerActor in _watch.keys():
+		var entry: Array = _watch[actor]
+		var deadline: float = entry[1]
+		if _time < deadline:
+			continue
+		var step: StringName = entry[0]
+		_watch.erase(actor)
+		push_warning("BoothDirector: watchdog « %s » (%s)" % [step, actor.case_id])
+		match step:
+			&"arrive":
+				actor.force_finish_walk()
+			&"present":
+				actor.force_documents_slot()
+			&"clear":
+				_emit_once(actor.case_id, FLAG_DEPARTED)
+				_release(actor)
+	for actor: PassengerActor in _cut_at.keys():
+		if _time >= _cut_at[actor]:
+			_emit_once(actor.case_id, FLAG_DEPARTED)
+			_release(actor)
+
+
+func _process_leaves() -> void:
+	for actor: PassengerActor in _pending_leave.keys():
+		var entry: Array = _pending_leave[actor]
+		var wait_until: float = entry[2]
+		if actor.has_pending_reaction() and _time < wait_until:
+			continue
+		_pending_leave.erase(actor)
+		var path: Path3D = entry[0]
+		var speed: float = entry[1]
+		_start_leave(actor, path, speed)
+
+
+## Regard : souris projetée sur le plan de la vitre (bornée), sinon la caméra.
+func _update_look() -> void:
+	if _desk_actor == null:
+		return
+	var target: Vector3 = camera.global_position
+	var mouse: Vector2 = _booth_mouse_position()
+	if mouse != _last_mouse:
+		_mouse_seen = _last_mouse.x >= 0.0 or _mouse_seen
+		_last_mouse = mouse
+	if _mouse_seen and not _face_zoom:
+		var origin: Vector3 = camera.project_ray_origin(mouse)
+		var direction: Vector3 = camera.project_ray_normal(mouse)
+		var plane: Plane = Plane(look_target_plane.global_basis.z, look_target_plane.global_position)
+		var hit: Variant = plane.intersects_ray(origin, direction)
+		if hit == null:
+			# Rayon parallèle ou derrière : on vise le comptoir.
+			target = Vector3(clampf(origin.x, -LOOK_X_LIMIT, LOOK_X_LIMIT), LOOK_Y_MIN, look_target_plane.global_position.z)
+		else:
+			var point: Vector3 = hit
+			target = Vector3(clampf(point.x, -LOOK_X_LIMIT, LOOK_X_LIMIT), clampf(point.y, LOOK_Y_MIN, LOOK_Y_MAX), point.z)
+	_desk_actor.set_look_target(target)
+
+
+## Position de la souris dans la bande 3D (SubViewport sous un
+## SubViewportContainer : conversion depuis la fenêtre, même hors de la bande).
+func _booth_mouse_position() -> Vector2:
+	var vp: Viewport = get_viewport()
+	var sub: SubViewport = vp as SubViewport
+	if sub != null:
+		var container: SubViewportContainer = sub.get_parent() as SubViewportContainer
+		if container != null and container.size.x > 0.0 and container.size.y > 0.0:
+			var root_mouse: Vector2 = container.get_viewport().get_mouse_position()
+			var local: Vector2 = container.get_global_transform_with_canvas().affine_inverse() * root_mouse
+			return local * Vector2(sub.size) / container.size
+	return vp.get_mouse_position()
+
+
+func _set_face_zoom(enabled: bool) -> void:
+	_face_zoom = enabled
+	if Settings.reduce_motion:
+		_zoom = 1.0 if enabled else 0.0
+
+
+func _update_camera(delta: float) -> void:
+	var goal: float = 1.0 if _face_zoom else 0.0
+	var rate: float = 1.0 / (ZOOM_IN_SEC if _face_zoom else ZOOM_OUT_SEC)
+	_zoom = move_toward(_zoom, goal, delta * rate)
+	var t: float = ease(_zoom, -2.0)
+	camera.fov = lerpf(BASE_FOV, FACE_FOV, t)
+	if _desk_actor != null and _desk_actor.visible:
+		var head_y: float = _desk_actor.rig.head.global_position.y
+		var wanted: float = clampf(atan((head_y - FRAMER_EYE_HEIGHT) / FRAMER_DISTANCE), -FRAMER_MAX_PITCH, FRAMER_MAX_PITCH)
+		if Settings.reduce_motion:
+			_framer_pitch = wanted
+		else:
+			_framer_pitch = lerpf(_framer_pitch, wanted, clampf(FRAMER_SMOOTH * delta, 0.0, 1.0))
+	var rest: Transform3D = Transform3D(_camera_rest.basis * Basis(Vector3.RIGHT, _framer_pitch), _camera_rest.origin)
+	if t <= 0.0 or _desk_actor == null:
+		camera.transform = rest
+		return
+	var head: Vector3 = _desk_actor.rig.head.global_position
+	var parent_inv: Transform3D = camera.get_parent_node_3d().global_transform.affine_inverse()
+	var head_local: Vector3 = parent_inv * head
+	var dolly: Vector3 = rest.origin + Vector3(0, 0, -FACE_DOLLY)
+	var aimed: Transform3D = Transform3D(Basis.looking_at(head_local - dolly, Vector3.UP), dolly)
+	camera.transform = rest.interpolate_with(aimed, t)
+
+
+## Point dégagé de la vitre : intersection caméra → tête avec le plan de la vitre.
+func _update_glass() -> void:
+	var mat: ShaderMaterial = glass.material_override as ShaderMaterial
+	if mat == null:
+		return
+	var head: Vector3 = desk_mark.global_position + Vector3(0, 1.62, 0)
+	if _desk_actor != null and _desk_actor.visible:
+		head = _desk_actor.rig.head.global_position
+	var from: Vector3 = camera.global_position
+	var dir: Vector3 = head - from
+	if absf(dir.z) < 0.0001:
+		return
+	var t: float = (glass.global_position.z - from.z) / dir.z
+	var p: Vector3 = from + dir * t - glass.global_position
+	var uv: Vector2 = Vector2(p.x / GLASS_SIZE.x + 0.5, 0.5 - p.y / GLASS_SIZE.y)
+	mat.set_shader_parameter(&"clear_point", uv)
+	mat.set_shader_parameter(&"fx_intensity", Settings.fx_intensity)
+
+
+func _pulse_light(light: OmniLight3D, color: Color, energy: float, duration: float) -> void:
+	if light == null:
+		return
+	light.light_color = color
+	light.light_energy = energy
+	var tween: Tween = create_tween()
+	tween.tween_property(light, ^"light_energy", 0.0, duration).set_ease(Tween.EASE_IN)

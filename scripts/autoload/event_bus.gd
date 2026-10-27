@@ -4,9 +4,8 @@
 ## Convention : passé pour un fait (`*_started`, `*_stamped`), `*_requested`
 ## pour une intention de l'UI vers la logique.
 ##
-## Typage : classes du modèle M2 (`Case`, `DayDef`, `FieldRef`…). Restent
-## provisoires (classe de base + `# TODO(M5): <Type>`) : `DaySummary` et
-## `CaseResult`, livrés avec le scoring et la boucle de jour (M5).
+## Typage : classes du modèle (`Case`, `DayDef`, `FieldRef`…). `CaseResult` et
+## `DaySummary` sont typés depuis M4 (contenu minimal, enrichi en M5).
 ## Pas de `class_name` (autoload, cf. ARCHITECTURE §4).
 extends Node
 
@@ -22,7 +21,7 @@ signal day_clock_ticked(remaining_sec: float)
 ## DayClock → DayController.
 signal day_time_expired()
 ## DayController → UI résumé, GameState.
-signal day_ended(summary: RefCounted) # TODO(M5): DaySummary
+signal day_ended(summary: DaySummary)
 ## DayController → UI, BoothDirector (debug).
 signal day_phase_changed(phase: DayPhase.Kind, case_id: StringName)
 
@@ -63,7 +62,7 @@ signal interrogation_answered(topic: StringName, line_key: String)
 ## UI tampon → DayController.
 signal verdict_stamped(verdict: Verdict)
 ## DayController (via ScoringService) → HUD, BoothDirector.
-signal case_resolved(case_id: StringName, result: RefCounted) # TODO(M5): CaseResult
+signal case_resolved(case_id: StringName, result: CaseResult)
 ## DayController → HUD.
 signal citation_issued(reason_key: String)
 ## GameState → HUD.
