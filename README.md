@@ -6,7 +6,9 @@ Jeu 3D stylisé cyberpunk inspiré de *Papers, Please*, développé avec **Godot
 
 ## État du projet
 
-**Phase : production — jalon M1 (Fondations) livré** : autoloads, `SeededRng`, `GameDate`, thème DS, écran titre, tests GUT. Prochain jalon : M2 (documents & règles).
+**Phase : production — démo jouable (jours 1 à 3).** Jalons livrés : M1 Fondations · M2 Documents & règles · M3 Générateur & apparences · M4 Interface de comparaison + guichet 3D greybox · M5 Boucle de jour (scoring, soirée, sauvegarde). En cours : M6 Passager final (personnages Kenney + animations Quaternius) et audio, équilibrage du foyer.
+
+Captures : [interface](docs/mockups/m4_day.png) · [Steam Deck](docs/mockups/m4_day_deck.png) · [briefing](docs/mockups/m5_briefing.png) · [soirée](docs/mockups/m5_evening.png)
 
 ## Documentation
 
@@ -30,7 +32,8 @@ Jeu 3D stylisé cyberpunk inspiré de *Papers, Please*, développé avec **Godot
 
 1. Installer [Godot 4.7.2](https://godotengine.org/download) (version standard, GDScript — pas la version .NET).
 2. Ouvrir `project.godot` depuis le gestionnaire de projets (le premier import génère `.godot/`, ignoré par git).
-3. Lancer (F5) : `scenes/main/main.tscn` affiche l'écran titre placeholder (thème Design System construit par `ui/theme/theme_builder.gd`).
+3. Lancer (F5) : écran titre → « Nouvelle partie » → briefing → shift au guichet → bilan → soirée.
+4. Assets sources (facultatif, pour retravailler personnages/sons) : `bash tools/fetch_assets.sh` (packs CC0 dans `art_src/downloads/`, non versionnés).
 
 En ligne de commande :
 
@@ -39,7 +42,7 @@ godot --headless --import          # import + détection des erreurs de parse
 godot --path .                     # lance le jeu
 ```
 
-Autoloads (dans cet ordre) : `EventBus` (catalogue de signaux), `Settings` (`user://settings.cfg`), `GameState` (état de campagne). Les polices (`assets/fonts/`) sont optionnelles tant qu'elles ne sont pas fournies : le thème retombe sur la police par défaut.
+Autoloads (dans cet ordre) : `EventBus` (catalogue de signaux), `Settings` (`user://settings.cfg`), `GameState` (état de campagne). Polices : Chakra Petch, Inter, JetBrains Mono (OFL) dans `assets/fonts/`.
 
 ## Tests
 
