@@ -17,9 +17,12 @@ Jeu 3D stylisé cyberpunk inspiré de *Papers, Please*, développé avec **Godot
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Structure Godot, modèle de données, moteur de règles, générateur |
 | [`docs/UI_FLOW.md`](docs/UI_FLOW.md) | Boucle de jeu, layout, flux de comparaison des documents |
 | [`docs/mockups/comparison.html`](docs/mockups/comparison.html) | Maquette interactive de l’écran de comparaison (ouvrir dans un navigateur, touches 0–4) · captures : [arrivée](docs/mockups/arrival.png), [discordance](docs/mockups/comparison.png) |
+| [`docs/BOOTH_SCENE.md`](docs/BOOTH_SCENE.md) | Mise en scène du guichet : vitre, caméra, chorégraphie du passager, apparences |
+| [`docs/ASSETS.md`](docs/ASSETS.md) | Sources d'assets libres, pipeline personnages/animations, registre des licences |
+| [`docs/AUDIO.md`](docs/AUDIO.md) | Bus audio, liste des sons, voix courtes sous-titrées |
 | [`DECISIONS.md`](DECISIONS.md) | Journal des décisions |
 
-À venir : `GDD.md` (Game Designer), `LORE.md` (Lore Master), `docs/NARRATIVE.md` (Scénariste), `docs/ASSETS.md` (Asset Lead), `docs/QA.md` (QA).
+À venir : `GDD.md` (Game Designer), `LORE.md` (Lore Master), `docs/NARRATIVE.md` (Scénariste), `docs/QA.md` (QA).
 
 ## Démarrage
 
