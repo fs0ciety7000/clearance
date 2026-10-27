@@ -337,7 +337,7 @@ classDiagram
 | `RuleSet` | `scripts/rules/rule_set.gd` | `id`, `rules: Array[Rule]`, `new_rule_ids: Array[StringName]` (badge « NOUVEAU » au Rulebook), `required_document_ids: Array[StringName]` (dérivé/vérifié) | Liste **explicite** par jour (pas d'héritage entre jours en MVP : plus lisible, diffable). Les `Rule` sont des `.tres` partagés référencés par plusieurs RuleSets. |
 | `DayDef` | `scripts/core/day_def.gd` | `day_number`, `game_date: int` (jour absolu, cf. `GameDate`), `rule_set`, `duration_sec`, `passenger_count`, `anomaly_count_weights: PackedFloat32Array` (proba de 0,1,2,3 anomalies), `anomaly_weights: Dictionary[AnomalyType, float]`, `scripted_cases: Array[ScriptedCaseDef]`, `intro_text_key`, `credit_per_correct`, `penalty_per_error` | Le Game Designer règle la difficulté uniquement ici. |
 | `ScriptedCaseDef` | `scripts/generation/scripted_case_def.gd` | `at_index: int`, `passenger_overrides: Dictionary`, `appearance_overrides: Dictionary[StringName, StringName]` (traits imposés, ex. personnage récurrent), `forced_anomalies: Array[AnomalyType]`, `dialogue_id: StringName`, `sets_flag / requires_flag: StringName` | Passagers narratifs (Scénariste) injectés à un index donné, générés par la même chaîne. |
-| `AppearanceCatalog` | `scripts/core/appearance_catalog.gd` | `slots: Array[AppearanceSlotDef]`, `min_distance: int` (anti-répétition, défaut 3), `window_size: int` (défaut 15) | `data/appearance/appearance_catalog.tres`. Une seule instance. |
+| `AppearanceCatalog` | `scripts/core/appearance_catalog.gd` | `slots: Array[AppearanceSlotDef]`, `min_distance: int` (anti-répétition, défaut 5), `window_size: int` (défaut 15) | `data/appearance/appearance_catalog.tres`. Une seule instance. |
 | `AppearanceSlotDef` | `scripts/core/appearance_slot_def.gd` | `id: StringName` (`silhouette, face, eyes, nose_mouth, hair, headwear, skin, outfit, accessory, palette`), `identity: bool` (trait de la personne vs trait changeable : tenue, coiffe, accessoire), `visible_in_portrait: bool`, `options: Array[AppearanceOptionDef]` | Les slots `identity && visible_in_portrait` sont ceux que compare `FaceComparator`. |
 | `AppearanceOptionDef` | `scripts/core/appearance_option_def.gd` | `id: StringName`, `weight: float`, `faction_weights: Dictionary[StringName, float]`, `tags: PackedStringArray` (ex. `&"family:round_face"`), **références visuelles** : `mesh: Mesh`, `atlas_cell: int`, `material: Material`, `portrait_layer: Texture2D` | Le générateur ne lit **que** `id`, poids et tags ; `AppearanceApplier`/`PortraitRenderer` lisent les références visuelles. En headless (tests), les meshes se chargent sur le renderer factice : acceptable ; si les tests ralentissent, scinder en `AppearanceVisualDef` séparé. |
 
@@ -418,7 +418,7 @@ Convention : nom au **passé** pour un fait (`*_started`, `*_stamped`), `*_reque
 | `next_case_requested` | — | UI (bouton « Suivant ») → DayController (ignoré hors `WAITING_CASE`) |
 | `case_presented` | `case: Case` | DayController → BoothDirector (applique l'apparence, lance la marche), UI (prépare les documents **sans les afficher**) |
 | `passenger_arrived` 🆕 | `case_id: StringName` | BoothDirector (acteur sur `DeskMark`) → DayController (`ARRIVING → INSPECTING`) |
-| `documents_presented` 🆕 | `case_id: StringName` | BoothDirector (marqueur `documents_out` du clip `present_documents`) → UI documents (les documents glissent par la fente), InspectionSession (démarre `elapsed_sec`), audio (hologramme qui s'allume) |
+| `documents_presented` 🆕 | `case_id: StringName` | BoothDirector (marqueur `documents_slot` du clip `present_documents`) → UI documents (les documents glissent par la fente), InspectionSession (démarre `elapsed_sec`), audio (hologramme qui s'allume) |
 | ~~`document_handed`~~ | — | **Supprimé** — remplacé par `documents_presented` (voir ci-dessous) |
 | `document_focused` | `doc: DocumentInstance` | UI → InspectionSession (télémétrie, tuto) |
 | `passenger_reaction_triggered` 🆕 | `reaction: PassengerReaction.Kind` | InspectionSession (réponses d'interrogation, réaction au verdict selon `dialogue_tags`) / dialogue → BoothDirector (OneShot + expression + bark) |
@@ -484,7 +484,7 @@ sequenceDiagram
     BD->>EB: passenger_arrived(case_id)
     EB->>DC: ARRIVING → INSPECTING + day_phase_changed(INSPECTING)
     BD->>PA: present_documents()
-    PA-->>BD: anim_event(&"documents_out")
+    PA-->>BD: anim_event(&"documents_slot")
     BD->>EB: documents_presented(case_id)
     EB->>UI: documents glissent par la fente (holo ON)
     EB->>IS: démarre elapsed_sec
@@ -660,8 +660,8 @@ Main (StateMachine) :
 
 ### 8 bis.6 Synchronisation anim ↔ logique et timeouts
 
-- **Marqueurs** : pistes de méthode dans les clips appelant `PassengerActor._on_anim_marker(name: StringName)` : `footstep_l`/`footstep_r` (walk, leave), `documents_out` (present_documents, à l'instant où les papiers passent la fente), `breath_in` (idle, optionnel). L'acteur ré-émet `anim_event(name)`.
-- **Dédoublonnage** : une piste de méthode peut ne pas se déclencher (fondu, frame sautée à bas FPS) ou se déclencher deux fois (blend). `documents_out` est donc **verrouillé une fois par cas** côté acteur ; les pas, eux, sont tolérés.
+- **Marqueurs** : pistes de méthode dans les clips appelant `PassengerActor._on_anim_marker(name: StringName)` : `footstep_l`/`footstep_r` (walk, leave), `documents_slot` (present_documents, à l'instant où les papiers passent la fente), `breath_in` (idle, optionnel). L'acteur ré-émet `anim_event(name)`.
+- **Dédoublonnage** : une piste de méthode peut ne pas se déclencher (fondu, frame sautée à bas FPS) ou se déclencher deux fois (blend). `documents_slot` est donc **verrouillé une fois par cas** côté acteur ; les pas, eux, sont tolérés.
 - **Watchdogs à deux niveaux** :
   1. **Local (BoothDirector)** : à chaque étape, `StepWatchdog` = durée attendue + 1,5 s (marche : `longueur / vitesse`, présentation : longueur du clip). À l'échéance, l'acteur est **calé** sur l'état final (téléport sur `DeskMark`, ou masqué en fin de sortie) et le signal EventBus est émis normalement + `push_warning`.
   2. **Global (DayController)** : timeouts du tableau §8 — couvre l'absence totale de booth ou un booth bloqué. Seul cas où un autre émetteur que BoothDirector émet `documents_presented`.
@@ -670,7 +670,7 @@ Main (StateMachine) :
 
 ### 8 bis.7 Horloge, accessibilité
 
-- L'horloge de shift **continue pendant la marche** (🟡 proposition à valider client) : la file d'attente fait partie de la pression temporelle. Marche d'arrivée cible : 4–6 s.
+- L'horloge de shift **continue pendant la marche** (🟡 proposition à valider client) : la file d'attente fait partie de la pression temporelle. Marche d’arrivée cible : ≤ 3–4 s (≈ 2,75 s dans BOOTH_SCENE).
 - **« Réduire les animations »** (`Settings.reduce_motion`) : vitesse de marche ×2,5, départ de `ArrivalPath` à 70 % de la courbe (arrivée ≤ 1,5 s), sortie coupée après 1 s (fondu), OneShots de réaction raccourcis (expression seule), sway caméra coupé. Les timings logiques (timeouts) se calculent à partir des durées effectives. Indépendant de « réduire les effets » (FX holo, D-001/UI_FLOW).
 
 ### 8 bis.8 Audio (structure seulement — détail dans `docs/AUDIO.md`)
@@ -722,7 +722,7 @@ campaign_seed  (tiré au « Nouvelle partie », stocké dans GameState)
 - `build_day_roster(day_seed, passenger_count, catalog, scripted) -> AppearanceRoster` : liste des apparences du jour, **calculée une fois au `day_started`** et dépendant **uniquement de `day_seed`** (+ catalogue et cas scénarisés du `DayDef`). Pour chaque index `i` : sous-graine `mix(day_seed, i, attempt)`, tirage, rejet si `distance(candidat, roster[j]) < catalog.min_distance` (distance = nombre de slots différents, tous slots confondus) pour un des `window_size` (15) précédents ; max 12 essais, puis on garde le candidat le plus éloigné (jamais d'échec). Les `appearance_overrides` des cas scénarisés sont posés d'abord.
 - **Déterminisme** : `roster[i]` = f(`day_seed`, `i`, données) ; rejouer le cas 7 reconstruit le roster (≈ quelques ms pour 60 passagers, pur) puis prend `roster[7]`. Le roster n'est pas sauvegardé (reconstructible).
 - **Faction** : le roster ne connaît pas la faction de chaque cas (elle est tirée dans le pipeline du cas). Pour garder l'indépendance, la faction de l'index `i` est tirée **dans le roster** depuis `mix(day_seed, i, &"faction")` et relue par `PassengerGenerator` (une seule source).
-- **Ressemblances occasionnelles tolérées** : `min_distance` (3 sur 10 slots) laisse partager plusieurs traits ; en dehors de la fenêtre, deux passagers peuvent se ressembler fortement. Ce n'est jamais une violation : seule la comparaison photo ↔ porteur compte.
+- **Ressemblances occasionnelles tolérées** : `min_distance` (5 sur 10 slots) laisse partager jusqu’à la moitié des traits ; en dehors de la fenêtre, deux passagers peuvent se ressembler fortement. Ce n'est jamais une violation : seule la comparaison photo ↔ porteur compte.
 
 **Anomalies de visage** (injecteurs, `scripts/generation/injectors/`) :
 
@@ -791,7 +791,7 @@ Invariants (debug + tests) : un injecteur de visage ne touche **jamais** `passen
 - **Scène de démo du booth** (`tests/manual/booth_sandbox.tscn`, hors CI) : boutons pour déclencher chaque étape/réaction, slider d'apparence — sert aux playtests anim/regard/expressions.
 - **Validation des données** : un test parcourt `res://data/**.tres` et vérifie la cohérence (ids uniques, `truth_path` existants, règles référençant des documents existants, chaque `DayDef` a ≥ 1 règle).
 - **Golden files** (optionnel M3+) : snapshot JSON de 20 cas de référence pour détecter les changements involontaires du générateur.
-- Hors périmètre GUT : rendu 3D, animations, regard, feel UI → playtests (QA, `docs/QA.md`). Un test GUT léger instancie néanmoins `passenger_actor.tscn` en headless pour vérifier que l'`AnimationLibrary` contient les 8 clips attendus et que `present_documents` porte le marqueur `documents_out` (garde-fou contre un ré-import qui perd les pistes).
+- Hors périmètre GUT : rendu 3D, animations, regard, feel UI → playtests (QA, `docs/QA.md`). Un test GUT léger instancie néanmoins `passenger_actor.tscn` en headless pour vérifier que l'`AnimationLibrary` contient les 8 clips attendus et que `present_documents` porte le marqueur `documents_slot` (garde-fou contre un ré-import qui perd les pistes).
 
 ---
 
@@ -810,8 +810,8 @@ Invariants (debug + tests) : un injecteur de visage ne touche **jamais** `passen
 | R9 | Temps | Temps réel vs horloge in-game accélérée | Horloge in-game affichée (DayClock), `duration_sec` réel en données — à confirmer par le Game Designer |
 | R10 | `res://ui/theme/` hors `scenes/ui` | Confusion de rangement | `res://ui/` réservé au thème (§3) |
 | R11 | Retarget Quaternius UAL / Mixamo → Kenney | Proportions différentes (pieds qui glissent, mains qui traversent le bureau), noms d'os, échelle, clips « in place » oubliés, pistes de méthode perdues au ré-import | `SkeletonProfileHumanoid` + `BoneMap` versionné ; clips téléchargés *in place* ; bibliothèque sauvegardée en fichier avec *Keep Custom Tracks* ; test GUT des clips/marqueurs (§12) ; capsule placeholder tant que le retarget n'est pas validé |
-| R12 | Désync animation ↔ logique | Marqueur `documents_out` sauté/doublé, anim bloquée, booth absent → jour figé | Logique pilotée par signaux idempotents avec `case_id` ; watchdog local + timeouts DayController ; `NullBooth`/`SilentBooth` en CI (§8 bis.6, P8) |
-| R13 | Horloge pendant la marche | Temps « perdu » à regarder marcher = frustration | 🟡 Horloge continue (proposition), marche 4–6 s, option « réduire les animations » — **à valider client / Game Designer** |
+| R12 | Désync animation ↔ logique | Marqueur `documents_slot` sauté/doublé, anim bloquée, booth absent → jour figé | Logique pilotée par signaux idempotents avec `case_id` ; watchdog local + timeouts DayController ; `NullBooth`/`SilentBooth` en CI (§8 bis.6, P8) |
+| R13 | Horloge pendant la marche | Temps « perdu » à regarder marcher = frustration | 🟡 Horloge continue (proposition), marche ≤ 3–4 s, option « réduire les animations » — **à valider client / Game Designer** |
 | R14 | Contrat `PassengerReaction` | (a) GDScript n'a pas d'enum global : le type est `PassengerReaction.Kind` ; (b) `RELIEVED` n'a **pas de clip** dans la liste | (a) adopté ; (b) **arbitré (D-014)** : MVP = expression + voix, pas de clip ; `react_relieved` éventuel post-MVP |
 | R15 | Choix de la sortie | `case_resolved` ne portait pas le verdict | Ajout de `CaseResult.verdict_kind` (signature du signal inchangée) — **à valider Orchestrateur** |
 | R16 | Anti-répétition vs indépendance des cas | Une fenêtre glissante rend le cas `i` dépendant des précédents | Roster du jour dépendant uniquement de `day_seed` (§9.3) ; testé (§12) |
