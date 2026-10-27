@@ -21,6 +21,8 @@ var narrative_flags: Dictionary[StringName, Variant] = {}
 var day_history: Array[Dictionary] = []
 ## Foyer de l'agent (Ilan, Noa, Dora — GDD §5.4).
 var household: Household = Household.new()
+## M7 : mémoire des passagers scénarisés (`CaseMemory`), clé = `ScriptedCaseDef.id`.
+var case_memory: Dictionary = {}
 
 
 ## Démarre une nouvelle campagne. `p_seed = 0` tire une graine non
@@ -38,6 +40,7 @@ func new_campaign(p_seed: int = 0) -> void:
 	narrative_flags.clear()
 	day_history.clear()
 	household = Household.new()
+	case_memory = {}
 
 
 ## Graine du jour courant (§9.1).
@@ -77,6 +80,11 @@ func add_to_flag(flag: StringName, delta: int) -> int:
 	var value: int = SaveService.as_int(narrative_flags.get(flag, 0)) + delta
 	set_flag(flag, value)
 	return value
+
+
+## M7 : mémorise un passager scénarisé traité (`CaseMemory.snapshot`).
+func remember_case(scripted_id: StringName, entry: Dictionary) -> void:
+	case_memory[String(scripted_id)] = entry.duplicate(true)
 
 
 ## Drapeaux « vrais » (booléen vrai ou entier non nul) : `requires_flag` du générateur.
@@ -124,6 +132,7 @@ func to_save_dict() -> Dictionary:
 		"narrative_flags": flags,
 		"day_history": day_history.duplicate(true),
 		"household": household.to_dict(),
+		"case_memory": case_memory.duplicate(true),
 	}
 
 
@@ -148,6 +157,14 @@ func apply_save_dict(data: Dictionary) -> void:
 			day_history.append(row)
 	var home: Dictionary = data.get("household", {})
 	household = Household.from_dict(home)
+	case_memory = {}
+	var remembered: Variant = data.get("case_memory", {})
+	if remembered is Dictionary:
+		var dict: Dictionary = remembered
+		for key: Variant in dict:
+			var entry: Variant = dict[key]
+			if entry is Dictionary:
+				case_memory[str(key)] = _json_deep(entry)
 	EventBus.credits_changed.emit(credits, 0)
 
 
@@ -166,6 +183,23 @@ func load_from_slot(slot: int = SaveService.DEFAULT_SLOT, dir: String = SaveServ
 	apply_save_dict(data)
 	EventBus.game_loaded.emit(slot)
 	return true
+
+
+## Variante récursive (dictionnaires et tableaux imbriqués, clés en texte).
+static func _json_deep(value: Variant) -> Variant:
+	if value is Dictionary:
+		var source: Dictionary = value
+		var result: Dictionary = {}
+		for key: Variant in source:
+			result[str(key)] = _json_deep(source[key])
+		return result
+	if value is Array:
+		var list: Array = value
+		var copy: Array = []
+		for item: Variant in list:
+			copy.append(_json_deep(item))
+		return copy
+	return _json_value(value)
 
 
 ## JSON ne connaît que les flottants : un nombre entier redevient `int`.

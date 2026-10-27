@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="FactionDef" format=3 uid="uid://dbj7v6x3rffa8"]
+
+[ext_resource type="Resource" path="res://data/names/namepool_thr.tres" id="1_3n5yd"]
+[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="2_gecpv"]
+
+[resource]
+script = ExtResource("2_gecpv")
+id = &"thr"
+name_key = "faction_thr_name"
+code = "THR"
+id_prefix = "HG-7"
+origin_sectors = PackedStringArray("Républiques de Tharsis (Mars)", "Tharsis — dômes d\'Olympus")
+name_pool = ExtResource("1_3n5yd")
+citizen_class_weights = Dictionary[StringName, float]({
+&"C-4": 0.6,
+&"C-5": 0.4
+})
+purpose_weights = Dictionary[StringName, float]({
+&"diplomatic": 0.25,
+&"family_visit": 0.15,
+&"trade": 0.35,
+&"transit": 0.25
+})
+employers = PackedStringArray("Délégation tharsienne", "Valcourt-Hsu Logistique", "Hydroponie Ceres-Verte")
+implant_rate = 0.2
+implant_weights = Dictionary[StringName, float]({
+&"KIN-17": 0.5,
+&"NX-4": 0.5,
+&"OPT-7": 1.0
+})

@@ -24,6 +24,12 @@
 ##   `<dialogue_id>_<sujet>` existe dans `fr.csv`, elle remplace la réplique
 ##   générique (`sc02_hurried_mother_about_expired`…). Une réplique de
 ##   supplication déclenche NERVOUS.
+## - M7 : `about_envelope` (« Qu'est-ce que c'est que ça ? », si une enveloppe a
+##   été glissée), `luciole_reply` (« La pluie ne tombe que vers le bas. »,
+##   seulement si `luciole_reply_allowed` : étiquette `luciole_password` et
+##   `lucioles_trust ≥ 2`, posé par le DayController ; mémorisé dans
+##   `luciole_replied`) ; familles `implant`, `wanted` ; `exit_line_key()` pour
+##   la dernière réplique au départ.
 ## Ne connaît pas la clé de réponse ; le DayController la garde.
 class_name InspectionSession
 extends Node
@@ -34,6 +40,12 @@ const TOPIC_CONFRONT: StringName = &"confront"
 const TOPIC_PURPOSE: StringName = &"purpose"
 const TOPIC_STAY: StringName = &"stay"
 const TOPIC_ORIGIN: StringName = &"origin"
+## M7 (NARRATIVE §4.0).
+const TOPIC_ABOUT_ENVELOPE: StringName = &"about_envelope"
+const TOPIC_LUCIOLE_REPLY: StringName = &"luciole_reply"
+const LINE_ABOUT_ENVELOPE: String = "line_about_envelope_generic"
+const LINE_LUCIOLE_REPLY: String = "line_luciole_reply_generic"
+const LINE_EXIT_DETAIN: String = "line_exit_detain_generic"
 const ABOUT_PREFIX: String = "about_"
 const DOC_SEPARATOR: String = ":"
 ## Au-delà, la réponse « séjour » est longue.
@@ -63,8 +75,13 @@ const FAMILY_ISSUER: String = "issuer"
 const FAMILY_ORIGIN: String = "origin"
 const FAMILY_HEALTH: String = "health"
 const FAMILY_OTHER: String = "other"
+const FAMILY_IMPLANT: String = "implant"
+const FAMILY_WANTED: String = "wanted"
 const FAMILIES: Array[String] = [FAMILY_FACE, FAMILY_ID_NUMBER, FAMILY_NAME, FAMILY_BIRTH, FAMILY_VALIDITY,
 		FAMILY_MISSING, FAMILY_ISSUER, FAMILY_ORIGIN, FAMILY_HEALTH, FAMILY_OTHER]
+## M7 : familles à réplique unique (`line_about_<famille>_generic`, NARRATIVE
+## §7.3) ; l'indignation (non constatée) reprend la famille « autre ».
+const GENERIC_FAMILIES: Array[String] = [FAMILY_IMPLANT, FAMILY_WANTED]
 ## `truth_path` d'un champ → famille de réplique.
 const TRUTH_PATH_FAMILIES: Dictionary[StringName, String] = {
 	&"appearance": FAMILY_FACE,
@@ -78,6 +95,9 @@ const TRUTH_PATH_FAMILIES: Dictionary[StringName, String] = {
 	&"document.issuer_id": FAMILY_ISSUER,
 	&"faction_id": FAMILY_ORIGIN,
 	&"health_status": FAMILY_HEALTH,
+	&"implants": FAMILY_IMPLANT,
+	&"document.mrz": FAMILY_ID_NUMBER,
+	&"document.seal_id": FAMILY_ISSUER,
 }
 
 var case: Case = null
@@ -89,6 +109,10 @@ var elapsed_sec: float = 0.0
 var documents_presented: bool = false
 var confirmed: Array[Discrepancy] = []
 var questions_asked: Array[StringName] = []
+## M7 : la réponse à la phrase de passe est proposée (posé par le DayController).
+var luciole_reply_allowed: bool = false
+## M7 : le joueur a répondu à la phrase de passe pendant ce cas.
+var luciole_replied: bool = false
 
 
 func _ready() -> void:
@@ -107,6 +131,8 @@ func begin(p_case: Case, p_ctx: RuleContext) -> void:
 	documents_presented = false
 	confirmed.clear()
 	questions_asked.clear()
+	luciole_reply_allowed = false
+	luciole_replied = false
 
 
 ## Termine la session au tampon : complète le verdict (preuves, questions,
@@ -187,6 +213,21 @@ func _on_interrogation_requested(topic: StringName) -> void:
 			EventBus.interrogation_answered.emit(topic, scripted_line("stay", LINE_STAY_SHORT if short else LINE_STAY_LONG))
 		TOPIC_ORIGIN:
 			EventBus.interrogation_answered.emit(topic, scripted_line("origin", LINE_ORIGIN_PREFIX + String(case.passenger_presented.faction_id)))
+		TOPIC_ABOUT_ENVELOPE:
+			if case.has_envelope():
+				EventBus.interrogation_answered.emit(topic, scripted_line("about_envelope", LINE_ABOUT_ENVELOPE))
+				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
+			else:
+				EventBus.interrogation_answered.emit(topic, LINE_GENERIC_SHRUG)
+				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.SHRUG)
+		TOPIC_LUCIOLE_REPLY:
+			if luciole_reply_allowed:
+				luciole_replied = true
+				EventBus.interrogation_answered.emit(topic, scripted_line("luciole_reply", LINE_LUCIOLE_REPLY))
+				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.RELIEVED)
+			else:
+				EventBus.interrogation_answered.emit(topic, LINE_GENERIC_SHRUG)
+				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.SHRUG)
 		_:
 			if String(topic).begins_with(ABOUT_PREFIX):
 				_confront_about(topic)
@@ -216,6 +257,10 @@ func _confront_about(topic: StringName) -> void:
 ## ou `line_about_<famille>_outrage_<n>` (non constatée) ; variante choisie par
 ## la graine du cas. Repli : famille « autre », puis réplique générique.
 func about_line(family: String, real: bool) -> String:
+	if GENERIC_FAMILIES.has(family):
+		if real and UiText.has("%s%s_generic" % [LINE_ABOUT_PREFIX, family]):
+			return "%s%s_generic" % [LINE_ABOUT_PREFIX, family]
+		family = FAMILY_OTHER
 	for fam: String in [family, FAMILY_OTHER]:
 		var stem: String = about_stem(fam, real)
 		var count: int = 0
@@ -241,6 +286,14 @@ static func family_of(d: Discrepancy, p_case: Case, p_ctx: RuleContext) -> Strin
 			return FAMILY_FACE
 		"expired":
 			return FAMILY_VALIDITY
+		"implant_mismatch":
+			return FAMILY_IMPLANT
+		"wanted_match":
+			return FAMILY_WANTED
+		"age_mismatch":
+			return FAMILY_BIRTH
+		"mrz_mismatch":
+			return FAMILY_ID_NUMBER
 		"rule_violated":
 			var rule_ref: FieldRef = d.a if d.a != null and d.a.is_rule() else d.b
 			var other: FieldRef = d.b if rule_ref == d.a else d.a
@@ -253,8 +306,14 @@ static func family_of(d: Discrepancy, p_case: Case, p_ctx: RuleContext) -> Strin
 				return FAMILY_ORIGIN
 			if rule is DocumentNotExpiredRule:
 				return FAMILY_VALIDITY
-			if rule is PortraitMatchRule:
+			if rule is PortraitMatchRule or rule is ApparentAgeRule:
 				return FAMILY_FACE
+			if rule is ImplantsDeclaredRule or rule is BannedImplantsRule:
+				return FAMILY_IMPLANT
+			if rule is WantedRule:
+				return FAMILY_WANTED
+			if rule is FactionBannedRule:
+				return FAMILY_ORIGIN
 			if rule is FieldValueAllowedRule:
 				var allowed: FieldValueAllowedRule = rule as FieldValueAllowedRule
 				return family_of_truth_path(allowed.truth_path)
@@ -271,7 +330,25 @@ static func family_of_reason(reason: String) -> String:
 			return FAMILY_FACE
 		"expired":
 			return FAMILY_VALIDITY
+		"implant", "implant_mismatch":
+			return FAMILY_IMPLANT
+		"wanted", "wanted_match":
+			return FAMILY_WANTED
 	return FAMILY_OTHER
+
+
+## Dernière réplique au départ (M7, NARRATIVE §4.0 `_exit_*`) :
+## `<dialogue_id>_exit_<approve|deny|detain>` si elle existe, réplique générique
+## pour une détention, vide sinon.
+static func exit_line_key(p_case: Case, kind: VerdictKind.Kind) -> String:
+	if p_case == null:
+		return ""
+	var suffix: String = "exit_" + SlippedItem.VERDICT_NAMES[kind]
+	for tag: StringName in p_case.dialogue_tags:
+		var key: String = "%s_%s" % [tag, suffix]
+		if UiText.has(key):
+			return key
+	return LINE_EXIT_DETAIN if kind == VerdictKind.Kind.DETAIN else ""
 
 
 static func family_of_truth_path(path: StringName) -> String:

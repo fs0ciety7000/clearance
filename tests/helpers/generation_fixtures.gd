@@ -6,6 +6,9 @@ extends RefCounted
 ## Graine de campagne de référence des tests.
 const BASE_SEED: int = 20_871_315
 const MVP_FACTIONS: Dictionary[StringName, float] = {&"tyc": 0.45, &"hal": 0.25, &"ter": 0.30}
+## M7 : les six origines (le jour « toutes règles » exerce aussi R19, THR).
+const ALL_FACTIONS: Dictionary[StringName, float] = {&"tyc": 0.30, &"hal": 0.17, &"ter": 0.20, &"cer": 0.13,
+		&"thr": 0.12, &"drv": 0.08}
 
 static var _data: DataCatalog = null
 
@@ -17,7 +20,7 @@ static func data() -> DataCatalog:
 
 
 ## Jour fictif J5 (17.03.2187) avec **toutes** les règles du catalogue et des
-## poids sur tous les types injectables. `count_weights` : proba de 0..3 anomalies.
+## poids sur tous les types injectables (M7 : six origines). `count_weights` : proba de 0..3 anomalies.
 static func full_day(count_weights: Array[float] = [0.0, 1.0, 0.0, 0.0], passenger_count: int = 12) -> DayDef:
 	var rs: RuleSet = RuleSet.new()
 	rs.id = &"rs_test_all"
@@ -35,10 +38,30 @@ static func full_day(count_weights: Array[float] = [0.0, 1.0, 0.0, 0.0], passeng
 	day.anomaly_count_weights = PackedFloat32Array(count_weights)
 	for kind: AnomalyType.Kind in InjectorRegistry.supported_kinds():
 		day.anomaly_weights[kind] = 1.0
-	day.faction_weights = MVP_FACTIONS.duplicate()
+	day.faction_weights = ALL_FACTIONS.duplicate()
 	day.visor_down_rate = 0.15
 	day.legit_noise_rate = 0.25
 	return day
+
+
+## M7 : index d'un passager du roster sur lequel `kind` est injectable
+## (permis requis : pas un Né-Halcyon ; origine interdite : THR), en partant de
+## `start` ; −1 si aucun.
+static func index_for(builder: CaseBuilder, kind: AnomalyType.Kind, start: int) -> int:
+	var count: int = builder.day.passenger_count
+	for offset: int in count:
+		var i: int = (start + offset) % count
+		var faction: StringName = builder.roster.get_entry(i).faction_id
+		match kind:
+			AnomalyType.Kind.PURPOSE_MISMATCH:
+				if faction != &"hal":
+					return i
+			AnomalyType.Kind.BANNED_FACTION:
+				if faction == &"thr":
+					return i
+			_:
+				return i
+	return -1
 
 
 static func day_seed(group: int, day_number: int) -> int:

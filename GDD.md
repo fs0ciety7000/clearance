@@ -495,6 +495,20 @@ Joueur parfait (graine 20 871 315) : 40/50/55 ₵ gagnés, solde 24/28/47 ₵, t
 - Pots-de-vin, audit, codes Lucioles 2–6 et génération aléatoire de Lucioles, jauges au-delà des flags `lucioles_contact` / `met_mira`.
 - Fins F1, F4–F7 ; documents d'extension (LORE §9) ; Scanner partiel (UI_FLOW §5.2).
 
+**État M7 — partie A, J4–J10 (logique et données, Gameplay Systems / Game Designer)** : jours 4 à 10 jouables de bout en bout avec l'UI M5/M6 (choix par défaut, documents nouveaux dans la vue générique), contrat d'interface en ARCHITECTURE §7.1. Faits : R08–R22 (22 règles, RuleSets cumulatifs 10/14/16/17/19/21/22), les 17 types d'anomalies injectables, origines CER (J4), THR (J6), DRV (J8), dérogation MIL (SC-11), MRZ, sceaux, implants déclarés, DÉTENTION au J7 (D-055), pots-de-vin scénarisés et générés (`bribe_rate`, 10–20 ₵ puis 20–30 ₵ au J7), objets glissés (D-054), codes Lucioles 1–7 (marques, MRZ `07`, permis en 7, phrase de passe, trois tapes, fil, *lumika*), jauges `loyalty` / `lucioles_trust` / `suspicion`, SC-06 → SC-22 (continuité D-057), briefings et soirées de NARRATIVE §3, §5 (choix par défaut D-058), audit du J9, aveu d'Ilan, avis de recherche du J10 (D-056), 7 fins et épilogues (NARRATIVE §6), sauvegarde v3. Hors partie A : écrans et interactions (objets, tampon DÉTENTION, avis, onglets, choix du soir, écran de fin), mise en scène 3D/audio des codes et des implants, signalement d'un porteur du code 1 (§4.7), dates « 00.00 » des Dérivants.
+
+Équilibrage J1–J10 (D-059 : taxe d'air 10 ₵ dès le J8 ; J1–J3 inchangés, D-047). Mesuré : `godot --headless --script res://tools/balance_sim.gd -- --seeds=200 --seed=1 --presets=default,loyal,luciole,mercenary,drift` (soirées « raisonnables », bot qui traite toute la file et pose une question ; `default` = choix sans UI, enveloppes rendues, DÉTENTION quand elle est attendue) :
+
+| Profil | 60 % | 80 % | 95 % |
+|---|---|---|---|
+| `default` | F2 54,5 % (J4,9 en moyenne) · F3 34 % (J6,7) · F7 9 % · F1 2,5 % | F7 95 % · F4 4 % · F1 0,5 % · F2 0,5 % | F4 92,5 % · F7 7,5 % |
+| `loyal` (dénonce, signe) | F2 53 % · F3 31,5 % · F7 15,5 % | F7 96 % · F4 4 % | F4 93,5 % · F7 6,5 % |
+| `luciole` (aide, laisse passer Mira) | F2 70 % · F3 26 % · F5 2,5 % · F1 1,5 % | F5 84 % · F1 11 % · F3 3 % · F2 2 % | F5 86,5 % · F1 13,5 % (double jeu) |
+| `mercenary` (garde les enveloppes) | F1 56 % (audit J9) · F2 28 % · F3 16 % | F1 100 % (audit) | F1 100 % (audit) |
+| `drift` (achète les places, refuse Mira) | comme `default` | F7 57 % · F6 40,5 % · F1 2 % | F6 100 % |
+
+Lecture : les sept fins sont atteignables (F3 aussi par une politique « loyer seulement », F2 « rien payé », tests `test_m7_campaign.gd`) ; un joueur à 80 % garde le foyer debout (≥ 1 poste sacrifié : 29–35 % des soirs J4–J6, 16–21 % J7–J9) et finit le plus souvent sur F7, F4 demandant ≥ 85 % de conformité ; un joueur à 95 % paie tout et accumule (solde ≈ 260 ₵ au J10, 114 ₵ à 80 %) ; un joueur à 60 % s'effondre avant le J10 dans ~88 % des campagnes (amendes escaladées : net ≈ 10–20 ₵/jour) — à arbitrer (D-059 : plafond d'amendes ou prime d'assiduité).
+
 ---
 
 ## 14. Métriques de playtest

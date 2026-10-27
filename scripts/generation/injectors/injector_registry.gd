@@ -1,9 +1,7 @@
-## Table des injecteurs disponibles (M3) par type d'anomalie.
-##
-## Types non encore injectables (pas de règle ou de document en M3) :
-## `PURPOSE_MISMATCH` (R09), `RELATIVE_DOCUMENTS` (reporté, GDD §13),
-## `UNDECLARED_IMPLANT`/`BANNED_IMPLANT`, `BANNED_FACTION`, `INVALID_SEAL`,
-## `MRZ_MISMATCH`, `WANTED_PERSON`.
+## Table des injecteurs disponibles par type d'anomalie : les 17 types de
+## `AnomalyType.Kind` (M3 : 9 types ; M7 : `PURPOSE_MISMATCH`, implants,
+## `RELATIVE_DOCUMENTS`, `BANNED_FACTION`, `INVALID_SEAL`, `MRZ_MISMATCH`,
+## `WANTED_PERSON` — ce dernier n'est jamais tiré au hasard).
 class_name InjectorRegistry
 extends RefCounted
 
@@ -19,6 +17,14 @@ static func create_all() -> Dictionary[AnomalyType.Kind, AnomalyInjector]:
 		WrongIssuerInjector.new(),
 		BioscanUnfitInjector.new(),
 		ImpostorLookalikeInjector.new(),
+		PurposeMismatchInjector.new(),
+		UndeclaredImplantInjector.new(),
+		BannedImplantInjector.new(),
+		RelativeDocumentsInjector.new(),
+		BannedFactionInjector.new(),
+		InvalidSealInjector.new(),
+		MrzMismatchInjector.new(),
+		WantedPersonInjector.new(),
 	]
 	var result: Dictionary[AnomalyType.Kind, AnomalyInjector] = {}
 	for injector: AnomalyInjector in injectors:

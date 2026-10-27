@@ -63,7 +63,8 @@ func test_document_view_builds_every_document_type() -> void:
 			else:
 				var expected: String = UiText.value_text(field, doc.get_value(field.id))
 				assert_eq(field_view.get_value_text(), expected, "%s/%s valeur" % [document_id, field.id])
-				assert_ne(expected, "—", "%s/%s renseigné" % [document_id, field.id])
+				if field.kind != FieldDef.FieldKind.LIST:
+					assert_ne(expected, "—", "%s/%s renseigné" % [document_id, field.id])
 		# Ordre d'affichage = `display_order` (photo à part).
 		var shown: Array[StringName] = []
 		for field_view: DocFieldView in view.fields:

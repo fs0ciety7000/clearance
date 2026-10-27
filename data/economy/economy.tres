@@ -4,3 +4,4 @@
 
 [resource]
 script = ExtResource("1_4lwsc")
+air_tax_raised = 10

@@ -5,6 +5,11 @@
 ## anticipées (F2, F3) et fin de la démo après le dernier `DayDef` des données.
 ## Les crédits et citations du shift sont déjà appliqués au fil de l'eau par le
 ## `DayController` ; la soirée débite les dépenses et remplace le foyer.
+## M7 : événements du soir (`prepare_events`, choix par défaut sans UI),
+## gains et drapeaux des événements, audit du J9 (F1), dernier jour sans soirée
+## (`close_final_day` : évaluation des fins F1–F7, épilogue), mémoire des
+## passagers (`memory_for_day`), jauges `loyalty` / `lucioles_trust` /
+## `suspicion`.
 class_name Campaign
 extends RefCounted
 
@@ -14,6 +19,11 @@ const FLAG_LUCIOLES_CONTACT: StringName = &"lucioles_contact"
 const FLAG_LUCIOLES_REPORTED: StringName = &"lucioles_reported"
 const FLAG_LUCIOLES_BURNED: StringName = &"lucioles_note_burned"
 const FLAG_LOYALTY: StringName = &"loyalty"
+const FLAG_TRUST: StringName = &"lucioles_trust"
+const FLAG_SUSPICION: StringName = &"suspicion"
+const FLAG_ENDING: StringName = &"ending"
+## Signaler le mot des Lucioles (GDD §4.7) : confiance −2.
+const REPORT_TRUST_DELTA: int = -2
 ## Graine de la soirée (Noa malade au premier soir sans chauffage…).
 const EVENING_SALT: String = "evening"
 
@@ -31,17 +41,44 @@ static func evening_seed() -> int:
 	return SeededRng.mix_string(SeededRng.day_seed(GameState.campaign_seed, GameState.current_day), EVENING_SALT)
 
 
-## Postes de la soirée du jour courant, présélectionnés.
-static func prepare_evening(data: DataCatalog) -> Array[ExpenseLine]:
+## Mémoire des passagers utile au jour courant (`CaseMemory.resolve`).
+static func memory_for_day(data: DataCatalog) -> Dictionary:
+	return CaseMemory.resolve(data, data.get_day(GameState.current_day), GameState.campaign_seed, GameState.case_memory)
+
+
+## Événements du soir du jour courant (M7), choix par défaut non encore posés.
+static func prepare_events(data: DataCatalog) -> Array[EveningEvent]:
+	var day: DayDef = data.get_day(GameState.current_day)
+	var defs: Array[EveningEventDef] = []
+	if day != null:
+		defs = day.evening_events
+	return EveningService.build_events(defs, GameState.narrative_flags, data.get_economy())
+
+
+## Postes de la soirée du jour courant, présélectionnés (coûts imposés par les
+## événements et les choix déjà faits).
+static func prepare_evening(data: DataCatalog, events: Array[EveningEvent] = [],
+		choices: Dictionary[StringName, StringName] = {}) -> Array[ExpenseLine]:
 	var lines: Array[ExpenseLine] = EveningService.build_lines(data.get_economy(), GameState.current_day, GameState.household)
+	EveningService.apply_line_costs(lines, events, choices)
 	EveningService.default_selection(lines, GameState.credits)
 	return lines
 
 
-## Calcule la soirée sans rien modifier (écran de conséquences).
-static func preview_evening(data: DataCatalog, lines: Array[ExpenseLine]) -> EveningReport:
+## Choix par défaut des événements (sans UI), avec le solde restant après les postes.
+static func default_choices(events: Array[EveningEvent], lines: Array[ExpenseLine]) -> Dictionary[StringName, StringName]:
+	return EveningService.default_choices(events, GameState.credits - EveningService.total_spent(lines))
+
+
+## Calcule la soirée sans rien modifier (écran de conséquences). `choices`
+## vide → choix par défaut des événements.
+static func preview_evening(data: DataCatalog, lines: Array[ExpenseLine], events: Array[EveningEvent] = [],
+		choices: Dictionary[StringName, StringName] = {}) -> EveningReport:
+	var chosen: Dictionary[StringName, StringName] = choices
+	if chosen.is_empty() and not events.is_empty():
+		chosen = default_choices(events, lines)
 	return EveningService.apply(data.get_economy(), GameState.current_day, GameState.household, lines,
-			GameState.credits, evening_seed())
+			GameState.credits, evening_seed(), events, chosen, GameState.narrative_flags)
 
 
 ## Valide la soirée : débit, foyer, historique, passage au jour suivant,
@@ -49,8 +86,10 @@ static func preview_evening(data: DataCatalog, lines: Array[ExpenseLine]) -> Eve
 ## Renvoie la fin atteinte (`EveningReport.ENDING_*`, `ENDING_DEMO_COMPLETE`) ou vide.
 static func close_evening(data: DataCatalog, summary: DaySummary, report: EveningReport,
 		save_slot: int = SaveService.DEFAULT_SLOT, save_dir: String = SaveService.DEFAULT_DIR) -> StringName:
-	GameState.add_credits(-report.spent)
+	GameState.add_credits(report.gained - report.spent)
 	GameState.household = report.household
+	for flag: StringName in report.flag_changes:
+		GameState.set_flag(flag, report.flag_changes[flag])
 	var entry: Dictionary = {
 		"processed": summary.get_processed_count() if summary != null else 0,
 		"planned": summary.planned_cases if summary != null else 0,
@@ -61,6 +100,7 @@ static func close_evening(data: DataCatalog, summary: DaySummary, report: Evenin
 		"fines": summary.get_fine_total() if summary != null else 0,
 		"credits": summary.get_net() if summary != null else 0,
 		"spent": report.spent,
+		"gained": report.gained + (summary.get_bribe_total() + summary.get_report_total() if summary != null else 0),
 		"balance": GameState.credits,
 	}
 	GameState.record_day_entry(entry)
@@ -70,9 +110,47 @@ static func close_evening(data: DataCatalog, summary: DaySummary, report: Evenin
 	if ending == EveningReport.ENDING_NONE:
 		GameState.save_to_slot(save_slot, save_dir)
 	else:
-		GameState.set_flag(&"ending", String(ending))
+		GameState.set_flag(FLAG_ENDING, String(ending))
 		SaveService.delete(save_slot, save_dir)
 	return ending
+
+
+## Le jour courant n'a pas de soirée (J10, D-053) : le bilan enchaîne sur la fin.
+static func has_evening(data: DataCatalog) -> bool:
+	var day: DayDef = data.get_day(GameState.current_day)
+	return day == null or day.has_evening
+
+
+## Dernier jour (sans soirée) : historique, évaluation de la fin (F1–F7,
+## `EndingService.evaluate_final`, crédits après le bilan), effacement de la
+## sauvegarde (D-041). Renvoie la fin atteinte.
+static func close_final_day(data: DataCatalog, summary: DaySummary, save_slot: int = SaveService.DEFAULT_SLOT,
+		save_dir: String = SaveService.DEFAULT_DIR) -> StringName:
+	GameState.record_day_entry({
+		"processed": summary.get_processed_count() if summary != null else 0,
+		"planned": summary.planned_cases if summary != null else 0,
+		"correct": summary.get_correct_count() if summary != null else 0,
+		"errors": summary.get_error_count() if summary != null else 0,
+		"citations": summary.get_citation_count() if summary != null else 0,
+		"wage": summary.get_wage_total() if summary != null else 0,
+		"fines": summary.get_fine_total() if summary != null else 0,
+		"credits": summary.get_net() if summary != null else 0,
+		"spent": 0,
+		"gained": summary.get_bribe_total() + summary.get_report_total() if summary != null else 0,
+		"balance": GameState.credits,
+	})
+	var ending: StringName = EndingService.evaluate_final(GameState.narrative_flags, GameState.household, GameState.credits,
+			compliance(), data.get_economy())
+	GameState.set_flag(FLAG_ENDING, String(ending))
+	SaveService.delete(save_slot, save_dir)
+	return ending
+
+
+## Épilogue de la fin enregistrée (`EndingService.epilogue`) ; vide hors fins M7.
+static func epilogue(ending: StringName) -> Dictionary:
+	if not EndingService.ALL_ENDINGS.has(ending):
+		return {}
+	return EndingService.epilogue(ending, GameState.narrative_flags, GameState.household)
 
 
 ## Le mot des Lucioles (SC-05) attend une décision du joueur ce soir.
@@ -86,6 +164,9 @@ static func decide_luciole_note(report_it: bool) -> void:
 	if report_it:
 		GameState.set_flag(FLAG_LUCIOLES_REPORTED, true)
 		GameState.add_to_flag(FLAG_LOYALTY, 1)
+		# M7 (GDD §4.7, NARRATIVE §2.1) : confiance −2, prime de signalement.
+		GameState.add_to_flag(FLAG_TRUST, REPORT_TRUST_DELTA)
+		GameState.add_credits(DataCatalog.load_economy().report_bonus)
 	else:
 		GameState.set_flag(FLAG_LUCIOLES_BURNED, true)
 

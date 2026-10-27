@@ -12,7 +12,9 @@
 class_name FieldDef
 extends Resource
 
-enum FieldKind { TEXT, DATE, ID_CODE, ENUM, PORTRAIT, NUMBER, BOOL }
+## Valeurs sérialisées en entier dans les `.tres` : on n'ajoute qu'à la fin.
+## `LIST` (M7) : liste de codes (`PackedStringArray`, ex. implants déclarés).
+enum FieldKind { TEXT, DATE, ID_CODE, ENUM, PORTRAIT, NUMBER, BOOL, LIST }
 
 const DOCUMENT_PATH_PREFIX: String = "document."
 const DEFAULT_DATE_FORMAT: String = "DD.MM.YYYY"

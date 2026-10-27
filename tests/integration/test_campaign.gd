@@ -121,12 +121,9 @@ func test_perfect_bot_three_days_null_booth() -> void:
 		expected_totals.append(5 * day.passenger_count)
 		var result: Array = _evening(summary)
 		var report: EveningReport = result[1]
-		if day_number < 3:
-			assert_eq(result[0], EveningReport.ENDING_NONE)
-			assert_true(SaveService.has_save(0, DIR), "sauvegarde automatique entre les jours")
-		else:
-			assert_eq(result[0], Campaign.ENDING_DEMO_COMPLETE, "fin de la démo après J3")
-			assert_false(SaveService.has_save(0, DIR))
+		# M7 : la campagne continue après le J3 (J4–J10, `test_m7_campaign.gd`).
+		assert_eq(result[0], EveningReport.ENDING_NONE)
+		assert_true(SaveService.has_save(0, DIR), "sauvegarde automatique entre les jours")
 		assert_eq(report.ending, EveningReport.ENDING_NONE, "un joueur parfait survit (GDD §5.3)")
 		for line: ExpenseLine in report.lines:
 			assert_true(line.paid, "J%d : un joueur parfait paie tout (%s, D-047)" % [day_number, line.id])
@@ -160,14 +157,18 @@ func test_approve_all_bot_three_days_economy_and_citations() -> void:
 				assert_false(result.missed_violations.is_empty(), "violations révélées après verdict")
 		if day_number == 1:
 			assert_eq(GameState.get_flag(&"sc02_mercy"), true, "SC-02 approuvée : drapeau de clémence")
+			assert_eq(GameState.get_flag(&"suspicion"), 1, "D-052 : approuver SC-02 = suspicion +1")
 		if day_number == 3:
 			assert_eq(GameState.get_flag(&"lucioles_trust"), 1, "SC-05 approuvé : confiance des Lucioles +1")
 		var result_pair: Array = _evening(summary)
 		ending = result_pair[0]
 		if ending != EveningReport.ENDING_NONE and ending != Campaign.ENDING_DEMO_COMPLETE:
 			break
-	assert_true(ending != EveningReport.ENDING_NONE, "la campagne se termine (fin de démo ou fin anticipée)")
-	assert_false(SaveService.has_save(0, DIR), "plus de « Continuer » après une fin")
+	# M7 : J1–J3 ne terminent plus la campagne ; une fin anticipée efface la sauvegarde.
+	if ending != EveningReport.ENDING_NONE:
+		assert_false(SaveService.has_save(0, DIR), "plus de « Continuer » après une fin")
+	else:
+		assert_true(SaveService.has_save(0, DIR), "la campagne continue au J4")
 
 
 func test_save_load_roundtrip_between_days() -> void:

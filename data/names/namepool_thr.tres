@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="NamePool" format=3 uid="uid://ds1q13ldmced0"]
+
+[ext_resource type="Script" path="res://scripts/generation/name_pool.gd" id="1_qchbi"]
+
+[resource]
+script = ExtResource("1_qchbi")
+id = &"thr"
+given_names_f = PackedStringArray("Soledad", "Katya", "Hana", "Teodora", "Branka", "Ayla")
+given_names_m = PackedStringArray("Alexei", "Idris", "Marcus", "Dariusz", "Yusuf", "Elias", "Radomir", "Viktor")
+given_names_x = PackedStringArray("Ming")
+family_names = PackedStringArray("Arkhipov", "Reyes-Kahn", "Mazur", "Okoro", "Sandoval", "Jovanović", "Hadid", "Wei", "Kaczmarek", "Ulloa", "Demir", "Fonseca", "Rostova", "Abiodun", "Krall")
+reserved_names = PackedStringArray()

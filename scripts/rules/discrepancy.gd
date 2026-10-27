@@ -15,6 +15,13 @@ const REASON_RULE_INACTIVE: String = "disc_rule_inactive"
 const REASON_SAME_FIELD: String = "disc_same_field"
 const REASON_UNKNOWN_FIELD: String = "disc_unknown_field"
 const REASON_INCOMPARABLE: String = "disc_incomparable"
+## M7 : implants visibles ≠ déclarés, âge apparent ≠ naissance, MRZ ≠ champ,
+## correspondance avec l'avis de recherche, personne absente de l'avis.
+const REASON_IMPLANT_MISMATCH: String = "disc_implant_mismatch"
+const REASON_AGE_MISMATCH: String = "disc_age_mismatch"
+const REASON_MRZ_MISMATCH: String = "disc_mrz_mismatch"
+const REASON_WANTED_MATCH: String = "disc_wanted_match"
+const REASON_WANTED_NO_MATCH: String = "disc_wanted_no_match"
 
 var a: FieldRef = null
 var b: FieldRef = null

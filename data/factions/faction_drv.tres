@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FactionDef" format=3 uid="uid://i7iu6gymhgvn"]
+
+[ext_resource type="Resource" path="res://data/names/namepool_drv.tres" id="1_eps21"]
+[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="2_lxumj"]
+
+[resource]
+script = ExtResource("2_lxumj")
+id = &"drv"
+name_key = "faction_drv_name"
+code = "DRV"
+id_prefix = "HG-9"
+origin_sectors = PackedStringArray("Cargos dérivants — sans port d\'attache", "La Soute — amarrages des cargos")
+name_pool = ExtResource("1_eps21")
+citizen_class_weights = Dictionary[StringName, float]({
+&"C-5": 1.0
+})
+purpose_weights = Dictionary[StringName, float]({
+&"family_visit": 0.1,
+&"trade": 0.4,
+&"transit": 0.5
+})
+employers = PackedStringArray("Équipage indépendant", "Valcourt-Hsu Logistique")
+implant_rate = 0.2
+implant_weights = Dictionary[StringName, float]({
+&"DER-1": 1.0,
+&"NX-4": 0.5
+})

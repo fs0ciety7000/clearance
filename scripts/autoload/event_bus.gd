@@ -24,6 +24,10 @@ signal day_time_expired()
 signal day_ended(summary: DaySummary)
 ## DayController → UI, BoothDirector (debug).
 signal day_phase_changed(phase: DayPhase.Kind, case_id: StringName)
+## M7 — DayController (après `day_started`) → Rulebook (onglet Avis de recherche).
+signal wanted_notices_published(notices: Array[WantedNotice])
+## M7 — DayController (après le n-ième cas, `DayDef.hall_announcements`) → UI, audio.
+signal hall_announced(text_key: String)
 
 # --- Passager -----------------------------------------------------------------
 
@@ -43,6 +47,12 @@ signal passenger_reaction_triggered(reaction: PassengerReaction.Kind)
 signal passenger_departed(case_id: StringName)
 ## BoothDirector (clic visage) → UI comparaison.
 signal inspection_target_picked(ref: FieldRef)
+## M7 — DayController (avec les documents) → UI plan de travail, booth.
+signal item_slipped(item: SlippedItem)
+## M7 — UI (GARDER / RENDRE / REMETTRE À LA GARDE) → DayController.
+signal item_decision_requested(item_id: StringName, decision: SlippedItem.Decision)
+## M7 — DayController → UI, booth (aussi au tampon pour une décision par défaut).
+signal item_decided(item: SlippedItem, decision: SlippedItem.Decision)
 
 # --- Inspection / comparaison -------------------------------------------------
 

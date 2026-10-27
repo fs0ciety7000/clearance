@@ -15,6 +15,29 @@ var case_seed: int = 0
 var passenger_presented: Passenger = null
 var documents: Array[DocumentInstance] = []
 var dialogue_tags: Array[StringName] = []
+## Objets glissés avec les papiers (M7 : enveloppe, mot, carte de quai).
+var slipped_items: Array[SlippedItem] = []
+## Codes Lucioles portés (LORE §7, 1–7) : jamais des discordances. 1 = marque
+## sur un document (`DocumentInstance.marks`), 2 = MRZ `07`, 3 = permis en 7,
+## 4 = phrase de passe (étiquette `luciole_password`), 5 = trois tapes
+## (`presentation`), 6 = fil magenta, 7 = *lumika* dans un bark.
+var luciole_codes: PackedInt32Array = []
+## Mise en scène de l'arrivée (`&"knock_three"` : code 5), vide sinon.
+var presentation: StringName = &""
+
+
+func get_item(item_id: StringName) -> SlippedItem:
+	for item: SlippedItem in slipped_items:
+		if item.id == item_id:
+			return item
+	return null
+
+
+func has_envelope() -> bool:
+	for item: SlippedItem in slipped_items:
+		if item.kind == SlippedItem.Kind.ENVELOPE:
+			return true
+	return false
 
 
 func get_document(document_id: StringName) -> DocumentInstance:

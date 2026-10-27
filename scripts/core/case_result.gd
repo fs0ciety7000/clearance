@@ -51,6 +51,14 @@ var procedure_missed: StringName = &""
 var scripted_id: StringName = &""
 ## Drapeaux narratifs modifiés par ce cas : `{flag: valeur}`.
 var narrative_changes: Dictionary[StringName, Variant] = {}
+## M7 : décisions finales sur les objets glissés `{item_id: SlippedItem.Decision}`.
+var item_decisions: Dictionary[StringName, int] = {}
+## Enveloppes gardées (₵, « divers non déclaré » : hors salaire et hors score).
+var bribe_credits: int = 0
+## Primes de signalement (objet remis à la Garde).
+var report_credits: int = 0
+## Le passager a reçu la réponse à la phrase de passe (code 4).
+var password_answered: bool = false
 
 
 func _init(p_case_id: StringName = &"") -> void:

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="FactionDef" format=3 uid="uid://dd51i8yemunsw"]
+
+[ext_resource type="Resource" path="res://data/names/namepool_cer.tres" id="1_fru0k"]
+[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="2_srpp2"]
+
+[resource]
+script = ExtResource("2_srpp2")
+id = &"cer"
+name_key = "faction_cer_name"
+code = "CER"
+id_prefix = "HG-6"
+origin_sectors = PackedStringArray("Libre-Fédération de Cérès", "Ceinture — stations de prospection")
+name_pool = ExtResource("1_fru0k")
+citizen_class_weights = Dictionary[StringName, float]({
+&"C-3": 0.2,
+&"C-4": 0.8
+})
+purpose_weights = Dictionary[StringName, float]({
+&"trade": 0.7,
+&"transit": 0.1,
+&"work": 0.2
+})
+employers = PackedStringArray("Hydroponie Ceres-Verte", "Valcourt-Hsu Logistique", "Prospection indépendante")
+implant_rate = 0.25
+implant_weights = Dictionary[StringName, float]({
+&"DER-6": 1.0,
+&"KIN-11": 0.5,
+&"NX-4": 0.5,
+&"OPT-3": 1.0
+})

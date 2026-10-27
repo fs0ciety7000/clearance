@@ -13,6 +13,8 @@ var results: Array[CaseResult] = []
 var planned_cases: int = 0
 ## Le shift s'est terminé par la fin du temps (et non par une file vide).
 var time_expired: bool = false
+## M7 : drapeaux posés par les cas scénarisés **non traités** (`final_unprocessed`).
+var unprocessed_changes: Dictionary[StringName, Variant] = {}
 
 
 func add_result(result: CaseResult) -> void:
@@ -80,6 +82,28 @@ func get_net() -> int:
 	return get_wage_total() - get_fine_total()
 
 
+## M7 : enveloppes gardées (« divers non déclaré »).
+func get_bribe_total() -> int:
+	var total: int = 0
+	for result: CaseResult in results:
+		total += result.bribe_credits
+	return total
+
+
+## M7 : primes de signalement (objets remis à la Garde).
+func get_report_total() -> int:
+	var total: int = 0
+	for result: CaseResult in results:
+		total += result.report_credits
+	return total
+
+
+## Tout ce que le shift a rapporté : net + enveloppes + primes (crédité au
+## `GameState` au fil du shift).
+func get_total_income() -> int:
+	return get_net() + get_bribe_total() + get_report_total()
+
+
 ## Indice de conformité du jour (cas corrects / cas traités), 0 si aucun cas.
 func get_compliance() -> float:
 	return float(get_correct_count()) / float(results.size()) if not results.is_empty() else 0.0
@@ -91,4 +115,6 @@ func get_narrative_changes() -> Dictionary[StringName, Variant]:
 	for result: CaseResult in results:
 		for flag: StringName in result.narrative_changes:
 			changes[flag] = result.narrative_changes[flag]
+	for flag: StringName in unprocessed_changes:
+		changes[flag] = unprocessed_changes[flag]
 	return changes

@@ -69,7 +69,7 @@ func test_migration_from_v1() -> void:
 	}
 	var data: Dictionary = SaveService.parse(JSON.stringify(v1))
 	assert_false(data.is_empty(), "v1 migrée")
-	assert_eq(SaveService.as_int(data["version"]), 2)
+	assert_eq(SaveService.as_int(data["version"]), SaveService.VERSION)
 	var home: Dictionary = data["household"]
 	assert_eq(Household.from_dict(home).to_dict(), Household.new().to_dict(), "foyer par défaut")
 	var history: Array = data["day_history"]

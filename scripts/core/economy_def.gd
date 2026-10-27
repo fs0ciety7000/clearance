@@ -15,6 +15,10 @@ extends Resource
 @export var rent_raise_day: int = 8
 ## Taxe d'air : prélevée d'office, jamais décochable.
 @export var air_tax: int = 5
+## M7 : taxe d'air relevée à partir de `air_tax_raise_day` (mesures d'urgence
+## après l'attentat du J8) ; égale à `air_tax` = pas de hausse.
+@export var air_tax_raised: int = 5
+@export var air_tax_raise_day: int = 8
 @export var food: int = 10
 @export var heating: int = 6
 ## Oxygène d'appoint de Dora, les soirs pairs (J2, J4…).
@@ -36,6 +40,22 @@ extends Resource
 @export var debt_evenings_limit: int = 3
 ## Prime de détention (GDD §5.1) — post-MVP (J7), lue par le ScoringService.
 @export var detain_bonus: int = 5
+
+@export_group("M7")
+## Prime de signalement d'un mot des Lucioles (GDD §4.7 : soirée J3, objet glissé).
+@export var report_bonus: int = 10
+## Audit du J9 (NARRATIVE §5) : score = suspicion − 1 si test de l'Inspecteur réussi.
+@export var audit_arrest_score: int = 4
+@export var audit_retention_score: int = 2
+@export var audit_retention: int = 30
+## Fin F6 : solde minimal après le bilan du J10.
+@export var drift_min_credits: int = 30
+## Fin F4 : indice de conformité minimal.
+@export var glory_min_compliance: float = 0.85
+
+
+func air_tax_for(day_number: int) -> int:
+	return air_tax_raised if day_number >= air_tax_raise_day else air_tax
 
 
 func rent_for(day_number: int) -> int:

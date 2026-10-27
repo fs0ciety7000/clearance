@@ -4,13 +4,16 @@ extends GutTest
 
 const Gen := preload("res://tests/helpers/generation_fixtures.gd")
 const ALLOWED_PARAMS: Array[StringName] = [&"document_id", &"expired_days", &"trait_count", &"char_count",
-		&"field_path", &"photo_noise"]
+		&"field_path", &"photo_noise",
+		# M7 : injecteurs (motif, implants, parent, origine interdite, MRZ) et codes Lucioles.
+		&"employer", &"implant", &"relative_given_name", &"relative_birth", &"purpose", &"component", &"mrz_value",
+		&"mrz_issuer", &"permit_suffix", &"mark_document_id"]
 
 
 func test_catalog_loads_name_pools_and_appearance_catalog() -> void:
 	var data: DataCatalog = Gen.data()
 	assert_eq(data.errors, PackedStringArray())
-	assert_eq(data.name_pools.size(), 3)
+	assert_eq(data.name_pools.size(), 6)
 	assert_not_null(data.appearance_catalog)
 
 

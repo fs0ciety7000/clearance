@@ -19,7 +19,22 @@ const EXPECTED_RULES: Dictionary[AnomalyType.Kind, Array] = {
 	K.ORIGIN_ID_MISMATCH: [&"r_origin_block"],
 	K.WRONG_ISSUER: [&"r_bioscan_issuer"],
 	K.BIOSCAN_UNFIT: [&"r_bioscan_fit"],
+	# M7
+	K.PURPOSE_MISMATCH: [&"r_purpose_consistent"],
+	K.UNDECLARED_IMPLANT: [&"r_implants_declared"],
+	K.BANNED_IMPLANT: [&"r_banned_implants"],
+	K.RELATIVE_DOCUMENTS: [&"r_portrait_match", &"r_apparent_age"],
+	K.BANNED_FACTION: [&"r_tharsis_banned"],
+	K.INVALID_SEAL: [&"r_seals_valid"],
+	K.MRZ_MISMATCH: [&"r_mrz_valid"],
 }
+## Verdict attendu par type (R17 et R18 sont de sévérité 3 : DÉTENTION).
+const DETAIN_KINDS: Array[AnomalyType.Kind] = [K.IMPOSTOR_LOOKALIKE, K.RELATIVE_DOCUMENTS]
+## Jamais tiré sans avis de recherche (testé à part, `test_m7_generation`).
+const NOTICE_ONLY: Array[AnomalyType.Kind] = [K.WANTED_PERSON]
+## Injectables seulement sur certains passagers (permis : pas les Nés-Halcyon ;
+## origine interdite : THR) — refus d'injecter attendu sur les autres.
+const CONDITIONAL: Array[AnomalyType.Kind] = [K.PURPOSE_MISMATCH, K.BANNED_FACTION]
 
 var _kinds: Array[AnomalyType.Kind] = []
 ## `[builder, generated, kind]` pour chaque graine (un type imposé par graine).
@@ -28,13 +43,17 @@ var _single: Array[Array] = []
 
 func before_all() -> void:
 	_kinds = InjectorRegistry.supported_kinds()
+	for kind: AnomalyType.Kind in NOTICE_ONLY:
+		_kinds.erase(kind)
 	var day: DayDef = Gen.full_day()
 	var builder: CaseBuilder = null
 	for s: int in SEEDS:
 		if s % day.passenger_count == 0:
 			builder = CaseBuilder.new(Gen.data(), day, Gen.day_seed(1000 + s, day.day_number))
 		var kind: AnomalyType.Kind = _kinds[s % _kinds.size()]
-		_single.append([builder, builder.build_with(s % day.passenger_count, [kind]), kind])
+		var index: int = Gen.index_for(builder, kind, s % day.passenger_count)
+		if index >= 0:
+			_single.append([builder, builder.build_with(index, [kind]), kind])
 
 
 func test_at_least_six_anomaly_types_are_injectable() -> void:
@@ -55,7 +74,8 @@ func test_each_injector_triggers_its_rule() -> void:
 		var kind: AnomalyType.Kind = triple[2]
 		var where: String = "%s %s" % [AnomalyType.name_of(kind), generated.case.case_id]
 		if generated.key.anomalies.size() != 1:
-			failures.append("%s : non injectée" % where)
+			if not CONDITIONAL.has(kind):
+				failures.append("%s : non injectée" % where)
 			continue
 		per_kind[kind] = per_kind.get(kind, 0) + 1
 		var violated: Array[StringName] = generated.key.get_violated_rule_ids()
@@ -64,14 +84,15 @@ func test_each_injector_triggers_its_rule() -> void:
 			failures.append("%s : règles %s" % [where, violated])
 		if not CaseBuilder._is_proven(generated.key.anomalies[0], generated.key.expected_violations, builder.ctx):
 			failures.append("%s : champ corrompu non cité" % where)
-		if generated.key.expected_verdict != VerdictKind.Kind.DENY:
+		var verdict: VerdictKind.Kind = VerdictKind.Kind.DETAIN if DETAIN_KINDS.has(kind) else VerdictKind.Kind.DENY
+		if generated.key.expected_verdict != verdict:
 			failures.append("%s : verdict %d" % [where, generated.key.expected_verdict])
 		if not generated.invariant_errors.is_empty():
 			failures.append("%s : %s" % [where, generated.invariant_errors])
 	assert_eq(failures.size(), 0, Gen.head(failures))
 	for kind: AnomalyType.Kind in _kinds:
 		var injected: int = per_kind.get(kind, 0)
-		assert_gt(injected, 50, AnomalyType.name_of(kind))
+		assert_gt(injected, 5 if CONDITIONAL.has(kind) else 50, AnomalyType.name_of(kind))
 
 
 func test_impostor_lookalike_changes_one_or_two_visible_identity_traits() -> void:

@@ -28,6 +28,9 @@ class Member:
 	var cold: bool = false
 	## Soirs consécutifs malade sans médicaments.
 	var untreated_evenings: int = 0
+	## M7 : perdu·e pour une raison narrative (« mis·e en attente », Ilan
+	## dénoncé·e, NARRATIVE §1.2) — `LOST` affiché `hh_state_detained`.
+	var detained: bool = false
 
 	func _init(p_id: StringName = &"") -> void:
 		id = p_id
@@ -42,7 +45,7 @@ class Member:
 	func state_key() -> String:
 		match health:
 			Household.Health.LOST:
-				return "hh_state_lost"
+				return "hh_state_detained" if detained else "hh_state_lost"
 			Household.Health.GRAVELY_SICK:
 				return "hh_state_gravely_sick"
 			Household.Health.SICK:
@@ -95,6 +98,23 @@ func sick_members() -> Array[Member]:
 	return result
 
 
+## Proches encore présents (ni perdus ni mis en attente) — fins M7 (`alive`).
+func alive_count() -> int:
+	return alive_members().size()
+
+
+## Ilan (ou un autre proche) est mis·e en attente : PERDU motivé (M7).
+func detain_member(id: StringName) -> void:
+	var member: Member = get_member(id)
+	if member == null:
+		return
+	member.health = Health.LOST
+	member.detained = true
+	member.hungry = false
+	member.cold = false
+	member.untreated_evenings = 0
+
+
 func all_lost() -> bool:
 	return alive_members().is_empty()
 
@@ -112,6 +132,7 @@ func to_dict() -> Dictionary:
 			"hungry": member.hungry,
 			"cold": member.cold,
 			"untreated_evenings": member.untreated_evenings,
+			"detained": member.detained,
 		})
 	return {
 		"members": list,
@@ -146,6 +167,7 @@ static func from_dict(data: Dictionary) -> Household:
 			member.hungry = dict.get("hungry", false) == true
 			member.cold = dict.get("cold", false) == true
 			member.untreated_evenings = _int(dict.get("untreated_evenings", 0))
+			member.detained = dict.get("detained", false) == true
 	return household
 
 

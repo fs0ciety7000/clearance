@@ -26,7 +26,7 @@ const HEALTH_REVIEW: StringName = &"review"
 const TRUTH_PATHS: Array[StringName] = [
 	&"given_name", &"family_name", &"birth_date", &"sex", &"faction_id",
 	&"origin_sector", &"citizen_id", &"citizen_class", &"appearance",
-	&"purpose", &"stay_days", &"employer", &"health_status",
+	&"purpose", &"stay_days", &"employer", &"health_status", &"implants",
 ]
 
 var id: StringName = &""
@@ -50,6 +50,11 @@ var stay_days: int = 0
 var employer: String = ""
 ## Statut sanitaire réel (bio-scan, 🟡 GDD `BIOSCAN_UNFIT`).
 var health_status: StringName = HEALTH_FIT
+## Implants **visibles** sur le corps (M7, LORE §8 : `OPT-3`, `MIL-9`…). La
+## carte d'identité recopie les implants *déclarés* (champ LIST `implants`) ;
+## un écart est une discordance (R15). Jamais une donnée d'apparence : les
+## injecteurs peuvent la modifier sans toucher `appearance` (invariant §9.3).
+var implants: PackedStringArray = []
 
 
 static func has_truth_path(path: StringName) -> bool:
@@ -76,6 +81,10 @@ func apply_overrides(overrides: Dictionary) -> PackedStringArray:
 		if typeof(value) != typeof(get(path)) and get(path) != null:
 			rejected.append(String(path))
 			continue
+		if value is PackedStringArray:
+			# Copie : un tableau partagé avec la définition (`.tres`) ne doit jamais être muté.
+			var list: PackedStringArray = value
+			value = list.duplicate()
 		set(path, value)
 	return rejected
 
@@ -87,6 +96,7 @@ func copy() -> Passenger:
 	result.appearance_seed = appearance_seed
 	for path: StringName in TRUTH_PATHS:
 		result.set(path, get(path))
+	result.implants = implants.duplicate()
 	result.appearance = appearance.copy() if appearance != null else null
 	return result
 

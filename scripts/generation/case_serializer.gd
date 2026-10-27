@@ -16,6 +16,10 @@ static func serialize_case(c: Case) -> Dictionary:
 	var tags: Array = []
 	for tag: StringName in c.dialogue_tags:
 		tags.append(String(tag))
+	var items: Array = []
+	for item: SlippedItem in c.slipped_items:
+		items.append({"id": String(item.id), "kind": SlippedItem.Kind.find_key(item.kind), "amount": item.amount,
+				"text_key": item.text_key, "extra": Array(item.extra_text_keys), "default": item.default_decision})
 	return {
 		"case_id": String(c.case_id),
 		"index": c.index,
@@ -23,6 +27,10 @@ static func serialize_case(c: Case) -> Dictionary:
 		"passenger": serialize_passenger(c.passenger_presented),
 		"documents": docs,
 		"dialogue_tags": tags,
+		# M7
+		"luciole_codes": Array(c.luciole_codes),
+		"presentation": String(c.presentation),
+		"slipped_items": items,
 	}
 
 
@@ -72,6 +80,8 @@ static func serialize_document(doc: DocumentInstance) -> Dictionary:
 		"expiry_date": doc.expiry_date,
 		"issuer_id": String(doc.issuer_id),
 		"seal_id": String(doc.seal_id),
+		"mrz": doc.mrz,
+		"marks": doc.marks.map(func(mark: StringName) -> String: return String(mark)),
 		"values": values,
 	}
 
@@ -97,4 +107,7 @@ static func value_to_variant(value: Variant) -> Variant:
 			for key: Variant in source:
 				result[str(key)] = value_to_variant(source[key])
 			return result
+		TYPE_PACKED_STRING_ARRAY:
+			var list: PackedStringArray = value
+			return Array(list)
 	return var_to_str(value)

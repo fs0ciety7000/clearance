@@ -1,0 +1,223 @@
+[gd_resource type="Resource" script_class="DayDef" format=3 uid="uid://bglj3bngpxw7r"]
+
+[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="1_x57bm"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="2_sta5i"]
+[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="3_vomac"]
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="4_olhuc"]
+[ext_resource type="Script" path="res://scripts/core/evening_option_def.gd" id="5_qs074"]
+[ext_resource type="Resource" path="res://data/days/ruleset_day_06.tres" id="6_ff8oj"]
+[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="7_w30bx"]
+[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="8_xqv62"]
+[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="9_lo8v5"]
+[ext_resource type="Script" path="res://scripts/core/slipped_item_def.gd" id="10_dqvxk"]
+[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="11_qm6k5"]
+
+[sub_resource type="Resource" id="d06_resource_3"]
+script = ExtResource("2_sta5i")
+all_of = Array[StringName]([&"sc09_doctor_passed"])
+
+[sub_resource type="Resource" id="d06_resource_2"]
+script = ExtResource("1_x57bm")
+speaker_key = "spk_hall"
+text_key = "msg_echo_sc09_doctor_passed"
+condition = SubResource("d06_resource_3")
+group = &"echo09"
+priority = 3
+
+[sub_resource type="Resource" id="d06_resource_5"]
+script = ExtResource("2_sta5i")
+all_of = Array[StringName]([&"sc09_doctor_refused"])
+
+[sub_resource type="Resource" id="d06_resource_4"]
+script = ExtResource("1_x57bm")
+speaker_key = "spk_hall"
+text_key = "msg_echo_sc09_doctor_refused"
+condition = SubResource("d06_resource_5")
+group = &"echo09"
+priority = 3
+
+[sub_resource type="Resource" id="d06_resource_6"]
+script = ExtResource("1_x57bm")
+speaker_key = "spk_okonkwo"
+text_key = "msg_okonkwo_day06"
+voice = 1
+
+[sub_resource type="Resource" id="d06_resource_8"]
+script = ExtResource("2_sta5i")
+all_of = Array[StringName]([&"lucioles_heating_accepted"])
+
+[sub_resource type="Resource" id="d06_resource_7"]
+script = ExtResource("1_x57bm")
+speaker_key = "spk_ilan"
+text_key = "msg_ilan_day06"
+voice = 2
+condition = SubResource("d06_resource_8")
+group = &"ilan"
+family_slot = true
+
+[sub_resource type="Resource" id="d06_resource_9"]
+script = ExtResource("1_x57bm")
+speaker_key = "spk_ilan"
+text_key = "msg_ilan_day06_noa"
+voice = 2
+group = &"ilan"
+family_slot = true
+
+[sub_resource type="Resource" id="d06_resource_13"]
+script = ExtResource("5_qs074")
+id = &"pay"
+label_key = "evt_d06_bioscan_opt_pay"
+result_key = "evt_d06_bioscan_res_pay"
+cost = 25
+flags = Dictionary[StringName, int]({
+&"noa_bioscan_paid": 0
+})
+default_rank = 1
+
+[sub_resource type="Resource" id="d06_resource_15"]
+script = ExtResource("2_sta5i")
+all_of = Array[StringName]([&"sc09_doctor_passed"])
+
+[sub_resource type="Resource" id="d06_resource_14"]
+script = ExtResource("5_qs074")
+id = &"free"
+label_key = "evt_d06_bioscan_opt_free"
+result_key = "evt_d06_bioscan_res_free"
+flags = Dictionary[StringName, int]({
+&"noa_bioscan_free": 0
+})
+condition = SubResource("d06_resource_15")
+
+[sub_resource type="Resource" id="d06_resource_16"]
+script = ExtResource("5_qs074")
+id = &"skip"
+label_key = "evt_d06_bioscan_opt_skip"
+result_key = "evt_d06_bioscan_res_skip"
+flags = Dictionary[StringName, int]({
+&"noa_bioscan_skipped": 0
+})
+household = &"noa_sick"
+default_rank = 2
+
+[sub_resource type="Resource" id="d06_resource_12"]
+script = ExtResource("2_sta5i")
+all_of = Array[StringName]([&"sc09_doctor_passed"])
+
+[sub_resource type="Resource" id="d06_resource_11"]
+script = ExtResource("4_olhuc")
+key = "evt_d06_bioscan_text_free"
+condition = SubResource("d06_resource_12")
+
+[sub_resource type="Resource" id="d06_resource_10"]
+script = ExtResource("3_vomac")
+id = &"d06_bioscan"
+title_key = "evt_d06_bioscan_title"
+text_key = "evt_d06_bioscan_text"
+text_variants = Array[ExtResource("4_olhuc")]([SubResource("d06_resource_11")])
+options = Array[ExtResource("5_qs074")]([SubResource("d06_resource_13"), SubResource("d06_resource_14"), SubResource("d06_resource_16")])
+
+[sub_resource type="Resource" id="scripted_sc_11"]
+script = ExtResource("8_xqv62")
+id = &"sc_11"
+at_index = 2
+passenger_overrides = {
+&"birth_date": 9417,
+&"citizen_class": &"C-4",
+&"faction_id": &"thr",
+&"family_name": "Mazur",
+&"given_name": "Dariusz",
+&"implants": PackedStringArray("MIL-9"),
+&"purpose": &"family_visit",
+&"sex": &"M",
+&"stay_days": 10
+}
+dialogue_id = &"sc11_mazur"
+flags_on_approve = Dictionary[StringName, int]({
+&"sc11_veteran_passed": 0
+})
+flags_on_deny = Dictionary[StringName, int]({
+&"sc11_veteran_refused": 0
+})
+extra_documents = Array[StringName]([&"mil_waiver"])
+luciole_codes = PackedInt32Array()
+
+[sub_resource type="Resource" id="d06_resource_1"]
+script = ExtResource("10_dqvxk")
+amount = 30
+label_key = "wb_envelope_label"
+effects = Dictionary[StringName, Dictionary]({
+&"deny_return": {
+&"inspector_test_passed": 0,
+&"loyalty": 1
+},
+&"keep": {
+&"inspector_bribe_taken": 0,
+&"suspicion": 2
+}
+})
+
+[sub_resource type="Resource" id="scripted_sc_12"]
+script = ExtResource("8_xqv62")
+id = &"sc_12"
+at_index = 6
+passenger_overrides = {
+&"birth_date": 16809,
+&"citizen_class": &"C-3",
+&"employer": "Bureau de Continuité",
+&"faction_id": &"hal",
+&"family_name": "Ravel",
+&"given_name": "Corentin",
+&"implants": PackedStringArray("OPT-14"),
+&"purpose": &"return",
+&"sex": &"M"
+}
+forced_anomalies = Array[int]([4])
+injection_params = {
+&"document_id": &"bioscan",
+&"field_path": "family_name"
+}
+dialogue_id = &"sc12_ravel"
+flags_on_approve = Dictionary[StringName, int]({
+&"inspector_test_failed": 0,
+&"loyalty": -1
+})
+slipped_item = SubResource("d06_resource_1")
+luciole_codes = PackedInt32Array()
+
+[resource]
+script = ExtResource("7_w30bx")
+day_number = 6
+game_date = 31852
+rule_set = ExtResource("6_ff8oj")
+duration_sec = 630.0
+passenger_count = 13
+anomaly_count_weights = PackedFloat32Array(0.35, 0.45, 0.15, 0.05)
+anomaly_weights = Dictionary[int, float]({
+0: 0.1,
+1: 0.07,
+2: 0.06,
+3: 0.08,
+4: 0.08,
+5: 0.07,
+6: 0.08,
+7: 0.08,
+8: 0.08,
+9: 0.2,
+10: 0.1
+})
+scripted_cases = Array[ExtResource("8_xqv62")]([SubResource("scripted_sc_11"), SubResource("scripted_sc_12")])
+intro_text_key = "day06_intro"
+faction_weights = Dictionary[StringName, float]({
+&"cer": 0.15,
+&"hal": 0.18,
+&"ter": 0.22,
+&"thr": 0.12,
+&"tyc": 0.33
+})
+visor_down_rate = 0.15
+legit_noise_rate = 0.25
+bribe_rate = 0.05
+luciole_rate = 0.06
+briefing_messages = Array[ExtResource("1_x57bm")]([SubResource("d06_resource_2"), SubResource("d06_resource_4"), SubResource("d06_resource_6"), SubResource("d06_resource_7"), SubResource("d06_resource_9")])
+evening_events = Array[ExtResource("3_vomac")]([SubResource("d06_resource_10")])
+rulebook_tabs = PackedStringArray("origins", "implants")

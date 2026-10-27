@@ -10,7 +10,7 @@ extends RefCounted
 
 ## Propriétés adressables par un `truth_path` `document.<nom>`.
 const DOCUMENT_PROPERTIES: Array[StringName] = [
-	&"serial", &"issue_date", &"expiry_date", &"issuer_id", &"seal_id",
+	&"serial", &"issue_date", &"expiry_date", &"issuer_id", &"seal_id", &"mrz",
 ]
 
 var type_def: DocumentTypeDef = null
@@ -20,6 +20,11 @@ var issue_date: int = 0
 var expiry_date: int = 0
 var issuer_id: StringName = &""
 var seal_id: StringName = &""
+## Bande MRZ (M7, `Mrz`) : recopie du N° ID, de l'origine et du nom ; les deux
+## derniers caractères = guichet émetteur (`04`, ou `07` : code Luciole n° 2).
+var mrz: String = ""
+## Marques visibles au zoom (M7) : `&"luciole"` = code Luciole n° 1 (LORE §7).
+var marks: Array[StringName] = []
 var values: Dictionary[StringName, Variant] = {}
 
 
@@ -78,11 +83,16 @@ func copy() -> DocumentInstance:
 	result.expiry_date = expiry_date
 	result.issuer_id = issuer_id
 	result.seal_id = seal_id
+	result.mrz = mrz
+	result.marks = marks.duplicate()
 	for key: StringName in values:
 		var value: Variant = values[key]
 		if value is PortraitValue:
 			var portrait: PortraitValue = value
 			result.values[key] = portrait.copy()
+		elif value is PackedStringArray:
+			var list: PackedStringArray = value
+			result.values[key] = list.duplicate()
 		else:
 			result.values[key] = value
 	return result

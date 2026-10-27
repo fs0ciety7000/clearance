@@ -27,7 +27,33 @@ extends Resource
 @export var requires_flag: StringName = &""
 ## Conséquences narratives du verdict (M5, GDD §11.1, §12) : `{drapeau: delta}`
 ## ajouté aux jauges entières (`lucioles_trust`, `loyalty`…) ou drapeau mis à
-## vrai si le delta vaut 0. APPROUVÉ → `flags_on_approve` ; REFUSÉ ou
-## DÉTENTION → `flags_on_deny`.
+## vrai si le delta vaut 0. APPROUVÉ → `flags_on_approve` ; REFUSÉ →
+## `flags_on_deny` ; DÉTENTION → `flags_on_detain` (M7, repli `flags_on_deny`).
 @export var flags_on_approve: Dictionary[StringName, int] = {}
 @export var flags_on_deny: Dictionary[StringName, int] = {}
+
+@export_group("M7")
+## DÉTENTION (NARRATIVE B3) ; vide → `flags_on_deny`.
+@export var flags_on_detain: Dictionary[StringName, int] = {}
+## Posés si le cas n'est pas traité avant la fin du shift (`final_unprocessed`).
+@export var flags_if_unprocessed: Dictionary[StringName, int] = {}
+## Effets conditionnels supplémentaires (verdict × drapeaux).
+@export var extra_effects: Array[CaseEffectDef] = []
+## Drapeaux qui empêchent le cas (remplacé par un passager généré, B4).
+@export var forbids_flags: Array[StringName] = []
+## Continuité (B5) : visage / identité d'un cas scénarisé d'un jour antérieur
+## (`CaseMemory`) ; les `appearance_overrides` s'appliquent par-dessus.
+@export var appearance_from_case: StringName = &""
+@export var identity_from_case: StringName = &""
+## Surcharges de la **vraie** identité (`CaseKey.truth`) après injection
+## (SC-13 : Lev Petrenko derrière les papiers de Soren Whitmore).
+@export var truth_overrides: Dictionary = {}
+## Documents ajoutés au dossier (SC-11 : dérogation d'implant militaire).
+@export var extra_documents: Array[StringName] = []
+## Objet glissé avec les papiers (enveloppe, mot, carte de quai).
+@export var slipped_item: SlippedItemDef = null
+## Codes Lucioles portés (LORE §7) ; `injection_params` : `mrz_issuer`
+## (code 2, « 07 »), `permit_suffix` (code 3, dernier chiffre du permis).
+@export var luciole_codes: PackedInt32Array = []
+## Étiquettes de dialogue supplémentaires (`luciole_password`…).
+@export var extra_tags: Array[StringName] = []

@@ -20,6 +20,10 @@ var final_credits: int = 0
 var flags: Dictionary[StringName, Variant] = {}
 var compliance: float = 0.0
 var title_button: Button = null
+## M7 : épilogue (`Campaign.epilogue` : `title_key`, `lines`) ; vide = texte
+## de fin historique (`end_text_<fin>`). Affichage minimal en attendant
+## l'écran de fin dédié (UI/UX, contrat ARCHITECTURE §7.1).
+var epilogue: Dictionary = {}
 
 
 func setup(p_ending: StringName, p_history: Array[Dictionary], p_household: Household, p_credits: int,
@@ -42,8 +46,16 @@ func _build() -> void:
 	top.add_child(UiIcon.make(UiIcon.Kind.LOGO if demo else UiIcon.Kind.DENIED, accent, DS.ICON_M))
 	top.add_child(eyebrow(UiText.t("end_eyebrow_%s" % ending, "CLEARANCE · VERTICAL SLICE"), accent))
 	page.add_child(rule_line(DS.YELLOW_24 if demo else DS.RED_24))
-	page.add_child(label(UiText.t("end_title_%s" % ending, String(ending).to_upper()), &"DisplayLabel", accent))
-	var text: Label = wrapped(UiText.t("end_text_%s" % ending, ""), &"BodyLabel")
+	var title_key: String = str(epilogue.get("title_key", "end_title_%s" % ending))
+	page.add_child(label(UiText.t(title_key, String(ending).to_upper()), &"DisplayLabel", accent))
+	var body: String = UiText.t("end_text_%s" % ending, "")
+	var lines: PackedStringArray = epilogue.get("lines", PackedStringArray())
+	if not lines.is_empty():
+		var texts: PackedStringArray = []
+		for key: String in lines:
+			texts.append(UiText.t(key, key))
+		body = "\n".join(texts)
+	var text: Label = wrapped(body, &"BodyLabel")
 	text.custom_minimum_size.x = 960.0
 	text.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	page.add_child(text)

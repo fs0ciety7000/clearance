@@ -14,6 +14,13 @@
 ## `case_resolved`, conséquences narratives des cas scénarisés
 ## (`ScriptedCaseDef.sets_flag` / `flags_on_*`), crédits et drapeaux appliqués
 ## au `GameState` si `apply_to_game_state`.
+## M7 : objets glissés (`item_slipped` aux documents, décisions
+## `item_decision_requested` → `item_decided`, décision par défaut au tampon),
+## DÉTENTION seulement si `DayDef.detain_enabled` (sinon lue comme REFUS),
+## conséquences narratives (`CaseConsequences` : verdict × objets × phrase de
+## passe), mémoire des passagers scénarisés (`GameState.case_memory`), avis de
+## recherche publiés au début du jour, annonces du Hall, drapeaux des cas
+## scénarisés non traités (`flags_if_unprocessed`).
 class_name DayController
 extends Node
 
@@ -47,6 +54,8 @@ var citations_today: int = 0
 var detain_bonus: int = ScoringService.DEFAULT_DETAIN_BONUS
 ## Cas scénarisé du cas courant (null sinon).
 var current_scripted: ScriptedCaseDef = null
+## Confiance minimale des Lucioles pour répondre à la phrase de passe (GDD §4.7).
+const PASSWORD_TRUST: int = CaseConsequences.PASSWORD_TRUST
 
 var _documents_presented: bool = false
 ## Temps passé dans la phase courante (timeouts).
@@ -55,6 +64,7 @@ var _started: bool = false
 
 
 func _ready() -> void:
+	EventBus.item_decision_requested.connect(_on_item_decision_requested)
 	EventBus.next_case_requested.connect(_on_next_case_requested)
 	EventBus.passenger_arrived.connect(_on_passenger_arrived)
 	EventBus.documents_presented.connect(_on_documents_presented)
@@ -64,13 +74,15 @@ func _ready() -> void:
 
 
 ## Prépare le jour `day_number` (phase INTRO) et émet `day_started`.
-func start_day(p_data: DataCatalog, day_number: int, day_seed: int, flags: Array[StringName] = []) -> bool:
+## `memory` : mémoire des passagers scénarisés (`CaseMemory.resolve`).
+func start_day(p_data: DataCatalog, day_number: int, day_seed: int, flags: Array[StringName] = [],
+		memory: Dictionary = {}) -> bool:
 	data = p_data
 	day = data.get_day(day_number) if data != null else null
 	if day == null:
 		push_error("DayController: jour %d introuvable" % day_number)
 		return false
-	builder = CaseBuilder.new(data, day, day_seed, flags)
+	builder = CaseBuilder.new(data, day, day_seed, flags, memory)
 	summary = DaySummary.new()
 	summary.day_number = day.day_number
 	summary.planned_cases = day.passenger_count
@@ -87,6 +99,7 @@ func start_day(p_data: DataCatalog, day_number: int, day_seed: int, flags: Array
 		clock.setup(day.duration_sec)
 	_set_phase(DayPhase.Kind.INTRO, &"")
 	EventBus.day_started.emit(day, day.rule_set.build_rulebook())
+	EventBus.wanted_notices_published.emit(builder.get_wanted_notices())
 	return true
 
 
@@ -154,6 +167,8 @@ func _on_next_case_requested() -> void:
 	_documents_presented = false
 	if inspection != null:
 		inspection.begin(current_case, builder.ctx)
+		inspection.luciole_reply_allowed = current_case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE_PASSWORD) \
+				and FlagCondition.gauge_value(flag_values(), CaseConsequences.FLAG_TRUST) >= PASSWORD_TRUST
 	# Phase posée avant l'émission : un écouteur synchrone voit ARRIVING.
 	phase = DayPhase.Kind.ARRIVING
 	_phase_time = 0.0
@@ -176,6 +191,19 @@ func _on_documents_presented(case_id: StringName) -> void:
 		return
 	if phase == DayPhase.Kind.INSPECTING or phase == DayPhase.Kind.ARRIVING:
 		_documents_presented = true
+		for item: SlippedItem in current_case.slipped_items:
+			EventBus.item_slipped.emit(item)
+
+
+## Décision de l'UI sur un objet glissé du cas courant (modifiable jusqu'au tampon).
+func _on_item_decision_requested(item_id: StringName, decision: SlippedItem.Decision) -> void:
+	if phase != DayPhase.Kind.INSPECTING or current_case == null:
+		return
+	var item: SlippedItem = current_case.get_item(item_id)
+	if item == null or not item.is_allowed(decision):
+		return
+	item.decision = decision
+	EventBus.item_decided.emit(item, decision)
 
 
 func _on_verdict_stamped(verdict: Verdict) -> void:
@@ -185,6 +213,8 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 	if verdict.case_id != &"" and verdict.case_id != current_case_id():
 		return
 	verdict.case_id = current_case_id()
+	if verdict.kind == VerdictKind.Kind.DETAIN and not day.detain_enabled:
+		verdict.kind = VerdictKind.Kind.DENY
 	_set_phase(DayPhase.Kind.RESOLVING, current_case_id())
 	if inspection != null:
 		inspection.end(verdict)
@@ -193,39 +223,59 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 	if result.has_citation():
 		citations_today += 1
 		ScoringService.apply_citation(result, citations_today, day)
+	_resolve_items(result)
+	result.password_answered = inspection != null and inspection.luciole_replied
 	_apply_narrative(result)
 	summary.add_result(result)
 	if apply_to_game_state:
-		GameState.add_credits(result.credits_delta)
+		GameState.add_credits(result.credits_delta + result.bribe_credits + result.report_credits)
 		GameState.score_total += result.wage
 		if result.has_citation():
 			GameState.add_citation()
 		for flag: StringName in result.narrative_changes:
 			GameState.set_flag(flag, result.narrative_changes[flag])
+		if current_scripted != null:
+			GameState.remember_case(current_scripted.id, CaseMemory.snapshot(day.day_number, current_case, result.verdict_kind))
 	EventBus.case_resolved.emit(current_case_id(), result)
 	if result.has_citation():
 		EventBus.citation_issued.emit(result.citation_reason_key)
+	var announcement: String = day.hall_announcements.get(summary.results.size(), "")
+	if not announcement.is_empty():
+		EventBus.hall_announced.emit(announcement)
 	_set_phase(DayPhase.Kind.DEPARTING, current_case_id())
+
+
+## Objets glissés au tampon : décision par défaut pour les objets non tranchés
+## (refus automatique, `item_decided` émis), crédits gardés / primes.
+func _resolve_items(result: CaseResult) -> void:
+	for item: SlippedItem in current_case.slipped_items:
+		if not item.is_decided():
+			item.decision = item.default_decision
+			EventBus.item_decided.emit(item, item.decision)
+		result.item_decisions[item.id] = item.decision
+		var credits: int = item.credits_for(item.decision)
+		if item.decision == SlippedItem.Decision.REPORT:
+			result.report_credits += credits
+		else:
+			result.bribe_credits += credits
+
+
+## Drapeaux narratifs courants (vides hors `GameState`).
+func flag_values() -> Dictionary[StringName, Variant]:
+	if apply_to_game_state:
+		return GameState.narrative_flags
+	var empty: Dictionary[StringName, Variant] = {}
+	return empty
 
 
 ## Conséquences narratives d'un cas scénarisé (GDD §12) : `sets_flag` dès le
 ## traitement, puis `flags_on_approve` / `flags_on_deny` selon le verdict
 ## (delta ajouté aux jauges ; 0 = drapeau mis à vrai).
 func _apply_narrative(result: CaseResult) -> void:
-	if current_scripted == null:
-		return
-	result.scripted_id = current_scripted.id
-	if current_scripted.sets_flag != &"":
-		result.narrative_changes[current_scripted.sets_flag] = true
-	var changes: Dictionary[StringName, int] = current_scripted.flags_on_approve \
-			if result.verdict_kind == VerdictKind.Kind.APPROVE else current_scripted.flags_on_deny
-	for flag: StringName in changes:
-		var delta: int = changes[flag]
-		if delta == 0:
-			result.narrative_changes[flag] = true
-		else:
-			var current: int = SaveService.as_int(GameState.get_flag(flag, 0)) if apply_to_game_state else 0
-			result.narrative_changes[flag] = current + delta
+	if current_scripted != null:
+		result.scripted_id = current_scripted.id
+	result.narrative_changes = CaseConsequences.compute(current_scripted, current_case, result.verdict_kind,
+			not current_key.expected_violations.is_empty(), result.password_answered, day.day_number, flag_values())
 
 
 static func _passenger_label(case: Case) -> String:
@@ -267,6 +317,13 @@ func _end_day() -> void:
 	if clock != null:
 		clock.stop()
 	summary.time_expired = time_expired
+	# Cas scénarisés restés dans la file (SC-22 : `final_unprocessed`).
+	for scripted: ScriptedCaseDef in builder.get_active_scripted_cases():
+		if scripted.at_index >= next_index and not scripted.flags_if_unprocessed.is_empty():
+			CaseConsequences.add_all(summary.unprocessed_changes, flag_values(), scripted.flags_if_unprocessed)
+	if apply_to_game_state:
+		for flag: StringName in summary.unprocessed_changes:
+			GameState.set_flag(flag, summary.unprocessed_changes[flag])
 	_set_phase(DayPhase.Kind.SUMMARY, &"")
 	EventBus.day_ended.emit(summary)
 

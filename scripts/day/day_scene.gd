@@ -91,7 +91,8 @@ func _ready() -> void:
 	intercom.spoke.connect(_on_intercom)
 	add_child(intercom)
 	EventBus.day_ended.connect(_on_day_ended)
-	if not day_controller.start_day(data, GameState.current_day, GameState.get_day_seed(), GameState.get_true_flags()):
+	if not day_controller.start_day(data, GameState.current_day, GameState.get_day_seed(), GameState.get_true_flags(),
+			Campaign.memory_for_day(data)):
 		return
 	if _args.has("start-case"):
 		var start_text: String = _args["start-case"]
@@ -193,19 +194,26 @@ func show_summary(summary: DaySummary) -> void:
 	var summary_screen: ShiftSummaryScreen = ShiftSummaryScreen.new()
 	summary_screen.name = "ShiftSummaryScreen"
 	summary_screen.setup(summary, day_controller.day)
-	summary_screen.finished.connect(func(_choice: StringName) -> void: show_evening(summary))
+	summary_screen.finished.connect(func(_choice: StringName) -> void:
+		if Campaign.has_evening(data):
+			show_evening(summary)
+		else:
+			show_final(summary))
 	_open(summary_screen, &"summary")
 
 
 func show_evening(summary: DaySummary) -> void:
 	var evening: EveningScreen = EveningScreen.new()
 	evening.name = "EveningScreen"
-	var lines: Array[ExpenseLine] = Campaign.prepare_evening(data)
-	evening.setup(day_controller.day, GameState.credits, summary.get_net() if summary != null else 0, lines,
+	# M7 : événements du soir sans écran dédié → choix par défaut (refus /
+	# neutre), résultats affichés dans le compte rendu de la nuit.
+	var events: Array[EveningEvent] = Campaign.prepare_events(data)
+	var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, events)
+	evening.setup(day_controller.day, GameState.credits, summary.get_total_income() if summary != null else 0, lines,
 			GameState.household, Campaign.luciole_note_pending(), consortium_advance())
 	evening.luciole_decided.connect(Campaign.decide_luciole_note)
 	evening.confirmed.connect(func(confirmed_lines: Array[ExpenseLine]) -> void:
-		var report: EveningReport = Campaign.preview_evening(data, confirmed_lines)
+		var report: EveningReport = Campaign.preview_evening(data, confirmed_lines, events)
 		var ending: StringName = Campaign.close_evening(data, summary, report)
 		evening.show_report(report, ending))
 	evening.finished.connect(_after_evening)
@@ -219,9 +227,15 @@ func _after_evening(choice: StringName) -> void:
 	show_end(choice)
 
 
+## M7 : dernier jour sans soirée (J10, D-053) → évaluation de la fin.
+func show_final(summary: DaySummary) -> void:
+	show_end(Campaign.close_final_day(data, summary))
+
+
 func show_end(ending: StringName) -> void:
 	var end: EndScreen = EndScreen.new()
 	end.name = "EndScreen"
+	end.epilogue = Campaign.epilogue(ending)
 	end.setup(ending, GameState.day_history, GameState.household, GameState.credits, GameState.narrative_flags,
 			Campaign.compliance())
 	end.finished.connect(func(_choice: StringName) -> void: go_to_title())

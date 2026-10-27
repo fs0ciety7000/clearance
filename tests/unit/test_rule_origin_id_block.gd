@@ -36,7 +36,8 @@ func test_document_without_origin_uses_visible_origin() -> void:
 
 func test_unknown_origin_is_skipped() -> void:
 	var c: Case = CaseFactory.valid_case([CaseFactory.ID_CARD])
-	c.get_document(CaseFactory.ID_CARD).set_value(&"origin", &"cer")
+	# M7 : CER existe désormais ; origine fictive.
+	c.get_document(CaseFactory.ID_CARD).set_value(&"origin", &"xyz")
 	assert_eq(_rule.evaluate(c, CaseFactory.context()).size(), 0)
 
 

@@ -21,3 +21,8 @@ purpose_weights = Dictionary[StringName, float]({
 &"work": 0.55
 })
 employers = PackedStringArray("Kessler-Ashe Orbital", "Valcourt-Hsu Logistique", "Hydroponie Ceres-Verte", "Meridian Biosystèmes")
+implant_rate = 0.1
+implant_weights = Dictionary[StringName, float]({
+&"DER-6": 1.0,
+&"KIN-5": 0.5
+})

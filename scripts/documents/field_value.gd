@@ -13,6 +13,13 @@ static func normalize(value: Variant) -> Variant:
 	match typeof(value):
 		TYPE_STRING, TYPE_STRING_NAME:
 			return str(value).strip_edges().to_upper()
+		TYPE_PACKED_STRING_ARRAY, TYPE_ARRAY:
+			# Liste (implants) : ensemble de codes, ordre indifférent.
+			var codes: PackedStringArray = []
+			for item: Variant in value:
+				codes.append(str(item).strip_edges().to_upper())
+			codes.sort()
+			return codes
 	return value
 
 
@@ -37,4 +44,7 @@ static func to_display(value: Variant, field: FieldDef) -> String:
 			return GameDate.format_pattern(days, field.get_date_format())
 		FieldDef.FieldKind.PORTRAIT:
 			return ""
+		FieldDef.FieldKind.LIST:
+			var codes: PackedStringArray = normalize(value)
+			return ", ".join(codes) if not codes.is_empty() else "—"
 	return str(value)

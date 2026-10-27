@@ -16,8 +16,11 @@ const SPEAKER_ILAN: String = "spk_ilan"
 const SPEAKER_HALL: String = "spk_hall"
 const SPEAKER_TREASURY: String = "spk_treasury"
 const MSG_ADVANCE: String = "msg_consortium_advance"
-## Nature du message (couleur du locuteur, DS §7.10) : Consortium, mentor, famille.
-enum Voice { CONSORTIUM, MENTOR, FAMILY }
+## Nature du message (couleur du locuteur, DS §7.10) : Consortium, mentor,
+## famille ; M7 : Lucioles (magenta), Inspection (jaune). On n'ajoute qu'à la fin.
+enum Voice { CONSORTIUM, MENTOR, FAMILY, LUCIOLES, INSPECTION }
+## Au plus 4 messages par briefing (NARRATIVE §3).
+const MAX_MESSAGES: int = 4
 
 var day_number: int = 1
 var game_date: int = 0
@@ -49,6 +52,10 @@ static func build(day: DayDef, flags: Dictionary[StringName, Variant], household
 	content.rulebook = day.rule_set.build_rulebook() if day.rule_set != null else []
 	if n == 1 and advance > 0:
 		content.advance_credits = advance
+	# M7 (J4+) : table de messages conditionnels des données (NARRATIVE §3, B11).
+	if not day.briefing_messages.is_empty():
+		content._add_from_table(day.briefing_messages, flags, household, n)
+		return content
 	# Échos des choix de la veille (GDD §11.1 : « écho parfois dans le bulletin »).
 	if n == 2:
 		if _is_true(flags, &"sc02_mercy"):
@@ -61,6 +68,53 @@ static func build(day: DayDef, flags: Dictionary[StringName, Variant], household
 	content.add(SPEAKER_OKONKWO, "msg_okonkwo_day%02d" % n, Voice.MENTOR)
 	content.add(SPEAKER_ILAN, family_message_key(n, household), Voice.FAMILY)
 	return content
+
+
+## Messages conditionnels : premier vrai de chaque groupe, emplacement « Ilan »
+## remplacé par l'état du foyer s'il ne va pas bien (omis si Ilan est mis·e en
+## attente), au plus `MAX_MESSAGES` (plus petites priorités), ordre des données.
+func _add_from_table(defs: Array[BriefingMessageDef], flags: Dictionary[StringName, Variant], household: Household,
+		on_day: int) -> void:
+	var picked: Array[Array] = [] # [ordre, priorité, speaker, texte, voix]
+	var used_groups: Array[StringName] = []
+	var family_key: String = family_message_key(on_day, household)
+	var ilan: Household.Member = household.get_member(Household.ILAN) if household != null else null
+	var ilan_away: bool = ilan != null and ilan.detained
+	var family_index: int = -1
+	var family_picked: bool = false
+	for i: int in defs.size():
+		var def: BriefingMessageDef = defs[i]
+		if def == null or (def.group != &"" and used_groups.has(def.group)):
+			continue
+		if def.family_slot:
+			if family_index < 0:
+				family_index = i
+			if ilan_away:
+				continue
+			if family_key != "msg_family_ok":
+				family_picked = true
+				if def.group != &"":
+					used_groups.append(def.group)
+				picked.append([i, def.priority, def.speaker_key, family_key, Voice.FAMILY])
+				continue
+		if not FlagCondition.check(def.condition, flags):
+			continue
+		if def.group != &"":
+			used_groups.append(def.group)
+		family_picked = family_picked or def.family_slot
+		picked.append([i, def.priority, def.speaker_key, def.text_key, def.voice])
+	# Pas de message narratif d'Ilan ce jour : l'état du foyer (« tout va bien »).
+	if family_index >= 0 and not family_picked and not ilan_away:
+		picked.append([family_index, 0, SPEAKER_ILAN, family_key, Voice.FAMILY])
+	var ranked: Array[Array] = picked.duplicate()
+	ranked.sort_custom(func(a: Array, b: Array) -> bool: return a[1] < b[1] or (a[1] == b[1] and a[0] < b[0]))
+	ranked = ranked.slice(0, MAX_MESSAGES)
+	ranked.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	for entry: Array in ranked:
+		var voice: Voice = entry[4]
+		var speaker: String = entry[2]
+		var text: String = entry[3]
+		add(speaker, text, voice)
 
 
 func add(speaker_key: String, text_key: String, voice: Voice, args: Array = []) -> void:

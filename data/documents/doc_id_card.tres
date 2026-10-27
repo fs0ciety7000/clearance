@@ -92,11 +92,35 @@ truth_path = &"document.issuer_id"
 comparable = false
 display_order = 10
 
+[sub_resource type="Resource" id="field_implants"]
+script = ExtResource("1_uh1rf")
+id = &"implants"
+label_key = "field_implants"
+kind = 7
+truth_path = &"implants"
+display_order = 11
+
+[sub_resource type="Resource" id="field_seal"]
+script = ExtResource("1_uh1rf")
+id = &"seal"
+label_key = "field_seal"
+kind = 3
+truth_path = &"document.seal_id"
+display_order = 12
+
+[sub_resource type="Resource" id="field_mrz"]
+script = ExtResource("1_uh1rf")
+id = &"mrz"
+label_key = "field_mrz"
+kind = 2
+truth_path = &"document.mrz"
+display_order = 13
+
 [resource]
 script = ExtResource("2_mcm25")
 id = &"id_card"
 title_key = "doc_id_card_title"
-fields = Array[ExtResource("1_uh1rf")]([SubResource("field_portrait"), SubResource("field_family_name"), SubResource("field_given_name"), SubResource("field_birth_date"), SubResource("field_sex"), SubResource("field_origin"), SubResource("field_citizen_id"), SubResource("field_citizen_class"), SubResource("field_issue_date"), SubResource("field_expiry_date"), SubResource("field_issuer")])
+fields = Array[ExtResource("1_uh1rf")]([SubResource("field_portrait"), SubResource("field_family_name"), SubResource("field_given_name"), SubResource("field_birth_date"), SubResource("field_sex"), SubResource("field_origin"), SubResource("field_citizen_id"), SubResource("field_citizen_class"), SubResource("field_issue_date"), SubResource("field_expiry_date"), SubResource("field_issuer"), SubResource("field_implants"), SubResource("field_seal"), SubResource("field_mrz")])
 validity_days = Vector2i(1825, 3650)
 holo_tint_token = &"ACCENT_YELLOW"
 issuer_id = &"bureau_continuite"

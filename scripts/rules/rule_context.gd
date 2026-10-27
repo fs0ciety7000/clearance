@@ -15,6 +15,8 @@ var document_db: Dictionary[StringName, DocumentTypeDef] = {}
 ## Slots comparés par `FaceComparator` (dérivés de l'`AppearanceCatalog` par
 ## `DataCatalog.make_context()` et `CaseBuilder` ; liste par défaut sinon).
 var identity_slots: Array[StringName] = FaceComparator.DEFAULT_IDENTITY_SLOTS.duplicate()
+## Avis de recherche du jour (M7, R22), posé par le `CaseBuilder`.
+var wanted: Array[WantedNotice] = []
 
 
 func _init(p_today: int = 0, p_rule_set: RuleSet = null) -> void:
@@ -39,3 +41,26 @@ func find_active_rule(rule_id: StringName) -> Rule:
 
 func get_faction(faction_id: StringName) -> FactionDef:
 	return faction_db.get(faction_id, null)
+
+
+## Numéro du jour (0 sans `DayDef`).
+func get_day_number() -> int:
+	return day_def.day_number if day_def != null else 0
+
+
+func find_wanted(notice_id: StringName) -> WantedNotice:
+	for notice: WantedNotice in wanted:
+		if notice.id == notice_id:
+			return notice
+	return null
+
+
+## Copie superficielle (mêmes bases, autre liste d'avis de recherche).
+func duplicate_context() -> RuleContext:
+	var ctx: RuleContext = RuleContext.new(today, rule_set)
+	ctx.day_def = day_def
+	ctx.faction_db = faction_db
+	ctx.document_db = document_db
+	ctx.identity_slots = identity_slots.duplicate()
+	ctx.wanted = wanted.duplicate()
+	return ctx

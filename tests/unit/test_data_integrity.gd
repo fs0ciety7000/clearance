@@ -20,13 +20,13 @@ func test_all_resources_load_without_error() -> void:
 
 
 func test_expected_content_counts() -> void:
-	assert_eq(_catalog.documents.size(), 3, "Carte d'identité, Permis d'entrée, Certificat bio-scan")
-	assert_eq(_catalog.factions.keys().size(), 3, "origines MVP : TYC, HAL, TER")
-	assert_gte(_catalog.rules.size(), 8)
-	assert_eq(_catalog.days.keys().size(), 3)
-	for document_id: StringName in [&"id_card", &"entry_permit", &"bioscan"]:
+	assert_eq(_catalog.documents.size(), 4, "Carte, Permis, Bio-scan, Dérogation MIL (M7)")
+	assert_eq(_catalog.factions.keys().size(), 6, "origines : TYC, HAL, TER + CER, THR, DRV (M7)")
+	assert_eq(_catalog.rules.size(), 22, "R01–R22 (GDD §7)")
+	assert_eq(_catalog.days.keys().size(), 10)
+	for document_id: StringName in [&"id_card", &"entry_permit", &"bioscan", &"mil_waiver"]:
 		assert_true(_catalog.documents.has(document_id), String(document_id))
-	for faction_id: StringName in [&"tyc", &"hal", &"ter"]:
+	for faction_id: StringName in [&"tyc", &"hal", &"ter", &"cer", &"thr", &"drv"]:
 		assert_true(_catalog.factions.has(faction_id), String(faction_id))
 
 
@@ -43,7 +43,10 @@ func test_factions() -> void:
 		assert_false(prefixes.has(faction.id_prefix), "préfixe en double " + faction.id_prefix)
 		codes.append(faction.code)
 		prefixes.append(faction.id_prefix)
-	# LORE §5 : HAL 1, TER 2, TYC 4.
+	# LORE §5 : HAL 1, TER 2, TYC 4, CER 6, THR 7, DRV 9.
+	assert_eq(_catalog.factions[&"cer"].get_id_block_digit(), 6)
+	assert_eq(_catalog.factions[&"thr"].get_id_block_digit(), 7)
+	assert_eq(_catalog.factions[&"drv"].get_id_block_digit(), 9)
 	assert_eq(_catalog.factions[&"hal"].get_id_block_digit(), 1)
 	assert_eq(_catalog.factions[&"ter"].get_id_block_digit(), 2)
 	assert_eq(_catalog.factions[&"tyc"].get_id_block_digit(), 4)
@@ -127,7 +130,7 @@ func test_days() -> void:
 	var numbers: Array[int] = []
 	numbers.assign(_catalog.days.keys())
 	numbers.sort()
-	assert_eq(numbers, [1, 2, 3] as Array[int])
+	assert_eq(numbers, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as Array[int])
 	for n: int in numbers:
 		var day: DayDef = _catalog.days[n]
 		var label: String = "J%d" % n
@@ -164,6 +167,19 @@ func test_days_follow_gdd_progression() -> void:
 		for rule_id: StringName in _catalog.get_day(n - 1).rule_set.get_rule_ids():
 			assert_true(_catalog.get_day(n).rule_set.has_rule(rule_id), "J%d garde %s" % [n, rule_id])
 	assert_eq(_catalog.get_day(3).rule_set.required_document_ids, [&"id_card", &"entry_permit"] as Array[StringName])
+	# M7 (GDD §9) : 10, 14, 16, 17, 19, 21, 22 règles actives de J4 à J10, cumulatives.
+	var counts: Array[int] = []
+	for n: int in range(4, 11):
+		counts.append(_catalog.get_day(n).rule_set.get_rule_ids().size())
+		for rule_id: StringName in _catalog.get_day(n - 1).rule_set.get_rule_ids():
+			assert_true(_catalog.get_day(n).rule_set.has_rule(rule_id), "J%d garde %s" % [n, rule_id])
+	assert_eq(counts, [10, 14, 16, 17, 19, 21, 22] as Array[int])
+	assert_eq(_catalog.get_day(5).rule_set.required_document_ids, [&"id_card", &"entry_permit", &"bioscan"] as Array[StringName])
+	for n: int in range(1, 11):
+		var day: DayDef = _catalog.get_day(n)
+		assert_eq(day.detain_enabled, n >= 7, "J%d : DÉTENTION à partir du J7" % n)
+		assert_eq(day.has_evening, n < 10, "J%d : pas de soirée au J10 (D-053)" % n)
+	assert_eq(_catalog.get_day(10).wanted_notices.size(), 3, "avis de recherche du J10")
 
 
 func _check_scripted_cases(day: DayDef, label: String) -> void:

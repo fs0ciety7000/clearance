@@ -75,11 +75,19 @@ truth_path = &"document.expiry_date"
 display_order = 8
 format = "DD.MM.YYYY"
 
+[sub_resource type="Resource" id="field_seal"]
+script = ExtResource("1_kk505")
+id = &"seal"
+label_key = "field_seal"
+kind = 3
+truth_path = &"document.seal_id"
+display_order = 9
+
 [resource]
 script = ExtResource("2_uscxf")
 id = &"bioscan"
 title_key = "doc_bioscan_title"
-fields = Array[ExtResource("1_kk505")]([SubResource("field_serial"), SubResource("field_family_name"), SubResource("field_given_name"), SubResource("field_birth_date"), SubResource("field_citizen_id"), SubResource("field_health_status"), SubResource("field_issuer"), SubResource("field_issue_date"), SubResource("field_expiry_date")])
+fields = Array[ExtResource("1_kk505")]([SubResource("field_serial"), SubResource("field_family_name"), SubResource("field_given_name"), SubResource("field_birth_date"), SubResource("field_citizen_id"), SubResource("field_health_status"), SubResource("field_issuer"), SubResource("field_issue_date"), SubResource("field_expiry_date"), SubResource("field_seal")])
 validity_days = Vector2i(30, 30)
 holo_tint_token = &"ACCENT_CYAN"
 issuer_id = &"clinique_meridian"

@@ -23,6 +23,16 @@ var events: Array[Dictionary] = []
 ## Foyer après la soirée.
 var household: Household = null
 var ending: StringName = ENDING_NONE
+## M7 : primes et gains des événements (dénonciation, colis, déposition…).
+var gained: int = 0
+## M7 : coûts des événements (options, retenue d'audit), inclus dans `spent`.
+var event_spent: int = 0
+## M7 : option retenue par événement (`{event_id: option_id}`).
+var choices: Dictionary[StringName, StringName] = {}
+## M7 : drapeaux à poser (valeurs absolues, `CaseConsequences`).
+var flag_changes: Dictionary[StringName, Variant] = {}
+## M7 : textes des événements de la soirée, dans l'ordre (lettres, résultats).
+var event_texts: PackedStringArray = []
 
 
 func add_event(key: String, tone: Tone, member: StringName = &"") -> void:

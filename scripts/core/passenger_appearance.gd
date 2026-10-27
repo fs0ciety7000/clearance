@@ -103,6 +103,20 @@ func serialize() -> Dictionary:
 	}
 
 
+## Inverse de `serialize()` (mémoire des passagers, sauvegarde JSON M7).
+static func deserialize(data: Dictionary) -> PassengerAppearance:
+	var traits_in: Dictionary[StringName, StringName] = {}
+	var raw: Variant = data.get("traits", {})
+	if raw is Dictionary:
+		var dict: Dictionary = raw
+		for slot: Variant in dict:
+			traits_in[StringName(str(slot))] = StringName(str(dict[slot]))
+	var result: PassengerAppearance = PassengerAppearance.new(traits_in, SaveService.as_int(data.get("age_band", 0)))
+	result.palette_id = StringName(str(data.get("palette_id", "")))
+	result.height_step = SaveService.as_int(data.get("height_step", 0))
+	return result
+
+
 func _union_slots(other: PassengerAppearance) -> Array[StringName]:
 	var keys: Array[StringName] = []
 	keys.assign(traits.keys())

@@ -34,7 +34,11 @@ static func create(def: DocumentTypeDef, p: Passenger, today: int, rng: SeededRn
 		if field.kind == FieldDef.FieldKind.PORTRAIT:
 			doc.values[field.id] = make_photo(p, rng, appearance_gen, photo_noise)
 		else:
-			doc.values[field.id] = p.get_truth(field.truth_path)
+			var value: Variant = p.get_truth(field.truth_path)
+			if value is PackedStringArray:
+				var list: PackedStringArray = value
+				value = list.duplicate()
+			doc.values[field.id] = value
 	doc.serial = make_serial(def.serial_pattern, rng, doc.issue_date, p)
 	return doc
 

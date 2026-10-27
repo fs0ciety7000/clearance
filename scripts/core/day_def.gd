@@ -38,6 +38,27 @@ extends Resource
 ## Amende des citations à partir de la 4ᵉ.
 @export var penalty_escalated: int = 10
 
+@export_group("M7")
+## Tampon DÉTENTION (« mise en attente ») disponible (J7+, GDD §4.5). Sinon une
+## détention tamponnée est lue comme un REFUS.
+@export var detain_enabled: bool = false
+## Soirée après le shift (faux au J10 : le bilan enchaîne sur la fin, D-053).
+@export var has_evening: bool = true
+## Montant d'une enveloppe générée (`bribe_rate`) : min/max, par pas de 10 ₵.
+@export var bribe_amounts: Vector2i = Vector2i(10, 20)
+## Avis de recherche du jour (R22, onglet « Avis de recherche »).
+@export var wanted_notices: Array[WantedNoticeDef] = []
+## Messages conditionnels du briefing (J4+, `BriefingContent`).
+@export var briefing_messages: Array[BriefingMessageDef] = []
+## Événements du soir (J4+, `EveningService`).
+@export var evening_events: Array[EveningEventDef] = []
+## Annonces du haut-parleur du Hall : nombre de cas traités → clé
+## (`hall_j7_okonkwo_citation` après le 5ᵉ cas du J7).
+@export var hall_announcements: Dictionary[int, String] = {}
+## Onglets du Rulebook ouverts ce jour (UI : `origins`, `implants`, `symbols`,
+## `seals`, `wanted`), cumulatifs.
+@export var rulebook_tabs: PackedStringArray = []
+
 
 ## Cas scénarisé prévu à cet index, ou null.
 func get_scripted_case(index: int) -> ScriptedCaseDef:

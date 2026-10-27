@@ -5,9 +5,15 @@
 ## imprime par profil et par soir : revenu net, solde, postes non payés, état du
 ## foyer, taux de « foyer entièrement malade » et de fins anticipées.
 ##
+## M7 : campagne J1–J10 (soirées à événements, audit, fin F1–F7) ; par profil,
+## répartition des fins (et jour moyen d'une fin anticipée). `--presets=`
+## liste de `SimProfile.PRESETS` (défaut : `default`, choix sans UI) ;
+## `--days=N` limite la campagne aux N premiers jours.
+##
 ## Usage (depuis la racine du projet) :
 ##   godot --headless --script res://tools/balance_sim.gd -- --seeds=200 --seed=1 \
-##       --profiles=0.6,0.8,0.95 --spending=reasoned|default [--set=heating=6,starting_credits=10]
+##       --profiles=0.6,0.8,0.95 --spending=reasoned|default [--set=heating=6,starting_credits=10] \
+##       [--presets=default,loyal,luciole,mercenary,drift,negligent] [--days=10]
 ## `--set` surcharge en mémoire des champs de l'`EconomyDef` (essais sans
 ## régénérer les données ; les valeurs retenues vont dans `build_data.gd`).
 extends SceneTree
@@ -17,6 +23,8 @@ var _seed: int = 1
 var _profiles: Array[float] = [0.6, 0.8, 0.95]
 var _spending: BalanceSimulator.Spending = BalanceSimulator.Spending.REASONED
 var _overrides: Dictionary[String, String] = {}
+var _presets: Array[StringName] = [&"default"]
+var _days: int = -1
 
 
 func _init() -> void:
@@ -40,8 +48,9 @@ func _init() -> void:
 			e.starting_credits, e.rent, e.air_tax, e.food, e.heating, e.oxygen, e.medicine_per_member,
 			e.noa_cold_sick_chance, e.deprivation_sick_evenings, e.untreated_worsen_evenings])
 	var start: int = Time.get_ticks_msec()
-	for accuracy: float in _profiles:
-		_run_profile(data, accuracy)
+	for preset: StringName in _presets:
+		for accuracy: float in _profiles:
+			_run_profile(data, accuracy, preset)
 	print("Durée : %d ms" % (Time.get_ticks_msec() - start))
 	quit(0)
 
@@ -61,12 +70,20 @@ func _parse_args() -> void:
 				var kv: PackedStringArray = pair.split("=")
 				if kv.size() == 2:
 					_overrides[kv[0].strip_edges()] = kv[1].strip_edges()
+		elif arg.begins_with("--presets="):
+			_presets.clear()
+			for part: String in arg.trim_prefix("--presets=").split(",", false):
+				_presets.append(StringName(part.strip_edges()))
+		elif arg.begins_with("--days="):
+			_days = arg.trim_prefix("--days=").to_int()
 		elif arg == "--spending=default":
 			_spending = BalanceSimulator.Spending.DEFAULT
 
 
-func _run_profile(data: DataCatalog, accuracy: float) -> void:
-	var last: int = data.get_last_day_number()
+func _run_profile(data: DataCatalog, accuracy: float, preset: StringName = &"default") -> void:
+	var last: int = _days if _days >= 1 else data.get_last_day_number()
+	var ending_counts: Dictionary[String, int] = {}
+	var ending_days: Dictionary[String, int] = {}
 	# Agrégats par jour (index 0 = J1).
 	var reached: Array[int] = []
 	var acc: Array[float] = []
@@ -90,7 +107,12 @@ func _run_profile(data: DataCatalog, accuracy: float) -> void:
 		unpaid.append(d)
 	var finished: int = 0
 	for n: int in _seeds:
-		var rows: Array[Dictionary] = BalanceSimulator.run_campaign(data, SeededRng.mix(_seed, n), accuracy, _spending)
+		var rows: Array[Dictionary] = BalanceSimulator.run_campaign(data, SeededRng.mix(_seed, n), accuracy, _spending,
+				last, SimProfile.preset(preset, accuracy))
+		var tail: Dictionary = rows[rows.size() - 1]
+		var ending_name: String = str(tail["ending"]) if str(tail["ending"]) != "" else "—"
+		ending_counts[ending_name] = ending_counts.get(ending_name, 0) + 1
+		ending_days[ending_name] = ending_days.get(ending_name, 0) + SaveService.as_int(tail["day"])
 		for row: Dictionary in rows:
 			var i: int = int(row["day"]) - 1
 			reached[i] += 1
@@ -114,10 +136,10 @@ func _run_profile(data: DataCatalog, accuracy: float) -> void:
 					any_unpaid = true
 			if any_unpaid:
 				sacrificed[i] += 1
-		if rows.size() == last and rows[rows.size() - 1]["ending"] == EveningReport.ENDING_NONE:
+		if rows.size() == last and (rows[rows.size() - 1]["ending"] == EveningReport.ENDING_NONE or rows[rows.size() - 1].get("final", false)):
 			finished += 1
 	print("")
-	print("== Profil %d %% ==" % roundi(accuracy * 100.0))
+	print("== Profil %d %% · %s ==" % [roundi(accuracy * 100.0), preset])
 	print("jour | précis. | revenu | solde | ≥1 poste sacrifié | impayés % (loyer/nourr./chauff./O₂/soins) | malades | graves | perdus | ≥1 malade | foyer entièrement malade | fin anticipée (cumul)")
 	var cumulative: int = 0
 	for i: int in last:
@@ -131,3 +153,11 @@ func _run_profile(data: DataCatalog, accuracy: float) -> void:
 				float(sick[i]) / r, float(grave[i]) / r, float(lost[i]) / r, 100.0 * any_sick[i] / r,
 				100.0 * all_sick[i] / r, 100.0 * cumulative / _seeds])
 	print("campagnes menées au bout : %.1f %%" % (100.0 * finished / _seeds))
+	var names: Array[String] = []
+	names.assign(ending_counts.keys())
+	names.sort()
+	var ending_parts: PackedStringArray = []
+	for ending_name: String in names:
+		ending_parts.append("%s %.1f %% (J%.1f)" % [ending_name, 100.0 * ending_counts[ending_name] / _seeds,
+				float(ending_days[ending_name]) / ending_counts[ending_name]])
+	print("fins : " + " · ".join(ending_parts))

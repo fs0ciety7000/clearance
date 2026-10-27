@@ -26,6 +26,10 @@ extends Resource
 @export var purpose_weights: Dictionary[StringName, float] = {}
 ## Employeurs typiques (champ « Employeur », LORE §6).
 @export var employers: PackedStringArray = []
+## M7 (LORE §8) : part des passagers porteurs d'un implant civil visible
+## (tiré seulement les jours où la règle R15 est active) et implants tirables.
+@export_range(0.0, 1.0) var implant_rate: float = 0.0
+@export var implant_weights: Dictionary[StringName, float] = {}
 
 
 ## Vrai si le N° ID est cohérent avec cette origine (règle R10, GDD §7).

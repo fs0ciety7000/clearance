@@ -20,7 +20,7 @@ var reactions: Array[PassengerReaction.Kind] = []
 
 
 func setup(test: GutTest, p_booth: Node, day_number: int, group: int = 0, day_seed: int = 0,
-		flags: Array[StringName] = []) -> void:
+		flags: Array[StringName] = [], memory: Dictionary = {}) -> void:
 	clock = DayClock.new()
 	session = InspectionSession.new()
 	controller = DayController.new()
@@ -40,7 +40,7 @@ func setup(test: GutTest, p_booth: Node, day_number: int, group: int = 0, day_se
 	EventBus.day_phase_changed.connect(_on_phase)
 	EventBus.day_ended.connect(_on_day_ended)
 	EventBus.passenger_reaction_triggered.connect(_on_reaction)
-	controller.start_day(Gen.data(), day_number, day_seed if day_seed != 0 else Gen.day_seed(group, day_number), flags)
+	controller.start_day(Gen.data(), day_number, day_seed if day_seed != 0 else Gen.day_seed(group, day_number), flags, memory)
 
 
 ## Libère les nœuds du jour (enchaînement de plusieurs jours dans un test).

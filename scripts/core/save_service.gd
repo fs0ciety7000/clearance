@@ -14,9 +14,11 @@ extends RefCounted
 
 ## Version du format. Historique :
 ## 1 — contrat ARCHITECTURE §10 (sans foyer) ;
-## 2 — M5 : `household` (Ilan, Noa, Dora), `day_history` détaillé.
-const VERSION: int = 2
-const GAME_VERSION: String = "0.5.0-m5"
+## 2 — M5 : `household` (Ilan, Noa, Dora), `day_history` détaillé ;
+## 3 — M7 : `case_memory` (passagers scénarisés), membre `detained` du foyer,
+##     jauge `suspicion` (SC-02 approuvé : +1 rétroactif, D-052).
+const VERSION: int = 3
+const GAME_VERSION: String = "0.7.0-m7"
 const DEFAULT_DIR: String = "user://saves"
 const DEFAULT_SLOT: int = 0
 ## Clés obligatoires après migration, avec leur type JSON attendu.
@@ -30,6 +32,7 @@ const SCHEMA: Dictionary[String, int] = {
 	"narrative_flags": TYPE_DICTIONARY,
 	"day_history": TYPE_ARRAY,
 	"household": TYPE_DICTIONARY,
+	"case_memory": TYPE_DICTIONARY,
 }
 
 
@@ -124,6 +127,9 @@ static func migrate(source: Dictionary) -> Dictionary:
 		return {}
 	if version == 1:
 		data = _migrate_1_to_2(data)
+		version = 2
+	if version == 2:
+		data = _migrate_2_to_3(data)
 	data["version"] = float(VERSION)
 	return data
 
@@ -142,6 +148,21 @@ static func _migrate_1_to_2(data: Dictionary) -> Dictionary:
 				if not day.has("spent"):
 					day["spent"] = 0
 	data["version"] = 2
+	return data
+
+
+## v2 → v3 : mémoire des passagers vide (recalculée à la demande,
+## `CaseMemory.resolve`) ; `suspicion +1` si SC-02 a été approuvée (D-052).
+static func _migrate_2_to_3(data: Dictionary) -> Dictionary:
+	if not data.has("case_memory"):
+		data["case_memory"] = {}
+	var flags: Variant = data.get("narrative_flags", {})
+	if flags is Dictionary:
+		var dict: Dictionary = flags
+		var mercy: Variant = dict.get("sc02_mercy", false)
+		if (mercy is bool and mercy) and not dict.has("suspicion"):
+			dict["suspicion"] = 1
+	data["version"] = 3
 	return data
 
 

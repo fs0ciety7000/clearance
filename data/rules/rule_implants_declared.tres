@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ImplantsDeclaredRule" format=3 uid="uid://csfpw74ujmer5"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/implants_declared_rule.gd" id="1_b1bg1"]
+
+[resource]
+script = ExtResource("1_b1bg1")
+escalated_prefixes = PackedStringArray("MIL-")
+id = &"r_implants_declared"
+title_key = "r_implants_declared_title"
+rulebook_text_key = "r_implants_declared_text"
+category = 1

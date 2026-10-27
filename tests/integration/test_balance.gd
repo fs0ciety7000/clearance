@@ -1,12 +1,15 @@
 ## Non-régression d'équilibrage du foyer (GDD §5.3, §14, D-047) : simulation
 ## rapide J1–J3 (`BalanceSimulator`, données réelles, 30 graines) par profil de
 ## précision avec la politique de dépenses « raisonnable ». Seuils larges : le
-## détail se mesure avec `tools/balance_sim.gd` (200 graines).
+## détail se mesure avec `tools/balance_sim.gd` (200 graines). M7 : la campagne
+## J1–J10 est mesurée par `test_m7_campaign.gd` ; ici, les trois premiers soirs.
 extends GutTest
 
 const Gen := preload("res://tests/helpers/generation_fixtures.gd")
 const SEEDS: int = 30
 const BASE_SEED: int = 1
+## Seuils D-047 mesurés sur J1–J3.
+const MVP_LAST_DAY: int = 3
 
 var data: DataCatalog = null
 
@@ -18,7 +21,7 @@ func before_all() -> void:
 ## Agrégats par profil : {all_sick: Array[int] par jour, endings: int,
 ## any_unpaid: Array[int] par jour, sick_j3: int (proches malades/graves/perdus au J3)}.
 func _measure(accuracy: float) -> Dictionary:
-	var last: int = data.get_last_day_number()
+	var last: int = MVP_LAST_DAY
 	var all_sick: Array[int] = []
 	var any_unpaid: Array[int] = []
 	for i: int in last:
@@ -27,7 +30,8 @@ func _measure(accuracy: float) -> Dictionary:
 	var endings: int = 0
 	var sick_last: int = 0
 	for n: int in SEEDS:
-		var rows: Array[Dictionary] = BalanceSimulator.run_campaign(data, SeededRng.mix(BASE_SEED, n), accuracy)
+		var rows: Array[Dictionary] = BalanceSimulator.run_campaign(data, SeededRng.mix(BASE_SEED, n), accuracy,
+				BalanceSimulator.Spending.REASONED, MVP_LAST_DAY)
 		for row: Dictionary in rows:
 			var i: int = int(row["day"]) - 1
 			if row["all_sick"]:
@@ -48,7 +52,8 @@ func test_simulation_is_deterministic() -> void:
 	var a: Array[Dictionary] = BalanceSimulator.run_campaign(data, 42, 0.8)
 	var b: Array[Dictionary] = BalanceSimulator.run_campaign(data, 42, 0.8)
 	assert_eq(a, b)
-	assert_eq(a.size(), data.get_last_day_number())
+	assert_gt(a.size(), 0)
+	assert_lte(a.size(), data.get_last_day_number())
 
 
 func test_reasoned_selection_priorities() -> void:

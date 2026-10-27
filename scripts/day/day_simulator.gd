@@ -5,6 +5,9 @@
 class_name DaySimulator
 extends RefCounted
 
+## Question posée par le joueur simulé (R08) — `InspectionSession.TOPIC_PURPOSE`.
+const TOPIC_PURPOSE: StringName = &"purpose"
+
 
 ## `policy(case: Case, key: CaseKey, index: int) -> VerdictKind.Kind`. Les refus
 ## sont documentés par les preuves visibles (`evidence_for`) si `document` ;
@@ -36,6 +39,61 @@ static func simulate(data: DataCatalog, day_number: int, day_seed: int, policy: 
 			ScoringService.apply_citation(result, citations, day)
 		summary.add_result(result)
 	summary.time_expired = count < day.passenger_count
+	return summary
+
+
+## M7 : jour simulé complet comme un vrai shift (`DayController`) : drapeaux
+## narratifs requis (`flags`, **modifié sur place** avec les conséquences des
+## cas : `CaseConsequences`), mémoire des passagers (`memory`, modifiée),
+## objets glissés (décision du `profile`, crédits), DÉTENTION seulement si le
+## jour l'autorise, phrase de passe, cas scénarisés non traités.
+static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile: SimProfile,
+		flags: Dictionary[StringName, Variant], memory: Dictionary, rng: SeededRng) -> DaySummary:
+	var day: DayDef = data.get_day(day_number)
+	var true_flags: Array[StringName] = []
+	for flag: StringName in flags:
+		if FlagCondition.is_flag_true(flags, flag):
+			true_flags.append(flag)
+	var builder: CaseBuilder = CaseBuilder.new(data, day, day_seed, true_flags, memory)
+	var summary: DaySummary = DaySummary.new()
+	summary.day_number = day_number
+	summary.planned_cases = day.passenger_count
+	var citations: int = 0
+	for i: int in day.passenger_count:
+		var generated: GeneratedCase = builder.build(i)
+		var case: Case = generated.case
+		var correct: bool = rng.chance(profile.accuracy)
+		var kind: VerdictKind.Kind = profile.verdict_for(case, generated.key, correct, day.detain_enabled)
+		case.remove_visor()
+		var verdict: Verdict = Verdict.new(case.case_id, kind)
+		if kind != VerdictKind.Kind.APPROVE:
+			verdict.flagged = evidence_for(case, generated.key, builder.ctx)
+		verdict.elapsed_sec = 30.0
+		# Interrogatoire systématique (R08) : une question posée.
+		verdict.questions_asked = [TOPIC_PURPOSE]
+		var result: CaseResult = ScoringService.score(verdict, generated.key, case.case_id, case, day,
+				data.get_economy().detain_bonus)
+		result.passenger_label = case.passenger_presented.short_label()
+		if result.has_citation():
+			citations += 1
+			ScoringService.apply_citation(result, citations, day)
+		for item: SlippedItem in case.slipped_items:
+			item.decision = profile.decision_for(case, item, rng.randf())
+			result.item_decisions[item.id] = item.decision
+			if item.decision == SlippedItem.Decision.REPORT:
+				result.report_credits += item.credits_for(item.decision)
+			else:
+				result.bribe_credits += item.credits_for(item.decision)
+		var scripted: ScriptedCaseDef = builder.get_scripted_case(i) if generated.scripted_id != &"" else null
+		result.scripted_id = generated.scripted_id
+		result.password_answered = profile.answer_password and case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE_PASSWORD) \
+				and FlagCondition.gauge_value(flags, CaseConsequences.FLAG_TRUST) >= CaseConsequences.PASSWORD_TRUST
+		result.narrative_changes = CaseConsequences.compute(scripted, case, result.verdict_kind,
+				not generated.key.expected_violations.is_empty(), result.password_answered, day_number, flags)
+		CaseConsequences.merge_into(flags, result.narrative_changes)
+		if scripted != null:
+			memory[String(scripted.id)] = CaseMemory.snapshot(day_number, case, result.verdict_kind)
+		summary.add_result(result)
 	return summary
 
 

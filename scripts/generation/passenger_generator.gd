@@ -45,6 +45,9 @@ static func generate(rng: SeededRng, faction: FactionDef, today: int, entry: App
 		var rejected: PackedStringArray = p.apply_overrides(overrides)
 		if not rejected.is_empty():
 			push_error("PassengerGenerator: surcharges refusées %s" % [rejected])
+		# M7 (R09) : une classe `C-4` imposée garde un séjour court.
+		if not overrides.has(&"stay_days") and p.citizen_class == SHORT_STAY_CLASS and p.stay_days > STAY_SHORT.y:
+			p.stay_days = rng.randi_range(STAY_SHORT.x, STAY_SHORT.y)
 	return p
 
 

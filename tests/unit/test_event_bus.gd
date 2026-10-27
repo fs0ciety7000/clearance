@@ -34,6 +34,12 @@ const EXPECTED_SIGNALS: Dictionary = {
 	&"settings_changed": 2,
 	&"game_saved": 1,
 	&"game_loaded": 1,
+	# M7 : objets glissés, avis de recherche, annonces du Hall.
+	&"item_slipped": 1,
+	&"item_decision_requested": 2,
+	&"item_decided": 2,
+	&"wanted_notices_published": 1,
+	&"hall_announced": 1,
 }
 
 

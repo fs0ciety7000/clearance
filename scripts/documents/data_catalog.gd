@@ -9,6 +9,7 @@ class_name DataCatalog
 extends RefCounted
 
 const DATA_ROOT: String = "res://data"
+const ECONOMY_PATH: String = "res://data/economy/economy.tres"
 
 var factions: Dictionary[StringName, FactionDef] = {}
 var documents: Dictionary[StringName, DocumentTypeDef] = {}
@@ -66,6 +67,15 @@ func get_last_day_number() -> int:
 ## Barème économique (valeurs par défaut du GDD si absent des données).
 func get_economy() -> EconomyDef:
 	return economy if economy != null else EconomyDef.new()
+
+
+## Barème seul (sans charger tout le catalogue) ; valeurs par défaut si absent.
+static func load_economy() -> EconomyDef:
+	if ResourceLoader.exists(ECONOMY_PATH):
+		var economy_def: EconomyDef = load(ECONOMY_PATH) as EconomyDef
+		if economy_def != null:
+			return economy_def
+	return EconomyDef.new()
 
 
 ## Contexte de règles d'un jour (date, RuleSet, bases origines et documents ;
