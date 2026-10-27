@@ -24,7 +24,7 @@ Planifie, découpe, délègue, revoit et intègre. Il n'écrit du code que pour 
 | **3D Designer / Asset Lead** | Guichet, station, passagers, éclairage, shaders, pipeline d'assets libres | `assets/`, `scenes/booth/`, `docs/ASSETS.md` | DESIGN_SYSTEM |
 | **QA / Playtester** | Plans de test, tests GUT, sessions de playtest, rapports de bugs, lisibilité | `tests/`, `docs/QA.md` | tous |
 | **Game Designer** *(ajouté)* | Boucle de jeu, progression des règles jour par jour, économie, difficulté | `GDD.md` | LORE, ARCHITECTURE |
-| **Audio Designer** *(optionnel, post-MVP)* | Ambiance, sons d'UI, musique | `assets/audio/`, `docs/AUDIO.md` | DESIGN_SYSTEM |
+| **Audio Designer** *(ajouté, MVP)* | Ambiance, sons d'UI, musique | `assets/audio/`, `docs/AUDIO.md` | DESIGN_SYSTEM |
 
 ## Règles de collaboration
 
