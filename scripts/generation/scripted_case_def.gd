@@ -19,6 +19,15 @@ extends Resource
 ## `char_count` (caractères du N° ID), `field_path` (`truth_path` altéré),
 ## `photo_noise` (bool : bruit légitime sur la photo).
 @export var injection_params: Dictionary = {}
+## Préfixe des répliques dédiées (`<dialogue_id>_arrival`, `_present`,
+## `_purpose`, `_about_<raison>`, `_note`…) ; posé dans `Case.dialogue_tags`.
 @export var dialogue_id: StringName = &""
+## Drapeau mis à vrai dès que le passager a été traité (M5).
 @export var sets_flag: StringName = &""
 @export var requires_flag: StringName = &""
+## Conséquences narratives du verdict (M5, GDD §11.1, §12) : `{drapeau: delta}`
+## ajouté aux jauges entières (`lucioles_trust`, `loyalty`…) ou drapeau mis à
+## vrai si le delta vaut 0. APPROUVÉ → `flags_on_approve` ; REFUSÉ ou
+## DÉTENTION → `flags_on_deny`.
+@export var flags_on_approve: Dictionary[StringName, int] = {}
+@export var flags_on_deny: Dictionary[StringName, int] = {}

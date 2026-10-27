@@ -19,7 +19,8 @@ var results: Array[CaseResult] = []
 var reactions: Array[PassengerReaction.Kind] = []
 
 
-func setup(test: GutTest, p_booth: Node, day_number: int, group: int = 0) -> void:
+func setup(test: GutTest, p_booth: Node, day_number: int, group: int = 0, day_seed: int = 0,
+		flags: Array[StringName] = []) -> void:
 	clock = DayClock.new()
 	session = InspectionSession.new()
 	controller = DayController.new()
@@ -39,7 +40,16 @@ func setup(test: GutTest, p_booth: Node, day_number: int, group: int = 0) -> voi
 	EventBus.day_phase_changed.connect(_on_phase)
 	EventBus.day_ended.connect(_on_day_ended)
 	EventBus.passenger_reaction_triggered.connect(_on_reaction)
-	controller.start_day(Gen.data(), day_number, Gen.day_seed(group, day_number))
+	controller.start_day(Gen.data(), day_number, day_seed if day_seed != 0 else Gen.day_seed(group, day_number), flags)
+
+
+## Libère les nœuds du jour (enchaînement de plusieurs jours dans un test).
+func dispose() -> void:
+	teardown()
+	for node: Node in [booth, controller, session, clock]:
+		if node != null and is_instance_valid(node):
+			node.get_parent().remove_child(node)
+			node.free()
 
 
 func teardown() -> void:
@@ -80,6 +90,20 @@ func count(event_name: StringName) -> int:
 
 func stamp(kind: VerdictKind.Kind) -> void:
 	EventBus.verdict_stamped.emit(Verdict.new(controller.current_case_id(), kind))
+
+
+## Agent consciencieux (M5) : fait retirer la visière, puis compare les champs
+## qui prouvent chaque violation (`discrepancy_check_requested`), comme le
+## ferait le joueur. Les preuves confirmées sont mémorisées par la session.
+func investigate_current() -> void:
+	var case: Case = controller.current_case
+	if case == null:
+		return
+	if case.passenger_presented.appearance.is_face_covered():
+		EventBus.interrogation_requested.emit(InspectionSession.TOPIC_REMOVE_VISOR)
+	for violation: Violation in controller.current_key.expected_violations:
+		if violation.refs.size() >= 2:
+			EventBus.discrepancy_check_requested.emit(violation.refs[0], violation.refs[1])
 
 
 func _on_case_presented(case: Case) -> void:

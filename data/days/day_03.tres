@@ -40,6 +40,10 @@ injection_params = {
 }
 dialogue_id = &"sc05_luciole_messenger"
 sets_flag = &"lucioles_contact"
+flags_on_approve = Dictionary[StringName, int]({
+&"lucioles_trust": 1,
+&"sc05_helped": 0
+})
 
 [resource]
 script = ExtResource("2_dd2l1")

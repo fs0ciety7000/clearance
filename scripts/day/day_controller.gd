@@ -9,6 +9,11 @@
 ## hors de l'état attendu est ignoré ; des timeouts de sécurité font avancer
 ## le jour même sans booth (`SilentBooth`). Ils sont pilotés par `advance()`
 ## (appelé par `_process`, ou à la main dans les tests).
+## M5 : notation complète (`ScoringService` : preuve, procédures, citations),
+## rang de la citation du jour et amende, `citation_issued` après
+## `case_resolved`, conséquences narratives des cas scénarisés
+## (`ScriptedCaseDef.sets_flag` / `flags_on_*`), crédits et drapeaux appliqués
+## au `GameState` si `apply_to_game_state`.
 class_name DayController
 extends Node
 
@@ -21,6 +26,8 @@ extends Node
 
 @export var clock: DayClock = null
 @export var inspection: InspectionSession = null
+## Applique crédits, citations et drapeaux au `GameState` au fil du shift.
+@export var apply_to_game_state: bool = true
 
 var data: DataCatalog = null
 var day: DayDef = null
@@ -34,6 +41,12 @@ var summary: DaySummary = null
 var time_expired: bool = false
 ## Nombre de timeouts de secours déclenchés (diagnostic, tests).
 var timeouts_fired: int = 0
+## Citations émises aujourd'hui (rang de la prochaine = +1).
+var citations_today: int = 0
+## Prime de détention (`EconomyDef.detain_bonus`).
+var detain_bonus: int = ScoringService.DEFAULT_DETAIN_BONUS
+## Cas scénarisé du cas courant (null sinon).
+var current_scripted: ScriptedCaseDef = null
 
 var _documents_presented: bool = false
 ## Temps passé dans la phase courante (timeouts).
@@ -64,8 +77,11 @@ func start_day(p_data: DataCatalog, day_number: int, day_seed: int, flags: Array
 	next_index = 0
 	time_expired = false
 	timeouts_fired = 0
+	citations_today = 0
 	current_case = null
 	current_key = null
+	current_scripted = null
+	detain_bonus = data.get_economy().detain_bonus
 	_started = true
 	if clock != null:
 		clock.setup(day.duration_sec)
@@ -134,6 +150,7 @@ func _on_next_case_requested() -> void:
 		return
 	current_case = generated.case
 	current_key = generated.key
+	current_scripted = builder.get_scripted_case(current_case.index) if generated.scripted_id != &"" else null
 	_documents_presented = false
 	if inspection != null:
 		inspection.begin(current_case, builder.ctx)
@@ -171,10 +188,48 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 	_set_phase(DayPhase.Kind.RESOLVING, current_case_id())
 	if inspection != null:
 		inspection.end(verdict)
-	var result: CaseResult = ScoringService.score(verdict, current_key, current_case_id())
+	var result: CaseResult = ScoringService.score(verdict, current_key, current_case_id(), current_case, day, detain_bonus)
+	result.passenger_label = _passenger_label(current_case)
+	if result.has_citation():
+		citations_today += 1
+		ScoringService.apply_citation(result, citations_today, day)
+	_apply_narrative(result)
 	summary.add_result(result)
+	if apply_to_game_state:
+		GameState.add_credits(result.credits_delta)
+		GameState.score_total += result.wage
+		if result.has_citation():
+			GameState.add_citation()
+		for flag: StringName in result.narrative_changes:
+			GameState.set_flag(flag, result.narrative_changes[flag])
 	EventBus.case_resolved.emit(current_case_id(), result)
+	if result.has_citation():
+		EventBus.citation_issued.emit(result.citation_reason_key)
 	_set_phase(DayPhase.Kind.DEPARTING, current_case_id())
+
+
+## Conséquences narratives d'un cas scénarisé (GDD §12) : `sets_flag` dès le
+## traitement, puis `flags_on_approve` / `flags_on_deny` selon le verdict
+## (delta ajouté aux jauges ; 0 = drapeau mis à vrai).
+func _apply_narrative(result: CaseResult) -> void:
+	if current_scripted == null:
+		return
+	result.scripted_id = current_scripted.id
+	if current_scripted.sets_flag != &"":
+		result.narrative_changes[current_scripted.sets_flag] = true
+	var changes: Dictionary[StringName, int] = current_scripted.flags_on_approve \
+			if result.verdict_kind == VerdictKind.Kind.APPROVE else current_scripted.flags_on_deny
+	for flag: StringName in changes:
+		var delta: int = changes[flag]
+		if delta == 0:
+			result.narrative_changes[flag] = true
+		else:
+			var current: int = SaveService.as_int(GameState.get_flag(flag, 0)) if apply_to_game_state else 0
+			result.narrative_changes[flag] = current + delta
+
+
+static func _passenger_label(case: Case) -> String:
+	return case.passenger_presented.short_label() if case != null and case.passenger_presented != null else ""
 
 
 func _on_passenger_departed(case_id: StringName) -> void:
@@ -186,6 +241,7 @@ func _on_passenger_departed(case_id: StringName) -> void:
 func _finish_departure() -> void:
 	current_case = null
 	current_key = null
+	current_scripted = null
 	_after_case()
 
 

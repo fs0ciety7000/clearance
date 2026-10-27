@@ -23,7 +23,8 @@ func _wait_phase(phase: DayPhase.Kind) -> bool:
 
 
 ## Joue tout le jour avec un bot ; `policy(case_key) -> VerdictKind.Kind`.
-func _play_day(policy: Callable) -> void:
+## `investigate` : le bot documente ses refus et fait retirer les visières (M5).
+func _play_day(policy: Callable, investigate: bool = false) -> void:
 	h.controller.close_intro()
 	var guard: int = 0
 	while h.controller.phase != DayPhase.Kind.SUMMARY and guard < 64:
@@ -36,6 +37,8 @@ func _play_day(policy: Callable) -> void:
 		assert_true(ok, "documents présentés pour %s" % case_id)
 		assert_eq(h.controller.phase, DayPhase.Kind.INSPECTING)
 		var kind: VerdictKind.Kind = policy.call(h.controller.current_key)
+		if investigate:
+			h.investigate_current()
 		h.stamp(kind)
 		assert_eq(h.controller.phase, DayPhase.Kind.DEPARTING)
 		await wait_until(func() -> bool: return h.controller.phase != DayPhase.Kind.DEPARTING, MAX_WAIT_SEC)
@@ -43,7 +46,7 @@ func _play_day(policy: Callable) -> void:
 
 func test_perfect_bot_full_day_with_null_booth() -> void:
 	h.setup(self, NullBooth.new(), 1)
-	await _play_day(func(key: CaseKey) -> VerdictKind.Kind: return key.expected_verdict)
+	await _play_day(func(key: CaseKey) -> VerdictKind.Kind: return key.expected_verdict, true)
 	var day: DayDef = h.controller.day
 	assert_eq(h.controller.phase, DayPhase.Kind.SUMMARY)
 	assert_eq(h.summaries.size(), 1, "day_ended émis une seule fois")

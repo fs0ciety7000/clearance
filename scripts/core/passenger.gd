@@ -93,3 +93,9 @@ func copy() -> Passenger:
 
 func full_name() -> String:
 	return "%s %s" % [given_name, family_name]
+
+
+## Désignation courte « M. VASQUEZ-ORLOV » (registre, bilan).
+func short_label() -> String:
+	var initial: String = given_name.left(1).to_upper()
+	return ("%s. %s" % [initial, family_name]).to_upper() if not initial.is_empty() else family_name.to_upper()

@@ -135,7 +135,13 @@ func push_citation(reason: String, sanction: String, warning: bool) -> PanelCont
 	return panel
 
 
-func _add(panel: PanelContainer, length: int) -> void:
+## Ajoute un nœud déjà construit (ticket de citation…) avec le même cycle de vie.
+func push_node(node: Control, length: int = 0) -> void:
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add(node, length)
+
+
+func _add(panel: Control, length: int) -> void:
 	add_child(panel)
 	while get_child_count() > MAX_VISIBLE:
 		var oldest: Node = get_child(0)

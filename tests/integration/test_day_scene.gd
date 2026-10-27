@@ -111,7 +111,9 @@ func test_one_case_end_to_end() -> void:
 	assert_ne(checked[0].result, Discrepancy.Result.INCOMPARABLE)
 	ui.set_inspection_active(false)
 	ui.ask(InspectionSession.TOPIC_PURPOSE)
-	assert_true(answers.has(InspectionSession.LINE_PURPOSE_PREFIX + String(case.passenger_presented.purpose)))
+	# M5 : un passager scénarisé (SC-01 au J1) répond par sa réplique dédiée.
+	var expected_line: String = scene.inspection.scripted_line("purpose", InspectionSession.LINE_PURPOSE_PREFIX + String(case.passenger_presented.purpose))
+	assert_true(answers.has(expected_line), "réponse %s" % expected_line)
 	var button: StampButton = ui.get_stamp_button(VerdictKind.Kind.APPROVE)
 	button.begin_hold()
 	await wait_seconds(0.6)
@@ -119,3 +121,52 @@ func test_one_case_end_to_end() -> void:
 	ok = await wait_until(func() -> bool: return dc.phase == DayPhase.Kind.WAITING_CASE, 5.0)
 	assert_true(ok, "départ du passager → « Suivant » de nouveau possible")
 	assert_eq(dc.summary.get_processed_count(), 1, "un seul verdict (maintien UI, pas de doublon)")
+
+
+func _press_escape() -> void:
+	var event: InputEventKey = InputEventKey.new()
+	event.keycode = KEY_ESCAPE
+	event.physical_keycode = KEY_ESCAPE
+	event.pressed = true
+	get_viewport().push_input(event)
+	var release: InputEventKey = event.duplicate()
+	release.pressed = false
+	get_viewport().push_input(release)
+	await wait_process_frames(2)
+
+
+## M5 : Échap annule d'abord ce que l'UI a en cours, sinon ouvre la pause.
+func test_escape_cancels_ui_then_opens_pause() -> void:
+	var ui: ComparisonUI = scene.ui as ComparisonUI
+	scene.briefing.close()
+	ui.request_next_case()
+	await wait_until(func() -> bool: return ui.documents_shown, 5.0)
+	ui.set_inspection_active(true)
+	await _press_escape()
+	assert_false(ui.inspection_active, "Échap quitte le Mode Inspection")
+	assert_false(scene.pause_menu.is_open, "…sans ouvrir la pause")
+	await _press_escape()
+	assert_true(scene.pause_menu.is_open, "rien à annuler : pause")
+	assert_true(get_tree().paused, "horloge gelée")
+	var remaining: float = scene.day_clock.remaining_sec
+	await wait_process_frames(5)
+	assert_eq(scene.day_clock.remaining_sec, remaining, "l'horloge ne tourne pas en pause")
+	scene.pause_menu.close()
+	assert_false(get_tree().paused)
+
+
+## M5 : sirène → bilan de shift → soirée (sans valider : pas d'écriture de sauvegarde).
+func test_day_end_leads_to_summary_then_evening() -> void:
+	scene.briefing.close()
+	assert_eq(scene.screen_history, [&"briefing"] as Array[StringName])
+	scene.day_clock.advance(scene.day_controller.day.duration_sec + 1.0)
+	assert_eq(scene.day_controller.phase, DayPhase.Kind.SUMMARY)
+	var ok: bool = await wait_until(func() -> bool: return scene.screen is ShiftSummaryScreen, 3.0)
+	assert_true(ok, "bilan affiché après la sirène")
+	assert_eq(scene.ui.process_mode, Node.PROCESS_MODE_DISABLED, "guichet inactif sous le bilan")
+	var summary_screen: ShiftSummaryScreen = scene.screen as ShiftSummaryScreen
+	assert_eq(summary_screen.summary.get_unprocessed_count(), scene.day_controller.day.passenger_count)
+	summary_screen.continue_button.pressed.emit()
+	ok = await wait_until(func() -> bool: return scene.screen is EveningScreen, 1.0)
+	assert_true(ok, "soirée après le bilan")
+	assert_eq(scene.screen_history, [&"briefing", &"summary", &"evening"] as Array[StringName])

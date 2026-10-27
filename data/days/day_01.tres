@@ -30,6 +30,12 @@ injection_params = {
 &"expired_days": 3
 }
 dialogue_id = &"sc02_hurried_mother"
+flags_on_approve = Dictionary[StringName, int]({
+&"sc02_mercy": 0
+})
+flags_on_deny = Dictionary[StringName, int]({
+&"sc02_turned_away": 0
+})
 
 [sub_resource type="Resource" id="scripted_tuto_concordant"]
 script = ExtResource("3_2bme4")

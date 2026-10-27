@@ -21,6 +21,8 @@ const MAX_CHECKS: int = 5
 
 var controller: DayController = null
 var ui: ComparisonUI = null
+## M5 (captures) : tamponne APPROUVÉ sans rien vérifier (citations garanties).
+var approve_all: bool = false
 
 var _wait: float = WAIT_BEFORE_NEXT_SEC
 var _running_for: StringName = &""
@@ -64,6 +66,9 @@ func _run_case(case_id: StringName) -> void:
 	if not _still(case_id):
 		return
 	var case: Case = controller.current_case
+	if approve_all:
+		await _stamp(case_id, VerdictKind.Kind.APPROVE)
+		return
 	if case.passenger_presented.appearance.is_face_covered():
 		_ask(InspectionSession.TOPIC_REMOVE_VISOR)
 		await _sleep(AFTER_VISOR_SEC)

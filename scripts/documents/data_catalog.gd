@@ -18,6 +18,8 @@ var days: Dictionary[int, DayDef] = {}
 var name_pools: Dictionary[StringName, NamePool] = {}
 ## Catalogue d'apparences (unique, `data/appearance/`).
 var appearance_catalog: AppearanceCatalog = null
+## Barème de la soirée (unique, `data/economy/`, M5).
+var economy: EconomyDef = null
 ## Chemins `.tres` chargés.
 var paths: PackedStringArray = []
 ## Problèmes de chargement (ressource illisible, type inconnu, doublon).
@@ -51,6 +53,19 @@ static func list_resource_paths(root: String) -> PackedStringArray:
 
 func get_day(day_number: int) -> DayDef:
 	return days.get(day_number, null)
+
+
+## Dernier jour jouable défini dans les données (3 pour la *vertical slice*).
+func get_last_day_number() -> int:
+	var last: int = 0
+	for n: int in days:
+		last = maxi(last, n)
+	return last
+
+
+## Barème économique (valeurs par défaut du GDD si absent des données).
+func get_economy() -> EconomyDef:
+	return economy if economy != null else EconomyDef.new()
 
 
 ## Contexte de règles d'un jour (date, RuleSet, bases origines et documents ;
@@ -92,6 +107,11 @@ func _register(path: String) -> void:
 			errors.append("%s : catalogue d'apparences en double" % path)
 		else:
 			appearance_catalog = res
+	elif res is EconomyDef:
+		if economy != null:
+			errors.append("%s : barème économique en double" % path)
+		else:
+			economy = res
 	elif res is DayDef:
 		var day: DayDef = res
 		if days.has(day.day_number):

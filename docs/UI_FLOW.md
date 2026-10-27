@@ -418,6 +418,19 @@ Les jours 2–5 introduisent chacun **un** outil (Interroger approfondi, onglet 
 
 ---
 
+### 8.1 Implémentation M5 — précisions de comportement
+
+Captures : [`m5_briefing.png`](mockups/m5_briefing.png), [`m5_briefing_j2.png`](mockups/m5_briefing_j2.png), [`m5_citation.png`](mockups/m5_citation.png), [`m5_summary.png`](mockups/m5_summary.png), [`m5_evening.png`](mockups/m5_evening.png), [`m5_options.png`](mockups/m5_options.png), [`m5_end.png`](mockups/m5_end.png).
+
+- **Enchaînement** : titre (« CONTINUER — JOUR N » en CTA si une sauvegarde existe, sinon « NOUVELLE PARTIE ») → briefing → shift → sirène (+1,2 s) → bilan → soirée → nuit (conséquences) → jour suivant (scène rechargée) ou écran de fin (fin de démo après J3, F2 réaffectation, F3 famille perdue). Sauvegarde automatique à la validation de la soirée ; une fin efface la sauvegarde.
+- **Briefing** : en-tête Bureau de Continuité (date, horaires), « JOUR NN » + titre de la directive de délégation, directive (liseré jaune), tuiles (passagers attendus, durée, rémunération), règles en vigueur (badge NOUVEAU = Rulebook), commandes du poste au J1 ; messages (Okonkwo cyan, brèves du hall jaunes, Ilan neutre — échos des choix de la veille), foyer (états icône + couleur + texte) et solde ; slogan. « PRENDRE SON POSTE » (focus par défaut) ferme l'INTRO.
+- **Tutoriel J1** : Okonkwo parle à l'intercom aux 4 premiers passagers (ouverture, Inspection, expiration ↔ date du jour, discordance, concordant, premier refus seul, première citation, au revoir) en **sous-titres** (toast si sous-titres désactivés).
+- **Ticket de citation** : imprimé dans la colonne des toasts (déroulé depuis la fente, fondu si « réduire les animations »), remplace le toast « Erreur de contrôle » ; avertissement ambre + triangle « AVERTISSEMENT n/2 », amende rouge + octogone « AMENDE −5 ₵ ». Tickets du bilan : archivés à 40 %, 100 % au survol / focus.
+- **Bilan** : tuiles traités / conformes / citations / salaire / amendes / net ; registre (tampon, nom, statut, ₵) avec, pour chaque erreur, la règle non relevée ou non documentée (n° + titre du Rulebook) ; passagers non traités.
+- **Soirée** : budget (solde du matin, net du shift, disponible), postes cochables (taxe d'air verrouillée « PRÉLEVÉE D'OFFICE »), « Fonds insuffisants » quand un poste ferait passer le solde sous 0, présélection loyer → nourriture → oxygène → médicaments → chauffage ; foyer ; mot des Lucioles (SIGNALER / BRÛLER, brûlé par défaut à la validation) ; « VALIDER ET DORMIR » puis panneau « La nuit au Bloc Pétrel ».
+- **Pause** : Échap **seulement si l'UI n'a rien à annuler** (menu de questions, champ A, Mode Inspection sont annulés d'abord), F10, Menu/Start. Arbre en pause (horloge, booth), fond flouté. REPRENDRE · OPTIONS · QUITTER VERS LE TITRE (second appui de confirmation). Échap : retour / reprendre.
+- **Options** (non diégétique, Accessibilité d'abord) : taille du texte 90–150 % (thème reconstruit à chaud), effets visuels Complets / Réduits / Désactivés, réduire les animations (marche ≤ 1 s dès le passager suivant), sous-titres, horloge ×0,5 ; volumes par bus. Aussi accessibles depuis le titre.
+
 ## 9. Questions ouvertes à valider
 
 1. L'horloge continue-t-elle pendant le Mode Inspection (recommandé : oui, avec option d'accessibilité) ?

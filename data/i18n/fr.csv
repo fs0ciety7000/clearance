@@ -71,9 +71,9 @@ r_bioscan_issuer_title,Émetteur agréé
 r_bioscan_issuer_text,Bio-scan : émetteur agréé Clinique Orbitale Meridian uniquement.
 r_bioscan_fit_title,Statut sanitaire
 r_bioscan_fit_text,Statut bio-scan : SAIN uniquement.
-day01_intro,Premier jour au Guichet 04. Une seule exigence : une carte d'identité valide.
-day02_intro,Nouvelle directive : la photo doit correspondre au porteur.
-day03_intro,Délégation des quais : permis d'entrée exigé des ressortissants.
+day01_intro,"Réouverture du Guichet 04. L'agent·e en poste contrôle la carte d'identité de tout entrant : présence, puis validité à la date du jour. Les autres vérifications restent assurées aux quais d'amarrage."
+day02_intro,Délégation n° 02 : le contrôle de concordance entre le porteur et la photo de sa carte est transféré des quais au Guichet 04. Une photo qui ne correspond pas au visage justifie un refus.
+day03_intro,"Délégation n° 03 : le poste des permis des quais ferme. Le Guichet 04 exige un permis d'entrée valide des ressortissants (sauf Nés-Halcyon), vérifie que l'identité concorde entre les documents et fait découvrir les visages."
 disc_concordant,Valeurs concordantes.
 disc_mismatch,Les valeurs diffèrent.
 disc_expired,Document expiré à la date du jour.
@@ -251,3 +251,281 @@ wb_title_count_one,PLAN DE TRAVAIL · %d DOCUMENT
 rb_new_count_one,%d NOUVEAU
 res_missed_one,%d infraction non relevée
 conc_face,Visage conforme à la photo.
+day01_directive_title,Directive n° 01 — Carte d'identité
+day02_directive_title,Directive n° 02 — Contrôle du visage
+day03_directive_title,Directive n° 03 — Permis d'entrée
+day01_slogan,L'ordre est l'air que nous respirons.
+day02_slogan,Un document exact est un citoyen en sécurité.
+day03_slogan,"Vigilance aujourd'hui, Continuité demain."
+br_org,CONSORTIUM · BUREAU DE CONTINUITÉ
+br_bulletin,Bulletin quotidien · Halcyon Gate — Guichet 04
+br_shift_hours,SHIFT 10:00 — 18:00
+br_day,JOUR %02d
+br_directive,DIRECTIVE DU JOUR · AUTORITÉ DE TRANSIT
+br_rules,RÈGLES EN VIGUEUR
+br_new_count,%d NOUVELLES
+br_new_count_one,%d NOUVELLE
+br_messages,MESSAGES
+br_msg_count,%d REÇUS
+br_msg_count_one,%d REÇU
+br_household,FOYER · BLOC PÉTREL
+br_balance,SOLDE %s
+br_hint,Lecture libre : l'horloge du shift démarre à la prise de poste.
+br_start,PRENDRE SON POSTE
+spk_okonkwo,OKONKWO · GUICHET 03
+spk_ilan,ILAN · BLOC PÉTREL
+spk_hall,BRÈVE · HALL DES GUICHETS
+msg_okonkwo_day01,"Bienvenue au 04, collègue. Deux règles aujourd'hui, pas une de plus. L'intercom (N) fait avancer la file ; Espace, c'est la touche Inspection : un champ, puis un autre. Une discordance épinglée, c'est ta preuve — sans preuve, pas de refus. Les tampons se maintiennent : V pour approuver, X pour refuser."
+msg_okonkwo_day02,"On regarde les visages, maintenant. Compare le passager à sa photo : une coiffure, une barbe, une casquette, ça change. Une forme de visage, des yeux, un teint, non."
+msg_okonkwo_day03,"Les quais nous refilent les permis. Les Nés-Halcyon n'en ont pas besoin, les autres si. Et les visières : fais-les relever avant d'approuver, sinon c'est pour ta pomme."
+msg_family_day01,"Bonne chance pour ton premier jour. Noa a dessiné ton badge sur la vitre embuée. Rentre avec de quoi chauffer, s'il te plaît."
+msg_family_ok,"Tout le monde a mangé, la cabine est tiède. Dora dit que tu tiens de son fils : têtu et ponctuel."
+msg_family_cold,"Il a fait froid cette nuit. Noa a dormi avec son manteau, et le recycleur siffle quand le chauffage est coupé."
+msg_family_hungry,On a partagé le dernier pain de spiruline. Ça ira pour aujourd'hui… pas deux jours de suite.
+msg_family_noa_sick,"Noa tousse, une toux grise qui ne passe pas. La Clinique Meridian demande 15 ₵ pour les médicaments."
+msg_family_sick,"Quelqu'un est malade à la maison. Sans médicaments, ça va empirer."
+msg_family_grave,"C'est grave. Il faut des médicaments ce soir, quoi qu'il en coûte."
+msg_family_lost,La cabine est trop silencieuse. Je ne sais pas comment le dire autrement.
+msg_echo_sc02_mercy,"La Gravitaire d'hier, celle à la carte expirée ? Elle est passée grâce à toi. Les Inspecteurs aussi l'ont vue passer. Fais attention à toi."
+msg_echo_sc02_turned_away,"Une mère gravitaire refoulée hier au Guichet 04 a dormi dans le hall, sur ses valises. Le service d'entretien l'a évacuée à l'aube."
+msg_echo_sc03_passed,Un mineur de Tycho entré hier avec une photo « ancienne » a été interpellé à l'Anneau C. Le Bureau rappelle qu'un document exact est un citoyen en sécurité.
+okonkwo_j1_open,"Appuie sur l'intercom (N) pour faire avancer le premier. Pendant qu'il marche, jette un œil au Rulebook."
+okonkwo_j1_inspect,"Pose ta main sur le pupitre… Espace, c'est la touche Inspection. Clique un champ, puis un autre."
+okonkwo_j1_expiry,"Celle-là, regarde sa date d'expiration… puis la date du jour, en haut du Rulebook."
+okonkwo_j1_discordance,"Fil magenta : discordance épinglée, c'est ta preuve. Pose-lui la question (Q) si tu veux, puis maintiens X."
+okonkwo_j1_concordant,"Compare quand même. « Concordant », ça ne coûte rien : l'outil ne punit personne."
+okonkwo_j1_alone,"À toi seul·e. Pas de carte, pas d'entrée : la règle 01 suffit comme preuve."
+okonkwo_j1_citation,"Un avis d'infraction. Les deux premiers du jour sont des avertissements ; après, c'est sur ta paie."
+okonkwo_j1_goodbye,"Bien. Je te laisse, ma propre file m'attend. Gloire au Consortium… comme on dit."
+tag_intercom,[intercom]
+note_title,UN MOT GLISSÉ ENTRE LES PAPIERS
+sc01_returning_technician_arrival,"Encore vous ? Non, je plaisante. Retour de mission, Anneau C."
+sc01_returning_technician_present,"Ma carte, comme d'habitude."
+sc01_returning_technician_purpose,Je rentre de trois semaines sur les recycleurs de l'Anneau C.
+sc02_hurried_mother_arrival,"Vite, s'il vous plaît… mes enfants m'attendent de l'autre côté."
+sc02_hurried_mother_present,Tal ka nesu. Voici ma carte.
+sc02_hurried_mother_purpose,"Rejoindre mes enfants. Ils sont arrivés la semaine dernière, avec leur père."
+sc02_hurried_mother_about_expired,"Trois jours ! Ravel ka ota — ma famille m'attend. Somi, sa tiru ka… laissez-moi passer, je la renouvellerai là-haut."
+sc02_hurried_mother_confront,"Je vous en supplie. Trois jours de retard, ce n'est rien pour vous."
+sc03_nervous_miner_arrival,"[toux] Esh ta, esh ta… pardon."
+sc03_nervous_miner_purpose,Contrat Kessler-Ashe. Ils ont besoin de bras aux sas.
+sc03_nervous_miner_about_face_mismatch,"C'est une vieille photo… la poussière de Tycho, ça vous change un homme. [toux grise]"
+sc04_mira_arrival,Bonjour. Je garde ma visière : la lumière du hall me brûle les yeux.
+sc04_mira_visor,…Si vous y tenez. Voilà.
+sc04_mira_purpose,"Kessler-Ashe Orbital. Maintenance des sas, équipe de nuit."
+sc05_luciole_messenger_arrival,"Il pleut sur les quais, ce soir… [mot inconnu]."
+sc05_luciole_messenger_present,Tal ka nesu. Regardez bien.
+sc05_luciole_messenger_about_mismatch,Une erreur d'impression. Regardez mieux… regardez le coin du permis.
+sc05_luciole_messenger_note,"« Laissez-le passer. Nous vous aiderons. » — un dessin de luciole, à l'encre magenta."
+cit_serial,G04-J%02d-%02d
+cit_motive,MOTIF
+cit_rule,Règle %02d · %s
+cit_warning_n,AVERTISSEMENT %d/%d
+cit_fine,AMENDE %s
+cit_withheld,retenue sur salaire
+cit_no_fine,sans retenue
+cit_irregular_entry,Entrée irrégulière
+cit_unjustified_denial,Refus injustifié
+cit_undocumented_denial,Refus non motivé
+cit_face_unchecked,Visage non contrôlé
+cit_interview_skipped,Interrogatoire omis
+cit_abusive_detention,Détention abusive
+cit_undocumented_detention,Procédure de détention
+cit_irregular_entry_desc,Entrée approuvée malgré une infraction au règlement du jour.
+cit_unjustified_denial_desc,Refus d'un passager en règle.
+cit_undocumented_denial_desc,"Refus juste, mais aucune discordance épinglée ne le motive."
+cit_face_unchecked_desc,Approbation d'un passager dont le visage restait masqué.
+cit_interview_skipped_desc,Ressortissant Tycho tamponné sans interrogatoire.
+cit_abusive_detention_desc,Mise en attente là où un simple refus suffisait.
+cit_undocumented_detention_desc,Mise en attente sans discordance documentée.
+sum_siren_time,FIN DE SHIFT · 18:00 · SIRÈNE DU HALL
+sum_siren_queue,FILE VIDÉE · GUICHET 04 FERMÉ
+sum_location,Halcyon Gate · Guichet 04 · rapport transmis aux Inspecteurs
+sum_title,BILAN DU SHIFT — JOUR %02d
+sum_processed,TRAITÉS
+sum_unprocessed,%d non traités · manque à gagner
+sum_unprocessed_one,%d non traité · manque à gagner
+sum_queue_empty,File vidée avant la sirène
+sum_correct,CONFORMES
+sum_compliance,Conformité %d %%
+sum_citations,CITATIONS
+sum_citation_detail,%d avert. · %d amende(s)
+sum_wage,SALAIRE
+sum_wage_detail,%d ₵ par dossier conforme
+sum_fines,AMENDES
+sum_fines_detail,Retenues sur salaire
+sum_net,NET DU JOUR
+sum_net_detail,Versé ce soir par la Banque Aurel
+sum_ledger,REGISTRE DU GUICHET
+sum_errors,%d ERREURS
+sum_errors_one,%d ERREUR
+sum_unprocessed_row,%d passagers encore dans la file à la sirène — 0 ₵
+sum_unprocessed_row_one,%d passager encore dans la file à la sirène — 0 ₵
+sum_ok,Conforme
+sum_detail_missed,Non relevé : %s
+sum_detail_undocumented,Aucune discordance épinglée pour : %s
+sum_detail_innocent,Dossier en règle : aucune violation à relever.
+sum_detail_procedure,Procédure : %s
+sum_tickets,AVIS D'INFRACTION
+sum_no_ticket,Aucune infraction aujourd'hui. Le Consortium prend note de votre exactitude.
+sum_hint,Chaque erreur rappelle la règle du Rulebook concernée.
+sum_continue,RENTRER AU BLOC PÉTREL
+ev_location,BLOC PÉTREL · ANNEAU C · CABINE 9 m²
+ev_subtitle,"Couchette triple, réchaud, recycleur d'air bruyant ; derrière le hublot, les Anneaux illuminés."
+ev_time,19:40
+ev_title,SOIRÉE — %s
+ev_budget,BUDGET DU FOYER
+ev_bank,BANQUE AUREL
+ev_morning,Solde du matin
+ev_shift_net,Net du shift (salaire − amendes)
+ev_available,Disponible ce soir
+ev_lines,DÉPENSES DU SOIR — COCHEZ CE QUE VOUS PAYEZ
+ev_spent,Dépenses
+ev_after,Solde après la soirée
+ev_debt_hint,Découvert : trois soirs de suite et l'Autorité de Transit vous réaffecte.
+ev_line_rent,Loyer de la cabine
+ev_note_rent,Deux loyers impayés de suite : réaffectation.
+ev_line_air_tax,Taxe d'air
+ev_note_air_tax,Quota respiratoire du foyer.
+ev_line_food,Nourriture
+ev_note_food,Nourrit tout le foyer. Deux soirs sans manger rendent malade.
+ev_line_heating,Chauffage
+ev_note_heating,Noa tousse quand il est coupé.
+ev_line_oxygen,Oxygène d'appoint de Dora
+ev_note_oxygen,"Sans recharge, Dora tombe malade."
+ev_line_meds,Médicaments — %s
+ev_note_meds,Clinique Orbitale Meridian : guérison dès demain.
+ev_note_meds_grave,"Gravement malade : sans soins, risque de perte."
+ev_mandatory,PRÉLEVÉE D'OFFICE
+ev_insufficient,Fonds insuffisants
+ev_family,LE FOYER
+ev_note_title,LE MOT GLISSÉ AU GUICHET
+ev_note_text,"« Laissez-le passer. Nous vous aiderons. » Un dessin de luciole à l'encre magenta, au dos d'un ticket de navette."
+ev_note_choice,"Le Consortium récompense les signalements. Les Lucioles, elles, se souviennent."
+ev_note_report,SIGNALER AU CONSORTIUM
+ev_note_burn,BRÛLER LE MOT
+ev_note_reported,Vous avez transmis le mot au Bureau de Continuité. Loyauté notée.
+ev_note_burned,Le mot s'est consumé dans le réchaud. Personne n'en saura rien.
+ev_hint,Ce qui n'est pas payé a des conséquences dès cette nuit.
+ev_confirm,VALIDER ET DORMIR
+ev_night,LA NUIT AU BLOC PÉTREL
+ev_night_balance,Solde : %s
+ev_next_day,JOUR SUIVANT
+ev_to_demo_end,FIN DE LA DÉMO
+ev_to_ending,VOIR LA SUITE
+hh_name_ilan,Ilan
+hh_name_noa,Noa
+hh_name_dora,Dora
+hh_role_ilan,Conjoint·e · technicien·ne de recycleur « réaffecté·e »
+hh_role_noa,8 ans · école de l'Anneau C
+hh_role_dora,"Mère d'Ilan · ancienne mineuse de Tycho, sous oxygène"
+hh_state_well,Bien
+hh_state_hungry,Affamé·e
+hh_state_cold,Froid
+hh_state_hungry_cold,Faim et froid
+hh_state_sick,Malade
+hh_state_gravely_sick,Gravement malade
+hh_state_lost,Perdu·e
+hh_note_ilan,"Cherche du travail aux recycleurs, sans succès."
+hh_note_noa,Tousse quand le chauffage est coupé.
+hh_note_dora,Recharge d'oxygène tous les deux soirs.
+hh_note_noa_sick,"Toux grise, fièvre légère. Il lui faut des médicaments."
+hh_note_dora_sick,Respire mal. Il lui faut des médicaments.
+hh_note_ilan_sick,"Fiévreux·se, mais refuse de se plaindre."
+hh_ev_better,%s va un peu mieux.
+hh_ev_cured,%s est guéri·e.
+hh_ev_untreated,%s n'a pas eu de médicaments. Ça ne peut pas durer.
+hh_ev_worse,L'état de %s s'aggrave.
+hh_ev_lost,Nous avons perdu %s.
+hh_ev_hungry,Le foyer se couche le ventre vide.
+hh_ev_sick_hunger,"%s tombe malade, affaibli·e par la faim."
+hh_ev_cold,La cabine est glaciale cette nuit.
+hh_ev_sick_cold,%s tombe malade à cause du froid.
+hh_ev_noa_cough,Noa tousse toute la nuit : il est malade.
+hh_ev_oxygen,"Sans recharge, Dora suffoque : elle est malade."
+hh_ev_oxygen_grave,Deuxième manquement d'oxygène : Dora est au plus mal.
+hh_ev_rent_unpaid,Loyer impayé : l'Autorité de Transit envoie un avertissement.
+hh_ev_debt,Votre compte à la Banque Aurel est à découvert.
+hh_ev_calm,Une nuit calme au Bloc Pétrel. Tout le monde dort au chaud.
+end_eyebrow_demo_complete,CLEARANCE · VERTICAL SLICE · JOURS 1 À 3
+end_title_demo_complete,FIN DE LA DÉMO
+end_text_demo_complete,"Trois jours au Guichet 04. La file ne se vide jamais tout à fait. Demain, la délégation des quais continue : interrogatoires des Tycho, Ceinturiers dans la file, premiers pots-de-vin… La suite au prochain shift."
+end_eyebrow_f2_reassigned,AUTORITÉ DE TRANSIT · AVIS DE RÉAFFECTATION
+end_title_f2_reassigned,RÉAFFECTATION
+end_text_f2_reassigned,"Loyers impayés, compte à découvert : l'Autorité de Transit vous retire le Guichet 04 et la cabine du Bloc Pétrel. Votre famille et vous êtes « réaffectés » vers les dortoirs de l'Anneau B."
+end_eyebrow_f3_family_lost,BLOC PÉTREL · ANNEAU C
+end_title_f3_family_lost,FAMILLE PERDUE
+end_text_f3_family_lost,"Ilan, Noa, Dora. La cabine est vide. Le guichet rouvre demain, avec ou sans vous."
+end_recap,RÉCAPITULATIF DES SHIFTS
+end_col_day,JOUR
+end_col_processed,TRAITÉS
+end_col_correct,CONFORMES
+end_col_citations,CITATIONS
+end_col_wage,SALAIRE
+end_col_fines,AMENDES
+end_col_spent,DÉPENSES
+end_col_balance,SOLDE
+end_compliance,INDICE DE CONFORMITÉ
+end_compliance_detail,Cas corrects / cas traités
+end_balance,SOLDE FINAL
+end_balance_detail,Banque Aurel
+end_family,LE FOYER
+end_traces,CE QUE VOUS AVEZ CHOISI
+end_trace_sc02_mercy,Vous avez laissé passer la mère gravitaire à la carte expirée.
+end_trace_sc02_turned_away,Vous avez refoulé la mère gravitaire : la règle avant tout.
+end_trace_sc03_passed,Vous avez cru le mineur à la « vieille photo ».
+end_trace_met_mira,"Vous avez croisé Mira Vasquez-Orlov, de Kessler-Ashe Orbital."
+end_trace_sc05_helped,Vous avez laissé passer le messager des Lucioles.
+end_trace_lucioles_reported,Vous avez signalé le mot des Lucioles au Consortium.
+end_trace_lucioles_note_burned,Vous avez brûlé le mot des Lucioles.
+end_hint,« Gloire au Consortium. » — Vesh ota lumi.
+end_to_title,RETOUR AU TITRE
+pause_title,PAUSE
+pause_keys,ÉCHAP · F10 · MENU
+pause_hint,Le shift est suspendu : l'horloge et la file sont arrêtées.
+pause_resume,REPRENDRE
+pause_options,OPTIONS
+pause_quit,QUITTER VERS LE TITRE
+pause_quit_confirm,CONFIRMER : LE SHIFT EN COURS SERA PERDU
+opt_accessibility,ACCESSIBILITÉ
+opt_text_scale,Taille du texte
+opt_fx,Effets visuels
+opt_fx_hint,"Scanlines, scintillement, lueurs des hologrammes."
+opt_fx_full,COMPLETS
+opt_fx_reduced,RÉDUITS
+opt_fx_off,DÉSACTIVÉS
+opt_reduce_motion,Réduire les animations
+opt_reduce_motion_hint,"Marche du passager raccourcie (≤ 1 s), sans travelling ; dès le passager suivant."
+opt_subtitles,Sous-titres
+opt_subtitles_hint,"Voix des passagers en tessar, sous-titrées en français."
+opt_clock_slow,"Horloge du shift ralentie (×0,5)"
+opt_clock_slow_hint,Les gains par cas sont inchangés.
+opt_audio,AUDIO
+opt_volume_master,Volume général
+opt_volume_music,Musique
+opt_volume_ambience,Ambiance
+opt_volume_sfx,Effets
+opt_volume_voice,Voix
+opt_volume_ui,Interface
+opt_saved,Réglages enregistrés automatiquement.
+opt_back,RETOUR
+opt_on,ACTIVÉ
+opt_off,DÉSACTIVÉ
+title_version,Vertical slice M5 — Jours 1 à 3
+title_continue,CONTINUER — JOUR %d
+title_new_game,NOUVELLE PARTIE
+title_options,OPTIONS
+title_quit,QUITTER
+br_expected,PASSAGERS ATTENDUS
+br_expected_detail,La file ne se vide jamais tout à fait.
+br_duration,DURÉE DU SHIFT
+br_duration_detail,≈ %d min réelles · l'horloge tourne aussi pendant la marche
+br_pay,RÉMUNÉRATION
+br_pay_detail,par dossier conforme · %d avertissements tolérés
+br_controls,COMMANDES DU POSTE
+br_ctrl_next,Intercom : passager suivant
+br_ctrl_inspect,Mode Inspection (A ↔ B)
+br_ctrl_ask,Interroger
+br_ctrl_approve,APPROUVÉ (maintenir)
+br_ctrl_deny,REFUSÉ (maintenir)
+br_ctrl_rulebook,Rulebook

@@ -22,6 +22,7 @@ const RULES_DIR: String = "res://data/rules"
 const DAYS_DIR: String = "res://data/days"
 const NAMES_DIR: String = "res://data/names"
 const APPEARANCE_DIR: String = "res://data/appearance"
+const ECONOMY_DIR: String = "res://data/economy"
 
 const K := AnomalyType.Kind
 const FK := FieldDef.FieldKind
@@ -43,7 +44,34 @@ func _build() -> void:
 	var rules: Dictionary[StringName, Rule] = _build_rules()
 	var sets: Array[RuleSet] = _build_rule_sets(rules)
 	_build_days(sets)
+	_build_economy()
 	assert(docs.size() == 3)
+
+
+# ---------------------------------------------------------------------------
+# Économie du foyer (GDD §5.3, §5.4) — M5
+# ---------------------------------------------------------------------------
+
+func _build_economy() -> void:
+	var e: EconomyDef = EconomyDef.new()
+	e.starting_credits = 0
+	e.rent = 15
+	e.rent_raised = 20
+	e.rent_raise_day = 8
+	e.air_tax = 5
+	e.food = 10
+	e.heating = 8
+	e.oxygen = 10
+	e.oxygen_every_n_days = 2
+	e.medicine_per_member = 15
+	e.noa_cold_sick_chance = 0.5
+	e.deprivation_sick_evenings = 2
+	e.untreated_worsen_evenings = 2
+	e.oxygen_grave_misses = 2
+	e.eviction_unpaid_rent = 2
+	e.debt_evenings_limit = 3
+	e.detain_bonus = 5
+	_save(e, ECONOMY_DIR, "economy")
 
 
 # ---------------------------------------------------------------------------
@@ -436,7 +464,8 @@ func _build_days(sets: Array[RuleSet]) -> void:
 		_scripted(&"sc_01", 0, {&"faction_id": &"hal", &"citizen_class": &"C-3", &"purpose": Passenger.PURPOSE_RETURN,
 				&"origin_sector": "Anneau C — logements de service"}, [], &"sc01_returning_technician"),
 		_scripted(&"sc_02", 1, {&"faction_id": &"ter", &"sex": Passenger.SEX_F, &"citizen_class": &"C-4"},
-				[K.EXPIRED_DOCUMENT], &"sc02_hurried_mother", {&"document_id": &"id_card", &"expired_days": 3}),
+				[K.EXPIRED_DOCUMENT], &"sc02_hurried_mother", {&"document_id": &"id_card", &"expired_days": 3},
+				{&"sc02_mercy": 0}, {&"sc02_turned_away": 0}),
 		_scripted(&"tuto_concordant", 2, {}, [], &""),
 		_scripted(&"tuto_missing_document", 3, {}, [K.MISSING_DOCUMENT], &""),
 	]
@@ -446,7 +475,7 @@ func _build_days(sets: Array[RuleSet]) -> void:
 	d2.scripted_cases = [
 		_scripted(&"sc_03", 3, {&"faction_id": &"tyc", &"sex": Passenger.SEX_M, &"citizen_class": &"C-3",
 				&"purpose": Passenger.PURPOSE_WORK}, [K.PORTRAIT_MISMATCH], &"sc03_nervous_miner",
-				{&"trait_count": 3, &"photo_noise": true}),
+				{&"trait_count": 3, &"photo_noise": true}, {&"sc03_passed": 0}, {}),
 	]
 
 	var d3: DayDef = _day(3, sets[2], 600.0, 11, [0.45, 0.45, 0.10, 0.0],
@@ -461,7 +490,8 @@ func _build_days(sets: Array[RuleSet]) -> void:
 	mira.appearance_overrides = {PassengerAppearance.SLOT_HEADWEAR: &"visor_down"}
 	mira.sets_flag = &"met_mira"
 	var messenger: ScriptedCaseDef = _scripted(&"sc_05", 7, {&"faction_id": &"tyc", &"citizen_class": &"C-3"},
-			[K.ID_MISMATCH], &"sc05_luciole_messenger", {&"document_id": &"entry_permit", &"char_count": 1})
+			[K.ID_MISMATCH], &"sc05_luciole_messenger", {&"document_id": &"entry_permit", &"char_count": 1},
+			{&"lucioles_trust": 1, &"sc05_helped": 0}, {})
 	messenger.sets_flag = &"lucioles_contact"
 	d3.scripted_cases = [mira, messenger]
 
@@ -495,8 +525,11 @@ func _day(n: int, rule_set: RuleSet, duration: float, count: int, count_weights:
 
 
 func _scripted(id: StringName, index: int, overrides: Dictionary, anomalies: Array[AnomalyType.Kind],
-		dialogue: StringName, params: Dictionary = {}) -> ScriptedCaseDef:
+		dialogue: StringName, params: Dictionary = {}, on_approve: Dictionary[StringName, int] = {},
+		on_deny: Dictionary[StringName, int] = {}) -> ScriptedCaseDef:
 	var s: ScriptedCaseDef = ScriptedCaseDef.new()
+	s.flags_on_approve = on_approve
+	s.flags_on_deny = on_deny
 	s.injection_params = params
 	s.id = id
 	s.at_index = index

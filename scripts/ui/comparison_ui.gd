@@ -67,6 +67,8 @@ var _veil: ColorRect = null
 var _next_cooldown: float = 0.0
 var _menu_items: Array[Dictionary] = []
 var _applied_min_px: int = 0
+## Dernier résultat reçu (`case_resolved`) : détail du ticket de citation.
+var _last_result: CaseResult = null
 
 
 func _ready() -> void:
@@ -282,7 +284,7 @@ func _on_case_presented(case: Case) -> void:
 	documents_shown = false
 	verdict_sent = false
 	elapsed_sec = 0.0
-	var bark: String = UiText.t("bark_arrival", "Bonsoir… J'arrive, j'arrive.")
+	var bark: String = UiText.t(scripted_key(case, "arrival", "bark_arrival"), "Bonsoir… J'arrive, j'arrive.")
 	passenger_panel.set_line(bark)
 	subtitles.show_line(UiText.passenger_number(case), bark, UiText.t("tag_footsteps", "[pas mouillés]"))
 	workbench.set_empty_state(UiText.t("wb_empty_title", "EN ATTENTE DES DOCUMENTS"),
@@ -296,8 +298,12 @@ func _on_documents_presented(case_id: StringName) -> void:
 	documents_shown = true
 	elapsed_sec = 0.0
 	workbench.present(current_case.documents, portrait_provider)
-	var line: String = UiText.t("bark_present", "Voici mes papiers…")
+	var line: String = UiText.t(scripted_key(current_case, "present", "bark_present"), "Voici mes papiers…")
 	passenger_panel.set_line(line)
+	# Mot glissé entre les documents (passager scénarisé, ex. SC-05 Lucioles).
+	var note_key: String = scripted_key(current_case, "note", "")
+	if not note_key.is_empty():
+		toasts.push(ToastStack.Kind.NARRATIVE, UiText.t("note_title", "UN MOT GLISSÉ ENTRE LES PAPIERS"), UiText.t(note_key, ""))
 	passenger_panel.set_hint("")
 	subtitles.show_line(_speaker_name(), line)
 	_refresh_all()
@@ -342,6 +348,10 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 
 
 func _on_interrogation_answered(topic: StringName, line_key: String) -> void:
+	# Visière : la clé reste `line_visor_removed` (contrat booth) ; un passager
+	# scénarisé a sa propre réplique (`<dialogue_id>_visor`).
+	if topic == InterrogationTopics.REMOVE_VISOR and line_key == InspectionSession.LINE_VISOR_REMOVED:
+		line_key = scripted_key(current_case, "visor", line_key)
 	var text: String = UiText.t(line_key, line_key)
 	passenger_panel.set_line(text)
 	subtitles.show_line(_speaker_name(), text)
@@ -374,15 +384,56 @@ func _on_case_resolved(case_id: StringName, result: CaseResult) -> void:
 	if current_case == null or case_id != current_case.case_id:
 		return
 	processed += 1
+	_last_result = result
 	top_bar.set_processed(processed)
 	_show_result(result)
 	_return_documents()
 	_refresh_all()
 
 
+## Avis d'infraction imprimé (DS §7.9) : détail tiré du `CaseResult` du cas
+## (rang, amende, règle citée) reçu juste avant par `case_resolved`.
 func _on_citation_issued(reason_key: String) -> void:
-	var reason: String = UiText.t(reason_key, reason_key)
-	toasts.push_citation(reason, UiText.t("cit_warning", "AVERTISSEMENT"), true)
+	show_citation(_last_result if _last_result != null and _last_result.citation_reason_key == reason_key else null, reason_key)
+
+
+func show_citation(result: CaseResult, reason_key: String = "") -> CitationTicket:
+	if result == null:
+		result = CaseResult.new()
+		result.citation_reason_key = reason_key
+		result.citation_number = 1
+	var number: int = 0
+	var title: String = ""
+	for i: int in rulebook_entries.size():
+		if rulebook_entries[i].rule_id == result.citation_rule_id:
+			number = i + 1
+			title = UiText.t(rulebook_entries[i].title_key, String(result.citation_rule_id))
+	var free: int = day.free_citations_per_day if day != null else 2
+	var ticket: CitationTicket = CitationTicket.make(result, day.day_number if day != null else 0, number, title, free)
+	toasts.push_node(ticket, 120)
+	ticket.play_print.call_deferred()
+	return ticket
+
+
+## Message d'intercom (Okonkwo, tutoriel diégétique du J1 — UI_FLOW §7) :
+## sous-titre au bas de la vitre ; toast si les sous-titres sont désactivés
+## (aucune information par le son seul, UI_FLOW §6).
+func say_intercom(speaker: String, text: String) -> void:
+	if subtitles.enabled:
+		subtitles.show_line(speaker, text, UiText.t("tag_intercom", "[intercom]"))
+	else:
+		toasts.push(ToastStack.Kind.INFO, speaker, text)
+
+
+## Clé de réplique dédiée d'un passager scénarisé (`<dialogue_id>_<suffixe>`),
+## sinon `fallback`.
+static func scripted_key(case: Case, suffix: String, fallback: String) -> String:
+	if case != null:
+		for tag: StringName in case.dialogue_tags:
+			var key: String = "%s_%s" % [tag, suffix]
+			if UiText.has(key):
+				return key
+	return fallback
 
 
 func _on_credits_changed(credits: int, _delta: int) -> void:
@@ -473,7 +524,9 @@ func pick(ref: FieldRef) -> InspectionSelection.Action:
 
 
 ## Échap / Ⓑ / clic droit : annule A, sinon ferme le menu, sinon quitte le mode.
-func cancel() -> void:
+## Renvoie `false` s'il n'y avait rien à annuler : Échap ouvre alors la pause
+## (M5, UI_FLOW §3.5 « Pause : Échap (hors sélection) »).
+func cancel() -> bool:
 	if question_menu_open:
 		close_question_menu()
 	elif selection.cancel():
@@ -482,6 +535,9 @@ func cancel() -> void:
 		_refresh_face()
 	elif inspection_active:
 		set_inspection_active(false)
+	else:
+		return false
+	return true
 
 
 func request_next_case() -> void:
@@ -577,13 +633,16 @@ func _show_result(result: CaseResult) -> void:
 	if result == null:
 		return
 	var verdict_name: String = StampMark.label_of(result.verdict_kind)
-	var side: String = ("+%d ₵" if result.credits_delta >= 0 else "%d ₵") % result.credits_delta
+	var side: String = ScreenBase.credits(result.wage, true)
 	var message: String = UiText.tf("res_case_detail", [verdict_name], "Tampon %s")
-	if not result.correct and not result.missed_violations.is_empty():
+	if result.citation_reason_key == ScoringService.CIT_IRREGULAR_ENTRY:
 		message += " · " + UiText.plural("res_missed", result.missed_violations.size(), "%d infraction non relevée", "%d infractions non relevées")
+	elif result.has_citation():
+		message += " · " + UiText.t(result.citation_reason_key, result.citation_reason_key).to_lower()
 	if result.correct:
 		toasts.push(ToastStack.Kind.SUCCESS, UiText.t("res_case_ok", "Dossier conforme"), message, side)
-	else:
+	elif not result.has_citation():
+		# Une erreur citée est annoncée par le ticket d'infraction (`citation_issued`).
 		toasts.push(ToastStack.Kind.ERROR, UiText.t("res_case_error", "Erreur de contrôle"), message, side)
 
 
@@ -965,8 +1024,9 @@ func _input(event: InputEvent) -> void:
 		toggle_inspection()
 		_handled()
 	elif event.is_action_pressed(&"cancel", false, true):
-		cancel()
-		_handled()
+		# Rien à annuler : l'événement continue (menu pause, `_unhandled_input`).
+		if cancel():
+			_handled()
 	elif event.is_action_pressed(&"interrogate", false, true):
 		toggle_question_menu()
 		_handled()

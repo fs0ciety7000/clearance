@@ -466,6 +466,8 @@ Cas contraints du tutoriel (sans dialogue dédié, J1) : index 2 sans anomalie (
 - 5 passagers scénarisés (§12) ; code Luciole 1 et 7 (SC-05 uniquement) ; sauvegarde entre jours ; options d'accessibilité du temps.
 - PC + Steam Deck (manette, 1280×800).
 
+**État M5 (implémenté, Gameplay Systems)** : tout le « Dedans » ci-dessus sauf les fins F1/F4–F7 (hors MVP) ; valeurs de §5 et §10 **inchangées** (aucun rééquilibrage). Précisions de lecture : Noa malade à 50 % au 1ᵉʳ soir sans chauffage (aléa seedé) ; un poste facultatif ne peut pas rendre le solde négatif (seule la taxe d'air le peut) ; amendes retenues au fil du shift (ticket immédiat) ; refus d'un dossier à document manquant documenté d'office (D-032). Mesuré (simulation, graine 20 871 315) : joueur parfait J1/J2/J3 = 40/50/55 ₵, solde 2/4/21 ₵, foyer en bonne santé ; bot « approuve tout » → réaffectation (F2) au soir du J2 ; joueur à ~80 % → foyer malade dès le J2 (à surveiller en playtest : §14 « sacrifier 1 poste sur 3 » paraît plus dur que prévu).
+
 **Dehors (post-MVP)**
 - Tampon DÉTENTION et prime (J7) — le code prévoit néanmoins `VerdictKind.DETAIN`.
 - `IMPOSTOR_LOOKALIKE`, `RELATIVE_DOCUMENTS` (🟡 optionnel MVP dans ARCHITECTURE : **reporté**), et tous les types J4+ ; Certificat bio-scan, implants, interdiction THR, sceaux, MRZ, avis de recherche.

@@ -11,6 +11,11 @@
 ## - Réactions du passager (`passenger_reaction_triggered`) : comparaison de
 ##   visages discordante, confrontation, verdict. Elles ne dépendent **jamais**
 ##   de la vérité cachée (`CaseKey`), seulement de ce que le joueur a constaté.
+## - M5 : répliques des passagers scénarisés — si le cas porte une étiquette de
+##   dialogue (`ScriptedCaseDef.dialogue_id`) et que la clé
+##   `<dialogue_id>_<sujet>` existe dans `fr.csv`, elle remplace la réplique
+##   générique (`sc02_hurried_mother_about_expired`…). Une réplique de
+##   supplication déclenche NERVOUS.
 ## Ne connaît pas la clé de réponse ; le DayController la garde.
 class_name InspectionSession
 extends Node
@@ -134,15 +139,15 @@ func _on_interrogation_requested(topic: StringName) -> void:
 				EventBus.interrogation_answered.emit(topic, LINE_CONFRONT_ANGRY)
 				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.ANGRY)
 			else:
-				EventBus.interrogation_answered.emit(topic, LINE_CONFRONT_NERVOUS)
+				EventBus.interrogation_answered.emit(topic, scripted_line("confront", LINE_CONFRONT_NERVOUS))
 				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
 		TOPIC_PURPOSE:
-			EventBus.interrogation_answered.emit(topic, LINE_PURPOSE_PREFIX + String(case.passenger_presented.purpose))
+			EventBus.interrogation_answered.emit(topic, scripted_line("purpose", LINE_PURPOSE_PREFIX + String(case.passenger_presented.purpose)))
 		TOPIC_STAY:
 			var short: bool = case.passenger_presented.stay_days <= SHORT_STAY_DAYS
-			EventBus.interrogation_answered.emit(topic, LINE_STAY_SHORT if short else LINE_STAY_LONG)
+			EventBus.interrogation_answered.emit(topic, scripted_line("stay", LINE_STAY_SHORT if short else LINE_STAY_LONG))
 		TOPIC_ORIGIN:
-			EventBus.interrogation_answered.emit(topic, LINE_ORIGIN_PREFIX + String(case.passenger_presented.faction_id))
+			EventBus.interrogation_answered.emit(topic, scripted_line("origin", LINE_ORIGIN_PREFIX + String(case.passenger_presented.faction_id)))
 		_:
 			if String(topic).begins_with(ABOUT_PREFIX):
 				_confront_about(topic)
@@ -158,11 +163,23 @@ func _confront_about(topic: StringName) -> void:
 	var reason: String = body.get_slice(DOC_SEPARATOR, 0)
 	var doc: StringName = StringName(body.get_slice(DOC_SEPARATOR, 1)) if body.contains(DOC_SEPARATOR) else &""
 	if has_confirmed(reason, doc):
-		EventBus.interrogation_answered.emit(topic, LINE_ABOUT_PREFIX + reason)
+		EventBus.interrogation_answered.emit(topic, scripted_line("about_" + reason, LINE_ABOUT_PREFIX + reason))
 		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
 	else:
 		EventBus.interrogation_answered.emit(topic, LINE_CONFRONT_ANGRY)
 		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.ANGRY)
+
+
+## Réplique dédiée du passager scénarisé (`<dialogue_id>_<suffixe>`) si elle
+## existe, sinon `fallback`.
+func scripted_line(suffix: String, fallback: String) -> String:
+	if case == null:
+		return fallback
+	for tag: StringName in case.dialogue_tags:
+		var key: String = "%s_%s" % [tag, suffix]
+		if UiText.has(key):
+			return key
+	return fallback
 
 
 ## Vrai si une discordance confirmée a cette raison (`expired`, `mismatch`…)
