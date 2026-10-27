@@ -63,6 +63,9 @@ Ancienne station de ravitaillement devenue **écluse politique** : tout vaisseau
 - **La guerre froide avec Tharsis** : les implants militaires sont vus comme des armes.
 - **Le contrôle du travail** : on n'entre que si un employeur vous a acheté. Le permis d'entrée est, au fond, un contrat.
 
+### La délégation progressive des quais (canon validé)
+Les contrôles existent tous en 2187, mais ils sont réalisés aux **quais d'amarrage** par les douanes de l'Autorité de Transit. En mars 2187, le Consortium transfère ces vérifications, une à une, aux guichets d'Anneau pour « fluidifier les quais » (et réduire les effectifs). Le Guichet 04 reçoit donc chaque matin une **directive de délégation** : ce qui était vérifié en amont devient sa responsabilité (permis au Jour 3, interrogatoire des Tycho au Jour 4, bio-scan au Jour 5…). Diégétiquement, c'est le briefing du jour ; mécaniquement, c'est la progression des règles du GDD.
+
 ---
 
 ## 4. Le Consortium
