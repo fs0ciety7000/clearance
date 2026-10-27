@@ -6,12 +6,14 @@ Jeu 3D stylisé cyberpunk inspiré de *Papers, Please*, développé avec **Godot
 
 ## État du projet
 
-**Phase : pré-production.** Design System, architecture et flux UI en cours de validation. Aucun code gameplay pour l'instant.
+**Phase : production — jalon M1 (Fondations) livré** : autoloads, `SeededRng`, `GameDate`, thème DS, écran titre, tests GUT. Prochain jalon : M2 (documents & règles).
 
 ## Documentation
 
 | Fichier | Contenu |
 |---|---|
+| [`GDD.md`](GDD.md) | Game design : boucle, économie, anomalies, progression J1–J10, fins |
+| [`LORE.md`](LORE.md) | Univers : Halcyon Gate, Consortium, origines, Lucioles, implants, langue Tessar |
 | [`AGENTS.md`](AGENTS.md) | Rôles du studio, propriété des fichiers, règles de collaboration |
 | [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) | Couleurs, typographie, composants, effets holographiques |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Structure Godot, modèle de données, moteur de règles, générateur |
@@ -22,12 +24,40 @@ Jeu 3D stylisé cyberpunk inspiré de *Papers, Please*, développé avec **Godot
 | [`docs/AUDIO.md`](docs/AUDIO.md) | Bus audio, liste des sons, voix courtes sous-titrées |
 | [`DECISIONS.md`](DECISIONS.md) | Journal des décisions |
 
-À venir : `GDD.md` (Game Designer), `LORE.md` (Lore Master), `docs/NARRATIVE.md` (Scénariste), `docs/QA.md` (QA).
+À venir : `docs/NARRATIVE.md` (Scénariste), `docs/QA.md` (QA).
 
 ## Démarrage
 
-1. Installer [Godot 4.4+](https://godotengine.org/download) (version standard, GDScript).
-2. Ouvrir `project.godot` depuis le gestionnaire de projets.
+1. Installer [Godot 4.7.2](https://godotengine.org/download) (version standard, GDScript — pas la version .NET).
+2. Ouvrir `project.godot` depuis le gestionnaire de projets (le premier import génère `.godot/`, ignoré par git).
+3. Lancer (F5) : `scenes/main/main.tscn` affiche l'écran titre placeholder (thème Design System construit par `ui/theme/theme_builder.gd`).
+
+En ligne de commande :
+
+```bash
+godot --headless --import          # import + détection des erreurs de parse
+godot --path .                     # lance le jeu
+```
+
+Autoloads (dans cet ordre) : `EventBus` (catalogue de signaux), `Settings` (`user://settings.cfg`), `GameState` (état de campagne). Les polices (`assets/fonts/`) sont optionnelles tant qu'elles ne sont pas fournies : le thème retombe sur la police par défaut.
+
+## Tests
+
+Framework : [GUT](https://github.com/bitwes/Gut) **9.7.1** (branche `godot_4_7`), **versionné** dans `addons/gut/` (D-008) — rien à installer. Le plugin est activé dans `project.godot` (panneau GUT dans l'éditeur).
+
+Mettre à jour GUT : remplacer le dossier `addons/gut/` par celui d'une release compatible Godot 4.7 (AssetLib « Gut - Godot Unit Testing (Godot 4) » ou `git clone -b godot_4_7 https://github.com/bitwes/Gut` puis copier `addons/gut`), et consigner la version ici.
+
+Lancer toute la suite en headless (config dans `.gutconfig.json` : `tests/unit/` et `tests/integration/`, préfixe `test_`) :
+
+```bash
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json -gexit
+```
+
+Code de sortie 0 si tout est vert. Un seul fichier : ajouter `-gtest=res://tests/unit/test_game_date.gd`.
+
+Notes :
+- Les avertissements GDScript des `addons/` sont exclus par défaut (GUT n'est pas typé statiquement) ; le code du projet, lui, traite `untyped_declaration` comme une erreur.
+- `push_error()` fait échouer un test GUT sauf s'il est attendu (`assert_push_error_count`).
 
 ## Feuille de route MVP
 

@@ -17,7 +17,7 @@
    - **Non-diégétique** (méta, pour le joueur) : menus pause/options, sous-titres, tutoriels contextuels, notifications système d'accessibilité. **Aucun effet holo**, contraste maximal, style plat.
    - En cas de doute : si l'information est nécessaire pour ne pas perdre injustement, elle doit aussi exister en non-diégétique (option).
 6. **Le Consortium est jaune, la rébellion est magenta.** Le jaune = autorité, marque, action officielle. Le magenta = ce qui cloche (anomalie détectée, voix dissidente). Ce couple narratif ne doit jamais être brouillé.
-7. **Accessible par défaut.** Options obligatoires : réduction des effets, échelle UI (80–150 %), mode daltonien (renfort des formes, pas de changement de palette), sous-titres, timer désactivable/ralenti.
+7. **Accessible par défaut.** Options obligatoires : réduction des effets, échelle UI (90–150 %, `Settings.text_scale` 0,9–1,5 ; en dessous de 90 % le minimum de 12 px n'est plus tenu), mode daltonien (renfort des formes, pas de changement de palette), sous-titres, timer désactivable/ralenti.
 
 ---
 
@@ -568,7 +568,7 @@ Tenir un registre `CREDITS` (source, auteur, licence, URL, date) pour chaque ass
 1. **Rôles** : Design System (propriétaire du document, de `tokens.gd`, du `.tres`) · Orchestrateur (propriétaire du **contrat** : couleurs de base, familles de police) · Tech UI (implémentation shaders/scènes) · Audio (§9).
 2. **Proposer un token** : ouvrir une demande « DS-Proposal » contenant : nom (selon convention §10.4), valeur, **besoin** (quel écran, quel problème — un token sans au moins 2 usages n'est pas créé), alternatives existantes écartées et pourquoi, contraste calculé si couleur, impact accessibilité.
 3. **Proposer un composant** : anatomie, les 6 états (default/hover/focus/selected/disabled/flagged — ou justification de leur absence), comportement clavier/manette, motion, son, type variation(s) Godot, maquette ou capture.
-4. **Critères d'acceptation** : réutilise les tokens existants · respecte la règle couleur + forme · contrastes AA · fonctionne en effets réduits et à 80 %/150 % d'échelle · testé avec simulateur de daltonisme (deutéranopie, protanopie, tritanopie) et en niveaux de gris.
+4. **Critères d'acceptation** : réutilise les tokens existants · respecte la règle couleur + forme · contrastes AA · fonctionne en effets réduits et à 90 %/150 % d'échelle · testé avec simulateur de daltonisme (deutéranopie, protanopie, tritanopie) et en niveaux de gris.
 5. **Changement du contrat** (valeurs de base) : uniquement via l'Orchestrateur ; le Design System produit l'étude d'impact (contrastes, composants touchés).
 6. **Versionnage** : SemVer sur ce document (MAJEUR = renommage/suppression de token, MINEUR = ajout, CORRECTIF = précision). Changelog en bas de fichier. Un token supprimé passe d'abord par 1 version « déprécié » (commentaire `# DEPRECATED` dans `tokens.gd`).
 7. **Revue** : toute PR qui touche `res://ui/` est relue par le Design System ; recherche de couleurs en dur (`Color(`, `#` hex hors `tokens.gd`) en revue.

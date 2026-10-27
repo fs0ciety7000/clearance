@@ -28,3 +28,6 @@ Statuts : 🟡 proposé (en attente de validation client) · 🟢 validé · �
 | D-022 | 2026-10-27 | Dépôt privé : les ressources importées dérivées de Mixamo peuvent être versionnées (jamais les fichiers bruts téléchargés) | 🟢 | Validé client | — |
 | D-023 | 2026-10-27 | Plateformes cibles : PC d'entrée de gamme ET Steam Deck (1280×800) — budgets perf et UI lisible aux deux | 🟢 | Validé client | — |
 | D-024 | 2026-10-27 | Pénalité pour un REFUS sans discordance documentée ; tampon narratif « DÉTENTION » prévu | 🟢 | Validé client | — |
+| D-025 | 2026-10-27 | Le thème Godot est construit en code par `ThemeBuilder.build()` (`ui/theme/theme_builder.gd`) depuis `DS`, au lieu d'un `clearance_theme.tres` écrit à la main | 🟢 | Une seule source de vérité (`tokens.gd`), testable par GUT ; un outil `@tool` pourra exporter un `.tres` si besoin | `.tres` maintenu en parallèle |
+| D-026 | 2026-10-27 | Échelle de texte 90–150 % (`Settings.text_scale` 0,9–1,5) | 🟢 | Garantit le minimum de 12 px du Design System | 80–150 % |
+| D-027 | 2026-10-27 | Fichiers `.uid` et `.import` générés par Godot versionnés | 🟢 | Références stables entre machines (Godot 4.4+) | Les ignorer |

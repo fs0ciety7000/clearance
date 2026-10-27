@@ -273,7 +273,10 @@ Les fichiers `*.import` sont **versionnés** (ARCHITECTURE §3).
 
 | Asset | Source | Licence | Auteur | Modifié ? | Chemin |
 |---|---|---|---|---|---|
-| | | | | | |
+| Chakra Petch SemiBold + Bold | github.com/google/fonts (ofl/chakrapetch), 2026-10-27 | SIL OFL 1.1 | The Chakra Petch Project Authors | non | `assets/fonts/ChakraPetch-*.ttf` + `OFL-ChakraPetch.txt` |
+| Inter (variable) | github.com/google/fonts (ofl/inter), 2026-10-27 | SIL OFL 1.1 | The Inter Project Authors | non (renommé `Inter-Variable.ttf`) | `assets/fonts/Inter-Variable.ttf` + `OFL-Inter.txt` |
+| JetBrains Mono (variable) | github.com/google/fonts (ofl/jetbrainsmono), 2026-10-27 | SIL OFL 1.1 | The JetBrains Mono Project Authors | non (renommé `JetBrainsMono-Variable.ttf`) | `assets/fonts/JetBrainsMono-Variable.ttf` + `OFL-JetBrainsMono.txt` |
+| GUT 9.7.1 (outil de test, hors jeu) | github.com/bitwes/Gut tag v9.7.1, 2026-10-27 | MIT | bitwes | non | `addons/gut/` |
 | | | | | | |
 | | | | | | |
 | | | | | | |
