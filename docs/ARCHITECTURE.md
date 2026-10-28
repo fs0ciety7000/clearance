@@ -505,6 +505,7 @@ PassengerActor (CharacterBody3D, passenger_actor.gd)
 │       ├── HeadAttachment → Head (repère en mètres) : Face (plaque ditherée), Nose, EarL/R, Hair,
 │       │                                              Headwear, HeadAccessory, HeadArea, implants
 │       ├── NeckAttachment → NeckWear · UpperChestAttachment → Outfit · RightHandAttachment → HandSpace/Papers
+│       ├── Parts (MeshInstance3D skinné, chr_parts.gdshader) — M10 : toutes les pièces ci-dessus fusionnées
 │       ├── HeadScale (HeadScaleModifier : tête ×0,45, cou ×0,55, forme du visage — D-051)
 │       └── NeckLook / HeadLook (LookAtModifier3D, cou 30 %, tête 100 %)
 ├── AnimationPlayer (bibliothèque « passenger ») + AnimationTree (construit par PassengerAnims)
@@ -512,7 +513,7 @@ PassengerActor (CharacterBody3D, passenger_actor.gd)
 └── ExpressionController (Node)
 ```
 
-Les pièces variables sont des `MeshInstance3D` **attachées aux os** (pas de meshes skinnés par slot). `AppearanceApplier` est un `RefCounted` (pas un nœud). `PassengerAudio` est ajouté à l'exécution par l'`AudioDirector`. Signaux locaux : `arrived`, `departed`, `cleared`, `anim_event(name)`, `reaction_finished(kind)`, `face_clicked`.
+Les pièces variables sont des `MeshInstance3D` **attachées aux os** (pas de meshes skinnés par slot) qui servent de **sources** : depuis M10, `PassengerRig.rebuild_parts()` les fusionne en un seul maillage `Parts` skinné sur le squelette (une liaison identité par os porteur, sommets exprimés dans l'espace de l'os), un matériau `chr_parts.gdshader` (albédo, émission, rugosité/métal et mode par sommet ; plaque visage, pièces unies, non éclairé, papiers), mis en cache par signature des pièces (acteur et portrait partagent le maillage). Les sources sont masquées mais gardent leurs noms (tests, débogage) ; seule la demi-visière translucide reste une instance à part. Toute modification de pièces (`AppearanceApplier`, `ImplantDecor`, brassard de la Garde) appelle `queue_parts_rebuild()` (différé, une fois par image) ; `face_material` = matériau des pièces (expressions, regard). `PassengerRig.merge_parts = false` restitue le rendu par pièce (comparaisons). `AppearanceApplier` est un `RefCounted` (pas un nœud). `PassengerAudio` est ajouté à l'exécution par l'`AudioDirector`. Signaux locaux : `arrived`, `departed`, `cleared`, `anim_event(name)`, `reaction_finished(kind)`, `face_clicked`.
 
 ### 8 bis.3 Animation et déplacement
 
@@ -552,7 +553,7 @@ Les pièces variables sont des `MeshInstance3D` **attachées aux os** (pas de me
 
 - Au plus 3 acteurs animés (2 du pool pendant le chevauchement + la Garde lors d'une détention) ; pool et Garde créés au chargement du jour.
 - File en imposteurs `MultiMesh` (silhouette ≤ 400 tris, teinte par `INSTANCE_COLOR`).
-- Budgets cibles : acteur ≤ 15 k tris (réel : ≈ 1,6 k corps + ≤ 2 k pièces) ; décor ≤ 40 draws : **7 depuis M9** (5 maillages fusionnés + vitre + file ; greybox : 56), ≈ 31 k triangles, aucune ombre portée par le décor (seul le passager entre dans l'atlas d'ombres de la `KeyLight`). Mesures `opengl3` (BOOTH_SCENE §17.4) : guichet vide 56 → 7 draws ; J1 avec passager 84 → 34 ; J7 détention + escorte 87 → 37 ; le reste vient des acteurs (≈ 27 draws par passager : pièces attachées aux os) — prochain levier. **FPS GPU non mesurés** sur PC d'entrée de gamme ni Steam Deck (rendu logiciel seulement) → §13 R27.
+- Budgets cibles : acteur ≤ 15 k tris (réel : ≈ 1,6 k corps + ≤ 2 k pièces) ; décor ≤ 40 draws : **7 depuis M9** (5 maillages fusionnés + vitre + file ; greybox : 56), ≈ 31 k triangles, aucune ombre portée par le décor (seul le passager entre dans l'atlas d'ombres de la `KeyLight`). Mesures `opengl3` (BOOTH_SCENE §17.4) : guichet vide 56 → 7 draws ; J1 avec passager 84 → 34 ; J7 détention + escorte 87 → 37 ; M10 (BOOTH_SCENE §18) : pièces fusionnées par acteur → **4 draws par passager** (2 instances × passe de base + passe de l'ombre de la `KeyLight` ; 2 en Bas), J1 34 → **11**, J7 détention + escorte 38 → **15**, sans changement visuel. **FPS GPU non mesurés** sur PC d'entrée de gamme ni Steam Deck (rendu logiciel seulement) → §13 R27.
 - **Qualité graphique** (`Settings.graphics_quality` : Auto / Bas / Moyen / Élevé ; Auto = Moyen sur Steam Deck, Élevé ailleurs) : Bas = sans ombre, sans glow, MSAA off, 1 nappe de pluie, sans cartes de normales ni ruissellement animé ; Moyen = ombre, glow, MSAA 2×, 2 nappes ; Élevé = MSAA 4×, 3 nappes, bloom. La résolution 3D n'est jamais réduite (comparaison visage ↔ photo).
 
 ---

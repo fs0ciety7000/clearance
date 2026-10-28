@@ -10,6 +10,8 @@
 ## tenue (col, liseré émissif) en pièces low-poly attachées aux os.
 ## Correspondance identifiants → rendu : `GreyboxStyle` (couleurs) et ici
 ## (pièces) ; le catalogue (`appearance_catalog.tres`) ne porte que les ids.
+## M10 : les pièces créées ici sont des sources, fusionnées par
+## `PassengerRig.rebuild_parts()` (un draw call pour toutes, BOOTH_SCENE §18).
 class_name AppearanceApplier
 extends RefCounted
 
@@ -58,6 +60,8 @@ static func apply(rig: PassengerRig, app: PassengerAppearance) -> void:
 	_apply_headwear(rig, app, pal)
 	_apply_outfit(rig, app, pal, outfit)
 	_apply_accessory(rig, app, pal)
+	# M10 : pièces fusionnées en un maillage skinné (une fois par image).
+	rig.queue_parts_rebuild()
 
 
 ## Couleur de tissu pour le toon : les palettes (très désaturées, sombres) sont

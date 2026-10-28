@@ -89,7 +89,7 @@ res://assets/
                      la vitre reste procédurale (pas de tex_glass_*)
     station/         tex_concrete_wet_a.png / _n / _orm …
   materials/         mat_chr_toon.tres, mat_face_dither.tres, mat_booth_glass.tres, mat_impostor.tres …
-  shaders/           chr_toon.gdshader, face_dither.gdshader, booth_glass.gdshader, rain_sheet.gdshader,
+  shaders/           chr_toon.gdshader, chr_parts.gdshader, face_dither.gdshader(inc), booth_glass.gdshader, rain_sheet.gdshader,
                      impostor_silhouette.gdshader  (+ holo.gdshader du Design System)
 res://data/appearance/  appearance_catalog.tres + slot_<slot>.tres   (AppearanceCatalog / AppearanceSlotDef / AppearanceOptionDef — 3D Designer + Lore Master, ARCHITECTURE §3)
 
@@ -239,6 +239,7 @@ L'Asset Lead (avec le Lore Master pour les poids par faction) remplit les option
 - Les types se distinguent par la **forme et l'emplacement**, pas par la couleur (règle couleur + forme du DS).
 
 ### 7.3 `face_dither.gdshader` (plaque visage)
+- M10 : code commun dans `face_dither.gdshaderinc`, inclus par `face_dither.gdshader` (plaque seule, rendu de référence) et par **`chr_parts.gdshader`** (pièces fusionnées de l'acteur : plaque visage + pièces unies + non éclairé + papiers, attributs par sommet — BOOTH_SCENE §18). Galbe de la plaque cuit dans le maillage fusionné ; la plaque n'ombre pas (`IN_SHADOW_PASS`).
 - Échantillonne 2 cellules (yeux, bouche) + pupilles + overlay + décals ; uniforms `eyes_cell`, `mouth_cell`, `pupil_offset`, `skin_tone`, `eye_color`, `age_level`, `transition` (0–1).
 - Dithering **Bayer 4×4 en espace UV** quantifié à 64×64 par cellule ; 3 tons dérivés de `skin_tone`.
 - Transition d'expression = seuil de dither animé sur 120 ms.

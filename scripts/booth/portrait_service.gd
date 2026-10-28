@@ -14,6 +14,9 @@
 ## l'affiche se rafraîchit seul. Cache par signature d'apparence (vider au
 ## changement de jour : `clear_cache()`). En headless (tests), l'esquisse CPU est
 ## la seule sortie : la comparaison se fait de toute façon sur les traits.
+## Coût (M10, BOOTH_SCENE §18.4) : un rendu `UPDATE_ONCE` par signature, puis
+## rien — viewport `UPDATE_DISABLED` et modèle du studio en pause entre deux
+## portraits ; les pièces fusionnées viennent du cache partagé avec l'acteur.
 class_name PortraitService
 extends Node
 
@@ -35,6 +38,7 @@ var _viewport: SubViewport = null
 var _camera: Camera3D = null
 var _rig: PassengerRig = null
 var _pose_player: AnimationPlayer = null
+var _sitter: Node3D = null
 
 
 func _ready() -> void:
@@ -143,15 +147,15 @@ func _build_studio() -> void:
 
 	# Le modèle posé sur la première image d'`idle` (bibliothèque `passenger`) :
 	# l'AnimationPlayer vise « Visual/Armature/Skeleton3D », comme sur l'acteur.
-	var sitter: Node3D = Node3D.new()
-	sitter.name = "Sitter"
-	_viewport.add_child(sitter)
+	_sitter = Node3D.new()
+	_sitter.name = "Sitter"
+	_viewport.add_child(_sitter)
 	_rig = PassengerRig.new()
 	_rig.name = "Visual"
 	_rig.set_rim_enabled(false)
-	sitter.add_child(_rig)
+	_sitter.add_child(_rig)
 	_pose_player = AnimationPlayer.new()
-	sitter.add_child(_pose_player)
+	_sitter.add_child(_pose_player)
 	_pose_player.add_animation_library(PassengerAnims.LIBRARY_NAME, PassengerAnims.load_library())
 	_pose_player.play(PassengerAnims.clip_path(&"idle"))
 	_pose_player.seek(0.0, true)
@@ -162,6 +166,9 @@ func _build_studio() -> void:
 	_camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	_camera.current = true
 	_viewport.add_child(_camera)
+	# Hors rendu, le studio ne coûte rien : viewport `UPDATE_DISABLED`, modèle
+	# (squelette, modificateurs) en pause jusqu'au prochain portrait.
+	_sitter.process_mode = Node.PROCESS_MODE_DISABLED
 
 
 func _pump() -> void:
@@ -171,7 +178,10 @@ func _pump() -> void:
 	var job: Array = _queue.pop_front()
 	var appearance: PassengerAppearance = job[0]
 	var texture: ImageTexture = job[1]
+	_sitter.process_mode = Node.PROCESS_MODE_INHERIT
 	AppearanceApplier.apply(_rig, appearance)
+	# Pièces fusionnées tout de suite (même maillage en cache que l'acteur).
+	_rig.rebuild_parts()
 	_neutral_face()
 	_pose_player.seek(0.0, true)
 	_rig.skeleton.force_update_all_bone_transforms()
@@ -193,6 +203,8 @@ func _pump() -> void:
 	_busy = false
 	if not _queue.is_empty():
 		_pump()
+	else:
+		_sitter.process_mode = Node.PROCESS_MODE_DISABLED
 
 
 func _neutral_face() -> void:

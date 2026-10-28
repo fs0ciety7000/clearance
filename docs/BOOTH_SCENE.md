@@ -428,7 +428,7 @@ Cible proposée (à confirmer) : 1080p60 sur GPU d'entrée de gamme récent (cla
 | Guichet (vitre, cadre, hygiaphone) | ≤ 10 k tris, ≤ 6 draws |
 | Hall + décor | ≤ 40 k tris, ≤ 20 draws (atlas de textures partagés) |
 | Pluie | 3 quads, 1 matériau |
-| **Total scène** | **≤ 70 k tris, ≤ 40 draws**, 1 lumière ombrée (atlas d'ombres 2048) + ≤ 6 omni — M9 : décor 7 draws / ≈ 31 k tris, 9 omni (§17.3) |
+| **Total scène** | **≤ 70 k tris, ≤ 40 draws**, 1 lumière ombrée (atlas d'ombres 2048) + ≤ 6 omni — M9 : décor 7 draws / ≈ 31 k tris, 9 omni (§17.3) ; M10 : passager 4 draws (§18) |
 | Textures 3D (VRAM) | ≤ 96 Mo |
 | Temps GPU de la bande 3D | ≤ 3 ms |
 | Post-process | glow + brouillard de profondeur ; MSAA 2× dans le SubViewport ; pas de SSAO/SSR/SDFGI/volumétrique/TAA |
@@ -557,5 +557,49 @@ Le reste des draws avec passager vient des acteurs (≈ 27 par passager : pièce
 ### 17.8 À valider / suite
 - **Décisions proposées** : (a) décor fusionné généré par outil + scène normalisée (plutôt qu'une scène éditée à la main : la fusion des maillages exige un outil, et la scène reste reproductible) ; (b) baie sur la ville de l'Anneau au lieu du quai sous la pluie (cohérence LORE §3 : station en orbite, pluie = condensation) ; (c) réglage « Qualité graphique » Auto/Bas/Moyen/Élevé ; (d) reflets analytiques sans Sky ; (e) un seul magenta (graffiti luciole) dans le décor.
 - Design System : textes du décor en Chakra Petch (JetBrains Mono variable produit des contours qui se croisent : `TextMesh` échoue sur Q, 3, ›).
-- Mesure GPU réelle (Steam Deck en Moyen) ; draws des acteurs (pièces d'apparence à fusionner par acteur).
+- Mesure GPU réelle (Steam Deck en Moyen) ; ~~draws des acteurs~~ → fait en M10 (§18).
 - Git LFS : +4,2 Mo de PNG (textures) et +2,2 Mo de `.res`.
+
+---
+
+## 18. Implémenté en M10 — coût de rendu des personnages (2026-10-28, 3D Designer / Asset Lead, appui Godot Architect)
+
+### 18.1 Constat
+Chaque pièce d'apparence était un `MeshInstance3D` attaché à un os avec son propre matériau : 10 à 15 instances visibles par passager (corps, plaque visage, nez, 2 oreilles, jusqu'à 7 boucles, coiffe en 2–4 pièces, visière, col, liseré, accessoires, implants), chacune dessinée deux fois (passe de base + passe d'ombre de la `KeyLight`) : ≈ 27 draws par passager.
+
+### 18.2 Technique retenue : pièces fusionnées et skinnées (un maillage, un matériau)
+- Les pièces restent construites comme avant (`AppearanceApplier`, `ImplantDecor`, brassard de la Garde) : ce sont des **sources** nommées, masquées.
+- `PassengerRig.rebuild_parts()` parcourt les `BoneAttachment3D` du squelette, exprime chaque pièce dans l'espace de son os (repère « en mètres » compris), concatène les primitives en **un seul `ArrayMesh` skinné** (une liaison `Skin` d'identité par os porteur, poids 1) affiché par `Skeleton3D/Parts`. Les déformations restent exactes : échelle de l'os `Head` (forme du visage), regard (`LookAtModifier3D`), animations.
+- **Un matériau par acteur**, `chr_parts.gdshader` : albédo et émission (CUSTOM0/CUSTOM1, flottants), rugosité/métal (UV2) et **mode** par sommet — pièce unie (rendu identique à `passenger_body` : rim de Fresnel bicolore), plaque visage (code partagé `face_dither.gdshaderinc` : expressions, regard, iris, lèvres inchangés ; galbe cuit ; **n'ombre pas** via `IN_SHADOW_PASS`), non éclairé (tatouage holo), papiers (affichés par l'uniforme `papers_visible`, triangles dégénérés sinon : pas de draw en plus pendant `present_documents`).
+- Seule la **demi-visière translucide** (alpha) garde sa propre instance (passe transparente).
+- **Cache par signature** des pièces (os, transformation, paramètres de primitive, rendu) : 48 maillages ; l'acteur et le portrait d'une même apparence partagent le maillage. Refusion différée (`queue_parts_rebuild()`, une fois par image, avant le rendu) ; ≈ 1–3 ms CPU par nouvelle apparence.
+- `PassengerRig.merge_parts = false` (statique, lu à la construction) restitue le rendu par pièce, pour les comparaisons.
+- Couleurs : les uniformes `source_color` ne sont pas linéarisés côté CPU en Compatibilité ; les couleurs cuites sont donc stockées telles quelles (vérifié au pixel près).
+
+### 18.3 Écartés
+- Corps + pièces en un seul shader : le corps est en `diffuse_toon`/`specular_toon` (mode de rendu par shader) ; tout fusionner changerait l'ombrage. Gain nul en draws avec la passe d'ombre (2 instances = 4 draws).
+- Uniformes d'instance / matériau partagé entre acteurs : ne retire aucun draw (2 matériaux par acteur suffisent).
+- Masquer jambes et pieds au guichet : le corps est un seul maillage (aucun gain), et la marche/la sortie les montrent.
+- LOD de la Garde : inutile une fois fusionnée (4 draws, brassard compris).
+- Ombres par qualité : déjà couvert — en **Bas**, la `KeyLight` n'ombre pas, un passager coûte 2 draws.
+
+### 18.4 Mesures (xvfb + `opengl3`, draws du `SubViewport` du booth, qualité Élevé sauf mention)
+
+| Situation | Avant | Après |
+|---|---|---|
+| J1, passager au guichet (bande 3D) | 34 (passager 27, 14 instances) | **11** (passager 4, 2 instances) |
+| J1, qualité Bas | — | 9 (passager 2) |
+| J7, détention + escorte (bande 3D, pic) | 38 (acteurs 31) | **15** (acteurs 8) |
+| File d'attente (imposteurs) | 1 instance `MultiMesh` | inchangée |
+| Planche de 12 apparences + implants + brassard | 287 draws, 150 instances | 49 draws, 25 instances |
+
+`PortraitService` : un rendu `UPDATE_ONCE` par signature (cache), viewport `UPDATE_DISABLED` sinon ; le modèle du studio (squelette, modificateurs) est désormais **en pause** entre deux portraits : 0 draw et ~0 CPU pendant le shift.
+
+### 18.5 Vérification visuelle
+Planche de 12 apparences couvrant toutes les coupes, coiffes (visière baissée/relevée, capuche, casquette, bonnet), accessoires (demi-visière, respirateur, écharpe, 4 tatouages), implants OPT/NX/MIL/KIN/DER-19, fil magenta, papiers, brassard : écart > 8/255 sur 0,04 % des pixels (contact entre sphères de boucles qui se recoupent). Portraits identiques (max 25/255 sur 53 pixels). Captures jeu (J1, J7 escorte, planche de 8, visière) : seuls diffèrent le décor animé et la phase d'`idle`. Comparatif : `docs/mockups/m10_characters_before_after.png`.
+
+### 18.6 Outils
+`tools/build_passenger_impostor.gd` pose désormais le modèle sur la 1ʳᵉ image d'`idle` figée (la pose dépendait du temps écoulé : sortie différente à chaque exécution) ; `imp_silhouette.res` régénéré, identique d'une exécution à l'autre.
+
+### 18.7 Décision proposée
+Fusion des pièces d'apparence en un maillage skinné par acteur, construit à l'application et mis en cache, avec un matériau à attributs par sommet (proposition D-075, à consigner par l'Orchestrateur).

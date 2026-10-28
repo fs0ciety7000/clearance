@@ -13,6 +13,7 @@
 ##         │   └── Face, Nose, EarL/R, Hair, Headwear, HeadAccessory, HeadArea
 ##         ├── NeckAttachment → NeckWear     ChestAttachment → Outfit
 ##         ├── HandAttachment → Papers
+##         ├── Parts (MeshInstance3D)      M10 : pièces fusionnées, skinnées (chr_parts.gdshader)
 ##         └── NeckLook / HeadLook (LookAtModifier3D, D-010)
 ## ```
 ## Les repères « en mètres » (`Head`, `NeckWear`, `Outfit`, `Papers`) annulent
@@ -20,6 +21,14 @@
 ## La forme de la tête (slot `face`) et sa taille passent par l'échelle de l'os
 ## `Head` (les pièces de tête suivent). Les pièces variables sont reconstruites
 ## par `AppearanceApplier` dans les conteneurs dédiés.
+##
+## M10 (BOOTH_SCENE §18, D-075 proposée) : les pièces restent des nœuds **sources**
+## (noms stables, tests, débogage) mais ne sont pas rendues : `rebuild_parts()`
+## les fusionne en **un seul maillage skinné** (`Parts`, un matériau
+## `chr_parts.gdshader`, une liaison d'os par repère), mis en cache par
+## signature. Un acteur = 2 instances (corps + pièces), + 1 seulement pour la
+## demi-visière translucide. Toute modification de pièces est suivie de
+## `queue_parts_rebuild()` (différé, une fois par image) ou `rebuild_parts()`.
 class_name PassengerRig
 extends Node3D
 
@@ -27,6 +36,7 @@ const MODEL: PackedScene = preload("res://assets/models/passenger/chr_kenney_med
 const BODY_SHADER: Shader = preload("res://assets/shaders/chr_toon.gdshader")
 const PART_SHADER: Shader = preload("res://assets/shaders/passenger_body.gdshader")
 const FACE_SHADER: Shader = preload("res://assets/shaders/face_dither.gdshader")
+const PARTS_SHADER: Shader = preload("res://assets/shaders/chr_parts.gdshader")
 const ZONES_DIR: String = "res://assets/textures/passenger/tex_chr_zones_%s.png"
 
 ## Kenney mesure ≈ 3,7 unités : ramené à ≈ 1,78 m (tête réduite comprise, centre de tête ≈ 1,62 m).
@@ -43,6 +53,18 @@ const CHEST_HALF_WIDTH: float = 0.35
 const CHEST_FRONT: float = 0.26
 ## Couche de collision du clic « Visage » (BOOTH_SCENE : HeadArea).
 const FACE_PICK_LAYER: int = 1 << 3
+## Galbe de la plaque visage (VERTEX.z -= k · r²), cuit dans le maillage fusionné.
+const FACE_CURVATURE: float = 1.2
+## Mode de rendu d'une pièce fusionnée (CUSTOM0.a, `chr_parts.gdshader`).
+enum PartMode { SOLID = 0, FACE = 1, UNSHADED = 2, PAPERS = 3 }
+## Maillages fusionnés gardés en cache (acteur et portrait d'une même apparence).
+const PARTS_CACHE_MAX: int = 48
+const PARTS_FORMAT: int = (Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT) \
+		| (Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM1_SHIFT)
+
+## Fusion des pièces (défaut). `false` : chaque pièce rendue seule (rendu de
+## référence M6, comparaisons avant/après) ; lu à la construction du rig.
+static var merge_parts: bool = true
 
 var armature: Node3D = null
 var skeleton: Skeleton3D = null
@@ -54,8 +76,13 @@ var nose: MeshInstance3D = null
 var ear_l: MeshInstance3D = null
 var ear_r: MeshInstance3D = null
 var head_area: Area3D = null
-## Liasse de papiers dans la main droite (visible pendant `present_documents`).
+## Liasse de papiers dans la main droite (pièce source ; affichée pendant
+## `present_documents` par `set_papers_visible`).
 var papers: MeshInstance3D = null
+## Pièces fusionnées (M10) : enfant du squelette, skinné, `parts_material`.
+var parts_mesh: MeshInstance3D = null
+var parts_material: ShaderMaterial = null
+var papers_visible: bool = false
 var neck_look: LookAtModifier3D = null
 var head_look: LookAtModifier3D = null
 # Conteneurs reconstruits à chaque apparence.
@@ -73,6 +100,8 @@ var implants_hand: Node3D = null
 var hand_space: Node3D = null
 
 var body_material: ShaderMaterial = null
+## Uniformes du visage (expressions, regard, iris) : `parts_material` quand
+## les pièces sont fusionnées, sinon le matériau de la plaque seule.
 var face_material: ShaderMaterial = null
 ## Matériau des pièces couleur peau (nez, oreilles).
 var skin_material: ShaderMaterial = null
@@ -85,7 +114,12 @@ var head_bone_scale: Vector3 = Vector3.ONE * HEAD_SCALE
 var head_scaler: HeadScaleModifier = null
 var _meter_spaces: Array[Node3D] = []
 var _head_bone: int = -1
+var _merge: bool = true
+var _parts_dirty: bool = false
+var _parts_key: String = ""
 static var _zone_cache: Dictionary[String, Texture2D] = {}
+## Signature des pièces → [ArrayMesh, Skin].
+static var _parts_cache: Dictionary[String, Array] = {}
 
 
 func _init() -> void:
@@ -180,12 +214,219 @@ func set_proportions(silhouette: Vector3, head_shape: Vector3) -> void:
 	head_bone_scale = head_shape * HEAD_SCALE / silhouette
 	_apply_head_scale()
 	_refresh_meter_spaces()
+	queue_parts_rebuild()
 
 
 func set_rim_enabled(enabled: bool) -> void:
 	rim_enabled = enabled
-	if body_material != null:
-		body_material.set_shader_parameter(&"rim_strength", 0.7 if enabled else 0.0)
+	for mat: ShaderMaterial in [body_material, parts_material]:
+		if mat != null:
+			mat.set_shader_parameter(&"rim_strength", 0.7 if enabled else 0.0)
+
+
+## Liasse de papiers en main (repères `papers_show` / `papers_hide`).
+func set_papers_visible(shown: bool) -> void:
+	papers_visible = shown
+	if _merge:
+		parts_material.set_shader_parameter(&"papers_visible", shown)
+	else:
+		papers.visible = shown
+
+
+## Demande une refusion des pièces (une seule par image, avant le rendu).
+func queue_parts_rebuild() -> void:
+	if not _merge or _parts_dirty:
+		return
+	_parts_dirty = true
+	_flush_parts.call_deferred()
+
+
+func _flush_parts() -> void:
+	if _parts_dirty:
+		rebuild_parts()
+
+
+## Fusionne immédiatement les pièces sources attachées aux os en un maillage
+## skinné (`parts_mesh`) ; les sources sont masquées. Les pièces dont le
+## matériau n'est pas fusionnable (transparence) restent rendues seules.
+func rebuild_parts() -> void:
+	_parts_dirty = false
+	if not _merge:
+		return
+	var parts: Array[Array] = []
+	for child: Node in skeleton.get_children():
+		var attachment: BoneAttachment3D = child as BoneAttachment3D
+		if attachment != null:
+			_collect_parts(attachment, Transform3D.IDENTITY, attachment.bone_name, parts)
+	var key: PackedStringArray = []
+	for part: Array in parts:
+		key.append(_part_key(part))
+	var signature: String = "\n".join(key)
+	if signature == _parts_key and parts_mesh.mesh != null:
+		return
+	_parts_key = signature
+	var built: Array = _parts_cache.get(signature, [])
+	if built.is_empty():
+		built = _bake_parts(parts)
+		if _parts_cache.size() >= PARTS_CACHE_MAX:
+			_parts_cache.erase(_parts_cache.keys()[0])
+		_parts_cache[signature] = built
+	parts_mesh.mesh = built[0]
+	parts_mesh.skin = built[1]
+
+
+## Vide le cache des maillages fusionnés (tests).
+static func clear_parts_cache() -> void:
+	_parts_cache.clear()
+
+
+static func parts_cache_size() -> int:
+	return _parts_cache.size()
+
+
+## Pièces sources : [os, transformation dans l'espace de l'os, maillage, mode,
+## albédo, émission, rugosité, métal, galbe].
+func _collect_parts(node: Node, xf: Transform3D, bone: String, out: Array[Array]) -> void:
+	for child: Node in node.get_children():
+		var spatial: Node3D = child as Node3D
+		if spatial == null or spatial == parts_mesh:
+			continue
+		var local: Transform3D = xf * spatial.transform
+		var mi: MeshInstance3D = spatial as MeshInstance3D
+		if mi != null and mi.mesh != null:
+			var part: Array = _describe_part(mi, bone, local)
+			mi.visible = part.is_empty()
+			if not part.is_empty():
+				out.append(part)
+		_collect_parts(spatial, local, bone, out)
+
+
+func _describe_part(mi: MeshInstance3D, bone: String, xf: Transform3D) -> Array:
+	if mi == face:
+		return [bone, xf, mi.mesh, PartMode.FACE, Color.BLACK, Color.BLACK, 0.6, 0.0, FACE_CURVATURE]
+	var shader_mat: ShaderMaterial = mi.material_override as ShaderMaterial
+	if shader_mat != null and shader_mat.shader == PART_SHADER:
+		var albedo: Color = _param(shader_mat, &"albedo", Color(0.5, 0.5, 0.5))
+		var emission: Color = _param(shader_mat, &"emission_color", Color.BLACK)
+		var rough: float = _param(shader_mat, &"roughness", 0.75)
+		var metal: float = _param(shader_mat, &"metallic", 0.0)
+		var mode: PartMode = PartMode.PAPERS if mi == papers else PartMode.SOLID
+		return [bone, xf, mi.mesh, mode, albedo, emission, rough, metal, 0.0]
+	var std: BaseMaterial3D = mi.material_override as BaseMaterial3D
+	if std != null and std.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED \
+			and std.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:
+		return [bone, xf, mi.mesh, PartMode.UNSHADED, std.albedo_color, Color.BLACK, 1.0, 0.0, 0.0]
+	return []
+
+
+static func _param(mat: ShaderMaterial, param: StringName, fallback: Variant) -> Variant:
+	var value: Variant = mat.get_shader_parameter(param)
+	return fallback if value == null else value
+
+
+## Signature d'une pièce : os, transformation, paramètres du maillage, rendu.
+static func _part_key(part: Array) -> String:
+	var mesh: Mesh = part[2]
+	var props: Array = [mesh.get_class()]
+	for prop: Dictionary in mesh.get_property_list():
+		var usage: int = prop["usage"]
+		var prop_name: StringName = prop["name"]
+		if (usage & PROPERTY_USAGE_STORAGE) != 0 and prop_name != &"resource_name":
+			props.append(mesh.get(prop_name))
+	return str([part[0], part[1], props, part[3], part[4], part[5], part[6], part[7], part[8]])
+
+
+## Construit le maillage fusionné et sa peau (une liaison identité par os :
+## les sommets sont exprimés dans l'espace de l'os, comme sous un `BoneAttachment3D`).
+static func _bake_parts(parts: Array[Array]) -> Array:
+	var skin: Skin = Skin.new()
+	var binds: Dictionary[String, int] = {}
+	var verts: PackedVector3Array = []
+	var normals: PackedVector3Array = []
+	var uvs: PackedVector2Array = []
+	var uv2s: PackedVector2Array = []
+	var custom0: PackedFloat32Array = []
+	var custom1: PackedFloat32Array = []
+	var bones: PackedInt32Array = []
+	var weights: PackedFloat32Array = []
+	var indices: PackedInt32Array = []
+	for part: Array in parts:
+		var bone: String = part[0]
+		if not binds.has(bone):
+			binds[bone] = skin.get_bind_count()
+			skin.add_named_bind(bone, Transform3D.IDENTITY)
+		var xf: Transform3D = part[1]
+		var mesh: Mesh = part[2]
+		var mode: int = part[3]
+		var albedo: Color = part[4]
+		var emission: Color = part[5]
+		var rough: float = part[6]
+		var metal: float = part[7]
+		var rough_metal: Vector2 = Vector2(rough, metal)
+		var curvature: float = part[8]
+		var normal_xf: Transform3D = Transform3D(xf.basis.inverse().transposed(), Vector3.ZERO)
+		for s: int in mesh.get_surface_count():
+			var arrays: Array = mesh.surface_get_arrays(s)
+			var pv: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			var n: int = pv.size()
+			if curvature != 0.0:
+				for i: int in n:
+					var v: Vector3 = pv[i]
+					pv[i] = Vector3(v.x, v.y, v.z - curvature * (v.x * v.x + v.y * v.y))
+			var base: int = verts.size()
+			verts.append_array(xf * pv)
+			var pn: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+			if pn.size() == n:
+				normals.append_array(normal_xf * pn)
+			else:
+				var filler: PackedVector3Array = []
+				filler.resize(n)
+				filler.fill(Vector3.UP)
+				normals.append_array(filler)
+			var puv: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV] if arrays[Mesh.ARRAY_TEX_UV] != null else PackedVector2Array()
+			if puv.size() != n:
+				puv.resize(n)
+			uvs.append_array(puv)
+			var chunk2: PackedVector2Array = []
+			chunk2.resize(n)
+			chunk2.fill(rough_metal)
+			uv2s.append_array(chunk2)
+			var c0: PackedFloat32Array = PackedFloat32Array([albedo.r, albedo.g, albedo.b, float(mode)])
+			var c1: PackedFloat32Array = PackedFloat32Array([emission.r, emission.g, emission.b, 0.0])
+			var bw: PackedInt32Array = PackedInt32Array([binds[bone], 0, 0, 0])
+			var ww: PackedFloat32Array = PackedFloat32Array([1.0, 0.0, 0.0, 0.0])
+			for i: int in n:
+				custom0.append_array(c0)
+				custom1.append_array(c1)
+				bones.append_array(bw)
+				weights.append_array(ww)
+			var pi: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+			if pi.is_empty():
+				pi.resize(n)
+				for i: int in n:
+					pi[i] = i
+			var flip: bool = xf.basis.determinant() < 0.0
+			for t: int in range(0, pi.size(), 3):
+				indices.append(base + pi[t])
+				indices.append(base + (pi[t + 2] if flip else pi[t + 1]))
+				indices.append(base + (pi[t + 1] if flip else pi[t + 2]))
+	var mesh_out: ArrayMesh = ArrayMesh.new()
+	if verts.is_empty():
+		return [mesh_out, skin]
+	var out: Array = []
+	out.resize(Mesh.ARRAY_MAX)
+	out[Mesh.ARRAY_VERTEX] = verts
+	out[Mesh.ARRAY_NORMAL] = normals
+	out[Mesh.ARRAY_TEX_UV] = uvs
+	out[Mesh.ARRAY_TEX_UV2] = uv2s
+	out[Mesh.ARRAY_CUSTOM0] = custom0
+	out[Mesh.ARRAY_CUSTOM1] = custom1
+	out[Mesh.ARRAY_BONES] = bones
+	out[Mesh.ARRAY_WEIGHTS] = weights
+	out[Mesh.ARRAY_INDEX] = indices
+	mesh_out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, out, [], {}, PARTS_FORMAT)
+	mesh_out.resource_name = "chr_parts"
+	return [mesh_out, skin]
 
 
 func _apply_head_scale() -> void:
@@ -197,6 +438,7 @@ func _apply_head_scale() -> void:
 
 
 func _build() -> void:
+	_merge = merge_parts
 	armature = Node3D.new()
 	armature.name = "Armature"
 	armature.scale = Vector3.ONE * BASE_SCALE
@@ -234,6 +476,12 @@ func _build() -> void:
 	papers = add_mesh(hand, "Papers", box(Vector3(0.10, 0.14, 0.012)), make_material(Color("#C9D3D8"), 0.5),
 			Vector3(0.0, 0.07, 0.03), Vector3(0, 0, 0))
 	papers.visible = false
+	if _merge:
+		parts_mesh = MeshInstance3D.new()
+		parts_mesh.name = "Parts"
+		parts_mesh.material_override = parts_material
+		skeleton.add_child(parts_mesh)
+		parts_mesh.skeleton = NodePath("..")
 
 	head_scaler = HeadScaleModifier.new()
 	head_scaler.name = "HeadScale"
@@ -243,6 +491,7 @@ func _build() -> void:
 	head_look = _look_modifier("HeadLook", "Head", 1.0)
 	_apply_head_scale()
 	_refresh_meter_spaces()
+	rebuild_parts()
 
 
 func _build_face() -> void:
@@ -251,11 +500,20 @@ func _build_face() -> void:
 	face_mesh.size = Vector2(0.19, 0.23)
 	face_mesh.subdivide_width = 6
 	face_mesh.subdivide_depth = 6
-	face_material = ShaderMaterial.new()
-	face_material.shader = FACE_SHADER
-	face_material.set_shader_parameter(&"atlas", FaceAtlas.get_texture())
-	face_material.set_shader_parameter(&"curvature", 1.2)
-	face = add_mesh(head, "Face", face_mesh, face_material, Vector3(0, -0.045, half.z + 0.004))
+	var plate: ShaderMaterial = ShaderMaterial.new()
+	plate.shader = FACE_SHADER
+	plate.set_shader_parameter(&"atlas", FaceAtlas.get_texture())
+	plate.set_shader_parameter(&"curvature", FACE_CURVATURE)
+	face_material = plate
+	if _merge:
+		parts_material = ShaderMaterial.new()
+		parts_material.shader = PARTS_SHADER
+		parts_material.set_shader_parameter(&"atlas", FaceAtlas.get_texture())
+		parts_material.set_shader_parameter(&"rim_left", GreyboxStyle.WORLD_TEAL_DIM)
+		parts_material.set_shader_parameter(&"rim_right", GreyboxStyle.WORLD_ROSE_DIM)
+		parts_material.set_shader_parameter(&"rim_strength", 0.7 if rim_enabled else 0.0)
+		face_material = parts_material
+	face = add_mesh(head, "Face", face_mesh, plate, Vector3(0, -0.045, half.z + 0.004))
 	face.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	nose = add_mesh(head, "Nose", box(Vector3(0.021, 0.03, 0.016)), skin_material, Vector3(0, -0.05, half.z + 0.008))
 	ear_l = add_mesh(head, "EarL", sphere(0.03), skin_material, Vector3(half.x + 0.004, -0.05, 0.0))

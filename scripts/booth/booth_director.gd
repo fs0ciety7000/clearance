@@ -509,6 +509,8 @@ func _add_armband(actor: PassengerActor) -> void:
 		actor.rig.add_mesh(space, "Armband", band, mat, Vector3(0, 0.12, 0), Vector3.ZERO, Vector3(1.0, 1.6, 1.0))
 	var meter: Node3D = attachment.get_node(^"Space") as Node3D
 	meter.scale = Vector3.ONE / actor.rig.armature.scale
+	# M10 : le brassard rejoint les pièces fusionnées de l'acteur.
+	actor.rig.queue_parts_rebuild()
 
 
 func _on_guard_arrived() -> void:

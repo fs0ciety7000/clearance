@@ -103,7 +103,7 @@ func assign(p_case_id: StringName, serial: int, expression_seed: int) -> void:
 	_visor_app = null
 	_nod_left = 0.0
 	_present_left = 0.0
-	rig.papers.visible = false
+	rig.set_papers_visible(false)
 	expression.paused = false
 	expression.instant = reduce_motion
 	expression.setup(rig.face_material, expression_seed)
@@ -316,9 +316,9 @@ func _on_anim_marker(marker: StringName) -> void:
 				return
 			_documents_slot_fired = true
 		&"papers_show":
-			rig.papers.visible = true
+			rig.set_papers_visible(true)
 		&"papers_hide":
-			rig.papers.visible = false
+			rig.set_papers_visible(false)
 		PassengerAnims.VISOR_OFF:
 			_apply_visor_removed()
 	anim_event.emit(marker)
@@ -327,7 +327,7 @@ func _on_anim_marker(marker: StringName) -> void:
 ## Émet `documents_slot` même si le repère n'a pas été joué (watchdog).
 func force_documents_slot() -> void:
 	_on_anim_marker(PassengerAnims.DOCUMENTS_SLOT)
-	rig.papers.visible = false
+	rig.set_papers_visible(false)
 
 
 func documents_slot_fired() -> bool:
