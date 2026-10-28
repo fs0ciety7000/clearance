@@ -6,6 +6,11 @@
 ## R09, R15–R22, jours 4–10 (GDD §8, NARRATIVE §3–§5 : SC-06 → SC-22,
 ## briefings conditionnels, soirées, avis de recherche). Toutes les
 ## sous-ressources reçoivent un identifiant stable (`_tag_subresources`).
+## Acte II (docs/ACT2.md, D-076 → D-079) : documents Contrat de travail,
+## Laissez-passer de dérive, Attestation d'asile, Ticket de file, champ
+## Firmware NX ; règles R23–R31 ; RuleSets et `DayDef` J11–J20 ; soirée pivot
+## du J10 ; barème de l'Acte II. Le contenu des jours de l'Acte II est dans
+## `tools/build_data_act2.gd` (fabriques statiques).
 ##
 ## Usage (depuis la racine du projet, après `godot --headless --import`) :
 ##   godot --headless --script res://tools/build_data.gd
@@ -29,27 +34,92 @@ const APPEARANCE_DIR: String = "res://data/appearance"
 const ECONOMY_DIR: String = "res://data/economy"
 
 const K := AnomalyType.Kind
+const Act2 := preload("res://tools/build_data_act2.gd")
 const FK := FieldDef.FieldKind
 const CAT := Rule.RuleCategory
 
 ## Noms de famille distinctifs des personnages (NARRATIVE §1, §4 ; LORE §5.3) :
-## jamais tirés pour un passager généré (QA-002). Les noms courants des
-## personnages secondaires (Mensah, Hadid, Duval…) restent tirables : seul leur
-## nom complet est réservé (`reserved_full_names`, calculé depuis les `DayDef`).
+## jamais tirés pour un passager généré (QA-002). QA-022 : s'y ajoutent, calculés
+## depuis les `DayDef`, les noms de famille de **tous** les personnages
+## scénarisés des deux actes (Navarro, Kerr, Sato, Mensah…) et des avis nommés ;
+## `reserved_full_names` (nom complet) reste le filet des noms non réservés.
 const RESERVED_FAMILY_NAMES: PackedStringArray = ["Okonkwo", "Vasquez-Orlov", "Ravel", "Valcourt", "Petrenko",
-		"Whitmore", "Novak", "Montclair", "Achebe-Sörensen", "Moreno-Lind", "Long-Ruban", "Basse-Marée"]
+		"Whitmore", "Novak", "Montclair", "Achebe-Sörensen", "Moreno-Lind", "Long-Ruban", "Basse-Marée",
+		# Acte II (docs/ACT2.md §8.5) : récurrents et le cargo démantelé.
+		"Lindgren", "Beaumont", "Oyelaran-Holm", "Lindqvist-Rey", "Sillage"]
+## QA-022 : noms de famille de figurants ajoutés après les 15 du LORE §5 pour
+## les origines dont la réserve tirable fondait (TYC et HAL : 5 noms sur 15 une
+## fois les personnages réservés ; TER : 8) — 15 noms tirables au moins.
+## Proposition au Lore Master (LORE §5 à compléter).
+const EXTRA_FAMILY_NAMES: Dictionary[StringName, PackedStringArray] = {
+	&"tyc": ["Ostrowski", "Varga", "Lindahl-Moreau", "Kuznetsova", "Abebe", "Rasmussen", "Tanaka-Roy", "Soto-Berg",
+			"Hallorann", "Mendes-Ivers"],
+	&"hal": ["Delaunay", "Ashworth", "Kobayashi", "Sorel", "Vidal-Mori", "Thorne", "Achterberg", "Nakamura",
+			"Castelli", "Hargreave"],
+	&"ter": ["Owusu", "Bello", "Chaudhry", "Kamau", "Sarr", "Mwangi", "Touré"],
+}
 ## Prénoms du foyer de l'agent·e (LORE §6, NARRATIVE §1.2) : jamais générés.
 const RESERVED_HOUSEHOLD_NAMES: PackedStringArray = ["Ilan", "Noa", "Dora"]
+
+## Scripts de données chargés par ce générateur. Un script qui ne s'analyse pas
+## ne bloque pas l'exécution (appels « Nonexistent function », `_build()`
+## interrompu sans bruit) : vérifiés avant toute écriture.
+const DATA_SCRIPTS: PackedStringArray = ["res://tools/build_data_act2.gd"]
+
+## Compte les erreurs moteur et de script (`push_error`, erreurs d'exécution)
+## émises pendant la génération : toute erreur fait échouer le build.
+class ErrorCounter:
+	extends Logger
+	var count: int = 0
+	var _mutex: Mutex = Mutex.new()
+
+	func _log_error(_function: String, _file: String, _line: int, _code: String, _rationale: String,
+			_editor_notify: bool, error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+		if error_type == ERROR_TYPE_WARNING:
+			return
+		_mutex.lock()
+		count += 1
+		_mutex.unlock()
 
 var _failures: int = 0
 ## Jours construits (ordre de construction), pour les noms réservés.
 var _days: Array[DayDef] = []
+## Vrai si `_build()` est allé à son terme (une erreur de script l'interrompt).
+var _completed: bool = false
 
 
 func _init() -> void:
-	_build()
-	print("build_data : %s" % ("OK" if _failures == 0 else "%d échec(s)" % _failures))
-	quit(1 if _failures > 0 else 0)
+	var errors: ErrorCounter = ErrorCounter.new()
+	OS.add_logger(errors)
+	if _data_scripts_ok():
+		_build()
+	OS.remove_logger(errors)
+	var problems: PackedStringArray = []
+	if _failures > 0:
+		problems.append("%d échec(s) de chargement ou d'enregistrement" % _failures)
+	if errors.count > 0:
+		problems.append("%d erreur(s) moteur ou de script" % errors.count)
+	if not _completed:
+		problems.append("génération interrompue")
+	if problems.is_empty():
+		print("build_data : OK")
+		quit(0)
+		return
+	printerr("build_data : ÉCHEC — %s ; données de res://data/ incomplètes ou invalides, voir les erreurs ci-dessus"
+			% ", ".join(problems))
+	quit(1)
+
+
+## Chaque script de `DATA_SCRIPTS` se charge et compile ; sinon `_failures`.
+func _data_scripts_ok() -> bool:
+	var ok: bool = true
+	for path: String in DATA_SCRIPTS:
+		var script: GDScript = load(path) as GDScript
+		if script == null or not script.can_instantiate():
+			push_error("build_data: script de données illisible (erreur d'analyse ?) : %s" % path)
+			_failures += 1
+			ok = false
+	return ok
 
 
 func _build() -> void:
@@ -61,9 +131,12 @@ func _build() -> void:
 	var sets: Array[RuleSet] = _build_rule_sets(rules)
 	_build_days(sets)
 	_build_days_m7(sets)
+	for day: DayDef in Act2.build_days(sets):
+		_save_day(day)
 	_build_economy()
 	_reserve_character_names(pools)
-	assert(docs.size() == 4)
+	assert(docs.size() == 8)
+	_completed = true
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +175,7 @@ func _build_economy() -> void:
 	e.audit_retention = 30
 	e.drift_min_credits = 30
 	e.glory_min_compliance = 0.85
+	Act2.configure_economy(e)
 	_save(e, ECONOMY_DIR, "economy")
 
 
@@ -166,20 +240,21 @@ func _build_name_pools() -> Dictionary[StringName, NamePool]:
 				["Mira", "Ilse", "Anouk", "Yara", "Rosalind", "Elena", "Sabine"],
 				["Tomás", "Dmitri", "Lev", "Bastien", "Kasimir", "Joaquín", "Arkady"],
 				["Noor"],
-				["Vasquez-Orlov", "Brandt", "Kowalczyk", "Moreno-Lind", "Petrenko", "Achebe-Sörensen", "Duval",
-				"Halvorsen", "Navarro", "Ivanova", "Lindqvist-Rey", "Mbeki", "Castellanos", "Novak", "Oyelaran-Holm"]),
+				PackedStringArray(["Vasquez-Orlov", "Brandt", "Kowalczyk", "Moreno-Lind", "Petrenko", "Achebe-Sörensen", "Duval",
+				"Halvorsen", "Navarro", "Ivanova", "Lindqvist-Rey", "Mbeki", "Castellanos", "Novak", "Oyelaran-Holm"])
+				+ PackedStringArray(EXTRA_FAMILY_NAMES[&"tyc"])),
 		_pool(&"hal",
 				["Céleste", "Ophélie", "Margaux", "Adaeze", "Mei", "Isadora", "Philippa"],
 				["Auguste", "Hiro", "Soren", "Valentin", "Corentin", "Kenji", "Aurelio"],
 				["Lin"],
-				["Valcourt", "Hsu", "Aurel", "Delacroix-Tan", "Whitmore", "Okafor", "Langlois", "Sato", "Ferreira",
-				"Lindgren", "Beaumont", "Choi", "Ravel", "Montclair", "Adeyemi"]),
+				PackedStringArray(["Valcourt", "Hsu", "Aurel", "Delacroix-Tan", "Whitmore", "Okafor", "Langlois", "Sato", "Ferreira",
+				"Lindgren", "Beaumont", "Choi", "Ravel", "Montclair", "Adeyemi"]) + PackedStringArray(EXTRA_FAMILY_NAMES[&"hal"])),
 		_pool(&"ter",
 				["Amara", "Fatou", "Leila", "Ana-Lucía", "Priya", "Inès", "Ngozi", "Samira"],
 				["Rahul", "Mateus", "Kwame", "Tariq", "Emeka", "Bilal", "Diego"],
 				[],
-				["Diallo", "Ramanathan", "Haddad", "Okonkwo", "Silva", "Mensah", "Rahman", "Benali", "Gutiérrez",
-				"Abara", "Nair", "Mahmoud", "Tembo", "Quispe", "Ferhat"]),
+				PackedStringArray(["Diallo", "Ramanathan", "Haddad", "Okonkwo", "Silva", "Mensah", "Rahman", "Benali", "Gutiérrez",
+				"Abara", "Nair", "Mahmoud", "Tembo", "Quispe", "Ferhat"]) + PackedStringArray(EXTRA_FAMILY_NAMES[&"ter"])),
 		# M7 : LORE §5.4–§5.6 (prénoms répartis F / M / épicènes).
 		_pool(&"cer",
 				["Zuri", "Oksana", "Ilka", "Suvi", "Nadia", "Linnea"],
@@ -350,6 +425,8 @@ func _build_documents() -> Dictionary[StringName, DocumentTypeDef]:
 		_field(&"issuer", FK.ENUM, &"document.issuer_id", false),
 		# M7 : implants déclarés (R15/R16), sceau (R20), bande MRZ (R21).
 		_field(&"implants", FK.LIST, &"implants"),
+		# Acte II (R27) : mise à jour d'un shunt NX- (vide sans shunt).
+		_field(&"firmware", FK.DATE, &"firmware_date"),
 		_field(&"seal", FK.ENUM, &"document.seal_id"),
 		_field(&"mrz", FK.ID_CODE, &"document.mrz"),
 	]
@@ -405,6 +482,57 @@ func _build_documents() -> Dictionary[StringName, DocumentTypeDef]:
 		_field(&"seal", FK.ENUM, &"document.seal_id"),
 	]
 	result[waiver.id] = waiver
+
+	# Acte II (docs/ACT2.md B19, LORE §9 « documents d'extension »).
+	var contract: DocumentTypeDef = _doc(&"work_contract", &"bureau_contrats", &"seal_corporate",
+			"CT-{EMP}-NNNN", Vector2i(90, 1095), &"ACCENT_CYAN")
+	contract.fields = [
+		_field(&"serial", FK.ID_CODE, &"document.serial"),
+		_field(&"family_name", FK.TEXT, &"family_name"),
+		_field(&"given_name", FK.TEXT, &"given_name"),
+		_field(&"citizen_id", FK.ID_CODE, &"citizen_id"),
+		_field(&"employer", FK.TEXT, &"employer"),
+		_field(&"contract_code", FK.ID_CODE, &"employer_code"),
+		_field(&"post", FK.ENUM, &"post"),
+		_field(&"issue_date", FK.DATE, &"document.issue_date"),
+		_field(&"expiry_date", FK.DATE, &"document.expiry_date"),
+		_field(&"seal", FK.ENUM, &"document.seal_id"),
+	]
+	result[contract.id] = contract
+	var drift_pass: DocumentTypeDef = _doc(&"drift_pass", &"capitainerie_soute", &"seal_drift_ink",
+			"LD-NNNN", Vector2i(30, 365), &"ACCENT_MAGENTA")
+	drift_pass.fields = [
+		_field(&"serial", FK.ID_CODE, &"document.serial"),
+		_field(&"vessel", FK.TEXT, &"vessel"),
+		_field(&"family_name", FK.TEXT, &"family_name"),
+		_field(&"given_name", FK.TEXT, &"given_name"),
+		_field(&"birth_date", FK.DATE, &"birth_date"),
+		_field(&"issue_date", FK.DATE, &"document.issue_date"),
+		_field(&"expiry_date", FK.DATE, &"document.expiry_date"),
+		_field(&"seal", FK.ENUM, &"document.seal_id"),
+	]
+	result[drift_pass.id] = drift_pass
+	var asylum: DocumentTypeDef = _doc(&"asylum", &"bureau_continuite", &"seal_asylum",
+			"AA-NNNN", Vector2i(90, 365), &"TEXT_SECONDARY")
+	asylum.fields = [
+		_field(&"serial", FK.ID_CODE, &"document.serial"),
+		_field(&"family_name", FK.TEXT, &"family_name"),
+		_field(&"given_name", FK.TEXT, &"given_name"),
+		_field(&"birth_date", FK.DATE, &"birth_date"),
+		_field(&"citizen_id", FK.ID_CODE, &"citizen_id"),
+		_field(&"zone", FK.TEXT, &"origin_sector"),
+		_field(&"issue_date", FK.DATE, &"document.issue_date"),
+		_field(&"expiry_date", FK.DATE, &"document.expiry_date"),
+		_field(&"seal", FK.ENUM, &"document.seal_id"),
+	]
+	result[asylum.id] = asylum
+	var ticket: DocumentTypeDef = _doc(&"queue_ticket", &"hall_guichets", &"",
+			"TF-NNNN", Vector2i(1, 1), &"TEXT_SECONDARY")
+	ticket.fields = [
+		_field(&"serial", FK.ID_CODE, &"document.serial", false),
+		_field(&"presented_at", FK.TIME, &"document.presented_at"),
+	]
+	result[ticket.id] = ticket
 
 	for doc: DocumentTypeDef in result.values():
 		for i: int in doc.fields.size():
@@ -522,6 +650,43 @@ func _build_rules() -> Dictionary[StringName, Rule]:
 	rules.append(_rule(MrzConsistentRule.new(), &"r_mrz_valid", CAT.IDENTITY, 2))
 	rules.append(_rule(WantedRule.new(), &"r_wanted_detain", CAT.IDENTITY, 3))
 
+	# --- Acte II : R23–R31 (docs/ACT2.md §2.4) ---
+	rules.append(_rule(AirQuotaRule.new(), &"r_air_quota", CAT.SPECIAL, 1))
+	var r24: RequireDocumentRule = RequireDocumentRule.new()
+	r24.document_id = &"work_contract"
+	r24.applies_to_purposes = [Passenger.PURPOSE_WORK]
+	r24.require_valid = true
+	rules.append(_rule(r24, &"r_contract_required", CAT.DOCUMENTS, 2))
+	var r25: ContractConsistentRule = ContractConsistentRule.new()
+	r25.employer_codes = Act2.EMPLOYER_CODES.duplicate()
+	r25.posts = Act2.CONTRACT_POSTS.duplicate()
+	rules.append(_rule(r25, &"r_contract_consistent", CAT.DOCUMENTS, 2))
+	var r26: DriftPassRule = DriftPassRule.new()
+	r26.document_id = &"drift_pass"
+	r26.applies_to_faction_ids = [&"drv"]
+	r26.require_valid = true
+	r26.registered_vessels = Act2.registered_vessels()
+	rules.append(_rule(r26, &"r_drift_pass", CAT.DOCUMENTS, 2))
+	var r27: DocumentNotExpiredRule = DocumentNotExpiredRule.new()
+	r27.document_id = &"id_card"
+	r27.field_path = &"firmware_date"
+	r27.max_age_days = 90
+	r27.detected_anomalies = [K.OUTDATED_FIRMWARE]
+	rules.append(_rule(r27, &"r_nx_firmware", CAT.IDENTITY, 2))
+	var r28: RequireDocumentRule = RequireDocumentRule.new()
+	r28.document_id = &"asylum"
+	r28.applies_to_faction_ids = [&"ter"]
+	r28.applies_to_classes = [&"C-5"]
+	r28.require_valid = true
+	rules.append(_rule(r28, &"r_asylum_required", CAT.DOCUMENTS, 2))
+	rules.append(_rule(CurfewRule.new(), &"r_curfew", CAT.PURPOSE, 2))
+	rules.append(_rule(RevokedIdRule.new(), &"r_revoked_ids", CAT.IDENTITY, 2))
+	var r31: FactionBannedRule = FactionBannedRule.new()
+	r31.banned_faction_ids = [&"ter"]
+	r31.exempt_purposes = []
+	r31.exempt_posts = [&"post_recycleur", &"post_soins", &"post_hydroponie"]
+	rules.append(_rule(r31, &"r_ter_closed", CAT.FACTION, 2))
+
 	var result: Dictionary[StringName, Rule] = {}
 	for rule: Rule in rules:
 		_save(rule, RULES_DIR, "rule_%s" % String(rule.id).trim_prefix("r_"))
@@ -566,6 +731,19 @@ func _build_rule_sets(rules: Dictionary[StringName, Rule]) -> Array[RuleSet]:
 		[&"r_seals_valid", &"r_mrz_valid"],
 		[&"r_wanted_detain"],
 	]
+	# Acte II : J11–J20 (docs/ACT2.md §2.1 ; J19 et J20 sans règle nouvelle).
+	news.append_array([
+		[&"r_air_quota"],
+		[&"r_contract_required", &"r_contract_consistent"],
+		[&"r_drift_pass"],
+		[&"r_nx_firmware"],
+		[&"r_asylum_required"],
+		[&"r_curfew"],
+		[&"r_revoked_ids"],
+		[&"r_ter_closed"],
+		[],
+		[],
+	])
 	var cumulative: Array[StringName] = d3.duplicate()
 	for i: int in news.size():
 		var new_ids: Array[StringName] = []
@@ -738,7 +916,8 @@ func _m7_day(n: int, rule_set: RuleSet, duration: float, count: int, count_weigh
 	d.luciole_rate = luciole
 	d.bribe_amounts = Vector2i(10, 20) if n <= 6 else Vector2i(20, 30)
 	d.detain_enabled = n >= 7
-	d.has_evening = n < 10
+	# D-076 : le J10 a une soirée (pivot « Nuit des vannes »).
+	d.has_evening = n <= 10
 	d.rulebook_tabs = tabs
 	return d
 
@@ -1134,6 +1313,8 @@ func _day10(rs: RuleSet, factions: Dictionary[StringName, float]) -> DayDef:
 		_family("msg_ilan_day10_supported", _all([&"ilan_supported"])),
 		_family("msg_ilan_day10"),
 	]
+	# Acte II (D-076) : soirée pivot « La Nuit des vannes » (docs/ACT2.md §1.2, §5.3).
+	d.evening_events = Act2.pivot_events()
 	return d
 
 
@@ -1228,6 +1409,24 @@ func _wanted(id: StringName, scripted_id: StringName, index: int, given: String,
 ## avis de recherche dont le nom de famille est tirable. Tri : déterministe.
 func _reserve_character_names(pools: Dictionary[StringName, NamePool]) -> void:
 	var full_names: Dictionary[String, bool] = {}
+	# QA-022 : le nom de famille de **chaque** personnage scénarisé des deux
+	# actes (identité présentée et vraie identité) et de chaque avis de
+	# recherche nommé est réservé, pas seulement son nom complet.
+	var character_families: Dictionary[String, bool] = {}
+	for name: String in RESERVED_FAMILY_NAMES:
+		character_families[name] = true
+	for day: DayDef in _days:
+		for scripted: ScriptedCaseDef in day.scripted_cases:
+			for family_value: Variant in [scripted.passenger_overrides.get(&"family_name", ""),
+					scripted.truth_overrides.get(&"family_name", "")]:
+				if not str(family_value).is_empty():
+					character_families[str(family_value)] = true
+		for notice: WantedNoticeDef in day.wanted_notices:
+			if not notice.family_name.is_empty():
+				character_families[notice.family_name] = true
+	var reserved_families: Array[String] = []
+	reserved_families.assign(character_families.keys())
+	reserved_families.sort()
 	for day: DayDef in _days:
 		for scripted: ScriptedCaseDef in day.scripted_cases:
 			var family: String = str(scripted.passenger_overrides.get(&"family_name", ""))
@@ -1243,7 +1442,7 @@ func _reserve_character_names(pools: Dictionary[StringName, NamePool]) -> void:
 	for id: StringName in pools:
 		var pool: NamePool = pools[id]
 		var reserved: PackedStringArray = []
-		for name: String in RESERVED_FAMILY_NAMES:
+		for name: String in reserved_families:
 			if pool.family_names.has(name):
 				reserved.append(name)
 		for name: String in RESERVED_HOUSEHOLD_NAMES:

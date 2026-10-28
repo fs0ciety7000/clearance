@@ -6,6 +6,9 @@
 ## Déplaçable (glisser), zoomable (molette / double-clic) et mis au premier plan
 ## par le `Workbench`, qui le contraint au plan de travail. En Mode Inspection
 ## le document est figé et ses champs deviennent sélectionnables.
+## Acte II : document **d'un tiers** (`DocumentInstance.third_party`, SC-27)
+## signalé par une puce « TIERS » (jamais comparé aux papiers du porteur) ;
+## document sans sceau (ticket de file) : pas de sceau dessiné.
 class_name DocumentView
 extends PanelContainer
 
@@ -29,6 +32,8 @@ const COMPACT_KINDS: Array[FieldDef.FieldKind] = [
 const WIDE_FIELD_IDS: Array[StringName] = [&"employer", &"origin_sector", &"mrz"]
 const MRZ_FIELD_ID: StringName = &"mrz"
 const SERIAL_PATH: StringName = &"document.serial"
+## Champ renommé « TITULAIRE » sur un document d'un tiers (QA-028).
+const HOLDER_PATH: StringName = &"family_name"
 ## M7 — marque « luciole » (code 1) : petit dessin magenta au coin bas-droit,
 ## lisible à la loupe (`DS.DOC_ZOOM`), discret à l'échelle 1.
 const MARK_LUCIOLE: StringName = &"luciole"
@@ -141,6 +146,18 @@ func get_document_id() -> StringName:
 	return instance.get_document_id() if instance != null else &""
 
 
+## Hauteur de l'« onglet » (repère local, échelle 1) : bandeau émetteur + titre,
+## seule partie visible d'un document rangé derrière un autre dans une pile
+## du plan de travail (QA-020).
+func tab_height() -> float:
+	var top: float = DS.SPACE_4
+	var box: StyleBox = get_theme_stylebox(&"panel")
+	if box != null:
+		top = box.get_margin(SIDE_TOP)
+	var header: float = _header.get_combined_minimum_size().y if _header != null else float(DS.SPACE_10)
+	return top + header + DS.SPACE_3
+
+
 ## Marque `mark_id` affichée (null si le document ne la porte pas).
 func get_mark_item(mark_id: StringName) -> DocMarkView:
 	for item: DocMarkView in mark_items:
@@ -226,6 +243,11 @@ func _build_header(def: DocumentTypeDef, show_serial: bool) -> Control:
 	title.uppercase = true
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	titles.add_child(title)
+	if instance.third_party:
+		var third: PanelContainer = ScreenBase.chip(UiText.t("doc_third_party", "DOCUMENT D'UN TIERS"), UiIcon.Kind.INFO, DS.TEXT_SECONDARY)
+		third.name = "ThirdParty"
+		third.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		titles.add_child(third)
 	var side: VBoxContainer = VBoxContainer.new()
 	side.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	side.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -236,16 +258,21 @@ func _build_header(def: DocumentTypeDef, show_serial: bool) -> Control:
 		serial.text = instance.serial
 		serial.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		side.add_child(serial)
-	var seal: UiIcon = UiIcon.make(UiIcon.seal_kind(instance.seal_id), _tint, DS.ICON_L + DS.SPACE_2)
-	seal.size_flags_horizontal = Control.SIZE_SHRINK_END
-	side.add_child(seal)
+	if instance.seal_id != &"":
+		var seal: UiIcon = UiIcon.make(UiIcon.seal_kind(instance.seal_id), _tint, DS.ICON_L + DS.SPACE_2)
+		seal.size_flags_horizontal = Control.SIZE_SHRINK_END
+		side.add_child(seal)
 	_header = header
 	return header
 
 
 func _make_field(field: FieldDef, portrait_provider: Callable) -> DocFieldView:
 	var item: DocFieldView = DocFieldView.new()
-	item.setup(get_document_id(), field, instance.get_value(field.id), portrait_provider)
+	var label_text: String = ""
+	if instance.third_party and field.truth_path == HOLDER_PATH:
+		# Document d'un tiers (SC-27) : le nom est celui du titulaire, pas du porteur.
+		label_text = UiText.t("field_holder", "Titulaire")
+	item.setup(get_document_id(), field, instance.get_value(field.id), portrait_provider, label_text)
 	item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	item.picked.connect(_on_item_picked)
 	if field.kind != FieldDef.FieldKind.PORTRAIT:

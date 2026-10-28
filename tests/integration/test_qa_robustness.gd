@@ -152,3 +152,33 @@ func test_temporary_setting_is_not_persisted_by_the_pause() -> void:
 	assert_false(persisted, "valeur de session non persistée")
 	assert_true(Settings.reduce_motion, "toujours active pour la session")
 	DirAccess.remove_absolute(path)
+
+
+## Rechargement de la scène en plein shift (`reload_current_scene` : la scène
+## sort de l'arbre avant d'être libérée) : le booth n'émet plus rien sur
+## l'`EventBus` (minuteurs, repères d'animation), l'UI sortie de l'arbre ne
+## touche plus à `get_tree()` (`workbench.gd` : `process_frame` sur null).
+func test_booth_emits_nothing_once_the_scene_left_the_tree() -> void:
+	scene.briefing.close()
+	_ui().request_next_case()
+	var arrived: bool = await wait_until(func() -> bool: return scene.booth.get_desk_actor() != null \
+			and scene.booth.get_desk_actor().state == PassengerActor.State.AT_DESK, 6.0)
+	assert_true(arrived, "passager au guichet")
+	var actor: PassengerActor = scene.booth.get_desk_actor()
+	assert_false(actor.documents_slot_fired(), "papiers pas encore présentés")
+	var emitted: Array[StringName] = []
+	var spy: Callable = func(case_id: StringName) -> void: emitted.append(case_id)
+	EventBus.documents_presented.connect(spy)
+	EventBus.passenger_departed.connect(spy)
+	remove_child(scene)
+	# Minuteur de présentation (0,3 s) et repère d'animation tardif.
+	await wait_seconds(BoothDirector.PRESENT_DELAY_SEC + 0.3)
+	actor.force_documents_slot()
+	await wait_process_frames(2)
+	EventBus.documents_presented.disconnect(spy)
+	EventBus.passenger_departed.disconnect(spy)
+	assert_eq(emitted, [] as Array[StringName], "aucune émission du booth hors de l'arbre")
+	# L'UI sortie de l'arbre reste sûre si elle reçoit encore des documents.
+	_ui().workbench.present(_ui().current_case.documents, Callable())
+	assert_true(_ui().workbench.layout_pending, "mise en page reportée au retour dans l'arbre")
+

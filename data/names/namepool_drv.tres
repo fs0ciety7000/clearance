@@ -9,5 +9,5 @@ given_names_f = PackedStringArray("Sefa", "Lumi", "Tamsin", "Ysolde", "Ezri", "W
 given_names_m = PackedStringArray("Orin", "Pell", "Corvo", "Brin", "Mott")
 given_names_x = PackedStringArray("Kesh", "Nim", "Ashe", "Halo")
 family_names = PackedStringArray("Long-Ruban", "Sillage", "Pierre-Bleue", "Nadir", "Vasque", "Heliodore", "Mainsoleil", "Corail-9", "Basse-Marée", "Tessaride", "Cendre", "Kalliope", "Lointain", "Saint-Orbe", "Varech")
-reserved_names = PackedStringArray("Long-Ruban", "Basse-Marée")
+reserved_names = PackedStringArray("Basse-Marée", "Long-Ruban", "Sillage")
 reserved_full_names = PackedStringArray()

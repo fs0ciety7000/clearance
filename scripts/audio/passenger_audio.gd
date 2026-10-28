@@ -111,7 +111,9 @@ func play_breath(cue: StringName) -> void:
 
 
 func _play_on(e: AudioStreamPlayer3D, cue: StringName, pitch: float = 1.0) -> void:
-	if e == null or not _audible():
+	# QA-025 : un acteur sorti de l'arbre (rechargement de scène pendant une
+	# marche, repère d'animation tardif) ne joue rien.
+	if e == null or not e.is_inside_tree() or not _audible():
 		return
 	var stream: AudioStream = AudioCueBank.stream_of(cue)
 	if stream == null:
@@ -126,7 +128,7 @@ func _play_on(e: AudioStreamPlayer3D, cue: StringName, pitch: float = 1.0) -> vo
 
 ## Joue une réplique (coupe la précédente : jamais deux barks à la fois).
 func say(stream: AudioStream, line_key: String = "") -> void:
-	if voice == null or stream == null:
+	if voice == null or stream == null or not voice.is_inside_tree():
 		return
 	voice.stop()
 	voice.stream = stream

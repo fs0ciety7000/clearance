@@ -14,7 +14,14 @@
 ## 5. signalement valide d'un porteur du code 1 (`luciole_report`, NARRATIVE
 ##    §4.9) : `luciole_reported_at_booth`, et `lucioles_trust −2` / `loyalty +1`
 ##    une seule fois (pas de cumul avec le 4) ; un cas scénarisé qui définit
-##    `flags_on_detain` (SC-13) garde ses drapeaux à la place de ces jauges.
+##    `flags_on_detain` (SC-13) garde ses drapeaux à la place de ces jauges ;
+## 6. Acte II : contexte du shift (`contexts` : `quota_reached`,
+##    `after_curfew`, `overrun`) pour les `CaseEffectDef.context` ; entrée
+##    imputée (`overrun`) → `quota_overrun +1` et `suspicion +1` à chaque 3ᵉ
+##    dépassement (D-077) ; `trust_on_breach` faux (`DayDef`, Acte II) : un
+##    Luciole généré approuvé en infraction ne donne plus de confiance ; un
+##    Brûlant (SC-47, `password_grants_trust` faux) ne donne jamais de
+##    confiance pour la phrase de passe (`flags_on_password` seuls).
 ## Résultat : valeurs **absolues** `{drapeau: valeur}` à poser dans le
 ## `GameState` (`true` pour un delta 0, sinon valeur actuelle + deltas).
 class_name CaseConsequences
@@ -30,11 +37,14 @@ const AUDIT_DAY: int = 9
 const PASSWORD_TRUST: int = 2
 ## Signalement valide au guichet (NARRATIVE §4.9).
 const FLAG_REPORTED_AT_BOOTH: StringName = &"luciole_reported_at_booth"
+## Acte II (R23) : dépassements cumulés du quota ; 1 point de suspicion tous les 3.
+const FLAG_QUOTA_OVERRUN: StringName = &"quota_overrun"
+const OVERRUNS_PER_SUSPICION: int = 3
 
 
 static func compute(scripted: ScriptedCaseDef, case: Case, verdict: VerdictKind.Kind, had_violations: bool,
 		password_answered: bool, day_number: int, flags: Dictionary[StringName, Variant],
-		luciole_report: bool = false) -> Dictionary[StringName, Variant]:
+		luciole_report: bool = false, contexts: Array[StringName] = [], trust_on_breach: bool = true) -> Dictionary[StringName, Variant]:
 	var changes: Dictionary[StringName, Variant] = {}
 	if scripted != null:
 		if scripted.sets_flag != &"":
@@ -46,13 +56,13 @@ static func compute(scripted: ScriptedCaseDef, case: Case, verdict: VerdictKind.
 			table = scripted.flags_on_detain if not scripted.flags_on_detain.is_empty() else scripted.flags_on_deny
 		add_all(changes, flags, table)
 		for effect: CaseEffectDef in scripted.extra_effects:
-			if effect != null and effect.applies(verdict, flags):
+			if effect != null and effect.applies(verdict, flags, contexts):
 				add_all(changes, flags, effect.flags)
 	if case != null:
 		for item: SlippedItem in case.slipped_items:
 			add_all(changes, flags, item.effects_for(verdict, item.final_decision()))
 		if scripted == null and case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE):
-			if verdict == VerdictKind.Kind.APPROVE and had_violations:
+			if verdict == VerdictKind.Kind.APPROVE and had_violations and trust_on_breach:
 				add(changes, flags, FLAG_TRUST, 1)
 			elif verdict == VerdictKind.Kind.DETAIN and not luciole_report:
 				add(changes, flags, FLAG_TRUST, -2)
@@ -63,12 +73,37 @@ static func compute(scripted: ScriptedCaseDef, case: Case, verdict: VerdictKind.
 			add(changes, flags, FLAG_TRUST, -2)
 			add(changes, flags, FLAG_LOYALTY, 1)
 	if password_answered:
-		if not FlagCondition.is_flag_true(flags, FLAG_PASSWORD) and not changes.has(FLAG_PASSWORD):
+		var grants: bool = scripted == null or scripted.password_grants_trust
+		if scripted != null:
+			add_all(changes, flags, scripted.flags_on_password)
+		if grants and not FlagCondition.is_flag_true(flags, FLAG_PASSWORD) and not changes.has(FLAG_PASSWORD):
 			changes[FLAG_PASSWORD] = true
 			add(changes, flags, FLAG_TRUST, 1)
 		if day_number == AUDIT_DAY:
 			add(changes, flags, FLAG_SUSPICION, 1)
+	if contexts.has(CaseEffectDef.CONTEXT_OVERRUN):
+		add(changes, flags, FLAG_QUOTA_OVERRUN, 1)
+		if SaveService.as_int(changes[FLAG_QUOTA_OVERRUN]) % OVERRUNS_PER_SUSPICION == 0:
+			add(changes, flags, FLAG_SUSPICION, 1)
 	return changes
+
+
+## Acte II — contexte du shift d'un verdict (partagé par le `DayController` et
+## le `DaySimulator`) : quota atteint, entrée imputée, ticket présenté après le
+## couvre-feu.
+static func contexts_for(day: DayDef, case: Case, result: CaseResult) -> Array[StringName]:
+	var contexts: Array[StringName] = []
+	if result.quota_full:
+		contexts.append(CaseEffectDef.CONTEXT_QUOTA_REACHED)
+	if result.quota_overrun:
+		contexts.append(CaseEffectDef.CONTEXT_OVERRUN)
+	if day != null and day.rule_set != null:
+		for rule: Rule in day.rule_set.rules:
+			var curfew: CurfewRule = rule as CurfewRule
+			if curfew != null and curfew.is_after_curfew(case):
+				contexts.append(CaseEffectDef.CONTEXT_AFTER_CURFEW)
+				break
+	return contexts
 
 
 ## Ajoute une table `{drapeau: delta}` (clés `StringName` ou textes).

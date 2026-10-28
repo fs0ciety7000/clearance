@@ -80,6 +80,20 @@ func select(ref: FieldRef) -> Action:
 	return Action.REQUESTED
 
 
+## Acte II : paire demandée hors sélection A → B (lien suggéré par le scanner
+## partiel, confirmé d'un clic). Faux si la paire est déjà demandée.
+func request_pair(p: FieldRef, q: FieldRef) -> bool:
+	if p == null or q == null:
+		return false
+	var key: String = pair_key(p, q)
+	if _requested.has(key):
+		return false
+	_requested[key] = true
+	last_a = p
+	last_b = q
+	return true
+
+
 ## Enregistre un résultat ; renvoie vrai s'il correspond à une paire demandée.
 func receive(result: Discrepancy) -> bool:
 	if result == null or result.a == null or result.b == null:

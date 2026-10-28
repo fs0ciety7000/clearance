@@ -1,4 +1,5 @@
-## EventBus — catalogue des signaux globaux (ARCHITECTURE §7, rév. 2).
+## EventBus — catalogue des signaux globaux (ARCHITECTURE §7, rév. 3.4 : 34 signaux,
+## émetteurs / écouteurs réels).
 ##
 ## Ne déclare que des signaux typés : aucun état, aucune méthode métier.
 ## Convention : passé pour un fait (`*_started`, `*_stamped`), `*_requested`
@@ -28,6 +29,16 @@ signal day_phase_changed(phase: DayPhase.Kind, case_id: StringName)
 signal wanted_notices_published(notices: Array[WantedNotice])
 ## M7 — DayController (après le n-ième cas, `DayDef.hall_announcements`) → UI, audio.
 signal hall_announced(text_key: String)
+## Acte II — DayController (début du jour, après chaque tampon) → barre d'état
+## (compteur `QUOTA used/max`, « QUOTA ATTEINT » quand `used >= maximum`).
+## `maximum = 0` : pas de quota ce jour.
+signal quota_changed(used: int, maximum: int)
+## Acte II — DayController (après `day_started`) → Rulebook (onglet Révocations, R30).
+signal revocations_published(entries: Array[RevokedEntry])
+## Acte II — DayController (aux documents, si un scanner partiel est branché)
+## → plan de travail : liens suggérés (pointillés) à confirmer d'un clic
+## (`discrepancy_check_requested`). `source` : `acv` (Consortium) ou `luciole`.
+signal scanner_suggested(case_id: StringName, links: Array[Discrepancy], source: StringName)
 
 # --- Passager -----------------------------------------------------------------
 
@@ -39,7 +50,8 @@ signal case_presented(case: Case)
 signal passenger_arrived(case_id: StringName)
 ## BoothDirector (ou DayController sur timeout) → UI documents, InspectionSession.
 signal documents_presented(case_id: StringName)
-## UI → InspectionSession.
+## UI (`ComparisonUI`, document mis au premier plan) → aucun écouteur à ce
+## jour (diagnostic, tests ; réservé au focus des sons / du booth).
 signal document_focused(doc: DocumentInstance)
 ## InspectionSession / dialogue → BoothDirector.
 signal passenger_reaction_triggered(reaction: PassengerReaction.Kind)

@@ -16,11 +16,17 @@
 ##   est une DISCORDANCE : la personne est recherchée) ; marque au coin d'un
 ##   document ↔ entrée du bulletin « Symboles subversifs » (onglet ouvert ce
 ##   jour, J7+) : DISCORDANCE si la marque est celle du symbole (§4.9) ;
+## - Acte II : entrée de l'onglet Révocations ↔ N° ID (DISCORDANCE si égal) ;
+##   compteur QUOTA ↔ R23 (règle de contexte) ; Firmware NX ↔ date du jour
+##   (DISCORDANCE à partir de 90 jours, R27) ; un document d'un tiers (SC-27)
+##   n'est jamais comparé à ceux du porteur ;
 ## - tout le reste → INCOMPARABLE (aucune pénalité).
 class_name DiscrepancyChecker
 extends RefCounted
 
 const EXPIRY_PATH: StringName = &"document.expiry_date"
+## Acte II (R27) : date de mise à jour d'un shunt `NX-` (carte d'identité).
+const FIRMWARE_PATH: StringName = &"firmware_date"
 
 
 static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Discrepancy:
@@ -56,6 +62,8 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 	if a.is_today() or b.is_today():
 		var dated: FieldRef = b if a.is_today() else a
 		var field: FieldDef = case.get_field_def(dated)
+		if field != null and field.truth_path == FIRMWARE_PATH:
+			return _check_firmware(case, dated, ctx, result)
 		if field == null or field.truth_path != EXPIRY_PATH:
 			return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 		var expiry: int = case.get_value(dated)
@@ -63,6 +71,11 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 			return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_EXPIRED)
 		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
 
+	# Acte II : onglet Révocations ↔ N° ID.
+	if a.is_revoked() or b.is_revoked():
+		return _check_revoked(case, a if a.is_revoked() else b, b if a.is_revoked() else a, ctx, result)
+	if a.is_quota_counter() or b.is_quota_counter():
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 	# M7 : avis de recherche ↔ visage / nom.
 	if a.is_wanted() or b.is_wanted():
 		return _check_wanted(case, a if a.is_wanted() else b, b if a.is_wanted() else a, ctx, result)
@@ -115,6 +128,8 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 	var field_b: FieldDef = case.get_field_def(b)
 	if field_a.truth_path == &"" or field_a.truth_path != field_b.truth_path:
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+	if case.get_document(a.document_id).third_party != case.get_document(b.document_id).third_party:
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 	if FieldValue.equals(case.get_value(a), case.get_value(b)):
 		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
 	return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_MISMATCH)
@@ -141,6 +156,10 @@ static func _check_symbol(case: Case, symbol_ref: FieldRef, other: FieldRef, ctx
 
 
 static func _is_resolvable(case: Case, ref: FieldRef, ctx: RuleContext) -> bool:
+	if ref.is_revoked():
+		return ctx != null and ctx.find_revoked(ref.field_id) != null
+	if ref.is_quota_counter():
+		return ctx != null
 	if ref.is_wanted():
 		return ctx != null and ctx.find_wanted(ref.field_id) != null
 	if ref.is_passenger_face():
@@ -175,6 +194,35 @@ static func _check_wanted(case: Case, wanted_ref: FieldRef, other: FieldRef, ctx
 	if matched:
 		return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_WANTED_MATCH)
 	return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_WANTED_NO_MATCH)
+
+
+## Acte II : entrée de l'onglet Révocations ↔ N° ID d'un document.
+static func _check_revoked(case: Case, revoked_ref: FieldRef, other: FieldRef, ctx: RuleContext,
+		result: Discrepancy) -> Discrepancy:
+	var entry: RevokedEntry = ctx.find_revoked(revoked_ref.field_id)
+	var field: FieldDef = case.get_field_def(other)
+	if entry == null or field == null or field.truth_path != &"citizen_id":
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+	if FieldValue.equals(case.get_value(other), entry.citizen_id):
+		return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_REVOKED_MATCH)
+	return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_REVOKED_NO_MATCH)
+
+
+## Acte II (R27) : Firmware NX ↔ date du jour, discordant si la règle active
+## d'ancienneté du firmware le juge périmé ; champ vide ou règle inactive :
+## INCOMPARABLE.
+static func _check_firmware(case: Case, dated: FieldRef, ctx: RuleContext, result: Discrepancy) -> Discrepancy:
+	var value: Variant = case.get_value(dated)
+	if not value is int or ctx == null or ctx.rule_set == null:
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+	for rule: Rule in ctx.rule_set.rules:
+		var age_rule: DocumentNotExpiredRule = rule as DocumentNotExpiredRule
+		if age_rule == null or age_rule.field_path != FIRMWARE_PATH or age_rule.document_id != dated.document_id:
+			continue
+		if age_rule.is_expired(case.get_document(dated.document_id), ctx.today):
+			return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_EXPIRED)
+		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
+	return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_RULE_INACTIVE)
 
 
 ## MRZ ↔ composante de la même carte ; null si la paire ne concerne pas la MRZ.

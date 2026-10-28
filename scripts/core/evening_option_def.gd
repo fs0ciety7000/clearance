@@ -13,8 +13,17 @@ extends Resource
 
 ## Noa tombe malade (bio-scan sauté).
 const HOUSEHOLD_NOA_SICK: StringName = &"noa_sick"
-## Ilan est « mis·e en attente » (dénoncé·e) : PERDU motivé.
+## Ilan est « mis·e en attente » (dénoncé·e, vannes échouées) : vivant·e,
+## absent·e du foyer, libérable (Acte II : distinct de PERDU).
 const HOUSEHOLD_ILAN_DETAINED: StringName = &"ilan_detained"
+## Acte II : Ilan libéré·e contre caution (rentre MALADE).
+const HOUSEHOLD_ILAN_RELEASED: StringName = &"ilan_released"
+## Acte II : Ilan caché·e / parti·e dans la Soute (ABSENT · DANS LA SOUTE).
+const HOUSEHOLD_ILAN_SOUTE: StringName = &"ilan_soute"
+## Acte II : Ilan rentre de la Soute (MALADE).
+const HOUSEHOLD_ILAN_BACK: StringName = &"ilan_back"
+## Acte II : Dora rentre à Tycho (ABSENT · PARTIE À TYCHO, vivante).
+const HOUSEHOLD_DORA_TYCHO: StringName = &"dora_tycho"
 
 @export var id: StringName = &""
 @export var label_key: String = ""
@@ -27,3 +36,9 @@ const HOUSEHOLD_ILAN_DETAINED: StringName = &"ilan_detained"
 @export var household: StringName = &""
 @export var condition: FlagCondition = null
 @export var default_rank: int = 0
+## Acte II : fin de campagne immédiate si l'option est retenue (« Embarquer »
+## au J10 → `f6_drift`, B30) ; vide sinon.
+@export var ends_campaign: StringName = &""
+## Acte II : jauges fixées à une valeur absolue (`registre := 0`, B30),
+## appliquées après les deltas de `flags`.
+@export var set_gauges: Dictionary[StringName, int] = {}

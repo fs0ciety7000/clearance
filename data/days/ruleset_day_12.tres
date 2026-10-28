@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="RuleSet" format=3 uid="uid://d0a73hxe6q6p0"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_nka3i"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_required.tres" id="2_f2ti0"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_valid.tres" id="3_ef4mb"]
+[ext_resource type="Resource" path="res://data/rules/rule_portrait_match.tres" id="4_qongl"]
+[ext_resource type="Resource" path="res://data/rules/rule_permit_required.tres" id="5_ap117"]
+[ext_resource type="Resource" path="res://data/rules/rule_permit_valid.tres" id="6_wuct1"]
+[ext_resource type="Resource" path="res://data/rules/rule_face_uncovered.tres" id="7_ol8fs"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fields_match.tres" id="8_ha0yi"]
+[ext_resource type="Resource" path="res://data/rules/rule_tycho_interview.tres" id="9_uk435"]
+[ext_resource type="Resource" path="res://data/rules/rule_purpose_consistent.tres" id="10_8exlr"]
+[ext_resource type="Resource" path="res://data/rules/rule_origin_block.tres" id="11_8k0ev"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_required.tres" id="12_5ngb3"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_valid.tres" id="13_qa6k6"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_issuer.tres" id="14_h7mdo"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_fit.tres" id="15_msfw1"]
+[ext_resource type="Resource" path="res://data/rules/rule_implants_declared.tres" id="16_8i0up"]
+[ext_resource type="Resource" path="res://data/rules/rule_banned_implants.tres" id="17_cmwu8"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fraud_detain.tres" id="18_00bsa"]
+[ext_resource type="Resource" path="res://data/rules/rule_apparent_age.tres" id="19_3cp1s"]
+[ext_resource type="Resource" path="res://data/rules/rule_tharsis_banned.tres" id="20_pistp"]
+[ext_resource type="Resource" path="res://data/rules/rule_seals_valid.tres" id="21_3p86l"]
+[ext_resource type="Resource" path="res://data/rules/rule_mrz_valid.tres" id="22_w7ysj"]
+[ext_resource type="Resource" path="res://data/rules/rule_wanted_detain.tres" id="23_nug1i"]
+[ext_resource type="Resource" path="res://data/rules/rule_air_quota.tres" id="24_23dts"]
+[ext_resource type="Resource" path="res://data/rules/rule_contract_required.tres" id="25_wu4xf"]
+[ext_resource type="Resource" path="res://data/rules/rule_contract_consistent.tres" id="26_k6am1"]
+[ext_resource type="Script" path="res://scripts/rules/rule_set.gd" id="27_uft8a"]
+
+[resource]
+script = ExtResource("27_uft8a")
+id = &"rs_day12"
+rules = Array[ExtResource("1_nka3i")]([ExtResource("2_f2ti0"), ExtResource("3_ef4mb"), ExtResource("4_qongl"), ExtResource("5_ap117"), ExtResource("6_wuct1"), ExtResource("7_ol8fs"), ExtResource("8_ha0yi"), ExtResource("9_uk435"), ExtResource("10_8exlr"), ExtResource("11_8k0ev"), ExtResource("12_5ngb3"), ExtResource("13_qa6k6"), ExtResource("14_h7mdo"), ExtResource("15_msfw1"), ExtResource("16_8i0up"), ExtResource("17_cmwu8"), ExtResource("18_00bsa"), ExtResource("19_3cp1s"), ExtResource("20_pistp"), ExtResource("21_3p86l"), ExtResource("22_w7ysj"), ExtResource("23_nug1i"), ExtResource("24_23dts"), ExtResource("25_wu4xf"), ExtResource("26_k6am1")])
+new_rule_ids = Array[StringName]([&"r_contract_required", &"r_contract_consistent"])
+required_document_ids = Array[StringName]([&"id_card", &"entry_permit", &"bioscan", &"work_contract"])

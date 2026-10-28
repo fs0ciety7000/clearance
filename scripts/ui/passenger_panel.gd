@@ -23,6 +23,9 @@ var _line: Label = null
 var _hint: Label = null
 var _questions: VBoxContainer = null
 var _speak_timer: SceneTreeTimer = null
+## Acte II : accent de la figure finale du J20 (liseré gauche + locuteur),
+## transparent sinon.
+var accent: Color = Color.TRANSPARENT
 
 
 func _ready() -> void:
@@ -66,7 +69,19 @@ func _ready() -> void:
 func set_speaker(text: String, identified: bool) -> void:
 	speaker = text
 	_speaker_label.text = text
-	_speaker_label.add_theme_color_override(&"font_color", DS.ACCENT_CYAN if identified else DS.ACCENT_CYAN)
+	var color: Color = accent if accent.a > 0.0 and identified else DS.ACCENT_CYAN
+	_speaker_label.add_theme_color_override(&"font_color", color)
+
+
+## Acte II : quelqu'un que l'agent·e connaît est à la vitre (SC-50).
+func set_accent(color: Color) -> void:
+	accent = color
+	queue_redraw()
+
+
+func _draw() -> void:
+	if accent.a > 0.0:
+		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), accent)
 
 
 ## Dernière réplique (entre guillemets) ; allume la LED le temps de la lecture.

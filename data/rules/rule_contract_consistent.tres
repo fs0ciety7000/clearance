@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ContractConsistentRule" format=3 uid="uid://b2ppmbq8qpd7u"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/contract_consistent_rule.gd" id="1_1yhm0"]
+
+[resource]
+script = ExtResource("1_1yhm0")
+employer_codes = Dictionary[String, String]({
+"Autorité de Transit": "AT",
+"Banque Aurel": "BA",
+"Bureau de Continuité": "BC",
+"Commission de Rééquilibrage": "CR",
+"Dispensaire de Tycho": "DT",
+"Délégation tharsienne": "DL",
+"Hydroponie Ceres-Verte": "CV",
+"Kessler-Ashe Orbital": "KA",
+"Meridian Biosystèmes": "MB",
+"Ondine Synaptique": "ON",
+"Prospection indépendante": "PI",
+"Valcourt-Hsu Logistique": "VH",
+"Équipage indépendant": "EQ"
+})
+posts = PackedStringArray("post_recycleur", "post_soins", "post_hydroponie", "post_manutention", "post_logistique", "post_maintenance")
+id = &"r_contract_consistent"
+title_key = "r_contract_consistent_title"
+rulebook_text_key = "r_contract_consistent_text"

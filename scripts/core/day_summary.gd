@@ -104,6 +104,24 @@ func get_total_income() -> int:
 	return get_net() + get_bribe_total() + get_report_total()
 
 
+## Acte II : entrées imputées au guichet (APPROUVÉ au-delà du quota, R23).
+func get_overrun_count() -> int:
+	var count: int = 0
+	for result: CaseResult in results:
+		if result.quota_overrun:
+			count += 1
+	return count
+
+
+## Acte II : refus motivés par le seul quota atteint.
+func get_quota_refusal_count() -> int:
+	var count: int = 0
+	for result: CaseResult in results:
+		if result.quota_refusal:
+			count += 1
+	return count
+
+
 ## Indice de conformité du jour (cas corrects / cas traités), 0 si aucun cas.
 func get_compliance() -> float:
 	return float(get_correct_count()) / float(results.size()) if not results.is_empty() else 0.0

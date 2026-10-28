@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RevokedIdRule" format=3 uid="uid://b8hxdurk10vys"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/revoked_id_rule.gd" id="1_fgync"]
+
+[resource]
+script = ExtResource("1_fgync")
+id = &"r_revoked_ids"
+title_key = "r_revoked_ids_title"
+rulebook_text_key = "r_revoked_ids_text"
+category = 1

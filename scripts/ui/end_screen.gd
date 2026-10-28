@@ -9,6 +9,10 @@
 ## l'ordre de la campagne), récapitulatif des shifts, conformité, solde, foyer.
 ## « RETOUR AU TITRE » (CTA jaune). Aucune sauvegarde ne survit à une fin
 ## (D-041 : effacée par `Campaign` et `DayScene.show_end`).
+## M8 (Acte II) : surtitres et titres F8 « LE REGISTRE » (cyan : la vérité
+## lue au Hall) et F9 « LES VITRES ÉTEINTES » (gris : les guichets éteints),
+## épilogues `end2_*`, puce « ACTE II », traces des choix J11–J20, tableau des
+## 20 shifts défilant.
 class_name EndScreen
 extends ScreenBase
 
@@ -24,7 +28,11 @@ const NARRATIVE_FLAGS: Array[StringName] = [&"sc02_mercy", &"sc02_turned_away", 
 		&"sc18_note_reported", &"sc18_note_kept", &"audit_retention", &"audit_clean",
 		&"ilan_supported", &"ilan_forbidden", &"ilan_denounced", &"okonkwo_denounced", &"okonkwo_warned",
 		&"drift_passes_bought", &"sc20_detained", &"sc20_passed", &"sc21_bribe_kept",
-		&"final_detained", &"final_passed", &"final_denied", &"final_unprocessed"]
+		&"final_detained", &"final_passed", &"final_denied", &"final_unprocessed",
+		# Acte II (J10 → J20).
+		&"vannes_opened", &"drift_stayed", &"sc25_elena_turned_away", &"quota_overrun", &"sc28_tariq_refused",
+		&"sc35_okonkwo_detained", &"sc35_okonkwo_helped", &"colleagues_listed", &"sc41_sato_spared", &"sc43_mateus_detained",
+		&"beaumont_defied", &"sc45_ravel_spared", &"ilan_joined_soute", &"dora_departed", &"registre_sent", &"strike_joined"]
 ## Au plus autant de traces affichées (les plus récentes l'emportent).
 const MAX_TRACES: int = 9
 ## Rythme de lecture de l'épilogue (une ligne toutes les ~1,9 s).
@@ -97,6 +105,10 @@ static func accent_of(p_ending: StringName, variant: String = "") -> Color:
 			return DS.ACCENT_CYAN
 		EndingService.F7_REOPENS:
 			return DS.TEXT_PRIMARY
+		EndingService.F8_REGISTRE:
+			return DS.ACCENT_CYAN
+		EndingService.F9_STRIKE:
+			return DS.TEXT_SECONDARY
 		Campaign.ENDING_DEMO_COMPLETE:
 			return DS.ACCENT_YELLOW
 	return DS.STATE_RED
@@ -114,6 +126,10 @@ static func icon_of(p_ending: StringName) -> UiIcon.Kind:
 			return UiIcon.Kind.DISCORDANCE
 		EndingService.F6_DRIFT:
 			return UiIcon.Kind.DIAMOND
+		EndingService.F8_REGISTRE:
+			return UiIcon.Kind.REGISTER
+		EndingService.F9_STRIKE:
+			return UiIcon.Kind.LOCK
 	return UiIcon.Kind.INFO
 
 
@@ -150,6 +166,11 @@ func _build() -> void:
 	top.add_child(UiIcon.make(icon_of(ending), accent, DS.ICON_M))
 	var eyebrow_key: String = str(epilogue.get("eyebrow_key", "end_eyebrow_%s" % ending))
 	top.add_child(eyebrow(UiText.t(eyebrow_key, "CLEARANCE · HALCYON GATE"), accent))
+	var act: Variant = epilogue.get("act", 1)
+	if act is int and act == 2:
+		var act_chip: PanelContainer = chip(UiText.t("end_act2_chip", "ACTE II"), UiIcon.Kind.REGISTER, DS.VOICE_COMMISSION)
+		act_chip.name = "ActChip"
+		top.add_child(act_chip)
 	if ending == EndingService.F5_AIR:
 		var variant_key: String = "end_variant_brulants" if variant == "brulants" else "end_variant_veilleurs"
 		var chip_node: PanelContainer = chip(UiText.t(variant_key, "VARIANTE"), UiIcon.Kind.DISCORDANCE, accent)
@@ -224,7 +245,15 @@ func _recap_column() -> Control:
 			row.add_child(trace_label)
 			right.add_child(row)
 	right.add_child(section(UiText.t("end_recap", "RÉCAPITULATIF DES SHIFTS"), UiIcon.Kind.DIAMOND, DS.TEXT_SECONDARY))
-	right.add_child(_table())
+	# Acte II : jusqu'à 20 lignes — le tableau défile, les tuiles restent visibles.
+	var table_scroll: ScrollContainer = ScrollContainer.new()
+	table_scroll.name = "RecapTable"
+	table_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	table_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right.add_child(table_scroll)
+	var table: Control = _table()
+	table.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	table_scroll.add_child(table)
 	var tiles: HBoxContainer = hbox(DS.SPACE_3)
 	right.add_child(tiles)
 	tiles.add_child(stat_tile(UiText.t("end_compliance", "INDICE DE CONFORMITÉ"), "%d %%" % roundi(compliance * 100.0),

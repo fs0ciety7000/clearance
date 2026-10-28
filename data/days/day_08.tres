@@ -1,28 +1,30 @@
 [gd_resource type="Resource" script_class="DayDef" format=3 uid="uid://du6607vrpu4hb"]
 
-[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="1_gnnl4"]
-[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="2_ldcyv"]
-[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="3_sqbur"]
-[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="4_lri07"]
-[ext_resource type="Script" path="res://scripts/core/evening_option_def.gd" id="5_hp6jd"]
-[ext_resource type="Resource" path="res://data/days/ruleset_day_08.tres" id="6_pyxf1"]
-[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="7_g6377"]
-[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="8_0q78k"]
-[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="9_pd451"]
-[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="10_epjlt"]
+[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_sqbur"]
+[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_lri07"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="3_hp6jd"]
+[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="4_pyxf1"]
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="5_g6377"]
+[ext_resource type="Script" path="res://scripts/core/evening_option_def.gd" id="6_0q78k"]
+[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="7_pd451"]
+[ext_resource type="Resource" path="res://data/days/ruleset_day_08.tres" id="8_epjlt"]
+[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="9_blmto"]
+[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="10_urw0e"]
+[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="11_hgg3s"]
+[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="12_fxly6"]
 
 [sub_resource type="Resource" id="d08_resource_5"]
-script = ExtResource("1_gnnl4")
+script = ExtResource("2_lri07")
 speaker_key = "spk_consortium"
 text_key = "msg_cons_day08_oath"
 priority = 2
 
 [sub_resource type="Resource" id="d08_resource_7"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 all_of = Array[StringName]([&"sc11_veteran_passed"])
 
 [sub_resource type="Resource" id="d08_resource_6"]
-script = ExtResource("1_gnnl4")
+script = ExtResource("2_lri07")
 speaker_key = "spk_consortium"
 text_key = "msg_cons_day08_veteran"
 condition = SubResource("d08_resource_7")
@@ -30,11 +32,11 @@ group = &"veteran"
 priority = 3
 
 [sub_resource type="Resource" id="d08_resource_9"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 all_of = Array[StringName]([&"sc11_veteran_refused"])
 
 [sub_resource type="Resource" id="d08_resource_8"]
-script = ExtResource("1_gnnl4")
+script = ExtResource("2_lri07")
 speaker_key = "spk_consortium"
 text_key = "msg_cons_day08_veteran_refused"
 condition = SubResource("d08_resource_9")
@@ -42,11 +44,11 @@ group = &"veteran"
 priority = 3
 
 [sub_resource type="Resource" id="d08_resource_11"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 all_of = Array[StringName]([&"sc11_veteran_passed"])
 
 [sub_resource type="Resource" id="d08_resource_10"]
-script = ExtResource("1_gnnl4")
+script = ExtResource("2_lri07")
 speaker_key = "spk_okonkwo"
 text_key = "msg_okonkwo_day08_veteran"
 voice = 1
@@ -54,21 +56,21 @@ condition = SubResource("d08_resource_11")
 group = &"okonkwo"
 
 [sub_resource type="Resource" id="d08_resource_12"]
-script = ExtResource("1_gnnl4")
+script = ExtResource("2_lri07")
 speaker_key = "spk_okonkwo"
 text_key = "msg_okonkwo_day08"
 voice = 1
 group = &"okonkwo"
 
 [sub_resource type="Resource" id="d08_resource_14"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 none_of = Array[StringName]([&"sc13_detained"])
 gauges_min = Dictionary[StringName, int]({
 &"lucioles_trust": 1
 })
 
 [sub_resource type="Resource" id="d08_resource_13"]
-script = ExtResource("1_gnnl4")
+script = ExtResource("2_lri07")
 speaker_key = "spk_lucioles"
 text_key = "msg_luc_day08"
 voice = 3
@@ -76,7 +78,7 @@ condition = SubResource("d08_resource_14")
 priority = 1
 
 [sub_resource type="Resource" id="d08_resource_15"]
-script = ExtResource("1_gnnl4")
+script = ExtResource("2_lri07")
 speaker_key = "spk_ilan"
 text_key = "msg_ilan_day08"
 voice = 2
@@ -84,7 +86,7 @@ group = &"ilan"
 family_slot = true
 
 [sub_resource type="Resource" id="d08_resource_16"]
-script = ExtResource("3_sqbur")
+script = ExtResource("4_pyxf1")
 id = &"d08_dora"
 kind = 0
 title_key = "evt_d08_dora_title"
@@ -92,9 +94,10 @@ text_key = "evt_d08_dora_text"
 flags = Dictionary[StringName, int]({
 &"dora_told_puits9": 0
 })
+text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d08_resource_18"]
-script = ExtResource("5_hp6jd")
+script = ExtResource("6_0q78k")
 id = &"denounce"
 label_key = "evt_d08_neighbor_opt_denounce"
 result_key = "evt_d08_neighbor_res_denounce"
@@ -106,7 +109,7 @@ flags = Dictionary[StringName, int]({
 default_rank = 2
 
 [sub_resource type="Resource" id="d08_resource_19"]
-script = ExtResource("5_hp6jd")
+script = ExtResource("6_0q78k")
 id = &"help"
 label_key = "evt_d08_neighbor_opt_help"
 result_key = "evt_d08_neighbor_res_help"
@@ -118,7 +121,7 @@ flags = Dictionary[StringName, int]({
 default_rank = 1
 
 [sub_resource type="Resource" id="d08_resource_20"]
-script = ExtResource("5_hp6jd")
+script = ExtResource("6_0q78k")
 id = &"ignore"
 label_key = "evt_d08_neighbor_opt_ignore"
 result_key = "evt_d08_neighbor_res_ignore"
@@ -127,22 +130,23 @@ flags = Dictionary[StringName, int]({
 })
 
 [sub_resource type="Resource" id="d08_resource_17"]
-script = ExtResource("3_sqbur")
+script = ExtResource("4_pyxf1")
 id = &"d08_neighbor"
 order = 1
 title_key = "evt_d08_neighbor_title"
 text_key = "evt_d08_neighbor_text"
-options = Array[ExtResource("5_hp6jd")]([SubResource("d08_resource_18"), SubResource("d08_resource_19"), SubResource("d08_resource_20")])
+options = Array[ExtResource("6_0q78k")]([SubResource("d08_resource_18"), SubResource("d08_resource_19"), SubResource("d08_resource_20")])
+text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d08_resource_22"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 none_of = Array[StringName]([&"lucioles_hostile"])
 gauges_min = Dictionary[StringName, int]({
 &"lucioles_trust": 1
 })
 
 [sub_resource type="Resource" id="d08_resource_23"]
-script = ExtResource("5_hp6jd")
+script = ExtResource("6_0q78k")
 id = &"accept"
 label_key = "evt_d08_package_opt_accept"
 result_key = "evt_d08_package_res_accept"
@@ -154,26 +158,27 @@ flags = Dictionary[StringName, int]({
 default_rank = 1
 
 [sub_resource type="Resource" id="d08_resource_24"]
-script = ExtResource("5_hp6jd")
+script = ExtResource("6_0q78k")
 id = &"refuse"
 label_key = "evt_d08_package_opt_refuse"
 result_key = "evt_d08_package_res_refuse"
 
 [sub_resource type="Resource" id="d08_resource_21"]
-script = ExtResource("3_sqbur")
+script = ExtResource("4_pyxf1")
 id = &"d08_package"
 order = 2
 condition = SubResource("d08_resource_22")
 title_key = "evt_d08_package_title"
 text_key = "evt_d08_package_text"
-options = Array[ExtResource("5_hp6jd")]([SubResource("d08_resource_23"), SubResource("d08_resource_24")])
+options = Array[ExtResource("6_0q78k")]([SubResource("d08_resource_23"), SubResource("d08_resource_24")])
+text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d08_resource_26"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 all_of = Array[StringName]([&"lucioles_hostile"])
 
 [sub_resource type="Resource" id="d08_resource_25"]
-script = ExtResource("3_sqbur")
+script = ExtResource("4_pyxf1")
 id = &"d08_sabotage"
 kind = 0
 order = 3
@@ -182,13 +187,14 @@ text_key = "evt_d08_sabotage"
 line_costs = Dictionary[StringName, int]({
 &"heating": 12
 })
+text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d08_resource_28"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 all_of = Array[StringName]([&"sc14_passed"])
 
 [sub_resource type="Resource" id="d08_resource_27"]
-script = ExtResource("3_sqbur")
+script = ExtResource("4_pyxf1")
 id = &"d08_soute_meds"
 kind = 0
 order = 4
@@ -197,26 +203,28 @@ text_key = "evt_d08_soute_meds"
 line_costs = Dictionary[StringName, int]({
 &"meds": 8
 })
+text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d08_resource_30"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 all_of = Array[StringName]([&"sc17_detained"])
 
 [sub_resource type="Resource" id="d08_resource_29"]
-script = ExtResource("3_sqbur")
+script = ExtResource("4_pyxf1")
 id = &"d08_kwame"
 kind = 0
 order = 5
 condition = SubResource("d08_resource_30")
 text_key = "evt_d08_kwame"
+text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d08_resource_32"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 all_of = Array[StringName]([&"noa_bioscan_skipped"])
 none_of = Array[StringName]([&"noa_bioscan_paid_late"])
 
 [sub_resource type="Resource" id="d08_resource_33"]
-script = ExtResource("5_hp6jd")
+script = ExtResource("6_0q78k")
 id = &"pay"
 label_key = "evt_d06_bioscan_opt_pay"
 result_key = "evt_d06_bioscan_res_pay"
@@ -226,7 +234,7 @@ flags = Dictionary[StringName, int]({
 })
 
 [sub_resource type="Resource" id="d08_resource_34"]
-script = ExtResource("5_hp6jd")
+script = ExtResource("6_0q78k")
 id = &"skip"
 label_key = "evt_d06_bioscan_opt_skip"
 result_key = "evt_d06_bioscan_res_skip"
@@ -234,16 +242,17 @@ household = &"noa_sick"
 default_rank = 1
 
 [sub_resource type="Resource" id="d08_resource_31"]
-script = ExtResource("3_sqbur")
+script = ExtResource("4_pyxf1")
 id = &"d08_bioscan"
 order = 6
 condition = SubResource("d08_resource_32")
 title_key = "evt_d08_bioscan_title"
 text_key = "evt_d06_bioscan_text"
-options = Array[ExtResource("5_hp6jd")]([SubResource("d08_resource_33"), SubResource("d08_resource_34")])
+options = Array[ExtResource("6_0q78k")]([SubResource("d08_resource_33"), SubResource("d08_resource_34")])
+text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="scripted_sc_15"]
-script = ExtResource("8_0q78k")
+script = ExtResource("10_urw0e")
 id = &"sc_15"
 at_index = 2
 passenger_overrides = {
@@ -264,11 +273,11 @@ flags_on_approve = Dictionary[StringName, int]({
 luciole_codes = PackedInt32Array()
 
 [sub_resource type="Resource" id="d08_resource_2"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 all_of = Array[StringName]([&"sc15_idris_passed"])
 
 [sub_resource type="Resource" id="d08_resource_1"]
-script = ExtResource("9_pd451")
+script = ExtResource("11_hgg3s")
 verdict = &"deny"
 condition = SubResource("d08_resource_2")
 flags = Dictionary[StringName, int]({
@@ -276,11 +285,11 @@ flags = Dictionary[StringName, int]({
 })
 
 [sub_resource type="Resource" id="d08_resource_4"]
-script = ExtResource("2_ldcyv")
+script = ExtResource("3_hp6jd")
 all_of = Array[StringName]([&"sc15_idris_passed"])
 
 [sub_resource type="Resource" id="d08_resource_3"]
-script = ExtResource("9_pd451")
+script = ExtResource("11_hgg3s")
 verdict = &"detain"
 condition = SubResource("d08_resource_4")
 flags = Dictionary[StringName, int]({
@@ -288,7 +297,7 @@ flags = Dictionary[StringName, int]({
 })
 
 [sub_resource type="Resource" id="scripted_sc_16"]
-script = ExtResource("8_0q78k")
+script = ExtResource("10_urw0e")
 id = &"sc_16"
 at_index = 3
 passenger_overrides = {
@@ -310,11 +319,11 @@ flags_on_approve = Dictionary[StringName, int]({
 &"lucioles_trust": 1,
 &"sc16_hana_passed": 0
 })
-extra_effects = Array[ExtResource("9_pd451")]([SubResource("d08_resource_1"), SubResource("d08_resource_3")])
+extra_effects = Array[ExtResource("11_hgg3s")]([SubResource("d08_resource_1"), SubResource("d08_resource_3")])
 luciole_codes = PackedInt32Array(6)
 
 [sub_resource type="Resource" id="scripted_sc_17"]
-script = ExtResource("8_0q78k")
+script = ExtResource("10_urw0e")
 id = &"sc_17"
 at_index = 7
 passenger_overrides = {
@@ -347,10 +356,10 @@ flags_on_detain = Dictionary[StringName, int]({
 luciole_codes = PackedInt32Array()
 
 [resource]
-script = ExtResource("7_g6377")
+script = ExtResource("9_blmto")
 day_number = 8
 game_date = 31854
-rule_set = ExtResource("6_pyxf1")
+rule_set = ExtResource("8_epjlt")
 duration_sec = 660.0
 passenger_count = 14
 anomaly_count_weights = PackedFloat32Array(0.3, 0.4, 0.22, 0.08)
@@ -370,7 +379,7 @@ anomaly_weights = Dictionary[int, float]({
 12: 0.14,
 13: 0.13
 })
-scripted_cases = Array[ExtResource("8_0q78k")]([SubResource("scripted_sc_15"), SubResource("scripted_sc_16"), SubResource("scripted_sc_17")])
+scripted_cases = Array[ExtResource("10_urw0e")]([SubResource("scripted_sc_15"), SubResource("scripted_sc_16"), SubResource("scripted_sc_17")])
 intro_text_key = "day08_intro"
 faction_weights = Dictionary[StringName, float]({
 &"cer": 0.13,
@@ -386,6 +395,6 @@ bribe_rate = 0.05
 luciole_rate = 0.07
 detain_enabled = true
 bribe_amounts = Vector2i(20, 30)
-briefing_messages = Array[ExtResource("1_gnnl4")]([SubResource("d08_resource_5"), SubResource("d08_resource_6"), SubResource("d08_resource_8"), SubResource("d08_resource_10"), SubResource("d08_resource_12"), SubResource("d08_resource_13"), SubResource("d08_resource_15")])
-evening_events = Array[ExtResource("3_sqbur")]([SubResource("d08_resource_16"), SubResource("d08_resource_17"), SubResource("d08_resource_21"), SubResource("d08_resource_25"), SubResource("d08_resource_27"), SubResource("d08_resource_29"), SubResource("d08_resource_31")])
+briefing_messages = Array[ExtResource("2_lri07")]([SubResource("d08_resource_5"), SubResource("d08_resource_6"), SubResource("d08_resource_8"), SubResource("d08_resource_10"), SubResource("d08_resource_12"), SubResource("d08_resource_13"), SubResource("d08_resource_15")])
+evening_events = Array[ExtResource("4_pyxf1")]([SubResource("d08_resource_16"), SubResource("d08_resource_17"), SubResource("d08_resource_21"), SubResource("d08_resource_25"), SubResource("d08_resource_27"), SubResource("d08_resource_29"), SubResource("d08_resource_31")])
 rulebook_tabs = PackedStringArray("origins", "implants", "symbols")

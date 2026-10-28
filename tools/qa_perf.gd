@@ -55,4 +55,5 @@ func _process(delta: float) -> void:
 				_prims / _n, Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0,
 				RenderingServer.get_video_adapter_name()])
 		set_process(false)
-		get_tree().quit(0)
+		# Sons arrêtés et retirés par l'AudioServer avant de quitter (QA-025).
+		get_tree().root.get_node("AudioMixBarrier").call(&"quit_after_silence", 0)

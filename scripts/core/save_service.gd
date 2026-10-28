@@ -23,8 +23,11 @@ extends RefCounted
 ## 1 — contrat ARCHITECTURE §10 (sans foyer) ;
 ## 2 — M5 : `household` (Ilan, Noa, Dora), `day_history` détaillé ;
 ## 3 — M7 : `case_memory` (passagers scénarisés), membre `detained` du foyer,
-##     jauge `suspicion` (SC-02 approuvé : +1 rétroactif, D-052).
-const VERSION: int = 3
+##     jauge `suspicion` (SC-02 approuvé : +1 rétroactif, D-052) ;
+## 4 — Acte II (docs/ACT2.md §8.6) : membres `breathless` / `breathless_streak`
+##     / `away` ; « mis·e en attente » séparé de `PERDU` (vivant·e) ; jauges
+##     `solidarite`, `registre`, `quota_overrun` dans les drapeaux (sans schéma).
+const VERSION: int = 4
 ## Réglage de projet portant la version du jeu (R23, §16.1).
 const VERSION_SETTING: String = "application/config/version"
 ## Dossier des `DayDef` (`day_NN.tres`) : borne haute du jour (`last_day()`).
@@ -198,6 +201,9 @@ static func migrate(source: Dictionary) -> Dictionary:
 		version = 2
 	if version == 2:
 		data = _migrate_2_to_3(data)
+		version = 3
+	if version == 3:
+		data = _migrate_3_to_4(data)
 	data["version"] = float(VERSION)
 	return data
 
@@ -231,6 +237,32 @@ static func _migrate_2_to_3(data: Dictionary) -> Dictionary:
 		if (mercy is bool and mercy) and not dict.has("suspicion"):
 			dict["suspicion"] = 1
 	data["version"] = 3
+	return data
+
+
+## v3 → v4 : une sauvegarde v3 date au plus du soir du J9. Champs du foyer par
+## défaut (rations « payées » : pas d'essoufflement, aucun absent) ; un proche
+## `lost` **et** `detained` (Ilan dénoncé·e à l'Acte I) redevient vivant·e,
+## mis·e en attente (`well`, `detained`).
+static func _migrate_3_to_4(data: Dictionary) -> Dictionary:
+	var home: Variant = data.get("household", {})
+	if home is Dictionary:
+		var dict: Dictionary = home
+		var members: Variant = dict.get("members", [])
+		if members is Array:
+			for entry: Variant in members:
+				if not entry is Dictionary:
+					continue
+				var member: Dictionary = entry
+				if str(member.get("health", "")) == "lost" and member.get("detained", false) == true:
+					member["health"] = "well"
+				if not member.has("breathless"):
+					member["breathless"] = false
+				if not member.has("breathless_streak"):
+					member["breathless_streak"] = 0
+				if not member.has("away"):
+					member["away"] = ""
+	data["version"] = 4
 	return data
 
 

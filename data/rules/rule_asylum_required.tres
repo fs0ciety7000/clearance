@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RequireDocumentRule" format=3 uid="uid://cuq7wvs5x8mpq"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/require_document_rule.gd" id="1_jaos6"]
+
+[resource]
+script = ExtResource("1_jaos6")
+document_id = &"asylum"
+applies_to_faction_ids = Array[StringName]([&"ter"])
+applies_to_classes = Array[StringName]([&"C-5"])
+require_valid = true
+id = &"r_asylum_required"
+title_key = "r_asylum_required_title"
+rulebook_text_key = "r_asylum_required_text"

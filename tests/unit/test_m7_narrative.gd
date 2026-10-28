@@ -134,7 +134,7 @@ func test_save_v3_round_trip_and_migration_from_v2() -> void:
 	}
 	var migrated: Dictionary = SaveService.parse(JSON.stringify(v2))
 	assert_false(migrated.is_empty())
-	assert_eq(SaveService.as_int(migrated["version"]), 3)
+	assert_eq(SaveService.as_int(migrated["version"]), SaveService.VERSION, "v2 → v3 → v4 en chaîne")
 	assert_eq(migrated["case_memory"], {})
 	assert_eq(SaveService.as_int(migrated["narrative_flags"]["suspicion"]), 1, "D-052 : SC-02 approuvée rétroactive")
 	var v2b: Dictionary = v2.duplicate(true)
@@ -147,7 +147,9 @@ func test_save_v3_round_trip_and_migration_from_v2() -> void:
 	var restored: Household = Household.from_dict(parsed)
 	assert_true(restored.get_member(Household.ILAN).detained)
 	assert_eq(restored.get_member(Household.ILAN).state_key(), "hh_state_detained")
-	assert_eq(restored.alive_count(), 2)
+	# Acte II (docs/ACT2.md §1.3) : mis·e en attente = vivant·e, absent·e du foyer.
+	assert_eq(restored.alive_count(), 3)
+	assert_eq(restored.present_count(), 2)
 
 
 # --- Briefings ----------------------------------------------------------------
@@ -281,7 +283,7 @@ func test_final_endings_follow_narrative_conditions() -> void:
 	assert_eq(EndingService.evaluate_final(_flags({"final_passed": true, "lucioles_trust": 9}), lost, 0, 1.0, economy),
 			EndingService.F3_FAMILY_LOST)
 	var one_left: Household = Household.new()
-	one_left.detain_member(Household.ILAN)
+	one_left.get_member(Household.ILAN).health = Household.Health.LOST
 	one_left.get_member(Household.DORA).health = Household.Health.LOST
 	assert_eq(EndingService.evaluate_final(_flags({"final_detained": true, "loyalty": 5}), one_left, 0, 1.0, economy),
 			EndingService.F7_REOPENS, "F4 exige deux proches")

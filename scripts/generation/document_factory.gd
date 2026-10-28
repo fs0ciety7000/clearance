@@ -20,6 +20,10 @@ const LONG_VALIDITY: int = 365
 const PHOTO_YEARS: Vector2i = Vector2i(0, 2)
 const PHOTO_YEARS_OLD: Vector2i = Vector2i(4, 8)
 const DIGITS: String = "0123456789"
+## Acte II : champ « Firmware NX » vide sans shunt (R27).
+const FIRMWARE_PATH: StringName = &"firmware_date"
+## Acte II : code employeur dans un numéro (`CT-{EMP}-NNNN`, contrat de travail).
+const EMPLOYER_TOKEN: String = "{EMP}"
 
 
 ## Document valide de type `def` pour le passager `p`.
@@ -35,6 +39,8 @@ static func create(def: DocumentTypeDef, p: Passenger, today: int, rng: SeededRn
 			doc.values[field.id] = make_photo(p, rng, appearance_gen, photo_noise)
 		else:
 			var value: Variant = p.get_truth(field.truth_path)
+			if field.truth_path == FIRMWARE_PATH and SaveService.as_int(value) == 0:
+				continue # Acte II : pas de shunt NX- → champ vide.
 			if value is PackedStringArray:
 				var list: PackedStringArray = value
 				value = list.duplicate()
@@ -75,6 +81,7 @@ static func make_serial(pattern: String, rng: SeededRng, issue_date: int, p: Pas
 	if pattern.begins_with(PassengerGenerator.ID_PREFIX):
 		return p.citizen_id
 	var text: String = pattern.replace("YYYY", "%04d" % GameDate.year_of(issue_date))
+	text = text.replace(EMPLOYER_TOKEN, p.employer_code if not p.employer_code.is_empty() else "00")
 	var result: String = ""
 	for i: int in text.length():
 		var c: String = text[i]

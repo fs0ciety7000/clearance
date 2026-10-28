@@ -6,12 +6,16 @@ extends Resource
 
 @export var key: String = ""
 @export var condition: FlagCondition = null
+## Acte II (B25) : suffixe de réplique remplacé (`arrival`, `confront`, `stay`…)
+## quand la clé sert de variante de réplique d'un cas scénarisé.
+@export var replaces: String = ""
 
 
-static func make(p_key: String, p_condition: FlagCondition = null) -> ConditionalKey:
+static func make(p_key: String, p_condition: FlagCondition = null, p_replaces: String = "") -> ConditionalKey:
 	var c: ConditionalKey = ConditionalKey.new()
 	c.key = p_key
 	c.condition = p_condition
+	c.replaces = p_replaces
 	return c
 
 

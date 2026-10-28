@@ -248,7 +248,7 @@ func _rule_card(entry: RulebookEntry, number: int) -> Control:
 	title_row.add_child(title)
 	if entry.is_new:
 		title_row.add_child(RuleCardView.make_new_badge(UiText.t("badge_new", "NOUVEAU")))
-	col.add_child(wrapped(UiText.t(entry.text_key, ""), &"BodySmall"))
+	col.add_child(wrapped(RuleCardView.rule_text(entry, day.air_quota if day != null else 0), &"BodySmall"))
 	return card
 
 
@@ -273,6 +273,10 @@ func _message_card(speaker_key: String, text_key: String, voice: BriefingContent
 			bg = DS.BG_ELEVATED.blend(DS.MAGENTA_12) # encre magenta, sans signature
 		BriefingContent.Voice.INSPECTION:
 			bg = DS.BG_ELEVATED.blend(DS.YELLOW_12)
+		BriefingContent.Voice.COMMISSION:
+			bg = DS.BG_ELEVATED.blend(DS.VOICE_COMMISSION_12) # registre administratif, froid
+		BriefingContent.Voice.BRULANTS:
+			bg = DS.BG_VOID # encre noire : la carte est plus sombre que les autres
 	var card: PanelContainer = panel()
 	card.name = "Message_%s" % speaker_key
 	card.add_theme_stylebox_override(&"panel", _bar_box(bg, accent))
@@ -288,7 +292,9 @@ func _message_card(speaker_key: String, text_key: String, voice: BriefingContent
 
 ## Couleur d'un locuteur (DS §7.10) : Consortium jaune, mentor cyan, famille
 ## gris, Lucioles magenta (contenu rebelle), Inspection des agents ambre
-## (avertissement : l'Inspecteur Ravel surveille l'agent·e).
+## (avertissement : l'Inspecteur Ravel surveille l'agent·e). Acte II
+## (DS §7.10) : Commission de Rééquilibrage en bleu de registre, Brûlants en
+## braise éteinte — deux teintes hors des familles sémantiques.
 static func voice_color(voice: BriefingContent.Voice) -> Color:
 	match voice:
 		BriefingContent.Voice.CONSORTIUM:
@@ -299,6 +305,10 @@ static func voice_color(voice: BriefingContent.Voice) -> Color:
 			return DS.ACCENT_MAGENTA
 		BriefingContent.Voice.INSPECTION:
 			return DS.STATE_AMBER
+		BriefingContent.Voice.COMMISSION:
+			return DS.VOICE_COMMISSION
+		BriefingContent.Voice.BRULANTS:
+			return DS.VOICE_BRULANTS
 	return DS.ACCENT_CYAN
 
 
@@ -312,6 +322,10 @@ static func voice_icon(voice: BriefingContent.Voice) -> UiIcon.Kind:
 			return UiIcon.Kind.DISCORDANCE
 		BriefingContent.Voice.INSPECTION:
 			return UiIcon.Kind.WARNING
+		BriefingContent.Voice.COMMISSION:
+			return UiIcon.Kind.REGISTER
+		BriefingContent.Voice.BRULANTS:
+			return UiIcon.Kind.FLAME
 	return UiIcon.Kind.CHAT
 
 

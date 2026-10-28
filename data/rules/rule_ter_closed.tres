@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FactionBannedRule" format=3 uid="uid://dipglt3x1t137"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/faction_banned_rule.gd" id="1_ru3kq"]
+
+[resource]
+script = ExtResource("1_ru3kq")
+banned_faction_ids = Array[StringName]([&"ter"])
+exempt_purposes = Array[StringName]([])
+exempt_posts = Array[StringName]([&"post_recycleur", &"post_soins", &"post_hydroponie"])
+id = &"r_ter_closed"
+title_key = "r_ter_closed_title"
+rulebook_text_key = "r_ter_closed_text"
+category = 2

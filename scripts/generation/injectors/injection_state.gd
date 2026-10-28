@@ -87,5 +87,17 @@ func filter_documents(document_ids: Array[StringName]) -> Array[StringName]:
 	return result
 
 
+## Documents de la règle du jour (`DayDef.focus_documents`) parmi les
+## candidats, s'il y en a ; sinon les candidats tels quels (QA-026).
+func prefer_focus_documents(document_ids: Array[StringName]) -> Array[StringName]:
+	if ctx == null or ctx.day_def == null or ctx.day_def.focus_documents.is_empty():
+		return document_ids
+	var focused: Array[StringName] = []
+	for document_id: StringName in document_ids:
+		if ctx.day_def.focus_documents.has(document_id):
+			focused.append(document_id)
+	return focused if not focused.is_empty() else document_ids
+
+
 func _key(document_id: StringName, field_id: StringName) -> String:
 	return "%s/%s" % [document_id, field_id if field_id != &"" else StringName(WHOLE_DOCUMENT)]

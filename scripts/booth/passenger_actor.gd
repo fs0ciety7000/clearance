@@ -135,6 +135,12 @@ func apply_markings(implants: PackedStringArray, magenta_thread: bool) -> void:
 	ImplantDecor.apply(rig, implants, magenta_thread)
 
 
+## Acte II : accessoires du cas (`PropDecor` : enfant, caisse du chat, drone,
+## LED de shunt), posés après les implants.
+func apply_props(tags: Array[StringName]) -> void:
+	PropDecor.apply(self, rig, tags)
+
+
 ## Marche le long de `path` jusqu'à `snap` (arrivée) ; `arrived` à la fin.
 func walk_to_desk(path: Path3D, speed: float, start_distance: float, snap: Node3D) -> void:
 	state = State.ARRIVING

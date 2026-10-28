@@ -2,6 +2,7 @@
 
 > Propriétaire : **QA / Playtester** · Version du jeu : `0.7.0-m7` (sauvegarde v3) · Godot 4.7.2 · GUT 9.7.1
 > Passe du 27.10.2026, sur `main` après les commits « Narration : écarts M7 corrigés » et « ARCHITECTURE rév. 3 ».
+> **Passe Acte II du 28.10.2026** (`0.8.1` + M8 A/B, sauvegarde v4, 515 tests) : voir [§12](#12-passe-qa-acte-ii-j10j20) — bugs QA-019 à QA-031.
 > Ce document liste les bugs trouvés ; **QA ne corrige pas le code de jeu** : chaque bug nomme le fichier suspecté et l'agent propriétaire (AGENTS.md).
 
 ## Sommaire
@@ -17,6 +18,7 @@
 9. [Lisibilité, UX, design](#9-lisibilité-ux-design)
 10. [Recommandations priorisées](#10-recommandations-priorisées)
 11. [Rejouer la passe](#11-rejouer-la-passe)
+12. [Passe QA Acte II (J10–J20)](#12-passe-qa-acte-ii-j10j20)
 
 ---
 
@@ -307,3 +309,221 @@ xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl
 ```
 
 `tools/qa_campaign.gd` et `tools/qa_perf.gd` ont besoin des autoloads : un script `--script` est compilé avant leur enregistrement, d'où le lanceur `tools/qa_boot.gd` (à corriger dans ARCHITECTURE §15, qui indique un lancement direct et « pas de `--headless` strict » : la campagne tourne en `--headless` **avec** le booth). Les campagnes et captures écrivent dans le `user://` réel (sauvegarde effacée à la fin, `settings.cfg` lu) : ne pas lancer deux campagnes en parallèle.
+
+---
+
+## 12. Passe QA Acte II (J10–J20)
+
+> Passe du 28.10.2026 sur `main` après « M8 partie B — interfaces de l'Acte II » (`bfad7e2`, 515/515 tests), sauvegarde **v4**. Même méthode qu'aux §1–§11 ; QA n'a corrigé aucun code de jeu. Après la passe : **524 tests** (515 + 9 de `tests/integration/test_qa_act2.gd`, dont 5 en `pending("QA-0xx")`), suite verte.
+
+### 12.1 Outils (QA) ajoutés ou étendus
+
+| Outil | Changement |
+|---|---|
+| `tools/qa_campaign.gd` | Ferme l'interstitiel « CHAPITRE II » comme un joueur ; une option qui termine la campagne (« Embarquer », J10) passe par la boîte « QUITTER HALCYON ? » puis CONFIRMER ; `QA_EVENING` (postes, rations, prélèvements, choix) ; `QA_DAY` + entrées imputées, refus quota, foyer, jauges `solidarite` / `registre` / `quota_overrun` ; **`--qa-reload`** : à chaque briefing d'un nouveau jour, « Quitter → Continuer » réel (`GameState.load_from_slot()` puis `reload_current_scene`) ; **`--qa-load=slot.json`** : reprend une sauvegarde réelle (migration v3 → v4 jouée dans la vraie scène). |
+| `tools/qa_capture.gd` (nouveau) | Capture réelle **sans `override.cfg`** : taille de fenêtre fixée (`--qa-size=1280x800`), attente en temps réel, PNG écrit puis sortie ; `--qa-quota=5/5` (état « ATTEINT »). |
+| `tests/fixtures/qa_save_v3_j9_*.json` (nouveau) | Trois **vraies** sauvegardes v3 produites par le code v0.8.1 (`3dd6ead`, soir du J9) : `loyal` (Ilan dénoncé·e : `lost` + `detained`), `drift` (laissez-passer achetés), `luciole` (Ilan soutenu·e). |
+| `tests/integration/test_qa_act2.gd` (nouveau) | Non-régressions Acte II (§12.6). |
+
+Toutes les exécutions ont tourné avec un `XDG_DATA_HOME` jetable (le `user://` réel n'est jamais touché, campagnes parallèles possibles) ; aucun fichier temporaire laissé dans le dépôt.
+
+### 12.2 Campagnes automatiques
+
+#### Vraie scène (`day.tscn`, booth 3D, bot `--autoplay`, 59–69 % de conformité)
+
+| Graine | Profil (soirées) | Crédits QA | Départ | Nuit des vannes | Fin | Jour | Solde final | Conformité |
+|---|---|---|---|---|---|---|---|---|
+| 7 | archiviste | +1 500 | J1 | ouvertes | **F8** Le Registre | J20 | 245 ₵ | 63 % |
+| 11 | solidaire | +1 500 | J1 | ouvertes | **F9** Les vitres éteintes (lumières coupées après le 10ᵉ cas) | J20 | 155 ₵ | 60 % |
+| 42 | luciole | +1 500 | J1 | ouvertes | **F7** (confiance 5 < 7 : pas de F5) | J20 | 164 ₵ | 59 % |
+| 3 | drift10 | +300 | J1 | ouvertes | **F6** au J10 (« Embarquer » + confirmation) | J10 | 25 ₵ | 66 % |
+| 7 | default | +300 | J1 | ouvertes | **F2** | soir J14 | −41 ₵ | 64 % |
+| 11 | luciole | +300 | J1 | ouvertes (Ilan dans la Soute) | **F2** | soir J14 | −91 ₵ | 61 % |
+| 23 | drift (reste au J10) | +300 | J1 | ouvertes | **F3** | soir J15 | −11 ₵ | 63 % |
+| 7 | loyal | — | **sauvegarde v3 réelle** (J10, Ilan dénoncé·e) | avortées | **F2** | soir J16 | −28 ₵ | 76 % |
+| 5 | default | 0 | J1 | — | **F2** | soir J7 | −28 ₵ | 64 % |
+| 42 | default | 0 | J1 | — | **F3** | soir J10 | −35 ₵ | 67 % |
+| 7 | default | 0 | J1 | — | **F3** | soir J11 | −28 ₵ | 69 % |
+| 11 | default | 0 | J1 | — | ⛔ **plantage** (signal 11) au rechargement après la soirée du J7 — rejouée à l'identique : **F3** au soir du J11, −58 ₵, 66 % (QA-030) | — | — | — |
+
+- **13 campagnes, 166 jours joués dans la vraie scène (dont 51 de l'Acte II), 104 « Quitter → Continuer » réels (49 aux soirs J10–J19) : aucune `SCRIPT ERROR` du jeu, aucun `QA_ISSUE`** (sauvegarde relue = état, solde borné, aucun blocage de phase, aucune clé brute dans les épilogues, sauvegarde effacée à la fin). Seules sorties moteur : QA-025 ; **un plantage** non reproduit (QA-030).
+- **Fins atteintes dans la vraie scène : F2, F3, F6 (J10), F7, F8, F9.** F1 (Revue du J17), F4 et F5 restent hors de portée du bot (il ne garde pas d'enveloppe, n'atteint jamais 85 % de conformité ni 7 de confiance) : couvertes par la simulation (ci-dessous) et `test_act2_campaign.gd`.
+- **Migration v3 → v4** : la sauvegarde v3 « loyal » (Ilan `lost` + `detained`) reprend au J10, Ilan apparaît **MIS·E EN ATTENTE** (vivant·e, `present_count` 2), pas de ration pour Ilan, caution proposée au J12/J14/J16 ; 7 jours joués, 6 rechargements sans écart.
+- **Prélèvements** : J11 et J17 = ⌊30 % × (solde − 40)⌋ à chaque fois (ex. 100 ₵ → 18 ₵ ; 190 → 45 ; 512 → 141) ; aucun ailleurs ; ligne « PRÉLEVÉE D'OFFICE » — mais note en clé brute (QA-024).
+- **Rations** : votre ration toujours prélevée (+1 ₵ sans compteur), pas de ligne pour un proche absent (Soute) ou en attente ; ration non payée → ESSOUFFLÉ·E puis MALADE au 2ᵉ soir (vu sur 4 campagnes).
+- **Nuit des vannes « ouverte par accident »** : 7 campagnes réelles sur 8 arrivées au soir du J10 ont ouvert les vannes (bot qui n'aide jamais sciemment les Lucioles : `lucioles_trust` 4–9 par approbations manquées, Mira non comparée à l'avis). `luciole_trust_on_breach = false` ne vaut qu'à partir du J11 : le « F5 par accident » du §9 est devenu « vannes ouvertes par accident » (Game Designer, §12.7).
+
+#### Simulation (`tools/balance_sim.gd`, 40 graines, graine 1, 12 préréglages × 65 / 80 / 95 %)
+
+| Préréglage | 65 % | 80 % | 95 % |
+|---|---|---|---|
+| `default` | F3 47,5 · F2 42,5 · F7 7,5 · F1 2,5 | F7 97,5 · F2 2,5 | F7 100 |
+| `loyal` | F3 45 · F2 30 · F7 25 | F7 100 | **F4 90** · F7 10 |
+| `luciole` | F2 60 · F3 37,5 · F5 2,5 | F5 80 · F1 15 · F2/F3 5 | **F5 95** · F1 5 |
+| `mercenary` | F1 85 (audit J9) · F2 10 · F3 5 | F1 100 (J9) | F1 100 (J9) |
+| `mercenary2` | F1 42,5 (Revue J17) · F3 37,5 · F2 20 | F1 60 · F7 37,5 | F1 47,5 · F7 52,5 |
+| `drift` / `drift10` | F2/F3 92,5 · F7 7,5 | F6 55 (J20) / 57,5 (J10) | **F6 100** |
+| `archiviste` | F2/F3 90 · F8 7,5 | **F8 97,5** | **F8 100** |
+| `solidaire` | F2/F3 87,5 · F9 7,5 · F1 5 | **F9 97,5** | **F9 100** |
+| `overrun` | F2/F3 90 · F7 5 · F1 5 | F7 92,5 · F1 5 | F7 97,5 · F1 2,5 |
+| `negligent` / `evicted` | F3 (J6) / F2 (J3) | idem | idem |
+
+**Les neuf fins F1–F9 sont atteignables** ; chiffres identiques à ACT2 §6.5 (D-080). `gen_stats` (40 campagnes × 20 jours) : invariants OK, 0 anomalie non placée, 0 re-tirage ; écarts de poids signalés en QA-026.
+
+### 12.3 Passe visuelle (captures réelles 1920×1080 et 1280×800)
+
+`tools/qa_capture.gd` sous xvfb (OpenGL 3 / llvmpipe), graine 3, `--reduce-motion` ; la Qualité Basse + FX 0 + texte 1,5 au Deck en §12.4. Seules les captures de bugs sont versionnées (`docs/qa/QA-0xx.png`).
+
+| Écran | 1080p | Deck | Constat |
+|---|---|---|---|
+| Briefing J11 (vannes ouvertes) | ❌ | ❌ | **« msg_cons_day11_albedo » en clair** dans le bloc Bureau de Continuité (QA-019, `docs/qa/QA-019.png`) ; voix COMMISSION (bleu registre) et magenta distinctes, lisibles |
+| Guichet J11, compteur « ATTEINT · 5 / 5 » | ✅ | ✅ | ambre lisible ; au Deck le sur-titre de la barre du haut tombe à « CONS… » (QA-029) |
+| Guichet J12 / J13, 4 documents (+ scanner magenta) | ❌ | ❌ | **chevauchement** : expiration du permis et du bio-scan, N° ID / émetteur / sceau de la carte cachés ; au J13 la discordance N° ID carte ↔ bio-scan est sous le permis (QA-020, `QA-020.png`, `QA-020-deck.png`) |
+| Guichet J14, scanner ACV-2 (SC-34, firmware) | ✅ | ⚠️ | lien ambre et pastille ✓ corrects (firmware 25.12.2186, périmé d'un jour) ; la pastille couvre le bas du bio-scan (QA-029) |
+| Rulebook J12 « Codes employeurs », J13 « Registre des cargos », J17 « Révocations » + Inspection | ✅ | ✅ | lisibles, listes défilantes ; J17 : 1ᵉʳ passager « Soren Sato » le jour de la révocation de Sato (QA-022) |
+| Guichet J15 (attestation d'asile) / J16 (ticket de file) | ✅ | — | ticket sans sceau, « PRÉSENTATION 10:00 » |
+| Soirée J10 + « QUITTER HALCYON ? » | ✅ | ✅ | boîte lisible, focus sur RESTER ; non modale au clavier (QA-021) |
+| Soirée J11, prélèvement + rations | ❌ | ❌ | **« ev_note_levy » en clair** sous le prélèvement (QA-024, `QA-024.png`) ; rations groupées lisibles, montant `%d` formaté (« 39 ₵ ») |
+| CHAPITRE II | ✅ | ✅ | Ⅱ lisible (pas une icône pause), rappel « Le 22 mars… » cohérent avec le J10 |
+| Fins F8 / F9 | ✅ | ✅ | titres, puce ACTE II, date « DIM. 01.04.2187 » ; compteur « 4 » rogné au bord (QA-029) |
+| J20 lumières coupées | ✅ | ✅ | bandeau haut-parleur lisible au-dessus du voile, panneaux assombris |
+| J20 figure finale Ilan / Mira (5 documents) | ⚠️ | ❌ | liseré gris (Ilan) / magenta (Mira) corrects ; **5 documents** : au Deck la carte et le permis sont presque entièrement couverts (QA-020, `QA-020-j20-deck.png`) ; « PASSAGER · I. LINDQVIST-REY » genré pour Ilan (QA-027) |
+| Qualité Basse + FX 0 + texte 1,5 | ❌ | ❌ | **QUOTA et CRÉDITS sortent de la barre du haut** (1080p comme Deck) ; ligne d'aide de la barre d'outils coupée au Deck (QA-031, `QA-031.png`) ; lumières coupées et soirée corrects |
+
+### 12.4 Robustesse
+
+| Scénario | Résultat | Preuve |
+|---|---|---|
+| Sauvegarde relue à chaque soir J10–J19 (+ prélèvements J11/J17 exacts, aucun ailleurs) | ✅ | `test_qa_act2::test_every_act_two_evening_save_roundtrips_with_levies` ; 49 « Quitter → Continuer » réels aux soirs J10–J19 |
+| Sauvegardes v3 réelles (v0.8.1) → v4, soirée pivot jouée, sauvegarde v4 relue | ✅ | `test_real_v3_saves_migrate_and_continue_into_act_two` ; campagne réelle `--qa-load` |
+| Spam « Suivant » / tampons pendant les lumières coupées (grève J20) | ✅ un seul verdict, aucun passager de plus, un seul bilan | `test_strike_lights_out_ignores_spam` |
+| Pause pendant un lien suggéré du scanner ; fin du temps pendant l'inspection puis confirmation et tampon | ✅ suggestion conservée, confirmation et tampon acceptés, bilan après le départ | `test_scanner_suggestion_survives_pause_and_time_out` |
+| Comparaison **concordante** puis tampon rapide (départ avant 1,5 s) | ❌ erreur moteur à chaque fois | QA-023 |
+| Boîte « QUITTER HALCYON ? » au clavier / manette | ❌ Tab sort de la boîte ; VALIDER accepté boîte ouverte | QA-021 |
+| « Embarquer » sans UI / par défaut | ✅ jamais choisi (`confirm()` → « Rester ») | test + campagne `drift` |
+| `reduce_motion` : CHAPITRE II, lumières coupées, documents | ✅ apparition immédiate, fondus courts (`DUR_FAST`) | captures |
+| Qualité Basse + FX 0 + texte 1,5 (Deck) | ❌ compteur QUOTA et CRÉDITS hors écran (QA-031) ; lumières coupées, soirée : ✅ | captures `low_*` |
+| Rechargements de scène rapprochés (CHAPITRE II puis Continuer) | ⚠️ `ERROR: Playback can only happen when a node is inside the scene tree` (pas de joueur bloqué) | QA-025 |
+
+### 12.5 i18n
+
+| Contrôle | Résultat |
+|---|---|
+| `fr.csv` | 1 925 clés (+769 depuis v0.8.1), aucun doublon, aucune valeur vide |
+| Clés manquantes | **`msg_cons_day11_albedo`** (briefing J11, QA-019) ; **`ev_note_levy`**, **`ev_note_lease`**, **`ev_note_inc_ilan_job`** (notes de postes par défaut, QA-024) |
+| Orphelines (jamais lues) | `tb_quota`, `tb_quota_full` (le compteur lit `tb_quota_caption/value/reached`), `wb_scanner_acv`, `wb_scanner_luciole` (lit `wb_scanner_src_*`), `field_holder`, `rb_emp_*` ×13 (l'onglet Employeurs affiche le nom brut de la règle) — QA-028 |
+| Sous-titres > 90 car. (SC-23 → SC-50, annonces) | **aucun** ; mots glissés longs mais hors sous-titre (`sc44_lindgren_note` 200, `sc33_corvo_note` 145) |
+| Briefings / soirées > 220 car. | directives `day11_intro`…`day15_intro` 226–256 (comme l'Acte I : `day08_intro` 314) — la directive n'a pas la limite des messages ; rien d'autre |
+| Tessar entre ‹…› | ✅ chevrons équilibrés partout ; aucun mot tessar hors chevrons (« ‹Ravel ka ota› » est voulu, SC-45) |
+| Noms | Beaumont, Sato, Lindgren, Oyelaran-Holm, Navarro, Kerr, Vasquez-Orlov cohérents entre `fr.csv`, ACT2 et LORE ; *Mistigri* (SC-27) absent du LORE (anecdotique) ; « Joaquín » (fils d'Elena) est aussi un nom du Puits 9 lu au J20 — écho voulu ? (Scénariste) |
+| Locuteurs | `msg_ilan_day16` signé ILAN mais parle d'Ilan à la 3ᵉ personne (QA-027) |
+| Pronoms | aucun pronom genré pour Ilan ; point médian respecté |
+| Spoilers | aucun : le CHAPITRE II ne rappelle que la nuit vécue, l'avis « visages seuls » du J20 ne nomme personne, les traces de fin ne citent que les choix faits |
+| Dates / jours | briefings, top bar, soirées et fins cohérents (ven. 23.03 → dim. 01.04.2187 ; « Le 22 mars » = J10) |
+
+### 12.6 Tests ajoutés (`tests/integration/test_qa_act2.gd`)
+
+| Test | État |
+|---|---|
+| `test_real_v3_saves_migrate_and_continue_into_act_two` | ✅ passe |
+| `test_every_act_two_evening_save_roundtrips_with_levies` | ✅ passe |
+| `test_scanner_suggestion_survives_pause_and_time_out` | ✅ passe |
+| `test_strike_lights_out_ignores_spam` | ✅ passe |
+| `test_act_two_briefings_have_no_raw_key` | `pending` QA-019 |
+| `test_four_documents_keep_their_expiry_dates_visible` | `pending` QA-020 |
+| `test_quit_halcyon_confirmation_is_modal` | `pending` QA-021 |
+| `test_act_two_character_surnames_are_not_drawn_for_generated_passengers` | `pending` QA-022 |
+| `test_evening_line_notes_are_translated` | `pending` QA-024 |
+
+### 12.7 Liste des bugs (Acte II)
+
+Statut : 🔴 ouvert. « Test » = test de non-régression `pending` tant que le bug existe.
+
+| ID | Sév. | Titre | Agent propriétaire | Test |
+|---|---|---|---|---|
+| QA-019 | **Majeur** | ✅ Corrigé (commit à venir) — `msg_cons_day11_albedo` ajoutée (ton ACT2 §3.5) : le bulletin Albédo **reprend l'annonce du prélèvement** (« Ce soir, Prélèvement de Rééquilibrage : 30 % de l'épargne au-delà de 40 ₵ »), les deux bulletins du groupe `levy` passent en priorité 0 (jamais coupés par le plafond de 4 messages) ; le test vérifie aussi que le J11 annonce toujours le prélèvement. Constat d'origine : briefing du J11, vannes ouvertes : **clé brute `msg_cons_day11_albedo`** affichée (absente de `fr.csv`) — et, même groupe `levy`, elle remplace l'annonce du prélèvement : le joueur n'est pas prévenu des 30 % retenus le soir. C'est la branche la plus fréquente (7 campagnes réelles sur 8) | Scénariste (`fr.csv`) + Gameplay Systems (groupe dans `build_data_act2.gd`) | `test_act_two_briefings_have_no_raw_key` |
+| QA-020 | **Majeur** | ✅ Corrigé (commit à venir) — mise en page par colonnes (`Workbench._plan_layout`) : critère = valeurs des champs ≥ 12 px **physiques** (échelle de la fenêtre et texte compris) ; à défaut, la disposition au texte le plus grand (à 3 % près, la plus large), jamais sous 0,72 : 1080p à 4 documents côte à côte (0,73, la carte borne la hauteur), Deck en **piles à onglets** (≈ 0,85 au lieu de 0,72) (la carte seule devant sa pile, les autres laissent dépasser émetteur + titre) ; clic sur un onglet ou **touches 1–n** (« TOUCHES 1–n » dans l'en-tête) : document devant ; un lien suggéré du scanner amène son document devant ; glisser / zoomer sort un document de sa pile ; plan recalé sur le Rulebook et la barre d'outils réels. Constat d'origine : plan de travail à **4 documents** (J12+ ; 5 possibles au J14+) : la mise en page par défaut les fait se chevaucher (~40 % de largeur) ; **dates d'expiration du permis et du bio-scan, N° ID / émetteur / sceau de la carte cachés** sous le document suivant, en 1080p comme au Deck. Au J13 (graine 3), la discordance N° ID carte ↔ bio-scan est entièrement sous le permis ; un lien du scanner peut pointer un champ invisible | UI/UX Expert (+ Design System) | `test_four_documents_keep_their_expiry_dates_visible` |
+| QA-024 | **Majeur** | ✅ Corrigé (commit à venir) — `ev_note_levy`, `ev_note_lease`, `ev_note_inc_ilan_job` ajoutées ; `test_evening_line_notes_are_translated` couvre J1–J20 × foyers (malades, Soute, en attente) × drapeaux Acte II, et **`test_every_data_referenced_key_exists_in_fr_csv`** parcourt par réflexion toutes les ressources de `data/` (briefings, soirées et options, annonces, avis, révocations, cas scénarisés, objets glissés, documents, règles, factions : `*_key`, `key`, `*_keys`). Constat d'origine : soirée : **notes de postes en clé brute** — « ev_note_levy » sous le Prélèvement de Rééquilibrage (J11, J17, dès 41 ₵ d'épargne : quasi toutes les parties), « ev_note_lease » sous la location ACV-2 (J14–J19), « ev_note_inc_ilan_job » (salaire d'Ilan) : `ExpenseLine` pose `ev_note_<id>` par défaut | Scénariste (`fr.csv`) ou Gameplay Systems (`note_key` vide / dédié dans `evening_service.gd`) | `test_evening_line_notes_are_translated` |
+| QA-030 | **Majeur** | ✅ Corrigé (commit à venir) — **cause racine : course de Godot 4.7.2 dans le thread audio**, pas la synthèse tessar. Reproduit (stress de rechargements de la vraie scène, §12.12 : `signal 11` après ≈ 500 rechargements) ; pile désassemblée : copie de `StringName` dans `AudioServer::_mix_step` sur le thread du pilote audio — l'erreur `/root … propagate_notification()` est la `NOTIFICATION_CRASH` du gestionnaire de plantage, émise hors du thread principal. Chaque changement de volume d'une lecture (`AudioStreamPlayer3D` des passagers à chaque mixage, fondus) remplace ses `bus_details` ; l'ancien bloc est libéré deux `AudioServer.update()` plus tard alors que le mixage peut encore le copier s'il est retardé d'une image (processeur chargé, images très courtes autour d'un rechargement). Correctif : autoload **`AudioMixBarrier`** (verrou du pilote pris et rendu à chaque image : le mixage en cours finit avant toute libération) ; en outre barks rendus par un `BarkJob` sans nœud (plus de lambda capturant le directeur), aucun bark ni son hors de l'arbre, attente des rendus à la sortie de l'arbre et à la libération. Après : 3 × 1 000 rechargements et 19 campagnes réelles (218 « Quitter → Continuer ») sans plantage (§12.12, ARCHITECTURE R31). Constat d'origine : **plantage intermittent** (1 campagne réelle sur 13, graine 11 sans crédits) au rechargement de la scène après la soirée du J7 : `ERROR: /root: The caller thread can't call the function propagate_notification() on this node` puis `handle_crash: signal 11` (Godot 4.7.2). Rejouée à l'identique : pas de plantage. Seul code multithread du projet : synthèse des voix tessar (`AudioDirector`, `WorkerThreadPool.add_task`, attente à `_exit_tree`) ; à instrumenter (`--verbose`, symboles) | Godot Architect + Audio Designer (`audio_director.gd:392`) | log `QA-030` (repro non déterministe) |
+| QA-031 | **Majeur** | ✅ Corrigé (commit à venir) — barre du haut adaptative (`TopBar.update_compaction`, paliers comme QA-011 : sur-titre, « FIN 18:00 », jauge, lieu, marque, date ; compteurs sur une ligne « TRAITÉS 00 · QUOTA 0/5 · CRÉDITS ₵ 20 » quand légende + valeur dépassent la hauteur) ; ligne d'aide de la barre d'outils dimensionnée à la taille du texte, barre qui grandit vers le haut et plan de travail qui la suit ; échelle minimale des documents divisée par l'échelle du texte. Constat d'origine : **Texte 1,5 (accessibilité)** : à l'Acte II, le compteur QUOTA ajouté à la barre du haut pousse **QUOTA et CRÉDITS hors de l'écran**, en 1920×1080 comme au Deck (au J10, sans quota, « CRÉDITS » est déjà rogné au Deck) ; au Deck la ligne d'aide de la barre d'outils passe sur 3 lignes et sort par le bas. Le joueur qui a besoin du grand texte ne voit plus ni son quota ni son solde | UI/UX Expert (`top_bar.gd`, `quota_counter_view.gd`, `tool_bar.gd`) | capture `QA-031.png` |
+| QA-021 | Mineur | ✅ Corrigé (commit à venir) — focus piégé entre RESTER / CONFIRMER (Tab, Maj+Tab, directions), Échap / B = « Rester » (le focus revient à l'option), `confirm()` ignoré boîte ouverte. Constat d'origine : boîte « QUITTER HALCYON ? » (J10, Embarquer) **non modale au clavier / manette** : Tab depuis CONFIRMER LE DÉPART passe aux postes de dépense derrière le voile puis à VALIDER ET DORMIR ; `confirm()` accepté boîte ouverte (la nuit passe avec « Rester », la boîte reste sous le rapport de nuit). Aucun départ involontaire possible | UI/UX Expert (`evening_screen.gd`) | `test_quit_halcyon_confirmation_is_modal` |
+| QA-022 | Mineur | ✅ Corrigé (commit à venir) — D-067 étendu : `build_data.gd` réserve le **nom de famille de chaque personnage scénarisé des deux actes** (identité présentée et vraie) et des avis nommés, plus les noms distinctifs ; pour garder ≥ 12–15 noms tirables, réserves TYC / HAL (+10) et TER (+7) complétées de figurants (`EXTRA_FAMILY_NAMES`, à reporter au LORE §5 par le Lore Master) ; test étendu à J1–J20 × 6 graines. Constat d'origine : générateur : **noms de famille des personnages de l'Acte II tirés pour des passagers générés** les jours mêmes — « Navarro » ≈ 0,5/jour (graine 3 : « Tomás Navarro » 1ᵉʳ passager du J11 **et** du J12, le jour d'Elena Navarro), « Kerr » au J13 (les trois Ren Kerr), « Sato » au J17 (« Soren Sato » 1ᵉʳ passager du jour où Sato est révoqué). Par ailleurs 28 % des paires de jours consécutifs partagent un nom complet exact (19 % à l'Acte I) | Gameplay Systems (`reserved_names`, D-067 / QA-002) | `test_act_two_character_surnames_are_not_drawn_for_generated_passengers` |
+| QA-023 | Mineur | ✅ Corrigé (commit à venir) — minuteur du surlignage concordant porté par le champ (`Tween` du champ, libéré avec lui) ; `test_concordant_mark_survives_documents_leaving_early`. Constat d'origine : `ERROR: Error calling from signal 'timeout' … _unmark_concordant: Cannot convert argument 1 from Object to Object` : une paire **concordante** comparée puis tamponnée avant 1,5 s → le minuteur rappelle `_unmark_concordant(item: InspectableItem)` sur un champ libéré (même motif que QA-012 : paramètre typé avant `is_instance_valid`). Aucun effet joueur, journal pollué (et GUT échoue si un test le déclenche) | UI/UX Expert (`comparison_ui.gd:851`, `:1556`) | log (repro : `test_scanner_suggestion…` avec un lien concordant) |
+| QA-025 | Mineur | ✅ Corrigé (commit à venir) — `PassengerAudio._play_on` / `say` ignorent un émetteur hors de l'arbre ; `AudioDirector` n'accepte plus aucun son ni bark une fois sorti de l'arbre (`_is_active()`) : un signal tardif ne relance plus de lecture **ni ne remplit à nouveau le cache d'`AudioCueBank` après `clear_cache()`** (première source des fuites) ; seconde source (`--verbose`) : quitter juste après l'écran de fin laisse des lectures (`AudioStreamRandomizer`, WAV, musique du bilan) dans la liste de l'`AudioServer`, qui ne les retire qu'à ses `update()` suivants — `AudioMixBarrier.quit_after_silence()` arrête tous les lecteurs, laisse 8 images + 250 ms (processeur chargé) puis quitte (`qa_campaign`, `qa_capture`, `qa_perf`). Stress de 60 rechargements : avant 2 erreurs « Playback… » + `49 ObjectDB instances leaked` / `25 resources still in use` ; après : 0 ; campagne graine 5 `--verbose` : 0 fuite. Reste (hors périmètre, cosmétique) : fermer la fenêtre en plein shift peut encore laisser ces fuites à la sortie. Constat d'origine : sorties moteur : `ERROR: Playback can only happen when a node is inside the scene tree` (`passenger_audio.gd:123`, `_play_on` sur un acteur sorti de l'arbre, rechargement de scène pendant une marche) ; fuites à la sortie après une fin F3 / F6 ou une capture (`8–37 ObjectDB instances leaked`, `3–17 resources still in use`) — QA-016 réapparaît sur ces chemins | Audio Designer / Godot Architect | log |
+| QA-026 | Mineur | ✅ Corrigé (commit à venir) — R28 : `DayDef.asylum_class_rate` (J15 : 1,0, ensuite 0,30) et `DayDef.focus_documents = [asylum]` (J15+ : `MISSING_DOCUMENT` / `EXPIRED_DOCUMENT` visent l'attestation quand le passager en porte une), file F_TER et poids EXPIRED / MISSING relevés au J15 → R28 violée dans **2,6 %** des cas du J15 (0,1 % avant), 0,3–0,9 % ensuite ; `UNREGISTERED_VESSEL` : poids **conditionnel** (DRV porteurs seulement) relevé à 0,20 dès le J14 → 1,1–2,8 % des anomalies (0,2–1,2 %) ; `REVOKED_ID` : poids 0 (jamais tiré au hasard : entrées de `DayDef.revocations`, comme `WANTED_PERSON`). Invariants OK, 0 re-tirage ; fins de `balance_sim` dans ±5 points (§12.12). Constat d'origine : équilibrage du générateur (gen_stats, 40 campagnes) : **R28 (attestation d'asile, J15) violée dans 0,1 % des cas** (la règle du jour n'est presque jamais exercée hors SC-36) ; `UNREGISTERED_VESSEL` sous-représenté après le J13 (0,2–1,2 % observés pour 3,7–6,5 % de poids : réservé aux `DRV`, 10 % de la file) ; `REVOKED_ID` au J19 14 % pour 6,8 % de poids | Gameplay Systems (`build_data_act2.gd`, injecteurs) | gen_stats |
+| QA-027 | Cosmétique | ✅ Corrigé (commit à venir, partie texte) — `msg_ilan_day16` réécrit à la 1ʳᵉ personne (« On m'a glissé un mot. Je ne l'ai pas encore ouvert… ») ; le libellé « PASSAGER·E » pour `X` reste côté UI/UX (`UiText`). Constat d'origine : `msg_ilan_day16` signé « ILAN · BLOC PÉTREL » : « Ilan a reçu un mot. Ilan ne l'a pas encore ouvert… » (Ilan parle de lui·elle à la 3ᵉ personne) → `spk_note` ou Dora (D-081). Même famille : le panneau du passager affiche « PASSAGER · I. LINDQVIST-REY » pour Ilan (sexe `X` → libellé masculin par défaut, `UiText.passenger_number`) alors que la convention interdit le genre pour Ilan → « PASSAGER·E » pour `X` | Scénariste / UI/UX | — |
+| QA-028 | Cosmétique | ✅ Corrigé (commit à venir, partie données) — `ContractConsistentRule.label_key(code)` (`rb_emp_<code>`) et `test_employer_codes_have_label_keys` (13 codes, libellé « XX · Employeur ») ; aucune clé référencée par les données sans traduction (`test_every_data_referenced_key_exists_in_fr_csv`). ✅ Corrigé (commit à venir, partie UI) — onglet « Codes employeurs » lu via `rb_emp_<code>` (code déjà sur la pastille) ; `tb_quota` / `tb_quota_full` = compteur compact de la barre du haut ; `wb_scanner_acv` / `wb_scanner_luciole` = infobulle de la pastille ✓ ; `field_holder` = libellé « TITULAIRE » du nom sur un document d'un tiers. Constat d'origine : clés orphelines de l'Acte II (§12.5) : `tb_quota`, `tb_quota_full`, `wb_scanner_acv`, `wb_scanner_luciole`, `field_holder`, `rb_emp_*` ×13 ; l'onglet « Codes employeurs » affiche les noms bruts de `ContractConsistentRule.employer_codes` au lieu de `rb_emp_*` | Scénariste / UI/UX | — |
+| QA-029 | Cosmétique | ✅ Corrigé (commit à venir) — libellés de champs repliés sur deux lignes au lieu d'être tronqués (« VALIDE / JUSQU'AU ») ; sur-titre « CONSORTIUM · … » de la barre du haut abandonné en entier ; pastille ✓ posée sur le lien hors de tout document ; compteur de l'écran de fin non reproduit (F8, 1080p et Deck : visible). Constat d'origine : libellés tronqués des documents (« FIRMWARE… », « STATUT SANITAI… », « VALIDE JUS… » au Deck ; « CONSORT… » dans la barre du haut au Deck) ; la pastille ✓ d'un lien du scanner se pose sur le texte du document qu'elle traverse (sceau / code-barres du bio-scan, J14) ; compteur « 4 » du bloc « CE QUE VOUS AVEZ CHOISI » rogné au bord droit de l'écran de fin | UI/UX Expert | captures |
+
+Total Acte II : **0 bloquant, 5 majeurs, 5 mineurs, 3 cosmétiques** (13 bugs, QA-019 à QA-031). Aucun bug de l'Acte I réapparu hors QA-016 (QA-025) ; les correctifs QA-001 à QA-018 tiennent (suite verte, captures J1–J10 non refaites).
+
+### 12.8 Difficulté observée (Game Designer)
+
+- **Le bot de la vraie scène (59–69 % de conformité cumulée) ne passe pas l'Acte II sans aide** : sans crédits de QA, fin F2 au soir du J7 (graine 5), F3 aux soirs du J10 et du J11 (graines 42, 7 et 11) : **sans aide, le bot ne voit jamais le J12** ; avec **+300 ₵**, F2/F3 entre le soir du J14 et celui du J15 (3/3) ; il faut **+1 500 ₵** pour atteindre le J20. À l'Acte II, ce bot tombe à **38–50 % de conformité les J12, J14, J17–J19** (contrats R24/R25, firmware R27, révocations R30 : règles « hors de l'écran » pour lui) et perd 25–50 ₵ par shift ; la base quotidienne (≈ 50 ₵ + rations, oxygène, soins) n'est jamais couverte.
+- **Simulation** (erreurs au hasard, plus clémente) : à 65 %, 50 % des campagnes atteignent le J11, 30 % le J15, **7,5 % le J20** ; à 80 %, 97,5 % finissent au J20 (fins conformes à la politique) ; à 95 %, épargne 300–450 ₵ malgré les deux prélèvements.
+- **Lecture** : cohérent avec D-060 (« dur ») et ACT2 §6.3 pour un joueur à 60 % (cibles respectées : J20 ≤ 5–10 %). Mais **ce n'est pas bloquant pour « la plupart des joueurs » seulement si un joueur humain dépasse nettement le bot** : les métriques Acte I du bot (90–100 % aux J2–J3, 40–70 % ensuite) suggèrent qu'un joueur moyen qui ne maîtrise pas les onglets Employeurs / Révocations se trouvera dans la zone 60–70 % au J12 et s'effondrera vers le J14–J15, **après** le pivot et le CHAPITRE II, ce qui est plus frustrant qu'un échec à l'Acte I. À confirmer en playtest humain (GDD §14) avant tout réglage ; pistes si confirmé : un 3ᵉ avertissement gratuit les jours de nouvelle règle (J12, J14, J17), ou plancher du prélèvement J11 relevé pour un solde < 100 ₵.
+- **« Vannes ouvertes par accident »** (suite de §9) : 7/8 campagnes réelles arrivées au J10 ont ouvert les vannes sans jamais aider sciemment les Lucioles. Recommandé : appliquer `luciole_trust_on_breach = false` dès le J8–J10 (ou compter `final_passed` seulement si Mira a été comparée à l'avis), sinon la branche « avortées » sera rare chez les joueurs inattentifs.
+
+### 12.9 Perf indicative
+
+`tools/qa_perf.gd` sous xvfb (llvmpipe, 4 cœurs **partagés avec les campagnes en cours** : les temps d'image ne sont pas comparables au §5, seuls les appels de dessin le sont).
+
+| Scène | Appels de dessin | Primitives | Image moyenne / p95 (llvmpipe chargé) |
+|---|---|---|---|
+| J7, 1ᵉʳ passager (référence Acte I, même machine, même charge) | **325** | 50 000 | 535 / 679 ms |
+| **J12**, 4 documents + scanner (boîte magenta, pointillés) | **406** (+25 %) | 51 400 | 555 / 760 ms |
+| **J20**, figure finale (5 documents, ticket de file) | **408** (+26 %) | 52 400 | 528 / 668 ms |
+
+Lecture : l'Acte II ajoute ≈ 80 appels de dessin, presque tous en **UI 2D** (un document ≈ 15–20 appels : cadre, champs, code-barres, sceau ; liens pointillés ; pastilles) ; la 3D ne bouge pas (primitives +4 %). Rien d'alarmant sur GPU, mais le budget Deck à fixer (§5, recommandation 7) doit inclure ~410 appels au pire cas ; piste : regrouper le rendu des champs d'un document (un seul `_draw`) si le Deck réel le demande.
+
+### 12.10 Recommandations priorisées
+
+1. **QA-030** (plantage intermittent au rechargement de scène) : instrumenter et relancer 20 campagnes avant toute démo publique.
+2. **QA-019 et QA-024** (clés brutes au J11, la première journée de l'Acte II, dans presque toutes les parties) : ajouter les quatre clés manquantes ; ne pas laisser le message Albédo évincer l'annonce du prélèvement (groupe distinct).
+3. **QA-020 et QA-031** : mise en page du guichet de l'Acte II — à 4–5 documents — ajuster aussi l'échelle à la largeur (≥ 0,72) ou cascader en gardant la colonne droite (dates, N° ID) de chaque document visible ; un lien suggéré du scanner devrait amener son document au premier plan ; barre du haut repliable (libellés courts / deux lignes) avec le texte 1,5.
+4. **Difficulté (§12.8)** : playtest humain J10–J15 avant toute retouche ; trancher « vannes ouvertes par accident ».
+5. QA-022 (réserver Navarro / Kerr / Sato ; élargir les réserves de noms), QA-021 (piéger le focus dans la boîte, ignorer VALIDER boîte ouverte), QA-026 (exercer R28).
+6. Journaux propres : QA-023, QA-025.
+7. Contenu : QA-027, QA-028, QA-029.
+8. QA (suite) : captures J1–J10 de non-régression à refaire au prochain jalon, F1/F4/F5 jouées à la main dans la vraie scène, perf sur GPU / Steam Deck réel.
+
+### 12.11 Rejouer la passe Acte II
+
+```bash
+godot --headless --import
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json -gexit           # 524 tests, 5 pending QA-019…024
+# Campagne réelle J1–J20 avec « Quitter → Continuer » chaque soir (user:// jetable)
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --autoplay \
+    --qa-seed=11 --qa-profile=solidaire --qa-speed=10 --qa-credits=1500 --qa-reload
+# Reprise d'une sauvegarde v3 réelle (migration v3 → v4 dans la vraie scène)
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --autoplay \
+    --qa-load=$PWD/tests/fixtures/qa_save_v3_j9_loyal.json --qa-profile=loyal --qa-speed=10 --qa-reload
+# Fins F1–F9 simulées
+godot --headless --script res://tools/balance_sim.gd -- --seeds=40 --seed=1 --profiles=0.65,0.8,0.95 \
+    --presets=default,loyal,luciole,mercenary,drift,negligent,evicted,drift10,archiviste,solidaire,overrun,mercenary2
+# Capture réelle (Deck) sans override.cfg
+XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
+    --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1280x800 --qa-wait=25 \
+    --qa-out=/tmp/j12.png --seed=3 --day=12 --screen=shift --flags=scanner_luciole,act2_started --reduce-motion
+```
+
+### 12.12 Correctifs techniques (Godot Architect) — mesures
+
+Correctifs QA-019, QA-022, QA-024 à QA-028 (données), QA-030, R28 et R30 de la revue d'architecture (rév. 3.5). Exécutions avec `XDG_DATA_HOME` jetable ; rien laissé dans le dépôt.
+
+| Mesure | Avant | Après |
+|---|---|---|
+| **Stress de rechargements** de la vraie scène (`day.tscn`, bot `--autoplay`, `reload_current_scene` toutes les 1–240 images, briefing comme plein shift) | 3 runs (≈ 2 100 rechargements) : **1 `signal 11`** (≈ 500ᵉ rechargement, pile : `AudioServer::_mix_step`, thread du pilote audio) ; 14–72 « Playback can only happen… » ; fuites à la sortie | 3 × 1 000 rechargements : **0 plantage**, 0 « Playback… » |
+| **Campagnes réelles** `qa_campaign --qa-reload` (« Quitter → Continuer » à chaque briefing), 3–4 en parallèle | 13 campagnes (§12.2) : 1 plantage (QA-030), fuites à la sortie | **19 campagnes**, 236 jours, **218 rechargements** (graines 3, 5, 7, 11, 13, 19, 23, 42 ; profils default, archiviste, solidaire, luciole, drift, drift10, loyal sur sauvegarde v3 réelle ; fins F2, F3, F6, F7, F8, F9) : 0 plantage, 0 `SCRIPT ERROR`, 0 `QA_ISSUE`, 0 « Playback… » ; 0 fuite depuis `quit_after_silence` (4 dernières campagnes, 4 en parallèle) |
+| `gen_stats` (40 campagnes) — R28 violée au J15 | 0,1 % | **2,6 %** (J16–J20 : 0,1–0,9 %) |
+| `UNREGISTERED_VESSEL` J14–J20 (part des anomalies) | 0,2–1,2 % | 1,1–2,8 % |
+| `REVOKED_ID` (poids) | 6,8–16,5 % (jamais tiré) | 0 (entrées de révocation seules, part observée inchangée : 6,2–19 %) |
+| Invariants du générateur, re-tirages | OK, 0 | OK, 0 (anomalies non placées J1/J2/J8 : 5/1/1, inchangées) |
+| `balance_sim` 40 graines × 12 préréglages × 65/80/95 % | §12.2 | 35 cases sur 36 à ±2,5 points ; `drift` 80 % : F6 55 → 47,5 (bruit : à **200 graines** 58,5 → 58,0 %) |
+| `build_data.gd` | — | deux exécutions = fichiers identiques |
+| ✅ Corrigé — **rechargement en plein shift** : `BoothDirector` émettait encore hors de l'arbre (minuteur de présentation, repère d'animation) → `ComparisonUI` sortie de l'arbre → `workbench.gd:137` (`process_frame` sur null) | reproduit (`test_booth_emits_nothing_once_the_scene_left_the_tree`, scène retirée de l'arbre au guichet) : `documents_presented` émis, 6 erreurs moteur | `_emit_once` / `_knock` / arrivée gardés par `is_inside_tree()`, minuteurs (`_after`) déconnectés à `_exit_tree` ; `Workbench` ne touche plus à `get_tree()` hors de l'arbre (mise en page reportée à `NOTIFICATION_ENTER_TREE`) : 0 émission, 0 erreur |
+| ✅ Corrigé — `build_data.gd` affichait « OK » malgré un `build_data_act2.gd` non analysable (`_build()` interrompu, code 0) | erreur d'analyse simulée (copie hors dépôt) : « OK », code 0, données partielles | scripts de données vérifiés avant toute écriture, `Logger` comptant les erreurs moteur / de script, génération menée à terme : « build_data : ÉCHEC — … », code 1, rien d'écrit ; échec d'enregistrement simulé : code 1 |
+| Suite GUT | 524 (5 pending) | **532 / 532**, aucun `pending` |
+| `export_all.sh linux` + `smoke_export.sh` | — | OK (titre, J1, J4, J7, J10, J15, J20) |
+
+Outils de ces mesures (stress de rechargements, sonde d'asile) gardés hors dépôt ; le stress se rejoue avec une boucle `reload_current_scene.call_deferred()` à intervalles aléatoires depuis un nœud lancé par `tools/qa_boot.gd`.

@@ -26,6 +26,11 @@ enum Kind {
 	INVALID_SEAL = 14,
 	MRZ_MISMATCH = 15, # 🟡 GDD
 	WANTED_PERSON = 16, # 🟡 GDD
+	# Acte II (docs/ACT2.md §2.2, B18) — ajoutés en fin d'enum (D-033).
+	CONTRACT_MISMATCH = 17,
+	UNREGISTERED_VESSEL = 18,
+	OUTDATED_FIRMWARE = 19,
+	REVOKED_ID = 20,
 }
 
 

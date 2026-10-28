@@ -62,6 +62,14 @@ var password_answered: bool = false
 ## M7 (NARRATIVE §4.9) : DÉTENTION d'un porteur du code 1 documentée par la
 ## paire marque ↔ bulletin = signalement valide (cas correct, sans citation).
 var luciole_report: bool = false
+## Acte II (R23, D-077) : le passager compte dans le quota respiratoire.
+var quota_counted: bool = false
+## Acte II : le quota était atteint au moment du tampon (passager compté).
+var quota_full: bool = false
+## Acte II : REFUS motivé par le seul quota (correct, documenté d'office).
+var quota_refusal: bool = false
+## Acte II : entrée **imputée** au guichet (APPROUVÉ au-delà du quota : 0 ₵).
+var quota_overrun: bool = false
 
 
 func _init(p_case_id: StringName = &"") -> void:
