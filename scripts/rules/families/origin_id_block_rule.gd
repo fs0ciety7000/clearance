@@ -15,7 +15,7 @@ const ORIGIN_PATH: StringName = &"faction_id"
 func evaluate(case: Case, ctx: RuleContext) -> Array[Violation]:
 	var violations: Array[Violation] = []
 	for doc: DocumentInstance in case.documents:
-		if doc.third_party:
+		if doc.is_foreign():
 			continue # Acte II : document d'un tiers (SC-27).
 		var violation: Violation = _check_document(case, doc, ctx)
 		if violation != null:

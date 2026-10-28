@@ -42,7 +42,7 @@ func get_referenced_truth_paths() -> Dictionary[StringName, Array]:
 func _refs_for(case: Case, path: StringName) -> Array[FieldRef]:
 	var refs: Array[FieldRef] = []
 	for ref: FieldRef in case.find_refs_by_truth_path(path):
-		if case.get_document(ref.document_id).third_party:
+		if case.get_document(ref.document_id).is_foreign():
 			continue # Acte II : document d'un tiers (SC-27), jamais comparé.
 		if document_ids.is_empty() or document_ids.has(ref.document_id):
 			refs.append(ref)

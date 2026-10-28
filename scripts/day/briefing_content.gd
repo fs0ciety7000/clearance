@@ -19,6 +19,8 @@ const MSG_ADVANCE: String = "msg_consortium_advance"
 ## Nature du message (couleur du locuteur, DS §7.10) : Consortium, mentor,
 ## famille ; M7 : Lucioles (magenta), Inspection (jaune). On n'ajoute qu'à la fin.
 ## Acte II : COMMISSION (Commission de Rééquilibrage), BRULANTS (encre noire).
+## Acte III : aucune voix nouvelle (docs/ACT3.md §5 : Arbitrage = COMMISSION,
+## Enquête = INSPECTION, comité de grève = LUCIOLES, Okafor = FAMILY).
 enum Voice { CONSORTIUM, MENTOR, FAMILY, LUCIOLES, INSPECTION, COMMISSION, BRULANTS }
 ## Au plus 4 messages par briefing (NARRATIVE §3).
 const MAX_MESSAGES: int = 4
@@ -49,6 +51,9 @@ static func build(day: DayDef, flags: Dictionary[StringName, Variant], household
 	content.game_date = day.game_date
 	content.directive_title_key = "day%02d_directive_title" % n
 	content.directive_key = day.intro_text_key
+	# Acte III : directive variante selon les drapeaux du matin (climat Vanne).
+	if not day.intro_variants.is_empty():
+		content.directive_key = ConditionalKey.first_match(day.intro_variants, flags, day.intro_text_key)
 	content.slogan_key = "day%02d_slogan" % n
 	content.rulebook = day.rule_set.build_rulebook() if day.rule_set != null else []
 	if n == 1 and advance > 0:

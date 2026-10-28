@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ContractSuspendedRule" format=3 uid="uid://dr51cx25ngs7x"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/contract_suspended_rule.gd" id="1_iy1y8"]
+
+[resource]
+script = ExtResource("1_iy1y8")
+suspended_codes = PackedStringArray("KA")
+id = &"r_tycho_lockout"
+title_key = "r_tycho_lockout_title"
+rulebook_text_key = "r_tycho_lockout_text"
+summons_exempt = true

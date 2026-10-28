@@ -4,6 +4,11 @@
 ## Cible : un document présent dont la règle d'expiration est active (Acte II :
 ## ou dont la `RequireDocumentRule` exige un document **valide**, R24 / R28).
 ## Paramètres : `document_id`, `expired_days`.
+## Acte III (R32, B38) : `expiry` (date imposée, `GameDate` : hors de la
+## fenêtre de prorogation, SC-51 ; ou dedans après la fin de la prorogation,
+## SC-80 au J30). Sans date imposée,
+## une expiration qui tomberait dans la fenêtre (donc prorogée) est reculée
+## avant la fenêtre : l'anomalie reste une vraie expiration.
 class_name ExpiredDocumentInjector
 extends AnomalyInjector
 
@@ -64,6 +69,12 @@ func inject(state: InjectionState) -> Anomaly:
 	else:
 		var old_expiry: int = doc.expiry_date
 		doc.expiry_date = today - days
+		var imposed: Variant = state.param(&"expiry", null)
+		if imposed is int:
+			doc.expiry_date = imposed
+		elif state.ctx.is_prorogated(doc.expiry_date):
+			# Acte III (R32) : jamais dans la fenêtre de prorogation.
+			doc.expiry_date = state.ctx.prorogation().window_start - days
 		doc.issue_date = doc.expiry_date - duration
 		anomaly = make_anomaly(get_kind(), document_id, field_for(state.case, document_id, EXPIRY_PATH), old_expiry, doc.expiry_date)
 	state.mark(document_id, field_for(state.case, document_id, EXPIRY_PATH))

@@ -91,14 +91,15 @@ func test_real_v3_saves_migrate_and_continue_into_act_two() -> void:
 			assert_eq(JSON.stringify(GameState.to_save_dict(), "", true), expected)
 
 
-## Chaque soir J10–J19 : la sauvegarde relue redonne l'état exact ; les
+## Chaque soir J10–J20 : la sauvegarde relue redonne l'état exact ; les
 ## prélèvements (D-079) ne tombent qu'au J11 et au J17, à 30 % au-delà de 40 ₵.
+## M9 : la soirée pivot du J20 ouvre l'Acte III (l'Acte III a son propre test).
 func test_every_act_two_evening_save_roundtrips_with_levies() -> void:
 	Campaign.new_game(data, 4242)
 	var economy: EconomyDef = data.get_economy()
 	var policy: Callable = func(_c: Case, key: CaseKey, i: int) -> VerdictKind.Kind:
 		return key.expected_verdict if i % 7 != 6 else VerdictKind.Kind.DENY
-	for day_number: int in range(1, data.get_last_day_number() + 1):
+	for day_number: int in range(1, 21):
 		assert_eq(GameState.current_day, day_number)
 		var summary: DaySummary = DaySimulator.simulate(data, day_number, GameState.get_day_seed(), policy)
 		GameState.add_credits(summary.get_net())
@@ -128,6 +129,8 @@ func test_every_act_two_evening_save_roundtrips_with_levies() -> void:
 			var expected: String = JSON.stringify(GameState.to_save_dict(), "", true)
 			assert_true(GameState.load_from_slot(0, DIR), "J%d relu" % day_number)
 			assert_eq(JSON.stringify(GameState.to_save_dict(), "", true), expected, "J%d : état identique" % day_number)
+	assert_true(Campaign.is_act3(), "soirée pivot du J20 : Acte III commencé")
+	assert_eq(GameState.current_day, 21)
 
 
 # ---------------------------------------------------------------------------
@@ -567,7 +570,7 @@ func test_employer_codes_have_label_keys() -> void:
 			var key: String = ContractConsistentRule.label_key(consistent.employer_codes[employer])
 			assert_true(UiText.has(key), "%s → %s" % [employer, key])
 			assert_true(UiText.t(key).ends_with(employer), "%s : libellé « %s »" % [key, UiText.t(key)])
-	assert_eq(found, 13, "13 codes employeurs")
+	assert_eq(found, 14, "13 codes employeurs + AR (Acte III)")
 
 
 func _collect_missing_keys(value: Variant, prop: String, missing: PackedStringArray, seen: Dictionary[int, bool]) -> void:

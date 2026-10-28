@@ -21,8 +21,13 @@ const FLAG_LUCIOLE_REMOVED: StringName = &"scanner_luciole_removed"
 
 
 ## Source branchée d'après les drapeaux (`acv`, `luciole`), vide sinon.
+## Acte III (J21, rappel de Continuité) : ACV-2 restitué, plus de liens Consortium.
+const FLAG_ACV_RETURNED: StringName = &"acv_returned"
+
+
 static func source_for(flags: Dictionary[StringName, Variant]) -> StringName:
-	if FlagCondition.is_flag_true(flags, FLAG_CONSORTIUM):
+	# Acte III : l'ACV-2 de la Commission est restitué au rappel du J21.
+	if FlagCondition.is_flag_true(flags, FLAG_CONSORTIUM) and not FlagCondition.is_flag_true(flags, FLAG_ACV_RETURNED):
 		return SOURCE_ACV
 	if FlagCondition.is_flag_true(flags, FLAG_LUCIOLE) and not FlagCondition.is_flag_true(flags, FLAG_LUCIOLE_REMOVED):
 		return SOURCE_LUCIOLE

@@ -26,9 +26,12 @@ static func find_in(rule_set: RuleSet) -> AirQuotaRule:
 	return null
 
 
-## Vrai si une approbation de ce passager compte dans le quota.
-func counts(case: Case) -> bool:
+## Vrai si une approbation de ce passager compte dans le quota (Acte III :
+## un convoqué de l'Enquête, convocation authentique, n'est pas compté — R36).
+func counts(case: Case, ctx: RuleContext = null) -> bool:
 	if case == null or exempt_faction_ids.has(Rule.visible_origin(case)):
+		return false
+	if is_exempted(case, ctx):
 		return false
 	var purpose: Variant = PurposeConsistentRule._value(case, permit_id, &"purpose")
 	if purpose != null:
@@ -41,4 +44,4 @@ func counts(case: Case) -> bool:
 func check_against(case: Case, ref: FieldRef, ctx: RuleContext) -> Discrepancy.Result:
 	if ref == null or not ref.is_quota_counter() or ctx == null or ctx.quota_max <= 0:
 		return Discrepancy.Result.INCOMPARABLE
-	return Discrepancy.Result.DISCORDANT if ctx.is_quota_full() and counts(case) else Discrepancy.Result.CONCORDANT
+	return Discrepancy.Result.DISCORDANT if ctx.is_quota_full() and counts(case, ctx) else Discrepancy.Result.CONCORDANT

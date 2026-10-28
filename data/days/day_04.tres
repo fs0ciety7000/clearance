@@ -1,37 +1,38 @@
 [gd_resource type="Resource" script_class="DayDef" format=3 uid="uid://bcs76od1a22ek"]
 
-[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_youir"]
-[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_cf11u"]
-[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="3_dhsup"]
-[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="4_qro8o"]
-[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="5_euh4e"]
-[ext_resource type="Script" path="res://scripts/core/evening_option_def.gd" id="6_py18b"]
-[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="7_vrvol"]
-[ext_resource type="Resource" path="res://data/days/ruleset_day_04.tres" id="8_45bwo"]
-[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="9_4fpem"]
-[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="10_sypw1"]
-[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="11_2hp76"]
-[ext_resource type="Script" path="res://scripts/core/slipped_item_def.gd" id="12_mfa1n"]
-[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="13_x6s1c"]
+[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_cf11u"]
+[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_dhsup"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="3_qro8o"]
+[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="4_euh4e"]
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="5_py18b"]
+[ext_resource type="Script" path="res://scripts/core/evening_option_def.gd" id="6_vrvol"]
+[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="7_45bwo"]
+[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="8_4fpem"]
+[ext_resource type="Resource" path="res://data/days/ruleset_day_04.tres" id="9_sypw1"]
+[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="10_2hp76"]
+[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="11_mfa1n"]
+[ext_resource type="Script" path="res://scripts/core/slipped_item_def.gd" id="12_x6s1c"]
+[ext_resource type="Script" path="res://scripts/core/summons_def.gd" id="13_3m8qg"]
+[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="14_2ljcg"]
 
 [sub_resource type="Resource" id="d04_resource_2"]
-script = ExtResource("2_cf11u")
+script = ExtResource("2_dhsup")
 speaker_key = "spk_consortium"
 text_key = "msg_cons_day04"
 priority = 2
 
 [sub_resource type="Resource" id="d04_resource_3"]
-script = ExtResource("2_cf11u")
+script = ExtResource("2_dhsup")
 speaker_key = "spk_okonkwo"
 text_key = "msg_okonkwo_day04"
 voice = 1
 
 [sub_resource type="Resource" id="d04_resource_5"]
-script = ExtResource("3_dhsup")
+script = ExtResource("3_qro8o")
 all_of = Array[StringName]([&"lucioles_reported"])
 
 [sub_resource type="Resource" id="d04_resource_4"]
-script = ExtResource("2_cf11u")
+script = ExtResource("2_dhsup")
 speaker_key = "spk_okonkwo"
 text_key = "msg_okonkwo_day04_reported"
 voice = 1
@@ -39,19 +40,19 @@ condition = SubResource("d04_resource_5")
 priority = 3
 
 [sub_resource type="Resource" id="d04_resource_8"]
-script = ExtResource("3_dhsup")
+script = ExtResource("3_qro8o")
 all_of = Array[StringName]([&"lucioles_note_burned"])
 
 [sub_resource type="Resource" id="d04_resource_9"]
-script = ExtResource("3_dhsup")
+script = ExtResource("3_qro8o")
 all_of = Array[StringName]([&"sc05_helped"])
 
 [sub_resource type="Resource" id="d04_resource_7"]
-script = ExtResource("3_dhsup")
+script = ExtResource("3_qro8o")
 any_of = Array[Resource]([SubResource("d04_resource_8"), SubResource("d04_resource_9")])
 
 [sub_resource type="Resource" id="d04_resource_6"]
-script = ExtResource("2_cf11u")
+script = ExtResource("2_dhsup")
 speaker_key = "spk_lucioles"
 text_key = "msg_luc_day04"
 voice = 3
@@ -59,7 +60,7 @@ condition = SubResource("d04_resource_7")
 priority = 1
 
 [sub_resource type="Resource" id="d04_resource_10"]
-script = ExtResource("2_cf11u")
+script = ExtResource("2_dhsup")
 speaker_key = "spk_ilan"
 text_key = "msg_ilan_day04"
 voice = 2
@@ -67,16 +68,16 @@ group = &"ilan"
 family_slot = true
 
 [sub_resource type="Resource" id="d04_resource_13"]
-script = ExtResource("3_dhsup")
+script = ExtResource("3_qro8o")
 all_of = Array[StringName]([&"sc07_bribe_kept"])
 
 [sub_resource type="Resource" id="d04_resource_12"]
-script = ExtResource("5_euh4e")
+script = ExtResource("5_py18b")
 key = "evt_d04_money"
 condition = SubResource("d04_resource_13")
 
 [sub_resource type="Resource" id="d04_resource_14"]
-script = ExtResource("6_py18b")
+script = ExtResource("6_vrvol")
 id = &"gift"
 label_key = "evt_d04_birthday_opt_gift"
 result_key = "evt_d04_birthday_res_gift"
@@ -87,22 +88,22 @@ flags = Dictionary[StringName, int]({
 default_rank = 1
 
 [sub_resource type="Resource" id="d04_resource_15"]
-script = ExtResource("6_py18b")
+script = ExtResource("6_vrvol")
 id = &"none"
 label_key = "evt_d04_birthday_opt_none"
 result_key = "evt_d04_birthday_res_none"
 
 [sub_resource type="Resource" id="d04_resource_11"]
-script = ExtResource("4_qro8o")
+script = ExtResource("4_euh4e")
 id = &"d04_birthday"
 title_key = "evt_d04_birthday_title"
 text_key = "evt_d04_birthday_text"
-extra_keys = Array[ExtResource("5_euh4e")]([SubResource("d04_resource_12")])
-options = Array[ExtResource("6_py18b")]([SubResource("d04_resource_14"), SubResource("d04_resource_15")])
+extra_keys = Array[ExtResource("5_py18b")]([SubResource("d04_resource_12")])
+options = Array[ExtResource("6_vrvol")]([SubResource("d04_resource_14"), SubResource("d04_resource_15")])
 text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="scripted_sc_06"]
-script = ExtResource("10_sypw1")
+script = ExtResource("11_mfa1n")
 id = &"sc_06"
 at_index = 1
 passenger_overrides = {
@@ -123,7 +124,7 @@ identity_from_case = &"sc_02"
 luciole_codes = PackedInt32Array()
 
 [sub_resource type="Resource" id="d04_resource_1"]
-script = ExtResource("12_mfa1n")
+script = ExtResource("12_x6s1c")
 amount = 20
 label_key = "wb_envelope_label"
 effects = Dictionary[StringName, Dictionary]({
@@ -142,7 +143,7 @@ effects = Dictionary[StringName, Dictionary]({
 })
 
 [sub_resource type="Resource" id="scripted_sc_07"]
-script = ExtResource("10_sypw1")
+script = ExtResource("11_mfa1n")
 id = &"sc_07"
 at_index = 4
 passenger_overrides = {
@@ -169,7 +170,7 @@ slipped_item = SubResource("d04_resource_1")
 luciole_codes = PackedInt32Array()
 
 [sub_resource type="Resource" id="scripted_sc_08"]
-script = ExtResource("10_sypw1")
+script = ExtResource("11_mfa1n")
 id = &"sc_08"
 at_index = 8
 passenger_overrides = {
@@ -198,10 +199,10 @@ flags_on_deny = Dictionary[StringName, int]({
 luciole_codes = PackedInt32Array(5)
 
 [resource]
-script = ExtResource("9_4fpem")
+script = ExtResource("10_2hp76")
 day_number = 4
 game_date = 31850
-rule_set = ExtResource("8_45bwo")
+rule_set = ExtResource("9_sypw1")
 duration_sec = 600.0
 passenger_count = 12
 anomaly_count_weights = PackedFloat32Array(0.45, 0.45, 0.1, 0)
@@ -214,7 +215,7 @@ anomaly_weights = Dictionary[int, float]({
 5: 0.2,
 6: 0.21
 })
-scripted_cases = Array[ExtResource("10_sypw1")]([SubResource("scripted_sc_06"), SubResource("scripted_sc_07"), SubResource("scripted_sc_08")])
+scripted_cases = Array[ExtResource("11_mfa1n")]([SubResource("scripted_sc_06"), SubResource("scripted_sc_07"), SubResource("scripted_sc_08")])
 intro_text_key = "day04_intro"
 faction_weights = Dictionary[StringName, float]({
 &"cer": 0.17,
@@ -226,6 +227,6 @@ visor_down_rate = 0.15
 legit_noise_rate = 0.2
 bribe_rate = 0.05
 luciole_rate = 0.04
-briefing_messages = Array[ExtResource("2_cf11u")]([SubResource("d04_resource_2"), SubResource("d04_resource_3"), SubResource("d04_resource_4"), SubResource("d04_resource_6"), SubResource("d04_resource_10")])
-evening_events = Array[ExtResource("4_qro8o")]([SubResource("d04_resource_11")])
+briefing_messages = Array[ExtResource("2_dhsup")]([SubResource("d04_resource_2"), SubResource("d04_resource_3"), SubResource("d04_resource_4"), SubResource("d04_resource_6"), SubResource("d04_resource_10")])
+evening_events = Array[ExtResource("4_euh4e")]([SubResource("d04_resource_11")])
 rulebook_tabs = PackedStringArray("origins")

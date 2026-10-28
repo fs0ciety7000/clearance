@@ -1,8 +1,9 @@
-## M8 — Acte II de bout en bout sans UI : campagne J1–J20 réelle
+## M8 — Acte II de bout en bout sans UI ; M9 : la campagne réelle va au J30
 ## (`DayController` + `NullBooth`, soirées par `Campaign` avec choix par
-## défaut) pour trois bots ; signaux du contrat UI M8 (`quota_changed`,
-## `revocations_published`, `scanner_suggested`, annonces conditionnelles) ;
-## chaque fin F1–F9 atteinte par un profil du simulateur ; déterminisme.
+## défaut, pivot du J20 non terminal, D-086) pour trois bots ; signaux du
+## contrat UI M8 (`quota_changed`, `revocations_published`,
+## `scanner_suggested`, annonces conditionnelles) ; chaque fin F1–F10 atteinte
+## par un profil du simulateur (docs/ACT3.md §6.4) ; déterminisme.
 extends GutTest
 
 const DayHarness := preload("res://tests/helpers/day_harness.gd")
@@ -102,13 +103,13 @@ func _evening(summary: DaySummary) -> StringName:
 	return Campaign.close_evening(data, summary, report, 0, DIR)
 
 
-## Campagne complète J1–J20 ; renvoie la fin.
+## Campagne complète J1–J30 ; renvoie la fin.
 func _play_campaign(policy: Callable) -> StringName:
-	for day_number: int in range(1, 21):
+	for day_number: int in range(1, 31):
 		assert_eq(GameState.current_day, day_number)
 		var summary: DaySummary = await _play_day(policy)
 		if not Campaign.has_evening(data):
-			assert_eq(day_number, 20, "seul le J20 n'a pas de soirée")
+			assert_eq(day_number, 30, "seul le J30 n'a pas de soirée")
 			return Campaign.close_final_day(data, summary, 0, DIR)
 		var ending: StringName = _evening(summary)
 		if ending != EveningReport.ENDING_NONE:
@@ -123,12 +124,12 @@ func _assert_ended(ending: StringName) -> void:
 	assert_gt((epilogue.get("lines", PackedStringArray()) as PackedStringArray).size(), 0)
 
 
-func test_conscientious_agent_plays_twenty_days() -> void:
+func test_conscientious_agent_plays_thirty_days() -> void:
 	var ending: StringName = await _play_campaign(func(_c: Case, key: CaseKey) -> VerdictKind.Kind:
 		return key.expected_verdict)
 	_assert_ended(ending)
-	assert_true(Campaign.is_act2())
-	assert_eq(GameState.day_history.size(), 20, "jusqu'au J20 (fin %s)" % ending)
+	assert_true(Campaign.is_act3(), "pivot du J20 franchi")
+	assert_eq(GameState.day_history.size(), 30, "jusqu'au J30 (fin %s)" % ending)
 	assert_ne(ending, EndingService.F1_ARRESTED, "aucun soupçon : pas d'arrestation")
 	assert_true(_announcements.has("hall_j17_review"))
 
@@ -184,12 +185,12 @@ func test_strike_ends_the_last_shift_early() -> void:
 	assert_lt(summary.get_processed_count(), data.get_day(20).passenger_count, "lumières coupées")
 
 
-## Fin attendue de chaque profil du simulateur (docs/ACT2.md §6.3).
+## Fin attendue de chaque profil du simulateur (docs/ACT3.md §6.4, campagne J1–J30).
 const ENDING_PROFILES: Dictionary[StringName, StringName] = {
-	&"mercenary": EndingService.F1_ARRESTED, &"evicted": EndingService.F2_REASSIGNED,
+	&"mercenary3": EndingService.F1_ARRESTED, &"evicted": EndingService.F2_REASSIGNED,
 	&"negligent": EndingService.F3_FAMILY_LOST, &"loyal": EndingService.F4_GLORY, &"luciole": EndingService.F5_AIR,
-	&"drift10": EndingService.F6_DRIFT, &"default": EndingService.F7_REOPENS, &"archiviste": EndingService.F8_REGISTRE,
-	&"solidaire": EndingService.F9_STRIKE,
+	&"drift": EndingService.F6_DRIFT, &"default": EndingService.F7_REOPENS, &"temoin": EndingService.F8_REGISTRE,
+	&"solidaire": EndingService.F9_STRIKE, &"passeur": EndingService.F10_PONT,
 }
 
 
@@ -204,7 +205,7 @@ func test_every_ending_is_reachable() -> void:
 				reached.append(wanted)
 				break
 		assert_true(reached.has(wanted), "%s → %s" % [preset, wanted])
-	assert_eq(reached.size(), EndingService.ALL_ENDINGS.size(), "F1 → F9")
+	assert_eq(reached.size(), EndingService.ALL_ENDINGS.size(), "F1 → F10")
 
 
 func test_full_simulation_is_deterministic() -> void:

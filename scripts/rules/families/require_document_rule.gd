@@ -81,7 +81,8 @@ func is_expired(case: Case, ctx: RuleContext) -> bool:
 	if not require_valid or ctx == null or not applies_to(case):
 		return false
 	var doc: DocumentInstance = case.get_own_document(document_id)
-	return doc != null and doc.expiry_date < ctx.today
+	# Acte III (R32) : prorogation de Continuité comprise.
+	return doc != null and ctx.is_document_expired(doc.expiry_date)
 
 
 func is_violated(case: Case) -> bool:

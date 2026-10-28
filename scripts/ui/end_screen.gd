@@ -147,8 +147,14 @@ static func trace_keys(p_flags: Dictionary[StringName, Variant]) -> PackedString
 func epilogue_lines() -> PackedStringArray:
 	var lines: PackedStringArray = []
 	var keys: PackedStringArray = epilogue.get("lines", PackedStringArray())
+	var args: Dictionary = epilogue.get("args", {})
 	for key: String in keys:
-		lines.append(ComparisonUI.lumika_text(UiText.t(key, key), true))
+		var text: String = UiText.t(key, key)
+		# Acte III : lignes à valeur (`%d` familles de Tycho, `epilogue.args`).
+		if args.has(key):
+			var values: Array = args[key]
+			text = text % values
+		lines.append(ComparisonUI.lumika_text(text, true))
 	if lines.is_empty():
 		var body: String = UiText.t("end_text_%s" % ending, "")
 		if not body.is_empty():

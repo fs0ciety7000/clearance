@@ -24,6 +24,12 @@ const HOUSEHOLD_ILAN_SOUTE: StringName = &"ilan_soute"
 const HOUSEHOLD_ILAN_BACK: StringName = &"ilan_back"
 ## Acte II : Dora rentre à Tycho (ABSENT · PARTIE À TYCHO, vivante).
 const HOUSEHOLD_DORA_TYCHO: StringName = &"dora_tycho"
+## Acte III : Ilan part réparer les recycleurs de Tycho (ABSENT · À TYCHO).
+const HOUSEHOLD_ILAN_TYCHO: StringName = &"ilan_tycho"
+## Acte III : Ilan rentre (de la Soute, du recycleur) en bonne santé.
+const HOUSEHOLD_ILAN_HOME: StringName = &"ilan_home"
+## Acte III : Dora témoigne en personne et rentre en toussant (MALADE).
+const HOUSEHOLD_DORA_SICK: StringName = &"dora_sick"
 
 @export var id: StringName = &""
 @export var label_key: String = ""
@@ -42,3 +48,7 @@ const HOUSEHOLD_DORA_TYCHO: StringName = &"dora_tycho"
 ## Acte II : jauges fixées à une valeur absolue (`registre := 0`, B30),
 ## appliquées après les deltas de `flags`.
 @export var set_gauges: Dictionary[StringName, int] = {}
+## Acte III : effets conditionnels de l'option (`CaseEffectDef`, verdict
+## ignoré) évalués à l'application sur les drapeaux du soir (questions de
+## l'Enquête : `aveux +1` si la vérité incrimine ; Déposition « Tout dire »).
+@export var conditional_flags: Array[CaseEffectDef] = []

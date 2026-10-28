@@ -82,6 +82,53 @@ extends Resource
 @export var focus_documents: Array[StringName] = []
 
 
+@export_group("Acte III")
+## Variantes de la directive du jour (`day27_intro_vanne`) : première vraie
+## sur les drapeaux du matin, sinon `intro_text_key`.
+@export var intro_variants: Array[ConditionalKey] = []
+## M1 « Retour aux quais » (B37) : documents retirés du guichet (plus
+## produits par le générateur, ligne barrée au Rulebook) — informatif pour l'UI.
+@export var retired_documents: Array[StringName] = []
+## Quota respiratoire suspendu ce jour si la condition est vraie (climat
+## Vanne, J27–J30) ; null = jamais.
+@export var quota_suspended_if: FlagCondition = null
+## Part des documents datés d'un passager généré propre tirés **dans** la
+## fenêtre de prorogation (R32, bruit légitime : expiré mais prorogé).
+@export_range(0.0, 1.0) var prorogation_noise_rate: float = 0.0
+## Part des leurres de l'onglet Révocations réintégrés (R33, bruit légitime) ;
+## un passager généré révoqué peut aussi l'être (`RevocationDef.reinstated_on`).
+@export_range(0.0, 1.0) var reinstated_decoy_rate: float = 0.0
+## M2 « Répondants » (R34, B42) : part des ressortissants (hors HAL, hors
+## convoqués) au motif VISITE FAMILIALE, par origine ; chacun reçoit un
+## répondant placé **plus tôt** dans la file (`CaseBuilder`, plan du jour).
+@export var family_visit_rates: Dictionary[StringName, float] = {}
+## Liens de répondant imposés : index du protégé → index du répondant (J30 :
+## familles de Tycho derrière Margaux, Okafor et le réseau). Un répondant
+## scénarisé absent rend le protégé à la génération ordinaire.
+@export var sponsor_links: Dictionary[int, int] = {}
+## Origine imposée aux protégés à lien imposé (J30 : familles de Tycho).
+@export var linked_ward_faction: StringName = &""
+## Emplacements du réseau (SC-81b) : groupe → index, remplis dans l'ordre par
+## les cas scénarisés actifs de ce groupe (`ScriptedCaseDef.slot_group`).
+@export var slot_groups: Dictionary[StringName, PackedInt32Array] = {}
+## Protégés au plus par répondant généré (cascade lisible).
+@export var max_wards_per_sponsor: int = 2
+## R36 (B43) : convocations du jour liées à des passagers, leurres (N° sans
+## passager), part des ressortissants générés convoqués.
+@export var summons: Array[SummonsDef] = []
+@export var summons_decoys: int = 0
+@export_range(0.0, 1.0) var summons_rate: float = 0.0
+## Poids d'anomalies modulés par un drapeau du matin : `{drapeau: {type: facteur}}`
+## (`SPONSOR_MISMATCH` ×1,5 si `sc62_tariq_passed`, `FORGED_SUMMONS` ×0,5 si
+## `forged_summons_reported`).
+@export var anomaly_weight_modifiers: Dictionary[StringName, Dictionary] = {}
+## Part de Lucioles ajoutée si un drapeau est vrai (`climate_vanne` : +0,02).
+@export var luciole_rate_bonus: Dictionary[StringName, float] = {}
+## Admissions correctes comptées dans une jauge, par origine (J30 :
+## `tyc` → `pont`, F10).
+@export var admission_gauges: Dictionary[StringName, StringName] = {}
+
+
 ## Heure du shift (UI_FLOW §1) : 10:00 → 18:00, en minutes depuis minuit.
 const SHIFT_START_MIN: int = 10 * 60
 const SHIFT_LENGTH_MIN: int = 8 * 60

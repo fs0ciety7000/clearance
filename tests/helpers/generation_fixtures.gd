@@ -10,6 +10,12 @@ const MVP_FACTIONS: Dictionary[StringName, float] = {&"tyc": 0.45, &"hal": 0.25,
 const ALL_FACTIONS: Dictionary[StringName, float] = {&"tyc": 0.30, &"hal": 0.17, &"ter": 0.20, &"cer": 0.13,
 		&"thr": 0.12, &"drv": 0.08}
 
+## Acte III : règles de **contexte du shift** liées à la Main courante (R34,
+## R37 : le verdict dépend des admissions précédentes, D-077). Hors du jour
+## « toutes règles » (un cas isolé n'a pas de Main courante) ; testées par
+## `tests/unit/test_act3_rules.gd`.
+const LEDGER_RULES: Array[StringName] = [&"r_sponsor", &"r_tycho_closed"]
+
 static var _data: DataCatalog = null
 
 
@@ -28,7 +34,8 @@ static func full_day(count_weights: Array[float] = [0.0, 1.0, 0.0, 0.0], passeng
 	ids.assign(data().rules.keys())
 	ids.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 	for rule_id: StringName in ids:
-		rs.rules.append(data().rules[rule_id])
+		if not LEDGER_RULES.has(rule_id):
+			rs.rules.append(data().rules[rule_id])
 	rs.required_document_ids = rs.compute_required_document_ids()
 	var day: DayDef = DayDef.new()
 	day.day_number = 5
@@ -53,9 +60,15 @@ static func index_for(builder: CaseBuilder, kind: AnomalyType.Kind, start: int) 
 		var i: int = (start + offset) % count
 		var faction: StringName = builder.roster.get_entry(i).faction_id
 		match kind:
-			AnomalyType.Kind.PURPOSE_MISMATCH:
+			AnomalyType.Kind.PURPOSE_MISMATCH, AnomalyType.Kind.FORGED_SUMMONS:
 				if faction != &"hal":
 					return i
+			# Acte III (R35) : ressortissant de Tycho sous contrat de travail.
+			AnomalyType.Kind.SUSPENDED_CONTRACT:
+				if faction == &"tyc":
+					var worker: GeneratedCase = builder.build_clean(i)
+					if worker != null and worker.case.has_own_document(&"work_contract"):
+						return i
 			AnomalyType.Kind.BANNED_FACTION:
 				if faction == &"thr":
 					return i

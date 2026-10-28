@@ -201,7 +201,8 @@ func test_rulebook_employers_vessels_and_revocations_tabs() -> void:
 		assert_true(tabs.has(tab), "onglet %s" % tab)
 	assert_true(ui.rulebook.show_reference_tab(RulebookReference.TAB_EMPLOYERS))
 	assert_not_null(ui.rulebook.find_child("Code_KA", true, false), "code employeur KA listé")
-	assert_eq(RulebookReference.employer_rows().size(), 13)
+	# 13 + l'Arbitrage de Continuité (AR, Acte III).
+	assert_eq(RulebookReference.employer_rows().size(), 14)
 	assert_true(ui.rulebook.show_reference_tab(RulebookReference.TAB_VESSELS))
 	assert_not_null(ui.rulebook.find_child("RemovedNote", true, false), "cargos retirés rappelés")
 	assert_true(RulebookReference.registered_vessels().has("BASSE-MARÉE"))

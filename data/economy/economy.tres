@@ -6,3 +6,4 @@
 script = ExtResource("1_4lwsc")
 air_tax_raised = 10
 levy_days = PackedInt32Array(11, 17)
+pont_threshold = 5

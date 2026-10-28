@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FactionBannedRule" format=3 uid="uid://cwrcrnajdmy4"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/faction_banned_rule.gd" id="1_edymo"]
+
+[resource]
+script = ExtResource("1_edymo")
+banned_faction_ids = Array[StringName]([&"tyc"])
+exempt_purposes = Array[StringName]([])
+exempt_if_sponsored = true
+id = &"r_tycho_closed"
+title_key = "r_tycho_closed_title"
+rulebook_text_key = "r_tycho_closed_text"
+category = 2
+summons_exempt = true

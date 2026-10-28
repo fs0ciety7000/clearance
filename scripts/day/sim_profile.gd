@@ -17,8 +17,15 @@ extends RefCounted
 ## Okonkwo, Ravel, vote la grève), `overrun` (approuve au-delà du quota),
 ## `mercenary2` (enveloppes gardées à partir du J10 : Revue du J17). Les
 ## préréglages de l'Acte I sont prolongés (choix et verdicts du J10 au J20).
+## Acte III (docs/ACT3.md §6.5) : `passeur` (approuve les répondants et le
+## réseau, garde la liste de Tycho, rapide au J30 : F10), `temoin` (Dire à
+## chaque question, Dora témoigne, garde rapports et registre, Tout dire :
+## F8), `accusateur` (Accuser, Dire ce qu'on attend), `mercenary3` (garde les
+## enveloppes à partir du J21 : Déposition) ; `luciole`, `loyal`, `drift`,
+## `solidaire` prolongés du J20 au J30.
 const PRESETS: Array[StringName] = [&"default", &"loyal", &"luciole", &"mercenary", &"drift", &"negligent", &"evicted",
-		&"drift10", &"archiviste", &"solidaire", &"overrun", &"mercenary2"]
+		&"drift10", &"archiviste", &"solidaire", &"overrun", &"mercenary2", &"passeur", &"temoin", &"accusateur",
+		&"mercenary3"]
 
 const VK := VerdictKind.Kind
 const SD := SlippedItem.Decision
@@ -63,7 +70,11 @@ static func preset(preset_name: StringName, p_accuracy: float = 0.95) -> SimProf
 			p.verdicts = {&"sc43_mateus": VK.DETAIN, &"sc47_kasimir": VK.DETAIN}
 			p.choices = {&"d08_neighbor": &"denounce", &"d09_okonkwo": &"sign", &"d09_ilan": &"forbid",
 					&"d07_school": &"pay", &"d12_job": &"accept", &"d12_page": &"report", &"d14_lease": &"take",
-					&"d15_fund": &"report", &"d17_list": &"sign", &"d19_registre": &"surrender"}
+					&"d15_fund": &"report", &"d17_list": &"sign", &"d19_registre": &"surrender",
+					# Acte III.
+					&"d21_amnesty": &"sign", &"d25_tycho_fund": &"report", &"d29_deposition": &"loyal"}
+			p.items.merge({&"sc65_yara": SD.REPORT, &"sc79_adeyemi": SD.REPORT})
+			p.verdicts.merge({&"sc82_dora": VK.DETAIN, &"sc82_mira": VK.DETAIN})
 		&"luciole":
 			p.answer_password = true
 			p.overrun = true
@@ -71,11 +82,15 @@ static func preset(preset_name: StringName, p_accuracy: float = 0.95) -> SimProf
 					&"sc13_lev": VK.APPROVE, &"sc14_kaito": VK.APPROVE, &"sc16_hana": VK.APPROVE, &"sc22_mira": VK.APPROVE,
 					&"sc20_arkady": VK.DETAIN, &"sc17_fatou": VK.DENY,
 					&"sc35_okonkwo_veilleur": VK.APPROVE, &"sc40_valentin": VK.APPROVE, &"sc50_ilan": VK.APPROVE,
-					&"sc50_mira": VK.APPROVE, &"sc47_kasimir": VK.DENY}
-			p.items = {&"sc18_sefa": SD.KEEP}
+					&"sc50_mira": VK.APPROVE, &"sc47_kasimir": VK.DENY,
+					# Acte III : la technicienne, le messager, la Commissaire témoin, la figure finale.
+					&"sc53_anouk": VK.APPROVE, &"sc66_lev": VK.APPROVE, &"sc59_beaumont": VK.APPROVE,
+					&"sc71_kasimir": VK.DENY, &"sc82_dora": VK.APPROVE, &"sc82_mira": VK.APPROVE}
+			p.items = {&"sc18_sefa": SD.KEEP, &"sc65_yara": SD.KEEP}
 			p.choices = {&"d05_heat": &"accept", &"d08_neighbor": &"help", &"d09_ilan": &"support",
 					&"d09_okonkwo": &"warn", &"d12_job": &"refuse", &"d13_scanner": &"install", &"d16_call": &"go",
-					&"d16_unplug": &"unplug"}
+					&"d16_unplug": &"unplug",
+					&"d21_amnesty": &"refuse", &"d23_job": &"tycho", &"d25_tycho_fund": &"give"}
 		&"mercenary":
 			p.keep_bribes = 1.0
 			p.items = {&"sc07_valcourt": SD.KEEP, &"sc12_ravel": SD.KEEP, &"sc14_kaito": SD.KEEP, &"sc21_philippa": SD.KEEP}
@@ -88,7 +103,11 @@ static func preset(preset_name: StringName, p_accuracy: float = 0.95) -> SimProf
 			p.choices = {&"d13_scanner": &"install", &"d16_unplug": &"keep"}
 		&"drift":
 			p.verdicts = {&"sc22_mira": VK.DENY, &"sc50_ilan": VK.DENY, &"sc50_mira": VK.DENY}
-			p.choices = {&"d09_drift": &"buy", &"d10_drift": &"stay", &"d19_drift": &"buy"}
+			p.choices = {&"d09_drift": &"buy", &"d10_drift": &"stay", &"d19_drift": &"buy",
+					# Acte III : reste au J20, part au J30 (places de la Soute, sinon billets).
+					&"d27_drift": &"buy", &"d27_tycho": &"buy"}
+			p.verdicts[&"sc82_dora"] = VK.DENY
+			p.verdicts[&"sc82_mira"] = VK.DENY
 		&"drift10":
 			p.verdicts = {&"sc22_mira": VK.DENY}
 			p.choices = {&"d09_drift": &"buy", &"d10_drift": &"board"}
@@ -99,9 +118,37 @@ static func preset(preset_name: StringName, p_accuracy: float = 0.95) -> SimProf
 			p.verdicts = {&"sc35_okonkwo_released": VK.APPROVE, &"sc35_okonkwo_quai": VK.APPROVE,
 					&"sc41_sato": VK.APPROVE, &"sc45_ravel": VK.APPROVE}
 			p.choices = {&"d09_okonkwo": &"refuse", &"d11_petition": &"sign", &"d15_fund": &"give",
-					&"d17_list": &"warn", &"d19_strike": &"join"}
+					&"d17_list": &"warn", &"d19_strike": &"join",
+					# Acte III : Tycho, la caisse, le vote du J29.
+					&"d21_amnesty": &"refuse", &"d23_job": &"tycho", &"d25_tycho_fund": &"give", &"d29_strike": &"join"}
+			p.verdicts.merge({&"sc55_valentin": VK.APPROVE, &"sc63_dmitri": VK.APPROVE, &"sc75_okonkwo": VK.APPROVE})
 		&"overrun":
 			p.overrun = true
+		&"passeur":
+			# F10 : le réseau des répondants et les familles de Tycho au J30.
+			p.verdicts = {&"sc59_beaumont": VK.APPROVE, &"sc55_valentin": VK.APPROVE, &"sc82_dora": VK.DENY,
+					&"sc82_mira": VK.DENY}
+			p.items = {&"sc79_adeyemi": SD.KEEP, &"sc64_lindgren": SD.KEEP}
+			p.choices = {&"d25_tycho_fund": &"give"}
+			p.pace = 0.8
+			# Au J30, le quota (3) est dépassé : les familles entrent imputées (0 ₵).
+			p.overrun = true
+		&"temoin":
+			# F8 : la vérité à l'Enquête, le registre de Tycho.
+			p.items = {&"sc33_corvo": SD.KEEP, &"sc44_lindgren": SD.KEEP, &"sc23_lindgren": SD.KEEP,
+					&"sc65_yara": SD.KEEP, &"sc77_lindgren": SD.KEEP, &"sc79_adeyemi": SD.KEEP, &"sc82_dora": SD.KEEP,
+					&"sc82_mira": SD.KEEP}
+			p.verdicts = {&"sc59_beaumont": VK.APPROVE}
+			p.choices = {&"d12_page": &"keep", &"d14_names": &"write", &"d17_file": &"copy", &"d19_registre": &"send",
+					&"d22_q1": &"tell", &"d24_noa": &"truth", &"d25_dora": &"write", &"d26_q2": &"tell",
+					&"d28_q3": &"tell", &"d29_deposition": &"truth"}
+		&"accusateur":
+			p.choices = {&"d22_q1": &"accuse", &"d26_q2": &"accuse", &"d28_q3": &"accuse", &"d29_deposition": &"loyal"}
+		&"mercenary3":
+			# Acte III : honnête jusqu'au J20, enveloppes gardées ensuite (Déposition).
+			p.keep_bribes = 1.0
+			p.bribes_from_day = 21
+			p.items = {&"sc51_valcourt": SD.KEEP, &"sc66_lev": SD.KEEP}
 		&"negligent":
 			p.spending = &"rent_only"
 		&"evicted":

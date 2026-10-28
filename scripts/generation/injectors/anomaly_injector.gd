@@ -27,7 +27,10 @@ func is_face_anomaly() -> bool:
 func active_rules(state: InjectionState, script: Script) -> Array[Rule]:
 	var result: Array[Rule] = []
 	for rule: Rule in state.get_rule_set().rules:
-		if rule != null and is_instance_of(rule, script) and rule.get_detectable_anomalies().has(get_kind()):
+		# Acte III : une règle levée par une convocation valide (R36) ne peut
+		# pas porter l'anomalie de ce passager.
+		if rule != null and is_instance_of(rule, script) and rule.get_detectable_anomalies().has(get_kind()) \
+				and not rule.is_exempted(state.case, state.ctx):
 			result.append(rule)
 	return result
 

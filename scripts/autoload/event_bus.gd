@@ -1,5 +1,5 @@
-## EventBus — catalogue des signaux globaux (ARCHITECTURE §7, rév. 3.4 : 34 signaux,
-## émetteurs / écouteurs réels).
+## EventBus — catalogue des signaux globaux (ARCHITECTURE §7, rév. 3.6 : 36 signaux,
+## émetteurs / écouteurs réels ; Acte III : `ledger_changed`, `summons_published`).
 ##
 ## Ne déclare que des signaux typés : aucun état, aucune méthode métier.
 ## Convention : passé pour un fait (`*_started`, `*_stamped`), `*_requested`
@@ -39,6 +39,13 @@ signal revocations_published(entries: Array[RevokedEntry])
 ## → plan de travail : liens suggérés (pointillés) à confirmer d'un clic
 ## (`discrepancy_check_requested`). `source` : `acv` (Consortium) ou `luciole`.
 signal scanner_suggested(case_id: StringName, links: Array[Discrepancy], source: StringName)
+## Acte III — DayController (début du jour, puis après chaque tampon qui
+## inscrit un répondant) → Rulebook (onglet Main courante, R34). Liste
+## complète, dans l'ordre d'admission ; vide avant le J24.
+signal ledger_changed(entries: Array[LedgerEntry])
+## Acte III — DayController (après `revocations_published`, chaque jour) →
+## Rulebook (onglet Convocations, R36) ; vide avant le J26.
+signal summons_published(entries: Array[SummonsEntry])
 
 # --- Passager -----------------------------------------------------------------
 

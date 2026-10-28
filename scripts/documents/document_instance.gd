@@ -32,6 +32,10 @@ var presented_at: int = -1
 ## Acte II — document **d'un tiers** (SC-27 : le contrat du chat) : ni comparé
 ## par R07, ni lu par les règles du porteur (`Case.get_own_document`).
 var third_party: bool = false
+## Acte III (M1 « Retour aux quais », SC-58) — document **retiré** présenté
+## quand même (bio-scan après le J23) : affiché, jamais lu par les règles ni
+## comparé (comme un document d'un tiers).
+var retired: bool = false
 
 
 func _init(p_type_def: DocumentTypeDef = null) -> void:
@@ -56,6 +60,11 @@ func get_field(field_id: StringName) -> FieldDef:
 
 func has_field(field_id: StringName) -> bool:
 	return get_field(field_id) != null
+
+
+## Acte III : document hors des règles du porteur (tiers ou retiré).
+func is_foreign() -> bool:
+	return third_party or retired
 
 
 ## Valeur affichée d'un champ (null + erreur si le champ n'existe pas).
@@ -93,6 +102,7 @@ func copy() -> DocumentInstance:
 	result.marks = marks.duplicate()
 	result.presented_at = presented_at
 	result.third_party = third_party
+	result.retired = retired
 	for key: StringName in values:
 		var value: Variant = values[key]
 		if value is PortraitValue:

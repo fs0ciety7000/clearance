@@ -30,6 +30,9 @@ const DEFAULT_DATE_FORMAT: String = "DD.MM.YYYY"
 @export var display_order: int = 0
 ## Motif d'affichage (dates : `YYYY`, `MM`, `DD`) ; vide = format par défaut.
 @export var format: String = ""
+## Acte III (B39) : ligne optionnelle (Répondant, Convocation du permis),
+## affichée seulement quand la valeur est renseignée ; vide = absente.
+@export var optional: bool = false
 
 
 ## Vrai si la valeur est une donnée du document (et non du passager).

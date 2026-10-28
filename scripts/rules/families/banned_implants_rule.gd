@@ -33,7 +33,7 @@ func banned_codes(case: Case, ctx: RuleContext) -> PackedStringArray:
 
 func has_valid_waiver(case: Case, ctx: RuleContext, code: String) -> bool:
 	var waiver: DocumentInstance = case.get_document(waiver_document_id)
-	if waiver == null or waiver.expiry_date < ctx.today:
+	if waiver == null or ctx.is_document_expired(waiver.expiry_date):
 		return false
 	var card_id: Variant = PurposeConsistentRule._value(case, document_id, &"citizen_id")
 	var waiver_id: Variant = PurposeConsistentRule._value(case, waiver_document_id, &"citizen_id")

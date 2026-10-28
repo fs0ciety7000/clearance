@@ -14,3 +14,9 @@ var severity: int = 2
 var is_new: bool = false
 ## Référence sélectionnable en mode Inspection (champ ↔ règle).
 var ref: FieldRef = null
+## Acte III (M1, I21) : note du jour sous la règle (`rb_suspended_quota` :
+## quota suspendu pendant l'Enquête), vide sinon.
+var note_key: String = ""
+## Acte III (M1) : règle **retirée** affichée barrée un jour, avec son motif
+## (`note_key` : `rb_retired_quais`, `rb_retired_curfew`) ; jamais évaluée.
+var retired: bool = false

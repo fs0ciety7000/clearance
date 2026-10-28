@@ -12,11 +12,16 @@
 ## M8 : campagne J1–J20 (pivot du J10, quota, rations, prélèvements, Revue du
 ## J17, fins F1–F9 de D-078) ; profils Acte II `drift10`, `archiviste`,
 ## `solidaire`, `overrun`, `mercenary2` (docs/ACT2.md §6).
+## M9 : campagne J1–J30 (pivot du J20, Acte III, fins F1–F10 de D-088) ;
+## profils `passeur`, `temoin`, `accusateur`, `mercenary3` (docs/ACT3.md §6.5) ;
+## `--climate=vanne|brulants|vitres|registre|promu|statu_quo` démarre au J21
+## depuis un état synthétique de ce climat (solde selon la précision).
 ##
 ## Usage (depuis la racine du projet) :
 ##   godot --headless --script res://tools/balance_sim.gd -- --seeds=200 --seed=1 \
 ##       --profiles=0.6,0.8,0.95 --spending=reasoned|default [--set=heating=6,starting_credits=10] \
-##       [--presets=default,loyal,luciole,mercenary,drift,negligent,archiviste,solidaire] [--days=20]
+##       [--presets=default,loyal,luciole,mercenary,drift,negligent,archiviste,solidaire] [--days=30] \
+##       [--climate=vanne]
 ## `--set` surcharge en mémoire des champs de l'`EconomyDef` (essais sans
 ## régénérer les données ; les valeurs retenues vont dans `build_data.gd`).
 extends SceneTree
@@ -28,6 +33,20 @@ var _spending: BalanceSimulator.Spending = BalanceSimulator.Spending.REASONED
 var _overrides: Dictionary[String, String] = {}
 var _presets: Array[StringName] = [&"default"]
 var _days: int = -1
+## Acte III : climat d'entrée synthétique (vide : campagne depuis le J1).
+var _climate: String = ""
+
+## État synthétique du J21 par climat : drapeaux et jauges (docs/ACT3.md §1.3).
+const CLIMATES: Dictionary[String, Dictionary] = {
+	"vanne": {"climate_vanne": true, "lucioles_trust": 6, "loyalty": 1, "suspicion": 2, "solidarite": 2, "registre": 1},
+	"brulants": {"climate_vanne": true, "vanne2_brulants": true, "lucioles_trust": 5, "loyalty": 0, "suspicion": 3,
+			"solidarite": 1, "registre": 1},
+	"vitres": {"climate_vitres": true, "lucioles_trust": 3, "loyalty": 1, "suspicion": 1, "solidarite": 4, "registre": 1},
+	"registre": {"climate_registre": true, "lucioles_trust": 2, "loyalty": 1, "suspicion": 1, "solidarite": 2, "registre": 3,
+			"verite": 1},
+	"promu": {"climate_promu": true, "lucioles_trust": -4, "loyalty": 7, "suspicion": 1, "solidarite": -2, "registre": 0},
+	"statu_quo": {"climate_statu_quo": true, "lucioles_trust": 1, "loyalty": 2, "suspicion": 2, "solidarite": 1, "registre": 1},
+}
 
 
 func _init() -> void:
@@ -79,6 +98,11 @@ func _parse_args() -> void:
 				_presets.append(StringName(part.strip_edges()))
 		elif arg.begins_with("--days="):
 			_days = arg.trim_prefix("--days=").to_int()
+		elif arg.begins_with("--climate="):
+			_climate = arg.trim_prefix("--climate=")
+			if not CLIMATES.has(_climate):
+				push_error("balance_sim: climat inconnu %s (%s)" % [_climate, ", ".join(CLIMATES.keys())])
+				_climate = ""
 		elif arg == "--spending=default":
 			_spending = BalanceSimulator.Spending.DEFAULT
 
@@ -110,8 +134,13 @@ func _run_profile(data: DataCatalog, accuracy: float, preset: StringName = &"def
 		unpaid.append(d)
 	var finished: int = 0
 	for n: int in _seeds:
-		var rows: Array[Dictionary] = BalanceSimulator.run_campaign(data, SeededRng.mix(_seed, n), accuracy, _spending,
-				last, SimProfile.preset(preset, accuracy))
+		var rows: Array[Dictionary] = []
+		if _climate.is_empty():
+			rows = BalanceSimulator.run_campaign(data, SeededRng.mix(_seed, n), accuracy, _spending, last,
+					SimProfile.preset(preset, accuracy))
+		else:
+			rows = BalanceSimulator.run_campaign_from(data, SeededRng.mix(_seed, n), accuracy, _spending, last,
+					SimProfile.preset(preset, accuracy), _climate_start(accuracy))
 		var tail: Dictionary = rows[rows.size() - 1]
 		var ending_name: String = str(tail["ending"]) if str(tail["ending"]) != "" else "—"
 		ending_counts[ending_name] = ending_counts.get(ending_name, 0) + 1
@@ -139,7 +168,7 @@ func _run_profile(data: DataCatalog, accuracy: float, preset: StringName = &"def
 					any_unpaid = true
 			if any_unpaid:
 				sacrificed[i] += 1
-		if rows.size() == last and (rows[rows.size() - 1]["ending"] == EveningReport.ENDING_NONE or rows[rows.size() - 1].get("final", false)):
+		if int(tail["day"]) == last and (rows[rows.size() - 1]["ending"] == EveningReport.ENDING_NONE or rows[rows.size() - 1].get("final", false)):
 			finished += 1
 	print("")
 	print("== Profil %d %% · %s ==" % [roundi(accuracy * 100.0), preset])
@@ -164,3 +193,16 @@ func _run_profile(data: DataCatalog, accuracy: float, preset: StringName = &"def
 		ending_parts.append("%s %.1f %% (J%.1f)" % [ending_name, 100.0 * ending_counts[ending_name] / _seeds,
 				float(ending_days[ending_name]) / ending_counts[ending_name]])
 	print("fins : " + " · ".join(ending_parts))
+
+
+## Acte III : état synthétique du soir du J20 (climat `_climate`) : solde de
+## docs/ACT3.md §6.3 selon la précision, drapeaux d'acte, jauges du climat.
+func _climate_start(accuracy: float) -> Dictionary:
+	var flags: Dictionary = {"act2_started": true, EndingService.FLAG_ACT3: true, "pivot3_done": true}
+	var climate: Dictionary = CLIMATES[_climate]
+	for key: String in climate:
+		flags[key] = climate[key]
+	var credits: int = 40 if accuracy < 0.7 else (200 if accuracy < 0.9 else 380)
+	var processed: int = 300
+	return {"day": 21, "credits": credits, "flags": flags, "household": Household.new(), "processed": processed,
+			"correct": roundi(processed * accuracy)}

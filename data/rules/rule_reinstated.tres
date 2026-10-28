@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ReinstatementRule" format=3 uid="uid://cnd5lfwmf5j4a"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/reinstatement_rule.gd" id="1_fkfyt"]
+
+[resource]
+script = ExtResource("1_fkfyt")
+id = &"r_reinstated"
+title_key = "r_reinstated_title"
+rulebook_text_key = "r_reinstated_text"
+category = 1

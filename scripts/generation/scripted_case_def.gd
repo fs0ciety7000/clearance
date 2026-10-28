@@ -80,3 +80,15 @@ extends Resource
 ## Dates imposées des documents du cas propre : `{document_id: {issue: jour,
 ## expiry: jour}}` (`GameDate`), ex. SC-48 (carte qui expire aujourd'hui).
 @export var document_dates: Dictionary = {}
+
+@export_group("Acte III")
+## Répondant (R34) : N° ID du passager présenté par ce cas scénarisé du jour
+## (SC-60 → SC-61…) ; le protégé est désactivé (passager généré) si le
+## répondant scénarisé est absent.
+@export var sponsor_case_id: StringName = &""
+## Emplacement du réseau (SC-81b) : le cas prend le prochain index libre du
+## groupe `DayDef.slot_groups[slot_group]` (dans l'ordre des données).
+@export var slot_group: StringName = &""
+## M1 : documents présentés quand même mais retirés du guichet (SC-58 :
+## bio-scan) — `DocumentInstance.retired`, jamais lus par les règles.
+@export var retired_documents: Array[StringName] = []

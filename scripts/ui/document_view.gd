@@ -103,6 +103,9 @@ func build(p_instance: DocumentInstance, portrait_provider: Callable = Callable(
 			portrait_def = field
 		elif field.id == MRZ_FIELD_ID:
 			mrz_def = field
+		elif field.optional and str(instance.get_value(field.id) if instance.get_value(field.id) != null else "").is_empty():
+			# Acte III (B39) : ligne optionnelle du permis absente (Répondant, Convocation).
+			continue
 		else:
 			body_fields.append(field)
 			has_serial_field = has_serial_field or field.truth_path == SERIAL_PATH

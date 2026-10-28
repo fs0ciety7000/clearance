@@ -1981,6 +1981,28 @@ Revenus = `passenger_count` × 5 × précision − amendes (escalade), comme GDD
 - Vérifier les seuils : F5 `lucioles_trust ≥ 10`, F4 `loyalty ≥ 10`, double jeu 10/10, Déposition 7/4, F9 `solidarite ≥ 5`, F10 `pont ≥ 6`, F8 `verite ≥ 3` et `registre ≥ 5`. Ajuster les **seuils** d'abord (GDD §14), puis les aides, puis `duration_sec`.
 - Playtest humain J21–J24 (la lecture de R32–R34 n'est pas simulable) ; mesurer le taux de refus injustifiés sur les documents prorogés.
 
+### 6.6 Mesuré vs cible (M9 partie A, `tools/balance_sim.gd`, J1–J30)
+
+Mesures de la logique livrée (données `tools/build_data_act3.gd`, graines 1…N, dépenses `reasoned`). « Climat » : départ synthétique au J21 (`--climate=`), solde 40 / 200 / 380 ₵ selon la précision.
+
+| Mesure | Cible (§6.4) | Mesuré | Écart / décision |
+|---|---|---|---|
+| 65 %, J30 atteint parmi les campagnes entrées au J21 (6 climats, 15 graines) | 20–35 % | 40–67 % (F2/F3 avant le J28 : 27–47 %) | plus jouable que prévu ; aides conservées (D-089) |
+| 65 %, campagne complète | J30 ≤ 5 % | 0 % (fin F2/F3 vers J10–J12) | — |
+| 80 %, J30 atteint (campagne complète, 40 graines) | ≥ 85 % | 77,5 % ; F1 par la Déposition 20 % (`default` se tait 4 fois : soupçon +4) | seuil d'arrestation 8 testé : F1 7,5 % pour `default`, mais `mercenary3` 95 % tombe à 57 % ; **7 conservé**, D-094 proposé |
+| 80 %, depuis chaque climat | ≥ 85 % | 87–100 % | — |
+| 95 % `loyal` → F4 | ≥ 80 % | 100 % (30 graines) | `sc82_*` mis en attente |
+| 95 % `luciole` → F5 ; F1 | ≥ 75 % ; ≤ 10 % | 96,7 % ; 3,3 % (Revue du J17) | — |
+| 95 % `drift` → F6 | ≥ 90 % | 80 % (F10 20 % : priorité F10 > F6 au climat Vanne) | priorité de D-088 conservée |
+| 95 % `temoin` → F8 | ≥ 80 % | 100 % | — |
+| 95 % `solidaire` → F9 | ≥ 80 % | 100 % | — |
+| 95 % `passeur` → F10 | ≥ 70 % | 80 % avec `pont ≥ 5` ; ≈ 60 % avec `pont ≥ 6` | **seuil abaissé à 5** (le quota du J30, 3, oblige à dépasser : entrées imputées à 0 ₵) ; D-092 proposé |
+| 95 % `mercenary3` → F1 (Déposition) | ≥ 60 % | 80 % | — |
+| `default` 95 % | F7 | F7 100 % | — |
+| « tout approuver » n'atteint pas F10 | — | n'atteint jamais le J30 (F1/F2/F3 à l'Acte I–II) ; `pont` ne compte que les admissions **correctes** | — |
+
+Générateur (`tools/gen_stats.gd`, 40 campagnes) : invariants OK J21–J30, zéro re-tirage propre ; part sans anomalie 40–53 % (cibles 36–48 %, scénarisés et répondants propres compris) ; `UNREGISTERED_VESSEL` conditionnel à 0,20 comme à l'Acte II (QA-026) au lieu de 0,02–0,03.
+
 **Prérequis recommandé** (QA §12.8, hors périmètre de ce document) : `luciole_trust_on_breach = false` dès le J8–J10, sinon les « vannes ouvertes par accident » se propagent en climat Vanne par accident.
 
 ---

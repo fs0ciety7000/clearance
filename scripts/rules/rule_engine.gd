@@ -20,6 +20,9 @@ static func validate(case: Case, rule_set: RuleSet, ctx: RuleContext) -> Array[V
 		if rule == null:
 			push_error("RuleEngine.validate: règle nulle dans « %s »" % rule_set.id)
 			continue
+		# Acte III (R36) : règle levée par une convocation authentique.
+		if rule.is_exempted(case, ctx):
+			continue
 		violations.append_array(rule.evaluate(case, ctx))
 	return violations
 

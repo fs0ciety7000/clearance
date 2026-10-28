@@ -29,6 +29,8 @@ const TRUTH_PATHS: Array[StringName] = [
 	&"purpose", &"stay_days", &"employer", &"health_status", &"implants",
 	# Acte II (docs/ACT2.md B19) : contrat de travail, laissez-passer de dérive, firmware NX.
 	&"employer_code", &"post", &"vessel", &"firmware_date",
+	# Acte III (docs/ACT3.md B39) : lignes optionnelles du permis.
+	&"sponsor_id", &"summons_id",
 ]
 
 var id: StringName = &""
@@ -68,6 +70,11 @@ var vessel: String = ""
 ## Acte II — date de la dernière mise à jour d'un shunt `NX-` (`GameDate`,
 ## R27) ; 0 = aucun shunt (champ vide sur la carte).
 var firmware_date: int = 0
+## Acte III — Répondant du permis (R34) : N° ID d'un·e Né·e-Halcyon admis·e
+## le jour même à ce guichet ; vide = aucun.
+var sponsor_id: String = ""
+## Acte III — Convocation de l'Enquête du permis (R36) : `ENQ-NNNN` ; vide = aucune.
+var summons_id: String = ""
 
 
 static func has_truth_path(path: StringName) -> bool:

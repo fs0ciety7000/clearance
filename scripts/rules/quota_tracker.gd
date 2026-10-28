@@ -14,14 +14,20 @@ var rule: AirQuotaRule = null
 var maximum: int = 0
 var used: int = 0
 var overruns: int = 0
+## Acte III : contexte du shift (convocations, R36), posé par `sync`.
+var ctx: RuleContext = null
 
 
 ## Compteur du jour ; inactif (maximum 0) sans règle R23 ou sans `air_quota`.
-static func for_day(day: DayDef) -> QuotaTracker:
+## Acte III : quota suspendu si `DayDef.quota_suspended_if` est vraie sur les
+## drapeaux du matin (climat Vanne, J27–J30).
+static func for_day(day: DayDef, flags: Dictionary[StringName, Variant] = {}) -> QuotaTracker:
 	var tracker: QuotaTracker = QuotaTracker.new()
 	if day != null:
 		tracker.rule = AirQuotaRule.find_in(day.rule_set)
 		tracker.maximum = day.air_quota if tracker.rule != null else 0
+		if day.quota_suspended_if != null and FlagCondition.check(day.quota_suspended_if, flags):
+			tracker.maximum = 0
 	return tracker
 
 
@@ -34,7 +40,7 @@ func is_full() -> bool:
 
 
 func counts(case: Case) -> bool:
-	return is_active() and rule.counts(case)
+	return is_active() and rule.counts(case, ctx)
 
 
 ## Quota atteint pour ce passager (compté) au moment du tampon.
@@ -54,7 +60,8 @@ func after_verdict(case: Case, verdict: VerdictKind.Kind) -> bool:
 
 
 ## Copie le compteur dans le contexte de règles (paire « Compteur ↔ R23 »).
-func sync(ctx: RuleContext) -> void:
-	if ctx != null:
-		ctx.quota_used = used
-		ctx.quota_max = maximum if is_active() else 0
+func sync(p_ctx: RuleContext) -> void:
+	if p_ctx != null:
+		ctx = p_ctx
+		p_ctx.quota_used = used
+		p_ctx.quota_max = maximum if is_active() else 0

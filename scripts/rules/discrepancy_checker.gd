@@ -51,6 +51,9 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 		if rule == null:
 			return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_RULE_INACTIVE)
 		var verdict: Discrepancy.Result = rule.check_against(case, other, ctx)
+		if verdict == Discrepancy.Result.DISCORDANT and rule.is_exempted(case, ctx):
+			# Acte III (R36) : convocation authentique, la règle est levée.
+			verdict = Discrepancy.Result.CONCORDANT
 		match verdict:
 			Discrepancy.Result.DISCORDANT:
 				return result.set_result(verdict, Discrepancy.REASON_RULE_VIOLATED)
@@ -67,10 +70,21 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 		if field == null or field.truth_path != EXPIRY_PATH:
 			return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 		var expiry: int = case.get_value(dated)
+		if case.get_document(dated.document_id).retired:
+			# Acte III (M1) : document retiré, plus contrôlé.
+			return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_RETIRED)
+		if ctx.is_prorogated(expiry):
+			# Acte III (R32) : expiré dans la fenêtre de prorogation, valide.
+			return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_PROROGATED)
 		if expiry < ctx.today:
 			return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_EXPIRED)
 		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
 
+	# Acte III : Main courante ↔ Répondant, Convocations ↔ Convocation.
+	if a.is_ledger() or b.is_ledger():
+		return _check_ledger(case, a if a.is_ledger() else b, b if a.is_ledger() else a, ctx, result)
+	if a.is_summons() or b.is_summons():
+		return _check_summons(case, a if a.is_summons() else b, b if a.is_summons() else a, ctx, result)
 	# Acte II : onglet Révocations ↔ N° ID.
 	if a.is_revoked() or b.is_revoked():
 		return _check_revoked(case, a if a.is_revoked() else b, b if a.is_revoked() else a, ctx, result)
@@ -128,7 +142,7 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 	var field_b: FieldDef = case.get_field_def(b)
 	if field_a.truth_path == &"" or field_a.truth_path != field_b.truth_path:
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
-	if case.get_document(a.document_id).third_party != case.get_document(b.document_id).third_party:
+	if case.get_document(a.document_id).is_foreign() or case.get_document(b.document_id).is_foreign():
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 	if FieldValue.equals(case.get_value(a), case.get_value(b)):
 		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
@@ -160,6 +174,10 @@ static func _is_resolvable(case: Case, ref: FieldRef, ctx: RuleContext) -> bool:
 		return ctx != null and ctx.find_revoked(ref.field_id) != null
 	if ref.is_quota_counter():
 		return ctx != null
+	if ref.is_ledger():
+		return ctx != null and ctx.find_ledger(ref.field_id) != null
+	if ref.is_summons():
+		return ctx != null and ctx.find_summons(ref.field_id) != null
 	if ref.is_wanted():
 		return ctx != null and ctx.find_wanted(ref.field_id) != null
 	if ref.is_passenger_face():
@@ -204,8 +222,40 @@ static func _check_revoked(case: Case, revoked_ref: FieldRef, other: FieldRef, c
 	if entry == null or field == null or field.truth_path != &"citizen_id":
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 	if FieldValue.equals(case.get_value(other), entry.citizen_id):
+		if ctx.honors_reinstatements() and entry.is_reinstated(ctx.today):
+			# Acte III (R33) : révoqué·e puis réintégré·e, valide.
+			return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_REINSTATED)
 		return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_REVOKED_MATCH)
 	return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_REVOKED_NO_MATCH)
+
+
+## Acte III (R34) : entrée de la Main courante ↔ Répondant du permis — même
+## N° ID : CONCORDANT (le répondant a été admis) ; autre N° : INCOMPARABLE.
+static func _check_ledger(case: Case, ledger_ref: FieldRef, other: FieldRef, ctx: RuleContext,
+		result: Discrepancy) -> Discrepancy:
+	var entry: LedgerEntry = ctx.find_ledger(ledger_ref.field_id)
+	var field: FieldDef = case.get_field_def(other)
+	if entry == null or field == null or field.truth_path != SponsorRule.SPONSOR_PATH:
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+	if FieldValue.equals(case.get_value(other), entry.citizen_id):
+		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_SPONSOR_MATCH)
+	return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+
+
+## Acte III (R36) : entrée de l'onglet Convocations ↔ Convocation du permis —
+## même N° et même nom : CONCORDANT ; même N°, autre nom (carte) : DISCORDANT ;
+## autre N° : INCOMPARABLE.
+static func _check_summons(case: Case, summons_ref: FieldRef, other: FieldRef, ctx: RuleContext,
+		result: Discrepancy) -> Discrepancy:
+	var entry: SummonsEntry = ctx.find_summons(summons_ref.field_id)
+	var field: FieldDef = case.get_field_def(other)
+	if entry == null or field == null or field.truth_path != SummonsRule.SUMMONS_PATH:
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+	if not FieldValue.equals(case.get_value(other), entry.number):
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+	if SummonsRule.name_matches(case, entry):
+		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_SUMMONS_MATCH)
+	return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_SUMMONS_NAME)
 
 
 ## Acte II (R27) : Firmware NX ↔ date du jour, discordant si la règle active
@@ -219,7 +269,7 @@ static func _check_firmware(case: Case, dated: FieldRef, ctx: RuleContext, resul
 		var age_rule: DocumentNotExpiredRule = rule as DocumentNotExpiredRule
 		if age_rule == null or age_rule.field_path != FIRMWARE_PATH or age_rule.document_id != dated.document_id:
 			continue
-		if age_rule.is_expired(case.get_document(dated.document_id), ctx.today):
+		if age_rule.is_expired(case.get_document(dated.document_id), ctx.today, ctx):
 			return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_EXPIRED)
 		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
 	return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_RULE_INACTIVE)

@@ -30,6 +30,10 @@ static func create_all() -> Dictionary[AnomalyType.Kind, AnomalyInjector]:
 		UnregisteredVesselInjector.new(),
 		OutdatedFirmwareInjector.new(),
 		RevokedIdInjector.new(),
+		# Acte III (docs/ACT3.md B38).
+		SponsorMismatchInjector.new(),
+		ForgedSummonsInjector.new(),
+		SuspendedContractInjector.new(),
 	]
 	var result: Dictionary[AnomalyType.Kind, AnomalyInjector] = {}
 	for injector: AnomalyInjector in injectors:

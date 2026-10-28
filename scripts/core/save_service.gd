@@ -26,8 +26,12 @@ extends RefCounted
 ##     jauge `suspicion` (SC-02 approuvé : +1 rétroactif, D-052) ;
 ## 4 — Acte II (docs/ACT2.md §8.6) : membres `breathless` / `breathless_streak`
 ##     / `away` ; « mis·e en attente » séparé de `PERDU` (vivant·e) ; jauges
-##     `solidarite`, `registre`, `quota_overrun` dans les drapeaux (sans schéma).
-const VERSION: int = 4
+##     `solidarite`, `registre`, `quota_overrun` dans les drapeaux (sans schéma) ;
+## 5 — Acte III (docs/ACT3.md §8.6) : aucun champ nouveau — climat, jauges
+##     `verite` / `aveux` / `pont`, logement, avance : drapeaux ; Ilan « À
+##     TYCHO » : motif d'absence existant. La version monte pour qu'un build
+##     0.9 (v4, J1–J20) refuse proprement une sauvegarde de l'Acte III.
+const VERSION: int = 5
 ## Réglage de projet portant la version du jeu (R23, §16.1).
 const VERSION_SETTING: String = "application/config/version"
 ## Dossier des `DayDef` (`day_NN.tres`) : borne haute du jour (`last_day()`).
@@ -204,6 +208,9 @@ static func migrate(source: Dictionary) -> Dictionary:
 		version = 3
 	if version == 3:
 		data = _migrate_3_to_4(data)
+		version = 4
+	if version == 4:
+		data = _migrate_4_to_5(data)
 	data["version"] = float(VERSION)
 	return data
 
@@ -263,6 +270,14 @@ static func _migrate_3_to_4(data: Dictionary) -> Dictionary:
 				if not member.has("away"):
 					member["away"] = ""
 	data["version"] = 4
+	return data
+
+
+## v4 → v5 : une sauvegarde v4 date au plus du soir du J19 (le J20 de la
+## 0.9 n'a pas de soirée) : aucune conversion d'état ; la partie rejoue le J20
+## et découvre la soirée pivot de l'Acte III.
+static func _migrate_4_to_5(data: Dictionary) -> Dictionary:
+	data["version"] = 5
 	return data
 
 

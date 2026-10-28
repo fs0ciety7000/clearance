@@ -13,16 +13,21 @@ extends Rule
 ## de travail du porteur (postes en pénurie : RECYCLEUR, SOINS, HYDROPONIE).
 @export var exempt_posts: Array[StringName] = []
 @export var contract_id: StringName = &"work_contract"
+## Acte III (R37, « Fermeture de Tycho ») : exemption par un **Répondant
+## valide** (R34 : motif VISITE FAMILIALE, répondant admis aujourd'hui).
+@export var exempt_if_sponsored: bool = false
 
 
 func is_banned_origin(faction_id: StringName) -> bool:
 	return banned_faction_ids.has(faction_id)
 
 
-func is_violated(case: Case) -> bool:
+func is_violated(case: Case, ctx: RuleContext = null) -> bool:
 	if not is_banned_origin(Rule.visible_origin(case)):
 		return false
 	if has_exempt_post(case):
+		return false
+	if exempt_if_sponsored and SponsorRule.has_valid_sponsor(case, ctx):
 		return false
 	var purpose: Variant = PurposeConsistentRule._value(case, permit_id, &"purpose")
 	if purpose == null:
@@ -46,9 +51,9 @@ func has_exempt_post(case: Case) -> bool:
 	return false
 
 
-func evaluate(case: Case, _ctx: RuleContext) -> Array[Violation]:
+func evaluate(case: Case, ctx: RuleContext) -> Array[Violation]:
 	var violations: Array[Violation] = []
-	if not is_violated(case):
+	if not is_violated(case, ctx):
 		return violations
 	var refs: Array[FieldRef] = []
 	PurposeConsistentRule._append(refs, Rule.find_ref(case, card_id, &"faction_id"))
@@ -56,6 +61,8 @@ func evaluate(case: Case, _ctx: RuleContext) -> Array[Violation]:
 	PurposeConsistentRule._append(refs, Rule.find_ref(case, permit_id, &"purpose"))
 	if not exempt_posts.is_empty() and case.get_own_document(contract_id) != null:
 		PurposeConsistentRule._append(refs, Rule.find_ref(case, contract_id, &"post"))
+	if exempt_if_sponsored:
+		PurposeConsistentRule._append(refs, Rule.find_ref(case, permit_id, SponsorRule.SPONSOR_PATH))
 	violations.append(make_violation(refs, "viol_faction_banned"))
 	return violations
 
@@ -64,16 +71,17 @@ func get_detectable_anomalies() -> Array[AnomalyType.Kind]:
 	return [AnomalyType.Kind.BANNED_FACTION]
 
 
-func check_against(case: Case, ref: FieldRef, _ctx: RuleContext) -> Discrepancy.Result:
+func check_against(case: Case, ref: FieldRef, ctx: RuleContext) -> Discrepancy.Result:
 	var field: FieldDef = case.get_field_def(ref)
 	if field == null:
 		return Discrepancy.Result.INCOMPARABLE
 	var on_origin: bool = ref.document_id == card_id and field.truth_path == &"faction_id"
 	var on_purpose: bool = ref.document_id == permit_id and field.truth_path == &"purpose"
 	var on_post: bool = not exempt_posts.is_empty() and ref.document_id == contract_id and field.truth_path == &"post"
-	if not on_origin and not on_purpose and not on_post:
+	var on_sponsor: bool = exempt_if_sponsored and ref.document_id == permit_id and field.truth_path == SponsorRule.SPONSOR_PATH
+	if not on_origin and not on_purpose and not on_post and not on_sponsor:
 		return Discrepancy.Result.INCOMPARABLE
-	return Discrepancy.Result.DISCORDANT if is_violated(case) else Discrepancy.Result.CONCORDANT
+	return Discrepancy.Result.DISCORDANT if is_violated(case, ctx) else Discrepancy.Result.CONCORDANT
 
 
 func get_referenced_truth_paths() -> Dictionary[StringName, Array]:

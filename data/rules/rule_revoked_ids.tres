@@ -8,3 +8,4 @@ id = &"r_revoked_ids"
 title_key = "r_revoked_ids_title"
 rulebook_text_key = "r_revoked_ids_text"
 category = 1
+summons_exempt = true

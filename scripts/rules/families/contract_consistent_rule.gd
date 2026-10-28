@@ -65,7 +65,7 @@ func check_against(case: Case, ref: FieldRef, _ctx: RuleContext) -> Discrepancy.
 	if field == null:
 		return Discrepancy.Result.INCOMPARABLE
 	var doc: DocumentInstance = case.get_document(ref.document_id)
-	var on_code: bool = ref.document_id == contract_id and field.truth_path == CODE_PATH and doc != null and not doc.third_party
+	var on_code: bool = ref.document_id == contract_id and field.truth_path == CODE_PATH and doc != null and not doc.is_foreign()
 	var on_employer: bool = ref.document_id == permit_id and field.truth_path == &"employer"
 	if not on_code and not on_employer:
 		return Discrepancy.Result.INCOMPARABLE

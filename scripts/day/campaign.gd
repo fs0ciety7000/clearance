@@ -18,6 +18,12 @@
 ## (rations, prélèvements, ACV-2) ; `overrun_yesterday` (entrées imputées la
 ## veille, briefing de la Commission) ; fin du J20 par
 ## `EndingService.evaluate_final_act2`, épilogues `end2_*`.
+## Acte III (docs/ACT3.md, D-086 → D-089, ARCHITECTURE §7.3) : la soirée du
+## J20 est un pivot (`act3_started` si la campagne continue ; climat posé par
+## la carte de fin d'acte) ; contexte du soir complet (`evening_context` :
+## solde, rappel des salaires, climat prévisualisé) ; fin du J30 par
+## `EndingService.evaluate_final_act3` (foyer du dernier jour, figure
+## finale), épilogues `end3_*`.
 class_name Campaign
 extends RefCounted
 
@@ -65,10 +71,13 @@ static func prepare_events(data: DataCatalog) -> Array[EveningEvent]:
 	return EveningService.build_events(defs, evening_flags(), data.get_economy())
 
 
-## Drapeaux du soir : narratifs + contexte (foyer, conformité), jamais sauvegardés.
+## Drapeaux du soir : narratifs + contexte (foyer, conformité ; Acte III :
+## solde, rappel des salaires, climat du J20), jamais sauvegardés.
 static func evening_flags() -> Dictionary[StringName, Variant]:
-	var levy: int = DataCatalog.load_economy().levy_for(GameState.current_day, GameState.credits)
-	return EveningService.context_flags(GameState.narrative_flags, GameState.household, compliance(), levy)
+	var economy: EconomyDef = DataCatalog.load_economy()
+	var levy: int = economy.levy_for(GameState.current_day, GameState.credits)
+	return EveningService.evening_context(GameState.narrative_flags, GameState.household, compliance(), levy,
+			GameState.current_day, economy, GameState.credits)
 
 
 ## Postes de la soirée du jour courant, présélectionnés (coûts imposés par les
@@ -112,6 +121,8 @@ static func close_evening(data: DataCatalog, summary: DaySummary, report: Evenin
 	if overruns > 0 or GameState.has_flag(FLAG_OVERRUN_YESTERDAY):
 		GameState.set_flag(FLAG_OVERRUN_YESTERDAY, overruns > 0)
 	var pivot: bool = GameState.current_day == data.get_economy().pivot_day and report.ending == EveningReport.ENDING_NONE
+	var pivot3: bool = GameState.current_day == data.get_economy().act3_pivot_day and report.ending == EveningReport.ENDING_NONE \
+			and is_act2()
 	var entry: Dictionary = {
 		"processed": summary.get_processed_count() if summary != null else 0,
 		"planned": summary.planned_cases if summary != null else 0,
@@ -128,6 +139,8 @@ static func close_evening(data: DataCatalog, summary: DaySummary, report: Evenin
 	GameState.record_day_entry(entry)
 	if pivot:
 		GameState.set_flag(EndingService.FLAG_ACT2, true)
+	if pivot3:
+		GameState.set_flag(EndingService.FLAG_ACT3, true)
 	var ending: StringName = report.ending
 	if ending == EveningReport.ENDING_NONE and GameState.current_day > data.get_last_day_number():
 		ending = ENDING_DEMO_COMPLETE
@@ -166,7 +179,11 @@ static func close_final_day(data: DataCatalog, summary: DaySummary, save_slot: i
 		"balance": GameState.credits,
 	})
 	var ending: StringName
-	if is_act2():
+	if is_act3():
+		EndingService.apply_final_household(GameState.narrative_flags, GameState.household)
+		ending = EndingService.evaluate_final_act3(GameState.narrative_flags, GameState.household, GameState.credits,
+				compliance(), data.get_economy())
+	elif is_act2():
 		ending = EndingService.evaluate_final_act2(GameState.narrative_flags, GameState.household, GameState.credits,
 				compliance(), data.get_economy())
 	else:
@@ -181,9 +198,16 @@ static func close_final_day(data: DataCatalog, summary: DaySummary, save_slot: i
 static func epilogue(ending: StringName) -> Dictionary:
 	if not EndingService.ALL_ENDINGS.has(ending):
 		return {}
+	if is_act3():
+		return EndingService.epilogue_act3(ending, GameState.narrative_flags, GameState.household)
 	if is_act2():
 		return EndingService.epilogue_act2(ending, GameState.narrative_flags, GameState.household)
 	return EndingService.epilogue(ending, GameState.narrative_flags, GameState.household)
+
+
+## Acte III commencé (soirée pivot du J20 passée sans fin).
+static func is_act3() -> bool:
+	return GameState.get_flag(EndingService.FLAG_ACT3, false) == true
 
 
 ## Acte II commencé (soirée pivot du J10 passée sans fin).

@@ -32,6 +32,14 @@
 ## (`audit_id = review`), textes à valeurs (`text_args`), drapeaux de contexte
 ## du foyer et de la conformité (`context_flags`) ; soirée pivot du J10 :
 ## suspicion divisée (`pivot_day`).
+## Acte III (docs/ACT3.md §5.3, §6.1, B47, B48 ; D-086, D-089) : soirée pivot
+## du J20 (suspicion divisée, climat d'entrée prévisualisé dans le contexte :
+## `evening_context`), loyer et inclusions de l'Anneau D, rations à 1 ₵ au
+## climat Vanne, Contribution « pour Tycho » (J25), avance de l'Arbitre retenue
+## au J27 (défaut → loyer impayé), prime de chef·fe de guichet et salaire de
+## briseur·se de grève, lettres à gain (aides conditionnelles), options à
+## effets conditionnels et revérifiées à l'application, Déposition du J29
+## (audit calculé après le choix du soir).
 class_name EveningService
 extends RefCounted
 
@@ -46,6 +54,21 @@ const RATION_PREFIX: String = "ration_"
 const LINE_LEASE: StringName = &"lease"
 const LINE_LEVY: StringName = &"levy"
 const LINE_ILAN_JOB: StringName = &"inc_ilan_job"
+## Acte III.
+const LINE_LOAN: StringName = &"loan_repay"
+const LINE_HEAD_BONUS: StringName = &"inc_head_bonus"
+const LINE_SCAB: StringName = &"inc_scab"
+const FLAG_RING_D: StringName = &"moved_ring_d"
+const FLAG_VANNE: StringName = &"climate_vanne"
+const FLAG_PROMU: StringName = &"climate_promu"
+const FLAG_LOAN: StringName = &"arbitre_loan"
+const FLAG_LOAN_DEFAULTED: StringName = &"loan_defaulted"
+const FLAG_SCAB: StringName = &"ilan_scab"
+const FLAG_ACT3: StringName = &"act3_started"
+## Pseudo-jauges de contexte (Acte III) : solde du soir, rappel des salaires.
+const GAUGE_BALANCE: StringName = &"balance"
+const GAUGE_RECALL: StringName = &"recall_amount"
+const NOTE_INCLUDED: String = "ev_note_included"
 const GROUP_RATIONS: StringName = &"rations"
 const FLAG_METER_REFUSED: StringName = &"meter_refused"
 const FLAG_PROMOTION_OFFERED: StringName = &"promotion_offered"
@@ -96,23 +119,42 @@ static func build_lines(economy: EconomyDef, day_number: int, household: Househo
 	var rations: bool = economy.rations_for(day_number)
 	var surcharge: int = economy.meter_surcharge if rations and day_number > economy.ration_start_day \
 			and day_number <= RECURRING_LAST_DAY and FlagCondition.is_flag_true(flags, FLAG_METER_REFUSED) else 0
-	lines.append(ExpenseLine.new(LINE_RENT, economy.rent_for(day_number)))
+	# Acte III : Anneau D (loyer 30 ₵, chauffage et rations inclus) ; climat
+	# Vanne (rations à 1 ₵).
+	var act3: bool = day_number >= economy.act3_first_day
+	var ring_d: bool = act3 and FlagCondition.is_flag_true(flags, FLAG_RING_D)
+	var vanne: bool = act3 and FlagCondition.is_flag_true(flags, FLAG_VANNE)
+	lines.append(ExpenseLine.new(LINE_RENT, economy.ring_d_rent if ring_d else economy.rent_for(day_number)))
 	if economy.air_tax_for(day_number) > 0:
 		lines.append(ExpenseLine.new(LINE_AIR_TAX, economy.air_tax_for(day_number), true))
 	if rations:
-		var own: ExpenseLine = ExpenseLine.new(LINE_RATION_SELF, economy.ration_self + surcharge, true)
+		var own_cost: int = economy.ration_self + surcharge
+		if ring_d:
+			own_cost = 0
+		elif vanne:
+			own_cost = economy.vanne_ration
+		var own: ExpenseLine = ExpenseLine.new(LINE_RATION_SELF, own_cost, true)
 		own.label_key = "exp_ration_self"
-		own.note_key = "exp_meter_surcharge" if surcharge > 0 else ""
+		own.note_key = "exp_meter_surcharge" if surcharge > 0 else (NOTE_INCLUDED if ring_d else "")
 		lines.append(own)
 	lines.append(ExpenseLine.new(LINE_FOOD, economy.food_for(day_number)))
-	lines.append(ExpenseLine.new(LINE_HEATING, economy.heating))
+	if ring_d:
+		var included: ExpenseLine = ExpenseLine.new(LINE_HEATING, 0, true)
+		included.note_key = NOTE_INCLUDED
+		lines.append(included)
+	else:
+		lines.append(ExpenseLine.new(LINE_HEATING, economy.heating))
 	if rations:
 		for member: Household.Member in household.present_members():
-			var ration: ExpenseLine = ExpenseLine.new(StringName(RATION_PREFIX + String(member.id)),
-					economy.ration_of(member.id) + surcharge)
+			var cost: int = economy.ration_of(member.id) + surcharge
+			if ring_d:
+				cost = 0
+			elif vanne:
+				cost = economy.vanne_ration
+			var ration: ExpenseLine = ExpenseLine.new(StringName(RATION_PREFIX + String(member.id)), cost, ring_d)
 			ration.ration_of = member.id
 			ration.label_key = "exp_ration_%s" % member.id
-			ration.note_key = "exp_meter_surcharge" if surcharge > 0 else "ev_note_ration"
+			ration.note_key = "exp_meter_surcharge" if surcharge > 0 else (NOTE_INCLUDED if ring_d else "ev_note_ration")
 			lines.append(ration)
 	var dora: Household.Member = household.get_member(Household.DORA)
 	if economy.oxygen_due(day_number) and dora != null and dora.is_present():
@@ -136,7 +178,17 @@ static func build_lines(economy: EconomyDef, day_number: int, household: Househo
 	if levy > 0:
 		var levy_line: ExpenseLine = ExpenseLine.new(LINE_LEVY, levy, true)
 		levy_line.label_key = "exp_levy"
+		if economy.is_contribution_day(day_number):
+			# Acte III : Contribution « pour Tycho » (20 % au-delà de 60 ₵).
+			levy_line.label_key = "exp_contribution"
+			levy_line.note_key = "ev_note_contribution"
 		lines.append(levy_line)
+	# Acte III : avance de l'Arbitre retenue (défaut si le solde ne la couvre pas).
+	if day_number == economy.loan_day and FlagCondition.is_flag_true(flags, FLAG_LOAN):
+		var loan: ExpenseLine = ExpenseLine.new(LINE_LOAN, economy.loan_repay, true)
+		loan.label_key = "exp_loan_repay"
+		loan.note_key = "ev_note_loan"
+		lines.append(loan)
 	return lines
 
 
@@ -151,6 +203,17 @@ static func income_lines(economy: EconomyDef, day_number: int, household: Househ
 		var job: ExpenseLine = ExpenseLine.new(LINE_ILAN_JOB, economy.ilan_job_income, true)
 		job.label_key = "inc_ilan_job"
 		lines.append(job)
+	# Acte III : prime de chef·fe de guichet (climat Promu·e), briseur·se de grève.
+	if FlagCondition.is_flag_true(flags, FLAG_PROMU) and day_number >= economy.act3_first_day \
+			and day_number <= economy.act3_last_evening:
+		var bonus: ExpenseLine = ExpenseLine.new(LINE_HEAD_BONUS, economy.head_bonus, true)
+		bonus.label_key = "inc_head_bonus"
+		lines.append(bonus)
+	if FlagCondition.is_flag_true(flags, FLAG_SCAB) and ilan != null and ilan.is_present() \
+			and day_number >= economy.scab_first_day and day_number <= economy.scab_last_day:
+		var scab: ExpenseLine = ExpenseLine.new(LINE_SCAB, economy.scab_income, true)
+		scab.label_key = "inc_scab"
+		lines.append(scab)
 	return lines
 
 
@@ -179,6 +242,25 @@ static func context_flags(flags: Dictionary[StringName, Variant], household: Hou
 		result[GAUGE_COMPLIANCE] = roundi(compliance * 100.0)
 	if levy >= 0:
 		result[GAUGE_LEVY] = levy
+	return result
+
+
+## Acte III : contexte d'une soirée complet — `context_flags`, solde du soir
+## (`balance`, conditions « solde < N » des aides), rappel des salaires
+## imputés (`recall_amount`), et le soir du pivot du J20 le **climat d'entrée**
+## prévisualisé (`climate_*`, `vanne2_brulants` : même évaluation que les fins
+## du J20, D-086) pour les lettres de la soirée pivot.
+static func evening_context(flags: Dictionary[StringName, Variant], household: Household, compliance: float,
+		levy: int, day_number: int, economy: EconomyDef, balance: int) -> Dictionary[StringName, Variant]:
+	var result: Dictionary[StringName, Variant] = context_flags(flags, household, compliance, levy)
+	result[GAUGE_BALANCE] = balance
+	if economy != null:
+		result[GAUGE_RECALL] = economy.recall_for(FlagCondition.gauge_value(flags, CaseConsequences.FLAG_QUOTA_OVERRUN))
+		if day_number == economy.act3_pivot_day and not FlagCondition.is_flag_true(flags, FLAG_ACT3):
+			var climate: StringName = EndingService.act2_climate(result, economy)
+			result[EndingService.CLIMATE_FLAGS[climate]] = true
+			if climate == EndingService.F5_AIR and EndingService.is_burners_variant2(result):
+				result[EndingService.FLAG_BRULANTS2] = true
 	return result
 
 
@@ -226,7 +308,17 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 	apply_line_costs(lines, events, choices)
 	if day_number == economy.pivot_day and economy.pivot_suspicion_divisor > 0:
 		_apply_pivot(report, economy, flags)
-	var household_effects: Array[StringName] = _apply_events(report, events, choices, flags)
+	elif day_number == economy.act3_pivot_day and economy.pivot_suspicion_divisor > 0:
+		_apply_pivot3(report, economy, flags)
+	# Acte III : avance de l'Arbitre non couverte par le solde → non retenue,
+	# comptée comme un loyer impayé (F2, D-047).
+	var loan_defaulted: bool = false
+	for line: ExpenseLine in lines:
+		if line.id == LINE_LOAN and balance_before < line.cost:
+			line.paid = false
+			loan_defaulted = true
+			report.flag_changes[FLAG_LOAN_DEFAULTED] = true
+	var household_effects: Array[StringName] = _apply_events(report, events, choices, flags, economy)
 	for income: ExpenseLine in income_lines(economy, day_number, household, flags):
 		report.gained += income.cost
 		report.income_lines.append(income)
@@ -327,6 +419,9 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 	else:
 		home.unpaid_rent_streak += 1
 		report.add_event("hh_ev_rent_unpaid", EveningReport.Tone.BAD if home.unpaid_rent_streak >= economy.eviction_unpaid_rent - 1 else EveningReport.Tone.WARNING)
+	if loan_defaulted:
+		home.unpaid_rent_streak += 1
+		report.add_event("hh_ev_loan_defaulted", EveningReport.Tone.BAD)
 	if report.balance_after < 0:
 		home.debt_streak += 1
 		report.add_event("hh_ev_debt", EveningReport.Tone.BAD)
@@ -378,6 +473,10 @@ static func build_events(defs: Array[EveningEventDef], flags: Dictionary[StringN
 		if def.kind == EveningEventDef.Kind.AUDIT:
 			if def.audit_id == EndingService.AUDIT_REVIEW:
 				event.audit = EndingService.review_outcome(flags, economy)
+			elif def.audit_id == EndingService.AUDIT_DEPOSITION:
+				# Acte III : provisoire (choix par défaut) ; recalculée à l'application
+				# avec le choix de la Déposition (`refresh_audit`).
+				event.audit = EndingService.deposition_outcome(flags, economy)
 			else:
 				event.audit = EndingService.audit_outcome(flags, economy)
 		for gauge: String in def.text_gauges:
@@ -440,17 +539,27 @@ static func _set_costs(lines: Array[ExpenseLine], costs: Dictionary[StringName, 
 
 
 ## Applique les événements au rapport ; renvoie les effets sur le foyer à
-## appliquer après l'évolution normale de la nuit.
+## appliquer après l'évolution normale de la nuit. Acte III : les drapeaux du
+## soir déjà posés (`flags` + effets précédents) servent aux conditions
+## d'application — option revérifiée (un choix rendu caduc par un autre est
+## ignoré : places pour Tycho après celles de la Soute), effets conditionnels
+## (`conditional_flags`), Déposition calculée après le choix du soir.
 static func _apply_events(report: EveningReport, events: Array[EveningEvent], choices: Dictionary[StringName, StringName],
-		flags: Dictionary[StringName, Variant]) -> Array[StringName]:
+		flags: Dictionary[StringName, Variant], economy: EconomyDef = null) -> Array[StringName]:
 	var effects: Array[StringName] = []
+	var current: Dictionary[StringName, Variant] = flags.duplicate()
 	for event: EveningEvent in events:
 		if report.ending == EndingService.F1_ARRESTED:
 			break
+		CaseConsequences.merge_into(current, report.flag_changes)
 		CaseConsequences.add_all(report.flag_changes, flags, event.def.flags)
 		match event.kind:
 			EveningEventDef.Kind.AUDIT:
 				var outcome: Dictionary = event.audit
+				if event.def.audit_id == EndingService.AUDIT_DEPOSITION and economy != null:
+					CaseConsequences.merge_into(current, report.flag_changes)
+					outcome = EndingService.deposition_outcome(current, economy)
+					event.audit = outcome
 				report.event_texts.append(str(outcome.get("result_key", "")))
 				report.event_spent += SaveService.as_int(outcome.get("cost", 0))
 				var audit_flags: Dictionary = outcome.get("flags", {})
@@ -468,6 +577,10 @@ static func _apply_events(report: EveningReport, events: Array[EveningEvent], ch
 					report.add_event(key, EveningReport.Tone.INFO)
 				if event.def.household != &"":
 					effects.append(event.def.household)
+				# Acte III : lettre à gain (aides conditionnelles, rappel des salaires).
+				report.gained += event.def.gain
+				if event.def.gain_gauge != &"":
+					report.gained += FlagCondition.gauge_value(current, event.def.gain_gauge)
 			EveningEventDef.Kind.CHOICE:
 				var chosen: StringName = choices.get(event.id, event.default_option)
 				var option: EveningOptionDef = event.get_option(chosen)
@@ -476,10 +589,16 @@ static func _apply_events(report: EveningReport, events: Array[EveningEvent], ch
 					report.add_event(key, EveningReport.Tone.INFO)
 				if option == null:
 					continue
+				CaseConsequences.merge_into(current, report.flag_changes)
+				if not FlagCondition.check(option.condition, current):
+					continue
 				report.choices[event.id] = option.id
 				report.event_spent += option.cost
 				report.gained += option.gain
 				CaseConsequences.add_all(report.flag_changes, flags, option.flags)
+				for effect: CaseEffectDef in option.conditional_flags:
+					if effect != null and FlagCondition.check(effect.condition, current):
+						CaseConsequences.add_all(report.flag_changes, flags, effect.flags)
 				for gauge: StringName in option.set_gauges:
 					report.flag_changes[gauge] = option.set_gauges[gauge]
 				if option.ends_campaign != &"" and report.ending == EveningReport.ENDING_NONE:
@@ -513,6 +632,17 @@ static func _apply_household_effect(report: EveningReport, effect: StringName) -
 		EveningOptionDef.HOUSEHOLD_DORA_TYCHO:
 			report.household.send_away(Household.DORA, Household.AWAY_TYCHO)
 			report.add_event("hh_ev_dora_tycho", EveningReport.Tone.INFO, Household.DORA)
+		# Acte III.
+		EveningOptionDef.HOUSEHOLD_ILAN_HOME:
+			report.household.bring_home(Household.ILAN, false)
+			report.add_event("hh_ev_ilan_home", EveningReport.Tone.GOOD, Household.ILAN)
+		EveningOptionDef.HOUSEHOLD_ILAN_TYCHO:
+			report.household.send_away(Household.ILAN, Household.AWAY_TYCHO)
+			report.add_event("hh_ev_ilan_tycho", EveningReport.Tone.INFO, Household.ILAN)
+		EveningOptionDef.HOUSEHOLD_DORA_SICK:
+			var dora: Household.Member = report.household.get_member(Household.DORA)
+			if dora != null and dora.is_present():
+				_fall_sick(dora, report, "hh_ev_dora_cough")
 
 
 ## Soirée pivot (J10, D-076) : la Commission « reprend les dossiers » —
@@ -525,6 +655,17 @@ static func _apply_pivot(report: EveningReport, economy: EconomyDef, flags: Dict
 		halved += 1
 	report.flag_changes[CaseConsequences.FLAG_SUSPICION] = halved
 	report.flag_changes[&"pivot_done"] = true
+
+
+## Soirée pivot du J20 (D-086) : l'Arbitre « rouvre les dossiers » —
+## `suspicion := ⌊suspicion / diviseur⌋` (+1 si `act3_pivot_bonus_flag`).
+static func _apply_pivot3(report: EveningReport, economy: EconomyDef, flags: Dictionary[StringName, Variant]) -> void:
+	var suspicion: int = FlagCondition.gauge_value(flags, CaseConsequences.FLAG_SUSPICION)
+	var halved: int = floori(float(suspicion) / economy.pivot_suspicion_divisor)
+	if economy.act3_pivot_bonus_flag != &"" and FlagCondition.is_flag_true(flags, economy.act3_pivot_bonus_flag):
+		halved += 1
+	report.flag_changes[CaseConsequences.FLAG_SUSPICION] = halved
+	report.flag_changes[&"pivot3_done"] = true
 
 
 static func _fall_sick(member: Household.Member, report: EveningReport, key: String) -> void:

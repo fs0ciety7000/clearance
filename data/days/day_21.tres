@@ -1,0 +1,497 @@
+[gd_resource type="Resource" script_class="DayDef" format=3 uid="uid://bsg1vowgelcje"]
+
+[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_lldms"]
+[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_reeo1"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="3_d0x53"]
+[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="4_gi344"]
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="5_rmtn0"]
+[ext_resource type="Script" path="res://scripts/core/evening_option_def.gd" id="6_wycpe"]
+[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="7_2nh5d"]
+[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="8_ycbb6"]
+[ext_resource type="Resource" path="res://data/days/ruleset_day_21.tres" id="9_phk1b"]
+[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="10_r3vjs"]
+[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="11_x31y8"]
+[ext_resource type="Script" path="res://scripts/core/slipped_item_def.gd" id="12_73wuw"]
+[ext_resource type="Script" path="res://scripts/core/summons_def.gd" id="13_k3nx8"]
+[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="14_0uxor"]
+
+[sub_resource type="Resource" id="d21_resource_47"]
+script = ExtResource("1_lldms")
+text_key = "hall_quota_suspended"
+at_minute = 600
+
+[sub_resource type="Resource" id="d21_resource_17"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"sc21_bribe_kept"])
+
+[sub_resource type="Resource" id="d21_resource_16"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_arbitre"
+text_key = "msg_arb_day21_kept"
+voice = 5
+condition = SubResource("d21_resource_17")
+group = &"arb"
+
+[sub_resource type="Resource" id="d21_resource_18"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_arbitre"
+text_key = "msg_arb_day21"
+voice = 5
+group = &"arb"
+
+[sub_resource type="Resource" id="d21_resource_19"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_consortium"
+text_key = "msg_cons_day21_amnesty"
+group = &"cons"
+
+[sub_resource type="Resource" id="d21_resource_21"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"vanne2_brulants"])
+
+[sub_resource type="Resource" id="d21_resource_20"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_brulants"
+text_key = "msg_brul_day21"
+voice = 6
+condition = SubResource("d21_resource_21")
+group = &"luc"
+priority = 1
+
+[sub_resource type="Resource" id="d21_resource_23"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"climate_vanne"])
+
+[sub_resource type="Resource" id="d21_resource_22"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_lucioles"
+text_key = "msg_luc_day21_vanne"
+voice = 3
+condition = SubResource("d21_resource_23")
+group = &"luc"
+priority = 1
+
+[sub_resource type="Resource" id="d21_resource_25"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"climate_vitres"])
+
+[sub_resource type="Resource" id="d21_resource_24"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_comite"
+text_key = "msg_comite_day21"
+voice = 1
+condition = SubResource("d21_resource_25")
+group = &"luc"
+priority = 1
+
+[sub_resource type="Resource" id="d21_resource_27"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"climate_registre"])
+
+[sub_resource type="Resource" id="d21_resource_26"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_tycho"
+text_key = "msg_tycho_day23"
+voice = 3
+condition = SubResource("d21_resource_27")
+group = &"luc"
+priority = 1
+
+[sub_resource type="Resource" id="d21_resource_28"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_consortium"
+text_key = "msg_cons_day21_albedo"
+group = &"cons"
+priority = 2
+
+[sub_resource type="Resource" id="d21_resource_30"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"ilan_soute3"])
+
+[sub_resource type="Resource" id="d21_resource_29"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_note"
+text_key = "msg_ilan_day21_soute"
+voice = 2
+condition = SubResource("d21_resource_30")
+group = &"ilan"
+family_slot = true
+
+[sub_resource type="Resource" id="d21_resource_32"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"hh_ilan_held"])
+
+[sub_resource type="Resource" id="d21_resource_31"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_dora"
+text_key = "msg_dora_day21_detained"
+voice = 2
+condition = SubResource("d21_resource_32")
+group = &"ilan"
+family_slot = true
+
+[sub_resource type="Resource" id="d21_resource_34"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"dora_departed"])
+
+[sub_resource type="Resource" id="d21_resource_33"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_dora"
+text_key = "msg_dora_day21_tycho"
+voice = 2
+condition = SubResource("d21_resource_34")
+group = &"ilan"
+family_slot = true
+
+[sub_resource type="Resource" id="d21_resource_35"]
+script = ExtResource("2_reeo1")
+speaker_key = "spk_ilan"
+text_key = "msg_ilan_day21"
+voice = 2
+group = &"ilan"
+family_slot = true
+
+[sub_resource type="Resource" id="d21_resource_37"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"hh_ilan_held"])
+
+[sub_resource type="Resource" id="d21_resource_38"]
+script = ExtResource("6_wycpe")
+id = &"sign"
+label_key = "evt_d21_amnesty_opt_sign"
+result_key = "evt_d21_amnesty_res_sign"
+flags = Dictionary[StringName, int]({
+&"amnesty_signed": 0,
+&"ilan_estranged": 0,
+&"loyalty": 1,
+&"lucioles_trust": -2
+})
+household = &"ilan_released"
+default_rank = -1
+
+[sub_resource type="Resource" id="d21_resource_39"]
+script = ExtResource("6_wycpe")
+id = &"refuse"
+label_key = "evt_d21_amnesty_opt_refuse"
+result_key = "evt_d21_amnesty_res_refuse"
+flags = Dictionary[StringName, int]({
+&"amnesty_refused": 0
+})
+
+[sub_resource type="Resource" id="d21_resource_36"]
+script = ExtResource("4_gi344")
+id = &"d21_amnesty"
+condition = SubResource("d21_resource_37")
+title_key = "evt_d21_amnesty_title"
+text_key = "evt_d21_amnesty_text"
+options = Array[ExtResource("6_wycpe")]([SubResource("d21_resource_38"), SubResource("d21_resource_39")])
+text_gauges = PackedStringArray()
+
+[sub_resource type="Resource" id="d21_resource_42"]
+script = ExtResource("3_d0x53")
+gauges_max = Dictionary[StringName, int]({
+&"quota_overrun": 0
+})
+
+[sub_resource type="Resource" id="d21_resource_41"]
+script = ExtResource("5_rmtn0")
+key = "evt_d21_recall_text_none"
+condition = SubResource("d21_resource_42")
+
+[sub_resource type="Resource" id="d21_resource_40"]
+script = ExtResource("4_gi344")
+id = &"d21_recall"
+kind = 0
+order = 1
+title_key = "evt_d21_recall_title"
+text_key = "evt_d21_recall_text"
+text_variants = Array[ExtResource("5_rmtn0")]([SubResource("d21_resource_41")])
+flags = Dictionary[StringName, int]({
+&"acv_returned": 0
+})
+text_gauges = PackedStringArray("recall_amount")
+gain_gauge = &"recall_amount"
+
+[sub_resource type="Resource" id="d21_resource_44"]
+script = ExtResource("6_wycpe")
+id = &"take"
+label_key = "evt_d21_loan_opt_take"
+result_key = "evt_d21_loan_res_take"
+gain = 30
+flags = Dictionary[StringName, int]({
+&"arbitre_loan": 0
+})
+default_rank = 1
+
+[sub_resource type="Resource" id="d21_resource_45"]
+script = ExtResource("6_wycpe")
+id = &"decline"
+label_key = "evt_d21_loan_opt_decline"
+result_key = "evt_d21_loan_res_decline"
+
+[sub_resource type="Resource" id="d21_resource_43"]
+script = ExtResource("4_gi344")
+id = &"d21_loan"
+order = 2
+title_key = "evt_d21_loan_title"
+text_key = "evt_d21_loan_text"
+options = Array[ExtResource("6_wycpe")]([SubResource("d21_resource_44"), SubResource("d21_resource_45")])
+text_gauges = PackedStringArray()
+economy_gauges_below = Dictionary[StringName, StringName]({
+&"balance": &"loan_balance_below"
+})
+
+[sub_resource type="Resource" id="d21_resource_46"]
+script = ExtResource("8_ycbb6")
+id = &"revoked_generated"
+at_index = 12
+
+[sub_resource type="Resource" id="d21_resource_3"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"sc07_bribe_kept"])
+
+[sub_resource type="Resource" id="d21_resource_2"]
+script = ExtResource("5_rmtn0")
+key = "sc51_valcourt_arrival_kept"
+condition = SubResource("d21_resource_3")
+replaces = "arrival"
+
+[sub_resource type="Resource" id="d21_resource_1"]
+script = ExtResource("12_73wuw")
+amount = 40
+label_key = "wb_envelope_label"
+effects = Dictionary[StringName, Dictionary]({
+&"keep": {
+&"sc51_bribe_kept": 0,
+&"suspicion": 1
+}
+})
+
+[sub_resource type="Resource" id="scripted_sc_51"]
+script = ExtResource("11_x31y8")
+id = &"sc_51"
+at_index = 1
+passenger_overrides = {
+&"citizen_class": &"C-1",
+&"faction_id": &"hal",
+&"purpose": &"return"
+}
+forced_anomalies = Array[int]([0])
+injection_params = {
+&"document_id": &"id_card",
+&"expiry": 31838
+}
+dialogue_id = &"sc51_valcourt"
+flags_on_approve = Dictionary[StringName, int]({
+&"sc51_valcourt_passed": 0
+})
+flags_on_deny = Dictionary[StringName, int]({
+&"sc51_valcourt_refused": 0
+})
+appearance_from_case = &"sc_07"
+identity_from_case = &"sc_07"
+slipped_item = SubResource("d21_resource_1")
+luciole_codes = PackedInt32Array()
+line_variants = Array[ExtResource("5_rmtn0")]([SubResource("d21_resource_2")])
+
+[sub_resource type="Resource" id="d21_resource_5"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"sc48_paz_refused"])
+
+[sub_resource type="Resource" id="d21_resource_4"]
+script = ExtResource("5_rmtn0")
+key = "sc52_paz_arrival_refused"
+condition = SubResource("d21_resource_5")
+replaces = "arrival"
+
+[sub_resource type="Resource" id="scripted_sc_52"]
+script = ExtResource("11_x31y8")
+id = &"sc_52"
+at_index = 5
+passenger_overrides = {
+&"citizen_class": &"C-4",
+&"faction_id": &"cer",
+&"purpose": &"trade",
+&"stay_days": 4
+}
+dialogue_id = &"sc52_paz"
+flags_on_approve = Dictionary[StringName, int]({
+&"sc52_paz_passed": 0
+})
+flags_on_deny = Dictionary[StringName, int]({
+&"sc52_paz_refused": 0
+})
+appearance_from_case = &"sc_48"
+identity_from_case = &"sc_48"
+luciole_codes = PackedInt32Array()
+line_variants = Array[ExtResource("5_rmtn0")]([SubResource("d21_resource_4")])
+document_dates = {
+&"bioscan": {
+"expiry": 31896,
+"issue": 31866
+},
+&"entry_permit": {
+"expiry": 31871,
+"issue": 31866
+},
+&"id_card": {
+"expiry": 31866,
+"issue": 28214
+}
+}
+
+[sub_resource type="Resource" id="d21_resource_7"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"climate_vanne"])
+
+[sub_resource type="Resource" id="d21_resource_6"]
+script = ExtResource("5_rmtn0")
+key = "sc53_anouk_arrival_vanne"
+condition = SubResource("d21_resource_7")
+replaces = "arrival"
+
+[sub_resource type="Resource" id="d21_resource_9"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"climate_vitres"])
+
+[sub_resource type="Resource" id="d21_resource_8"]
+script = ExtResource("5_rmtn0")
+key = "sc53_anouk_arrival_vitres"
+condition = SubResource("d21_resource_9")
+replaces = "arrival"
+
+[sub_resource type="Resource" id="d21_resource_11"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"climate_registre"])
+
+[sub_resource type="Resource" id="d21_resource_10"]
+script = ExtResource("5_rmtn0")
+key = "sc53_anouk_arrival_registre"
+condition = SubResource("d21_resource_11")
+replaces = "arrival"
+
+[sub_resource type="Resource" id="scripted_sc_53"]
+script = ExtResource("11_x31y8")
+id = &"sc_53"
+at_index = 10
+passenger_overrides = {
+&"birth_date": 18764,
+&"citizen_class": &"C-3",
+&"employer": "Kessler-Ashe Orbital",
+&"faction_id": &"tyc",
+&"family_name": "Halvorsen",
+&"given_name": "Anouk",
+&"implants": PackedStringArray(),
+&"post": &"post_recycleur",
+&"purpose": &"work",
+&"sex": &"F"
+}
+forced_anomalies = Array[int]([16])
+dialogue_id = &"sc53_anouk"
+flags_on_approve = Dictionary[StringName, int]({
+&"lucioles_trust": 1,
+&"sc53_anouk_passed": 0
+})
+flags_on_deny = Dictionary[StringName, int]({
+&"sc53_anouk_turned_back": 0
+})
+flags_on_detain = Dictionary[StringName, int]({
+&"loyalty": 1,
+&"lucioles_trust": -1,
+&"sc53_anouk_detained": 0
+})
+luciole_codes = PackedInt32Array()
+extra_tags = Array[StringName]([&"prop_bandaged_hands"])
+line_variants = Array[ExtResource("5_rmtn0")]([SubResource("d21_resource_6"), SubResource("d21_resource_8"), SubResource("d21_resource_10")])
+document_dates = {
+&"work_contract": {
+"expiry": 31865,
+"issue": 31500
+}
+}
+
+[sub_resource type="Resource" id="d21_resource_12"]
+script = ExtResource("14_0uxor")
+id = &"wanted_anouk"
+scripted_case_id = &"sc_53"
+reason_key = "wanted_anouk_reason"
+faces_only = true
+
+[sub_resource type="Resource" id="d21_resource_13"]
+script = ExtResource("14_0uxor")
+id = &"wanted_generated"
+at_index = 13
+reason_key = "wanted_generated_reason"
+
+[sub_resource type="Resource" id="d21_resource_15"]
+script = ExtResource("3_d0x53")
+all_of = Array[StringName]([&"vanne2_brulants"])
+
+[sub_resource type="Resource" id="d21_resource_14"]
+script = ExtResource("14_0uxor")
+id = &"wanted_generated_brulants"
+at_index = 7
+reason_key = "wanted_generated_reason"
+condition = SubResource("d21_resource_15")
+
+[resource]
+script = ExtResource("10_r3vjs")
+day_number = 21
+game_date = 31867
+rule_set = ExtResource("9_phk1b")
+duration_sec = 720.0
+passenger_count = 15
+anomaly_count_weights = PackedFloat32Array(0.48, 0.37, 0.13, 0.02)
+anomaly_weights = Dictionary[int, float]({
+0: 0.12,
+1: 0.05,
+2: 0.03,
+3: 0.05,
+4: 0.05,
+5: 0.04,
+6: 0.05,
+7: 0.04,
+8: 0.04,
+9: 0.06,
+10: 0.05,
+11: 0.07,
+12: 0.06,
+13: 0.07,
+14: 0.06,
+15: 0.06,
+16: 0.06,
+17: 0.06,
+18: 0.2,
+19: 0.05
+})
+scripted_cases = Array[ExtResource("11_x31y8")]([SubResource("scripted_sc_51"), SubResource("scripted_sc_52"), SubResource("scripted_sc_53")])
+intro_text_key = "day21_intro"
+faction_weights = Dictionary[StringName, float]({
+&"cer": 0.14,
+&"drv": 0.06,
+&"hal": 0.18,
+&"ter": 0.21,
+&"thr": 0.13,
+&"tyc": 0.28
+})
+visor_down_rate = 0.2
+legit_noise_rate = 0.38
+bribe_rate = 0.05
+luciole_rate = 0.08
+free_citations_per_day = 3
+detain_enabled = true
+bribe_amounts = Vector2i(20, 30)
+wanted_notices = Array[ExtResource("14_0uxor")]([SubResource("d21_resource_12"), SubResource("d21_resource_13"), SubResource("d21_resource_14")])
+briefing_messages = Array[ExtResource("2_reeo1")]([SubResource("d21_resource_16"), SubResource("d21_resource_18"), SubResource("d21_resource_19"), SubResource("d21_resource_20"), SubResource("d21_resource_22"), SubResource("d21_resource_24"), SubResource("d21_resource_26"), SubResource("d21_resource_28"), SubResource("d21_resource_29"), SubResource("d21_resource_31"), SubResource("d21_resource_33"), SubResource("d21_resource_35")])
+evening_events = Array[ExtResource("4_gi344")]([SubResource("d21_resource_36"), SubResource("d21_resource_40"), SubResource("d21_resource_43")])
+rulebook_tabs = PackedStringArray("origins", "implants", "symbols", "seals", "wanted", "employers", "vessels", "revoked")
+luciole_trust_on_breach = false
+revocations = Array[ExtResource("8_ycbb6")]([SubResource("d21_resource_46")])
+revoked_decoys = 4
+announcements = Array[ExtResource("1_lldms")]([SubResource("d21_resource_47")])
+focus_documents = Array[StringName]([&"asylum"])
+retired_documents = Array[StringName]([&"queue_ticket"])
+prorogation_noise_rate = 0.15
+luciole_rate_bonus = Dictionary[StringName, float]({
+&"climate_vanne": 0.02
+})

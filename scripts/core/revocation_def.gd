@@ -16,3 +16,8 @@ extends Resource
 @export var reason_key: String = ""
 ## Condition sur les drapeaux du matin (null = toujours).
 @export var condition: FlagCondition = null
+## Acte III (R33) : date de réintégration (`GameDate`), 0 = aucune ; un
+## passager généré réintégré est un **bruit légitime** (pas d'anomalie).
+@export var reinstated_on: int = 0
+## Acte III : motif d'exclusion de la réintégration (`rb_reinstated_excluded`).
+@export var excluded_reason_key: String = ""

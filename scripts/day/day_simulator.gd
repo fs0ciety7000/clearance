@@ -34,6 +34,7 @@ static func simulate(data: DataCatalog, day_number: int, day_seed: int, policy: 
 		verdict.elapsed_sec = 30.0
 		var result: CaseResult = ScoringService.score(verdict, generated.key, case.case_id, case, day, data.get_economy().detain_bonus)
 		result.passenger_label = case.passenger_presented.short_label() if case.passenger_presented != null else ""
+		builder.record_verdict(case, kind)
 		if result.has_citation():
 			citations += 1
 			ScoringService.apply_citation(result, citations, day)
@@ -51,6 +52,8 @@ static func simulate(data: DataCatalog, day_number: int, day_seed: int, policy: 
 ## en règle est refusé, ou approuvé et imputé si `profile.overrun`), heure de
 ## présentation (`present_minute` : ticket de file, couvre-feu), contexte du
 ## shift des effets, fin anticipée sur une annonce (grève du J20).
+## Acte III : Main courante (`CaseBuilder.record_verdict` après chaque
+## verdict), quota suspendu selon le climat, jauges d'admissions (`pont`).
 static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile: SimProfile,
 		flags: Dictionary[StringName, Variant], memory: Dictionary, rng: SeededRng) -> DaySummary:
 	var day: DayDef = data.get_day(day_number)
@@ -63,7 +66,8 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 	summary.day_number = day_number
 	summary.planned_cases = day.passenger_count
 	var citations: int = 0
-	var quota: QuotaTracker = QuotaTracker.for_day(day)
+	var quota: QuotaTracker = QuotaTracker.for_day(day, flags)
+	quota.sync(builder.ctx)
 	var timed: bool = _has_curfew(day)
 	for i: int in day.passenger_count:
 		if timed:
@@ -88,6 +92,9 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 				data.get_economy().detain_bonus, quota_full)
 		result.quota_counted = quota.counts(case)
 		result.quota_overrun = quota.after_verdict(case, kind)
+		quota.sync(builder.ctx)
+		# Acte III (R34) : Main courante du shift.
+		builder.record_verdict(case, kind)
 		result.passenger_label = case.passenger_presented.short_label()
 		if result.has_citation():
 			citations += 1
@@ -105,7 +112,8 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 				and FlagCondition.gauge_value(flags, CaseConsequences.FLAG_TRUST) >= CaseConsequences.PASSWORD_TRUST
 		result.narrative_changes = CaseConsequences.compute(scripted, case, result.verdict_kind,
 				not generated.key.expected_violations.is_empty(), result.password_answered, day_number, flags,
-				result.luciole_report, CaseConsequences.contexts_for(day, case, result), day.luciole_trust_on_breach)
+				result.luciole_report, CaseConsequences.contexts_for(day, case, result), day.luciole_trust_on_breach,
+				day.admission_gauges)
 		CaseConsequences.merge_into(flags, result.narrative_changes)
 		if scripted != null:
 			memory[String(scripted.id)] = CaseMemory.snapshot(day_number, case, result.verdict_kind)

@@ -16,8 +16,12 @@ func find_entry(case: Case, ctx: RuleContext) -> RevokedEntry:
 	var value: Variant = PurposeConsistentRule._value(case, document_id, &"citizen_id")
 	if value == null:
 		return null
+	var reinstatements: bool = ctx.honors_reinstatements()
 	for entry: RevokedEntry in ctx.revoked:
 		if FieldValue.equals(entry.citizen_id, value):
+			# Acte III (R33) : réintégré·e à la date du jour → valide.
+			if reinstatements and entry.is_reinstated(ctx.today):
+				continue
 			return entry
 	return null
 

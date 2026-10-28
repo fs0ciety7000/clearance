@@ -14,6 +14,11 @@
 ## Acte II (docs/ACT2.md §6.4) : campagne J1–J20 — soirée pivot du J10
 ## (« Embarquer » possible), rations, prélèvements, quota (`SimProfile.overrun`),
 ## couvre-feu, Revue du J17, fin du J20 par `EndingService.evaluate_final_act2`.
+## Acte III (docs/ACT3.md §6.5) : campagne J1–J30 — soirée pivot du J20
+## (carte de fin d'acte, climat, « Embarquer » possible), aides
+## conditionnelles, Main courante, Déposition du J29, fin du J30
+## (`evaluate_final_act3`) ; `run_campaign_from` démarre au J21 depuis un état
+## synthétique (climat, solde, profil — `balance_sim --climate=`).
 class_name BalanceSimulator
 extends RefCounted
 
@@ -42,18 +47,30 @@ const REPORT_TRUST_DELTA: int = -2
 ## `profile` nul : profil `default` de précision `accuracy`.
 static func run_campaign(data: DataCatalog, campaign_seed: int, accuracy: float,
 		spending: Spending = Spending.REASONED, last_day: int = -1, profile: SimProfile = null) -> Array[Dictionary]:
+	var start: Dictionary = {"day": 1, "credits": data.get_economy().starting_credits, "flags": {},
+			"household": Household.new()}
+	return run_campaign_from(data, campaign_seed, accuracy, spending, last_day, profile, start)
+
+
+## Acte III : campagne à partir d'un état `{day, credits, flags, household,
+## processed, correct}` (J21 synthétique d'un climat, `balance_sim --climate=`).
+static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: float, spending: Spending,
+		last_day: int, profile: SimProfile, start: Dictionary) -> Array[Dictionary]:
 	var economy: EconomyDef = data.get_economy()
 	var final_day: int = last_day if last_day >= 1 else data.get_last_day_number()
 	if profile == null:
 		profile = SimProfile.preset(&"default", accuracy)
-	var household: Household = Household.new()
-	var credits: int = economy.starting_credits
+	var household: Household = start.get("household", Household.new())
+	var credits: int = SaveService.as_int(start.get("credits", economy.starting_credits))
 	var flags: Dictionary[StringName, Variant] = {}
+	var start_flags: Dictionary = start.get("flags", {})
+	for key: Variant in start_flags:
+		flags[StringName(str(key))] = start_flags[key]
 	var memory: Dictionary = {}
-	var processed: int = 0
-	var correct: int = 0
+	var processed: int = SaveService.as_int(start.get("processed", 0))
+	var correct: int = SaveService.as_int(start.get("correct", 0))
 	var rows: Array[Dictionary] = []
-	for day_number: int in range(1, final_day + 1):
+	for day_number: int in range(SaveService.as_int(start.get("day", 1)), final_day + 1):
 		var day: DayDef = data.get_day(day_number)
 		var day_seed: int = SeededRng.day_seed(campaign_seed, day_number)
 		var rng: SeededRng = SeededRng.new(SeededRng.mix_string(day_seed, PLAYER_SALT))
@@ -64,7 +81,10 @@ static func run_campaign(data: DataCatalog, campaign_seed: int, accuracy: float,
 		var compliance: float = float(correct) / float(processed) if processed > 0 else 0.0
 		if not day.has_evening:
 			var final_row: Dictionary = _final_row(day_number, summary, credits, household)
-			if FlagCondition.is_flag_true(flags, EndingService.FLAG_ACT2):
+			if FlagCondition.is_flag_true(flags, EndingService.FLAG_ACT3):
+				EndingService.apply_final_household(flags, household)
+				final_row["ending"] = EndingService.evaluate_final_act3(flags, household, credits, compliance, economy)
+			elif FlagCondition.is_flag_true(flags, EndingService.FLAG_ACT2):
 				final_row["ending"] = EndingService.evaluate_final_act2(flags, household, credits, compliance, economy)
 			else:
 				final_row["ending"] = EndingService.evaluate_final(flags, household, credits, compliance, economy)
@@ -77,8 +97,8 @@ static func run_campaign(data: DataCatalog, campaign_seed: int, accuracy: float,
 			_decide_note(flags, profile, economy)
 			if profile.report_note:
 				credits += economy.report_bonus
-		var context: Dictionary[StringName, Variant] = EveningService.context_flags(flags, household, compliance,
-				economy.levy_for(day_number, credits))
+		var context: Dictionary[StringName, Variant] = EveningService.evening_context(flags, household, compliance,
+				economy.levy_for(day_number, credits), day_number, economy, credits)
 		var events: Array[EveningEvent] = EveningService.build_events(day.evening_events, context, economy)
 		var lines: Array[ExpenseLine] = EveningService.build_lines(economy, day_number, household, flags, credits)
 		EveningService.apply_line_costs(lines, events, profile.choices)
@@ -106,6 +126,9 @@ static func run_campaign(data: DataCatalog, campaign_seed: int, accuracy: float,
 			flags[&"overrun_yesterday"] = summary.get_overrun_count() > 0
 		if day_number == economy.pivot_day and not report.is_game_over():
 			flags[EndingService.FLAG_ACT2] = true
+		if day_number == economy.act3_pivot_day and not report.is_game_over() \
+				and FlagCondition.is_flag_true(flags, EndingService.FLAG_ACT2):
+			flags[EndingService.FLAG_ACT3] = true
 		var row: Dictionary = _row(day_number, summary, report)
 		row["bribes"] = summary.get_bribe_total()
 		row["overruns"] = summary.get_overrun_count()

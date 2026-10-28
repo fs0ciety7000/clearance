@@ -25,6 +25,13 @@ func inject(state: InjectionState) -> Anomaly:
 			if anomaly != null:
 				return anomaly
 			continue
+		if banned.exempt_if_sponsored:
+			# Acte III (R37) : un ressortissant de Tycho sans répondant ni
+			# convocation (motif hors VISITE FAMILIALE).
+			var closed: Anomaly = _inject_closed(state, banned)
+			if closed != null:
+				return closed
+			continue
 		var field_id: StringName = field_for(state.case, banned.permit_id, &"purpose")
 		if field_id == &"" or not state.is_free(banned.permit_id, field_id):
 			continue
@@ -41,6 +48,34 @@ func inject(state: InjectionState) -> Anomaly:
 		state.mark(banned.permit_id, field_id)
 		return make_anomaly(get_kind(), banned.permit_id, field_id, original, purpose)
 	return null
+
+
+## Acte III (R37) : motif COMMERCE / TRANSIT (le Répondant éventuel est
+## effacé : sans motif VISITE FAMILIALE il n'exempte plus) ; jamais sur un convoqué.
+func _inject_closed(state: InjectionState, banned: FactionBannedRule) -> Anomaly:
+	if state.ctx.has_valid_summons(state.case):
+		return null
+	var field_id: StringName = field_for(state.case, banned.permit_id, &"purpose")
+	if field_id == &"" or not state.is_free(banned.permit_id, field_id):
+		return null
+	var sponsor_field: StringName = field_for(state.case, banned.permit_id, SponsorRule.SPONSOR_PATH)
+	if sponsor_field != &"" and not state.is_free(banned.permit_id, sponsor_field):
+		return null
+	var permit: DocumentInstance = state.case.get_document(banned.permit_id)
+	var original: Variant = permit.get_value(field_id)
+	var purpose: StringName = StringName(str(state.param(&"purpose", "")))
+	if purpose == &"" or purpose == Passenger.PURPOSE_FAMILY_VISIT:
+		purpose = [Passenger.PURPOSE_TRADE, Passenger.PURPOSE_TRANSIT][state.rng.randi_range(0, 1)]
+	permit.set_value(field_id, purpose)
+	state.truth.purpose = purpose
+	state.case.passenger_presented.purpose = purpose
+	if sponsor_field != &"":
+		permit.set_value(sponsor_field, "")
+		state.truth.sponsor_id = ""
+		state.case.passenger_presented.sponsor_id = ""
+		state.mark(banned.permit_id, sponsor_field)
+	state.mark(banned.permit_id, field_id)
+	return make_anomaly(get_kind(), banned.permit_id, field_id, original, purpose)
 
 
 ## Postes non exemptés de R31 (contrat sur un poste ordinaire).

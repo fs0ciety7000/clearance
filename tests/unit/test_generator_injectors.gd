@@ -33,15 +33,21 @@ const EXPECTED_RULES: Dictionary[AnomalyType.Kind, Array] = {
 	K.CONTRACT_MISMATCH: [&"r_contract_consistent"],
 	K.UNREGISTERED_VESSEL: [&"r_drift_pass"],
 	K.OUTDATED_FIRMWARE: [&"r_nx_firmware"],
+	# Acte III (docs/ACT3.md §2.4) ; SPONSOR_MISMATCH : jour réel, `test_act3_rules`.
+	K.SPONSOR_MISMATCH: [&"r_sponsor"],
+	K.FORGED_SUMMONS: [&"r_summons"],
+	K.SUSPENDED_CONTRACT: [&"r_tycho_lockout"],
 }
 ## Verdict attendu par type (R17 et R18 sont de sévérité 3 : DÉTENTION).
 const DETAIN_KINDS: Array[AnomalyType.Kind] = [K.IMPOSTOR_LOOKALIKE, K.RELATIVE_DOCUMENTS]
 ## Jamais tiré sans avis de recherche (testé à part, `test_m7_generation`).
 const NOTICE_ONLY: Array[AnomalyType.Kind] = [K.WANTED_PERSON, K.REVOKED_ID]
+## Acte III : besoin d'une Main courante (R34, hors du jour « toutes règles »).
+const LEDGER_ONLY: Array[AnomalyType.Kind] = [K.SPONSOR_MISMATCH]
 ## Injectables seulement sur certains passagers (permis : pas les Nés-Halcyon ;
 ## origine interdite : THR) — refus d'injecter attendu sur les autres.
 const CONDITIONAL: Array[AnomalyType.Kind] = [K.PURPOSE_MISMATCH, K.BANNED_FACTION, K.CONTRACT_MISMATCH,
-		K.UNREGISTERED_VESSEL]
+		K.UNREGISTERED_VESSEL, K.SUSPENDED_CONTRACT]
 
 var _kinds: Array[AnomalyType.Kind] = []
 ## `[builder, generated, kind]` pour chaque graine (un type imposé par graine).
@@ -50,7 +56,7 @@ var _single: Array[Array] = []
 
 func before_all() -> void:
 	_kinds = InjectorRegistry.supported_kinds()
-	for kind: AnomalyType.Kind in NOTICE_ONLY:
+	for kind: AnomalyType.Kind in NOTICE_ONLY + LEDGER_ONLY:
 		_kinds.erase(kind)
 	var day: DayDef = Gen.full_day()
 	var builder: CaseBuilder = null
@@ -103,7 +109,8 @@ func test_each_injector_triggers_its_rule() -> void:
 	assert_eq(failures.size(), 0, Gen.head(failures))
 	for kind: AnomalyType.Kind in _kinds:
 		var injected: int = per_kind.get(kind, 0)
-		assert_gt(injected, 5 if CONDITIONAL.has(kind) else 50, AnomalyType.name_of(kind))
+		# 1 000 graines réparties sur ~20 types (Acte III : 3 de plus) : ≥ 40 chacun.
+		assert_gt(injected, 5 if CONDITIONAL.has(kind) else 40, AnomalyType.name_of(kind))
 
 
 func test_impostor_lookalike_changes_one_or_two_visible_identity_traits() -> void:
