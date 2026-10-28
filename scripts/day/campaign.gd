@@ -159,16 +159,26 @@ static func luciole_note_pending() -> bool:
 			and not GameState.has_flag(FLAG_LUCIOLES_REPORTED) and not GameState.has_flag(FLAG_LUCIOLES_BURNED)
 
 
+## Prime affichée sur le bouton « SIGNALER AU CONSORTIUM » (+10 ₵).
+static func luciole_report_bonus() -> int:
+	return EveningService.report_bonus(DataCatalog.load_economy(), true)
+
+
 ## « Signaler » le mot (GDD §4.7, MVP : drapeau + loyauté) ou le brûler.
-static func decide_luciole_note(report_it: bool) -> void:
+## Renvoie la prime **créditée sur le compte** (`GameState.credits`) ce soir :
+## l'écran de soirée l'ajoute à ses fonds (`EveningService.evening_funds`,
+## QA-008) ; 0 si le mot est brûlé.
+static func decide_luciole_note(report_it: bool) -> int:
+	var bonus: int = EveningService.report_bonus(DataCatalog.load_economy(), report_it)
 	if report_it:
 		GameState.set_flag(FLAG_LUCIOLES_REPORTED, true)
 		GameState.add_to_flag(FLAG_LOYALTY, 1)
 		# M7 (GDD §4.7, NARRATIVE §2.1) : confiance −2, prime de signalement.
 		GameState.add_to_flag(FLAG_TRUST, REPORT_TRUST_DELTA)
-		GameState.add_credits(DataCatalog.load_economy().report_bonus)
+		GameState.add_credits(bonus)
 	else:
 		GameState.set_flag(FLAG_LUCIOLES_BURNED, true)
+	return bonus
 
 
 ## Indice de conformité cumulé (GDD §5.1) sur l'historique.

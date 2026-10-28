@@ -51,7 +51,9 @@ func _build(day_number: int, rule_number: int, rule_title: String, free_citation
 	var header_row: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
 	header.add_child(header_row)
 	header_row.add_child(UiIcon.make(UiIcon.Kind.LOGO, DS.TEXT_ON_ACCENT, DS.ICON_S))
-	var title: Label = ScreenBase.label(UiText.t("cit_header", "CONSORTIUM · AVIS D'INFRACTION"), &"BadgeLabel")
+	# Libellés repliés : le ticket tient dans la colonne des toasts même avec
+	# le plancher de texte du Steam Deck (QA-009).
+	var title: Label = ScreenBase.wrapped(UiText.t("cit_header", "CONSORTIUM · AVIS D'INFRACTION"), &"BadgeLabel")
 	title.uppercase = true
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_row.add_child(title)
@@ -68,11 +70,11 @@ func _build(day_number: int, rule_number: int, rule_title: String, free_citation
 	body.add_child(box)
 	var reason_key: String = result.citation_reason_key if result != null else ""
 	box.add_child(ScreenBase.eyebrow(UiText.t("cit_motive", "MOTIF")))
-	var reason: Label = ScreenBase.label(UiText.t(reason_key, reason_key), &"BodyStrong")
+	var reason: Label = ScreenBase.wrapped(UiText.t(reason_key, reason_key), &"BodyStrong")
 	reason.uppercase = true
 	box.add_child(reason)
 	if rule_number > 0:
-		box.add_child(ScreenBase.label(UiText.tf("cit_rule", [rule_number, rule_title], "Règle %02d · %s"), &"DataSmall", DS.TEXT_PRIMARY))
+		box.add_child(ScreenBase.wrapped(UiText.tf("cit_rule", [rule_number, rule_title], "Règle %02d · %s"), &"DataSmall", DS.TEXT_PRIMARY))
 	var desc_key: String = reason_key + "_desc"
 	if UiText.has(desc_key):
 		box.add_child(ScreenBase.wrapped(UiText.t(desc_key, ""), &"BodySmall"))
@@ -92,9 +94,14 @@ func _build(day_number: int, rule_number: int, rule_title: String, free_citation
 	else:
 		sanction_text = UiText.tf("cit_fine", [ScreenBase.credits(-result.fine)], "AMENDE %s")
 	var sanction: Label = ScreenBase.label(sanction_text, &"DocFieldValue", accent)
-	sanction.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sanction.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	sanction_row.add_child(sanction)
-	sanction_row.add_child(ScreenBase.label(UiText.t("cit_withheld" if not warning else "cit_no_fine", ""), &"CaptionLabel"))
+	var note: Label = ScreenBase.wrapped(UiText.t("cit_withheld" if not warning else "cit_no_fine", ""), &"CaptionLabel")
+	note.custom_minimum_size.x = 0.0
+	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	sanction_row.add_child(note)
 
 	var teeth: Control = Control.new()
 	teeth.mouse_filter = Control.MOUSE_FILTER_IGNORE

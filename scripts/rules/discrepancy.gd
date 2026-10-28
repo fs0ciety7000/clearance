@@ -22,6 +22,9 @@ const REASON_AGE_MISMATCH: String = "disc_age_mismatch"
 const REASON_MRZ_MISMATCH: String = "disc_mrz_mismatch"
 const REASON_WANTED_MATCH: String = "disc_wanted_match"
 const REASON_WANTED_NO_MATCH: String = "disc_wanted_no_match"
+## M7 (NARRATIVE §4.9) : marque au coin d'un document ↔ bulletin « Symboles
+## subversifs » ; confirmée, elle documente un signalement (DÉTENTION, code 1).
+const REASON_SYMBOL_MATCH: String = "disc_symbol_match"
 
 var a: FieldRef = null
 var b: FieldRef = null

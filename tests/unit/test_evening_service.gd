@@ -169,3 +169,23 @@ func test_apply_does_not_mutate_input() -> void:
 	var before: Dictionary = home.to_dict()
 	EveningService.apply(economy, 1, home, _pay(_lines(1, home), []), 0, 1)
 	assert_eq(home.to_dict(), before)
+
+
+## QA-008 (API logique) : la prime de signalement est exposée et s'ajoute aux
+## fonds de la soirée ; `Campaign.decide_luciole_note` renvoie le montant crédité.
+func test_report_bonus_is_exposed_for_the_evening_funds() -> void:
+	var eco: EconomyDef = DataCatalog.load_economy()
+	assert_eq(EveningService.report_bonus(eco, true), eco.report_bonus)
+	assert_eq(EveningService.report_bonus(eco, false), 0)
+	assert_eq(EveningService.evening_funds(9, EveningService.report_bonus(eco, true)), 9 + eco.report_bonus)
+	assert_eq(Campaign.luciole_report_bonus(), eco.report_bonus)
+	var saved: Dictionary = GameState.to_save_dict()
+	GameState.new_campaign(5)
+	GameState.credits = 9
+	assert_eq(Campaign.decide_luciole_note(true), eco.report_bonus, "prime renvoyée")
+	assert_eq(GameState.credits, 9 + eco.report_bonus, "prime créditée")
+	if SaveService.as_int(saved.get("current_day", 0)) >= 1:
+		GameState.apply_save_dict(saved)
+	else:
+		GameState.new_campaign(1)
+		GameState.current_day = 0

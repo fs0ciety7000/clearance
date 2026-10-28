@@ -10,7 +10,11 @@
 ##    `lucioles_trust +1` la première fois ; `suspicion +1` le jour de l'audit (J9) ;
 ## 4. passager **généré** porteur d'un code Luciole : approuvé malgré une
 ##    violation → `lucioles_trust +1` ; détenu → `lucioles_trust −2`,
-##    `loyalty +1` (dénonciation, GDD §4.7).
+##    `loyalty +1` (dénonciation, GDD §4.7) ;
+## 5. signalement valide d'un porteur du code 1 (`luciole_report`, NARRATIVE
+##    §4.9) : `luciole_reported_at_booth`, et `lucioles_trust −2` / `loyalty +1`
+##    une seule fois (pas de cumul avec le 4) ; un cas scénarisé qui définit
+##    `flags_on_detain` (SC-13) garde ses drapeaux à la place de ces jauges.
 ## Résultat : valeurs **absolues** `{drapeau: valeur}` à poser dans le
 ## `GameState` (`true` pour un delta 0, sinon valeur actuelle + deltas).
 class_name CaseConsequences
@@ -24,10 +28,13 @@ const FLAG_PASSWORD: StringName = &"password_answered"
 const AUDIT_DAY: int = 9
 ## Confiance minimale des Lucioles pour répondre à la phrase de passe (GDD §4.7).
 const PASSWORD_TRUST: int = 2
+## Signalement valide au guichet (NARRATIVE §4.9).
+const FLAG_REPORTED_AT_BOOTH: StringName = &"luciole_reported_at_booth"
 
 
 static func compute(scripted: ScriptedCaseDef, case: Case, verdict: VerdictKind.Kind, had_violations: bool,
-		password_answered: bool, day_number: int, flags: Dictionary[StringName, Variant]) -> Dictionary[StringName, Variant]:
+		password_answered: bool, day_number: int, flags: Dictionary[StringName, Variant],
+		luciole_report: bool = false) -> Dictionary[StringName, Variant]:
 	var changes: Dictionary[StringName, Variant] = {}
 	if scripted != null:
 		if scripted.sets_flag != &"":
@@ -47,9 +54,14 @@ static func compute(scripted: ScriptedCaseDef, case: Case, verdict: VerdictKind.
 		if scripted == null and case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE):
 			if verdict == VerdictKind.Kind.APPROVE and had_violations:
 				add(changes, flags, FLAG_TRUST, 1)
-			elif verdict == VerdictKind.Kind.DETAIN:
+			elif verdict == VerdictKind.Kind.DETAIN and not luciole_report:
 				add(changes, flags, FLAG_TRUST, -2)
 				add(changes, flags, FLAG_LOYALTY, 1)
+	if luciole_report:
+		add(changes, flags, FLAG_REPORTED_AT_BOOTH, 0)
+		if scripted == null or scripted.flags_on_detain.is_empty():
+			add(changes, flags, FLAG_TRUST, -2)
+			add(changes, flags, FLAG_LOYALTY, 1)
 	if password_answered:
 		if not FlagCondition.is_flag_true(flags, FLAG_PASSWORD) and not changes.has(FLAG_PASSWORD):
 			changes[FLAG_PASSWORD] = true

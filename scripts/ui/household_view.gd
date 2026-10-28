@@ -9,7 +9,15 @@ static func member_name(id: StringName) -> String:
 	return UiText.t("hh_name_%s" % id, String(id).capitalize())
 
 
-static func member_role(id: StringName) -> String:
+## Rôle d'un proche au jour `day` (par défaut le jour en cours) : la variante
+## `hh_role_<id>_from_j<N>` la plus récente avec N ≤ jour l'emporte (Noa a
+## 9 ans à partir du J4, QA-014), sinon `hh_role_<id>`.
+static func member_role(id: StringName, day: int = -1) -> String:
+	var current: int = day if day >= 0 else GameState.current_day
+	for n: int in range(current, 0, -1):
+		var key: String = "hh_role_%s_from_j%d" % [id, n]
+		if UiText.has(key):
+			return UiText.t(key)
 	return UiText.t("hh_role_%s" % id, "")
 
 
@@ -58,7 +66,7 @@ static func member_card(member: Household.Member, note: String = "", compact: bo
 	head.add_child(names)
 	names.add_child(ScreenBase.label(member_name(member.id), &"BodyStrong"))
 	if not compact:
-		names.add_child(ScreenBase.label(member_role(member.id), &"CaptionLabel"))
+		names.add_child(ScreenBase.wrapped(member_role(member.id), &"CaptionLabel"))
 	var chip: PanelContainer = ScreenBase.chip(state_text(member), state_icon(member), state_color(member))
 	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(chip)

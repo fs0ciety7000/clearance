@@ -10,12 +10,17 @@ signal field_picked(item: InspectableItem)
 signal document_focused(doc: DocumentInstance)
 ## Clic dans le vide en Mode Inspection (annule le champ A, UI_FLOW §3.3).
 signal background_clicked()
+## Documents mis en place (après `present()`, une passe de mise en page).
+signal layout_done()
 
 enum BannerKind { DISCORDANT, CONCORDANT, INCOMPARABLE, INFO }
 
 ## Hauteur réservée à l'en-tête du plan (libellés).
 const HEADER_H: float = 48.0
 const GRID_STEP: float = 32.0
+## Échelle minimale d'ajustement des documents à la hauteur du plan (QA-015) :
+## en dessous, le texte deviendrait illisible ; le zoom de lecture reste dispo.
+const MIN_FIT_SCALE: float = 0.72
 
 var views: Array[DocumentView] = []
 ## M7 : objets glissés posés sur le plan (enveloppe, mot, carte de quai).
@@ -39,6 +44,14 @@ var _banner_text: Label = null
 var _banner_tween: Tween = null
 var _stamp: StampMark = null
 var _unavailable_reason: String = ""
+## Échelle de base des documents posés (≤ 1) : la plus grande pièce tient dans
+## la hauteur du plan, sous l'en-tête et au-dessus de la barre d'outils.
+var fit_scale: float = 1.0
+## Rectangles d'arrivée des documents (repère du plan) : les objets glissés
+## se posent à côté, jamais sur un champ (QA-015).
+var _doc_targets: Array[Rect2] = []
+## Vrai entre `present()` et la mise en place des documents (une image).
+var layout_pending: bool = false
 
 
 func _ready() -> void:
@@ -75,29 +88,64 @@ func present(documents: Array[DocumentInstance], portrait_provider: Callable = C
 		view.field_picked.connect(_on_field_picked)
 		_docs_layer.add_child(view)
 		view.set_inspection_active(inspection_active)
+		view.modulate.a = 0.0
 		views.append(view)
+	_refresh_header()
+	# Mise en place après une passe de mise en page : les champs repliés
+	# (autowrap) n'ont leur hauteur définitive qu'une fois la largeur connue,
+	# et l'échelle d'ajustement en dépend (QA-015).
+	layout_pending = true
+	if not get_tree().process_frame.is_connected(_on_layout_frame):
+		get_tree().process_frame.connect(_on_layout_frame, CONNECT_ONE_SHOT)
+
+
+func _on_layout_frame() -> void:
+	if not layout_pending or not is_inside_tree():
+		return
+	_arrange_views()
+	layout_pending = false
+	layout_done.emit()
+
+
+func _arrange_views() -> void:
+	for view: DocumentView in views:
+		view.size = view.get_combined_minimum_size()
+	fit_scale = compute_fit_scale()
 	var targets: Array[Vector2] = default_layout()
+	_doc_targets.clear()
 	var slot: Vector2 = Vector2(size.x * 0.5, -DS.SPACE_4)
 	for i: int in views.size():
 		var view: DocumentView = views[i]
-		view.size = view.get_combined_minimum_size()
 		var target: Vector2 = targets[i]
+		_doc_targets.append(Rect2(target, view.size * fit_scale))
 		if reduce_motion:
 			view.position = target
+			view.scale = Vector2(fit_scale, fit_scale)
 			view.modulate.a = 0.0
 			create_tween().tween_property(view, "modulate:a", 1.0, DS.DUR_FAST).set_delay(DS.DOC_STAGGER * i * 0.5)
 			continue
 		view.position = slot - Vector2(view.size.x * 0.5, view.size.y * 0.3)
-		view.scale = Vector2(0.9, 0.06)
+		view.scale = Vector2(0.9, 0.06) * fit_scale
 		view.pivot_offset = Vector2(view.size.x * 0.5, 0.0)
 		view.modulate.a = 0.0
 		var tween: Tween = create_tween().set_parallel(true)
 		var delay: float = DS.DOC_STAGGER * i
 		tween.tween_property(view, "modulate:a", 1.0, DS.DUR_FAST).set_delay(delay)
-		tween.tween_property(view, "scale", Vector2.ONE, DS.DUR_SLOW).set_delay(delay).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+		tween.tween_property(view, "scale", Vector2(fit_scale, fit_scale), DS.DUR_SLOW).set_delay(delay).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 		tween.tween_property(view, "position", target, DS.DUR_SLOW + DS.DUR_FAST).set_delay(delay).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		tween.chain().tween_callback(_reset_pivot.bind(view))
 	_refresh_header()
+
+
+## Échelle qui fait tenir le plus haut document dans la hauteur utile du plan.
+func compute_fit_scale() -> float:
+	var tallest: float = 0.0
+	for view: DocumentView in views:
+		tallest = maxf(tallest, view.get_combined_minimum_size().y)
+	var available: float = size.y - HEADER_H - DS.SPACE_4
+	if tallest <= 0.0 or available <= 0.0 or tallest <= available:
+		return 1.0
+	return clampf(available / tallest, MIN_FIT_SCALE, 1.0)
 
 
 func _reset_pivot(view: DocumentView) -> void:
@@ -121,11 +169,13 @@ func add_slipped_item(view: SlippedItemView) -> void:
 
 
 func _place_item(view: SlippedItemView, index: int) -> void:
+	if layout_pending:
+		await layout_done
 	if not is_instance_valid(view) or not view.is_inside_tree():
 		return
 	view.reset_size()
-	var target: Vector2 = Vector2(size.x - view.size.x - DS.SPACE_8 - DS.SPACE_6 * index,
-			maxf(size.y - view.size.y - DS.SPACE_6 - DS.SPACE_4 * index, HEADER_H))
+	var target: Vector2 = item_target(view.size, index)
+	view.set_meta(&"target", target)
 	if reduce_motion:
 		view.position = target
 		view.modulate.a = 0.0
@@ -139,6 +189,41 @@ func _place_item(view: SlippedItemView, index: int) -> void:
 	tween.tween_property(view, "modulate:a", 1.0, DS.DUR_FAST).set_delay(delay)
 	tween.tween_property(view, "position", target, DS.DUR_SLOW + DS.DUR_FAST).set_delay(delay).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(view, "rotation_degrees", 2.0, DS.DUR_SLOW + DS.DUR_FAST).set_delay(delay).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+## Place d'un objet glissé : coin bas-droit par défaut, sinon la position libre
+## (ou la moins couverte) le long des bords droit puis gauche, hors des
+## documents et des autres objets (QA-015).
+func item_target(item_size: Vector2, index: int) -> Vector2:
+	var preferred: Vector2 = Vector2(size.x - item_size.x - DS.SPACE_8 - DS.SPACE_6 * index,
+			maxf(size.y - item_size.y - DS.SPACE_6 - DS.SPACE_4 * index, HEADER_H))
+	var obstacles: Array[Rect2] = _doc_targets.duplicate()
+	for i: int in mini(index, items.size()):
+		var other: SlippedItemView = items[i]
+		if is_instance_valid(other):
+			var placed: Vector2 = other.get_meta(&"target", other.position)
+			obstacles.append(Rect2(placed, other.size))
+	var candidates: Array[Vector2] = [preferred]
+	var bottom: float = maxf(size.y - item_size.y - DS.SPACE_4, HEADER_H)
+	var y: float = bottom
+	while y >= HEADER_H:
+		candidates.append(Vector2(size.x - item_size.x - DS.SPACE_4, y))
+		candidates.append(Vector2(DS.SPACE_4, y))
+		y -= DS.SPACE_6
+	var best: Vector2 = preferred
+	var best_overlap: float = INF
+	for candidate: Vector2 in candidates:
+		var rect: Rect2 = Rect2(candidate, item_size).grow(DS.SPACE_2)
+		var overlap: float = 0.0
+		for obstacle: Rect2 in obstacles:
+			var inter: Rect2 = rect.intersection(obstacle)
+			overlap += inter.get_area() if inter.has_area() else 0.0
+		if overlap < best_overlap - 0.5:
+			best = candidate
+			best_overlap = overlap
+			if overlap <= 0.0:
+				break
+	return best
 
 
 func get_slipped_view(item_id: StringName) -> SlippedItemView:
@@ -160,6 +245,9 @@ func _on_item_drag_moved(view: SlippedItemView, relative: Vector2) -> void:
 
 ## Retire les documents (rendus par la fente si `animated`).
 func clear(animated: bool = true) -> void:
+	if layout_pending:
+		layout_pending = false
+		layout_done.emit()
 	_hide_stamp()
 	hide_banner()
 	for item_view: SlippedItemView in items:
@@ -193,14 +281,19 @@ func clear(animated: bool = true) -> void:
 
 
 ## Positions par défaut : de gauche à droite, légèrement décalées en hauteur
-## (posées « à la main »), resserrées si la largeur manque.
+## (posées « à la main »), resserrées si la largeur manque. Les objets glissés
+## déjà reçus gardent une colonne libre à droite (QA-015).
 func default_layout() -> Array[Vector2]:
 	var result: Array[Vector2] = []
 	var margin: float = DS.SPACE_8
-	var available: float = maxf(size.x - margin * 2.0, 1.0)
+	var reserve: float = 0.0
+	for item_view: SlippedItemView in items:
+		if is_instance_valid(item_view):
+			reserve = maxf(reserve, item_view.get_combined_minimum_size().x + DS.SPACE_4)
+	var available: float = maxf(size.x - margin * 2.0 - reserve, 1.0)
 	var total: float = 0.0
 	for view: DocumentView in views:
-		total += view.get_combined_minimum_size().x
+		total += view.get_combined_minimum_size().x * fit_scale
 	var gap: float = DS.SPACE_10
 	if views.size() > 1:
 		gap = minf(DS.SPACE_10, (available - total) / (views.size() - 1))
@@ -208,7 +301,7 @@ func default_layout() -> Array[Vector2]:
 	var x: float = margin + maxf((available - used) * 0.5, 0.0)
 	var offsets: Array[float] = [DS.SPACE_4, 0.0, DS.SPACE_6, DS.SPACE_2, DS.SPACE_4]
 	for i: int in views.size():
-		var min_size: Vector2 = views[i].get_combined_minimum_size()
+		var min_size: Vector2 = views[i].get_combined_minimum_size() * fit_scale
 		var y: float = HEADER_H + offsets[i % offsets.size()]
 		y = minf(y, maxf(size.y - min_size.y - DS.SPACE_4, HEADER_H))
 		result.append(Vector2(x, y))
@@ -271,6 +364,8 @@ func clamp_view(view: DocumentView) -> void:
 ## Zoom de lecture : bascule (0) ou pas de molette (±1) ; centre conservé.
 func zoom_view(view: DocumentView, steps: int) -> void:
 	var target: float = view.zoom
+	if is_zero_approx(target):
+		target = 1.0
 	if steps == 0:
 		target = 1.0 if view.zoom > 1.0 else DS.DOC_ZOOM
 	elif steps > 0:
@@ -282,15 +377,17 @@ func zoom_view(view: DocumentView, steps: int) -> void:
 	bring_to_front(view)
 	var center: Vector2 = view.position + view.size * view.scale * 0.5
 	view.zoom = target
-	var new_pos: Vector2 = center - view.size * target * 0.5
-	var visual: Vector2 = view.size * target
+	# Le zoom de lecture s'applique à l'échelle d'ajustement du plan.
+	var visual_scale: float = target * fit_scale
+	var new_pos: Vector2 = center - view.size * visual_scale * 0.5
+	var visual: Vector2 = view.size * visual_scale
 	new_pos = Vector2(clampf(new_pos.x, 0.0, maxf(size.x - visual.x, 0.0)), clampf(new_pos.y, 0.0, maxf(size.y - visual.y, 0.0)))
 	if reduce_motion:
-		view.scale = Vector2(target, target)
+		view.scale = Vector2(visual_scale, visual_scale)
 		view.position = new_pos
 		return
 	var tween: Tween = view.create_tween().set_parallel(true)
-	tween.tween_property(view, "scale", Vector2(target, target), DS.DUR_BASE).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(view, "scale", Vector2(visual_scale, visual_scale), DS.DUR_BASE).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(view, "position", new_pos, DS.DUR_BASE).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 

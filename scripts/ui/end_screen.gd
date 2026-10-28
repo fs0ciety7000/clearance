@@ -30,6 +30,8 @@ const MAX_TRACES: int = 9
 ## Rythme de lecture de l'épilogue (une ligne toutes les ~1,9 s).
 const LINE_REVEAL_SEC: float = DS.DUR_DRAMATIC * 3.0
 const EPILOGUE_WIDTH: float = 820.0
+## Définitions des jours (date du dernier jour joué, QA-010).
+const DAY_PATH: String = "res://data/days/day_%02d.tres"
 
 var ending: StringName = &"demo_complete"
 var history: Array[Dictionary] = []
@@ -61,6 +63,21 @@ func setup(p_ending: StringName, p_history: Array[Dictionary], p_household: Hous
 	final_credits = p_credits
 	flags = p_flags
 	compliance = p_compliance
+
+
+## Date de la fin : celle du dernier jour joué (`history`), donc une fin
+## anticipée (F2 au soir du J4…) n'est pas datée du J10 (QA-010). Repli sur la
+## date fixe `end_date` si l'historique ou la définition du jour manque.
+static func date_text(p_history: Array[Dictionary]) -> String:
+	var last_day: int = 0
+	for entry: Dictionary in p_history:
+		last_day = maxi(last_day, SaveService.as_int(entry.get("day", 0)))
+	var path: String = DAY_PATH % last_day
+	if last_day > 0 and ResourceLoader.exists(path):
+		var day_def: DayDef = load(path) as DayDef
+		if day_def != null:
+			return UiText.tf("end_date_day", [UiText.date_with_weekday(day_def.game_date)], "%s · GUICHET 04")
+	return UiText.t("end_date", "JEUDI 22.03.2187 · GUICHET 04")
 
 
 ## Couleur sémantique d'une fin (DS §2.1).
@@ -139,7 +156,9 @@ func _build() -> void:
 		chip_node.name = "VariantChip"
 		top.add_child(chip_node)
 	top.add_child(spacer())
-	top.add_child(label(UiText.t("end_date", "JEUDI 22.03.2187 · GUICHET 04"), &"DataSmall"))
+	var date_label: Label = label(date_text(history), &"DataSmall")
+	date_label.name = "EndDate"
+	top.add_child(date_label)
 	page.add_child(rule_line(Color(accent, 0.24)))
 	var title_key: String = str(epilogue.get("title_key", "end_title_%s" % ending))
 	var title: Label = label(UiText.t(title_key, String(ending).to_upper()), &"DisplayLabel", accent)

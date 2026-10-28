@@ -46,7 +46,7 @@ all_of = Array[StringName]([&"sc05_helped"])
 
 [sub_resource type="Resource" id="d04_resource_7"]
 script = ExtResource("2_tgytg")
-any_of = Array[ExtResource("2_tgytg")]([SubResource("d04_resource_8"), SubResource("d04_resource_9")])
+any_of = Array[Resource]([SubResource("d04_resource_8"), SubResource("d04_resource_9")])
 
 [sub_resource type="Resource" id="d04_resource_6"]
 script = ExtResource("1_npg6y")

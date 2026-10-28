@@ -13,7 +13,9 @@
 ## - M7 : visage ↔ « Implants déclarés » (implants visibles), visage ↔ date de
 ##   naissance (âge apparent), MRZ ↔ N° ID / origine / nom / prénoms de la même
 ##   carte, entrée de l'avis de recherche ↔ visage ou nom (une correspondance
-##   est une DISCORDANCE : la personne est recherchée) ;
+##   est une DISCORDANCE : la personne est recherchée) ; marque au coin d'un
+##   document ↔ entrée du bulletin « Symboles subversifs » (onglet ouvert ce
+##   jour, J7+) : DISCORDANCE si la marque est celle du symbole (§4.9) ;
 ## - tout le reste → INCOMPARABLE (aucune pénalité).
 class_name DiscrepancyChecker
 extends RefCounted
@@ -27,6 +29,9 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_UNKNOWN_FIELD)
 	if a.equals(b):
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_SAME_FIELD)
+	# M7 : bulletin « Symboles subversifs » ↔ marque d'un document.
+	if a.is_symbol() or b.is_symbol():
+		return _check_symbol(case, a if a.is_symbol() else b, b if a.is_symbol() else a, ctx, result)
 	if not _is_resolvable(case, a, ctx) or not _is_resolvable(case, b, ctx):
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_UNKNOWN_FIELD)
 
@@ -78,7 +83,7 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 			if not birth is int:
 				return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 			var birth_date: int = birth
-			if ApparentAgeRule.band_of_birth(birth_date, ctx.today) == case.passenger_presented.appearance.age_band:
+			if ApparentAgeRule.birth_matches_band(birth_date, ctx.today, case.passenger_presented.appearance.age_band):
 				return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
 			return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_AGE_MISMATCH)
 	# M7 : MRZ ↔ champ recopié de la même carte.
@@ -113,6 +118,26 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 	if FieldValue.equals(case.get_value(a), case.get_value(b)):
 		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
 	return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_MISMATCH)
+
+
+## Onglet du Rulebook portant le bulletin des symboles (`DayDef.rulebook_tabs`).
+const SYMBOLS_TAB: String = "symbols"
+
+
+## Symbole ↔ marque : DISCORDANCE si le document porte la marque du symbole et
+## que le bulletin est ouvert ce jour ; sinon INCOMPARABLE.
+static func _check_symbol(case: Case, symbol_ref: FieldRef, other: FieldRef, ctx: RuleContext,
+		result: Discrepancy) -> Discrepancy:
+	if other.is_symbol() or not other.is_mark():
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+	if ctx == null or ctx.day_def == null or not ctx.day_def.rulebook_tabs.has(SYMBOLS_TAB):
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_RULE_INACTIVE)
+	var doc: DocumentInstance = case.get_document(other.document_id)
+	if doc == null or not doc.marks.has(other.get_mark_id()):
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_UNKNOWN_FIELD)
+	if other.get_mark_id() != symbol_ref.field_id:
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+	return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_SYMBOL_MATCH)
 
 
 static func _is_resolvable(case: Case, ref: FieldRef, ctx: RuleContext) -> bool:

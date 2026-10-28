@@ -59,6 +59,9 @@ var bribe_credits: int = 0
 var report_credits: int = 0
 ## Le passager a reçu la réponse à la phrase de passe (code 4).
 var password_answered: bool = false
+## M7 (NARRATIVE §4.9) : DÉTENTION d'un porteur du code 1 documentée par la
+## paire marque ↔ bulletin = signalement valide (cas correct, sans citation).
+var luciole_report: bool = false
 
 
 func _init(p_case_id: StringName = &"") -> void:

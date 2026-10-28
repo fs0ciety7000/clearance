@@ -22,15 +22,16 @@ var quit_button: Button = null
 var options: OptionsPanel = null
 var _menu: Array[Control] = []
 var _saved_day: int = 0
+var _applied_min_px: int = -1
 
 
 func _ready() -> void:
 	get_tree().paused = false
-	theme = ThemeBuilder.build(Settings.text_scale)
-	EventBus.settings_changed.connect(func(key: StringName, value: Variant) -> void:
+	_apply_theme()
+	EventBus.settings_changed.connect(func(key: StringName, _value: Variant) -> void:
 		if key == Settings.KEY_TEXT_SCALE:
-			var scale_value: float = value
-			theme = ThemeBuilder.build(scale_value))
+			_apply_theme())
+	get_viewport().size_changed.connect(_on_viewport_resized)
 	RenderingServer.set_default_clear_color(DS.BG_VOID)
 	_background.color = DS.BG_VOID
 	_title.add_theme_font_size_override(&"font_size", DS.FS_DISPLAY_XL)
@@ -38,7 +39,7 @@ func _ready() -> void:
 	_content.add_theme_constant_override(&"separation", DS.SPACE_4)
 	var version: Label = _content.get_node_or_null("Version") as Label
 	if version != null:
-		version.text = UiText.t("title_version", "Vertical slice M5 — Jours 1 à 3")
+		version.text = version_text()
 	var save: Dictionary = SaveService.load_slot()
 	_saved_day = SaveService.as_int(save.get("current_day", 0)) if not save.is_empty() else 0
 	# Le bouton de la scène devient le CTA principal (Continuer ou Nouvelle partie).
@@ -63,6 +64,33 @@ func _ready() -> void:
 	options.back_requested.connect(_show_menu)
 	_content.add_child(options)
 	_start_button.grab_focus.call_deferred()
+
+
+## Mention de version : « Démo · v0.8.0 » (`application/config/version`) ;
+## « Démo » seul si la version n'est pas définie (QA-013).
+static func version_text() -> String:
+	var version: String = str(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
+	if version.is_empty():
+		return UiText.t("title_version_none", "Démo")
+	if not version.begins_with("v"):
+		version = "v" + version
+	return UiText.tf("title_version", [version], "Démo · %s")
+
+
+## Thème DS avec le plancher de texte Steam Deck (D-023), comme `ScreenBase` :
+## reconstruit quand l'échelle du texte ou la taille de la fenêtre change (QA-004).
+func _apply_theme() -> void:
+	_applied_min_px = _min_text_px()
+	theme = ThemeBuilder.build(Settings.text_scale, _applied_min_px)
+
+
+func _min_text_px() -> int:
+	return ThemeBuilder.min_px_for(get_viewport().get_final_transform().get_scale().x)
+
+
+func _on_viewport_resized() -> void:
+	if _min_text_px() != _applied_min_px:
+		_apply_theme()
 
 
 func _add_button(text: String, callback: Callable) -> Button:

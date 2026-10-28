@@ -4,6 +4,8 @@
 >
 > Documents liés : [`AGENTS.md`](../AGENTS.md) · [`DECISIONS.md`](../DECISIONS.md) · [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) · [`docs/UI_FLOW.md`](UI_FLOW.md) · [`docs/BOOTH_SCENE.md`](BOOTH_SCENE.md) (visuel du guichet, 3D Designer) · [`docs/ASSETS.md`](ASSETS.md) (rigs, clips, atlas, licences) · [`docs/AUDIO.md`](AUDIO.md) (Audio Designer) · [`docs/NARRATIVE.md`](NARRATIVE.md) (Scénariste)
 >
+> **Révision 3.1** (2026-10-28, corrections de la passe QA — `docs/QA.md`) : R18, R23, R25 résolus ; §4 (réglages de session), §5 (noms réservés, dates « année seule », symboles), §6.3 (signalement du code 1), §10 (sauvegarde atomique, borne du jour, version), §15 (`qa_boot.gd`), §16.4 (filtres d'export).
+>
 > **Révision 3** (2026-10-27, passe documentaire après M7 — jeu complet J1–J10, 414 tests GUT) : le document décrit désormais **le code réel**. Les notes « Implémenté en Mx » des révisions précédentes ont été fondues dans les sections concernées. Sections réécrites : §2–§14 ; **nouvelles** : §15 « Outils et pipelines », §16 « Export et distribution ». La numérotation §1–§14 est conservée (renvois des autres documents).
 >
 > **Légende** : sans mention = **état réel** (vérifié dans le code). 🎯 **Intention** = prévu mais non implémenté (ou implémenté autrement, l'écart est alors décrit). ⚠️ = incohérence connue, à corriger dans le code (liste en §13).
@@ -161,7 +163,7 @@ GameState="*res://scripts/autoload/game_state.gd"
 | Autoload | Rôle (état réel) | Ne fait PAS |
 |---|---|---|
 | `EventBus` | 31 signaux typés (catalogue §7). Aucun état, aucune méthode. | Logique, stockage |
-| `Settings` | Préférences dans `user://settings.cfg` (`ConfigFile`) : `volume_{master,music,ambience,sfx,voice,ui}` (appliqués aux bus `Master/Music/Ambience/SFX/Voice/UI`), `fx_intensity` (1 / 0,5 / 0), `reduce_motion`, `text_scale` (0,9–1,5, D-026), `subtitles`, `clock_slow_accessibility` (horloge ×0,5), `audio_mono`. `set_value()` valide (`_sanitize`), applique et émet `settings_changed`. 🎯 Langue, daltonisme, sensibilité manette : non implémentés. | État de partie |
+| `Settings` | Préférences dans `user://settings.cfg` (`ConfigFile`) : `volume_{master,music,ambience,sfx,voice,ui}` (appliqués aux bus `Master/Music/Ambience/SFX/Voice/UI`), `fx_intensity` (1 / 0,5 / 0), `reduce_motion`, `text_scale` (0,9–1,5, D-026), `subtitles`, `clock_slow_accessibility` (horloge ×0,5), `audio_mono`. `set_value()` valide (`_sanitize`), applique et émet `settings_changed` (choix du joueur, persisté ; `persist = false` diffère seulement l'écriture). **Valeurs de session** (QA-006) : `set_session_value()` / `clear_session_value()` (argument `--reduce-motion`, outils, tests) appliquent sans jamais écrire — `save_settings()` écrit pour ces clés la dernière valeur persistée. `use_storage(path)` change de fichier : la suite GUT utilise `user://test_settings/settings.cfg` (crochet `tests/helpers/gut_pre_run.gd`, `.gutconfig.json`). 🎯 Langue, daltonisme, sensibilité manette : non implémentés. | État de partie |
 | `GameState` | État de **campagne** : `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags: Dictionary[StringName, Variant]` (drapeaux et jauges `loyalty` / `lucioles_trust` / `suspicion`), `day_history: Array[Dictionary]`, `household: Household`, `case_memory` (§9.4). `to_save_dict()` / `apply_save_dict()` / `save_to_slot()` / `load_from_slot()` (§10), `get_day_seed()`, `add_to_flag()`, `get_true_flags()`, `remember_case()`. Émet `credits_changed`, `narrative_flag_changed`, `game_saved`, `game_loaded`. | État du jour en cours (porté par `DayController`) |
 
 `EventBus` est chargé en premier : les autres s'y connectent dans `_ready`.
@@ -205,8 +207,8 @@ classDiagram
 |---|---|---|---|
 | `FieldDef` | `documents/field_def.gd` | `id`, `label_key`, `kind: FieldKind` (`TEXT, DATE, ID_CODE, ENUM, PORTRAIT, NUMBER, BOOL, LIST`), `truth_path`, `comparable`, `display_order`, `format` | `truth_path` = propriété de `Passenger` (`Passenger.TRUTH_PATHS`) ou `document.<prop>` (`serial`, `issue_date`, `expiry_date`, `issuer_id`, `seal_id`, `mrz`) résolue par `DocumentInstance.get_value()`. `LIST` = `PackedStringArray` (implants). |
 | `DocumentTypeDef` | `documents/document_type_def.gd` | `id`, `title_key`, `fields`, `issuer_faction_ids`, `validity_days: Vector2i`, `holo_tint_token` (token `DS`), `issuer_id`, `seal_id`, `serial_pattern` | 4 types : `id_card` (dont `implants`, `seal`, `mrz`), `entry_permit`, `bioscan`, `mil_waiver`. ⚠️ `view_scene` n'est ni rempli ni lu (vue générique `DocumentView`). |
-| `FactionDef` | `core/faction_def.gd` | `id`, `name_key`, `code`, `id_prefix`, `origin_sectors`, `name_pool`, `citizen_class_weights`, `purpose_weights`, `employers`, `implant_rate`, `implant_weights` | 6 origines : TYC, HAL, TER, CER, THR, DRV. ⚠️ `seal_texture` non rempli, non lu. |
-| `NamePool` | `generation/name_pool.gd` | `given_names_f/m/x`, `family_names`, `reserved_names` (jamais tirés : Okonkwo…) | Une par origine. |
+| `FactionDef` | `core/faction_def.gd` | `id`, `name_key`, `code`, `id_prefix`, `origin_sectors`, `name_pool`, `citizen_class_weights`, `purpose_weights`, `employers`, `implant_rate`, `implant_weights`, `year_only_birth_rate` (DRV 0,5 : naissances `00.00.AAAA`, §9.2) | 6 origines : TYC, HAL, TER, CER, THR, DRV. ⚠️ `seal_texture` non rempli, non lu. |
+| `NamePool` | `generation/name_pool.gd` | `given_names_f/m/x`, `family_names`, `reserved_names` (jamais tirés : Okonkwo, noms de famille distinctifs des personnages, prénoms du foyer), `reserved_full_names` (« Prénom Nom » des personnages scénarisés et des avis : prénom remplacé sans tirage, `avoid_reserved_full_name`) | Une par origine. Listes réservées **calculées** par `build_data.gd` depuis les `DayDef` (QA-002). |
 | `Rule` (abstraite) | `rules/rule.gd` | `id`, `title_key`, `rulebook_text_key`, `category` (`DOCUMENTS, IDENTITY, FACTION, PURPOSE, SPECIAL`), `severity` 1–3 | §6. |
 | `RuleSet` | `rules/rule_set.gd` | `id`, `rules`, `new_rule_ids` (badge « NOUVEAU »), `required_document_ids` | Liste **explicite et cumulative** par jour (pas d'héritage). Règles partagées entre RuleSets, **jamais mutées**. |
 | `DayDef` | `core/day_def.gd` | `day_number`, `game_date`, `rule_set`, `duration_sec`, `passenger_count`, `anomaly_count_weights`, `anomaly_weights: Dictionary[AnomalyType.Kind, float]`, `scripted_cases`, `intro_text_key`, `credit_per_correct`, `penalty_per_error` ; GDD : `faction_weights`, `visor_down_rate`, `legit_noise_rate`, `bribe_rate`, `luciole_rate`, `free_citations_per_day`, `penalty_escalated` ; M7 : `detain_enabled`, `has_evening`, `bribe_amounts`, `wanted_notices`, `briefing_messages`, `evening_events`, `hall_announcements: Dictionary[int, String]`, `rulebook_tabs` | J1–J10 : 8→16 passagers, 540→720 s ; DÉTENTION dès J7 ; pas de soirée au J10. |
@@ -228,19 +230,19 @@ classDiagram
 | `PassengerAppearance` | Apparence modulaire, **pure** (identifiants seulement) | `traits`, `palette_id`, `height_step` (−2..+2), `age_band` ; `distance()`, `derive()`, `copy()`, `serialize()`, `is_face_covered()`, `without_visor()` |
 | `PortraitValue` | Valeur d'un champ `PORTRAIT` | `appearance` (la personne sur la photo), `photo_seed`, `years_before_issue` |
 | `DocumentInstance` | Document tendu | `type_def`, `serial`, `issue_date`, `expiry_date`, `issuer_id`, `seal_id`, `mrz` (bande `Mrz`), `marks` (`&"luciole"`), `values` ; `get_value()` / `set_value()` / `copy()` |
-| `FieldRef` | Pointeur vers un champ affiché | `document_id`, `field_id` ; pseudo-références : `passenger_face()`, `today()`, `rulebook_rule(id)`, `wanted(id)` |
+| `FieldRef` | Pointeur vers un champ affiché | `document_id`, `field_id` ; pseudo-références : `passenger_face()`, `today()`, `rulebook_rule(id)`, `wanted(id)`, `symbol(id)` (bulletin « Symboles subversifs », `__symbols__`), `mark(document_id, mark_id)` (marque au coin d'un document, `mark:luciole`) |
 | `Case` | **Ce que voit le joueur** | `case_id`, `index`, `case_seed`, `passenger_presented`, `documents`, `dialogue_tags`, `slipped_items`, `luciole_codes`, `presentation` (`&"knock_three"`) ; `remove_visor()`, `get_value(ref)`, `find_refs_by_*` |
 | `CaseKey` | **Clé de réponse** (jamais transmise) | `truth`, `anomalies`, `expected_violations`, `expected_verdict` |
 | `Anomaly` / `AnomalyType.Kind` | Corruption injectée | 17 valeurs **figées** (D-033) : `EXPIRED_DOCUMENT`… `WANTED_PERSON = 16` ; `cosmetic` |
 | `Violation`, `Discrepancy`, `Verdict`, `VerdictKind` | Sorties règle / comparaison / décision | `Discrepancy.result` (`CONCORDANT, DISCORDANT, INCOMPARABLE`), `differing_traits`, `reason_key` ; `Verdict.kind` (`APPROVE, DENY, DETAIN`), `flagged`, `elapsed_sec` |
-| `CaseResult` | Sortie du scoring (§8) | `verdict_kind`, `expected_verdict`, `correct`, `verdict_correct`, `documented`, `expected_violations` / `missed_violations` (révélées après verdict), `wage`, `fine`, `credits_delta`, `citation_*`, `procedure_missed`, `scripted_id`, `narrative_changes`, `item_decisions`, `bribe_credits`, `report_credits`, `password_answered` |
+| `CaseResult` | Sortie du scoring (§8) | `verdict_kind`, `expected_verdict`, `correct`, `verdict_correct`, `documented`, `expected_violations` / `missed_violations` (révélées après verdict), `wage`, `fine`, `credits_delta`, `citation_*`, `procedure_missed`, `scripted_id`, `narrative_changes`, `item_decisions`, `bribe_credits`, `report_credits`, `password_answered`, `luciole_report` (§6.3) |
 | `DaySummary` | Bilan du jour | résultats, non traités, `time_expired`, `unprocessed_changes` ; `get_wage_total()`, `get_fine_total()`, `get_net()`, `get_bribe_total()`, `get_report_total()`, `get_total_income()` |
 | `RuleContext` | Contexte d'évaluation | `today`, `day_def`, `rule_set`, `faction_db`, `document_db`, `identity_slots`, `wanted` |
 | `RulebookEntry` | Ligne du Rulebook | `rule_id`, `title_key`, `text_key`, `category`, `severity`, `is_new`, `ref` |
 | `SlippedItem`, `WantedNotice`, `CaseMemory`, `Household`, `EveningEvent`, `EveningReport`, `ExpenseLine` | M5/M7 | objet glissé et sa décision ; avis (`get_ref()`) ; mémoire des cas scénarisés ; foyer (Ilan, Noa, Dora : santé, faim, froid, `detained`) ; soirée |
 | `DataCatalog` | Chargement indexé de `res://data/` | `factions`, `documents`, `rules`, `rule_sets`, `days`, `errors` ; `load_from()`, `get_day()`, `get_economy()`, `make_context()` ; liste les fichiers par `DirAccess` et suit les `.remap` d'export (§16) |
 
-- **Dates** : `GameDate` = entier « jours depuis 01.01.2100 » ; jamais `Time`/OS dans la logique.
+- **Dates** : `GameDate` = entier « jours depuis 01.01.2100 » ; jamais `Time`/OS dans la logique. Date « année seule » (Dérivants, NARRATIVE §4.10) : `GameDate.year_only(AAAA)` = `YEAR_ONLY_BASE − AAAA` (hors de toute vraie date), lue `(AAAA, 0, 0)` par `to_ymd` ⇒ affichage `00.00.AAAA`, égalité par année (R07), `add_years` conservé ; `possible_ages()` = {âge − 1, âge} ; `latest_day()` = 31.12.AAAA ; `Passenger.is_birth_year_only()`. (NARRATIVE proposait 01.01.AAAA + booléen : l'encodage dans l'entier évite de propager un drapeau sur chaque champ de document.)
 - **`Case` / `CaseKey` séparés** physiquement : l'UI ne peut pas tricher par erreur.
 - **Invariant d'apparence** : l'acteur 3D affiche `case.passenger_presented.appearance`, toujours égale à l'apparence physique réelle ; aucun injecteur ne la modifie (seulement les `PortraitValue`). Exception assumée : la visière (état physique, posée sur la vérité *et* le présenté).
 
@@ -301,7 +303,8 @@ func get_rulebook_entry() -> RulebookEntry
 
 ### 6.3 Comparaison (mode Inspection)
 
-- **`DiscrepancyChecker.check(case, a, b, ctx) -> Discrepancy`** compare ce qui est **affiché** (jamais `CaseKey`). Paires : même `truth_path` entre documents ; photo ↔ visage (`FieldRef.passenger_face()`) et photo ↔ photo ; date ↔ `FieldRef.today()` ; règle ↔ champ (`Rule.check_against`, R09, R15, R16, R19, R20, R21) ; visage ↔ `implants` (`disc_implant_mismatch`) ; visage ↔ naissance (`disc_age_mismatch`) ; MRZ ↔ N° ID / origine / nom / prénoms de la même carte (`disc_mrz_mismatch`) ; avis ↔ visage ou nom (`disc_wanted_match` / `disc_wanted_no_match`). Visage masqué ⇒ `INCOMPARABLE` (`disc_face_masked`).
+- **`DiscrepancyChecker.check(case, a, b, ctx) -> Discrepancy`** compare ce qui est **affiché** (jamais `CaseKey`). Paires : même `truth_path` entre documents ; photo ↔ visage (`FieldRef.passenger_face()`) et photo ↔ photo ; date ↔ `FieldRef.today()` ; règle ↔ champ (`Rule.check_against`, R09, R15, R16, R19, R20, R21) ; visage ↔ `implants` (`disc_implant_mismatch`) ; visage ↔ naissance (`disc_age_mismatch`) ; MRZ ↔ N° ID / origine / nom / prénoms de la même carte (`disc_mrz_mismatch`) ; avis ↔ visage ou nom (`disc_wanted_match` / `disc_wanted_no_match`) ; marque d'un document ↔ symbole du bulletin, si l'onglet `symbols` est ouvert ce jour (J7+) ⇒ `disc_symbol_match`. Visage masqué ⇒ `INCOMPARABLE` (`disc_face_masked`). Naissance « année seule » ↔ visage : concordante si l'un des deux âges possibles est dans la tranche (`ApparentAgeRule.birth_matches_band`, zéro faux positif).
+- **Signalement d'un porteur du code 1** (NARRATIVE §4.9) : DÉTENTION + `disc_symbol_match` épinglée sur un cas `luciole_codes ∋ 1` ⇒ `ScoringService.is_luciole_report` : cas correct, aucune citation ni procédure, salaire + prime de détention (`CaseResult.luciole_report`) ; `CaseConsequences.compute(…, luciole_report)` : `luciole_reported_at_booth`, `lucioles_trust −2`, `loyalty +1` une seule fois (pas de cumul avec la dénonciation générique) ; un cas scénarisé avec `flags_on_detain` (SC-13) garde ses drapeaux à la place des jauges. **L'UI doit rendre sélectionnables** la marque (`FieldRef.mark(doc, &"luciole")`) et l'entrée du bulletin (`FieldRef.symbol(&"luciole")`).
 - **`FaceComparator.compare(a, b, identity_slots)`** renvoie les slots d'identité visibles en portrait qui diffèrent ; tenue, coiffe, accessoire et `age_band` ±1 ignorés. `identity_slots_of(catalog)` alimente `RuleContext.identity_slots`.
 
 ---
@@ -568,7 +571,7 @@ Interdits : `randi()`, `randf()`, `Array.shuffle()`, `Array.pick_random()` globa
 `CaseBuilder.new(data, day, day_seed, flags, memory)` est **une instance par jour** : roster, avis du jour, continuité. `build(index)` / `build_clean(index)` / `build_with(index, anomalies, params)` / `build_day()` renvoient un `GeneratedCase` (`case`, `key`, `scripted_id`, diagnostics : `clean_attempts`, `photo_noise`, `visor_down`, `invariant_errors`).
 
 1. **Cas scénarisé** à cet index (si `requires_flag` satisfait et aucun `forbids_flags`) : overrides, identité/visage repris d'un cas antérieur (`identity_from_case`, `appearance_from_case`, via `CaseMemory`).
-2. **Passager vrai** (`PassengerGenerator`) : origine (lue dans le roster), nom (`NamePool`), naissance, secteur, N° ID `HG-#NNN-XXXX` (sans checksum), classe, motif, durée, employeur, implants civils les jours où R15 est active.
+2. **Passager vrai** (`PassengerGenerator`) : origine (lue dans le roster), nom (`NamePool`, jamais un nom réservé ni le nom complet d'un personnage — QA-002), naissance (`00.00.AAAA` pour une part `year_only_birth_rate` des DRV, décidée par l'empreinte du N° ID, sans tirage), secteur, N° ID `HG-#NNN-XXXX` (sans checksum), classe, motif, durée, employeur, implants civils les jours où R15 est active.
 3. **Documents valides** (`DocumentFactory`) : documents exigés par les `RequireDocumentRule` actives pour l'origine (+ `extra_documents`) ; MRZ, sceau et implants déclarés présents dès J1 (jamais discordants avant leurs règles) ; photo officielle sans coiffe ni accessoire ; bruit légitime (`legit_noise_rate` : autre coupe, photo ancienne).
 4. **Contrôle** : `RuleEngine.validate() == []`, sinon re-tirage (8 max).
 5. **Visière** : `visor_down_rate` (×1,5 si anomalie de visage, plafond 0,40), sur la vérité et le présenté (D-035).
@@ -597,11 +600,11 @@ Sérialisation stable : `CaseSerializer` (tests de déterminisme). 🎯 Golden f
 
 - **Quand** : automatiquement à la validation de la soirée (`Campaign.close_evening`), jamais en plein shift (D-041). Toute fin efface la sauvegarde (`SaveService.delete()`, idempotent).
 - **Où / format** : `user://saves/slot_0.json` (un seul emplacement utilisé), JSON texte ; préférences séparées dans `user://settings.cfg`. Jamais de `.tres` dans `user://` (D-008).
-- **Format v3** (`SaveService.VERSION = 3`, `GAME_VERSION = "0.7.0-m7"`) : `version`, `game_version`, `saved_at`, `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags`, `day_history` (détail par jour : traités, corrects, citations, salaire, amendes, dépenses, solde), `household`, `case_memory`.
+- **Format v3** (`SaveService.VERSION = 3` ; `game_version` = `SaveService.game_version()`, lu dans `application/config/version` de `project.godot`, `0.8.0`) : `version`, `game_version`, `saved_at`, `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags`, `day_history` (détail par jour : traités, corrects, citations, salaire, amendes, dépenses, solde), `household`, `case_memory`.
 - **Migrations** (`SaveService.migrate`, en chaîne) : v1 → v2 (foyer par défaut, historique complété) ; v2 → v3 (`case_memory` vide, `suspicion +1` rétroactif si SC-02 approuvée, D-052/D-057). Version inconnue ou future ⇒ refus.
-- **Lecture** : JSON → migrations → validation de schéma (`SCHEMA`, jour ≥ 1) ; nombres JSON lus par `as_int()`. **Écriture atomique** (`.tmp` puis renommage).
+- **Lecture** : JSON → migrations → validation de schéma (`SCHEMA`, `1 ≤ jour ≤ SaveService.last_day()`, dernier `day_NN.tres` de `data/days` — QA-003) ; nombres JSON lus par `as_int()`. **Écriture atomique** (QA-018) : `.tmp` écrit et vidé, puis renommé **par-dessus** la sauvegarde (jamais de suppression préalable) ; si la plateforme refuse d'écraser, l'ancienne passe d'abord en `.bak`. Lecture de secours : sauvegarde principale absente ou refusée ⇒ `.tmp`, puis `.bak` ; `has_save` / `delete` couvrent les trois fichiers.
 - Responsables : `SaveService` (pur, dossier paramétrable pour les tests) ; `GameState.save_to_slot()` / `load_from_slot()` ; écran titre « Continuer ».
-- ⚠️ `GAME_VERSION` est une constante isolée (pas de `application/config/version` dans `project.godot`) — §16.
+- ✅ Version unique : `application/config/version` (`project.godot`) ; l'écran titre l'affiche (QA-013, UI).
 
 ---
 
@@ -627,7 +630,7 @@ Sérialisation stable : `CaseSerializer` (tests de déterminisme). 🎯 Golden f
 
 ## 12. Stratégie de test
 
-- **Outil** : GUT 9.7.1, versionné dans `addons/gut/`. **414 tests** : 35 suites unitaires (347) + 9 suites d'intégration (67).
+- **Outil** : GUT 9.7.1, versionné dans `addons/gut/`. **445 tests** (après la passe QA) : 38 suites unitaires (358) + 13 suites d'intégration (87), dont les suites `test_qa_*` (non-régression des bugs QA : `pending("QA-xxx")` tant qu'un bug est ouvert). Crochet `pre_run_script` (`tests/helpers/gut_pre_run.gd`) : préférences isolées dans `user://test_settings/` (jamais le `settings.cfg` du joueur).
 - **Commande** (README) : `godot --headless --import` puis `godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json -gexit` (`.gutconfig.json` : `tests/unit/` + `tests/integration/`, préfixe `test_`).
 - **Helpers** (`tests/helpers/`, par `preload`) : `case_factory.gd` (cas construits à la main sur les vraies données), `generation_fixtures.gd` (catalogue réel, jour « toutes règles », collecte sur N graines), `day_harness.gd` (DayController + DayClock + InspectionSession + booth au choix, `set_process(false)`, temps piloté par `advance()`, journal des signaux).
 
@@ -669,14 +672,14 @@ Sérialisation stable : `CaseSerializer` (tests de déterminisme). 🎯 Golden f
 | R15 | Choix de la sortie | ✅ Résolu | `CaseResult.verdict_kind` |
 | R16 | Anti-répétition vs indépendance | ✅ Résolu | Roster du jour = f(`day_seed`) |
 | R17 | Clic visage accessible | ✅ Résolu | Action `inspect_face` (F / manette) + vignette UI |
-| R18 | Arguments de debug actifs en build final | ⚠️ Ouvert | `DayScene` accepte `--day`, `--seed`, `--debug-keys`, `--screen`… sans garde `OS.is_debug_build()`. De plus, `--seed` (nouvelle partie) et `--day` sont réappliqués à **chaque** `reload_current_scene()` : une campagne lancée avec eux ne progresse pas d'un jour à l'autre |
+| R18 | Arguments de debug actifs en build final | ✅ Résolu | `DebugArgs.for_scene()` (`scripts/day/debug_args.gd`) : vide hors `OS.is_debug_build()` sauf fonctionnalité d'export `debug_args` ; les arguments qui modifient la partie (`ONE_SHOT` : `--seed`, `--day`, `--screen`, `--flags`…) ne valent que pour la première scène du processus (QA-017) |
 | R19 | Scripts trop gros | ⚠️ Ouvert | `BoothDirector` (escorte, codes, regard, zoom à extraire), `ComparisonUI` |
 | R20 | `build_booth_greybox` non déterministe | 🟡 Connu | Godot 4.7 tire des `unique_id` au hasard : régénérer = diff complet de `booth.tscn` |
 | R21 | Champs de Resource morts | ⚠️ Ouvert | `DocumentTypeDef.view_scene`, `FactionDef.seal_texture`, `AppearanceOptionDef.mesh/atlas_cell/material/portrait_layer` |
 | R22 | Signaux sans écouteur | 🟡 Ouvert | `document_focused`, `narrative_flag_changed`, `game_saved`, `game_loaded` (garder si un usage est prévu, sinon retirer) |
-| R23 | Version du jeu dispersée | ⚠️ Ouvert | `SaveService.GAME_VERSION`, libellé titre `title_version` (« Vertical slice M5 — Jours 1 à 3 », obsolète), rien dans `project.godot` |
+| R23 | Version du jeu dispersée | ✅ Résolu | `application/config/version = "0.8.0"` ; `SaveService.game_version()` le lit (plus de constante) ; libellé du titre : QA-013 (UI) |
 | R24 | Données et traductions dans un build exporté | 🟡 À vérifier | `DataCatalog` liste `res://data` par `DirAccess` (+ `.remap`) ; `UiText` charge `fr.fr.translation` à la demande — à valider sur un export réel |
-| R25 | Mockups exportés | ⚠️ Ouvert | `docs/mockups/*.png` sont importés (≈ 11 Mo) : `.gdignore` dans `docs/` ou filtre d'export |
+| R25 | Mockups exportés | ✅ Résolu | `docs/.gdignore` (comme `art_src/.gdignore`) : docs, maquettes et captures QA ne sont plus importées |
 | R26 | Décor du guichet | 🟡 Ouvert | Toujours greybox M4 ; 56 draws > budget 40 |
 | R27 | Performance cible | 🟡 Ouvert | Aucune mesure GPU (PC d'entrée de gamme, Steam Deck 1280×800) |
 
@@ -710,7 +713,7 @@ Tous les outils sont des scripts `extends SceneTree` lancés en headless depuis 
 
 | Outil | Génère / fait | Quand le relancer | Déterminisme | Prérequis |
 |---|---|---|---|---|
-| `install_godot.sh` | Installe Godot 4.7.2 (Linux x86_64) dans `/opt/godot` + lien `/usr/local/bin/godot` ; clone GUT 9.7.1 dans `/opt/gut` | Nouvelle machine / CI | Versions figées | `curl`, `unzip`, `git`, droits root. Note : le clone `/opt/gut` est redondant avec `addons/gut` versionné |
+| `install_godot.sh` | Installe Godot 4.7.2 (Linux x86_64) dans `/opt/godot` + lien `/usr/local/bin/godot` (GUT 9.7.1 est versionné dans `addons/gut` : rien à cloner) | Nouvelle machine / CI | Version figée | `curl`, `unzip`, droits root |
 | `fetch_assets.sh` | Télécharge les packs CC0 (Kenney Animated Characters ×3, Sci-fi / Interface / Impact Sounds ; Quaternius UAL Standard via itch.io) dans `art_src/downloads/` (ignoré par git) | Avant `build_audio.sh` ou une mise à jour des sources personnage | Dépend des sites (liens résolus à la volée) | `curl`, `unzip`, `python3`, réseau |
 | `build_data.gd` | **Tous les `.tres` de `data/`** : documents, origines, réserves de noms, catalogue d'apparences, économie, 22 règles, RuleSets et `DayDef` J1–J10 (cas scénarisés, briefings, soirées, avis) | À chaque changement de contenu (Game Designer, Scénariste, Lore) — jamais d'édition manuelle durable (D-029) | **Oui** : UID conservés, identifiants de sous-ressources stables (`_tag_subresources`) | `godot --headless --import` fait au préalable ; puis `test_data_integrity` |
 | `build_booth_greybox.gd` | `scenes/booth/booth.tscn` (décor greybox, nœuds contractuels §8 bis.1) | Seulement pour modifier le décor | **Non** pour les `unique_id` des nœuds (diff complet à chaque régénération) ; géométrie identique | Autoloads chargés (attend une frame) |
@@ -720,7 +723,9 @@ Tous les outils sont des scripts `extends SceneTree` lancés en headless depuis 
 | `build_passenger_impostor.gd` | `imp_silhouette.res` (≤ 400 tris, étape 4) | Après un changement de proportions du rig | Oui (simplification meshoptimizer) | `passenger_actor.tscn` fonctionnel |
 | `build_audio.sh` (+ `build_audio.gd`) | Décode les packs Kenney en WAV, synthétise et traite les sons (`build_audio.gd`), écrit `assets/audio/**` (WAV 48 kHz) et `default_bus_layout.tres`, encode ambiances/musiques en OGG Vorbis, réimporte et pose les boucles dans les `.import` | Changement de cue sheet / de mix (`--only=ui,booth,…` pour une partie) | Graines fixes ; l'OGG dépend de la version de `ffmpeg`/libvorbis | `fetch_assets.sh` fait, **`ffmpeg` avec `libvorbis`**, `sed`, Godot 4.7 (`GODOT=` pour un autre binaire) |
 | `gen_stats.gd` | Rapport console par jour : nombre/types d'anomalies (observé vs poids), verdicts, visière, bruit, re-tirages, invariants, anti-répétition | Après un changement de poids du générateur ou du catalogue (`-- --campaigns=200 --seed=1`) | Oui (même graine ⇒ même rapport) ; code retour ≠ 0 si invariant violé | Données à jour |
-| `qa_campaign.gd` *(QA, en cours d'ajout)* | Campagne J1–J10 dans la **vraie** `day.tscn` jouée par `--autoplay`, accélérée (`Engine.time_scale`) ; contrôle à chaque soir sauvegarde relue = `GameState`, solde affiché ; lignes `QA_DAY` / `QA_END` | Avant une livraison, après un changement de flux de jour | Oui à graine fixe (`--qa-seed`) | Rendu (pas de `--headless` strict pour le booth, sinon `--no-booth`) ; détail dans `docs/QA.md` |
+| `qa_boot.gd` | Lanceur des nœuds QA qui ont besoin des autoloads (un `--script` est compilé avant leur enregistrement) : attend une image puis ajoute `--qa-node=<script>` à la racine | — | — | `godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_campaign.gd …` |
+| `qa_campaign.gd` (QA) | Campagne J1–J10 dans la **vraie** `day.tscn` (booth 3D compris) jouée par `--autoplay`, accélérée (`Engine.time_scale`) ; contrôle à chaque soir sauvegarde relue = `GameState`, solde affiché ; lignes `QA_DAY` / `QA_END` | Avant une livraison, après un changement de flux de jour | Oui à graine fixe (`--qa-seed`) | **Lancé par `qa_boot.gd`** (jamais directement), `--headless` possible avec le booth ; `--no-booth` sans erreur (QA-012) ; détail dans `docs/QA.md` §11 |
+| `qa_perf.gd` (QA) | Temps moyen / p95 par image au guichet | Après un changement du booth | — | Par `qa_boot.gd`, rendu réel (xvfb, `--rendering-driver opengl3`) |
 | `balance_sim.gd` | Rapport console : par profil (précision) et par soir, revenu, solde, foyer, fins F1–F7 ; `--set=champ=valeur` surcharge l'`EconomyDef` en mémoire | Après un changement d'économie, de paie ou de soirées (`-- --seeds=200 --profiles=0.6,0.8,0.95 --presets=…`) | Oui | Données à jour ; reporter les valeurs retenues dans `build_data.gd` puis `test_balance` |
 
 **Ordre type d'une régénération complète** : `install_godot.sh` → `fetch_assets.sh` → `godot --headless --import` → `build_passenger_bonemaps` → import → `build_passenger_anims` → `build_passenger_skins` → `build_passenger_impostor` → `build_audio.sh` → `build_data` → (`build_booth_greybox` si besoin) → import → suite GUT.
@@ -734,7 +739,7 @@ Tous les outils sont des scripts `extends SceneTree` lancés en headless depuis 
 ### 16.1 Prérequis
 
 - **Modèles d'export 4.7.2-stable** (`Godot_v4.7.2-stable_export_templates.tpz`) installés dans `<données Godot>/export_templates/4.7.2.stable/` (Linux : `~/.local/share/godot/…`, Windows : `%APPDATA%\Godot\…`, macOS : `~/Library/Application Support/Godot/…`). À ajouter à `install_godot.sh` (CI).
-- **Version du jeu** : définir `application/config/version` dans `project.godot` (ex. `0.8.0`) et en dériver `SaveService.GAME_VERSION` et le libellé de l'écran titre (R23).
+- **Version du jeu** : ✅ `application/config/version = "0.8.0"` dans `project.godot`, lue par `SaveService.game_version()` et l'écran titre (R23).
 - `godot --headless --import` avant tout export (génère notamment `fr.fr.translation`).
 
 ### 16.2 Presets
@@ -755,11 +760,11 @@ Tous les outils sont des scripts `extends SceneTree` lancés en headless depuis 
 
 ### 16.4 Contenu exporté
 
-- Mode `export_filter="all_resources"` avec `exclude_filter` :
-  `tests/*, tools/*, addons/gut/*, docs/*, scenes/passenger/passenger_demo.tscn, scenes/ui/comparison_ui_demo.tscn, scripts/booth/passenger_demo.gd, scripts/ui/comparison_ui_demo.gd, scripts/ui/demo_booth_backdrop.gd`.
-- `art_src/` est déjà invisible (`.gdignore`). Ajouter un `.gdignore` dans `docs/` évite aussi l'import des mockups (R25).
+- Mode `export_filter="all_resources"` avec `exclude_filter` (à poser dans chaque preset) :
+  `tests/*, tools/*, addons/gut/*, .gutconfig.json, scenes/passenger/passenger_demo.tscn, scenes/ui/comparison_ui_demo.tscn, scripts/booth/passenger_demo.gd, scripts/ui/comparison_ui_demo.gd, scripts/ui/demo_booth_backdrop.gd`.
+- `art_src/` et `docs/` sont invisibles pour Godot (`.gdignore`, R25) : ni importés ni exportés.
 - `include_filter` pour les fichiers non-ressources à distribuer : licences `assets/fonts/OFL-*.txt` (obligatoire OFL) et `assets/models/passenger/License_*.txt` (+ un fichier `CREDITS` généré depuis `docs/ASSETS.md`).
-- `DemoAutoplay` et `NullBooth` restent (référencés par `DayScene`), mais les arguments de debug doivent être neutralisés en build final (`OS.is_debug_build()` ou une fonctionnalité d'export `debug_args`) — R18.
+- `DemoAutoplay` et `NullBooth` restent (référencés par `DayScene`) ; les arguments de debug sont neutralisés en build *release* par `DebugArgs` (R18). Un preset de test peut les réactiver avec la fonctionnalité personnalisée `debug_args` (`custom_features`).
 - Le plugin éditeur GUT est déclaré dans `project.godot` ; il n'est pas chargé à l'exécution, l'exclure de l'export est sans effet de bord (à confirmer par le smoke test).
 - Vérifier sur un build réel : chargement de `res://data` par `DataCatalog` (`.tres` convertis en binaire + `.remap`), traduction `fr.fr.translation`, `passenger_anims.res`, sauvegarde dans `user://` (R24). **Smoke test** proposé : lancer le binaire exporté en headless avec `--day=10 --no-booth --autoplay` (en build debug) et vérifier l'absence d'erreur.
 

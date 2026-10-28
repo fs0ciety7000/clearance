@@ -1,6 +1,8 @@
 ## `NAME_MISMATCH` (GDD §6) : nom, prénom ou date de naissance altéré sur un
 ## document — 1 lettre, une partie d'un nom composé, ou inversion jour/mois
-## (sinon un chiffre de l'année). Détecté par R07.
+## (sinon un chiffre de l'année). Détecté par R07. Date « année seule »
+## (`00.00.AAAA`, Dérivants) : toujours l'année (jamais d'inversion, NARRATIVE
+## §4.10), sans tirage supplémentaire.
 class_name NameMismatchInjector
 extends FieldMismatchInjector
 
@@ -28,7 +30,8 @@ func alter(state: InjectionState, path: StringName, value: Variant) -> Variant:
 
 static func _alter_date(rng: SeededRng, date: int) -> int:
 	var ymd: Vector3i = GameDate.to_ymd(date)
-	if ymd.z <= 12 and ymd.z != ymd.y and rng.chance(0.7):
+	# Année seule : `(AAAA, 0, 0)`, la condition est fausse sans tirer `chance`.
+	if not GameDate.is_year_only(date) and ymd.z <= 12 and ymd.z != ymd.y and rng.chance(0.7):
 		return GameDate.from_ymd(ymd.x, ymd.z, ymd.y)
 	var shift: int = rng.randi_range(1, 9) * (1 if rng.chance(0.5) else -1)
 	return GameDate.add_years(date, shift)

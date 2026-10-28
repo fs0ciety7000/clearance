@@ -115,7 +115,6 @@ func _build_header() -> void:
 	_new_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_new_label = _new_badge.find_children("", "Label", true, false)[0] as Label
 	header.add_child(_new_badge)
-	header.add_child(make_keycap("Tab"))
 
 
 func _build_footer() -> void:
@@ -126,6 +125,9 @@ func _build_footer() -> void:
 	_page_label.theme_type_variation = &"DataSmall"
 	_page_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(_page_label)
+	# « Tab » (replier) rejoint « [ » « ] » en pied : l'en-tête tient dans la
+	# largeur du panneau avec le plancher de texte du Steam Deck (QA-009).
+	footer.add_child(make_keycap("Tab"))
 	footer.add_child(make_keycap("["))
 	footer.add_child(make_keycap("]"))
 

@@ -10,3 +10,4 @@ given_names_m = PackedStringArray("Kaito", "Ansel", "Matteo", "Jory", "Ezra", "K
 given_names_x = PackedStringArray("Tavi", "Ren", "Paz")
 family_names = PackedStringArray("Morrow", "Vance", "Takahashi-Bell", "Ruuska", "Calder", "Ibarra", "Szabo", "Kerr", "Amundsen", "Pak", "Oduya", "Strand", "Vela", "Marsh", "Kovač")
 reserved_names = PackedStringArray()
+reserved_full_names = PackedStringArray("Kaito Morrow")

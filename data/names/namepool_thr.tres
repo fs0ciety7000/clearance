@@ -10,3 +10,4 @@ given_names_m = PackedStringArray("Alexei", "Idris", "Marcus", "Dariusz", "Yusuf
 given_names_x = PackedStringArray("Ming")
 family_names = PackedStringArray("Arkhipov", "Reyes-Kahn", "Mazur", "Okoro", "Sandoval", "Jovanović", "Hadid", "Wei", "Kaczmarek", "Ulloa", "Demir", "Fonseca", "Rostova", "Abiodun", "Krall")
 reserved_names = PackedStringArray()
+reserved_full_names = PackedStringArray("Dariusz Mazur", "Hana Hadid", "Idris Hadid")

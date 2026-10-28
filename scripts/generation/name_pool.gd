@@ -2,8 +2,13 @@
 ## `res://data/names/namepool_<faction>.tres`, référencée par `FactionDef.name_pool`.
 ##
 ## Les prénoms sont répartis en `f`/`m`/`x` (épicènes, tirables pour tous) ;
-## `reserved_names` ne sont **jamais** tirés (ex. Okonkwo, le mentor du J1),
-## mais restent admis dans un cas scénarisé.
+## `reserved_names` ne sont **jamais** tirés (ex. Okonkwo, le mentor du J1, et
+## les noms de famille distinctifs des personnages scénarisés), mais restent
+## admis dans un cas scénarisé. `reserved_full_names` (« Prénom Nom » des
+## personnages scénarisés et des avis de recherche, QA-002) : la combinaison
+## n'est jamais générée — le prénom est remplacé de façon déterministe, **sans
+## tirage supplémentaire** (le flux aléatoire, donc l'équilibrage, est inchangé).
+## Les deux listes sont calculées par `tools/build_data.gd`.
 class_name NamePool
 extends Resource
 
@@ -15,6 +20,8 @@ extends Resource
 @export var family_names: PackedStringArray = []
 ## Noms (prénoms ou noms de famille) jamais générés.
 @export var reserved_names: PackedStringArray = []
+## Noms complets (« Prénom Nom ») jamais générés.
+@export var reserved_full_names: PackedStringArray = []
 
 
 ## Prénoms tirables pour un sexe (`Passenger.SEX_*`), sans les noms réservés.
@@ -58,6 +65,25 @@ func pick_family_name(rng: SeededRng) -> String:
 
 func is_reserved(name: String) -> bool:
 	return reserved_names.has(name)
+
+
+func is_reserved_full_name(given: String, family: String) -> bool:
+	return reserved_full_names.has("%s %s" % [given, family])
+
+
+## `given` si « given family » n'est pas réservé ; sinon le prénom suivant de la
+## réserve du sexe (ordre de `given_names_for`, circulaire) qui ne l'est pas.
+## Déterministe et sans tirage.
+func avoid_reserved_full_name(given: String, family: String, sex: StringName) -> String:
+	if not is_reserved_full_name(given, family):
+		return given
+	var pool: PackedStringArray = given_names_for(sex)
+	var start: int = maxi(pool.find(given), 0)
+	for step: int in range(1, pool.size() + 1):
+		var candidate: String = pool[(start + step) % pool.size()]
+		if not is_reserved_full_name(candidate, family):
+			return candidate
+	return given
 
 
 func _without_reserved(names: PackedStringArray) -> PackedStringArray:

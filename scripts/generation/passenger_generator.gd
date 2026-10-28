@@ -61,9 +61,21 @@ static func draw_identity(rng: SeededRng, faction: FactionDef, today: int, p: Pa
 	else:
 		p.given_name = pool.pick_given_name(rng, p.sex)
 		p.family_name = pool.pick_family_name(rng)
+		# Jamais l'identité d'un personnage scénarisé (QA-002), sans tirage.
+		p.given_name = pool.avoid_reserved_full_name(p.given_name, p.family_name, p.sex)
 	var band: int = p.appearance.age_band if p.appearance != null else 1
 	p.birth_date = birth_date_for_band(rng, band, today)
 	p.citizen_id = make_citizen_id(rng, faction)
+	# Dérivants (NARRATIVE §4.10) : naissance `00.00.AAAA` pour une part des
+	# passagers, décidée par l'empreinte du N° ID (aucun tirage : le flux
+	# aléatoire des autres origines et des autres champs est inchangé).
+	if faction.year_only_birth_rate > 0.0 and stable_fraction(p.citizen_id) < faction.year_only_birth_rate:
+		p.birth_date = GameDate.year_only(GameDate.year_of(p.birth_date))
+
+
+## Fraction déterministe dans [0, 1) d'un texte (empreinte `hash`, stable).
+static func stable_fraction(text: String) -> float:
+	return float(hash(text) & 0xFFFF) / 65536.0
 
 
 ## N° ID `HG-#NNN-XXXX` : `#` = chiffre d'origine, `NNN` chiffres, `XXXX` sûrs.

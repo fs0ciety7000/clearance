@@ -4,7 +4,12 @@
 ## - `passenger_face()` = `(__passenger__, face)` : le visage de l'acteur 3D ;
 ## - `today()` = `(__rulebook__, __today__)` : la date du jour du Rulebook ;
 ## - `rulebook_rule(rule_id)` = `(__rulebook__, <rule_id>)` : une règle du Rulebook ;
-## - `wanted(notice_id)` = `(__wanted__, <notice_id>)` : une entrée de l'avis de recherche (M7).
+## - `wanted(notice_id)` = `(__wanted__, <notice_id>)` : une entrée de l'avis de recherche (M7) ;
+## - `symbol(symbol_id)` = `(__symbols__, <symbol_id>)` : une entrée du bulletin
+##   « Symboles subversifs » (onglet du Rulebook, J7+ : `luciole`) ;
+## - `mark(document_id, mark_id)` = `(<document_id>, mark:<mark_id>)` : une marque
+##   au coin d'un document (`DocumentInstance.marks`, ex. la luciole du code 1).
+##   Paire marque ↔ symbole = preuve d'un signalement (NARRATIVE §4.9).
 ## GDScript n'admet pas de constante objet : `FieldRef.PASSENGER_FACE` du
 ## document d'architecture devient la fabrique `FieldRef.passenger_face()`.
 class_name FieldRef
@@ -16,6 +21,10 @@ const RULEBOOK_DOCUMENT_ID: StringName = &"__rulebook__"
 const TODAY_FIELD_ID: StringName = &"__today__"
 ## Avis de recherche du jour (M7, R22) : `(__wanted__, <notice_id>)`.
 const WANTED_DOCUMENT_ID: StringName = &"__wanted__"
+## Bulletin « Symboles subversifs » (M7, J7+) : `(__symbols__, <symbol_id>)`.
+const SYMBOLS_DOCUMENT_ID: StringName = &"__symbols__"
+## Préfixe du champ d'une marque de document : `mark:<mark_id>`.
+const MARK_PREFIX: String = "mark:"
 
 var document_id: StringName = &""
 var field_id: StringName = &""
@@ -41,6 +50,29 @@ static func rulebook_rule(rule_id: StringName) -> FieldRef:
 ## Entrée de l'avis de recherche du jour (M7, onglet « Avis de recherche »).
 static func wanted(notice_id: StringName) -> FieldRef:
 	return FieldRef.new(WANTED_DOCUMENT_ID, notice_id)
+
+
+## Entrée du bulletin « Symboles subversifs » (`symbol_id` = id de marque, ex. `luciole`).
+static func symbol(symbol_id: StringName) -> FieldRef:
+	return FieldRef.new(SYMBOLS_DOCUMENT_ID, symbol_id)
+
+
+## Marque `mark_id` au coin du document `document_id`.
+static func mark(p_document_id: StringName, mark_id: StringName) -> FieldRef:
+	return FieldRef.new(p_document_id, StringName(MARK_PREFIX + String(mark_id)))
+
+
+func is_symbol() -> bool:
+	return document_id == SYMBOLS_DOCUMENT_ID
+
+
+func is_mark() -> bool:
+	return String(field_id).begins_with(MARK_PREFIX) and not is_symbol()
+
+
+## Identifiant de la marque (`luciole`), vide si ce n'est pas une marque.
+func get_mark_id() -> StringName:
+	return StringName(String(field_id).trim_prefix(MARK_PREFIX)) if is_mark() else &""
 
 
 func is_wanted() -> bool:

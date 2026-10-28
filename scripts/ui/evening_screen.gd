@@ -45,6 +45,10 @@ var consortium_advance: int = 0
 var lines: Array[ExpenseLine] = []
 var household: Household = null
 var luciole_pending: bool = false
+## Prime de signalement reçue ce soir (mot des Lucioles signalé) : déjà
+## créditée sur le compte par `Campaign.decide_luciole_note`, ajoutée ici au
+## solde disponible pour les postes (QA-008).
+var report_bonus: int = 0
 var confirm_button: Button = null
 ## M7 : événements du soir (ordre d'affichage) et choix du joueur.
 var events: Array[EveningEvent] = []
@@ -58,6 +62,8 @@ var prev_button: Button = null
 
 var _rows: Array[Button] = []
 var _spent_label: Label = null
+var _available_label: Label = null
+var _bonus_row: HBoxContainer = null
 var _after_label: Label = null
 var _after_hint: Label = null
 var _note_card: PanelContainer = null
@@ -158,8 +164,13 @@ func _budget() -> VBoxContainer:
 		head_box.add_child(_money_row(UiText.t("ev_advance", "Avance du Consortium (prise de poste)"),
 				credits(consortium_advance, true), DS.ACCENT_YELLOW))
 	head_box.add_child(_money_row(UiText.t("ev_shift_net", "Net du shift (salaire − amendes)"), credits(shift_net, true), DS.TEXT_SECONDARY))
+	_bonus_row = _money_row(UiText.t("ev_report_bonus", "Prime de signalement (Consortium)"), "", DS.ACCENT_YELLOW)
+	_bonus_row.visible = false
+	head_box.add_child(_bonus_row)
 	head_box.add_child(rule_line())
-	head_box.add_child(_money_row(UiText.t("ev_available", "Disponible ce soir"), credits(balance), DS.ACCENT_YELLOW, &"DataTitle"))
+	var available_row: HBoxContainer = _money_row(UiText.t("ev_available", "Disponible ce soir"), credits(balance), DS.ACCENT_YELLOW, &"DataTitle")
+	_available_label = available_row.get_child(available_row.get_child_count() - 1)
+	head_box.add_child(available_row)
 	box.add_child(eyebrow(UiText.t("ev_lines", "DÉPENSES DU SOIR — COCHEZ CE QUE VOUS PAYEZ")))
 	for line: ExpenseLine in lines:
 		var row: Button = _expense_row(line)
@@ -274,7 +285,12 @@ func set_line_paid(id: StringName, paid: bool) -> bool:
 func _refresh() -> void:
 	var spent: int = EveningService.total_spent(lines)
 	var delta: int = event_balance_delta()
-	var after: int = balance - spent + delta
+	var after: int = funds() - spent + delta
+	if _available_label != null:
+		_available_label.text = credits(funds())
+	if _bonus_row != null:
+		_bonus_row.visible = report_bonus != 0
+		(_bonus_row.get_child(_bonus_row.get_child_count() - 1) as Label).text = credits(report_bonus, true)
 	for row: Button in _rows:
 		var line: ExpenseLine = row.get_meta(&"line")
 		var affordable: bool = EveningService.can_toggle_on(lines, effective_balance(), line)
@@ -318,7 +334,13 @@ func _family() -> Control:
 
 ## Solde disponible pour les postes, événements compris.
 func effective_balance() -> int:
-	return balance + event_balance_delta()
+	return funds() + event_balance_delta()
+
+
+## Fonds de la soirée avant dépenses et événements : solde du shift + prime de
+## signalement éventuelle.
+func funds() -> int:
+	return balance + report_bonus
 
 
 ## Effet net des événements (retenue d'audit, coûts et gains des options).
@@ -339,7 +361,7 @@ func event_balance_delta(except_event: StringName = &"") -> int:
 
 ## Fonds disponibles pour une option de `event` (les autres choix comptés).
 func available_for(event: EveningEvent) -> int:
-	return balance - EveningService.total_spent(lines) + event_balance_delta(event.id)
+	return funds() - EveningService.total_spent(lines) + event_balance_delta(event.id)
 
 
 ## Un audit qui arrête l'agent·e (F1) clôt la soirée : les panneaux suivants sautent.
@@ -400,7 +422,7 @@ func get_choices() -> Dictionary[StringName, StringName]:
 		if event.is_choice() and not result.has(event.id) and not is_skipped(event):
 			undecided.append(event)
 	var defaults: Dictionary[StringName, StringName] = EveningService.default_choices(undecided,
-			balance - EveningService.total_spent(lines) + event_balance_delta())
+			funds() - EveningService.total_spent(lines) + event_balance_delta())
 	for id: StringName in defaults:
 		result[id] = defaults[id]
 	return result
@@ -653,10 +675,14 @@ func _decide_luciole(report_it: bool) -> void:
 		return
 	luciole_pending = false
 	luciole_decided.emit(report_it)
+	if report_it:
+		report_bonus += DataCatalog.load_economy().report_bonus
 	if _note_card != null:
 		_note_card.queue_free()
 		_note_card = null
 		_right.add_child(wrapped(UiText.t("ev_note_reported" if report_it else "ev_note_burned", ""), &"BodySmall", DS.TEXT_SECONDARY))
+	if _spent_label != null:
+		_refresh()
 	confirm_button.grab_focus()
 
 

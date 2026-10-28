@@ -473,6 +473,8 @@ func _post_generate(truth: Passenger, faction: FactionDef, overrides: Dictionary
 					and FieldValue.equals(truth.family_name, notice.family_name):
 				guard += 1
 				truth.given_name = faction.name_pool.pick_given_name(rng, truth.sex)
+				truth.given_name = faction.name_pool.avoid_reserved_full_name(truth.given_name, truth.family_name,
+						truth.sex)
 	if not overrides.has(&"implants") and _has_rule(ImplantsDeclaredRule) and faction.implant_rate > 0.0 \
 			and not faction.implant_weights.is_empty() and rng.chance(faction.implant_rate):
 		var codes: Array = faction.implant_weights.keys()

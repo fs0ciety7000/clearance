@@ -89,7 +89,8 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		result.password_answered = profile.answer_password and case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE_PASSWORD) \
 				and FlagCondition.gauge_value(flags, CaseConsequences.FLAG_TRUST) >= CaseConsequences.PASSWORD_TRUST
 		result.narrative_changes = CaseConsequences.compute(scripted, case, result.verdict_kind,
-				not generated.key.expected_violations.is_empty(), result.password_answered, day_number, flags)
+				not generated.key.expected_violations.is_empty(), result.password_answered, day_number, flags,
+				result.luciole_report)
 		CaseConsequences.merge_into(flags, result.narrative_changes)
 		if scripted != null:
 			memory[String(scripted.id)] = CaseMemory.snapshot(day_number, case, result.verdict_kind)

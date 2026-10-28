@@ -32,7 +32,18 @@ const K := AnomalyType.Kind
 const FK := FieldDef.FieldKind
 const CAT := Rule.RuleCategory
 
+## Noms de famille distinctifs des personnages (NARRATIVE §1, §4 ; LORE §5.3) :
+## jamais tirés pour un passager généré (QA-002). Les noms courants des
+## personnages secondaires (Mensah, Hadid, Duval…) restent tirables : seul leur
+## nom complet est réservé (`reserved_full_names`, calculé depuis les `DayDef`).
+const RESERVED_FAMILY_NAMES: PackedStringArray = ["Okonkwo", "Vasquez-Orlov", "Ravel", "Valcourt", "Petrenko",
+		"Whitmore", "Novak", "Montclair", "Achebe-Sörensen", "Moreno-Lind", "Long-Ruban", "Basse-Marée"]
+## Prénoms du foyer de l'agent·e (LORE §6, NARRATIVE §1.2) : jamais générés.
+const RESERVED_HOUSEHOLD_NAMES: PackedStringArray = ["Ilan", "Noa", "Dora"]
+
 var _failures: int = 0
+## Jours construits (ordre de construction), pour les noms réservés.
+var _days: Array[DayDef] = []
 
 
 func _init() -> void:
@@ -42,7 +53,8 @@ func _init() -> void:
 
 
 func _build() -> void:
-	_build_factions(_build_name_pools())
+	var pools: Dictionary[StringName, NamePool] = _build_name_pools()
+	_build_factions(pools)
 	_build_appearance_catalog()
 	var docs: Dictionary[StringName, DocumentTypeDef] = _build_documents()
 	var rules: Dictionary[StringName, Rule] = _build_rules()
@@ -50,6 +62,7 @@ func _build() -> void:
 	_build_days(sets)
 	_build_days_m7(sets)
 	_build_economy()
+	_reserve_character_names(pools)
 	assert(docs.size() == 4)
 
 
@@ -136,6 +149,8 @@ func _build_factions(pools: Dictionary[StringName, NamePool]) -> void:
 	drv.employers = ["Équipage indépendant", "Valcourt-Hsu Logistique"]
 	drv.implant_rate = 0.20
 	drv.implant_weights = {&"DER-1": 1.0, &"NX-4": 0.5}
+	# NARRATIVE §4.10 : environ la moitié des Dérivants nés « 00.00.AAAA ».
+	drv.year_only_birth_rate = 0.5
 	for faction: FactionDef in [tyc, hal, ter, cer, thr, drv]:
 		faction.name_pool = pools[faction.id]
 		_save(faction, FACTIONS_DIR, "faction_%s" % faction.id)
@@ -185,8 +200,8 @@ func _build_name_pools() -> Dictionary[StringName, NamePool]:
 				["Long-Ruban", "Sillage", "Pierre-Bleue", "Nadir", "Vasque", "Heliodore", "Mainsoleil", "Corail-9",
 				"Basse-Marée", "Tessaride", "Cendre", "Kalliope", "Lointain", "Saint-Orbe", "Varech"]),
 	]
-	# Okonkwo, le mentor du J1 (LORE §5.3), n'est jamais généré.
-	pools[2].reserved_names = ["Okonkwo"]
+	# Noms réservés (Okonkwo, personnages, foyer) : `_reserve_character_names`,
+	# une fois les jours construits.
 	var result: Dictionary[StringName, NamePool] = {}
 	for pool: NamePool in pools:
 		_save(pool, NAMES_DIR, "namepool_%s" % pool.id)
@@ -997,7 +1012,7 @@ func _day9(rs: RuleSet, factions: Dictionary[StringName, float]) -> DayDef:
 			factions, 0.20, 0.35, 0.05, 0.07, ["origins", "implants", "symbols", "seals"])
 	var sefa: ScriptedCaseDef = _scripted(&"sc_18", 4, {&"faction_id": &"drv", &"given_name": "Sefa",
 			&"family_name": "Long-Ruban", &"sex": Passenger.SEX_F, &"citizen_class": &"C-5",
-			&"birth_date": GameDate.from_ymd(2163, 5, 5), &"purpose": Passenger.PURPOSE_TRANSIT,
+			&"birth_date": GameDate.year_only(2163), &"purpose": Passenger.PURPOSE_TRANSIT, # « 00.00.2163 » (§4.10)
 			&"implants": PackedStringArray()},
 			[], &"sc18_sefa", {&"mrz_issuer": "07"}, {&"sc18_passed": 0}, {})
 	sefa.luciole_codes = PackedInt32Array([2])
@@ -1206,8 +1221,54 @@ func _wanted(id: StringName, scripted_id: StringName, index: int, given: String,
 	return w
 
 
+## QA-002 : noms jamais générés, calculés depuis les données. Par réserve :
+## `reserved_names` = noms de famille distinctifs et prénoms du foyer présents
+## dans la réserve ; `reserved_full_names` = « Prénom Nom » de chaque personnage
+## scénarisé (identité présentée, vraie identité, parent de SC-17) et de chaque
+## avis de recherche dont le nom de famille est tirable. Tri : déterministe.
+func _reserve_character_names(pools: Dictionary[StringName, NamePool]) -> void:
+	var full_names: Dictionary[String, bool] = {}
+	for day: DayDef in _days:
+		for scripted: ScriptedCaseDef in day.scripted_cases:
+			var family: String = str(scripted.passenger_overrides.get(&"family_name", ""))
+			_add_full_name(full_names, scripted.passenger_overrides.get(&"given_name", ""), family)
+			_add_full_name(full_names, scripted.truth_overrides.get(&"given_name", ""),
+					scripted.truth_overrides.get(&"family_name", family))
+			_add_full_name(full_names, scripted.injection_params.get(&"relative_given_name", ""), family)
+		for notice: WantedNoticeDef in day.wanted_notices:
+			_add_full_name(full_names, notice.given_name, notice.family_name)
+	var sorted_full: Array[String] = []
+	sorted_full.assign(full_names.keys())
+	sorted_full.sort()
+	for id: StringName in pools:
+		var pool: NamePool = pools[id]
+		var reserved: PackedStringArray = []
+		for name: String in RESERVED_FAMILY_NAMES:
+			if pool.family_names.has(name):
+				reserved.append(name)
+		for name: String in RESERVED_HOUSEHOLD_NAMES:
+			if pool.all_given_names().has(name):
+				reserved.append(name)
+		pool.reserved_names = reserved
+		var reserved_full: PackedStringArray = []
+		for full: String in sorted_full:
+			var family: String = full.substr(full.find(" ") + 1)
+			if pool.family_names.has(family) and not reserved.has(family):
+				reserved_full.append(full)
+		pool.reserved_full_names = reserved_full
+		_save(pool, NAMES_DIR, "namepool_%s" % pool.id)
+
+
+func _add_full_name(names: Dictionary[String, bool], given: Variant, family: Variant) -> void:
+	var g: String = str(given)
+	var f: String = str(family)
+	if not g.is_empty() and not f.is_empty():
+		names["%s %s" % [g, f]] = true
+
+
 ## Sauvegarde d'un jour : identifiants stables pour toutes ses sous-ressources.
 func _save_day(day: DayDef) -> void:
+	_days.append(day)
 	for scripted: ScriptedCaseDef in day.scripted_cases:
 		scripted.resource_scene_unique_id = "scripted_%s" % scripted.id
 	var counter: Array[int] = [0]

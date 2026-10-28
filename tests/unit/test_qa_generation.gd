@@ -1,5 +1,6 @@
 ## QA (docs/QA.md §6) — cohérence du générateur avec les passagers scénarisés.
-## Bugs ouverts : `pending("QA-xxx …")`, la suite reste verte.
+## QA-002 corrigé : noms (et noms de famille distinctifs) des personnages
+## réservés aux tirages (`NamePool.reserved_names` / `reserved_full_names`).
 extends GutTest
 
 const Gen := preload("res://tests/helpers/generation_fixtures.gd")
@@ -34,10 +35,10 @@ func _fixed_scripted_names() -> Dictionary:
 	return fixed
 
 
-## QA-002 : le générateur tire parfois le nom complet exact d'un personnage
-## scénarisé (≈ 1,9 % des passagers générés, ~2 par campagne) : une seconde
-## « Mira Vasquez-Orlov » au J3, « Lev Petrenko » aux J5 et J6, l'inspecteur
-## « Corentin Ravel » au guichet…
+## QA-002 (corrigé) : aucun passager généré ne porte le nom complet d'un
+## personnage scénarisé (avant : ≈ 1,9 %, une seconde « Mira Vasquez-Orlov »
+## au J3, « Lev Petrenko », l'inspecteur « Corentin Ravel » au guichet…), ni un
+## nom de famille distinctif réservé.
 func test_generated_passengers_never_reuse_a_scripted_full_name() -> void:
 	var fixed: Dictionary = _fixed_scripted_names()
 	assert_gt(fixed.size(), 10, "personnages scénarisés à nom fixe")
@@ -53,7 +54,7 @@ func test_generated_passengers_never_reuse_a_scripted_full_name() -> void:
 				var full: String = "%s %s" % [p.given_name, p.family_name]
 				if fixed.has(full):
 					hits.append("graine %d J%d #%d %s (= %s)" % [campaign, n, i, full, fixed[full]])
-	if not hits.is_empty():
-		pending("QA-002 : %d homonyme(s) de personnages scénarisés : %s" % [hits.size(), ", ".join(hits.slice(0, 6))])
-		return
-	assert_eq(hits.size(), 0)
+				var pool: NamePool = data.factions[p.faction_id].name_pool
+				if pool.is_reserved(p.family_name):
+					hits.append("graine %d J%d #%d nom réservé %s" % [campaign, n, i, p.family_name])
+	assert_eq(hits.size(), 0, ", ".join(hits.slice(0, 6)))

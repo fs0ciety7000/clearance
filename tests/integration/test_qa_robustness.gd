@@ -8,14 +8,12 @@ const DAY_SCENE: PackedScene = preload("res://scenes/main/day.tscn")
 const VK := VerdictKind.Kind
 
 var scene: DayScene = null
-var _reduce_before: bool = false
 var _saved_state: Dictionary = {}
 
 
 func before_each() -> void:
-	_reduce_before = Settings.reduce_motion
 	_saved_state = GameState.to_save_dict()
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, true, false)
+	Settings.set_session_value(Settings.KEY_REDUCE_MOTION, true)
 	GameState.new_campaign(20_871_315)
 	scene = DAY_SCENE.instantiate()
 	add_child_autofree(scene)
@@ -23,7 +21,7 @@ func before_each() -> void:
 
 func after_each() -> void:
 	get_tree().paused = false
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, _reduce_before, false)
+	Settings.clear_session_value(Settings.KEY_REDUCE_MOTION)
 	if SaveService.as_int(_saved_state.get("current_day", 0)) >= 1:
 		GameState.apply_save_dict(_saved_state)
 	else:
@@ -112,9 +110,9 @@ func test_escape_spam_leaves_pause_state_consistent() -> void:
 	assert_false(get_tree().paused)
 
 
-## QA-005 : un tampon maintenu au clavier, puis Échap (pause), relâché pendant
-## la pause : à la reprise, le maintien continue et le verdict tombe sans que
-## le joueur tienne la touche.
+## QA-005 (corrigé) : un tampon maintenu au clavier, puis Échap (pause),
+## relâché pendant la pause : le maintien est annulé à l'ouverture de la pause,
+## aucun verdict ne tombe à la reprise.
 func test_stamp_hold_does_not_survive_the_pause() -> void:
 	assert_true(await _first_case())
 	var dc: DayController = scene.day_controller
@@ -127,35 +125,30 @@ func test_stamp_hold_does_not_survive_the_pause() -> void:
 	await wait_process_frames(2)
 	scene.pause_menu.close()
 	await wait_seconds(DS.STAMP_HOLD + 0.4)
-	if dc.summary.get_processed_count() > 0 or button.is_holding():
-		pending("QA-005 : tampon maintenu relâché pendant la pause → verdict posé à la reprise")
-		return
-	assert_eq(dc.summary.get_processed_count(), 0)
+	assert_false(button.is_holding(), "maintien annulé par la pause")
+	assert_eq(dc.summary.get_processed_count(), 0, "aucun verdict posé à la reprise")
 
 
-## QA-006 : un réglage temporaire (`set_value(…, persist = false)` : argument
-## `--reduce-motion`, tests GUT) est écrit dans `user://settings.cfg` à la
-## fermeture de la pause (`PauseMenu.close()` → `Settings.save_settings()`).
+## QA-006 (corrigé) : un réglage de session (`set_session_value` : argument
+## `--reduce-motion`, tests GUT) n'est pas écrit à la fermeture de la pause
+## (`PauseMenu.close()` → `Settings.save_settings()`) ; la suite écrit dans un
+## fichier de test (`tests/helpers/gut_pre_run.gd`), jamais dans le réel.
 func test_temporary_setting_is_not_persisted_by_the_pause() -> void:
-	var path: String = Settings.SETTINGS_PATH
-	var backup: String = FileAccess.get_file_as_string(path) if FileAccess.file_exists(path) else ""
+	var path: String = Settings.settings_path
+	assert_ne(path, Settings.SETTINGS_PATH, "suite isolée du settings.cfg réel")
 	var cfg: ConfigFile = ConfigFile.new()
 	cfg.set_value(Settings.SECTION, String(Settings.KEY_REDUCE_MOTION), false)
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	cfg.save(path)
-	# `before_each` a posé reduce_motion = true sans persistance.
+	# `before_each` a posé reduce_motion = true pour la session.
+	assert_true(Settings.reduce_motion)
+	assert_true(Settings.is_session_value(Settings.KEY_REDUCE_MOTION))
 	scene.briefing.close()
 	scene.pause_menu.open()
 	scene.pause_menu.close()
 	var after: ConfigFile = ConfigFile.new()
 	after.load(path)
-	var persisted: bool = after.get_value(Settings.SECTION, String(Settings.KEY_REDUCE_MOTION), false)
-	if backup.is_empty():
-		DirAccess.remove_absolute(path)
-	else:
-		var file: FileAccess = FileAccess.open(path, FileAccess.WRITE)
-		file.store_string(backup)
-		file.close()
-	if persisted:
-		pending("QA-006 : réglage temporaire écrit dans settings.cfg par la pause")
-		return
-	assert_false(persisted)
+	var persisted: bool = after.get_value(Settings.SECTION, String(Settings.KEY_REDUCE_MOTION), true)
+	assert_false(persisted, "valeur de session non persistée")
+	assert_true(Settings.reduce_motion, "toujours active pour la session")
+	DirAccess.remove_absolute(path)

@@ -108,6 +108,9 @@ func test_every_catalog_option_applies() -> void:
 	var raised: Node3D = rig.headwear_root.get_node_or_null(^"Visor")
 	assert_not_null(raised)
 	assert_lt(raised.rotation_degrees.x, -30.0, "visière relevée")
+	# Les accessoires remplacés sont libérés par `queue_free` : une image pour
+	# qu'ils ne soient pas comptés comme orphelins (QA-016).
+	await wait_process_frames(1)
 
 
 func test_face_atlas_cells_all_drawn() -> void:

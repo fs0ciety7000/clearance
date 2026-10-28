@@ -90,16 +90,35 @@ func test_wrong_inner_types_load_safely() -> void:
 	assert_eq(Campaign.compliance(), 0.0, "historique illisible ignoré")
 
 
-## QA-003 : `validate` n'impose pas de borne haute au jour : une sauvegarde au
-## J99 (ou J11) est acceptée, le titre propose « CONTINUER — JOUR 99 » et la
-## scène de jour reste vide (`start_day` échoue, aucun écran).
+## QA-003 (corrigé) : une sauvegarde au-delà du dernier jour des données (J11,
+## J99) est refusée ; le dernier jour lui-même reste valide.
 func test_out_of_range_day_is_refused() -> void:
-	for day: int in [11, 99]:
+	var last: int = data.get_last_day_number()
+	assert_eq(SaveService.last_day(), last, "borne lue dans data/days")
+	for day: int in [last + 1, 99]:
 		_write_raw(JSON.stringify(_valid_dict(day)))
-		if not SaveService.load_slot(0, DIR).is_empty():
-			pending("QA-003 : sauvegarde au J%d acceptée (pas de borne haute)" % day)
-			return
-	assert_true(true)
+		assert_true(SaveService.load_slot(0, DIR).is_empty(), "J%d refusé" % day)
+		assert_false(GameState.load_from_slot(0, DIR), "J%d : état inchangé" % day)
+	_write_raw(JSON.stringify(_valid_dict(last)))
+	assert_false(SaveService.load_slot(0, DIR).is_empty(), "J%d accepté" % last)
+
+
+## QA-018 (corrigé) : l'écriture renomme le `.tmp` par-dessus la sauvegarde
+## (jamais de suppression préalable) ; un `.tmp` complet laissé par un arrêt
+## avant le renommage est relu si la sauvegarde principale manque.
+func test_interrupted_save_is_recovered_from_tmp() -> void:
+	assert_eq(SaveService.save(_valid_dict(4), 0, DIR), OK)
+	assert_eq(SaveService.save(_valid_dict(5), 0, DIR), OK, "écrase la précédente")
+	var path: String = SaveService.slot_path(0, DIR)
+	assert_false(FileAccess.file_exists(path + SaveService.TMP_SUFFIX), "pas de .tmp résiduel")
+	assert_false(FileAccess.file_exists(path + SaveService.BACKUP_SUFFIX), "pas de .bak résiduel")
+	assert_eq(SaveService.as_int(SaveService.load_slot(0, DIR).get("current_day")), 5)
+	# Arrêt simulé entre l'écriture du .tmp et le renommage, ancienne absente.
+	DirAccess.rename_absolute(path, path + SaveService.TMP_SUFFIX)
+	assert_true(SaveService.has_save(0, DIR), ".tmp vu comme sauvegarde")
+	assert_eq(SaveService.as_int(SaveService.load_slot(0, DIR).get("current_day")), 5, "relu depuis le .tmp")
+	SaveService.delete(0, DIR)
+	assert_false(SaveService.has_save(0, DIR), "delete efface aussi le .tmp")
 
 
 func test_scene_resumes_from_a_loaded_save() -> void:

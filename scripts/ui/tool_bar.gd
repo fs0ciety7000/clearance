@@ -11,6 +11,13 @@ signal next_pressed()
 signal stamped(kind: VerdictKind.Kind)
 
 const HEIGHT: float = 96.0
+## Largeur minimale de la ligne d'état : en dessous, elle se replie en colonne
+## et fait grandir la barre (QA-011).
+const STATUS_MIN_W: float = 360.0
+## Niveaux de compaction (Steam Deck, J7+ : « SUIVANT » + trois tampons) :
+## 1 sans légende du tiroir, 2 tampons sans ligne d'aide, 3 sans touches sur
+## Inspection / Interroger, 4 sans ligne d'état.
+const MAX_COMPACT_LEVEL: int = 4
 
 var inspect_button: Button = null
 var interrogate_button: Button = null
@@ -23,6 +30,12 @@ var _badge: PanelContainer = null
 var _badge_label: Label = null
 var _next_label: Label = null
 var _next_keys: Control = null
+var _row: HBoxContainer = null
+var _caption_box: VBoxContainer = null
+var _key_rows: Array[Control] = []
+## Niveau de compaction en vigueur (0 = barre complète).
+var compact_level: int = 0
+var _compaction_queued: bool = false
 
 
 func _ready() -> void:
@@ -37,6 +50,7 @@ func _ready() -> void:
 	var row: HBoxContainer = HBoxContainer.new()
 	row.add_theme_constant_override("separation", DS.SPACE_4)
 	margin.add_child(row)
+	_row = row
 
 	inspect_button = _tool_button(UiIcon.Kind.DIAMOND, UiText.t("tb_inspection", "INSPECTION"), ["ESPACE", "LT"])
 	inspect_button.toggle_mode = true
@@ -87,6 +101,7 @@ func _ready() -> void:
 	drawer_row.add_theme_constant_override("separation", DS.SPACE_3)
 	drawer.add_child(drawer_row)
 	var caption_box: VBoxContainer = VBoxContainer.new()
+	_caption_box = caption_box
 	caption_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	caption_box.add_theme_constant_override("separation", DS.SPACE_1)
 	drawer_row.add_child(caption_box)
@@ -109,9 +124,72 @@ func _ready() -> void:
 		button.stamped.connect(_on_stamped)
 		drawer_row.add_child(button)
 		stamps[kind] = button
+	_key_rows = [(inspect_button.get_child(0) as HBoxContainer).get_child(2) as Control,
+			(interrogate_button.get_child(0) as HBoxContainer).get_child(3) as Control]
 	set_detain_available(false)
 	set_stamps_locked(true)
 	set_unlocked_count(0)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED or what == NOTIFICATION_THEME_CHANGED:
+		queue_compaction()
+
+
+## Recalcule (en différé) le niveau de compaction pour que la barre tienne
+## dans la largeur de son parent.
+func queue_compaction() -> void:
+	if _compaction_queued or _row == null:
+		return
+	_compaction_queued = true
+	update_compaction.call_deferred()
+
+
+func update_compaction() -> void:
+	_compaction_queued = false
+	if _row == null or not is_inside_tree():
+		return
+	var available: float = get_parent_area_size().x
+	if available <= 0.0:
+		return
+	var level: int = 0
+	while level <= MAX_COMPACT_LEVEL:
+		_apply_compact_level(level)
+		if required_width() <= available:
+			break
+		level += 1
+	compact_level = mini(level, MAX_COMPACT_LEVEL)
+
+
+func _apply_compact_level(level: int) -> void:
+	_caption_box.visible = level < 1
+	for kind: VerdictKind.Kind in stamps:
+		stamps[kind].compact = level >= 2
+	for keys: Control in _key_rows:
+		keys.visible = level < 3
+	_status.visible = level < 4
+	for button: Button in [inspect_button, interrogate_button, next_button]:
+		_fit_button(button, button.get_child(0) as HBoxContainer)
+
+
+## Largeur nécessaire à la barre au niveau de compaction appliqué.
+func required_width() -> float:
+	var total: float = DS.SPACE_6 * 2.0
+	var count: int = 0
+	for child: Node in _row.get_children():
+		var control: Control = child as Control
+		if control == null or not control.visible:
+			continue
+		count += 1
+		if control == _status:
+			total += STATUS_MIN_W
+		else:
+			total += control.get_combined_minimum_size().x
+	total += _row.get_theme_constant(&"separation") * maxi(count - 1, 0)
+	var panel: StyleBox = get_theme_stylebox(&"panel")
+	if panel != null:
+		total += panel.get_minimum_size().x
+	return total
 
 
 ## Recopie les polices du thème (BodySmall / BodyStrong) dans la ligne d'état
@@ -121,6 +199,7 @@ func refresh_fonts() -> void:
 	_status.add_theme_font_size_override(&"bold_font_size", get_theme_font_size(&"font_size", &"BodySmall"))
 	_status.add_theme_font_override(&"normal_font", get_theme_font(&"font", &"BodySmall"))
 	_status.add_theme_font_override(&"bold_font", get_theme_font(&"font", &"BodyStrong"))
+	queue_compaction()
 
 
 ## Bouton d'outil : icône + libellé + touches, dans un `ButtonTool`.
@@ -199,6 +278,7 @@ func _set_inner_dim(button: Button, dim: bool) -> void:
 func set_unlocked_count(count: int) -> void:
 	_badge.visible = count > 0
 	_badge_label.text = str(count)
+	queue_compaction()
 
 
 ## « Suivant » : `mode` = &"ready" (CTA jaune), &"approaching", &"departing", &"hidden".
@@ -219,6 +299,7 @@ func set_next_mode(mode: StringName) -> void:
 			_next_label.add_theme_color_override(&"font_color", DS.STATE_AMBER)
 			_next_keys.visible = false
 			next_button.add_theme_stylebox_override(&"disabled", ThemeBuilder.chamfer_box(DS.BG_PANEL, DS.STATE_AMBER, DS.BORDER_DEFAULT, DS.CHAMFER_M, 0))
+	queue_compaction()
 
 
 func set_status(bbcode: String) -> void:
@@ -234,10 +315,12 @@ func set_stamps_locked(locked: bool) -> void:
 		stamps[kind].locked = locked
 	_stamps_caption.text = UiText.t("tb_stamps_locked", "TAMPONS VERROUILLÉS") if locked else UiText.t("tb_stamps", "TAMPONS OFFICIELS")
 	_stamps_caption.add_theme_color_override(&"font_color", DS.TEXT_SECONDARY if locked else DS.ACCENT_YELLOW)
+	queue_compaction()
 
 
 func set_detain_available(available: bool) -> void:
 	stamps[VerdictKind.Kind.DETAIN].visible = available
+	queue_compaction()
 
 
 func set_fx_intensity(value: float) -> void:

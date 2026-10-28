@@ -25,3 +25,4 @@ implant_weights = Dictionary[StringName, float]({
 &"DER-1": 1.0,
 &"NX-4": 0.5
 })
+year_only_birth_rate = 0.5

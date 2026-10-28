@@ -275,7 +275,8 @@ func _apply_narrative(result: CaseResult) -> void:
 	if current_scripted != null:
 		result.scripted_id = current_scripted.id
 	result.narrative_changes = CaseConsequences.compute(current_scripted, current_case, result.verdict_kind,
-			not current_key.expected_violations.is_empty(), result.password_answered, day.day_number, flag_values())
+			not current_key.expected_violations.is_empty(), result.password_answered, day.day_number, flag_values(),
+			result.luciole_report)
 
 
 static func _passenger_label(case: Case) -> String:

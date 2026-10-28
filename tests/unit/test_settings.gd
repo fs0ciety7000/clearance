@@ -80,3 +80,29 @@ func test_no_signal_when_value_unchanged() -> void:
 	watch_signals(EventBus)
 	_set_no_persist(&"subtitles", true)
 	assert_signal_not_emitted(EventBus, "settings_changed")
+
+
+## QA-006 : une valeur de session n'est jamais écrite ; un choix du joueur
+## (même différé) l'est, et remplace la valeur de session.
+func test_session_value_is_never_persisted() -> void:
+	var path: String = "user://test_settings/unit_settings.cfg"
+	_settings.set(&"settings_path", path)
+	_settings.call(&"set_session_value", &"reduce_motion", true)
+	var current: bool = _value(&"reduce_motion")
+	assert_true(current)
+	_settings.call(&"save_settings")
+	var cfg: ConfigFile = ConfigFile.new()
+	cfg.load(path)
+	var stored: bool = cfg.get_value("settings", "reduce_motion", true)
+	assert_false(stored, "valeur persistée inchangée")
+	_settings.call(&"clear_session_value", &"reduce_motion")
+	current = _value(&"reduce_motion")
+	assert_false(current, "retour à la valeur persistée")
+	_settings.call(&"set_session_value", &"reduce_motion", true)
+	_settings.call(&"set_value", &"reduce_motion", true)
+	var session: bool = _settings.call(&"is_session_value", &"reduce_motion")
+	assert_false(session, "choix du joueur")
+	cfg.load(path)
+	stored = cfg.get_value("settings", "reduce_motion", false)
+	assert_true(stored, "choix du joueur persisté")
+	DirAccess.remove_absolute(path)

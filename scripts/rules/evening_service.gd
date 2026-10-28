@@ -42,6 +42,20 @@ const HOSTILE_TRUST: int = -2
 const PRIORITY: Array[StringName] = [LINE_RENT, LINE_FOOD, LINE_OXYGEN, &"meds", LINE_HEATING]
 
 
+## Prime de signalement du mot des Lucioles (GDD §4.7, `EconomyDef.report_bonus`) :
+## montant crédité **ce soir** si le joueur signale, 0 s'il brûle le mot
+## (QA-008 : l'écran l'ajoute aux fonds de la soirée, `evening_funds`).
+static func report_bonus(economy: EconomyDef, report_it: bool) -> int:
+	return economy.report_bonus if report_it else 0
+
+
+## Fonds disponibles pour les postes et les options du soir : solde au sortir
+## du shift (`balance_before` de `apply`) + primes déjà créditées ce soir
+## (`report_bonus`). C'est aussi le `balance_before` à passer à `apply`.
+static func evening_funds(shift_balance: int, bonuses: int) -> int:
+	return shift_balance + bonuses
+
+
 ## Postes de la soirée du jour `day_number`, dans l'ordre d'affichage.
 static func build_lines(economy: EconomyDef, day_number: int, household: Household) -> Array[ExpenseLine]:
 	var lines: Array[ExpenseLine] = []

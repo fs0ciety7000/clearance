@@ -13,6 +13,8 @@ extends ScreenBase
 signal closed()
 
 const LEFT_RATIO: float = 1.45
+## Pas de défilement au clavier / à la manette (px logiques).
+const SCROLL_STEP: float = 120.0
 ## Commandes rappelées au J1 (tutoriel diégétique court, UI_FLOW §7) :
 ## [touches, clé du libellé].
 const CONTROLS: Array[Array] = [
@@ -25,6 +27,11 @@ var household: Household = null
 var credits_balance: int = 0
 var day: DayDef = null
 var start_button: Button = null
+## Contenu défilant (directive, règles, messages, foyer) entre l'en-tête et la
+## barre d'action fixe (QA-001 : 22 règles au J10, plancher de texte au Deck).
+var scroll: ScrollContainer = null
+## « Suite du bulletin » : visible tant que du contenu reste sous le pli.
+var scroll_hint: Label = null
 
 
 func setup(p_content: BriefingContent, p_household: Household, p_credits: int, p_day: DayDef = null) -> void:
@@ -44,12 +51,26 @@ func close(choice: StringName = &"start") -> void:
 func _build() -> void:
 	if content == null:
 		content = BriefingContent.new()
-	var page: VBoxContainer = vbox(DS.SPACE_6)
+	var page: VBoxContainer = vbox(DS.SPACE_4)
 	root_box().add_child(page)
 	page.add_child(_header())
+	scroll = ScrollContainer.new()
+	scroll.name = "BriefingScroll"
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# Place de la barre réservée : pas de boucle « barre visible → texte replié
+	# → barre masquée » (cf. `EndScreen`).
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_RESERVE
+	scroll.follow_focus = false
+	page.add_child(scroll)
+	var inner: MarginContainer = MarginContainer.new()
+	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner.add_theme_constant_override("margin_right", DS.SPACE_4)
+	inner.add_theme_constant_override("margin_bottom", DS.SPACE_2)
+	scroll.add_child(inner)
 	var columns: HBoxContainer = hbox(DS.SPACE_8)
-	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	page.add_child(columns)
+	inner.add_child(columns)
 	var left: VBoxContainer = vbox(DS.SPACE_5)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.size_flags_stretch_ratio = LEFT_RATIO
@@ -67,8 +88,46 @@ func _build() -> void:
 	columns.add_child(right)
 	right.add_child(_messages())
 	right.add_child(_household())
+	page.add_child(rule_line())
 	page.add_child(_footer())
+	var bar: VScrollBar = scroll.get_v_scroll_bar()
+	bar.changed.connect(_refresh_scroll_hint)
+	bar.value_changed.connect(func(_v: float) -> void: _refresh_scroll_hint())
+	_refresh_scroll_hint.call_deferred()
 	start_button.grab_focus.call_deferred()
+
+
+## Vrai si une partie du bulletin est encore sous le pli.
+func has_more_below() -> bool:
+	if scroll == null:
+		return false
+	var bar: VScrollBar = scroll.get_v_scroll_bar()
+	return bar.max_value - bar.page - bar.value > 1.0
+
+
+func _refresh_scroll_hint() -> void:
+	if scroll_hint != null:
+		scroll_hint.modulate.a = 1.0 if has_more_below() else 0.0
+
+
+## Défilement au clavier / à la manette (haut/bas, pages) : le bouton d'action
+## garde le focus, la souris défile à la molette ou par la barre.
+func _input(event: InputEvent) -> void:
+	if scroll == null or is_closing() or not is_visible_in_tree() or not event.is_pressed():
+		return
+	var step: float = 0.0
+	if event.is_action(&"ui_down"):
+		step = SCROLL_STEP
+	elif event.is_action(&"ui_up"):
+		step = -SCROLL_STEP
+	elif event.is_action(&"ui_page_down"):
+		step = scroll.size.y * 0.8
+	elif event.is_action(&"ui_page_up"):
+		step = -scroll.size.y * 0.8
+	if step == 0.0:
+		return
+	scroll.scroll_vertical = roundi(scroll.scroll_vertical + step)
+	get_viewport().set_input_as_handled()
 
 
 func _header() -> Control:
@@ -161,7 +220,8 @@ func _controls() -> Control:
 		cap_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cap.add_child(cap_label)
 		row.add_child(cap)
-		var text: Label = label(UiText.t(caption_key, caption_key), &"BodySmall")
+		var text: Label = wrapped(UiText.t(caption_key, caption_key), &"BodySmall")
+		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(text)
 		grid.add_child(row)
@@ -293,7 +353,9 @@ func _household() -> Control:
 func _slogan() -> Control:
 	var slogan_row: HBoxContainer = hbox(DS.SPACE_2)
 	slogan_row.add_child(UiIcon.make(UiIcon.Kind.LOGO, DS.YELLOW_60, DS.ICON_S))
-	slogan_row.add_child(label("« %s »" % UiText.t(content.slogan_key, ""), &"BodySmall", DS.ACCENT_YELLOW))
+	var slogan: Label = wrapped("« %s »" % UiText.t(content.slogan_key, ""), &"BodySmall", DS.ACCENT_YELLOW)
+	slogan.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slogan_row.add_child(slogan)
 	return slogan_row
 
 
@@ -301,10 +363,13 @@ func _footer() -> Control:
 	var row: HBoxContainer = hbox(DS.SPACE_4)
 	var texts: VBoxContainer = vbox(DS.SPACE_1)
 	texts.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(texts)
+	scroll_hint = label(UiText.t("br_scroll_hint", "▼ SUITE DU BULLETIN · MOLETTE OU ↑ ↓"), &"DataSmall", DS.ACCENT_CYAN)
+	scroll_hint.modulate.a = 0.0
+	texts.add_child(scroll_hint)
 	texts.add_child(_slogan())
-	texts.add_child(label(UiText.t("br_hint", "Lecture libre : l'horloge du shift démarre à la prise de poste."), &"CaptionLabel"))
-	row.add_child(spacer())
+	texts.add_child(wrapped(UiText.t("br_hint", "Lecture libre : l'horloge du shift démarre à la prise de poste."), &"CaptionLabel"))
 	start_button = button(UiText.t("br_start", "PRENDRE SON POSTE"), &"ButtonPrimary")
 	start_button.custom_minimum_size.x = 320.0
 	start_button.pressed.connect(close.bind(&"start"))

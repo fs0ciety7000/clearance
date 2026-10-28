@@ -8,6 +8,16 @@
 ## (`res://default_bus_layout.tres`, docs/AUDIO.md §2) ; les autres réglages
 ## (taille du texte, effets, animations, sous-titres, horloge) sont appliqués
 ## par leurs consommateurs à l'écoute de `settings_changed`.
+##
+## Réglages **persistés** ≠ réglages **de session** (QA-006) :
+## - `set_value()` = choix du joueur ; `persist = false` ne fait que différer
+##   l'écriture (glissement d'un slider), le prochain `save_settings()` l'écrit ;
+## - `set_session_value()` = valeur temporaire (argument `--reduce-motion`,
+##   outils, tests) : appliquée et notifiée, **jamais écrite** ;
+##   `save_settings()` écrit pour cette clé la dernière valeur persistée.
+##   `clear_session_value()` la retire ; un `set_value()` du joueur la remplace.
+## - `use_storage(path)` change le fichier (tests GUT :
+##   `tests/helpers/gut_pre_run.gd`, jamais le `settings.cfg` réel).
 ## Pas de `class_name` (autoload).
 extends Node
 
@@ -64,6 +74,12 @@ const VOLUME_BUSES: Dictionary = {
 }
 
 var _values: Dictionary[StringName, Variant] = {}
+## Valeurs telles qu'écrites (ou lues) dans `settings_path`.
+var _persisted: Dictionary[StringName, Variant] = {}
+## Clés portant une valeur de session (jamais écrite).
+var _session_keys: Dictionary[StringName, bool] = {}
+## Fichier des préférences (`SETTINGS_PATH` ; autre chemin : `use_storage`).
+var settings_path: String = SETTINGS_PATH
 
 var fx_intensity: float:
 	get:
@@ -143,20 +159,63 @@ func get_volume(key: StringName) -> float:
 	return get_float(key)
 
 
-## Modifie un réglage. Renvoie `false` si la clé est inconnue.
-## `persist = false` évite l'écriture disque (ex. glissement d'un slider ;
-## appeler `save_settings()` au relâchement).
+## Modifie un réglage (choix du joueur). Renvoie `false` si la clé est
+## inconnue. `persist = false` diffère l'écriture disque (ex. glissement d'un
+## slider ; appeler `save_settings()` au relâchement). Remplace une éventuelle
+## valeur de session de la clé.
 func set_value(key: StringName, value: Variant, persist: bool = true) -> bool:
 	if not has_key(key):
 		push_error("Settings: clé inconnue '%s'" % key)
 		return false
+	_session_keys.erase(key)
+	var changed: bool = _store(key, value)
+	if persist and (changed or _persisted[key] != _values[key]):
+		save_settings()
+	return true
+
+
+## Valeur temporaire pour la session (arguments, outils, tests) : appliquée et
+## notifiée comme `set_value`, mais jamais écrite par `save_settings()`.
+func set_session_value(key: StringName, value: Variant) -> bool:
+	if not has_key(key):
+		push_error("Settings: clé inconnue '%s'" % key)
+		return false
+	_session_keys[key] = true
+	_store(key, value)
+	return true
+
+
+## Retire la valeur de session d'une clé : revient à la valeur persistée.
+func clear_session_value(key: StringName) -> void:
+	if not _session_keys.has(key):
+		return
+	_session_keys.erase(key)
+	_store(key, _persisted[key])
+
+
+func is_session_value(key: StringName) -> bool:
+	return _session_keys.has(key)
+
+
+## Change le fichier des préférences (tests) : valeurs par défaut, sessions
+## effacées, puis lecture de `path` s'il existe.
+func use_storage(path: String) -> void:
+	settings_path = path
+	_session_keys.clear()
+	_reset_values()
+	load_settings()
+	apply_all()
+	for key: StringName in DEFAULTS:
+		EventBus.settings_changed.emit(key, _values[key])
+
+
+## Affecte, applique et notifie ; `false` si la valeur ne change pas.
+func _store(key: StringName, value: Variant) -> bool:
 	var sanitized: Variant = _sanitize(key, value)
 	if _values[key] == sanitized:
-		return true
+		return false
 	_values[key] = sanitized
 	_apply(key)
-	if persist:
-		save_settings()
 	EventBus.settings_changed.emit(key, sanitized)
 	return true
 
@@ -171,25 +230,31 @@ func reset_to_defaults(persist: bool = true) -> void:
 
 func load_settings() -> Error:
 	var config: ConfigFile = ConfigFile.new()
-	var err: Error = config.load(SETTINGS_PATH)
+	var err: Error = config.load(settings_path)
 	if err == ERR_FILE_NOT_FOUND:
 		return OK
 	if err != OK:
-		push_warning("Settings: lecture de %s impossible (%s), valeurs par défaut." % [SETTINGS_PATH, error_string(err)])
+		push_warning("Settings: lecture de %s impossible (%s), valeurs par défaut." % [settings_path, error_string(err)])
 		return err
 	for key: StringName in DEFAULTS:
 		var stored: Variant = config.get_value(SECTION, String(key), DEFAULTS[key])
-		_values[key] = _sanitize(key, stored)
+		_persisted[key] = _sanitize(key, stored)
+		if not _session_keys.has(key):
+			_values[key] = _persisted[key]
 	return OK
 
 
+## Écrit les choix du joueur ; une clé de session garde sa valeur persistée.
 func save_settings() -> Error:
 	var config: ConfigFile = ConfigFile.new()
 	for key: StringName in DEFAULTS:
-		config.set_value(SECTION, String(key), _values[key])
-	var err: Error = config.save(SETTINGS_PATH)
+		if not _session_keys.has(key):
+			_persisted[key] = _values[key]
+		config.set_value(SECTION, String(key), _persisted[key])
+	DirAccess.make_dir_recursive_absolute(settings_path.get_base_dir())
+	var err: Error = config.save(settings_path)
 	if err != OK:
-		push_warning("Settings: écriture de %s impossible (%s)." % [SETTINGS_PATH, error_string(err)])
+		push_warning("Settings: écriture de %s impossible (%s)." % [settings_path, error_string(err)])
 	return err
 
 
@@ -201,8 +266,10 @@ func apply_all() -> void:
 
 func _reset_values() -> void:
 	_values.clear()
+	_persisted.clear()
 	for key: StringName in DEFAULTS:
 		_values[key] = DEFAULTS[key]
+		_persisted[key] = DEFAULTS[key]
 
 
 func _apply(key: StringName) -> void:

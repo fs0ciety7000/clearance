@@ -100,7 +100,7 @@ static func _fill_dates(doc: DocumentInstance, def: DocumentTypeDef, p: Passenge
 	var issue: int = today - rng.randi_range(0, max_age)
 	if hi > LONG_VALIDITY:
 		# Carte d'identité : émise après les 16 ans du titulaire.
-		issue = maxi(issue, GameDate.add_years(p.birth_date, ID_CARD_MIN_AGE))
+		issue = maxi(issue, GameDate.add_years(GameDate.latest_day(p.birth_date), ID_CARD_MIN_AGE))
 		issue = mini(issue, today)
 	doc.issue_date = issue
 	doc.expiry_date = issue + duration

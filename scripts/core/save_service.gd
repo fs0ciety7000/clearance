@@ -1,13 +1,20 @@
 ## Sauvegarde de campagne (ARCHITECTURE §10, D-008) — JSON texte versionné.
 ##
 ## - Fichier `user://saves/slot_<n>.json`, jamais de `.tres` (un `.tres` peut
-##   exécuter du code) ; écriture atomique (`.tmp` puis renommage).
+##   exécuter du code) ; écriture atomique : `.tmp` écrit puis renommé
+##   **par-dessus** la sauvegarde (jamais de suppression préalable, QA-018) ;
+##   si la plateforme refuse d'écraser, l'ancienne est d'abord mise de côté en
+##   `.bak`. À la lecture, une sauvegarde principale absente ou illisible est
+##   remplacée par le `.tmp` complet, puis par le `.bak`.
 ## - Contenu : le dictionnaire produit par `GameState.to_save_dict()` (graine,
 ##   jour, crédits, score, citations, drapeaux narratifs, historique, foyer),
 ##   plus `version`, `game_version` et `saved_at` posés ici.
 ## - Lecture : JSON → migrations successives (`migrate`) → validation de schéma
 ##   (`validate`) ; tout fichier illisible, corrompu ou d'une version future est
-##   refusé (`push_warning`, renvoie un dictionnaire vide).
+##   refusé (`push_warning`, renvoie un dictionnaire vide), de même qu'un jour
+##   hors de `1..dernier jour des données` (QA-003).
+## - Version du jeu : `application/config/version` de `project.godot`
+##   (`game_version()`), écrite dans `game_version` (informative).
 ## Pure (aucun autoload) : le dossier est paramétrable pour les tests.
 class_name SaveService
 extends RefCounted
@@ -18,7 +25,12 @@ extends RefCounted
 ## 3 — M7 : `case_memory` (passagers scénarisés), membre `detained` du foyer,
 ##     jauge `suspicion` (SC-02 approuvé : +1 rétroactif, D-052).
 const VERSION: int = 3
-const GAME_VERSION: String = "0.7.0-m7"
+## Réglage de projet portant la version du jeu (R23, §16.1).
+const VERSION_SETTING: String = "application/config/version"
+## Dossier des `DayDef` (`day_NN.tres`) : borne haute du jour (`last_day()`).
+const DAYS_DIR: String = "res://data/days"
+const TMP_SUFFIX: String = ".tmp"
+const BACKUP_SUFFIX: String = ".bak"
 const DEFAULT_DIR: String = "user://saves"
 const DEFAULT_SLOT: int = 0
 ## Clés obligatoires après migration, avec leur type JSON attendu.
@@ -35,6 +47,8 @@ const SCHEMA: Dictionary[String, int] = {
 	"case_memory": TYPE_DICTIONARY,
 }
 
+static var _last_day_cache: int = 0
+
 
 ## Entier d'une valeur JSON (nombre, sinon `fallback`) — sans conversion non sûre.
 static func as_int(value: Variant, fallback: int = 0) -> int:
@@ -47,47 +61,100 @@ static func as_int(value: Variant, fallback: int = 0) -> int:
 	return fallback
 
 
+## Version du jeu (`project.godot`), « 0.0.0 » si absente.
+static func game_version() -> String:
+	var value: Variant = ProjectSettings.get_setting(VERSION_SETTING, "")
+	var text: String = str(value) if value != null else ""
+	return text if not text.is_empty() else "0.0.0"
+
+
+## Dernier jour jouable : plus grand `NN` des `day_NN.tres` de `DAYS_DIR`
+## (gère les `.remap` d'un export). Lu une fois puis mis en cache.
+static func last_day() -> int:
+	if _last_day_cache > 0:
+		return _last_day_cache
+	var dir: DirAccess = DirAccess.open(DAYS_DIR)
+	if dir == null:
+		return 0
+	var last: int = 0
+	for file: String in dir.get_files():
+		var name: String = file.trim_suffix(".remap")
+		if name.begins_with("day_") and name.ends_with(".tres"):
+			var number: String = name.trim_prefix("day_").trim_suffix(".tres")
+			if number.is_valid_int():
+				last = maxi(last, number.to_int())
+	_last_day_cache = last
+	return last
+
+
 static func slot_path(slot: int = DEFAULT_SLOT, dir: String = DEFAULT_DIR) -> String:
 	return dir.path_join("slot_%d.json" % slot)
 
 
+## Vrai si une sauvegarde (principale, ou `.tmp` / `.bak` de secours) existe.
 static func has_save(slot: int = DEFAULT_SLOT, dir: String = DEFAULT_DIR) -> bool:
-	return FileAccess.file_exists(slot_path(slot, dir))
+	var path: String = slot_path(slot, dir)
+	return FileAccess.file_exists(path) or FileAccess.file_exists(path + TMP_SUFFIX) \
+			or FileAccess.file_exists(path + BACKUP_SUFFIX)
 
 
 ## Écrit `data` (copié, complété de `version`/`game_version`/`saved_at`).
+## Atomique : la sauvegarde précédente reste lisible jusqu'au renommage.
 static func save(data: Dictionary, slot: int = DEFAULT_SLOT, dir: String = DEFAULT_DIR) -> Error:
 	var payload: Dictionary = data.duplicate(true)
 	payload["version"] = VERSION
-	payload["game_version"] = GAME_VERSION
+	payload["game_version"] = game_version()
 	payload["saved_at"] = Time.get_datetime_string_from_system(true)
 	var err: Error = DirAccess.make_dir_recursive_absolute(dir)
 	if err != OK and err != ERR_ALREADY_EXISTS:
 		push_warning("SaveService: dossier %s inaccessible (%s)" % [dir, error_string(err)])
 		return err
 	var path: String = slot_path(slot, dir)
-	var tmp_path: String = path + ".tmp"
+	var tmp_path: String = path + TMP_SUFFIX
+	var backup_path: String = path + BACKUP_SUFFIX
 	var file: FileAccess = FileAccess.open(tmp_path, FileAccess.WRITE)
 	if file == null:
-		push_warning("SaveService: écriture de %s impossible (%s)" % [tmp_path, error_string(FileAccess.get_open_error())])
-		return FileAccess.get_open_error()
+		err = FileAccess.get_open_error()
+		push_warning("SaveService: écriture de %s impossible (%s)" % [tmp_path, error_string(err)])
+		return err
 	file.store_string(JSON.stringify(payload, "\t", true))
+	file.flush()
+	err = file.get_error()
 	file.close()
-	if FileAccess.file_exists(path):
-		DirAccess.remove_absolute(path)
+	if err != OK:
+		push_warning("SaveService: écriture de %s incomplète (%s)" % [tmp_path, error_string(err)])
+		DirAccess.remove_absolute(tmp_path)
+		return err
+	# Renommage par-dessus : atomique sous Linux / macOS (rename) et Windows.
 	err = DirAccess.rename_absolute(tmp_path, path)
+	if err != OK and FileAccess.file_exists(path):
+		# Plateforme qui refuse d'écraser : l'ancienne passe en `.bak` (relue
+		# en secours) avant le renommage, jamais supprimée avant.
+		if FileAccess.file_exists(backup_path):
+			DirAccess.remove_absolute(backup_path)
+		err = DirAccess.rename_absolute(path, backup_path)
+		if err == OK:
+			err = DirAccess.rename_absolute(tmp_path, path)
 	if err != OK:
 		push_warning("SaveService: renommage de %s impossible (%s)" % [tmp_path, error_string(err)])
-	return err
+		return err
+	if FileAccess.file_exists(backup_path):
+		DirAccess.remove_absolute(backup_path)
+	return OK
 
 
 ## Lit, migre et valide une sauvegarde. Vide si absente ou invalide.
+## Secours (QA-018) : si la sauvegarde principale manque ou est refusée, le
+## `.tmp` (écriture terminée mais pas encore renommée) puis le `.bak`.
 static func load_slot(slot: int = DEFAULT_SLOT, dir: String = DEFAULT_DIR) -> Dictionary:
 	var path: String = slot_path(slot, dir)
-	if not FileAccess.file_exists(path):
-		return {}
-	var text: String = FileAccess.get_file_as_string(path)
-	return parse(text, path)
+	for candidate: String in [path, path + TMP_SUFFIX, path + BACKUP_SUFFIX]:
+		if not FileAccess.file_exists(candidate):
+			continue
+		var data: Dictionary = parse(FileAccess.get_file_as_string(candidate), candidate)
+		if not data.is_empty():
+			return data
+	return {}
 
 
 ## Analyse un texte JSON de sauvegarde (migrations + validation).
@@ -109,8 +176,9 @@ static func parse(text: String, origin: String = "<texte>") -> Dictionary:
 
 static func delete(slot: int = DEFAULT_SLOT, dir: String = DEFAULT_DIR) -> void:
 	var path: String = slot_path(slot, dir)
-	if FileAccess.file_exists(path):
-		DirAccess.remove_absolute(path)
+	for candidate: String in [path, path + TMP_SUFFIX, path + BACKUP_SUFFIX]:
+		if FileAccess.file_exists(candidate):
+			DirAccess.remove_absolute(candidate)
 
 
 ## Fait monter un dictionnaire de sauvegarde jusqu'à `VERSION`. Vide si la
@@ -166,8 +234,10 @@ static func _migrate_2_to_3(data: Dictionary) -> Dictionary:
 	return data
 
 
-## Contrôle de schéma : message d'erreur, vide si conforme.
-static func validate(data: Dictionary) -> String:
+## Contrôle de schéma : message d'erreur, vide si conforme. `max_day` : borne
+## haute du jour (défaut : `last_day()`, dernier jour des données ; ≤ 0 si les
+## données sont introuvables = pas de borne).
+static func validate(data: Dictionary, max_day: int = -1) -> String:
 	for key: String in SCHEMA:
 		if not data.has(key):
 			return "clé « %s » manquante" % key
@@ -179,4 +249,7 @@ static func validate(data: Dictionary) -> String:
 	var day: int = as_int(data["current_day"])
 	if day < 1:
 		return "jour %d invalide" % day
+	var last: int = max_day if max_day >= 0 else last_day()
+	if last > 0 and day > last:
+		return "jour %d au-delà du dernier jour (%d)" % [day, last]
 	return ""

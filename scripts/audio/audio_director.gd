@@ -139,7 +139,24 @@ func _exit_tree() -> void:
 	_apply_ducks(0.0, 0.0)
 	AudioBuses.set_effect_enabled(AudioBuses.MUSIC, AudioBuses.FX_MUFFLE, false)
 	_bark_cache.clear()
+	_stop_all_players(self)
 	AudioCueBank.clear_cache()
+
+
+## Arrête tous les lecteurs (pools, ambiances, musique, émetteurs) : un flux
+## encore joué à la fermeture du jeu reste référencé par l'AudioServer
+## (« ObjectDB instances leaked », « resources still in use », QA-016).
+static func _stop_all_players(node: Node) -> void:
+	for child: Node in node.get_children():
+		if child is AudioStreamPlayer:
+			var player: AudioStreamPlayer = child
+			player.stop()
+			player.stream = null
+		elif child is AudioStreamPlayer3D:
+			var player_3d: AudioStreamPlayer3D = child
+			player_3d.stop()
+			player_3d.stream = null
+		_stop_all_players(child)
 
 
 func _pool(node_name: String, bus_name: StringName, size: int) -> VoicePool:
@@ -430,10 +447,32 @@ func _on_voice_finished() -> void:
 func is_voice_active() -> bool:
 	if voice_2d.playing:
 		return true
-	for pa: PassengerAudio in passenger_audio.values():
-		if is_instance_valid(pa) and pa.is_speaking():
+	for pa: PassengerAudio in live_passenger_audio():
+		if pa.is_speaking():
 			return true
 	return false
+
+
+## Émetteurs encore valides ; purge ceux dont l'acteur ou l'émetteur a été
+## libéré (booth retiré par `--no-booth`, acteur détruit). Ne type jamais une
+## instance libérée (affectation typée = SCRIPT ERROR, QA-012).
+func live_passenger_audio() -> Array[PassengerAudio]:
+	var live: Array[PassengerAudio] = []
+	var kept: Dictionary[PassengerActor, PassengerAudio] = {}
+	var actors: Array = passenger_audio.keys()
+	var emitters: Array = passenger_audio.values()
+	for i: int in emitters.size():
+		var actor_value: Variant = actors[i]
+		var emitter_value: Variant = emitters[i]
+		if not is_instance_valid(actor_value) or not is_instance_valid(emitter_value):
+			continue
+		var actor: PassengerActor = actor_value
+		var emitter: PassengerAudio = emitter_value
+		kept[actor] = emitter
+		live.append(emitter)
+	if kept.size() != emitters.size():
+		passenger_audio = kept
+	return live
 
 
 # ---------------------------------------------------------------------------
@@ -778,6 +817,5 @@ func _on_settings_changed(key: StringName, value: Variant) -> void:
 			fx_reduced = level < 1.0
 		Settings.KEY_AUDIO_MONO:
 			var mono: bool = value
-			for pa: PassengerAudio in passenger_audio.values():
-				if is_instance_valid(pa):
-					pa.set_mono(mono)
+			for pa: PassengerAudio in live_passenger_audio():
+				pa.set_mono(mono)

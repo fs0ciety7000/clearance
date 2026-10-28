@@ -30,7 +30,7 @@ func _ready() -> void:
 		var kv: PackedStringArray = arg.trim_prefix("--").split("=", true, 1)
 		_args[kv[0]] = kv[1] if kv.size() > 1 else ""
 	# Captures en mouvement réel, quel que soit le réglage local du joueur.
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, _args.has("reduce-motion"), false)
+	Settings.set_session_value(Settings.KEY_REDUCE_MOTION, _args.has("reduce-motion"))
 	var data: DataCatalog = DataCatalog.load_from()
 	var day_number: int = _arg("day", "3").to_int()
 	var seed_value: int = _arg("seed", "7").to_int()

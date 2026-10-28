@@ -411,8 +411,7 @@ func test_show_end_leaves_no_save() -> void:
 # ---------------------------------------------------------------------------
 
 func test_booth_markings_knock_and_escort() -> void:
-	var reduce_before: bool = Settings.reduce_motion
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, true, false)
+	Settings.set_session_value(Settings.KEY_REDUCE_MOTION, true)
 	var booth: BoothDirector = BOOTH_SCENE.instantiate()
 	add_child_autofree(booth)
 	var builder: CaseBuilder = CaseBuilder.new(Gen.data(), Gen.data().get_day(3), Gen.day_seed(0, 3))
@@ -442,4 +441,4 @@ func test_booth_markings_knock_and_escort() -> void:
 	assert_true(done, "la Garde repart avec le passager")
 	assert_true(booth.guard.is_free())
 	EventBus.documents_presented.disconnect(on_docs)
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, reduce_before, false)
+	Settings.clear_session_value(Settings.KEY_REDUCE_MOTION)

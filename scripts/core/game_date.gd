@@ -4,6 +4,10 @@
 ## triviales (`expiry < today`). Calendrier grégorien proleptique
 ## (années bissextiles : divisibles par 4, sauf siècles non divisibles par 400).
 ## Jour 0 = 01.01.2100. Les dates antérieures sont des entiers négatifs.
+## Dates « année seule » (naissances des Dérivants, `00.00.AAAA`, NARRATIVE
+## §4.10) : `year_only(AAAA)` = `YEAR_ONLY_BASE − AAAA`, hors de toute vraie
+## date ; `to_ymd` les lit `(AAAA, 0, 0)`, d'où l'affichage `00.00.AAAA`, une
+## égalité par année (R07) et `age_on` = âge le plus élevé possible.
 ## Classe utilitaire : uniquement des fonctions statiques.
 class_name GameDate
 extends RefCounted
@@ -15,6 +19,8 @@ const _EPOCH_UNIX_DAYS: int = 47482
 const INVALID: int = -999_999_999
 ## Format d'affichage par défaut (19.03.2187).
 const DEFAULT_PATTERN: String = "DD.MM.YYYY"
+## Base des dates « année seule » (bien au-dessus d'`INVALID`).
+const YEAR_ONLY_BASE: int = -100_000_000
 
 
 ## Division entière arrondie vers −∞.
@@ -60,8 +66,35 @@ static func from_ymd(year: int, month: int, day: int) -> int:
 	return era * 146097 + doe - 719468 - _EPOCH_UNIX_DAYS
 
 
-## Date civile d'un jour de jeu : `Vector3i(année, mois, jour)`.
+## Date « année seule » `00.00.AAAA`.
+static func year_only(year: int) -> int:
+	return YEAR_ONLY_BASE - year
+
+
+static func is_year_only(days: int) -> bool:
+	return days <= YEAR_ONLY_BASE and days > INVALID
+
+
+## Jour concret le plus tardif d'une date (31.12.AAAA pour une année seule) :
+## bornes prudentes (âge minimal à l'émission d'un document).
+static func latest_day(days: int) -> int:
+	if is_year_only(days):
+		return from_ymd(YEAR_ONLY_BASE - days, 12, 31)
+	return days
+
+
+## Âges révolus possibles à `on_days` : `(x, x)` pour une date complète,
+## `(âge − 1, âge)` pour une année seule (jour et mois inconnus).
+static func possible_ages(birth_days: int, on_days: int) -> Vector2i:
+	var age: int = age_on(birth_days, on_days)
+	return Vector2i(age - 1, age) if is_year_only(birth_days) else Vector2i(age, age)
+
+
+## Date civile d'un jour de jeu : `Vector3i(année, mois, jour)` ;
+## `(AAAA, 0, 0)` pour une date « année seule ».
 static func to_ymd(days: int) -> Vector3i:
+	if is_year_only(days):
+		return Vector3i(YEAR_ONLY_BASE - days, 0, 0)
 	var z: int = days + _EPOCH_UNIX_DAYS + 719468
 	var era: int = _floor_div(z, 146097)
 	var doe: int = z - era * 146097
@@ -137,7 +170,10 @@ static func add_days(days: int, count: int) -> int:
 
 
 ## Ajoute des années civiles ; le 29 février devient le 28 si besoin.
+## Une date « année seule » reste « année seule ».
 static func add_years(days: int, count: int) -> int:
+	if is_year_only(days):
+		return year_only(YEAR_ONLY_BASE - days + count)
 	var ymd: Vector3i = to_ymd(days)
 	var year: int = ymd.x + count
 	var day: int = mini(ymd.z, days_in_month(year, ymd.y))

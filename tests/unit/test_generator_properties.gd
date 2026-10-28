@@ -138,11 +138,16 @@ func test_names_come_from_the_right_pool_and_never_okonkwo() -> void:
 		var names: PackedStringArray = []
 		for p: Passenger in [generated.key.truth, c.passenger_presented]:
 			var pool: NamePool = Gen.data().factions[p.faction_id].name_pool
+			names.append_array([p.given_name, p.family_name])
+			# Un personnage scénarisé garde son nom (réservé aux tirages, QA-002).
+			if generated.scripted_id != &"":
+				continue
+			if pool.is_reserved_full_name(p.given_name, p.family_name):
+				failures.append("%s : nom complet réservé %s %s" % [c.case_id, p.given_name, p.family_name])
 			if not pool.given_names_for(p.sex).has(p.given_name):
 				failures.append("%s : prénom %s hors réserve %s/%s" % [c.case_id, p.given_name, p.faction_id, p.sex])
 			if not pool.get_family_names().has(p.family_name):
 				failures.append("%s : nom %s hors réserve %s" % [c.case_id, p.family_name, p.faction_id])
-			names.append_array([p.given_name, p.family_name])
 		for path: StringName in [&"given_name", &"family_name"]:
 			for ref: FieldRef in c.find_refs_by_truth_path(path):
 				var value: String = str(c.get_value(ref))

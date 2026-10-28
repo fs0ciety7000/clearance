@@ -29,6 +29,15 @@ var locked: bool = true:
 var hold_progress: float = 0.0
 var hold_duration: float = DS.STAMP_HOLD
 var fx_intensity: float = 1.0
+## Mode compact (barre d'outils étroite, Steam Deck) : sans la ligne d'aide
+## sous le libellé, largeur réduite au libellé (QA-011).
+var compact: bool = false:
+	set(value):
+		if compact == value:
+			return
+		compact = value
+		_update_width()
+		queue_redraw()
 
 var _holding: bool = false
 var _hovered: bool = false
@@ -48,17 +57,32 @@ func setup(p_kind: VerdictKind.Kind, p_hint: String, p_locked_hint: String) -> v
 	focus_exited.connect(queue_redraw)
 
 
-## Largeur ajustée au texte (échelle du texte, plancher Steam Deck).
+## Largeur ajustée au texte (échelle du texte, plancher Steam Deck). Tout
+## maintien est annulé quand l'arbre passe en pause, que la fenêtre perd le
+## focus ou que le tampon est masqué : le relâchement ne serait jamais reçu
+## et le verdict tomberait à la reprise (QA-005).
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_THEME_CHANGED:
-		var font: Font = get_theme_font(&"font", &"StampLabel")
-		var small: Font = get_theme_font(&"font", &"CaptionLabel")
-		var caption_size: int = get_theme_font_size(&"font_size", &"CaptionLabel")
-		var text_w: float = font.get_string_size(StampMark.label_of(kind), HORIZONTAL_ALIGNMENT_LEFT, -1,
-				get_theme_font_size(&"font_size", &"StampLabel")).x
+	if what == NOTIFICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT \
+			or (what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree()):
+		if _holding:
+			end_hold()
+	elif what == NOTIFICATION_THEME_CHANGED:
+		_update_width()
+
+
+func _update_width() -> void:
+	if not is_inside_tree():
+		return
+	var font: Font = get_theme_font(&"font", &"StampLabel")
+	var small: Font = get_theme_font(&"font", &"CaptionLabel")
+	var caption_size: int = get_theme_font_size(&"font_size", &"CaptionLabel")
+	var text_w: float = font.get_string_size(StampMark.label_of(kind), HORIZONTAL_ALIGNMENT_LEFT, -1,
+			get_theme_font_size(&"font_size", &"StampLabel")).x
+	if not compact:
 		for caption: String in [hint, locked_hint]:
 			text_w = maxf(text_w, small.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, caption_size).x)
-		custom_minimum_size.x = maxf(WIDTH, DS.SPACE_4 + DS.ICON_L + DS.SPACE_3 + text_w + DS.SPACE_4)
+	var base: float = DS.SPACE_4 + DS.ICON_L + DS.SPACE_3 + text_w + DS.SPACE_4
+	custom_minimum_size.x = ceilf(base) if compact else maxf(WIDTH, base)
 
 
 func is_holding() -> bool:
@@ -159,6 +183,10 @@ func _draw() -> void:
 	var font_size: int = get_theme_font_size(&"font_size", &"StampLabel")
 	var x: float = icon_rect.end.x + DS.SPACE_3
 	var width: float = size.x - x - DS.SPACE_3
+	if compact:
+		var ascent: float = font.get_ascent(font_size) - font.get_height(font_size) * 0.5
+		draw_string(font, Vector2(x, size.y * 0.5 + ascent), StampMark.label_of(kind), HORIZONTAL_ALIGNMENT_LEFT, width, font_size, fg)
+		return
 	draw_string(font, Vector2(x, size.y * 0.5 + 1.0), StampMark.label_of(kind), HORIZONTAL_ALIGNMENT_LEFT, width, font_size, fg)
 	var small: Font = get_theme_font(&"font", &"CaptionLabel")
 	var small_size: int = get_theme_font_size(&"font_size", &"CaptionLabel")

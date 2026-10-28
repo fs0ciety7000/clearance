@@ -53,6 +53,7 @@ func inject(state: InjectionState) -> Anomaly:
 	var given: String = str(state.param(&"relative_given_name", ""))
 	if given.is_empty():
 		given = faction.name_pool.pick_given_name(state.rng, presented.sex)
+		given = faction.name_pool.avoid_reserved_full_name(given, presented.family_name, presented.sex)
 	var citizen_id: String = PassengerGenerator.make_citizen_id(state.rng, faction)
 	var values: Dictionary[StringName, Variant] = {&"given_name": given, &"birth_date": birth, &"citizen_id": citizen_id}
 	for path: StringName in PATHS:

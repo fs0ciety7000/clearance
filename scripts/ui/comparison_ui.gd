@@ -212,6 +212,7 @@ func _build() -> void:
 	rulebook.anchor_bottom = 1.0
 	rulebook.offset_left = -(RULEBOOK_WIDTH + DS.SPACE_4)
 	rulebook.offset_right = -DS.SPACE_4
+	rulebook.grow_horizontal = Control.GROW_DIRECTION_BEGIN # jamais hors du bord droit (QA-009)
 	rulebook.offset_top = BAND_BOTTOM + DS.SPACE_2
 	rulebook.offset_bottom = -(TOOLBAR_H + DS.SPACE_2)
 	add_child(rulebook)
@@ -239,6 +240,7 @@ func _build() -> void:
 	queue_panel.anchor_right = 1.0
 	queue_panel.offset_left = -(QUEUE_PANEL_WIDTH + DS.SPACE_8)
 	queue_panel.offset_right = -DS.SPACE_8
+	queue_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	queue_panel.offset_top = BAND_TOP + DS.SPACE_6
 	add_child(BlurBackdrop.create(queue_panel))
 	add_child(queue_panel)
@@ -283,6 +285,7 @@ func _build() -> void:
 	toasts.anchor_right = 1.0
 	toasts.offset_left = -(QUEUE_PANEL_WIDTH + DS.SPACE_8)
 	toasts.offset_right = -DS.SPACE_8
+	toasts.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	toasts.offset_top = BAND_TOP + DS.SPACE_6 + 132.0
 	add_child(toasts)
 	toasts.toast_shown.connect(func(kind: ToastStack.Kind) -> void: toast_shown.emit(kind))
@@ -546,7 +549,7 @@ static func arrival_text(case: Case) -> String:
 	var text: String = UiText.t(scripted_key(case, "arrival", "bark_arrival"), "Bonsoir… J'arrive, j'arrive.")
 	if case != null and case.dialogue_tags.has(CaseBuilder.TAG_LUMIKA) and not text.to_lower().contains(LUMIKA_WORD) \
 			and not text.contains(_unknown_word()):
-		text += " " + LUMIKA_WORD.capitalize() + "."
+		text += " ‹" + LUMIKA_WORD.capitalize() + ".›" # mot en Tessar entre chevrons (D-062)
 	return passenger_text(text)
 
 

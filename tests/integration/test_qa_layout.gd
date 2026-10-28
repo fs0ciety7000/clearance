@@ -14,7 +14,6 @@ const SIZES: Array[Vector2i] = [Vector2i(1920, 1080), Vector2i(1920, 1200)]
 const DECK_SCALE: float = 1280.0 / 1920.0
 
 var data: DataCatalog = null
-var _reduce_before: bool = false
 
 
 func before_all() -> void:
@@ -22,12 +21,11 @@ func before_all() -> void:
 
 
 func before_each() -> void:
-	_reduce_before = Settings.reduce_motion
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, true, false)
+	Settings.set_session_value(Settings.KEY_REDUCE_MOTION, true)
 
 
 func after_each() -> void:
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, _reduce_before, false)
+	Settings.clear_session_value(Settings.KEY_REDUCE_MOTION)
 
 
 ## Ajoute `screen` dans un SubViewport `size` ; renvoie le viewport.
@@ -47,10 +45,9 @@ func _visible_in(button: Control, vp: SubViewport) -> bool:
 	return Rect2(Vector2.ZERO, Vector2(vp.size)).encloses(rect)
 
 
-## QA-001 : le briefing n'a pas de défilement ; dès le J4 (10 règles) la liste
-## des règles pousse « PRENDRE SON POSTE » hors de l'écran (en bas), en 1080p
-## comme au Deck ; au Deck, dès le J1, la colonne de droite et le bouton
-## sortent aussi par la droite (libellés sur une ligne, plancher de texte).
+## QA-001 (corrigé) : contenu du briefing défilant, barre d'action fixe ;
+## « PRENDRE SON POSTE » reste dans l'écran du J1 au J10, en 1080p comme au
+## Deck (libellés repliés malgré le plancher de texte).
 func test_briefing_start_button_is_on_screen_every_day() -> void:
 	var failures: PackedStringArray = []
 	for size: Vector2i in SIZES:
@@ -65,10 +62,7 @@ func test_briefing_start_button_is_on_screen_every_day() -> void:
 				var end: Vector2 = screen.start_button.get_global_rect().end
 				failures.append("J%d %dx%d (coin du bouton %d,%d)" % [n, size.x, size.y, roundi(end.x), roundi(end.y)])
 			vp.queue_free()
-	if not failures.is_empty():
-		pending("QA-001 : « PRENDRE SON POSTE » hors écran : %s" % ", ".join(failures))
-		return
-	assert_true(true)
+	assert_eq(failures.size(), 0, "« PRENDRE SON POSTE » hors écran : %s" % ", ".join(failures))
 
 
 func test_summary_and_evening_buttons_are_on_screen() -> void:
@@ -85,9 +79,8 @@ func test_summary_and_evening_buttons_are_on_screen() -> void:
 			vp.queue_free()
 
 
-## QA-004 : l'écran titre (`scenes/main/main.gd`) construit son thème sans le
-## plancher de texte Steam Deck (`ThemeBuilder.min_px_for`) : au Deck, les
-## légendes tombent à ~8 px physiques (DS : 12 px minimum).
+## QA-004 (corrigé) : l'écran titre (`scenes/main/main.gd`) applique le
+## plancher de texte Steam Deck (`ThemeBuilder.min_px_for`) comme `ScreenBase`.
 func test_title_screen_applies_the_steam_deck_text_floor() -> void:
 	var main: Control = (load("res://scenes/main/main.tscn") as PackedScene).instantiate()
 	add_child_autofree(main)
@@ -99,11 +92,7 @@ func test_title_screen_applies_the_steam_deck_text_floor() -> void:
 		return
 	var expected: int = ThemeBuilder.build(Settings.text_scale, floor_px).get_font_size(&"font_size", &"CaptionLabel")
 	var caption: int = main.theme.get_font_size(&"font_size", &"CaptionLabel")
-	if caption < expected:
-		pending("QA-004 : titre sans plancher Steam Deck (légende %d px, plancher attendu %d px à l'échelle %.2f ; %d px au Deck)" % [
-				caption, expected, scale, ThemeBuilder.min_px_for(DECK_SCALE)])
-		return
-	assert_gte(caption, expected)
+	assert_gte(caption, expected, "légende du titre au plancher Steam Deck (échelle %.2f)" % scale)
 
 
 ## Garde de mise en page (pas de bug constaté) : « RETOUR AU TITRE » visible pour
@@ -135,9 +124,9 @@ func test_end_screen_buttons_are_on_screen_for_every_ending() -> void:
 	assert_true(true)
 
 
-## QA-011 : au Deck, la barre d'outils déborde sous l'écran quand le bouton
-## « SUIVANT » est affiché (guichet en attente), et davantage dès le J7 (trois
-## tampons) : boutons Inspection / Interroger / Suivant et tampons coupés.
+## QA-011 (corrigé) : au Deck, la barre d'outils se compacte (légende du
+## tiroir, aides des tampons, touches, ligne d'état) au lieu de déborder sous
+## l'écran quand « SUIVANT » et les trois tampons (J7+) sont affichés.
 ## Tolérance 2 px (les boutons sont posés au ras du bord, DS). Le conteneur
 ## de la barre dépasse toujours de 17 px sous l'écran (sans effet visible).
 func test_toolbar_fits_on_screen() -> void:
@@ -172,7 +161,4 @@ func test_toolbar_fits_on_screen() -> void:
 			vp.queue_free()
 			await wait_process_frames(1)
 	GameState.apply_save_dict(saved)
-	if not failures.is_empty():
-		pending("QA-011 : barre d'outils hors écran : %s" % " | ".join(failures))
-		return
-	assert_true(true)
+	assert_eq(failures.size(), 0, "barre d'outils hors écran : %s" % " | ".join(failures))

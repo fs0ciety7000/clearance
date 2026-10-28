@@ -76,7 +76,7 @@ all_of = Array[StringName]([&"lucioles_note_burned"])
 
 [sub_resource type="Resource" id="d05_resource_11"]
 script = ExtResource("2_4hb2g")
-any_of = Array[ExtResource("2_4hb2g")]([SubResource("d05_resource_12"), SubResource("d05_resource_13")])
+any_of = Array[Resource]([SubResource("d05_resource_12"), SubResource("d05_resource_13")])
 
 [sub_resource type="Resource" id="d05_resource_10"]
 script = ExtResource("1_2f3nl")
@@ -111,7 +111,7 @@ gauges_min = Dictionary[StringName, int]({
 
 [sub_resource type="Resource" id="d05_resource_17"]
 script = ExtResource("2_4hb2g")
-any_of = Array[ExtResource("2_4hb2g")]([SubResource("d05_resource_18"), SubResource("d05_resource_19")])
+any_of = Array[Resource]([SubResource("d05_resource_18"), SubResource("d05_resource_19")])
 
 [sub_resource type="Resource" id="d05_resource_20"]
 script = ExtResource("5_qe0y7")

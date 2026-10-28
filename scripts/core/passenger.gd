@@ -101,6 +101,11 @@ func copy() -> Passenger:
 	return result
 
 
+## Naissance « année seule » `00.00.AAAA` (Dérivants, NARRATIVE §4.10).
+func is_birth_year_only() -> bool:
+	return GameDate.is_year_only(birth_date)
+
+
 func full_name() -> String:
 	return "%s %s" % [given_name, family_name]
 

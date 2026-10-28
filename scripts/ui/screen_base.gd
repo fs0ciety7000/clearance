@@ -247,7 +247,9 @@ static func stat_tile(caption: String, value: String, detail: String = "", accen
 	var value_label: Label = label(value, &"TimerCompact", accent)
 	box.add_child(value_label)
 	if not detail.is_empty():
-		box.add_child(label(detail, &"CaptionLabel"))
+		# Replié plutôt qu'élargi : trois tuiles côte à côte tiennent au Deck
+		# (plancher de texte 18 px, QA-001).
+		box.add_child(wrapped(detail, &"CaptionLabel"))
 	return tile
 
 

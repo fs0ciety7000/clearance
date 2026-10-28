@@ -9,4 +9,5 @@ given_names_f = PackedStringArray("Céleste", "Ophélie", "Margaux", "Adaeze", "
 given_names_m = PackedStringArray("Auguste", "Hiro", "Soren", "Valentin", "Corentin", "Kenji", "Aurelio")
 given_names_x = PackedStringArray("Lin")
 family_names = PackedStringArray("Valcourt", "Hsu", "Aurel", "Delacroix-Tan", "Whitmore", "Okafor", "Langlois", "Sato", "Ferreira", "Lindgren", "Beaumont", "Choi", "Ravel", "Montclair", "Adeyemi")
-reserved_names = PackedStringArray()
+reserved_names = PackedStringArray("Ravel", "Valcourt", "Whitmore", "Montclair")
+reserved_full_names = PackedStringArray()

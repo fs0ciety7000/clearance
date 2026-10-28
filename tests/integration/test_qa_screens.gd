@@ -43,10 +43,7 @@ func test_reporting_the_note_updates_the_evening_balance() -> void:
 	assert_true(evening.luciole_pending, "mot en attente")
 	evening.call(&"_decide_luciole", true)
 	assert_eq(GameState.credits, 9 + data.get_economy().report_bonus, "prime créditée")
-	if evening.effective_balance() != GameState.credits:
-		pending("QA-008 : solde de la soirée %d ₵ après signalement, compte %d ₵" % [evening.effective_balance(), GameState.credits])
-		return
-	assert_eq(evening.effective_balance(), GameState.credits)
+	assert_eq(evening.effective_balance(), GameState.credits, "prime comprise dans le solde de la soirée")
 
 
 ## Textes visibles d'un arbre de contrôles.
@@ -74,7 +71,5 @@ func test_early_ending_shows_the_date_of_the_last_day_played() -> void:
 	await wait_process_frames(2)
 	var last_day: String = UiText.date(data.get_day(4).game_date)
 	var texts: String = " | ".join(_texts(end))
-	if texts.contains("22.03.2187") and not texts.contains(last_day):
-		pending("QA-010 : fin anticipée au J4 datée du 22.03.2187 (J10) au lieu du %s" % last_day)
-		return
+	assert_false(texts.contains("22.03.2187"), "pas de date du J10 pour une fin au J4")
 	assert_true(texts.contains(last_day), "date du dernier jour joué")

@@ -24,6 +24,9 @@
 ## Inspection, premier avis sélectionné), `--flags=a,b:2` (drapeaux / jauges de
 ## démonstration), `--item=keep|return|report` (décision sur l'objet glissé),
 ## `--zoom-doc=<id>` (loupe sur un document).
+## Tous ces arguments passent par `DebugArgs` : ignorés dans un export
+## *release*, et ceux qui modifient la partie (`--seed`, `--day`, `--screen`…)
+## ne s'appliquent qu'à la première scène du processus (QA-017).
 class_name DayScene
 extends Control
 
@@ -66,12 +69,12 @@ var _overlay: Control = null
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(DS.BG_VOID)
-	_args = _parse_args()
+	_args = DebugArgs.for_scene()
 	debug_keys = _args.has("debug-keys")
 	if _args.has("no-booth"):
 		_replace_booth_with_null()
 	if _args.has("reduce-motion"):
-		Settings.set_value(Settings.KEY_REDUCE_MOTION, true, false)
+		Settings.set_session_value(Settings.KEY_REDUCE_MOTION, true) # jamais persisté (QA-006)
 	data = DataCatalog.load_from()
 	if GameState.current_day <= 0 or _args.has("seed"):
 		var seed_text: String = _args.get("seed", "0")
@@ -439,15 +442,6 @@ func _replace_booth_with_null() -> void:
 func _arg(key: String, fallback: String = "") -> String:
 	var value: Variant = _args.get(key, fallback)
 	return value if value is String else fallback
-
-
-func _parse_args() -> Dictionary:
-	var result: Dictionary = {}
-	for arg: String in OS.get_cmdline_user_args():
-		var clean: String = arg.trim_prefix("--")
-		var parts: PackedStringArray = clean.split("=", true, 1)
-		result[parts[0]] = parts[1] if parts.size() > 1 else "true"
-	return result
 
 
 ## Raccourcis de debug (`--debug-keys` seulement : l'UI porte les vraies actions).

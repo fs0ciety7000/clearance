@@ -9,6 +9,10 @@
 ## - **Procédures** (D-031) : R06 « visage découvert » (APPROUVÉ visière baissée
 ##   → VISAGE NON CONTRÔLÉ), R08 « interrogatoire TYC » (tampon sans question →
 ##   INTERROGATOIRE OMIS), si la règle est dans le RuleSet du jour.
+## - **Signalement d'un porteur du code 1** (NARRATIVE §4.9, J7+) : DÉTENTION
+##   + paire « marque luciole ↔ bulletin » confirmée = cas **correct**, aucune
+##   citation (ni procédure), salaire + prime de détention, quelles que soient
+##   les autres violations (`CaseResult.luciole_report`).
 ## - **Citation** : au plus une par cas, la plus grave (table `GRAVITY`).
 ## - **Crédits** : `credit_per_correct` si correct, + prime de détention ; 0
 ##   sinon. L'amende dépend du rang de la citation dans la journée
@@ -39,6 +43,8 @@ const GRAVITY: Dictionary[String, int] = {
 const DEFAULT_DETAIN_BONUS: int = 5
 ## Gains par défaut sans `DayDef` (tests unitaires).
 const DEFAULT_CREDIT_PER_CORRECT: int = 5
+## Code Luciole dont la marque se signale (code 1, GDD §4.7).
+const LUCIOLE_REPORT_CODE: int = 1
 
 
 ## Note un verdict. `case` (cas présenté, éventuellement muté par le retrait de
@@ -59,6 +65,14 @@ static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Cas
 	result.expected_violations = key.expected_violations.duplicate()
 	result.verdict_correct = is_correct(verdict.kind, key.expected_verdict)
 	result.documented = is_documented(verdict.flagged, key.expected_violations)
+	if is_luciole_report(verdict, case):
+		result.luciole_report = true
+		result.verdict_correct = true
+		result.documented = true
+		result.correct = true
+		result.wage = (day.credit_per_correct if day != null else DEFAULT_CREDIT_PER_CORRECT) + detain_bonus
+		result.credits_delta = result.wage
+		return result
 
 	var citation: String = ""
 	var rule_id: StringName = &""
@@ -131,6 +145,18 @@ static func fine_for(citation_number: int, day: DayDef) -> int:
 	if citation_number == free + 1:
 		return first_fine
 	return escalated
+
+
+## Signalement valide (§4.9) : DÉTENTION d'un porteur du code 1 avec une paire
+## marque ↔ bulletin confirmée et épinglée. Les codes 2 à 7 ne prouvent rien.
+static func is_luciole_report(verdict: Verdict, case: Case) -> bool:
+	if verdict == null or verdict.kind != VerdictKind.Kind.DETAIN or case == null \
+			or not case.luciole_codes.has(LUCIOLE_REPORT_CODE):
+		return false
+	for discrepancy: Discrepancy in verdict.flagged:
+		if discrepancy != null and discrepancy.confirmed and discrepancy.reason_key == Discrepancy.REASON_SYMBOL_MATCH:
+			return true
+	return false
 
 
 static func is_correct(given: VerdictKind.Kind, expected: VerdictKind.Kind) -> bool:

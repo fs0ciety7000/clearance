@@ -12,16 +12,14 @@ var scene: DayScene = null
 var picked: Array[FieldRef] = []
 var checked: Array[Discrepancy] = []
 var answers: Array[String] = []
-var _reduce_before: bool = false
 var _day_before: int = 0
 var _seed_before: int = 0
 
 
 func before_each() -> void:
-	_reduce_before = Settings.reduce_motion
 	_day_before = GameState.current_day
 	_seed_before = GameState.campaign_seed
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, true, false)
+	Settings.set_session_value(Settings.KEY_REDUCE_MOTION, true)
 	GameState.new_campaign(20_871_315)
 	picked.clear()
 	checked.clear()
@@ -37,7 +35,7 @@ func after_each() -> void:
 	EventBus.inspection_target_picked.disconnect(_on_picked)
 	EventBus.discrepancy_checked.disconnect(_on_checked)
 	EventBus.interrogation_answered.disconnect(_on_answered)
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, _reduce_before, false)
+	Settings.clear_session_value(Settings.KEY_REDUCE_MOTION)
 	GameState.current_day = _day_before
 	GameState.campaign_seed = _seed_before
 

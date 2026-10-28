@@ -30,6 +30,9 @@ extends Resource
 ## (tiré seulement les jours où la règle R15 est active) et implants tirables.
 @export_range(0.0, 1.0) var implant_rate: float = 0.0
 @export var implant_weights: Dictionary[StringName, float] = {}
+## Part des passagers générés nés à une date « année seule » `00.00.AAAA`
+## (Dérivants, NARRATIVE §4.10 : 0.5). Décidé sans tirage (empreinte du N° ID).
+@export_range(0.0, 1.0) var year_only_birth_rate: float = 0.0
 
 
 ## Vrai si le N° ID est cohérent avec cette origine (règle R10, GDD §7).

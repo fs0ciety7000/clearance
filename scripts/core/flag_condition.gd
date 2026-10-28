@@ -14,7 +14,10 @@ extends Resource
 @export var none_of: Array[StringName] = []
 @export var gauges_min: Dictionary[StringName, int] = {}
 @export var gauges_max: Dictionary[StringName, int] = {}
-@export var any_of: Array[FlagCondition] = []
+## Sous-conditions (`FlagCondition`). Typé `Resource` et non `FlagCondition` :
+## un tableau typé de sa propre classe crée une référence circulaire du script
+## vers lui-même (script jamais libéré, fuite à la sortie — QA-016).
+@export var any_of: Array[Resource] = []
 
 
 func evaluate(flags: Dictionary[StringName, Variant]) -> bool:
@@ -31,7 +34,8 @@ func evaluate(flags: Dictionary[StringName, Variant]) -> bool:
 		if gauge_value(flags, gauge) > gauges_max[gauge]:
 			return false
 	if not any_of.is_empty():
-		for sub: FlagCondition in any_of:
+		for item: Resource in any_of:
+			var sub: FlagCondition = item as FlagCondition
 			if sub != null and sub.evaluate(flags):
 				return true
 		return false
@@ -80,5 +84,5 @@ static func make(p_all: Array[StringName] = [], p_none: Array[StringName] = [],
 ## « Au moins une de ces conditions ».
 static func any(conditions: Array[FlagCondition]) -> FlagCondition:
 	var c: FlagCondition = FlagCondition.new()
-	c.any_of = conditions
+	c.any_of.assign(conditions)
 	return c

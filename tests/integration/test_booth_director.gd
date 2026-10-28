@@ -11,7 +11,6 @@ const Gen := preload("res://tests/helpers/generation_fixtures.gd")
 var booth: BoothDirector = null
 var builder: CaseBuilder = null
 var events: Array[Array] = []
-var _reduce_before: bool = false
 
 
 func before_all() -> void:
@@ -19,8 +18,7 @@ func before_all() -> void:
 
 
 func before_each() -> void:
-	_reduce_before = Settings.reduce_motion
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, true, false)
+	Settings.set_session_value(Settings.KEY_REDUCE_MOTION, true)
 	events.clear()
 	booth = BOOTH_SCENE.instantiate()
 	add_child_autofree(booth)
@@ -33,7 +31,7 @@ func after_each() -> void:
 	EventBus.passenger_arrived.disconnect(_on_arrived)
 	EventBus.documents_presented.disconnect(_on_documents)
 	EventBus.passenger_departed.disconnect(_on_departed)
-	Settings.set_value(Settings.KEY_REDUCE_MOTION, _reduce_before, false)
+	Settings.clear_session_value(Settings.KEY_REDUCE_MOTION)
 
 
 func _on_arrived(case_id: StringName) -> void:

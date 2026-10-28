@@ -204,3 +204,20 @@ func test_attaches_passenger_audio_to_booth_actors() -> void:
 	assert_eq(pa.voice.panning_strength, 0.0, "mono : pas de panoramique 3D")
 	Settings.set_value(Settings.KEY_AUDIO_MONO, false, false)
 	assert_gt(pa.voice.panning_strength, 0.0)
+
+
+## QA-012 : booth libéré après le branchement (`--no-booth`) : plus de
+## SCRIPT ERROR à chaque image, les émetteurs morts sont purgés.
+func test_freed_booth_actors_are_purged_without_error() -> void:
+	var booth: BoothDirector = BOOTH_SCENE.instantiate()
+	add_child(booth)
+	var d: AudioDirector = AudioDirector.new()
+	d.booth = booth
+	add_child_autofree(d)
+	assert_eq(d.passenger_audio.size(), BoothDirector.POOL_SIZE)
+	booth.free()
+	assert_false(d.is_voice_active())
+	assert_eq(d.passenger_audio.size(), 0, "émetteurs libérés purgés")
+	assert_eq(d.live_passenger_audio().size(), 0)
+	await wait_process_frames(2)
+	assert_false(d.is_voice_active())

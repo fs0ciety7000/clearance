@@ -294,9 +294,6 @@ bark_depart_ok,Gloire au Consortium.
 bark_depart_denied,Vous n'avez pas de cœur.
 bark_depart_detained,Attendez… où est-ce qu'on m'emmène ?
 tag_departing,[en partant]
-briefing_eyebrow,Halcyon Gate · Guichet 04 · Directive du jour
-briefing_title,JOUR %d
-briefing_hint,Cliquez ou appuyez sur une touche pour ouvrir le guichet
 wb_title_count_one,PLAN DE TRAVAIL · %d DOCUMENT
 rb_new_count_one,%d NOUVEAU
 res_missed_one,%d infraction non relevée
@@ -322,6 +319,7 @@ br_household,FOYER · BLOC PÉTREL
 br_balance,SOLDE %s
 br_balance_advance,SOLDE %s · AVANCE INCLUSE
 br_hint,Lecture libre : l'horloge du shift démarre à la prise de poste.
+br_scroll_hint,▼ SUITE DU BULLETIN · MOLETTE OU ↑ ↓
 br_start,PRENDRE SON POSTE
 spk_okonkwo,OKONKWO · GUICHET 03
 spk_ilan,ILAN · BLOC PÉTREL
@@ -343,13 +341,13 @@ msg_family_lost,La cabine est trop silencieuse. Je ne sais pas comment le dire a
 msg_echo_sc02_mercy,"La Gravitaire d'hier, celle à la carte expirée ? Elle est passée grâce à toi. Les Inspecteurs aussi l'ont vue passer. Fais attention à toi."
 msg_echo_sc02_turned_away,"Une mère gravitaire refoulée hier au Guichet 04 a dormi dans le Hall, sur ses valises. Le service d'entretien l'a évacuée à l'aube."
 msg_echo_sc03_passed,Un mineur de Tycho entré hier avec une photo « ancienne » a été interpellé à l'Anneau C. Le Bureau rappelle qu'un document exact est un citoyen en sécurité.
-okonkwo_j1_open,"Appuie sur l'intercom (N) pour faire avancer le premier. Pendant qu'il marche, jette un œil au Rulebook."
-okonkwo_j1_inspect,"Pose ta main sur le pupitre… Espace, c'est la touche Inspection. Clique un champ, puis un autre."
+okonkwo_j1_open,"Intercom (N) : fais avancer le premier. Pendant qu'il marche, jette un œil au Rulebook."
+okonkwo_j1_inspect,"Pose ta main sur le pupitre… Espace, c'est l'Inspection. Clique un champ, puis un autre."
 okonkwo_j1_expiry,"Celle-là, regarde sa date d'expiration… puis la date du jour, en haut du Rulebook."
-okonkwo_j1_discordance,"Fil magenta : discordance épinglée, c'est ta preuve. Pose-lui la question (Q) si tu veux, puis maintiens X."
+okonkwo_j1_discordance,"Fil magenta : discordance épinglée, ta preuve. Pose-lui la question (Q), puis maintiens X."
 okonkwo_j1_concordant,"Compare quand même. « Concordant », ça ne coûte rien : l'outil ne punit personne."
 okonkwo_j1_alone,"À toi seul·e. Pas de carte, pas d'entrée : la règle 01 suffit comme preuve."
-okonkwo_j1_citation,"Un avis d'infraction. Les deux premiers du jour sont des avertissements ; après, c'est sur ta paie."
+okonkwo_j1_citation,"Un avis d'infraction. Les deux premiers du jour avertissent ; après, c'est sur ta paie."
 okonkwo_j1_goodbye,"Bien. Je te laisse, ma propre file m'attend. Gloire au Consortium… comme on dit."
 tag_intercom,[intercom]
 note_title,UN MOT GLISSÉ ENTRE LES PAPIERS
@@ -434,6 +432,7 @@ ev_morning,Solde du matin
 ev_advance,Avance du Consortium (prise de poste)
 ev_shift_net,Net du shift (salaire − amendes)
 ev_available,Disponible ce soir
+ev_report_bonus,Prime de signalement (Consortium)
 ev_lines,DÉPENSES DU SOIR — COCHEZ CE QUE VOUS PAYEZ
 ev_spent,Dépenses
 ev_after,Solde après la soirée
@@ -473,6 +472,7 @@ hh_name_noa,Noa
 hh_name_dora,Dora
 hh_role_ilan,Conjoint·e · technicien·ne de recycleur « réaffecté·e »
 hh_role_noa,8 ans · école de l'Anneau C
+hh_role_noa_from_j4,9 ans · école de l'Anneau C
 hh_role_dora,"Mère d'Ilan · ancienne mineuse de Tycho, sous oxygène"
 hh_state_well,Bien
 hh_state_hungry,Affamé·e
@@ -568,7 +568,8 @@ opt_saved,Réglages enregistrés automatiquement.
 opt_back,RETOUR
 opt_on,ACTIVÉ
 opt_off,DÉSACTIVÉ
-title_version,Vertical slice M5 — Jours 1 à 3
+title_version,Démo · %s
+title_version_none,Démo
 title_continue,CONTINUER — JOUR %d
 title_new_game,NOUVELLE PARTIE
 title_options,OPTIONS
@@ -1024,6 +1025,7 @@ disc_age_mismatch,L'âge apparent ne correspond pas à la date de naissance.
 disc_mrz_mismatch,La MRZ ne recopie pas ce champ.
 disc_wanted_match,Correspondance avec l'avis de recherche.
 disc_wanted_no_match,Aucune correspondance avec l'avis de recherche.
+disc_symbol_match,Marque relevée au bulletin des symboles subversifs : signalement documenté.
 hh_ev_ilan_detained,Ilan est mis·e en attente à l'Anneau B. Sa couchette reste faite.
 evt_d09_audit_title,LE DOSSIER DU GUICHET 04
 evt_d08_bioscan_title,"LA TOUX GRISE, ENCORE"
@@ -1108,6 +1110,7 @@ sum_item_report,SIGNALÉ %s
 end_variant_veilleurs,VARIANTE · VEILLEURS
 end_variant_brulants,VARIANTE · BRÛLANTS
 end_date,JEUDI 22.03.2187 · GUICHET 04
+end_date_day,%s · GUICHET 04
 end_skip,TOUT AFFICHER
 end_trace_sc06_reunited,"Vous avez laissé Amara retrouver les siens, la deuxième fois."
 end_trace_sc07_bribe_kept,Vous avez gardé l'enveloppe du fils Valcourt.
