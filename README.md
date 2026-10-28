@@ -6,7 +6,7 @@ Jeu 3D stylisé cyberpunk inspiré de *Papers, Please*, développé avec **Godot
 
 ## État du projet
 
-**Phase : production — campagne complète jouable (jours 1 à 10, 7 fins).** Jalons livrés : M1 Fondations · M2 Documents & règles · M3 Générateur & apparences · M4 Interface de comparaison + guichet 3D · M5 Boucle de jour (scoring, soirée, sauvegarde) · M6 Passager final (Kenney + Quaternius) et audio · M7 Jours 4–10 (détention, objets glissés, avis de recherche, Lucioles, soirées à choix, fins) · QA (17 bugs corrigés) · Exports Windows / macOS / Linux (v0.8.0).
+**Phase : production — campagne complète jouable (jours 1 à 10, 7 fins).** Jalons livrés : M1 Fondations · M2 Documents & règles · M3 Générateur & apparences · M4 Interface de comparaison + guichet 3D · M5 Boucle de jour (scoring, soirée, sauvegarde) · M6 Passager final (Kenney + Quaternius) et audio · M7 Jours 4–10 (détention, objets glissés, avis de recherche, Lucioles, soirées à choix, fins) · QA (17 bugs corrigés) · Exports Windows / macOS / Linux · Décor définitif du guichet et personnages optimisés (v0.8.1).
 
 Captures : [guichet J3](docs/mockups/m6_day3_autoplay.png) · [enveloppe J4](docs/mockups/m7_envelope.png) · [fin « Rendre l'air »](docs/mockups/m7_end_f5.png) · [interface](docs/mockups/m4_day.png) · [Steam Deck](docs/mockups/m4_day_deck.png) · [briefing](docs/mockups/m5_briefing.png) · [soirée](docs/mockups/m5_evening.png)
 
@@ -26,6 +26,7 @@ Captures : [guichet J3](docs/mockups/m6_day3_autoplay.png) · [enveloppe J4](doc
 | [`docs/AUDIO.md`](docs/AUDIO.md) | Bus audio, liste des sons, voix courtes sous-titrées |
 | [`docs/NARRATIVE.md`](docs/NARRATIVE.md) | Arcs, flags, passagers scénarisés J4–J10, soirées, 7 fins |
 | [`docs/QA.md`](docs/QA.md) | Passe QA : couverture, bugs (QA-001…), campagnes, i18n |
+| [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions |
 | [`DECISIONS.md`](DECISIONS.md) | Journal des décisions |
 
 ## Démarrage

@@ -76,6 +76,8 @@ static func apply(rig: PassengerRig, implants: PackedStringArray, magenta_thread
 					rig.make_material(Color("#5B4A44"), 0.6), Vector3(0, 0.06, -0.025))
 	if magenta_thread:
 		rig.add_mesh(rig.implants_hand, "MagentaThread", _torus(0.036, 0.043), _glow(rig, THREAD, THREAD_GLOW), Vector3(0, -0.01, 0))
+	# M10 : fusionnées avec les autres pièces de l'acteur (BOOTH_SCENE §18).
+	rig.queue_parts_rebuild()
 
 
 static func _torus(inner: float, outer: float) -> TorusMesh:

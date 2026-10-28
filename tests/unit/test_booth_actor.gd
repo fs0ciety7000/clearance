@@ -248,3 +248,90 @@ func test_palettes_are_not_black() -> void:
 func test_outfit_zone_maps_exist() -> void:
 	for skin: String in AppearanceApplier.OUTFIT_SKINS:
 		assert_not_null(PassengerRig.zone_texture(skin), skin)
+
+
+# --- M10 : coût de rendu des personnages (BOOTH_SCENE §18) --------------------
+
+## Instances rendues (visibles) et surfaces d'un rig.
+func _rendered(rig: PassengerRig) -> Vector2i:
+	var count: Vector2i = Vector2i.ZERO
+	for node: Node in rig.find_children("*", "MeshInstance3D", true, false):
+		var mi: MeshInstance3D = node as MeshInstance3D
+		if mi.visible and mi.mesh != null:
+			count.x += 1
+			count.y += mi.mesh.get_surface_count()
+	return count
+
+
+func _loaded_appearance(accessory: StringName) -> PassengerAppearance:
+	var traits: Dictionary[StringName, StringName] = {
+		&"silhouette": &"silhouette_s1_stocky", &"face": &"face_round_e1", &"eyes": &"eyes_heterochromia",
+		&"nose_mouth": &"nose_mouth_n3_l2", &"skin": &"skin_03", &"hair": &"hair_curly_c04",
+		&"headwear": &"visor_up", &"outfit": &"outfit_02", &"accessory": accessory, &"palette": &"palette_05",
+	}
+	var app: PassengerAppearance = PassengerAppearance.new(traits, 2)
+	app.palette_id = &"palette_05"
+	return app
+
+
+func test_actor_fits_render_budget() -> void:
+	var rig: PassengerRig = PassengerRig.new()
+	add_child_autofree(rig)
+	# Pire cas : 7 boucles, visière relevée, col, liseré, tous les implants, fil, papiers.
+	AppearanceApplier.apply(rig, _loaded_appearance(&"respirator_neck"))
+	ImplantDecor.apply(rig, PackedStringArray(["OPT-1", "NX-2", "MIL-3", "KIN-4", "DER-19"]), true)
+	rig.set_papers_visible(true)
+	rig.rebuild_parts()
+	var count: Vector2i = _rendered(rig)
+	assert_eq(count.x, 2, "corps + pièces fusionnées")
+	assert_lte(count.y, 2, "≤ 2 surfaces (≤ 4 draws avec l'ombre de la lampe)")
+	assert_true(rig.parts_mesh.visible)
+	assert_not_null(rig.parts_mesh.skin)
+	assert_same(rig.face_material, rig.parts_material, "expressions et regard sur le matériau fusionné")
+	var papers_shown: bool = rig.parts_material.get_shader_parameter(&"papers_visible")
+	assert_true(papers_shown)
+	# Les sources restent adressables (tests, débogage) mais ne sont pas rendues.
+	assert_not_null(rig.implants_head.get_node_or_null(^"OptIris"))
+	assert_false(rig.face.visible)
+	# Seule la demi-visière translucide garde sa propre instance.
+	AppearanceApplier.apply(rig, _loaded_appearance(&"half_visor"))
+	rig.rebuild_parts()
+	count = _rendered(rig)
+	assert_eq(count.x, 3)
+	await wait_process_frames(1)
+
+
+func test_parts_bind_existing_bones_and_are_cached() -> void:
+	var rig_a: PassengerRig = PassengerRig.new()
+	var rig_b: PassengerRig = PassengerRig.new()
+	add_child_autofree(rig_a)
+	add_child_autofree(rig_b)
+	var app: PassengerAppearance = _loaded_appearance(&"scarf")
+	for rig: PassengerRig in [rig_a, rig_b]:
+		AppearanceApplier.apply(rig, app)
+		ImplantDecor.apply(rig, PackedStringArray(["KIN-1"]), true)
+		rig.rebuild_parts()
+	assert_same(rig_a.parts_mesh.mesh, rig_b.parts_mesh.mesh, "même apparence → même maillage (cache)")
+	var skin: Skin = rig_a.parts_mesh.skin
+	for i: int in skin.get_bind_count():
+		assert_gt(rig_a.skeleton.find_bone(String(skin.get_bind_name(i))), -1, String(skin.get_bind_name(i)))
+	assert_lte(PassengerRig.parts_cache_size(), PassengerRig.PARTS_CACHE_MAX)
+	await wait_process_frames(1)
+
+
+func test_different_appearances_bake_different_parts() -> void:
+	var rig_a: PassengerRig = PassengerRig.new()
+	var rig_b: PassengerRig = PassengerRig.new()
+	add_child_autofree(rig_a)
+	add_child_autofree(rig_b)
+	var a: PassengerAppearance = _loaded_appearance(&"scarf")
+	var b: PassengerAppearance = a.derive({&"skin": &"skin_07", &"hair": &"hair_long_c02"})
+	AppearanceApplier.apply(rig_a, a)
+	AppearanceApplier.apply(rig_b, b)
+	rig_a.rebuild_parts()
+	rig_b.rebuild_parts()
+	assert_ne(rig_a.parts_mesh.mesh, rig_b.parts_mesh.mesh)
+	var colors_a: PackedFloat32Array = rig_a.parts_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_CUSTOM0]
+	var colors_b: PackedFloat32Array = rig_b.parts_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_CUSTOM0]
+	assert_ne(colors_a, colors_b, "couleurs de peau / cheveux cuites différentes")
+	await wait_process_frames(1)

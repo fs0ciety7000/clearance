@@ -1,7 +1,7 @@
 ## Étape 4 du pipeline personnage M6 (BOOTH_SCENE §11, ARCHITECTURE §8 bis.9) :
 ## silhouette de file d'attente **cohérente avec le passager final**.
 ## Le modèle Kenney du rig (proportions M6 : tête réduite, cou raccourci) est
-## posé sur la 1ʳᵉ image d'`idle`, skinné sur CPU, puis simplifié
+## posé sur la 1ʳᵉ image d'`idle` (figée : sortie déterministe), skinné sur CPU, puis simplifié
 ## (LOD meshoptimizer d'`ImporterMesh`) sous le budget de 400 triangles.
 ## Sortie : `res://assets/models/passenger/imp_silhouette.res` (pieds à y = 0,
 ## face +Z, sans squelette ni UV ; teinte par `INSTANCE_COLOR` du MultiMesh).
@@ -19,6 +19,12 @@ func _initialize() -> void:
 	var actor: PassengerActor = (load(ACTOR) as PackedScene).instantiate()
 	get_root().add_child(actor)
 	actor.assign(&"impostor", 1, 1)
+	# Pose figée sur la 1ʳᵉ image d'`idle` (comme le portrait) : la sortie ne
+	# dépend pas du temps écoulé, l'outil est déterministe (M10).
+	actor.anim_tree.active = false
+	actor.anim_player.play(PassengerAnims.clip_path(&"idle"))
+	actor.anim_player.seek(0.0, true)
+	actor.anim_player.pause()
 	for i: int in 6:
 		await process_frame
 	var rig: PassengerRig = actor.rig
