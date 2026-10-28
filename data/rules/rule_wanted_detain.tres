@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="WantedRule" format=3 uid="uid://dva6nm6b73e7s"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/wanted_rule.gd" id="1_jvodf"]
+
+[resource]
+script = ExtResource("1_jvodf")
+id = &"r_wanted_detain"
+title_key = "r_wanted_detain_title"
+rulebook_text_key = "r_wanted_detain_text"
+category = 1
+severity = 3

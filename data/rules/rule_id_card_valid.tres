@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DocumentNotExpiredRule" format=3 uid="uid://bvp1v4j3k72wt"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/document_not_expired_rule.gd" id="1_fuxsr"]
+
+[resource]
+script = ExtResource("1_fuxsr")
+document_id = &"id_card"
+id = &"r_id_card_valid"
+title_key = "r_id_card_valid_title"
+rulebook_text_key = "r_id_card_valid_text"

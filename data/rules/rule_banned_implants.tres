@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BannedImplantsRule" format=3 uid="uid://doorgltdys2r"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/banned_implants_rule.gd" id="1_ek2ic"]
+
+[resource]
+script = ExtResource("1_ek2ic")
+always_banned = PackedStringArray("DER-19")
+waiver_prefixes = PackedStringArray("MIL-")
+id = &"r_banned_implants"
+title_key = "r_banned_implants_title"
+rulebook_text_key = "r_banned_implants_text"
+category = 4

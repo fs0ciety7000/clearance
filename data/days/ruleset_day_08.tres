@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="RuleSet" format=3 uid="uid://cq8yijs0hs5xe"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_uwgoq"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_required.tres" id="2_tt18j"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_valid.tres" id="3_m80rg"]
+[ext_resource type="Resource" path="res://data/rules/rule_portrait_match.tres" id="4_34owb"]
+[ext_resource type="Resource" path="res://data/rules/rule_permit_required.tres" id="5_sb1qw"]
+[ext_resource type="Resource" path="res://data/rules/rule_permit_valid.tres" id="6_ptfr1"]
+[ext_resource type="Resource" path="res://data/rules/rule_face_uncovered.tres" id="7_yxt2g"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fields_match.tres" id="8_v5q4t"]
+[ext_resource type="Resource" path="res://data/rules/rule_tycho_interview.tres" id="9_dmoke"]
+[ext_resource type="Resource" path="res://data/rules/rule_purpose_consistent.tres" id="10_31lre"]
+[ext_resource type="Resource" path="res://data/rules/rule_origin_block.tres" id="11_fufb4"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_required.tres" id="12_t8c44"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_valid.tres" id="13_pv4jm"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_issuer.tres" id="14_1c464"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_fit.tres" id="15_v452y"]
+[ext_resource type="Resource" path="res://data/rules/rule_implants_declared.tres" id="16_ud465"]
+[ext_resource type="Resource" path="res://data/rules/rule_banned_implants.tres" id="17_5qb1g"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fraud_detain.tres" id="18_gsaw2"]
+[ext_resource type="Resource" path="res://data/rules/rule_apparent_age.tres" id="19_j1lja"]
+[ext_resource type="Resource" path="res://data/rules/rule_tharsis_banned.tres" id="20_gy451"]
+[ext_resource type="Script" path="res://scripts/rules/rule_set.gd" id="21_cbfe0"]
+
+[resource]
+script = ExtResource("21_cbfe0")
+id = &"rs_day08"
+rules = Array[ExtResource("1_uwgoq")]([ExtResource("2_tt18j"), ExtResource("3_m80rg"), ExtResource("4_34owb"), ExtResource("5_sb1qw"), ExtResource("6_ptfr1"), ExtResource("7_yxt2g"), ExtResource("8_v5q4t"), ExtResource("9_dmoke"), ExtResource("10_31lre"), ExtResource("11_fufb4"), ExtResource("12_t8c44"), ExtResource("13_pv4jm"), ExtResource("14_1c464"), ExtResource("15_v452y"), ExtResource("16_ud465"), ExtResource("17_5qb1g"), ExtResource("18_gsaw2"), ExtResource("19_j1lja"), ExtResource("20_gy451")])
+new_rule_ids = Array[StringName]([&"r_apparent_age", &"r_tharsis_banned"])
+required_document_ids = Array[StringName]([&"id_card", &"entry_permit", &"bioscan"])

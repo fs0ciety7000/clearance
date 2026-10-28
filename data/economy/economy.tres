@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="EconomyDef" format=3 uid="uid://bfhjppxb3s0gt"]
+
+[ext_resource type="Script" path="res://scripts/core/economy_def.gd" id="1_4lwsc"]
+
+[resource]
+script = ExtResource("1_4lwsc")
+air_tax_raised = 10

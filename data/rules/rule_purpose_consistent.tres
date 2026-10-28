@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PurposeConsistentRule" format=3 uid="uid://cp7haf81dttvn"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/purpose_consistent_rule.gd" id="1_qf605"]
+
+[resource]
+script = ExtResource("1_qf605")
+no_employer_values = PackedStringArray("", "SANS EMPLOYEUR")
+id = &"r_purpose_consistent"
+title_key = "r_purpose_consistent_title"
+rulebook_text_key = "r_purpose_consistent_text"
+category = 3

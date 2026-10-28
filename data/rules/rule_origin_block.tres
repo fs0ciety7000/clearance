@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="OriginIdBlockRule" format=3 uid="uid://cdq1begcumyns"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/origin_id_block_rule.gd" id="1_4gwuc"]
+
+[resource]
+script = ExtResource("1_4gwuc")
+id = &"r_origin_block"
+title_key = "r_origin_block_title"
+rulebook_text_key = "r_origin_block_text"
+category = 1

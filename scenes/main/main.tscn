@@ -1,0 +1,71 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/main/main.gd" id="1_main"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
+
+[node name="Background" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+theme_type_variation = &"HoloPanel"
+
+[node name="Content" type="VBoxContainer" parent="Center/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Eyebrow" type="Label" parent="Center/Panel/Content"]
+layout_mode = 2
+theme_type_variation = &"DocFieldLabel"
+text = "Halcyon Gate · Contrôle d'entrée · 2187"
+horizontal_alignment = 1
+uppercase = true
+
+[node name="Title" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DisplayLabel"
+text = "CLEARANCE"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Center/Panel/Content"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "Chaque visage, chaque hologramme, chaque règle compte."
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"ButtonPrimary"
+text = "Commencer le shift"
+
+[node name="Version" type="Label" parent="Center/Panel/Content"]
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "Prototype M1 — Fondations"
+horizontal_alignment = 1

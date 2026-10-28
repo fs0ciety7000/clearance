@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ApparentAgeRule" format=3 uid="uid://bthfxhjrtyyhb"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/apparent_age_rule.gd" id="1_aurlp"]
+
+[resource]
+script = ExtResource("1_aurlp")
+id = &"r_apparent_age"
+title_key = "r_apparent_age_title"
+rulebook_text_key = "r_apparent_age_text"
+category = 1
+severity = 3

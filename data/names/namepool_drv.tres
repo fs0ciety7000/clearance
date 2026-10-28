@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NamePool" format=3 uid="uid://b4c1gfobps75w"]
+
+[ext_resource type="Script" path="res://scripts/generation/name_pool.gd" id="1_87kkb"]
+
+[resource]
+script = ExtResource("1_87kkb")
+id = &"drv"
+given_names_f = PackedStringArray("Sefa", "Lumi", "Tamsin", "Ysolde", "Ezri", "Wren")
+given_names_m = PackedStringArray("Orin", "Pell", "Corvo", "Brin", "Mott")
+given_names_x = PackedStringArray("Kesh", "Nim", "Ashe", "Halo")
+family_names = PackedStringArray("Long-Ruban", "Sillage", "Pierre-Bleue", "Nadir", "Vasque", "Heliodore", "Mainsoleil", "Corail-9", "Basse-Marée", "Tessaride", "Cendre", "Kalliope", "Lointain", "Saint-Orbe", "Varech")
+reserved_names = PackedStringArray("Long-Ruban", "Basse-Marée")
+reserved_full_names = PackedStringArray()

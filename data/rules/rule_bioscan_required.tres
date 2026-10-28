@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RequireDocumentRule" format=3 uid="uid://dw48iu1553cxj"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/require_document_rule.gd" id="1_k8173"]
+
+[resource]
+script = ExtResource("1_k8173")
+document_id = &"bioscan"
+id = &"r_bioscan_required"
+title_key = "r_bioscan_required_title"
+rulebook_text_key = "r_bioscan_required_text"

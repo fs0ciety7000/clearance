@@ -1,0 +1,271 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/booth/booth_director.gd" id="1_booth"]
+[ext_resource type="Shader" path="res://assets/shaders/booth_decor.gdshader" id="2_booth"]
+[ext_resource type="CompressedTexture2DArray" path="res://assets/textures/booth/tex_booth_albedo_rough.png" id="3_booth"]
+[ext_resource type="CompressedTexture2DArray" path="res://assets/textures/booth/tex_booth_normal_metal.png" id="4_booth"]
+[ext_resource type="ArrayMesh" path="res://assets/models/booth/booth_static_near.res" id="5_booth"]
+[ext_resource type="ArrayMesh" path="res://assets/models/booth/booth_static_far.res" id="6_booth"]
+[ext_resource type="Shader" path="res://assets/shaders/booth_emissive.gdshader" id="7_booth"]
+[ext_resource type="ArrayMesh" path="res://assets/models/booth/booth_emissive.res" id="8_booth"]
+[ext_resource type="Shader" path="res://assets/shaders/booth_holo.gdshader" id="9_booth"]
+[ext_resource type="ArrayMesh" path="res://assets/models/booth/booth_holo.res" id="10_booth"]
+[ext_resource type="Shader" path="res://assets/shaders/rain_sheet.gdshader" id="11_booth"]
+[ext_resource type="ArrayMesh" path="res://assets/models/booth/booth_rain.res" id="12_booth"]
+[ext_resource type="Shader" path="res://assets/shaders/booth_glass.gdshader" id="13_booth"]
+[ext_resource type="Shader" path="res://assets/shaders/impostor_silhouette.gdshader" id="14_booth"]
+[ext_resource type="Script" path="res://scripts/booth/queue_impostors.gd" id="15_booth"]
+[ext_resource type="Script" path="res://scripts/booth/booth_quality.gd" id="16_booth"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.02745098, 0.03137255, 0.047058824, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.08627451, 0.105882354, 0.14901961, 1)
+ambient_light_energy = 0.55
+reflected_light_source = 1
+tonemap_mode = 4
+tonemap_exposure = 1.05
+glow_enabled = true
+glow_intensity = 0.7
+glow_bloom = 0.02
+fog_enabled = true
+fog_light_color = Color(0.10666667, 0.12784314, 0.16705883, 1)
+fog_density = 0.024
+fog_sky_affect = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1"]
+render_priority = 0
+shader = ExtResource("2_booth")
+shader_parameter/albedo_rough = ExtResource("3_booth")
+shader_parameter/normal_metal = ExtResource("4_booth")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2"]
+render_priority = 0
+shader = ExtResource("7_booth")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3"]
+render_priority = 0
+shader = ExtResource("9_booth")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4"]
+render_priority = 0
+shader = ExtResource("11_booth")
+shader_parameter/color = Color(0.41000003, 0.44333336, 0.49666667, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5"]
+render_priority = 0
+shader = ExtResource("13_booth")
+shader_parameter/aspect = 1.7142857142857144
+
+[sub_resource type="QuadMesh" id="QuadMesh_1"]
+size = Vector2(2.4, 1.4)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6"]
+render_priority = 0
+shader = ExtResource("14_booth")
+
+[sub_resource type="MultiMesh" id="MultiMesh_1"]
+transform_format = 1
+use_colors = true
+
+[sub_resource type="Curve3D" id="Curve3D_1"]
+bake_interval = 0.05
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0.0814, 0, 0.28599998, -1.27, 0, -3.3, -0.20239998, 0, -0.495, 0.20239998, 0, 0.495, -0.9, 0, -2, -0.198, 0, -0.308, 0.198, 0, 0.308, -0.35, 0, -1.05, -0.077, 0, -0.098999985, 0, 0, 0, 0, 0, -0.6),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_2"]
+bake_interval = 0.05
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0.154, 0, -0.055, 0, 0, -0.6, -0.32999998, 0, 0.021999992, 0.32999998, 0, -0.021999992, 0.7, 0, -0.85, -0.35199997, 0, -0.09900001, 0.35199997, 0, 0.09900001, 1.5, 0, -0.7, -0.28599998, 0, -0.22, 0.28599998, 0, 0.22, 2.3, 0, -0.4, -0.11, 0, -0.15400001, 0, 0, 0, 2.8, 0, 0.3),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+}
+point_count = 5
+
+[sub_resource type="Curve3D" id="Curve3D_3"]
+bake_interval = 0.05
+_data = {
+"points": PackedVector3Array(0, 0, 0, -0.099, 0, -0.17599998, 0, 0, -0.6, 0.22, 0, 0.39600003, -0.22, 0, -0.39600003, -0.45, 0, -1.4, 0.24199998, 0, 0.37399998, -0.24199998, 0, -0.37399998, -1, 0, -2.4, 0.35199997, 0, 0.46199998, -0.35199997, 0, -0.46199998, -1.55, 0, -3.1, 0.23099999, 0, 0.30800003, 0, 0, 0, -2.6, 0, -4.5),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+}
+point_count = 5
+
+[node name="Booth" type="Node3D" unique_id=216536834]
+script = ExtResource("1_booth")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=632283840]
+environment = SubResource("Environment_1")
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=468755918]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 2)
+
+[node name="BoothCamera" type="Camera3D" parent="CameraRig" unique_id=319932293]
+unique_name_in_owner = true
+current = true
+fov = 14.0
+far = 120.0
+
+[node name="Lights" type="Node3D" parent="." unique_id=174527342]
+
+[node name="KeyLight" type="SpotLight3D" parent="Lights" unique_id=155477953]
+transform = Transform3D(0.9701424, -0.14269543, 0.19611613, 0, 0.8086075, 0.5883484, -0.2425356, -0.5707817, 0.78446454, 0.25, 2.3, 0.4)
+light_color = Color(0.9098039, 0.94509804, 0.9607843, 1)
+light_energy = 3.0
+shadow_enabled = true
+spot_attenuation = 0.8
+spot_angle = 22.0
+
+[node name="RimLeft" type="OmniLight3D" parent="Lights" unique_id=1052885619]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 2, -1.8)
+light_color = Color(0.16862746, 0.43137255, 0.47058824, 1)
+light_energy = 2.2
+omni_range = 2.6
+omni_attenuation = 1.2
+
+[node name="RimRight" type="OmniLight3D" parent="Lights" unique_id=392747110]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 2, -1.8)
+light_color = Color(0.49411765, 0.22745098, 0.36078432, 1)
+light_energy = 2.2
+omni_range = 2.6
+omni_attenuation = 1.2
+
+[node name="Fill" type="OmniLight3D" parent="Lights" unique_id=892635015]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.8, -1)
+light_color = Color(0.22745098, 0.27058825, 0.3372549, 1)
+light_energy = 0.6
+omni_range = 3.0
+omni_attenuation = 1.2
+
+[node name="HalcyonSpill" type="OmniLight3D" parent="Lights" unique_id=853694898]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 1.6, -2.3)
+light_color = Color(0.7882353, 0.72156864, 0.3529412, 1)
+light_energy = 0.6
+omni_range = 1.6
+omni_attenuation = 1.2
+
+[node name="SlotGlow" type="OmniLight3D" parent="Lights" unique_id=832071483]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, -0.1)
+light_color = Color(0, 0.8980392, 1, 1)
+light_energy = 0.0
+omni_range = 0.6
+omni_attenuation = 1.2
+
+[node name="GateLight" type="OmniLight3D" parent="Lights" unique_id=641359097]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 1.2, -0.6)
+light_color = Color(0.18039216, 1, 0.6039216, 1)
+light_energy = 0.0
+omni_range = 2.0
+omni_attenuation = 1.2
+
+[node name="BoothInterior" type="OmniLight3D" parent="Lights" unique_id=859516232]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 1.95, 0.8)
+light_color = Color(0.49784315, 0.52588236, 0.5692157, 1)
+light_energy = 3.5
+light_cull_mask = 2
+omni_range = 2.4
+omni_attenuation = 1.2
+
+[node name="HallTeal" type="OmniLight3D" parent="Lights" unique_id=880437415]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6, 2.4, -7.9)
+light_color = Color(0.16862746, 0.43137255, 0.47058824, 1)
+light_energy = 2.4
+omni_range = 4.5
+omni_attenuation = 1.2
+
+[node name="HallRose" type="OmniLight3D" parent="Lights" unique_id=880377018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4, 2.2, -7.6)
+light_color = Color(0.49411765, 0.22745098, 0.36078432, 1)
+light_energy = 2.2
+omni_range = 4.5
+omni_attenuation = 1.2
+
+[node name="Decor" type="Node3D" parent="." unique_id=190879248]
+
+[node name="StaticNear" type="MeshInstance3D" parent="Decor" unique_id=1036465968]
+layers = 3
+material_override = SubResource("ShaderMaterial_1")
+cast_shadow = 0
+mesh = ExtResource("5_booth")
+
+[node name="StaticFar" type="MeshInstance3D" parent="Decor" unique_id=942452899]
+material_override = SubResource("ShaderMaterial_1")
+cast_shadow = 0
+mesh = ExtResource("6_booth")
+
+[node name="Emissive" type="MeshInstance3D" parent="Decor" unique_id=1013638311]
+material_override = SubResource("ShaderMaterial_2")
+cast_shadow = 0
+mesh = ExtResource("8_booth")
+
+[node name="Holo" type="MeshInstance3D" parent="Decor" unique_id=150119764]
+material_override = SubResource("ShaderMaterial_3")
+cast_shadow = 0
+mesh = ExtResource("10_booth")
+
+[node name="Rain" type="MeshInstance3D" parent="Decor" unique_id=150463788]
+material_override = SubResource("ShaderMaterial_4")
+cast_shadow = 0
+mesh = ExtResource("12_booth")
+
+[node name="BoothFront" type="Node3D" parent="." unique_id=919318664]
+
+[node name="Glass" type="MeshInstance3D" parent="BoothFront" unique_id=416508564]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+sorting_offset = 1.0
+material_override = SubResource("ShaderMaterial_5")
+cast_shadow = 0
+mesh = SubResource("QuadMesh_1")
+
+[node name="QueueImpostors" type="MultiMeshInstance3D" parent="." unique_id=319982680]
+unique_name_in_owner = true
+material_override = SubResource("ShaderMaterial_6")
+cast_shadow = 0
+multimesh = SubResource("MultiMesh_1")
+script = ExtResource("15_booth")
+slots = PackedVector2Array(-1.32, -3.45, -1.95, -4.15, -1.4, -4.85, -2.25, -5.55, -1.55, -6.3, -2.45, -6.95, -2.95, -7.6)
+tints = PackedColorArray(0.23137255, 0.25882354, 0.32156864, 1, 0.35686275, 0.2901961, 0.24705882, 1, 0.18431373, 0.2901961, 0.29803923, 1, 0.29803923, 0.22745098, 0.30980393, 1, 0.41960785, 0.3882353, 0.33333334, 1, 0.18039216, 0.22745098, 0.33333334, 1)
+
+[node name="ArrivalPath" type="Path3D" parent="." unique_id=30588609]
+unique_name_in_owner = true
+curve = SubResource("Curve3D_1")
+
+[node name="DeskMark" type="Marker3D" parent="." unique_id=111188341]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.6)
+
+[node name="ExitApprovedPath" type="Path3D" parent="." unique_id=1039651755]
+unique_name_in_owner = true
+curve = SubResource("Curve3D_2")
+
+[node name="ClearMark" type="Marker3D" parent="ExitApprovedPath" unique_id=324179279]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 0, -0.85)
+
+[node name="ExitRefusedPath" type="Path3D" parent="." unique_id=394973048]
+unique_name_in_owner = true
+curve = SubResource("Curve3D_3")
+
+[node name="ClearMark" type="Marker3D" parent="ExitRefusedPath" unique_id=879899900]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0, -1.15)
+
+[node name="LookTargetPlane" type="Marker3D" parent="." unique_id=229049871]
+unique_name_in_owner = true
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 1.4, 0)
+
+[node name="PassengerSlots" type="Node3D" parent="." unique_id=157550592]
+unique_name_in_owner = true
+
+[node name="Quality" type="Node" parent="." unique_id=868223148 node_paths=PackedStringArray("key_light")]
+script = ExtResource("16_booth")
+environment = SubResource("Environment_1")
+key_light = NodePath("../Lights/KeyLight")
+decor_material = SubResource("ShaderMaterial_1")
+emissive_material = SubResource("ShaderMaterial_2")
+holo_material = SubResource("ShaderMaterial_3")
+rain_material = SubResource("ShaderMaterial_4")
+glass_material = SubResource("ShaderMaterial_5")

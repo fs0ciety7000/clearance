@@ -1,0 +1,128 @@
+[gd_resource type="Resource" script_class="DocumentTypeDef" format=3 uid="uid://cymsp1xm1qy7s"]
+
+[ext_resource type="Script" path="res://scripts/documents/field_def.gd" id="1_uh1rf"]
+[ext_resource type="Script" path="res://scripts/documents/document_type_def.gd" id="2_mcm25"]
+
+[sub_resource type="Resource" id="field_portrait"]
+script = ExtResource("1_uh1rf")
+id = &"portrait"
+label_key = "field_portrait"
+kind = 4
+truth_path = &"appearance"
+
+[sub_resource type="Resource" id="field_family_name"]
+script = ExtResource("1_uh1rf")
+id = &"family_name"
+label_key = "field_family_name"
+truth_path = &"family_name"
+display_order = 1
+
+[sub_resource type="Resource" id="field_given_name"]
+script = ExtResource("1_uh1rf")
+id = &"given_name"
+label_key = "field_given_name"
+truth_path = &"given_name"
+display_order = 2
+
+[sub_resource type="Resource" id="field_birth_date"]
+script = ExtResource("1_uh1rf")
+id = &"birth_date"
+label_key = "field_birth_date"
+kind = 1
+truth_path = &"birth_date"
+display_order = 3
+format = "DD.MM.YYYY"
+
+[sub_resource type="Resource" id="field_sex"]
+script = ExtResource("1_uh1rf")
+id = &"sex"
+label_key = "field_sex"
+kind = 3
+truth_path = &"sex"
+display_order = 4
+
+[sub_resource type="Resource" id="field_origin"]
+script = ExtResource("1_uh1rf")
+id = &"origin"
+label_key = "field_origin"
+kind = 3
+truth_path = &"faction_id"
+display_order = 5
+
+[sub_resource type="Resource" id="field_citizen_id"]
+script = ExtResource("1_uh1rf")
+id = &"citizen_id"
+label_key = "field_citizen_id"
+kind = 2
+truth_path = &"citizen_id"
+display_order = 6
+
+[sub_resource type="Resource" id="field_citizen_class"]
+script = ExtResource("1_uh1rf")
+id = &"citizen_class"
+label_key = "field_citizen_class"
+kind = 3
+truth_path = &"citizen_class"
+display_order = 7
+
+[sub_resource type="Resource" id="field_issue_date"]
+script = ExtResource("1_uh1rf")
+id = &"issue_date"
+label_key = "field_issue_date"
+kind = 1
+truth_path = &"document.issue_date"
+display_order = 8
+format = "DD.MM.YYYY"
+
+[sub_resource type="Resource" id="field_expiry_date"]
+script = ExtResource("1_uh1rf")
+id = &"expiry_date"
+label_key = "field_expiry_date"
+kind = 1
+truth_path = &"document.expiry_date"
+display_order = 9
+format = "DD.MM.YYYY"
+
+[sub_resource type="Resource" id="field_issuer"]
+script = ExtResource("1_uh1rf")
+id = &"issuer"
+label_key = "field_issuer"
+kind = 3
+truth_path = &"document.issuer_id"
+comparable = false
+display_order = 10
+
+[sub_resource type="Resource" id="field_implants"]
+script = ExtResource("1_uh1rf")
+id = &"implants"
+label_key = "field_implants"
+kind = 7
+truth_path = &"implants"
+display_order = 11
+
+[sub_resource type="Resource" id="field_seal"]
+script = ExtResource("1_uh1rf")
+id = &"seal"
+label_key = "field_seal"
+kind = 3
+truth_path = &"document.seal_id"
+display_order = 12
+
+[sub_resource type="Resource" id="field_mrz"]
+script = ExtResource("1_uh1rf")
+id = &"mrz"
+label_key = "field_mrz"
+kind = 2
+truth_path = &"document.mrz"
+display_order = 13
+
+[resource]
+script = ExtResource("2_mcm25")
+id = &"id_card"
+title_key = "doc_id_card_title"
+fields = Array[ExtResource("1_uh1rf")]([SubResource("field_portrait"), SubResource("field_family_name"), SubResource("field_given_name"), SubResource("field_birth_date"), SubResource("field_sex"), SubResource("field_origin"), SubResource("field_citizen_id"), SubResource("field_citizen_class"), SubResource("field_issue_date"), SubResource("field_expiry_date"), SubResource("field_issuer"), SubResource("field_implants"), SubResource("field_seal"), SubResource("field_mrz")])
+validity_days = Vector2i(1825, 3650)
+holo_tint_token = &"ACCENT_YELLOW"
+issuer_id = &"bureau_continuite"
+seal_id = &"seal_solar_hexagon"
+serial_pattern = "HG-#NNN-XXXX"

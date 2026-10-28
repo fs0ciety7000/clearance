@@ -1,0 +1,87 @@
+[gd_resource type="Resource" script_class="DocumentTypeDef" format=3 uid="uid://b0vpfcl5dy2rk"]
+
+[ext_resource type="Script" path="res://scripts/documents/field_def.gd" id="1_staua"]
+[ext_resource type="Script" path="res://scripts/documents/document_type_def.gd" id="2_n6vuc"]
+
+[sub_resource type="Resource" id="field_serial"]
+script = ExtResource("1_staua")
+id = &"serial"
+label_key = "field_serial"
+kind = 2
+truth_path = &"document.serial"
+
+[sub_resource type="Resource" id="field_family_name"]
+script = ExtResource("1_staua")
+id = &"family_name"
+label_key = "field_family_name"
+truth_path = &"family_name"
+display_order = 1
+
+[sub_resource type="Resource" id="field_given_name"]
+script = ExtResource("1_staua")
+id = &"given_name"
+label_key = "field_given_name"
+truth_path = &"given_name"
+display_order = 2
+
+[sub_resource type="Resource" id="field_citizen_id"]
+script = ExtResource("1_staua")
+id = &"citizen_id"
+label_key = "field_citizen_id"
+kind = 2
+truth_path = &"citizen_id"
+display_order = 3
+
+[sub_resource type="Resource" id="field_authorized_implants"]
+script = ExtResource("1_staua")
+id = &"authorized_implants"
+label_key = "field_authorized_implants"
+kind = 7
+truth_path = &"implants"
+display_order = 4
+
+[sub_resource type="Resource" id="field_issue_date"]
+script = ExtResource("1_staua")
+id = &"issue_date"
+label_key = "field_issue_date"
+kind = 1
+truth_path = &"document.issue_date"
+display_order = 5
+format = "DD.MM.YYYY"
+
+[sub_resource type="Resource" id="field_expiry_date"]
+script = ExtResource("1_staua")
+id = &"expiry_date"
+label_key = "field_expiry_date"
+kind = 1
+truth_path = &"document.expiry_date"
+display_order = 6
+format = "DD.MM.YYYY"
+
+[sub_resource type="Resource" id="field_issuer"]
+script = ExtResource("1_staua")
+id = &"issuer"
+label_key = "field_issuer"
+kind = 3
+truth_path = &"document.issuer_id"
+comparable = false
+display_order = 7
+
+[sub_resource type="Resource" id="field_seal"]
+script = ExtResource("1_staua")
+id = &"seal"
+label_key = "field_seal"
+kind = 3
+truth_path = &"document.seal_id"
+display_order = 8
+
+[resource]
+script = ExtResource("2_n6vuc")
+id = &"mil_waiver"
+title_key = "doc_mil_waiver_title"
+fields = Array[ExtResource("1_staua")]([SubResource("field_serial"), SubResource("field_family_name"), SubResource("field_given_name"), SubResource("field_citizen_id"), SubResource("field_authorized_implants"), SubResource("field_issue_date"), SubResource("field_expiry_date"), SubResource("field_issuer"), SubResource("field_seal")])
+validity_days = Vector2i(90, 365)
+holo_tint_token = &"STATE_RED"
+issuer_id = &"autorite_transit"
+seal_id = &"seal_barred_ring_red"
+serial_pattern = "DM-NNNN"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PortraitMatchRule" format=3 uid="uid://d1s7bfolqun6o"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/portrait_match_rule.gd" id="1_gr0lk"]
+
+[resource]
+script = ExtResource("1_gr0lk")
+check_between_documents = false
+max_differing_traits = 2
+detected_anomalies = Array[int]([11])
+id = &"r_identity_fraud_detain"
+title_key = "r_identity_fraud_detain_title"
+rulebook_text_key = "r_identity_fraud_detain_text"
+category = 1
+severity = 3

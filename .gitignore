@@ -1,0 +1,33 @@
+# --- Godot 4 ---
+# Cache éditeur / imports (régénéré automatiquement)
+.godot/
+# Les fichiers *.import SONT versionnés (paramètres d'import des assets).
+
+# Exports : export_presets.cfg est VERSIONNÉ (sans secret, D-069 ; les données
+# sensibles vont dans .godot/export_credentials.cfg). Sorties d'export ignorées :
+build/
+exports/
+
+# Mono / C# (non utilisé, par sécurité)
+.mono/
+data_*/
+mono_crash.*.json
+
+# Temporaires / OS
+*.tmp
+*.translation
+.DS_Store
+Thumbs.db
+*~
+*.swp
+
+# IDE
+.vscode/
+.idea/
+
+# Addons : GUT est VERSIONNÉ (addons/gut) pour des tests reproductibles
+# et une CI sans téléchargement. Ne pas l'ignorer.
+
+# Packs sources téléchargés (tools/fetch_assets.sh) — seules les ressources importées dans assets/ sont versionnées
+art_src/downloads/
+art_src/mixamo/

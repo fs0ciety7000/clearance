@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NamePool" format=3 uid="uid://bav3ch1ypyt3c"]
+
+[ext_resource type="Script" path="res://scripts/generation/name_pool.gd" id="1_h26rw"]
+
+[resource]
+script = ExtResource("1_h26rw")
+id = &"tyc"
+given_names_f = PackedStringArray("Mira", "Ilse", "Anouk", "Yara", "Rosalind", "Elena", "Sabine")
+given_names_m = PackedStringArray("Tomás", "Dmitri", "Lev", "Bastien", "Kasimir", "Joaquín", "Arkady")
+given_names_x = PackedStringArray("Noor")
+family_names = PackedStringArray("Vasquez-Orlov", "Brandt", "Kowalczyk", "Moreno-Lind", "Petrenko", "Achebe-Sörensen", "Duval", "Halvorsen", "Navarro", "Ivanova", "Lindqvist-Rey", "Mbeki", "Castellanos", "Novak", "Oyelaran-Holm")
+reserved_names = PackedStringArray("Vasquez-Orlov", "Petrenko", "Novak", "Achebe-Sörensen", "Moreno-Lind")
+reserved_full_names = PackedStringArray("Bastien Duval", "Dmitri Kowalczyk")

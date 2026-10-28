@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ProcedureRule" format=3 uid="uid://c5kak8ruds1eo"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/procedure_rule.gd" id="1_ojp7u"]
+
+[resource]
+script = ExtResource("1_ojp7u")
+procedure_id = &"face_uncovered"
+id = &"r_face_uncovered"
+title_key = "r_face_uncovered_title"
+rulebook_text_key = "r_face_uncovered_text"
+category = 4
+severity = 1

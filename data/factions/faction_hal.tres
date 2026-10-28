@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="FactionDef" format=3 uid="uid://d05enylanmg6q"]
+
+[ext_resource type="Resource" path="res://data/names/namepool_hal.tres" id="1_d5c71"]
+[ext_resource type="Script" path="res://scripts/core/faction_def.gd" id="2_4n8o5"]
+
+[resource]
+script = ExtResource("2_4n8o5")
+id = &"hal"
+name_key = "faction_hal_name"
+code = "HAL"
+id_prefix = "HG-1"
+origin_sectors = PackedStringArray("Anneaux D–F", "Anneau C — logements de service", "Coursives d\'Halcyon Gate")
+name_pool = ExtResource("1_d5c71")
+citizen_class_weights = Dictionary[StringName, float]({
+&"C-1": 0.05,
+&"C-2": 0.25,
+&"C-3": 0.45,
+&"C-4": 0.25
+})
+purpose_weights = Dictionary[StringName, float]({
+&"return": 0.7,
+&"trade": 0.1,
+&"work": 0.2
+})
+employers = PackedStringArray("Bureau de Continuité", "Banque Aurel", "Valcourt-Hsu Logistique", "Meridian Biosystèmes", "Ondine Synaptique")
+implant_rate = 0.15
+implant_weights = Dictionary[StringName, float]({
+&"DER-13": 1.0,
+&"NX-18": 1.0,
+&"OPT-14": 0.5,
+&"OPT-7": 0.5
+})

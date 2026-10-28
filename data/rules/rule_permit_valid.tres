@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DocumentNotExpiredRule" format=3 uid="uid://dsl5m6bepcgsp"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/document_not_expired_rule.gd" id="1_ibisd"]
+
+[resource]
+script = ExtResource("1_ibisd")
+document_id = &"entry_permit"
+id = &"r_permit_valid"
+title_key = "r_permit_valid_title"
+rulebook_text_key = "r_permit_valid_text"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NamePool" format=3 uid="uid://dgble8l7vedkj"]
+
+[ext_resource type="Script" path="res://scripts/generation/name_pool.gd" id="1_0tvdn"]
+
+[resource]
+script = ExtResource("1_0tvdn")
+id = &"ter"
+given_names_f = PackedStringArray("Amara", "Fatou", "Leila", "Ana-Lucía", "Priya", "Inès", "Ngozi", "Samira")
+given_names_m = PackedStringArray("Rahul", "Mateus", "Kwame", "Tariq", "Emeka", "Bilal", "Diego")
+given_names_x = PackedStringArray()
+family_names = PackedStringArray("Diallo", "Ramanathan", "Haddad", "Okonkwo", "Silva", "Mensah", "Rahman", "Benali", "Gutiérrez", "Abara", "Nair", "Mahmoud", "Tembo", "Quispe", "Ferhat")
+reserved_names = PackedStringArray("Okonkwo")
+reserved_full_names = PackedStringArray("Amara Diallo", "Fatou Mensah", "Ngozi Mensah")

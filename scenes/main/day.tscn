@@ -1,0 +1,75 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/day/day_scene.gd" id="1_scene"]
+[ext_resource type="PackedScene" path="res://scenes/booth/booth.tscn" id="2_booth"]
+[ext_resource type="Script" path="res://scripts/day/day_controller.gd" id="3_dc"]
+[ext_resource type="Script" path="res://scripts/day/day_clock.gd" id="4_clock"]
+[ext_resource type="Script" path="res://scripts/day/inspection_session.gd" id="5_insp"]
+[ext_resource type="Script" path="res://scripts/booth/portrait_service.gd" id="6_portrait"]
+[ext_resource type="Script" path="res://scripts/audio/audio_director.gd" id="7_audio"]
+
+[node name="Day" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_scene")
+
+[node name="BoothContainer" type="SubViewportContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 56.0
+offset_bottom = 432.0
+grow_horizontal = 2
+stretch = true
+
+[node name="BoothViewport" type="SubViewport" parent="BoothContainer"]
+unique_name_in_owner = true
+handle_input_locally = false
+msaa_3d = 1
+physics_object_picking = true
+size = Vector2i(1920, 376)
+render_target_update_mode = 4
+
+[node name="Booth" parent="BoothContainer/BoothViewport" instance=ExtResource("2_booth")]
+unique_name_in_owner = true
+
+[node name="Services" type="Node" parent="."]
+
+[node name="DayClock" type="Node" parent="Services"]
+unique_name_in_owner = true
+script = ExtResource("4_clock")
+
+[node name="InspectionSession" type="Node" parent="Services"]
+unique_name_in_owner = true
+script = ExtResource("5_insp")
+
+[node name="DayController" type="Node" parent="Services" node_paths=PackedStringArray("clock", "inspection")]
+unique_name_in_owner = true
+script = ExtResource("3_dc")
+clock = NodePath("../DayClock")
+inspection = NodePath("../InspectionSession")
+
+[node name="PortraitService" type="Node" parent="Services"]
+unique_name_in_owner = true
+script = ExtResource("6_portrait")
+
+[node name="UISlot" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="AudioDirector" type="Node" parent="." node_paths=PackedStringArray("booth")]
+unique_name_in_owner = true
+script = ExtResource("7_audio")
+booth = NodePath("../BoothContainer/BoothViewport/Booth")

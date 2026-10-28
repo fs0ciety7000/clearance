@@ -1,0 +1,43 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/booth/passenger_actor.gd" id="1_actor"]
+[ext_resource type="Script" path="res://scripts/booth/passenger_locomotion.gd" id="2_loco"]
+[ext_resource type="Script" path="res://scripts/booth/passenger_rig.gd" id="3_rig"]
+[ext_resource type="Script" path="res://scripts/booth/expression_controller.gd" id="4_expr"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.25
+height = 1.75
+
+[node name="PassengerActor" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_actor")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Locomotion" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_loco")
+
+[node name="Visual" type="Node3D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("3_rig")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+unique_name_in_owner = true
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+unique_name_in_owner = true
+callback_mode_process = 1
+
+[node name="LookTarget" type="Marker3D" parent="."]
+unique_name_in_owner = true
+top_level = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 2)
+
+[node name="ExpressionController" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4_expr")

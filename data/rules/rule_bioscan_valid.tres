@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DocumentNotExpiredRule" format=3 uid="uid://c3eb3rb7cigpq"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/document_not_expired_rule.gd" id="1_lshaw"]
+
+[resource]
+script = ExtResource("1_lshaw")
+document_id = &"bioscan"
+max_age_days = 30
+id = &"r_bioscan_valid"
+title_key = "r_bioscan_valid_title"
+rulebook_text_key = "r_bioscan_valid_text"

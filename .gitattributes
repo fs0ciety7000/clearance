@@ -1,0 +1,34 @@
+# Normalisation des fins de ligne
+* text=auto eol=lf
+
+# Fichiers Godot texte (diffables, fusionnables)
+*.gd      text eol=lf
+*.tres    text eol=lf
+*.tscn    text eol=lf
+*.godot   text eol=lf
+*.cfg     text eol=lf
+*.import  text eol=lf
+*.gdshader text eol=lf
+*.json    text eol=lf
+*.md      text eol=lf
+*.svg     text eol=lf
+*.csv     text eol=lf
+
+# Binaires
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.exr  binary
+*.hdr  binary
+*.glb  binary
+*.gltf binary
+*.blend binary
+*.fbx  binary
+*.ttf  binary
+*.otf  binary
+*.woff2 binary
+*.wav  binary
+*.ogg  binary
+*.mp3  binary
+*.res  binary
+*.scn  binary

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SealValidRule" format=3 uid="uid://ufwia4nq28jd"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/seal_valid_rule.gd" id="1_ka6xm"]
+
+[resource]
+script = ExtResource("1_ka6xm")
+id = &"r_seals_valid"
+title_key = "r_seals_valid_title"
+rulebook_text_key = "r_seals_valid_text"

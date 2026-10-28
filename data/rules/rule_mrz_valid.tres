@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MrzConsistentRule" format=3 uid="uid://b85t0vjkua8hr"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/mrz_consistent_rule.gd" id="1_jqmdi"]
+
+[resource]
+script = ExtResource("1_jqmdi")
+id = &"r_mrz_valid"
+title_key = "r_mrz_valid_title"
+rulebook_text_key = "r_mrz_valid_text"
+category = 1

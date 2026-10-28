@@ -1,0 +1,815 @@
+[gd_resource type="Resource" script_class="AppearanceCatalog" format=3 uid="uid://1r28wj55q3bp"]
+
+[ext_resource type="Script" path="res://scripts/core/appearance_catalog.gd" id="1_l4wml"]
+[ext_resource type="Script" path="res://scripts/core/appearance_slot_def.gd" id="2_tf2pv"]
+[ext_resource type="Script" path="res://scripts/core/appearance_option_def.gd" id="3_wgllo"]
+
+[sub_resource type="Resource" id="opt_silhouette_silhouette_s1_stocky"]
+script = ExtResource("3_wgllo")
+id = &"silhouette_s1_stocky"
+faction_weights = Dictionary[StringName, float]({
+&"ter": 1.5
+})
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_silhouette_silhouette_s2_slender"]
+script = ExtResource("3_wgllo")
+id = &"silhouette_s2_slender"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_silhouette_silhouette_s3_medium"]
+script = ExtResource("3_wgllo")
+id = &"silhouette_s3_medium"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_silhouette_silhouette_s4_slight"]
+script = ExtResource("3_wgllo")
+id = &"silhouette_s4_slight"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="slot_silhouette"]
+script = ExtResource("2_tf2pv")
+id = &"silhouette"
+identity = true
+options = Array[ExtResource("3_wgllo")]([SubResource("opt_silhouette_silhouette_s1_stocky"), SubResource("opt_silhouette_silhouette_s2_slender"), SubResource("opt_silhouette_silhouette_s3_medium"), SubResource("opt_silhouette_silhouette_s4_slight")])
+
+[sub_resource type="Resource" id="opt_face_face_round_e1"]
+script = ExtResource("3_wgllo")
+id = &"face_round_e1"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_round_e2"]
+script = ExtResource("3_wgllo")
+id = &"face_round_e2"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_round_e3"]
+script = ExtResource("3_wgllo")
+id = &"face_round_e3"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_square_e1"]
+script = ExtResource("3_wgllo")
+id = &"face_square_e1"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_square_e2"]
+script = ExtResource("3_wgllo")
+id = &"face_square_e2"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_square_e3"]
+script = ExtResource("3_wgllo")
+id = &"face_square_e3"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_oval_e1"]
+script = ExtResource("3_wgllo")
+id = &"face_oval_e1"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_oval_e2"]
+script = ExtResource("3_wgllo")
+id = &"face_oval_e2"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_oval_e3"]
+script = ExtResource("3_wgllo")
+id = &"face_oval_e3"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_angular_e1"]
+script = ExtResource("3_wgllo")
+id = &"face_angular_e1"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_angular_e2"]
+script = ExtResource("3_wgllo")
+id = &"face_angular_e2"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_face_face_angular_e3"]
+script = ExtResource("3_wgllo")
+id = &"face_angular_e3"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="slot_face"]
+script = ExtResource("2_tf2pv")
+id = &"face"
+identity = true
+visible_in_portrait = true
+options = Array[ExtResource("3_wgllo")]([SubResource("opt_face_face_round_e1"), SubResource("opt_face_face_round_e2"), SubResource("opt_face_face_round_e3"), SubResource("opt_face_face_square_e1"), SubResource("opt_face_face_square_e2"), SubResource("opt_face_face_square_e3"), SubResource("opt_face_face_oval_e1"), SubResource("opt_face_face_oval_e2"), SubResource("opt_face_face_oval_e3"), SubResource("opt_face_face_angular_e1"), SubResource("opt_face_face_angular_e2"), SubResource("opt_face_face_angular_e3")])
+
+[sub_resource type="Resource" id="opt_eyes_eyes_brown"]
+script = ExtResource("3_wgllo")
+id = &"eyes_brown"
+weight = 3.0
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_eyes_eyes_hazel"]
+script = ExtResource("3_wgllo")
+id = &"eyes_hazel"
+weight = 2.0
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_eyes_eyes_green"]
+script = ExtResource("3_wgllo")
+id = &"eyes_green"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_eyes_eyes_blue"]
+script = ExtResource("3_wgllo")
+id = &"eyes_blue"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_eyes_eyes_grey"]
+script = ExtResource("3_wgllo")
+id = &"eyes_grey"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_eyes_eyes_heterochromia"]
+script = ExtResource("3_wgllo")
+id = &"eyes_heterochromia"
+weight = 0.1
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="slot_eyes"]
+script = ExtResource("2_tf2pv")
+id = &"eyes"
+identity = true
+visible_in_portrait = true
+options = Array[ExtResource("3_wgllo")]([SubResource("opt_eyes_eyes_brown"), SubResource("opt_eyes_eyes_hazel"), SubResource("opt_eyes_eyes_green"), SubResource("opt_eyes_eyes_blue"), SubResource("opt_eyes_eyes_grey"), SubResource("opt_eyes_eyes_heterochromia")])
+
+[sub_resource type="Resource" id="opt_nose_mouth_nose_mouth_n1_l1"]
+script = ExtResource("3_wgllo")
+id = &"nose_mouth_n1_l1"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_nose_mouth_nose_mouth_n1_l2"]
+script = ExtResource("3_wgllo")
+id = &"nose_mouth_n1_l2"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_nose_mouth_nose_mouth_n2_l1"]
+script = ExtResource("3_wgllo")
+id = &"nose_mouth_n2_l1"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_nose_mouth_nose_mouth_n2_l2"]
+script = ExtResource("3_wgllo")
+id = &"nose_mouth_n2_l2"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_nose_mouth_nose_mouth_n3_l1"]
+script = ExtResource("3_wgllo")
+id = &"nose_mouth_n3_l1"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_nose_mouth_nose_mouth_n3_l2"]
+script = ExtResource("3_wgllo")
+id = &"nose_mouth_n3_l2"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="slot_nose_mouth"]
+script = ExtResource("2_tf2pv")
+id = &"nose_mouth"
+identity = true
+visible_in_portrait = true
+options = Array[ExtResource("3_wgllo")]([SubResource("opt_nose_mouth_nose_mouth_n1_l1"), SubResource("opt_nose_mouth_nose_mouth_n1_l2"), SubResource("opt_nose_mouth_nose_mouth_n2_l1"), SubResource("opt_nose_mouth_nose_mouth_n2_l2"), SubResource("opt_nose_mouth_nose_mouth_n3_l1"), SubResource("opt_nose_mouth_nose_mouth_n3_l2")])
+
+[sub_resource type="Resource" id="opt_skin_skin_01"]
+script = ExtResource("3_wgllo")
+id = &"skin_01"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_skin_skin_02"]
+script = ExtResource("3_wgllo")
+id = &"skin_02"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_skin_skin_03"]
+script = ExtResource("3_wgllo")
+id = &"skin_03"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_skin_skin_04"]
+script = ExtResource("3_wgllo")
+id = &"skin_04"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_skin_skin_05"]
+script = ExtResource("3_wgllo")
+id = &"skin_05"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_skin_skin_06"]
+script = ExtResource("3_wgllo")
+id = &"skin_06"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_skin_skin_07"]
+script = ExtResource("3_wgllo")
+id = &"skin_07"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_skin_skin_08"]
+script = ExtResource("3_wgllo")
+id = &"skin_08"
+faction_weights = Dictionary[StringName, float]({
+&"tyc": 3.0
+})
+tags = PackedStringArray("tycho_grey")
+
+[sub_resource type="Resource" id="slot_skin"]
+script = ExtResource("2_tf2pv")
+id = &"skin"
+identity = true
+visible_in_portrait = true
+options = Array[ExtResource("3_wgllo")]([SubResource("opt_skin_skin_01"), SubResource("opt_skin_skin_02"), SubResource("opt_skin_skin_03"), SubResource("opt_skin_skin_04"), SubResource("opt_skin_skin_05"), SubResource("opt_skin_skin_06"), SubResource("opt_skin_skin_07"), SubResource("opt_skin_skin_08")])
+
+[sub_resource type="Resource" id="opt_hair_hair_short_c01"]
+script = ExtResource("3_wgllo")
+id = &"hair_short_c01"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_short_c02"]
+script = ExtResource("3_wgllo")
+id = &"hair_short_c02"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_short_c03"]
+script = ExtResource("3_wgllo")
+id = &"hair_short_c03"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_short_c04"]
+script = ExtResource("3_wgllo")
+id = &"hair_short_c04"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_short_c05"]
+script = ExtResource("3_wgllo")
+id = &"hair_short_c05"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_short_c06"]
+script = ExtResource("3_wgllo")
+id = &"hair_short_c06"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_short_c07"]
+script = ExtResource("3_wgllo")
+id = &"hair_short_c07"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_short_c08"]
+script = ExtResource("3_wgllo")
+id = &"hair_short_c08"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_short_c09"]
+script = ExtResource("3_wgllo")
+id = &"hair_short_c09"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_short_c10"]
+script = ExtResource("3_wgllo")
+id = &"hair_short_c10"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_long_c01"]
+script = ExtResource("3_wgllo")
+id = &"hair_long_c01"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_long_c02"]
+script = ExtResource("3_wgllo")
+id = &"hair_long_c02"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_long_c03"]
+script = ExtResource("3_wgllo")
+id = &"hair_long_c03"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_long_c04"]
+script = ExtResource("3_wgllo")
+id = &"hair_long_c04"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_long_c05"]
+script = ExtResource("3_wgllo")
+id = &"hair_long_c05"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_long_c06"]
+script = ExtResource("3_wgllo")
+id = &"hair_long_c06"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_long_c07"]
+script = ExtResource("3_wgllo")
+id = &"hair_long_c07"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_long_c08"]
+script = ExtResource("3_wgllo")
+id = &"hair_long_c08"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_long_c09"]
+script = ExtResource("3_wgllo")
+id = &"hair_long_c09"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_long_c10"]
+script = ExtResource("3_wgllo")
+id = &"hair_long_c10"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_bun_c01"]
+script = ExtResource("3_wgllo")
+id = &"hair_bun_c01"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_bun_c02"]
+script = ExtResource("3_wgllo")
+id = &"hair_bun_c02"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_bun_c03"]
+script = ExtResource("3_wgllo")
+id = &"hair_bun_c03"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_bun_c04"]
+script = ExtResource("3_wgllo")
+id = &"hair_bun_c04"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_bun_c05"]
+script = ExtResource("3_wgllo")
+id = &"hair_bun_c05"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_bun_c06"]
+script = ExtResource("3_wgllo")
+id = &"hair_bun_c06"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_bun_c07"]
+script = ExtResource("3_wgllo")
+id = &"hair_bun_c07"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_bun_c08"]
+script = ExtResource("3_wgllo")
+id = &"hair_bun_c08"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_bun_c09"]
+script = ExtResource("3_wgllo")
+id = &"hair_bun_c09"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_bun_c10"]
+script = ExtResource("3_wgllo")
+id = &"hair_bun_c10"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_braids_c01"]
+script = ExtResource("3_wgllo")
+id = &"hair_braids_c01"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_braids_c02"]
+script = ExtResource("3_wgllo")
+id = &"hair_braids_c02"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_braids_c03"]
+script = ExtResource("3_wgllo")
+id = &"hair_braids_c03"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_braids_c04"]
+script = ExtResource("3_wgllo")
+id = &"hair_braids_c04"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_braids_c05"]
+script = ExtResource("3_wgllo")
+id = &"hair_braids_c05"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_braids_c06"]
+script = ExtResource("3_wgllo")
+id = &"hair_braids_c06"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_braids_c07"]
+script = ExtResource("3_wgllo")
+id = &"hair_braids_c07"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_braids_c08"]
+script = ExtResource("3_wgllo")
+id = &"hair_braids_c08"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_braids_c09"]
+script = ExtResource("3_wgllo")
+id = &"hair_braids_c09"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_braids_c10"]
+script = ExtResource("3_wgllo")
+id = &"hair_braids_c10"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_curly_c01"]
+script = ExtResource("3_wgllo")
+id = &"hair_curly_c01"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_curly_c02"]
+script = ExtResource("3_wgllo")
+id = &"hair_curly_c02"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_curly_c03"]
+script = ExtResource("3_wgllo")
+id = &"hair_curly_c03"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_curly_c04"]
+script = ExtResource("3_wgllo")
+id = &"hair_curly_c04"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_curly_c05"]
+script = ExtResource("3_wgllo")
+id = &"hair_curly_c05"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_curly_c06"]
+script = ExtResource("3_wgllo")
+id = &"hair_curly_c06"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_curly_c07"]
+script = ExtResource("3_wgllo")
+id = &"hair_curly_c07"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_curly_c08"]
+script = ExtResource("3_wgllo")
+id = &"hair_curly_c08"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_curly_c09"]
+script = ExtResource("3_wgllo")
+id = &"hair_curly_c09"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_curly_c10"]
+script = ExtResource("3_wgllo")
+id = &"hair_curly_c10"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_mohawk_c01"]
+script = ExtResource("3_wgllo")
+id = &"hair_mohawk_c01"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_mohawk_c02"]
+script = ExtResource("3_wgllo")
+id = &"hair_mohawk_c02"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_mohawk_c03"]
+script = ExtResource("3_wgllo")
+id = &"hair_mohawk_c03"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_mohawk_c04"]
+script = ExtResource("3_wgllo")
+id = &"hair_mohawk_c04"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_mohawk_c05"]
+script = ExtResource("3_wgllo")
+id = &"hair_mohawk_c05"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_mohawk_c06"]
+script = ExtResource("3_wgllo")
+id = &"hair_mohawk_c06"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_mohawk_c07"]
+script = ExtResource("3_wgllo")
+id = &"hair_mohawk_c07"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_mohawk_c08"]
+script = ExtResource("3_wgllo")
+id = &"hair_mohawk_c08"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_mohawk_c09"]
+script = ExtResource("3_wgllo")
+id = &"hair_mohawk_c09"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_mohawk_c10"]
+script = ExtResource("3_wgllo")
+id = &"hair_mohawk_c10"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_shaved_c01"]
+script = ExtResource("3_wgllo")
+id = &"hair_shaved_c01"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_shaved_c02"]
+script = ExtResource("3_wgllo")
+id = &"hair_shaved_c02"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_shaved_c03"]
+script = ExtResource("3_wgllo")
+id = &"hair_shaved_c03"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_shaved_c04"]
+script = ExtResource("3_wgllo")
+id = &"hair_shaved_c04"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_shaved_c05"]
+script = ExtResource("3_wgllo")
+id = &"hair_shaved_c05"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_shaved_c06"]
+script = ExtResource("3_wgllo")
+id = &"hair_shaved_c06"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_shaved_c07"]
+script = ExtResource("3_wgllo")
+id = &"hair_shaved_c07"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_shaved_c08"]
+script = ExtResource("3_wgllo")
+id = &"hair_shaved_c08"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_shaved_c09"]
+script = ExtResource("3_wgllo")
+id = &"hair_shaved_c09"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_hair_hair_shaved_c10"]
+script = ExtResource("3_wgllo")
+id = &"hair_shaved_c10"
+weight = 0.6
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="slot_hair"]
+script = ExtResource("2_tf2pv")
+id = &"hair"
+visible_in_portrait = true
+options = Array[ExtResource("3_wgllo")]([SubResource("opt_hair_hair_short_c01"), SubResource("opt_hair_hair_short_c02"), SubResource("opt_hair_hair_short_c03"), SubResource("opt_hair_hair_short_c04"), SubResource("opt_hair_hair_short_c05"), SubResource("opt_hair_hair_short_c06"), SubResource("opt_hair_hair_short_c07"), SubResource("opt_hair_hair_short_c08"), SubResource("opt_hair_hair_short_c09"), SubResource("opt_hair_hair_short_c10"), SubResource("opt_hair_hair_long_c01"), SubResource("opt_hair_hair_long_c02"), SubResource("opt_hair_hair_long_c03"), SubResource("opt_hair_hair_long_c04"), SubResource("opt_hair_hair_long_c05"), SubResource("opt_hair_hair_long_c06"), SubResource("opt_hair_hair_long_c07"), SubResource("opt_hair_hair_long_c08"), SubResource("opt_hair_hair_long_c09"), SubResource("opt_hair_hair_long_c10"), SubResource("opt_hair_hair_bun_c01"), SubResource("opt_hair_hair_bun_c02"), SubResource("opt_hair_hair_bun_c03"), SubResource("opt_hair_hair_bun_c04"), SubResource("opt_hair_hair_bun_c05"), SubResource("opt_hair_hair_bun_c06"), SubResource("opt_hair_hair_bun_c07"), SubResource("opt_hair_hair_bun_c08"), SubResource("opt_hair_hair_bun_c09"), SubResource("opt_hair_hair_bun_c10"), SubResource("opt_hair_hair_braids_c01"), SubResource("opt_hair_hair_braids_c02"), SubResource("opt_hair_hair_braids_c03"), SubResource("opt_hair_hair_braids_c04"), SubResource("opt_hair_hair_braids_c05"), SubResource("opt_hair_hair_braids_c06"), SubResource("opt_hair_hair_braids_c07"), SubResource("opt_hair_hair_braids_c08"), SubResource("opt_hair_hair_braids_c09"), SubResource("opt_hair_hair_braids_c10"), SubResource("opt_hair_hair_curly_c01"), SubResource("opt_hair_hair_curly_c02"), SubResource("opt_hair_hair_curly_c03"), SubResource("opt_hair_hair_curly_c04"), SubResource("opt_hair_hair_curly_c05"), SubResource("opt_hair_hair_curly_c06"), SubResource("opt_hair_hair_curly_c07"), SubResource("opt_hair_hair_curly_c08"), SubResource("opt_hair_hair_curly_c09"), SubResource("opt_hair_hair_curly_c10"), SubResource("opt_hair_hair_mohawk_c01"), SubResource("opt_hair_hair_mohawk_c02"), SubResource("opt_hair_hair_mohawk_c03"), SubResource("opt_hair_hair_mohawk_c04"), SubResource("opt_hair_hair_mohawk_c05"), SubResource("opt_hair_hair_mohawk_c06"), SubResource("opt_hair_hair_mohawk_c07"), SubResource("opt_hair_hair_mohawk_c08"), SubResource("opt_hair_hair_mohawk_c09"), SubResource("opt_hair_hair_mohawk_c10"), SubResource("opt_hair_hair_shaved_c01"), SubResource("opt_hair_hair_shaved_c02"), SubResource("opt_hair_hair_shaved_c03"), SubResource("opt_hair_hair_shaved_c04"), SubResource("opt_hair_hair_shaved_c05"), SubResource("opt_hair_hair_shaved_c06"), SubResource("opt_hair_hair_shaved_c07"), SubResource("opt_hair_hair_shaved_c08"), SubResource("opt_hair_hair_shaved_c09"), SubResource("opt_hair_hair_shaved_c10")])
+
+[sub_resource type="Resource" id="opt_headwear_none"]
+script = ExtResource("3_wgllo")
+id = &"none"
+weight = 6.0
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_headwear_hood"]
+script = ExtResource("3_wgllo")
+id = &"hood"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_headwear_cap"]
+script = ExtResource("3_wgllo")
+id = &"cap"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_headwear_beanie"]
+script = ExtResource("3_wgllo")
+id = &"beanie"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_headwear_visor_down"]
+script = ExtResource("3_wgllo")
+id = &"visor_down"
+weight = 0.0
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_headwear_visor_up"]
+script = ExtResource("3_wgllo")
+id = &"visor_up"
+weight = 0.0
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="slot_headwear"]
+script = ExtResource("2_tf2pv")
+id = &"headwear"
+options = Array[ExtResource("3_wgllo")]([SubResource("opt_headwear_none"), SubResource("opt_headwear_hood"), SubResource("opt_headwear_cap"), SubResource("opt_headwear_beanie"), SubResource("opt_headwear_visor_down"), SubResource("opt_headwear_visor_up")])
+
+[sub_resource type="Resource" id="opt_outfit_outfit_01"]
+script = ExtResource("3_wgllo")
+id = &"outfit_01"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_outfit_outfit_02"]
+script = ExtResource("3_wgllo")
+id = &"outfit_02"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_outfit_outfit_03"]
+script = ExtResource("3_wgllo")
+id = &"outfit_03"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_outfit_outfit_04"]
+script = ExtResource("3_wgllo")
+id = &"outfit_04"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_outfit_outfit_05"]
+script = ExtResource("3_wgllo")
+id = &"outfit_05"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_outfit_outfit_06"]
+script = ExtResource("3_wgllo")
+id = &"outfit_06"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_outfit_outfit_07"]
+script = ExtResource("3_wgllo")
+id = &"outfit_07"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_outfit_outfit_08"]
+script = ExtResource("3_wgllo")
+id = &"outfit_08"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="slot_outfit"]
+script = ExtResource("2_tf2pv")
+id = &"outfit"
+options = Array[ExtResource("3_wgllo")]([SubResource("opt_outfit_outfit_01"), SubResource("opt_outfit_outfit_02"), SubResource("opt_outfit_outfit_03"), SubResource("opt_outfit_outfit_04"), SubResource("opt_outfit_outfit_05"), SubResource("opt_outfit_outfit_06"), SubResource("opt_outfit_outfit_07"), SubResource("opt_outfit_outfit_08")])
+
+[sub_resource type="Resource" id="opt_accessory_none"]
+script = ExtResource("3_wgllo")
+id = &"none"
+weight = 5.0
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_accessory_half_visor"]
+script = ExtResource("3_wgllo")
+id = &"half_visor"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_accessory_respirator_neck"]
+script = ExtResource("3_wgllo")
+id = &"respirator_neck"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_accessory_scarf"]
+script = ExtResource("3_wgllo")
+id = &"scarf"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_accessory_holo_tattoo_1"]
+script = ExtResource("3_wgllo")
+id = &"holo_tattoo_1"
+weight = 0.5
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_accessory_holo_tattoo_2"]
+script = ExtResource("3_wgllo")
+id = &"holo_tattoo_2"
+weight = 0.5
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_accessory_holo_tattoo_3"]
+script = ExtResource("3_wgllo")
+id = &"holo_tattoo_3"
+weight = 0.5
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_accessory_holo_tattoo_4"]
+script = ExtResource("3_wgllo")
+id = &"holo_tattoo_4"
+weight = 0.5
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="slot_accessory"]
+script = ExtResource("2_tf2pv")
+id = &"accessory"
+options = Array[ExtResource("3_wgllo")]([SubResource("opt_accessory_none"), SubResource("opt_accessory_half_visor"), SubResource("opt_accessory_respirator_neck"), SubResource("opt_accessory_scarf"), SubResource("opt_accessory_holo_tattoo_1"), SubResource("opt_accessory_holo_tattoo_2"), SubResource("opt_accessory_holo_tattoo_3"), SubResource("opt_accessory_holo_tattoo_4")])
+
+[sub_resource type="Resource" id="opt_palette_palette_01"]
+script = ExtResource("3_wgllo")
+id = &"palette_01"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_02"]
+script = ExtResource("3_wgllo")
+id = &"palette_02"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_03"]
+script = ExtResource("3_wgllo")
+id = &"palette_03"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_04"]
+script = ExtResource("3_wgllo")
+id = &"palette_04"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_05"]
+script = ExtResource("3_wgllo")
+id = &"palette_05"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_06"]
+script = ExtResource("3_wgllo")
+id = &"palette_06"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_07"]
+script = ExtResource("3_wgllo")
+id = &"palette_07"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_08"]
+script = ExtResource("3_wgllo")
+id = &"palette_08"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_09"]
+script = ExtResource("3_wgllo")
+id = &"palette_09"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_10"]
+script = ExtResource("3_wgllo")
+id = &"palette_10"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_11"]
+script = ExtResource("3_wgllo")
+id = &"palette_11"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="opt_palette_palette_12"]
+script = ExtResource("3_wgllo")
+id = &"palette_12"
+tags = PackedStringArray()
+
+[sub_resource type="Resource" id="slot_palette"]
+script = ExtResource("2_tf2pv")
+id = &"palette"
+options = Array[ExtResource("3_wgllo")]([SubResource("opt_palette_palette_01"), SubResource("opt_palette_palette_02"), SubResource("opt_palette_palette_03"), SubResource("opt_palette_palette_04"), SubResource("opt_palette_palette_05"), SubResource("opt_palette_palette_06"), SubResource("opt_palette_palette_07"), SubResource("opt_palette_palette_08"), SubResource("opt_palette_palette_09"), SubResource("opt_palette_palette_10"), SubResource("opt_palette_palette_11"), SubResource("opt_palette_palette_12")])
+
+[resource]
+script = ExtResource("1_l4wml")
+slots = Array[ExtResource("2_tf2pv")]([SubResource("slot_silhouette"), SubResource("slot_face"), SubResource("slot_eyes"), SubResource("slot_nose_mouth"), SubResource("slot_skin"), SubResource("slot_hair"), SubResource("slot_headwear"), SubResource("slot_outfit"), SubResource("slot_accessory"), SubResource("slot_palette")])
+age_band_weights = PackedFloat32Array(0.35, 0.45, 0.2)

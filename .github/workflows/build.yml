@@ -1,0 +1,100 @@
+# Build & release CLEARANCE (ARCHITECTURE §16.7, DECISIONS D-069…D-072).
+# Déclenché UNIQUEMENT à la main (Actions > Build > Run workflow) ou par un tag v*
+# (ex. git tag v0.8.0 && git push origin v0.8.0) — jamais à chaque push.
+# Aucun secret requis : signature macOS ad hoc, Windows non signé.
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GODOT_VERSION: "4.7.2-stable"   # figée (D-003) ; modèles d'export identiques
+
+jobs:
+  build:
+    name: Tests GUT + exports Windows / macOS / Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: write   # publication de la Release sur tag (gh release)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Godot ${{ env.GODOT_VERSION }}
+        run: sudo bash tools/install_godot.sh
+
+      - name: Cache des modèles d'export
+        id: templates
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates/4.7.2.stable
+          key: godot-export-templates-${{ env.GODOT_VERSION }}
+
+      - name: Modèles d'export ${{ env.GODOT_VERSION }}
+        if: steps.templates.outputs.cache-hit != 'true'
+        run: bash tools/install_godot.sh --templates-only
+
+      - name: Version du tag = version du projet
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version="$(sed -n 's/^config\/version="\(.*\)"$/\1/p' project.godot)"
+          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "::error::tag $GITHUB_REF_NAME ≠ project.godot v$version"; exit 1; }
+
+      - name: Import du projet
+        run: godot --headless --import
+
+      - name: Suite GUT
+        run: godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json -gexit
+
+      # --- Emplacements pour une future signature (secrets GitHub, jamais dans le dépôt) ---
+      # Les noms GODOT_* sont lus par l'exportateur et remplacent les champs vides de
+      # export_presets.cfg (à vérifier dans la doc 4.7 avant activation). Il faudra aussi
+      # passer codesign/codesign à 3 (rcodesign) ou faire signer sur un runner macOS,
+      # et notarization/notarization à 2 (rcodesign) dans le preset macOS.
+      # - name: Certificats de signature
+      #   run: |
+      #     echo "${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}" | base64 -d > "$RUNNER_TEMP/macos.p12"
+      #     echo "${{ secrets.MACOS_NOTARY_API_KEY_P8_BASE64 }}" | base64 -d > "$RUNNER_TEMP/notary.p8"
+      #     echo "${{ secrets.WINDOWS_CERTIFICATE_PFX_BASE64 }}" | base64 -d > "$RUNNER_TEMP/windows.pfx"
+
+      - name: Exports release + archives
+        run: bash tools/export_all.sh
+        # env:
+        #   GODOT_MACOS_CODESIGN_CERTIFICATE_FILE: ${{ runner.temp }}/macos.p12
+        #   GODOT_MACOS_CODESIGN_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        #   GODOT_MACOS_NOTARIZATION_API_UUID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+        #   GODOT_MACOS_NOTARIZATION_API_KEY: ${{ runner.temp }}/notary.p8
+        #   GODOT_MACOS_NOTARIZATION_API_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+        #   GODOT_WINDOWS_CODESIGN_IDENTITY: ${{ runner.temp }}/windows.pfx   # + osslsigncode installé
+        #   GODOT_WINDOWS_CODESIGN_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+
+      - name: Smoke test des exports Linux
+        run: bash tools/smoke_export.sh
+
+      - name: Artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CLEARANCE-${{ github.ref_name }}-${{ github.run_number }}
+          path: |
+            build/dist/CLEARANCE-*
+            build/dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Release GitHub (tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" build/dist/CLEARANCE-* build/dist/SHA256SUMS \
+            --title "CLEARANCE $GITHUB_REF_NAME" --prerelease \
+            --notes "Builds Windows (x86_64), macOS (universel, signé ad hoc, non notarisé : clic droit > Ouvrir) et Linux x86_64 / Steam Deck. Voir README > Builds."
