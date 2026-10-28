@@ -30,6 +30,8 @@ enum Kind {
 	FLAME, ## Acte II : flamme (voix des Brûlants)
 	SCANNER, ## Acte II : réticule de balayage (scanner partiel, compteur)
 	REGISTER, ## Acte II : registre à lignes (Commission, révocations)
+	SCALES, ## Acte III : balance (Arbitrage, Enquête, convocations)
+	STRIKE, ## Acte III : ligne barrée (règle ou document retiré·e)
 }
 
 @export var kind: Kind = Kind.DIAMOND:
@@ -185,6 +187,21 @@ static func draw_icon(canvas: CanvasItem, p_kind: Kind, rect: Rect2, p_color: Co
 			canvas.draw_rect(Rect2(c + Vector2(-7, -9) * u, Vector2(14, 18) * u), p_color, false, p_stroke)
 			for y: float in [-4.0, 0.0, 4.0]:
 				canvas.draw_line(c + Vector2(-4, y) * u, c + Vector2(4, y) * u, p_color, p_stroke)
+		Kind.SCALES:
+			# Fléau, colonne, socle et deux plateaux suspendus.
+			canvas.draw_line(c + Vector2(0, -9) * u, c + Vector2(0, 8) * u, p_color, p_stroke)
+			canvas.draw_line(c + Vector2(-5, 8) * u, c + Vector2(5, 8) * u, p_color, p_stroke)
+			canvas.draw_line(c + Vector2(-8, -6) * u, c + Vector2(8, -6) * u, p_color, p_stroke)
+			for side: float in [-1.0, 1.0]:
+				var top: Vector2 = c + Vector2(7 * side, -6) * u
+				canvas.draw_line(top, c + Vector2(7 * side - 3, 1) * u, p_color, p_stroke)
+				canvas.draw_line(top, c + Vector2(7 * side + 3, 1) * u, p_color, p_stroke)
+				canvas.draw_line(c + Vector2(7 * side - 4, 1) * u, c + Vector2(7 * side + 4, 1) * u, p_color, p_stroke)
+		Kind.STRIKE:
+			# Trois lignes de texte, la médiane barrée en travers.
+			for y: float in [-5.0, 0.0, 5.0]:
+				canvas.draw_line(c + Vector2(-7, y) * u, c + Vector2(7, y) * u, Color(p_color, 0.5), p_stroke)
+			canvas.draw_line(c + Vector2(-9, 3) * u, c + Vector2(9, -3) * u, p_color, p_stroke)
 
 
 ## Icône du sceau d'un document (`seal_id` des `.tres`).

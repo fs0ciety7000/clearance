@@ -13,6 +13,9 @@
 ## `DriftPassRule.registered_vessels`, cargos retirés), Révocations (J17, R30 :
 ## cartes `RevokedCardView` construites par le `RulebookPanel`) ; ligne
 ## « firmware NX » de l'onglet Implants (R27) quand la règle est en vigueur.
+## Acte III (ARCHITECTURE §7.3) : Main courante (J24, R34 : `LedgerCardView`,
+## répondants admis aujourd'hui, liste qui s'allonge) et Convocations (J26,
+## R36 : `SummonsCardView`), construites par le `RulebookPanel`.
 class_name RulebookReference
 extends RefCounted
 
@@ -24,10 +27,12 @@ const TAB_WANTED: StringName = &"wanted"
 const TAB_EMPLOYERS: StringName = &"employers"
 const TAB_VESSELS: StringName = &"vessels"
 const TAB_REVOKED: StringName = &"revoked"
+const TAB_LEDGER: StringName = &"ledger"
+const TAB_SUMMONS: StringName = &"summons"
 const ORDER: Array[StringName] = [TAB_ORIGINS, TAB_IMPLANTS, TAB_SYMBOLS, TAB_SEALS, TAB_WANTED, TAB_EMPLOYERS, TAB_VESSELS,
-		TAB_REVOKED]
+		TAB_REVOKED, TAB_LEDGER, TAB_SUMMONS]
 ## Onglets construits par le `RulebookPanel` (cartes sélectionnables).
-const DYNAMIC_TABS: Array[StringName] = [TAB_WANTED, TAB_REVOKED]
+const DYNAMIC_TABS: Array[StringName] = [TAB_WANTED, TAB_REVOKED, TAB_LEDGER, TAB_SUMMONS]
 ## Règles qui portent les registres de l'Acte II (`data/rules/`).
 const RULE_CONTRACT: StringName = &"r_contract_consistent"
 const RULE_DRIFT: StringName = &"r_drift_pass"
@@ -35,7 +40,7 @@ const RULE_FIRMWARE: StringName = &"r_nx_firmware"
 ## Jour d'ouverture de chaque onglet (GDD §7) : pastille ambre « nouveau ».
 const INTRO_DAY: Dictionary[StringName, int] = {
 	TAB_ORIGINS: 4, TAB_IMPLANTS: 6, TAB_SYMBOLS: 7, TAB_SEALS: 9, TAB_WANTED: 10,
-	TAB_EMPLOYERS: 12, TAB_VESSELS: 13, TAB_REVOKED: 17,
+	TAB_EMPLOYERS: 12, TAB_VESSELS: 13, TAB_REVOKED: 17, TAB_LEDGER: 24, TAB_SUMMONS: 26,
 }
 ## Familles d'implants (LORE §8) : [code, légal si déclaré].
 const IMPLANT_FAMILIES: Array[Array] = [
@@ -67,6 +72,10 @@ static func tab_title(tab: StringName) -> String:
 			return UiText.t("rb_tab_vessels", "Registre des cargos")
 		TAB_REVOKED:
 			return UiText.t("rb_tab_revoked", "Révocations")
+		TAB_LEDGER:
+			return UiText.t("rb_tab_ledger", "Main courante")
+		TAB_SUMMONS:
+			return UiText.t("rb_tab_summons", "Convocations")
 	return String(tab)
 
 

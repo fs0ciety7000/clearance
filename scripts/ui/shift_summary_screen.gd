@@ -12,6 +12,7 @@
 ## « RENTRER AU BLOC PÉTREL » → `finished(&"evening")`.
 ## Acte II : tuile « ENTRÉES IMPUTÉES » (dépassements du quota), puces
 ## « IMPUTÉE » / « REFUS QUOTA » dans le registre du guichet.
+## Acte III : tuile « FAMILLES DE TYCHO ADMISES » au J30 (`ss_pont`, F10).
 class_name ShiftSummaryScreen
 extends ScreenBase
 
@@ -108,11 +109,33 @@ func _tiles() -> Control:
 				UiText.t("sum_overruns_detail", "Au-delà du quota · 0 ₵ chacune"), DS.STATE_AMBER, UiIcon.Kind.BREATH)
 		overrun_tile.name = "OverrunTile"
 		row.add_child(overrun_tile)
+	# Acte III (J30, F10) : familles de Tycho admises en règle (`admission_gauges`).
+	if day != null and not day.admission_gauges.is_empty():
+		var admitted: int = admission_count(summary, day)
+		var pont_tile: PanelContainer = stat_tile(UiText.t("ss_pont", "Familles de Tycho admises").to_upper(), str(admitted),
+				UiText.t("sum_pont_detail", "Admissions en règle · ressortissants de Tycho"),
+				DS.STATE_GREEN if admitted > 0 else DS.TEXT_SECONDARY, UiIcon.Kind.APPROVED)
+		pont_tile.name = "PontTile"
+		row.add_child(pont_tile)
 	var total_detail: String = UiText.t("sum_net_detail", "Versé ce soir par la Banque Aurel")
 	if bribes > 0 or reports > 0:
 		total_detail = UiText.tf("sum_total_detail", [credits(summary.get_total_income(), true)], "Ce soir au total : %s")
 	row.add_child(stat_tile(UiText.t("sum_net", "NET DU JOUR"), credits(net, true), total_detail, DS.ACCENT_YELLOW, UiIcon.Kind.LOGO))
 	return row
+
+
+## Acte III : admissions comptées dans une jauge `admission_gauges` (J30 :
+## ressortissants de Tycho admis en règle → `pont`) — un cas par admission.
+static func admission_count(p_summary: DaySummary, p_day: DayDef) -> int:
+	var count: int = 0
+	if p_summary == null or p_day == null:
+		return count
+	for result: CaseResult in p_summary.results:
+		for gauge: StringName in p_day.admission_gauges.values():
+			if result.narrative_changes.has(gauge):
+				count += 1
+				break
+	return count
 
 
 func _ledger() -> Control:

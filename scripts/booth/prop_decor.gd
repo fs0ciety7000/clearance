@@ -12,6 +12,14 @@
 ##   de son épaule — un maillage, un matériau, sans ombre : 1 draw call.
 ## Les compagnons (enfant, drone) sont des enfants de l'acteur : ils le suivent
 ## à l'arrivée et à la sortie ; reconstruits à chaque cas (pool de 2 acteurs).
+## Acte III (ARCHITECTURE §7.3, ACT3 §8.3) — toutes **fusionnées** au maillage
+## skinné de l'acteur (0 draw call de plus) :
+## - `prop_bandaged_hands` : bandages de gaze sur la main et le poignet (SC-53) ;
+## - `prop_certificate_crate` : caisse de certificats inutiles (SC-58) ;
+## - `prop_school_satchel` : cartable de copies de la maîtresse (SC-56, SC-81) ;
+## - `prop_armband_pocket` : brassard jaune de la Garde qui dépasse d'une poche
+##   de poitrine (SC-79) ;
+## - `sc81b` : badge « répondant » agrafé à la poitrine (réseau du J30).
 class_name PropDecor
 extends RefCounted
 
@@ -19,7 +27,18 @@ const TAG_CHILD: StringName = &"companion_child"
 const TAG_CAT_CRATE: StringName = &"prop_cat_crate"
 const TAG_DRONE: StringName = &"prop_drone"
 const TAG_SHUNT_LED: StringName = &"prop_shunt_led"
-const ALL_TAGS: Array[StringName] = [TAG_CHILD, TAG_CAT_CRATE, TAG_DRONE, TAG_SHUNT_LED]
+## Acte III.
+const TAG_BANDAGES: StringName = &"prop_bandaged_hands"
+const TAG_CERTIFICATES: StringName = &"prop_certificate_crate"
+const TAG_SATCHEL: StringName = &"prop_school_satchel"
+const TAG_ARMBAND: StringName = &"prop_armband_pocket"
+const TAG_SPONSOR_BADGE: StringName = &"sc81b"
+const ALL_TAGS: Array[StringName] = [TAG_CHILD, TAG_CAT_CRATE, TAG_DRONE, TAG_SHUNT_LED, TAG_BANDAGES, TAG_CERTIFICATES,
+		TAG_SATCHEL, TAG_ARMBAND, TAG_SPONSOR_BADGE]
+## Accessoires tenus à la main droite (un seul à la fois : le premier l'emporte).
+const HAND_TAGS: Array[StringName] = [TAG_CAT_CRATE, TAG_CERTIFICATES, TAG_SATCHEL]
+## Pièces posées sur la poitrine (repère `outfit_root`, vidé à chaque cas).
+const CHEST_PARTS: PackedStringArray = ["PropArmband", "PropArmbandFold", "PropBadge", "PropBadgeStripe", "PropBadgeClip"]
 const NODE_CHILD: String = "PropChild"
 const NODE_DRONE: String = "PropDrone"
 
@@ -38,6 +57,17 @@ const DRONE_BODY: Color = Color("#262B33")
 const DRONE_TRIM: Color = Color("#5C6675")
 ## Lentille du drone : bleu de registre de la Commission (DS.VOICE_COMMISSION).
 const DRONE_LENS: Color = Color("#8E9CFF")
+## Acte III : gaze, carton et feuillets, cuir du cartable, brassard de la
+## Garde (jaune Consortium désaturé), badge (cyan du guichet).
+const GAUZE: Color = Color("#D9D3C7")
+const GAUZE_STAIN: Color = Color("#A9685E")
+const CARDBOARD: Color = Color("#8C6E4A")
+const SHEETS: Color = Color("#E4E6E1")
+const LEATHER: Color = Color("#5A3B28")
+const BUCKLE: Color = Color("#B8A46A")
+const ARMBAND_YELLOW: Color = Color("#D8C21A")
+const BADGE_BODY: Color = Color("#2A3038")
+const BADGE_GLOW: Color = Color(0.0, 0.9, 1.0)
 ## Position des compagnons dans le repère de l'acteur (m).
 const CHILD_OFFSET: Vector3 = Vector3(-0.46, 0.0, 0.08)
 const DRONE_OFFSET: Vector3 = Vector3(0.36, 1.98, 0.05)
@@ -65,11 +95,34 @@ static func apply(actor: Node3D, rig: PassengerRig, tags: Array[StringName]) -> 
 		if old != null:
 			actor.remove_child(old)
 			old.queue_free()
+	if rig != null and rig.outfit_root != null:
+		for part_name: String in CHEST_PARTS:
+			var part: Node = rig.outfit_root.get_node_or_null(part_name)
+			if part != null:
+				rig.outfit_root.remove_child(part)
+				part.queue_free()
 	if rig != null and rig.implants_hand != null:
-		if tags.has(TAG_CAT_CRATE):
-			_add_crate(rig)
+		var held: StringName = &""
+		for tag: StringName in HAND_TAGS:
+			if tags.has(tag):
+				held = tag
+				break
+		match held:
+			TAG_CAT_CRATE:
+				_add_crate(rig)
+			TAG_CERTIFICATES:
+				_add_certificates(rig)
+			TAG_SATCHEL:
+				_add_satchel(rig)
 		if tags.has(TAG_SHUNT_LED):
 			_add_led(rig)
+		if tags.has(TAG_BANDAGES):
+			_add_bandages(rig)
+		if rig.outfit_root != null:
+			if tags.has(TAG_ARMBAND):
+				_add_armband(rig)
+			if tags.has(TAG_SPONSOR_BADGE):
+				_add_badge(rig)
 		rig.queue_parts_rebuild()
 	if tags.has(TAG_CHILD):
 		var child: MeshInstance3D = _instance(NODE_CHILD, _mesh("child"), true)
@@ -111,6 +164,70 @@ static func _add_led(rig: PassengerRig) -> void:
 	var led: ShaderMaterial = rig.make_material(LED_AMBER.darkened(0.3), 0.4)
 	led.set_shader_parameter(&"emission_color", LED_AMBER * 1.4)
 	rig.add_mesh(rig.implants_head, "ShuntLed", PassengerRig.sphere(0.006), led, Vector3(half.x + 0.011, -0.01, -0.055))
+
+
+## Acte III — gaze enroulée autour de la main et du poignet (SC-53).
+static func _add_bandages(rig: PassengerRig) -> void:
+	var root: Node3D = rig.implants_hand
+	var gauze: ShaderMaterial = rig.make_material(GAUZE, 0.95)
+	rig.add_mesh(root, "BandageWrist", PassengerRig.cylinder(0.04, 0.042, 0.05, 10), gauze, Vector3(0, -0.02, 0))
+	rig.add_mesh(root, "BandagePalm", PassengerRig.cylinder(0.046, 0.044, 0.045, 10), gauze, Vector3(0, 0.045, 0.005),
+			Vector3.ZERO, Vector3(1.0, 1.0, 0.62))
+	rig.add_mesh(root, "BandageStain", PassengerRig.box(Vector3(0.022, 0.016, 0.004)), rig.make_material(GAUZE_STAIN, 0.9),
+			Vector3(0.01, 0.05, 0.034))
+
+
+## Acte III — caisse de certificats de Meridian (SC-58), tenue par la poignée.
+static func _add_certificates(rig: PassengerRig) -> void:
+	var root: Node3D = rig.implants_hand
+	var board: ShaderMaterial = rig.make_material(CARDBOARD, 0.9)
+	rig.add_mesh(root, "CertHandle", _torus(0.03, 0.04), rig.make_material(CARDBOARD.darkened(0.35), 0.8), Vector3(0, 0.05, 0),
+			Vector3(0, 0, 90))
+	rig.add_mesh(root, "CertBox", PassengerRig.box(Vector3(0.26, 0.17, 0.2)), board, Vector3(0, 0.16, 0))
+	var sheets: ShaderMaterial = rig.make_material(SHEETS, 0.6)
+	for i: int in 3:
+		rig.add_mesh(root, "CertSheet", PassengerRig.box(Vector3(0.21, 0.004, 0.15)), sheets,
+				Vector3(-0.012 + 0.012 * i, 0.248 + 0.006 * i, 0.004 * i), Vector3(0, 4.0 * (i - 1), 0))
+
+
+## Acte III — cartable de copies de la maîtresse (SC-56, SC-81).
+static func _add_satchel(rig: PassengerRig) -> void:
+	var root: Node3D = rig.implants_hand
+	var leather: ShaderMaterial = rig.make_material(LEATHER, 0.8)
+	rig.add_mesh(root, "SatchelHandle", _torus(0.028, 0.036), rig.make_material(LEATHER.darkened(0.3), 0.7), Vector3(0, 0.045, 0),
+			Vector3(0, 0, 90))
+	rig.add_mesh(root, "SatchelBody", PassengerRig.box(Vector3(0.3, 0.21, 0.08)), leather, Vector3(0, 0.17, 0))
+	rig.add_mesh(root, "SatchelFlap", PassengerRig.box(Vector3(0.3, 0.12, 0.012)), rig.make_material(LEATHER.lightened(0.08), 0.75),
+			Vector3(0, 0.215, 0.045))
+	rig.add_mesh(root, "SatchelBuckle", PassengerRig.box(Vector3(0.04, 0.03, 0.01)), rig.make_material(BUCKLE, 0.35, 0.8),
+			Vector3(0, 0.165, 0.054))
+	rig.add_mesh(root, "SatchelCopies", PassengerRig.box(Vector3(0.24, 0.02, 0.05)), rig.make_material(SHEETS, 0.6),
+			Vector3(0, 0.285, 0.0))
+
+
+## Acte III — brassard jaune de la Garde, plié dans la poche de poitrine (SC-79).
+static func _add_armband(rig: PassengerRig) -> void:
+	var front: float = PassengerRig.CHEST_FRONT * PassengerRig.BASE_SCALE
+	var x: float = -PassengerRig.CHEST_HALF_WIDTH * PassengerRig.BASE_SCALE * 0.42
+	var yellow: ShaderMaterial = rig.make_material(ARMBAND_YELLOW, 0.85)
+	rig.add_mesh(rig.outfit_root, "PropArmband", PassengerRig.box(Vector3(0.05, 0.05, 0.014)), yellow, Vector3(x, 0.02, front + 0.012),
+			Vector3(0, 0, -12))
+	rig.add_mesh(rig.outfit_root, "PropArmbandFold", PassengerRig.box(Vector3(0.056, 0.012, 0.02)), rig.make_material(ARMBAND_YELLOW.darkened(0.3), 0.85),
+			Vector3(x, -0.005, front + 0.014))
+
+
+## Acte III — badge « répondant » agrafé à la poitrine (réseau du J30, SC-81b).
+static func _add_badge(rig: PassengerRig) -> void:
+	var front: float = PassengerRig.CHEST_FRONT * PassengerRig.BASE_SCALE
+	var x: float = PassengerRig.CHEST_HALF_WIDTH * PassengerRig.BASE_SCALE * 0.42
+	rig.add_mesh(rig.outfit_root, "PropBadge", PassengerRig.box(Vector3(0.045, 0.06, 0.006)), rig.make_material(BADGE_BODY, 0.5, 0.3),
+			Vector3(x, -0.01, front + 0.01))
+	var glow: ShaderMaterial = rig.make_material(BADGE_GLOW.darkened(0.6), 0.4)
+	glow.set_shader_parameter(&"emission_color", BADGE_GLOW * 0.9)
+	rig.add_mesh(rig.outfit_root, "PropBadgeStripe", PassengerRig.box(Vector3(0.036, 0.008, 0.003)), glow,
+			Vector3(x, 0.005, front + 0.0145))
+	rig.add_mesh(rig.outfit_root, "PropBadgeClip", PassengerRig.box(Vector3(0.016, 0.014, 0.008)), rig.make_material(Color("#9AA4AE"), 0.3, 0.9),
+			Vector3(x, 0.024, front + 0.011))
 
 
 static func _torus(inner: float, outer: float) -> TorusMesh:

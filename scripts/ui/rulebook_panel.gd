@@ -9,6 +9,11 @@
 ## Acte II : onglets Codes employeurs, Registre des cargos et Révocations
 ## (`RevokedCardView`, sélectionnables), ligne firmware NX, avis « visages
 ## seuls » du J20 ; texte de R23 formaté avec le quota du jour (`quota_max`).
+## Acte III (ARCHITECTURE §7.3) : onglets Main courante (`LedgerCardView`,
+## liste qui s'allonge, dernière entrée surlignée) et Convocations
+## (`SummonsCardView`), sélectionnables ; colonne « RÉINTÉGRÉ·E LE » des
+## Révocations ; règles retirées barrées un jour (`retired_entries`) ; R23
+## « SUSPENDU » quand le quota est levé (`quota_suspended`).
 class_name RulebookPanel
 extends PanelContainer
 
@@ -20,6 +25,8 @@ const TAB_ALL: int = -1
 ## M7 : onglets de référence (identifiants négatifs, ordre `RulebookReference.ORDER`).
 const TAB_REFERENCE_BASE: int = -10
 const COLLAPSED_WIDTH: float = 48.0
+## Règle du quota respiratoire (R23) : note « SUSPENDU » de l'Acte III.
+const RULE_QUOTA: StringName = &"r_air_quota"
 
 var entries: Array[RulebookEntry] = []
 var today: int = 0
@@ -41,6 +48,19 @@ var revoked_entries: Array[RevokedEntry] = []
 var revoked_cards: Array[RevokedCardView] = []
 ## Acte II : maximum du quota du jour (texte de R23 « %d entrées »).
 var quota_max: int = 0
+## Acte III : Main courante du shift (`ledger_changed`) et convocations du
+## jour (`summons_published`), leurs cartes affichées.
+var ledger_entries: Array[LedgerEntry] = []
+var ledger_cards: Array[LedgerCardView] = []
+var summons_entries: Array[SummonsEntry] = []
+var summons_cards: Array[SummonsCardView] = []
+## Acte III (M1) : règles retirées ce jour (lignes barrées, en fin de liste).
+var retired_entries: Array[RulebookEntry] = []
+## Acte III : quota suspendu (climat, Enquête) — note sous R23.
+var quota_suspended: bool = false
+var reduce_motion: bool = false
+## Identifiant de la dernière entrée de la Main courante (surlignée une fois).
+var _last_ledger_id: StringName = &""
 var portrait_provider: Callable = Callable()
 ## Marques des cartes masquées par l'onglet courant (clé `FieldRef.key()`).
 var _kept_marks: Dictionary[String, Array] = {}
@@ -185,6 +205,10 @@ func set_rulebook(p_entries: Array[RulebookEntry], p_today: int, p_day_number: i
 	reference_tabs = tabs.duplicate()
 	wanted_notices.clear()
 	revoked_entries.clear()
+	ledger_entries.clear()
+	summons_entries.clear()
+	retired_entries.clear()
+	_last_ledger_id = &""
 	today = p_today
 	day_number = p_day_number
 	_day_label.text = UiText.tf("rb_day", [p_day_number], "JOUR %02d")
@@ -219,6 +243,41 @@ func set_revoked(p_entries: Array[RevokedEntry]) -> void:
 	_show_tab(tab if _tab_ids.has(tab) else TAB_ALL)
 
 
+## Acte III (M1) : règles retirées du jour, affichées barrées dans « Règles ».
+func set_retired(p_entries: Array[RulebookEntry]) -> void:
+	retired_entries = p_entries.duplicate()
+	refresh_cards()
+
+
+## Acte III : Main courante du shift (`ledger_changed`) ; la nouvelle dernière
+## entrée est surlignée si l'onglet est affiché.
+func set_ledger(p_entries: Array[LedgerEntry]) -> void:
+	var previous: int = ledger_entries.size()
+	ledger_entries = p_entries.duplicate()
+	var fresh: StringName = &""
+	if ledger_entries.size() > previous:
+		var last: LedgerEntry = ledger_entries[ledger_entries.size() - 1]
+		fresh = last.id
+	var tab: int = current_tab
+	_build_tabs()
+	_show_tab(tab if _tab_ids.has(tab) else TAB_ALL)
+	if fresh != &"":
+		# Surlignée maintenant si l'onglet est affiché, sinon à son ouverture.
+		_last_ledger_id = fresh
+		var card: LedgerCardView = get_ledger_card(fresh)
+		if card != null:
+			card.highlight(reduce_motion)
+			_last_ledger_id = &""
+
+
+## Acte III : convocations du jour (`summons_published`).
+func set_summons(p_entries: Array[SummonsEntry]) -> void:
+	summons_entries = p_entries.duplicate()
+	var tab: int = current_tab
+	_build_tabs()
+	_show_tab(tab if _tab_ids.has(tab) else TAB_ALL)
+
+
 ## Reconstruit l'onglet courant (quota du jour connu après `day_started`).
 func refresh_cards() -> void:
 	_show_tab(current_tab if _tab_ids.has(current_tab) else TAB_ALL)
@@ -244,6 +303,10 @@ func visible_reference_tabs() -> Array[StringName]:
 			continue
 		if tab == RulebookReference.TAB_REVOKED and revoked_entries.is_empty():
 			continue
+		if tab == RulebookReference.TAB_SUMMONS and summons_entries.is_empty():
+			continue
+		# La Main courante est ouverte même vide (« Aucun répondant admis ») :
+		# elle se remplit pendant le shift.
 		tabs.append(tab)
 	return tabs
 
@@ -293,6 +356,12 @@ func _build_tabs() -> void:
 		elif tab == RulebookReference.TAB_REVOKED:
 			button.text += " ·%d" % revoked_entries.size()
 			button.add_theme_color_override(&"font_color", DS.VOICE_COMMISSION)
+		elif tab == RulebookReference.TAB_LEDGER:
+			button.text += " ·%d" % ledger_entries.size()
+			button.add_theme_color_override(&"font_color", DS.STATE_GREEN if not ledger_entries.is_empty() else DS.TEXT_SECONDARY)
+		elif tab == RulebookReference.TAB_SUMMONS:
+			button.text += " ·%d" % summons_entries.size()
+			button.add_theme_color_override(&"font_color", DS.STATE_AMBER)
 		elif RulebookReference.is_new(tab, day_number):
 			button.text += " ·" + UiText.t("rb_tab_new", "NEW")
 			button.add_theme_color_override(&"font_color", DS.STATE_AMBER)
@@ -334,6 +403,8 @@ func _show_tab(id: int) -> void:
 	wanted_cards.clear()
 	symbol_cards.clear()
 	revoked_cards.clear()
+	ledger_cards.clear()
+	summons_cards.clear()
 	_scroll.tooltip_text = ""
 	if _reference_view != null:
 		_reference_view.queue_free()
@@ -348,7 +419,10 @@ func _show_tab(id: int) -> void:
 		if id != TAB_ALL and entry.category != id:
 			continue
 		var card: RuleCardView = RuleCardView.new()
-		card.setup(entry, i + 1, quota_max)
+		var note: String = ""
+		if quota_suspended and entry.rule_id == RULE_QUOTA:
+			note = UiText.t("rb_suspended_quota", "SUSPENDU PENDANT L'ENQUÊTE")
+		card.setup(entry, i + 1, quota_max, note)
 		card.picked.connect(_on_item_picked)
 		_list.add_child(card)
 		card.set_inspection_active(inspection_active)
@@ -360,6 +434,16 @@ func _show_tab(id: int) -> void:
 			for n: int in mark[1]:
 				card.add_flag(n)
 		cards.append(card)
+	# Acte III (M1) : règles retirées, barrées en fin de liste (un jour).
+	for entry: RulebookEntry in retired_entries:
+		if id != TAB_ALL and entry.category != id:
+			continue
+		var retired: RuleCardView = RuleCardView.new()
+		retired.name = "Retired_%s" % entry.rule_id
+		retired.setup(entry, 0, quota_max)
+		_list.add_child(retired)
+		retired.set_inspection_active(inspection_active)
+		cards.append(retired)
 	var index: int = _tab_ids.find(id)
 	_page_label.text = UiText.tf("rb_page", [index + 1, _tab_ids.size()], "ONGLET %d / %d")
 
@@ -374,6 +458,10 @@ func _list_items() -> Array[InspectableItem]:
 		items.append(card)
 	for card: RevokedCardView in revoked_cards:
 		items.append(card)
+	for card: LedgerCardView in ledger_cards:
+		items.append(card)
+	for card: SummonsCardView in summons_cards:
+		items.append(card)
 	return items
 
 
@@ -381,6 +469,12 @@ func _list_items() -> Array[InspectableItem]:
 func _show_reference(tab: StringName, marks: Dictionary[String, Array]) -> void:
 	if tab == RulebookReference.TAB_REVOKED:
 		_show_revoked(marks)
+		return
+	if tab == RulebookReference.TAB_LEDGER:
+		_show_ledger(marks)
+		return
+	if tab == RulebookReference.TAB_SUMMONS:
+		_show_summons(marks)
 		return
 	if tab != RulebookReference.TAB_WANTED:
 		var rule_ids: Array[StringName] = []
@@ -438,12 +532,82 @@ func _show_revoked(marks: Dictionary[String, Array]) -> void:
 	for i: int in revoked_entries.size():
 		var card: RevokedCardView = RevokedCardView.new()
 		card.name = "Revoked_%s" % revoked_entries[i].id
-		card.setup(revoked_entries[i], i + 1)
+		card.setup(revoked_entries[i], i + 1, today)
 		card.picked.connect(_on_item_picked)
 		_list.add_child(card)
 		card.set_inspection_active(inspection_active)
 		_restore_marks(card, marks)
 		revoked_cards.append(card)
+
+
+## Acte III : Main courante — une carte sélectionnable par répondant admis
+## aujourd'hui (consigne en tête, « Aucun répondant admis » tant qu'elle est vide).
+func _show_ledger(marks: Dictionary[String, Array]) -> void:
+	var head: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
+	head.name = "LedgerHead"
+	head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(ScreenBase.wrapped(UiText.t("rb_ledger_hint", "Répondants admissibles admis aujourd'hui à ce guichet."), &"BodySmall"))
+	if ledger_entries.is_empty():
+		var empty: Label = ScreenBase.wrapped(UiText.t("rb_ledger_empty", "Aucun répondant admis pour l'instant."), &"BodySmall",
+				DS.TEXT_SECONDARY)
+		empty.name = "LedgerEmpty"
+		head.add_child(empty)
+	_reference_view = head
+	_list.add_child(head)
+	for i: int in ledger_entries.size():
+		var card: LedgerCardView = LedgerCardView.new()
+		card.name = "Ledger_%s" % ledger_entries[i].id
+		card.setup(ledger_entries[i], i + 1)
+		card.picked.connect(_on_item_picked)
+		_list.add_child(card)
+		card.set_inspection_active(inspection_active)
+		_restore_marks(card, marks)
+		ledger_cards.append(card)
+		if card.entry.id == _last_ledger_id:
+			card.highlight(reduce_motion)
+			_last_ledger_id = &""
+
+
+## Acte III : Convocations de l'Enquête — une carte sélectionnable par N° ENQ.
+func _show_summons(marks: Dictionary[String, Array]) -> void:
+	var intro: Label = ScreenBase.wrapped(UiText.t("rb_summons_intro",
+			"Enquête de Continuité · convocations du jour. Mode Inspection : comparez au champ Convocation du permis."), &"BodySmall")
+	intro.name = "SummonsIntro"
+	_reference_view = intro
+	_list.add_child(intro)
+	for i: int in summons_entries.size():
+		var card: SummonsCardView = SummonsCardView.new()
+		card.name = "Summons_%s" % summons_entries[i].id
+		card.setup(summons_entries[i], i + 1)
+		card.picked.connect(_on_item_picked)
+		_list.add_child(card)
+		card.set_inspection_active(inspection_active)
+		_restore_marks(card, marks)
+		summons_cards.append(card)
+
+
+## Carte de la Main courante affichée (null si l'onglet n'est pas ouvert).
+func get_ledger_card(entry_id: StringName) -> LedgerCardView:
+	for card: LedgerCardView in ledger_cards:
+		if card.entry.id == entry_id:
+			return card
+	return null
+
+
+## Carte de convocation affichée (null si l'onglet n'est pas ouvert).
+func get_summons_card(entry_id: StringName) -> SummonsCardView:
+	for card: SummonsCardView in summons_cards:
+		if card.entry.id == entry_id:
+			return card
+	return null
+
+
+## Carte de règle affichée pour `rule_id` (retirée comprise), null sinon.
+func get_rule_card(rule_id: StringName) -> RuleCardView:
+	for card: RuleCardView in cards:
+		if card.entry.rule_id == rule_id:
+			return card
+	return null
 
 
 ## Carte de révocation affichée (null si l'onglet n'est pas ouvert).
@@ -500,6 +664,12 @@ func find_item(ref: FieldRef, reveal: bool = false) -> InspectableItem:
 			_show_tab(revoked_id)
 			return find_item(ref, false)
 		return null
+	if reveal and (ref.is_ledger() or ref.is_summons()):
+		var tab_id: int = reference_tab_id(RulebookReference.TAB_LEDGER if ref.is_ledger() else RulebookReference.TAB_SUMMONS)
+		if _tab_ids.has(tab_id) and current_tab != tab_id:
+			_show_tab(tab_id)
+			return find_item(ref, false)
+		return null
 	if reveal and ref.is_symbol():
 		var symbols_id: int = reference_tab_id(RulebookReference.TAB_SYMBOLS)
 		if _tab_ids.has(symbols_id) and current_tab != symbols_id:
@@ -510,6 +680,14 @@ func find_item(ref: FieldRef, reveal: bool = false) -> InspectableItem:
 		_show_tab(TAB_ALL)
 		return find_item(ref, false)
 	return null
+
+
+## Fait défiler la liste jusqu'à la carte de `ref` (cible choisie en Mode
+## Inspection dans un onglet défilant : Main courante, Convocations…).
+func scroll_to(ref: FieldRef) -> void:
+	var item: InspectableItem = find_item(ref, true)
+	if item != null and item != today_item and is_inside_tree():
+		_scroll.ensure_control_visible.call_deferred(item)
 
 
 ## Affiche un onglet de référence (`origins`, `wanted`…) ; faux s'il est fermé.

@@ -2401,7 +2401,7 @@ evt_d20_drift_opt_board,Embarquer (fin de la campagne)
 evt_d20_drift_res_board,Vous laissez la clé du Bloc Pétrel sur la porte.
 evt_d20_drift_opt_stay,Rester. Wren vous rendra 30 ₵
 evt_d20_drift_res_stay,"Wren rend 30 ₵. « Deux fois. Vous êtes d'ici, alors. »"
-chapter3_title,ACTE III — TÉMOINS
+chapter3_title,TÉMOINS
 chapter3_sub,Lundi 02.04.2187 — mercredi 11.04.2187
 chapter3_recall,"Le 1ᵉʳ avril, la station a retenu son souffle. Le 2, elle a demandé qui l'avait fait."
 evt_d21_amnesty_title,L'AMNISTIE
@@ -2640,7 +2640,9 @@ val_post_controle,CONTRÔLE SANITAIRE
 cmp_prorogated,PROROGÉ (R32)
 cmp_reinstated,RÉINTÉGRÉ (R33)
 tb_quota_suspended,QUOTA SUSPENDU
-q_about_sponsor,(§4.0)
+q_about_sponsor,Votre répondant ne figure pas à la main courante.
+q_about_summons,Cette convocation ne figure pas à l'onglet.
+q_about_lockout,Votre contrat est suspendu.
 line_about_sponsor_generic,Il était devant moi dans la file. Vous ne l'avez pas vu ?
 line_about_summons_generic,On me l'a donnée au quai. Je ne savais pas qu'il y en avait des fausses.
 line_about_lockout_generic,Suspendu ? Je n'ai pas fait grève. Je suis juste né là-bas.
@@ -2719,3 +2721,41 @@ end3_f8_title,LES TÉMOINS
 end3_f9_title,LES VITRES ÉTEINTES
 end3_f10_title,LE PONT
 evt_d25_ilan_back,"Ilan rentre de la Soute, l'air des Anneaux sur les vêtements. « Il tient sans nous, maintenant. » Noa ne le lâche plus."
+rb_ledger_display,MAIN COURANTE %02d · %s
+rb_ledger_admitted,ADMIS·E · %s
+rb_summons_intro,Convocations du jour · à comparer au champ Convocation du permis.
+rb_summons_display,CONVOCATION %s · %s
+doc_retired,RETIRÉ · NON CONTRÔLÉ
+tb_quota_suspended_tip,Quota suspendu : aucune entrée n'est imputée aujourd'hui.
+conc_prorogated_detail,%s — expiré le %s : prorogé jusqu'au 10.04.
+conc_reinstated_detail,%s — N° %s réintégré le %s : la révocation est levée.
+conc_sponsor_detail,Répondant %s (%s) admis aujourd'hui : inscrit à la main courante.
+disc_summons_name_detail,Convocation %s au nom de %s : ce n'est pas le porteur.
+tag_prop_bandaged_hands,[des mains bandées tendent les papiers]
+tag_prop_certificate_crate,[une caisse de certificats cogne contre le comptoir]
+tag_prop_armband_pocket,[un brassard jaune dépasse de sa poche]
+tag_prop_school_satchel,[un cartable de copies sous le bras]
+tag_sc81b,[un badge de répondant agrafé à la poitrine]
+chapter3_eyebrow,CHAPITRE III · HALCYON GATE · GUICHET 04
+chapter3_numeral,III
+chapter3_continue,PRENDRE SON POSTE · JOUR 21
+chapter3_climate_vanne,Les Veilleurs tiennent le recycleur central. Le quota est suspendu ; l'air de la Vanne coûte 1 ₵.
+chapter3_climate_brulants,Le quai 1 fume encore. La Garde compte les vitres ; l'Enquête cherche des coupables.
+chapter3_climate_vitres,Les guichets ont un comité. Le quota est « suspendu pour révision ».
+chapter3_climate_registre,Deux cent douze noms ont été lus. Tycho s'est soulevée dès ce matin.
+chapter3_climate_promu,"Chef·fe de guichet à l'essai, C-2. Toujours à la vitre : le Hall manque de bras."
+chapter3_climate_statu_quo,"Rien ne s'est passé, dit le bulletin. Tout le monde sait que si."
+act_card_continue,LA NUIT DU 1ᵉʳ AVRIL ▶
+ev_kind_verdict,VERDICT
+ev_deposition_pending,Le greffe délibère. Votre déposition d'abord.
+ev_dep_arrest,MISE EN ATTENTE · FIN DE LA CAMPAGNE
+ev_dep_blame,BLÂME · RETENUE SUR LE SOLDE
+ev_dep_clean,RIEN À RETENIR
+sum_pont_detail,Admissions en règle · ressortissants de Tycho
+end_act3_chip,ACTE III
+end_variant_charte,VARIANTE · CHARTE DE LA VANNE
+end_variant_seconde_vanne,VARIANTE · SECONDE VANNE
+end_variant_derive,VARIANTE · DÉRIVE
+end_variant_tycho,VARIANTE · TYCHO
+end_figure_dora,DERNIÈRE NAVETTE · DORA
+end_figure_mira,DERNIÈRE NAVETTE · MIRA
