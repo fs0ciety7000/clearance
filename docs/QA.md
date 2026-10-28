@@ -521,7 +521,9 @@ Correctifs QA-019, QA-022, QA-024 à QA-028 (données), QA-030, R28 et R30 de la
 | Invariants du générateur, re-tirages | OK, 0 | OK, 0 (anomalies non placées J1/J2/J8 : 5/1/1, inchangées) |
 | `balance_sim` 40 graines × 12 préréglages × 65/80/95 % | §12.2 | 35 cases sur 36 à ±2,5 points ; `drift` 80 % : F6 55 → 47,5 (bruit : à **200 graines** 58,5 → 58,0 %) |
 | `build_data.gd` | — | deux exécutions = fichiers identiques |
-| Suite GUT | 524 (5 pending) | **531 / 531**, aucun `pending` |
+| ✅ Corrigé — **rechargement en plein shift** : `BoothDirector` émettait encore hors de l'arbre (minuteur de présentation, repère d'animation) → `ComparisonUI` sortie de l'arbre → `workbench.gd:137` (`process_frame` sur null) | reproduit (`test_booth_emits_nothing_once_the_scene_left_the_tree`, scène retirée de l'arbre au guichet) : `documents_presented` émis, 6 erreurs moteur | `_emit_once` / `_knock` / arrivée gardés par `is_inside_tree()`, minuteurs (`_after`) déconnectés à `_exit_tree` ; `Workbench` ne touche plus à `get_tree()` hors de l'arbre (mise en page reportée à `NOTIFICATION_ENTER_TREE`) : 0 émission, 0 erreur |
+| ✅ Corrigé — `build_data.gd` affichait « OK » malgré un `build_data_act2.gd` non analysable (`_build()` interrompu, code 0) | erreur d'analyse simulée (copie hors dépôt) : « OK », code 0, données partielles | scripts de données vérifiés avant toute écriture, `Logger` comptant les erreurs moteur / de script, génération menée à terme : « build_data : ÉCHEC — … », code 1, rien d'écrit ; échec d'enregistrement simulé : code 1 |
+| Suite GUT | 524 (5 pending) | **532 / 532**, aucun `pending` |
 | `export_all.sh linux` + `smoke_export.sh` | — | OK (titre, J1, J4, J7, J10, J15, J20) |
 
 Outils de ces mesures (stress de rechargements, sonde d'asile) gardés hors dépôt ; le stress se rejoue avec une boucle `reload_current_scene.call_deferred()` à intervalles aléatoires depuis un nœud lancé par `tools/qa_boot.gd`.

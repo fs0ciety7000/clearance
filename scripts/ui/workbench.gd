@@ -134,11 +134,21 @@ func present(documents: Array[DocumentInstance], portrait_provider: Callable = C
 	# et l'échelle d'ajustement en dépend (QA-015).
 	layout_pending = true
 	_measured = false
+	_wait_layout_frame()
+
+
+## Mise en place à la prochaine image ; hors de l'arbre (scène en cours de
+## rechargement), reportée à `NOTIFICATION_ENTER_TREE` (aucun `get_tree()`).
+func _wait_layout_frame() -> void:
+	if not is_inside_tree():
+		return
 	if not get_tree().process_frame.is_connected(_on_layout_frame):
 		get_tree().process_frame.connect(_on_layout_frame, CONNECT_ONE_SHOT)
 
 
 func _notification(what: int) -> void:
+	if what == NOTIFICATION_ENTER_TREE and layout_pending:
+		_wait_layout_frame()
 	if what == NOTIFICATION_RESIZED and not views.is_empty() and not layout_pending:
 		_relayout.call_deferred()
 
@@ -186,7 +196,7 @@ func _on_layout_frame() -> void:
 		_measured = true
 		for view: DocumentView in views:
 			view.size = view.get_combined_minimum_size()
-		get_tree().process_frame.connect(_on_layout_frame, CONNECT_ONE_SHOT)
+		_wait_layout_frame()
 		return
 	_arrange_views()
 	layout_pending = false

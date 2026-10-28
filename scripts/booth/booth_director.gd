@@ -143,6 +143,9 @@ var _guard_follow_at: float = -1.0
 var _guard_in_path: Path3D = null
 var _guard_out_path: Path3D = null
 var _guard_mark: Marker3D = null
+## Minuteurs en attente (`SceneTreeTimer`, rappel) : déconnectés à la sortie
+## de l'arbre (rechargement de scène en plein shift).
+var _timers: Array[Array] = []
 
 
 func _ready() -> void:
@@ -165,6 +168,29 @@ func _ready() -> void:
 	EventBus.inspection_target_picked.connect(_on_inspection_target_picked)
 	EventBus.day_started.connect(_on_day_started)
 	_build_guard()
+
+
+## Sortie de l'arbre (`reload_current_scene`, retour au titre) : minuteurs
+## annulés ; plus aucune émission tant que le booth n'est pas dans l'arbre
+## (`_emit_once`, `_knock`), l'UI sœur étant déjà sortie.
+func _exit_tree() -> void:
+	for entry: Array in _timers:
+		var timer: SceneTreeTimer = entry[0]
+		var callback: Callable = entry[1]
+		if is_instance_valid(timer) and timer.timeout.is_connected(callback):
+			timer.timeout.disconnect(callback)
+	_timers.clear()
+
+
+## `callback` dans `sec` secondes, annulé si le booth sort de l'arbre.
+func _after(sec: float, callback: Callable) -> void:
+	if not is_inside_tree():
+		return
+	var timer: SceneTreeTimer = get_tree().create_timer(sec)
+	var entry: Array = [timer, callback]
+	_timers.append(entry)
+	timer.timeout.connect(func() -> void: _timers.erase(entry))
+	timer.timeout.connect(callback)
 
 
 ## Acteur lié à un cas (tests, debug).
@@ -305,16 +331,18 @@ func _on_inspection_target_picked(ref: FieldRef) -> void:
 func _on_actor_arrived(actor: PassengerActor) -> void:
 	var case_id: StringName = actor.case_id
 	_watch.erase(actor)
+	if not is_inside_tree():
+		return
 	_emit_once(case_id, FLAG_ARRIVED)
 	var delay: float = PRESENT_DELAY_SEC
 	var case: Case = _cases.get(case_id, null)
 	if case != null and case.presentation == PRESENTATION_KNOCK:
 		# Code 5 : trois tapes sur la vitre, puis les papiers.
 		for i: int in KNOCK_COUNT:
-			get_tree().create_timer(KNOCK_LEAD_SEC + KNOCK_INTERVAL_SEC * i).timeout.connect(_knock.bind(actor, case_id, i + 1))
+			_after(KNOCK_LEAD_SEC + KNOCK_INTERVAL_SEC * i, _knock.bind(actor, case_id, i + 1))
 		delay += KNOCK_LEAD_SEC + KNOCK_INTERVAL_SEC * KNOCK_COUNT
-	get_tree().create_timer(delay).timeout.connect(func() -> void:
-		if actor.case_id == case_id and actor.state == PassengerActor.State.AT_DESK and not actor.documents_slot_fired():
+	_after(delay, func() -> void:
+		if is_inside_tree() and actor.case_id == case_id and actor.state == PassengerActor.State.AT_DESK and not actor.documents_slot_fired():
 			actor.present_documents()
 			_arm_watchdog(actor, &"present", actor.clip_length(&"present_documents")))
 
@@ -342,8 +370,9 @@ func _on_actor_face_clicked(actor: PassengerActor) -> void:
 
 
 ## Émet un signal du booth une seule fois par cas, dans l'ordre du contrat.
+## Hors de l'arbre (scène en cours de rechargement) : rien n'est émis.
 func _emit_once(case_id: StringName, flag: int) -> void:
-	if case_id == &"":
+	if case_id == &"" or not is_inside_tree():
 		return
 	var flags: int = _emitted.get(case_id, 0)
 	if (flags & flag) != 0:
@@ -401,7 +430,7 @@ static func has_magenta_thread(case: Case) -> bool:
 
 ## Une tape sur la vitre : onde (anneau cyan pâle qui s'élargit et s'efface).
 func _knock(actor: PassengerActor, case_id: StringName, knock: int) -> void:
-	if actor.case_id != case_id or actor.state != PassengerActor.State.AT_DESK:
+	if not is_inside_tree() or actor.case_id != case_id or actor.state != PassengerActor.State.AT_DESK:
 		return
 	glass_knocked.emit(case_id, knock)
 	var ring: MeshInstance3D = MeshInstance3D.new()
@@ -423,7 +452,7 @@ func _knock(actor: PassengerActor, case_id: StringName, knock: int) -> void:
 	ring.global_position = glass.global_position * Vector3(0, 0, 1) + KNOCK_POINT + Vector3(0.012 * (knock - 2), 0.01 * (knock % 2), 0)
 	ring.rotation_degrees = Vector3(90, 0, 0)
 	if Settings.reduce_motion:
-		get_tree().create_timer(DS.DUR_SLOW).timeout.connect(ring.queue_free)
+		_after(DS.DUR_SLOW, ring.queue_free)
 		return
 	var tween: Tween = ring.create_tween().set_parallel(true)
 	tween.tween_property(ring, ^"scale", Vector3.ONE * 3.2, DS.DUR_SLOW + DS.DUR_FAST).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)

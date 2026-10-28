@@ -61,15 +61,65 @@ const EXTRA_FAMILY_NAMES: Dictionary[StringName, PackedStringArray] = {
 ## Prénoms du foyer de l'agent·e (LORE §6, NARRATIVE §1.2) : jamais générés.
 const RESERVED_HOUSEHOLD_NAMES: PackedStringArray = ["Ilan", "Noa", "Dora"]
 
+## Scripts de données chargés par ce générateur. Un script qui ne s'analyse pas
+## ne bloque pas l'exécution (appels « Nonexistent function », `_build()`
+## interrompu sans bruit) : vérifiés avant toute écriture.
+const DATA_SCRIPTS: PackedStringArray = ["res://tools/build_data_act2.gd"]
+
+## Compte les erreurs moteur et de script (`push_error`, erreurs d'exécution)
+## émises pendant la génération : toute erreur fait échouer le build.
+class ErrorCounter:
+	extends Logger
+	var count: int = 0
+	var _mutex: Mutex = Mutex.new()
+
+	func _log_error(_function: String, _file: String, _line: int, _code: String, _rationale: String,
+			_editor_notify: bool, error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+		if error_type == ERROR_TYPE_WARNING:
+			return
+		_mutex.lock()
+		count += 1
+		_mutex.unlock()
+
 var _failures: int = 0
 ## Jours construits (ordre de construction), pour les noms réservés.
 var _days: Array[DayDef] = []
+## Vrai si `_build()` est allé à son terme (une erreur de script l'interrompt).
+var _completed: bool = false
 
 
 func _init() -> void:
-	_build()
-	print("build_data : %s" % ("OK" if _failures == 0 else "%d échec(s)" % _failures))
-	quit(1 if _failures > 0 else 0)
+	var errors: ErrorCounter = ErrorCounter.new()
+	OS.add_logger(errors)
+	if _data_scripts_ok():
+		_build()
+	OS.remove_logger(errors)
+	var problems: PackedStringArray = []
+	if _failures > 0:
+		problems.append("%d échec(s) de chargement ou d'enregistrement" % _failures)
+	if errors.count > 0:
+		problems.append("%d erreur(s) moteur ou de script" % errors.count)
+	if not _completed:
+		problems.append("génération interrompue")
+	if problems.is_empty():
+		print("build_data : OK")
+		quit(0)
+		return
+	printerr("build_data : ÉCHEC — %s ; données de res://data/ incomplètes ou invalides, voir les erreurs ci-dessus"
+			% ", ".join(problems))
+	quit(1)
+
+
+## Chaque script de `DATA_SCRIPTS` se charge et compile ; sinon `_failures`.
+func _data_scripts_ok() -> bool:
+	var ok: bool = true
+	for path: String in DATA_SCRIPTS:
+		var script: GDScript = load(path) as GDScript
+		if script == null or not script.can_instantiate():
+			push_error("build_data: script de données illisible (erreur d'analyse ?) : %s" % path)
+			_failures += 1
+			ok = false
+	return ok
 
 
 func _build() -> void:
@@ -86,6 +136,7 @@ func _build() -> void:
 	_build_economy()
 	_reserve_character_names(pools)
 	assert(docs.size() == 8)
+	_completed = true
 
 
 # ---------------------------------------------------------------------------
