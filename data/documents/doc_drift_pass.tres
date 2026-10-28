@@ -1,0 +1,77 @@
+[gd_resource type="Resource" script_class="DocumentTypeDef" format=3 uid="uid://thc0gumiqhsc"]
+
+[ext_resource type="Script" path="res://scripts/documents/field_def.gd" id="1_h8ohx"]
+[ext_resource type="Script" path="res://scripts/documents/document_type_def.gd" id="2_056hr"]
+
+[sub_resource type="Resource" id="field_serial"]
+script = ExtResource("1_h8ohx")
+id = &"serial"
+label_key = "field_serial"
+kind = 2
+truth_path = &"document.serial"
+
+[sub_resource type="Resource" id="field_vessel"]
+script = ExtResource("1_h8ohx")
+id = &"vessel"
+label_key = "field_vessel"
+truth_path = &"vessel"
+display_order = 1
+
+[sub_resource type="Resource" id="field_family_name"]
+script = ExtResource("1_h8ohx")
+id = &"family_name"
+label_key = "field_family_name"
+truth_path = &"family_name"
+display_order = 2
+
+[sub_resource type="Resource" id="field_given_name"]
+script = ExtResource("1_h8ohx")
+id = &"given_name"
+label_key = "field_given_name"
+truth_path = &"given_name"
+display_order = 3
+
+[sub_resource type="Resource" id="field_birth_date"]
+script = ExtResource("1_h8ohx")
+id = &"birth_date"
+label_key = "field_birth_date"
+kind = 1
+truth_path = &"birth_date"
+display_order = 4
+format = "DD.MM.YYYY"
+
+[sub_resource type="Resource" id="field_issue_date"]
+script = ExtResource("1_h8ohx")
+id = &"issue_date"
+label_key = "field_issue_date"
+kind = 1
+truth_path = &"document.issue_date"
+display_order = 5
+format = "DD.MM.YYYY"
+
+[sub_resource type="Resource" id="field_expiry_date"]
+script = ExtResource("1_h8ohx")
+id = &"expiry_date"
+label_key = "field_expiry_date"
+kind = 1
+truth_path = &"document.expiry_date"
+display_order = 6
+format = "DD.MM.YYYY"
+
+[sub_resource type="Resource" id="field_seal"]
+script = ExtResource("1_h8ohx")
+id = &"seal"
+label_key = "field_seal"
+kind = 3
+truth_path = &"document.seal_id"
+display_order = 7
+
+[resource]
+script = ExtResource("2_056hr")
+id = &"drift_pass"
+title_key = "doc_drift_pass_title"
+fields = Array[ExtResource("1_h8ohx")]([SubResource("field_serial"), SubResource("field_vessel"), SubResource("field_family_name"), SubResource("field_given_name"), SubResource("field_birth_date"), SubResource("field_issue_date"), SubResource("field_expiry_date"), SubResource("field_seal")])
+holo_tint_token = &"ACCENT_MAGENTA"
+issuer_id = &"capitainerie_soute"
+seal_id = &"seal_drift_ink"
+serial_pattern = "LD-NNNN"

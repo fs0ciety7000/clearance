@@ -13,6 +13,13 @@
 ##   `face_rect_provider() -> Rect2` (rectangle global du visage dans la bande B,
 ##   pour le cadre « VISAGE » et l'ancrage des liens) sont renseignés par
 ##   l'intégrateur.
+## M8 (Acte II, ARCHITECTURE §7.2) : compteur QUOTA de la barre d'état
+## (`quota_changed`, sélectionnable), onglets Employeurs / Vaisseaux /
+## Révocations du Rulebook (`revocations_published`), liens suggérés du scanner
+## partiel (`scanner_suggested`, pointillés de la source, à confirmer d'un
+## clic : `confirm_suggestion`), répliques lues par `Case.scripted_key`
+## (variantes conditionnelles), étiquettes d'ambiance des accessoires
+## (`companion_child`, `prop_*`) et figure finale du J20 (SC-50).
 class_name ComparisonUI
 extends Control
 
@@ -46,6 +53,22 @@ const UNKNOWN_WORD_FALLBACK: String = "[mot inconnu]"
 const PRESENTATION_KNOCK: StringName = &"knock_three"
 ## Annonce du haut-parleur du Hall : durée minimale d'affichage.
 const PA_MIN_HOLD: float = 6.0
+## Acte II : étiquettes d'ambiance des accessoires (`Case.dialogue_tags`) →
+## didascalie sous-titrée à l'arrivée (à la place des « pas mouillés »).
+const PROP_TAGS: Dictionary[StringName, String] = {
+	&"companion_child": "tag_companion_child",
+	&"prop_cat_crate": "tag_prop_cat_crate",
+	&"prop_drone": "tag_prop_drone",
+	&"prop_shunt_led": "tag_prop_shunt_led",
+}
+## Acte II : figure finale du J20 (SC-50, D-079) — dialogue → voix (couleur).
+const FINAL_FIGURES: Dictionary[StringName, String] = {&"sc50_ilan": "ilan", &"sc50_mira": "mira"}
+## Grève du J20 : voile de la vue 3D et luminosité des panneaux.
+const LIGHTS_OUT_BAND: float = 0.82
+const LIGHTS_OUT_PANELS: float = 0.38
+## Couleurs des sources du scanner partiel (ARCHITECTURE §7.2 : ambre / magenta).
+const SCANNER_ACV: StringName = &"acv"
+const SCANNER_LUCIOLE: StringName = &"luciole"
 
 ## Photo des documents : `func(appearance: PassengerAppearance) -> Texture2D`.
 var portrait_provider: Callable = Callable()
@@ -76,6 +99,14 @@ var slipped_items: Array[SlippedItem] = []
 var wanted_notices: Array[WantedNotice] = []
 ## M7 : dernière annonce du Hall affichée (texte), vide sinon.
 var announcement_text: String = ""
+## Acte II : compteur du quota (`quota_changed`), révocations du jour.
+var quota_used: int = 0
+var quota_max: int = 0
+var revocations: Array[RevokedEntry] = []
+## Acte II : liens suggérés par le scanner partiel pour le cas courant
+## (non encore confirmés) et leur source (`acv`, `luciole`).
+var suggestions: Array[Discrepancy] = []
+var scanner_source: StringName = &""
 var fx_intensity: float = 1.0
 var reduce_motion: bool = false
 
@@ -93,6 +124,13 @@ var links: LinkLayer = null
 var pa_strip: PanelContainer = null
 var _pa_label: Label = null
 var _pa_serial: int = 0
+## Acte II : pastilles « CONFIRMER » posées au milieu des liens suggérés.
+var _suggestion_layer: Control = null
+var _suggestion_buttons: Array[Button] = []
+## Acte II : grève du J20, les vitres s'éteignent (voile sur la vue 3D, panneaux
+## assombris ; seuls le haut-parleur et les sous-titres restent lisibles).
+var lights_out: bool = false
+var _lights_veil: ColorRect = null
 var _veil: ColorRect = null
 var _next_cooldown: float = 0.0
 var _menu_items: Array[Dictionary] = []
@@ -164,6 +202,8 @@ func _min_text_px() -> int:
 
 func _rebuild_theme(text_scale: float) -> void:
 	theme = ThemeBuilder.build(text_scale, _min_text_px())
+	if workbench != null:
+		workbench.text_scale = text_scale
 	if tool_bar != null:
 		tool_bar.refresh_fonts()
 
@@ -200,10 +240,12 @@ func _build() -> void:
 	workbench.offset_bottom = -TOOLBAR_H
 	workbench.reduce_motion = reduce_motion
 	workbench.fx_intensity = fx_intensity
+	workbench.text_scale = _text_scale()
 	add_child(workbench)
 	workbench.field_picked.connect(_on_item_picked)
 	workbench.document_focused.connect(_on_document_focused)
 	workbench.background_clicked.connect(_on_background_clicked)
+	workbench.scanner_confirm_pressed.connect(func() -> void: confirm_suggestion())
 
 	rulebook = RulebookPanel.new()
 	rulebook.name = "Rulebook"
@@ -218,12 +260,14 @@ func _build() -> void:
 	add_child(rulebook)
 	rulebook.item_picked.connect(_on_item_picked)
 	rulebook.collapse_changed.connect(_on_rulebook_collapsed)
+	rulebook.resized.connect(_sync_workbench_bounds)
 
 	top_bar = TopBar.new()
 	top_bar.name = "TopBar"
 	top_bar.anchor_right = 1.0
 	top_bar.offset_bottom = BAND_TOP
 	add_child(top_bar)
+	top_bar.quota_view.picked.connect(_on_item_picked)
 
 	passenger_panel = PassengerPanel.new()
 	passenger_panel.name = "PassengerPanel"
@@ -245,6 +289,15 @@ func _build() -> void:
 	add_child(BlurBackdrop.create(queue_panel))
 	add_child(queue_panel)
 
+	_lights_veil = ColorRect.new()
+	_lights_veil.name = "LightsOutVeil"
+	_lights_veil.color = Color(DS.BG_VOID, 0.0)
+	_lights_veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lights_veil.anchor_right = 1.0
+	_lights_veil.offset_top = BAND_TOP
+	_lights_veil.offset_bottom = BAND_BOTTOM
+	_lights_veil.visible = false
+	add_child(_lights_veil)
 	subtitles = SubtitleBar.new()
 	subtitles.name = "Subtitles"
 	subtitles.anchor_left = 0.5
@@ -263,7 +316,10 @@ func _build() -> void:
 	tool_bar.anchor_right = 1.0
 	tool_bar.anchor_bottom = 1.0
 	tool_bar.offset_top = -TOOLBAR_H
+	# Une barre plus haute que prévu grandit vers le haut, jamais hors de l'écran (QA-031).
+	tool_bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(tool_bar)
+	tool_bar.resized.connect(_sync_workbench_bounds)
 	tool_bar.inspection_toggled.connect(set_inspection_active)
 	tool_bar.interrogate_pressed.connect(toggle_question_menu)
 	tool_bar.next_pressed.connect(request_next_case)
@@ -278,6 +334,11 @@ func _build() -> void:
 	links.reduce_motion = reduce_motion
 	links.face_label = UiText.t("face_label", "VISAGE")
 	add_child(links)
+	_suggestion_layer = Control.new()
+	_suggestion_layer.name = "ScannerSuggestions"
+	_suggestion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_suggestion_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_suggestion_layer)
 
 	toasts = ToastStack.new()
 	toasts.name = "Toasts"
@@ -340,6 +401,9 @@ func _connect_bus() -> void:
 	EventBus.inspection_target_picked.connect(_on_inspection_target_picked)
 	EventBus.credits_changed.connect(_on_credits_changed)
 	EventBus.settings_changed.connect(_on_settings_changed)
+	EventBus.quota_changed.connect(_on_quota_changed)
+	EventBus.revocations_published.connect(_on_revocations_published)
+	EventBus.scanner_suggested.connect(_on_scanner_suggested)
 
 
 # ---------------------------------------------------------------------------
@@ -354,6 +418,8 @@ func _on_day_started(p_day: DayDef, p_rulebook: Array[RulebookEntry]) -> void:
 	# DÉTENTION (« mise en attente ») seulement si le jour l'autorise (J7+, D-055).
 	detain_available = p_day.detain_enabled
 	wanted_notices.clear()
+	revocations.clear()
+	rulebook.quota_max = p_day.air_quota
 	rulebook.set_rulebook(rulebook_entries, p_day.game_date, p_day.day_number, p_day.rulebook_tabs)
 	top_bar.set_day(p_day.day_number, p_day.game_date)
 	top_bar.set_clock(remaining_sec, p_day.duration_sec)
@@ -393,9 +459,12 @@ func _on_case_presented(case: Case) -> void:
 	verdict_sent = false
 	elapsed_sec = 0.0
 	slipped_items.clear()
+	suggestions.clear()
+	_refresh_suggestion_buttons()
 	var bark: String = arrival_text(case)
 	passenger_panel.set_line(bark)
-	subtitles.show_line(UiText.passenger_number(case), bark, UiText.t("tag_footsteps", "[pas mouillés]"))
+	passenger_panel.set_accent(final_figure_color(case))
+	subtitles.show_line(UiText.passenger_number(case), bark, arrival_tag(case))
 	workbench.set_empty_state(UiText.t("wb_empty_title", "EN ATTENTE DES DOCUMENTS"),
 			UiText.t("wb_empty_arriving", "Ils glisseront par la fente de la vitre à l'arrivée du passager. En attendant : Tab · Rulebook."))
 	_refresh_all()
@@ -409,6 +478,7 @@ func _on_documents_presented(case_id: StringName) -> void:
 	workbench.present(current_case.documents, portrait_provider)
 	for item: SlippedItem in slipped_items:
 		_show_slipped(item)
+	_show_suggestions()
 	var line: String = passenger_text(UiText.t(scripted_key(current_case, "present", "bark_present"), "Voici mes papiers…"))
 	passenger_panel.set_line(line)
 	# Mot glissé entre les documents (passager scénarisé, ex. SC-05 Lucioles).
@@ -543,6 +613,237 @@ func find_notice(notice_id: StringName) -> WantedNotice:
 	return null
 
 
+# ---------------------------------------------------------------------------
+# Acte II : quota, révocations, scanner partiel, accessoires, figure finale
+# ---------------------------------------------------------------------------
+
+## Les vitres s'éteignent (grève du J20, `DayScene.lights_out`) : la vue 3D
+## passe sous un voile presque noir, les panneaux s'assombrissent ; le bandeau
+## du haut-parleur et les sous-titres restent pleinement lisibles.
+func set_lights_out(duration: float = DS.DUR_DRAMATIC) -> void:
+	if lights_out:
+		return
+	lights_out = true
+	_lights_veil.visible = true
+	# La dernière annonce (« les vitres s'éteignent ») reste affichée dans le noir.
+	if pa_strip.visible:
+		_pa_serial += 1
+	# Le fondu continue même si l'UI est désactivée par un écran plein cadre.
+	var tween: Tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.tween_property(_lights_veil, "color:a", LIGHTS_OUT_BAND, duration)
+	for panel: Control in [workbench, rulebook, top_bar, tool_bar, passenger_panel, queue_panel, links, _suggestion_layer]:
+		tween.tween_property(panel, "modulate", Color(LIGHTS_OUT_PANELS, LIGHTS_OUT_PANELS, LIGHTS_OUT_PANELS, 1.0), duration)
+
+
+func _on_quota_changed(used: int, maximum: int) -> void:
+	quota_used = used
+	quota_max = maximum
+	top_bar.set_quota(used, maximum)
+	if rulebook.quota_max != maximum and maximum > 0:
+		rulebook.quota_max = maximum
+		rulebook.refresh_cards()
+
+
+func _on_revocations_published(entries: Array[RevokedEntry]) -> void:
+	revocations = entries.duplicate()
+	rulebook.set_revoked(revocations)
+
+
+## Révocation par identifiant (null si inconnue).
+func find_revocation(entry_id: StringName) -> RevokedEntry:
+	for entry: RevokedEntry in revocations:
+		if entry.id == entry_id:
+			return entry
+	return null
+
+
+## Couleur d'une source du scanner (ACV-2 ambre, boîtier des Lucioles magenta).
+static func scanner_color(source: StringName) -> Color:
+	return DS.ACCENT_MAGENTA if source == SCANNER_LUCIOLE else DS.STATE_AMBER
+
+
+func _on_scanner_suggested(case_id: StringName, p_links: Array[Discrepancy], source: StringName) -> void:
+	if current_case == null or case_id != current_case.case_id:
+		return
+	scanner_source = source
+	suggestions.clear()
+	for link: Discrepancy in p_links:
+		if link != null and link.a != null and link.b != null:
+			suggestions.append(link)
+	# Les documents peuvent être posés juste après (ordre des écouteurs).
+	if documents_shown:
+		_show_suggestions()
+
+
+## Trace les liens suggérés (pointillés) et la pastille de source du plan.
+func _show_suggestions() -> void:
+	if scanner_source == &"":
+		workbench.set_scanner("", DS.TEXT_SECONDARY, 0)
+		return
+	var tint: Color = scanner_color(scanner_source)
+	for link: Discrepancy in suggestions:
+		if not selection.is_requested(link.a, link.b):
+			links.add_suggested(link.a, link.b, tint)
+	var label: String = UiText.t("wb_scanner_src_luciole", "BOÎTIER MAGENTA") if scanner_source == SCANNER_LUCIOLE \
+			else UiText.t("wb_scanner_src_acv", "ACV-2 · CONSORTIUM")
+	workbench.set_scanner(label, tint, pending_suggestion_count())
+	_refresh_suggestion_buttons()
+	_front_suggested_document()
+
+
+## Le document visé par le premier lien suggéré passe devant sa pile : le champ
+## pointé par le scanner n'est jamais caché sous un autre document (QA-020).
+func _front_suggested_document() -> void:
+	if workbench.layout_pending:
+		await workbench.layout_done
+	for link: Discrepancy in suggestions:
+		if selection.is_requested(link.a, link.b):
+			continue
+		for ref: FieldRef in [link.a, link.b]:
+			var view: DocumentView = workbench.get_view(ref.document_id)
+			if view != null and not workbench.is_front(view):
+				workbench.bring_to_front(view)
+			if view != null:
+				return
+
+
+## Liens suggérés encore à confirmer.
+func pending_suggestion_count() -> int:
+	var count: int = 0
+	for link: Discrepancy in suggestions:
+		if not selection.is_requested(link.a, link.b):
+			count += 1
+	return count
+
+
+## Confirme le lien suggéré `index` (clic sur sa pastille, ou le premier en
+## attente si −1) : la paire est évaluée comme une sélection A → B
+## (`discrepancy_check_requested`) et devient une discordance épinglée.
+func confirm_suggestion(index: int = -1) -> bool:
+	if not _inspection_allowed() or suggestions.is_empty():
+		return false
+	var target: Discrepancy = null
+	if index >= 0 and index < suggestions.size():
+		target = suggestions[index]
+	else:
+		for link: Discrepancy in suggestions:
+			if not selection.is_requested(link.a, link.b):
+				target = link
+				break
+	if target == null or not selection.request_pair(target.a, target.b):
+		return false
+	links.add_evaluating(target.a, target.b)
+	EventBus.discrepancy_check_requested.emit(target.a, target.b)
+	workbench.set_scanner_count(pending_suggestion_count())
+	_refresh_suggestion_buttons()
+	_refresh_all()
+	return true
+
+
+func _refresh_suggestion_buttons() -> void:
+	for button: Button in _suggestion_buttons:
+		button.queue_free()
+	_suggestion_buttons.clear()
+	if _suggestion_layer == null or not documents_shown or verdict_sent:
+		return
+	var tint: Color = scanner_color(scanner_source)
+	for i: int in suggestions.size():
+		var link: Discrepancy = suggestions[i]
+		if selection.is_requested(link.a, link.b):
+			continue
+		# Pastille compacte (coche dans un carré chanfreiné) : ne masque aucune valeur.
+		var button: Button = Button.new()
+		button.name = "Confirm_%d" % i
+		button.theme_type_variation = &"ButtonGhost"
+		button.focus_mode = Control.FOCUS_NONE
+		button.custom_minimum_size = Vector2(DS.ICON_L, DS.ICON_L)
+		button.add_theme_stylebox_override(&"normal", ThemeBuilder.chamfer_box(DS.BG_VOID, tint, DS.BORDER_STRONG, DS.CHAMFER_S, 0))
+		button.add_theme_stylebox_override(&"hover", ThemeBuilder.chamfer_box(DS.BG_ELEVATED.blend(Color(tint, 0.24)), tint,
+				DS.BORDER_STRONG, DS.CHAMFER_S, 0))
+		button.add_theme_stylebox_override(&"pressed", ThemeBuilder.chamfer_box(Color(tint, 0.4), tint, DS.BORDER_STRONG, DS.CHAMFER_S, 0))
+		var check: UiIcon = UiIcon.make(UiIcon.Kind.CHECK, tint, DS.ICON_M)
+		check.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		check.offset_left = DS.SPACE_1
+		check.offset_top = DS.SPACE_1
+		check.offset_right = -DS.SPACE_1
+		check.offset_bottom = -DS.SPACE_1
+		button.add_child(check)
+		var source: String = UiText.t("wb_scanner_luciole", "‹lumika› · suggestion") if scanner_source == SCANNER_LUCIOLE \
+				else UiText.t("wb_scanner_acv", "ACV-2 · suggestion")
+		button.tooltip_text = "%s — %s\n%s" % [source, describe(link), UiText.t("wb_scanner_confirm", "CONFIRMER")]
+		button.visible = false
+		button.pressed.connect(confirm_suggestion.bind(i))
+		_suggestion_layer.add_child(button)
+		_suggestion_buttons.append(button)
+	_place_suggestion_buttons()
+
+
+## Pastilles au milieu de leur lien (suivent les documents déplacés).
+func _place_suggestion_buttons() -> void:
+	if _suggestion_buttons.is_empty():
+		return
+	var shown: Array[LinkLayer.Link] = links.suggested_links()
+	var inv: Transform2D = get_global_transform().affine_inverse()
+	for button: Button in _suggestion_buttons:
+		var index: int = button.name.trim_prefix("Confirm_").to_int()
+		var mid: Vector2 = Vector2.INF
+		button.reset_size()
+		if index < suggestions.size():
+			for link: LinkLayer.Link in shown:
+				if InspectionSelection.pair_key(link.a, link.b) == InspectionSelection.pair_key(suggestions[index].a, suggestions[index].b):
+					mid = _suggestion_anchor(link, button.size * get_global_transform().get_scale())
+		button.visible = mid != Vector2.INF
+		if button.visible:
+			button.position = (inv * mid - button.size * 0.5).round()
+
+
+## Point du lien où poser sa pastille (repère global) : le plus près du milieu
+## hors de tout document, pour ne jamais couvrir de texte (QA-029) ; le
+## milieu à défaut.
+func _suggestion_anchor(link: LinkLayer.Link, chip: Vector2) -> Vector2:
+	var points: PackedVector2Array = links.link_points(link)
+	if points.is_empty():
+		return Vector2.INF
+	var covers: Array[Rect2] = []
+	for view: DocumentView in workbench.views:
+		if is_instance_valid(view) and view.visible:
+			covers.append(view.get_global_rect())
+	var middle: int = points.size() >> 1
+	for step: int in points.size():
+		for index: int in [middle + step, middle - step]:
+			if index < 0 or index >= points.size():
+				continue
+			var rect: Rect2 = Rect2(points[index] - chip * 0.5, chip).grow(DS.SPACE_1)
+			var clear_spot: bool = true
+			for cover: Rect2 in covers:
+				if cover.intersects(rect):
+					clear_spot = false
+					break
+			if clear_spot:
+				return points[index]
+	return points[middle]
+
+
+## Didascalie d'arrivée : accessoire d'ambiance (enfant, caisse, drone, LED),
+## sinon les pas mouillés.
+static func arrival_tag(case: Case) -> String:
+	if case != null:
+		for tag: StringName in PROP_TAGS:
+			if case.dialogue_tags.has(tag):
+				return UiText.t(PROP_TAGS[tag], "[%s]" % tag)
+	return UiText.t("tag_footsteps", "[pas mouillés]")
+
+
+## Figure finale du J20 (SC-50) : Ilan (voix de la famille) ou Mira (Lucioles),
+## couleur transparente sinon.
+static func final_figure_color(case: Case) -> Color:
+	if case != null:
+		for tag: StringName in FINAL_FIGURES:
+			if case.dialogue_tags.has(tag):
+				return DS.TEXT_SECONDARY if FINAL_FIGURES[tag] == "ilan" else DS.ACCENT_MAGENTA
+	return Color.TRANSPARENT
+
+
 ## Réplique d'arrivée (`<dialogue>_arrival`, sinon générique) ; un porteur du
 ## code 7 glisse *lumika* dans sa phrase.
 static func arrival_text(case: Case) -> String:
@@ -600,7 +901,11 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 			for item: InspectableItem in [item_a, item_b]:
 				if item != null:
 					item.set_concordant(true)
-					get_tree().create_timer(DS.CONCORDANT_HOLD + DS.DUR_BASE).timeout.connect(_unmark_concordant.bind(item))
+					# Minuteur porté par le champ (QA-023) : libéré avec lui si le
+					# passager part avant la fin, jamais rappelé sur un objet libéré.
+					var unmark: Tween = item.create_tween()
+					unmark.tween_interval(DS.CONCORDANT_HOLD + DS.DUR_BASE)
+					unmark.tween_callback(item.set_concordant.bind(false))
 			workbench.show_banner(Workbench.BannerKind.CONCORDANT, UiText.t("res_concordant", "CONCORDANT"), describe(result), DS.CONCORDANT_HOLD)
 		_:
 			links.resolve(result, 0)
@@ -734,15 +1039,13 @@ func say_intercom(speaker: String, text: String) -> void:
 		toasts.push(ToastStack.Kind.INFO, speaker, text)
 
 
-## Clé de réplique dédiée d'un passager scénarisé (`<dialogue_id>_<suffixe>`),
-## sinon `fallback`.
+## Clé de réplique dédiée d'un passager scénarisé : variante conditionnelle
+## (`Case.line_overrides`), sinon `<dialogue_id>_<suffixe>` traduite, sinon
+## `fallback` — `Case.scripted_key` (M8, ARCHITECTURE §7.2).
 static func scripted_key(case: Case, suffix: String, fallback: String) -> String:
-	if case != null:
-		for tag: StringName in case.dialogue_tags:
-			var key: String = "%s_%s" % [tag, suffix]
-			if UiText.has(key):
-				return key
-	return fallback
+	if case == null:
+		return fallback
+	return case.scripted_key(suffix, fallback, UiText.has)
 
 
 func _on_credits_changed(credits: int, _delta: int) -> void:
@@ -790,6 +1093,7 @@ func set_inspection_active(enabled: bool) -> void:
 	_clear_selected_marks()
 	workbench.set_inspection_active(enabled)
 	rulebook.set_inspection_active(enabled)
+	top_bar.quota_view.set_inspection_active(enabled)
 	if enabled and rulebook.collapsed:
 		rulebook.set_collapsed(false)
 	links.inspection_active = enabled
@@ -984,11 +1288,14 @@ func _return_documents() -> void:
 	links.clear()
 	_clear_rulebook_marks()
 	set_inspection_active(false)
+	_refresh_suggestion_buttons()
+	workbench.set_scanner("", DS.TEXT_SECONDARY, 0)
 	_refresh_all()
 
 
 func _clear_rulebook_marks() -> void:
 	rulebook.clear_item_marks()
+	top_bar.quota_view.clear_marks()
 
 
 ## Oublie le cas courant (nouveau cas, ou retour au guichet vide).
@@ -1006,6 +1313,10 @@ func _end_case(animated: bool) -> void:
 	links.clear()
 	links.face_state = 0
 	_clear_rulebook_marks()
+	suggestions.clear()
+	scanner_source = &""
+	workbench.set_scanner("", DS.TEXT_SECONDARY, 0)
+	_refresh_suggestion_buttons()
 	if inspection_active:
 		set_inspection_active(false)
 	if phase == DayPhase.Kind.WAITING_CASE:
@@ -1235,7 +1546,9 @@ func _refresh_doc_flags() -> void:
 func _find_item(ref: FieldRef) -> InspectableItem:
 	if ref == null or ref.is_passenger_face():
 		return null
-	if ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted() or ref.is_symbol():
+	if ref.is_quota_counter():
+		return top_bar.quota_view
+	if ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted() or ref.is_symbol() or ref.is_revoked():
 		return rulebook.find_item(ref, true)
 	return workbench.find_item(ref)
 
@@ -1250,7 +1563,8 @@ func _rect_of(ref: FieldRef) -> Rect2:
 	if item == null or not item.is_visible_in_tree():
 		return Rect2()
 	var rect: Rect2 = item.get_global_rect()
-	if (ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted() or ref.is_symbol()) and rulebook.collapsed:
+	if (ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted() or ref.is_symbol() or ref.is_revoked()) \
+			and rulebook.collapsed:
 		return Rect2()
 	return rect
 
@@ -1274,7 +1588,22 @@ func _on_document_focused(doc: DocumentInstance) -> void:
 func _on_rulebook_collapsed(collapsed: bool) -> void:
 	var width: float = RulebookPanel.COLLAPSED_WIDTH if collapsed else RULEBOOK_WIDTH
 	rulebook.offset_left = -(width + DS.SPACE_4)
-	workbench.offset_right = -(width + DS.SPACE_4 * 2.0) if collapsed else -WORKBENCH_RIGHT_GAP
+	_sync_workbench_bounds()
+
+
+## Le plan de travail suit les bords réels du Rulebook et de la barre d'outils,
+## qui grandissent avec le texte 1,5 : aucun document sous le Rulebook ni sous
+## la barre (QA-020, QA-031).
+func _sync_workbench_bounds() -> void:
+	if workbench == null or rulebook == null or tool_bar == null:
+		return
+	var right_gap: float = RulebookPanel.COLLAPSED_WIDTH + DS.SPACE_4 * 2.0 if rulebook.collapsed else WORKBENCH_RIGHT_GAP
+	if rulebook.is_inside_tree() and size.x > 0.0:
+		right_gap = maxf(right_gap, size.x - rulebook.position.x + DS.SPACE_2)
+	var bar: float = maxf(TOOLBAR_H, tool_bar.size.y)
+	workbench.offset_right = -right_gap
+	workbench.offset_bottom = -bar
+	rulebook.offset_bottom = -(bar + DS.SPACE_2)
 
 
 func _select_a(ref: FieldRef) -> void:
@@ -1288,14 +1617,13 @@ func _select_a(ref: FieldRef) -> void:
 
 
 func _clear_selected_marks() -> void:
-	for item: InspectableItem in workbench.get_items() + rulebook.get_items():
+	var items: Array[InspectableItem] = workbench.get_items()
+	items.append_array(rulebook.get_items())
+	items.append(top_bar.quota_view)
+	for item: InspectableItem in items:
 		if item.selected:
 			item.set_selected(false)
 
-
-func _unmark_concordant(item: InspectableItem) -> void:
-	if is_instance_valid(item):
-		item.set_concordant(false)
 
 
 func _pulse_item(item: InspectableItem) -> void:
@@ -1343,12 +1671,24 @@ func describe(result: Discrepancy) -> String:
 			for entry: RulebookEntry in rulebook_entries:
 				if entry.rule_id == rule_ref.field_id:
 					title = UiText.t(entry.title_key, title)
+			if (result.a.is_quota_counter() or result.b.is_quota_counter()) and quota_max > 0:
+				return UiText.tf("disc_quota_detail", [number, quota_used, quota_max],
+						"Règle %02d — quota atteint (%d / %d) : refus justifié.")
 			return UiText.tf("disc_rule_detail", [number, title], "Règle %02d enfreinte — %s")
 		"disc_wanted_match":
 			var wanted_ref: FieldRef = result.a if result.a.is_wanted() else result.b
 			var notice: WantedNotice = find_notice(wanted_ref.field_id) if wanted_ref != null else null
 			if notice != null:
-				return UiText.tf("disc_wanted_detail", [notice.full_name().to_upper()], "Avis de recherche : %s")
+				var who: String = notice.full_name().strip_edges().to_upper()
+				if who.is_empty():
+					who = UiText.t("rb_wanted_face_only", "VISAGE SEUL")
+				return UiText.tf("disc_wanted_detail", [who], "Avis de recherche : %s")
+		Discrepancy.REASON_REVOKED_MATCH:
+			var revoked_ref: FieldRef = result.a if result.a.is_revoked() else result.b
+			var entry: RevokedEntry = find_revocation(revoked_ref.field_id) if revoked_ref != null else null
+			if entry != null:
+				return UiText.tf("disc_revoked_detail", [entry.citizen_id, entry.full_name().to_upper()],
+						"N° ID %s révoqué — %s n'est plus citoyen·ne.")
 	return UiText.t(result.reason_key, result.reason_key)
 
 
@@ -1358,6 +1698,7 @@ func describe(result: Discrepancy) -> String:
 
 func _process(delta: float) -> void:
 	_next_cooldown = maxf(_next_cooldown - delta, 0.0)
+	_place_suggestion_buttons()
 	if documents_shown and not verdict_sent:
 		elapsed_sec += delta
 
@@ -1393,6 +1734,7 @@ func _input(event: InputEvent) -> void:
 	else:
 		_handle_stamp_input(event)
 		_handle_question_keys(event)
+		_handle_document_keys(event)
 
 
 func _handle_stamp_input(event: InputEvent) -> void:
@@ -1425,6 +1767,18 @@ func _handle_question_keys(event: InputEvent) -> void:
 		if topic != &"":
 			ask(topic)
 			_handled()
+
+
+## Touches 1–9 hors menu de questions : document n au premier plan (piles à
+## onglets du plan de travail, QA-020).
+func _handle_document_keys(event: InputEvent) -> void:
+	var key: InputEventKey = event as InputEventKey
+	if question_menu_open or key == null or not key.pressed or key.echo or key.is_command_or_control_pressed() \
+			or not documents_shown:
+		return
+	var n: int = key.physical_keycode - KEY_0
+	if n >= 1 and n <= 9 and workbench.focus_document(n - 1):
+		_handled()
 
 
 func _handled() -> void:

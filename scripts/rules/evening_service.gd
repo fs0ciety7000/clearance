@@ -20,6 +20,18 @@
 ## crédite les gains, applique les effets (drapeaux, foyer) et l'audit (F1
 ## possible, prioritaire sur F3 > F2). `lucioles_hostile` est dérivé à la
 ## clôture d'une soirée ≥ J7 si `lucioles_trust ≤ −2`.
+## Acte II (docs/ACT2.md M2, §5.3, §6.1, B30, B32 ; D-076, D-079) : à partir du
+## J11, la taxe d'air devient des **rations** (la vôtre prélevée, celles des
+## proches présents cochables ; non payée → ESSOUFFLÉ·E, 2 soirs → MALADE ;
+## forfait +1 ₵ sans compteur) ; hausses datées (nourriture, oxygène,
+## médicaments), oxygène offert (`promotion_offered`), location ACV-2,
+## prélèvements de Rééquilibrage (J11, J17 : 30 % au-delà de 40 ₵), salaire
+## d'Ilan (`income_lines`) ; seuls les proches **présents** mangent, respirent et
+## tombent malades. Événements : effets foyer des lettres, jauges fixées,
+## option qui termine la campagne (« Embarquer », F6 au J10), Revue du J17
+## (`audit_id = review`), textes à valeurs (`text_args`), drapeaux de contexte
+## du foyer et de la conformité (`context_flags`) ; soirée pivot du J10 :
+## suspicion divisée (`pivot_day`).
 class_name EveningService
 extends RefCounted
 
@@ -28,6 +40,24 @@ const LINE_AIR_TAX: StringName = &"air_tax"
 const LINE_FOOD: StringName = &"food"
 const LINE_HEATING: StringName = &"heating"
 const LINE_OXYGEN: StringName = &"oxygen"
+## Acte II.
+const LINE_RATION_SELF: StringName = &"ration_self"
+const RATION_PREFIX: String = "ration_"
+const LINE_LEASE: StringName = &"lease"
+const LINE_LEVY: StringName = &"levy"
+const LINE_ILAN_JOB: StringName = &"inc_ilan_job"
+const GROUP_RATIONS: StringName = &"rations"
+const FLAG_METER_REFUSED: StringName = &"meter_refused"
+const FLAG_PROMOTION_OFFERED: StringName = &"promotion_offered"
+const FLAG_PROMOTION_REVOKED: StringName = &"promotion_revoked"
+const FLAG_ILAN_JOB: StringName = &"ilan_meter_job"
+const FLAG_SCANNER_CONSORTIUM: StringName = &"scanner_consortium"
+## Dernier soir des dépenses récurrentes (J19 : le J20 n'a pas de soirée).
+const RECURRING_LAST_DAY: int = 19
+## Pseudo-jauge de contexte : indice de conformité cumulé × 100.
+const GAUGE_COMPLIANCE: StringName = &"compliance_pct"
+## Pseudo-jauge de contexte : prélèvement de Rééquilibrage du soir (₵).
+const GAUGE_LEVY: StringName = &"levy_amount"
 const MEDS_PREFIX: String = "meds_"
 const MEDS_LABEL_KEY: String = "ev_line_meds"
 const MEDS_NOTE_KEY: String = "ev_note_meds"
@@ -38,8 +68,9 @@ const FLAG_HOSTILE: StringName = &"lucioles_hostile"
 const HOSTILE_FROM_DAY: int = 7
 const HOSTILE_TRUST: int = -2
 
-## Ordre de présélection (après la taxe d'air, toujours payée).
-const PRIORITY: Array[StringName] = [LINE_RENT, LINE_FOOD, LINE_OXYGEN, &"meds", LINE_HEATING]
+## Ordre de présélection (après la taxe d'air, toujours payée ; Acte II :
+## rations des proches après la nourriture).
+const PRIORITY: Array[StringName] = [LINE_RENT, LINE_FOOD, GROUP_RATIONS, LINE_OXYGEN, &"meds", LINE_HEATING]
 
 
 ## Prime de signalement du mot des Lucioles (GDD §4.7, `EconomyDef.report_bonus`) :
@@ -57,22 +88,98 @@ static func evening_funds(shift_balance: int, bonuses: int) -> int:
 
 
 ## Postes de la soirée du jour `day_number`, dans l'ordre d'affichage.
-static func build_lines(economy: EconomyDef, day_number: int, household: Household) -> Array[ExpenseLine]:
+## Acte II : `flags` (compteur refusé, promotion, ACV-2) et `balance` (solde
+## du soir, assiette du prélèvement de Rééquilibrage).
+static func build_lines(economy: EconomyDef, day_number: int, household: Household,
+		flags: Dictionary[StringName, Variant] = {}, balance: int = 0) -> Array[ExpenseLine]:
 	var lines: Array[ExpenseLine] = []
+	var rations: bool = economy.rations_for(day_number)
+	var surcharge: int = economy.meter_surcharge if rations and day_number > economy.ration_start_day \
+			and day_number <= RECURRING_LAST_DAY and FlagCondition.is_flag_true(flags, FLAG_METER_REFUSED) else 0
 	lines.append(ExpenseLine.new(LINE_RENT, economy.rent_for(day_number)))
-	lines.append(ExpenseLine.new(LINE_AIR_TAX, economy.air_tax_for(day_number), true))
-	lines.append(ExpenseLine.new(LINE_FOOD, economy.food))
+	if economy.air_tax_for(day_number) > 0:
+		lines.append(ExpenseLine.new(LINE_AIR_TAX, economy.air_tax_for(day_number), true))
+	if rations:
+		var own: ExpenseLine = ExpenseLine.new(LINE_RATION_SELF, economy.ration_self + surcharge, true)
+		own.label_key = "exp_ration_self"
+		own.note_key = "exp_meter_surcharge" if surcharge > 0 else ""
+		lines.append(own)
+	lines.append(ExpenseLine.new(LINE_FOOD, economy.food_for(day_number)))
 	lines.append(ExpenseLine.new(LINE_HEATING, economy.heating))
+	if rations:
+		for member: Household.Member in household.present_members():
+			var ration: ExpenseLine = ExpenseLine.new(StringName(RATION_PREFIX + String(member.id)),
+					economy.ration_of(member.id) + surcharge)
+			ration.ration_of = member.id
+			ration.label_key = "exp_ration_%s" % member.id
+			ration.note_key = "exp_meter_surcharge" if surcharge > 0 else "ev_note_ration"
+			lines.append(ration)
 	var dora: Household.Member = household.get_member(Household.DORA)
-	if economy.oxygen_due(day_number) and dora != null and dora.is_alive():
-		lines.append(ExpenseLine.new(LINE_OXYGEN, economy.oxygen))
+	if economy.oxygen_due(day_number) and dora != null and dora.is_present():
+		if FlagCondition.is_flag_true(flags, FLAG_PROMOTION_OFFERED) and not FlagCondition.is_flag_true(flags, FLAG_PROMOTION_REVOKED):
+			var free: ExpenseLine = ExpenseLine.new(LINE_OXYGEN, 0, true)
+			free.note_key = "ev_note_oxygen_free"
+			lines.append(free)
+		else:
+			lines.append(ExpenseLine.new(LINE_OXYGEN, economy.oxygen_for(day_number)))
 	for member: Household.Member in household.sick_members():
-		var meds: ExpenseLine = ExpenseLine.new(StringName(MEDS_PREFIX + String(member.id)), economy.medicine_per_member)
+		var meds: ExpenseLine = ExpenseLine.new(StringName(MEDS_PREFIX + String(member.id)), economy.medicine_for(day_number))
 		meds.member_id = member.id
 		meds.label_key = MEDS_LABEL_KEY
 		meds.note_key = MEDS_NOTE_KEY + ("_grave" if member.health == Household.Health.GRAVELY_SICK else "")
 		lines.append(meds)
+	if FlagCondition.is_flag_true(flags, FLAG_SCANNER_CONSORTIUM) and day_number <= RECURRING_LAST_DAY:
+		var lease: ExpenseLine = ExpenseLine.new(LINE_LEASE, economy.lease_cost, true)
+		lease.label_key = "exp_lease"
+		lines.append(lease)
+	var levy: int = economy.levy_for(day_number, balance)
+	if levy > 0:
+		var levy_line: ExpenseLine = ExpenseLine.new(LINE_LEVY, levy, true)
+		levy_line.label_key = "exp_levy"
+		lines.append(levy_line)
 	return lines
+
+
+## Acte II : revenus récurrents du soir (montants positifs, crédités par
+## `apply` avec les gains) — salaire d'Ilan, technicien·ne de rationnement.
+static func income_lines(economy: EconomyDef, day_number: int, household: Household,
+		flags: Dictionary[StringName, Variant] = {}) -> Array[ExpenseLine]:
+	var lines: Array[ExpenseLine] = []
+	var ilan: Household.Member = household.get_member(Household.ILAN)
+	if FlagCondition.is_flag_true(flags, FLAG_ILAN_JOB) and ilan != null and ilan.is_present() \
+			and day_number >= economy.ilan_job_first_day and day_number <= RECURRING_LAST_DAY:
+		var job: ExpenseLine = ExpenseLine.new(LINE_ILAN_JOB, economy.ilan_job_income, true)
+		job.label_key = "inc_ilan_job"
+		lines.append(job)
+	return lines
+
+
+## Acte II : drapeaux narratifs complétés de pseudo-drapeaux de contexte (jamais
+## sauvegardés) pour les conditions des soirées et des briefings :
+## `hh_<proche>_present|alive|held|away|sick` (foyer), jauges `hh_alive`,
+## `hh_present`, `compliance_pct` (indice cumulé × 100), drapeau `hh_any_sick`,
+## `levy_amount` (prélèvement du soir, texte de la lettre du J11).
+static func context_flags(flags: Dictionary[StringName, Variant], household: Household,
+		compliance: float = -1.0, levy: int = -1) -> Dictionary[StringName, Variant]:
+	var result: Dictionary[StringName, Variant] = flags.duplicate()
+	if household != null:
+		var any_sick: bool = false
+		for member: Household.Member in household.members:
+			var stem: String = "hh_%s_" % member.id
+			result[StringName(stem + "present")] = member.is_present()
+			result[StringName(stem + "alive")] = member.is_alive()
+			result[StringName(stem + "held")] = member.detained and member.is_alive()
+			result[StringName(stem + "away")] = member.away != &""
+			result[StringName(stem + "sick")] = member.is_sick() and member.is_present()
+			any_sick = any_sick or (member.is_sick() and member.is_present())
+		result[&"hh_any_sick"] = any_sick
+		result[&"hh_alive"] = household.alive_count()
+		result[&"hh_present"] = household.present_count()
+	if compliance >= 0.0:
+		result[GAUGE_COMPLIANCE] = roundi(compliance * 100.0)
+	if levy >= 0:
+		result[GAUGE_LEVY] = levy
+	return result
 
 
 ## Présélection : la taxe d'air, puis les postes par priorité tant que le
@@ -117,7 +224,12 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 	report.balance_before = balance_before
 	report.household = home
 	apply_line_costs(lines, events, choices)
+	if day_number == economy.pivot_day and economy.pivot_suspicion_divisor > 0:
+		_apply_pivot(report, economy, flags)
 	var household_effects: Array[StringName] = _apply_events(report, events, choices, flags)
+	for income: ExpenseLine in income_lines(economy, day_number, household, flags):
+		report.gained += income.cost
+		report.income_lines.append(income)
 	report.spent = total_spent(lines) + report.event_spent
 	report.balance_after = balance_before - report.spent + report.gained
 
@@ -154,7 +266,7 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 	else:
 		home.hunger_streak += 1
 		report.add_event("hh_ev_hungry", EveningReport.Tone.WARNING)
-		for member: Household.Member in home.alive_members():
+		for member: Household.Member in home.present_members():
 			member.hungry = true
 			if home.hunger_streak >= economy.deprivation_sick_evenings:
 				_fall_sick(member, report, "hh_ev_sick_hunger")
@@ -167,18 +279,35 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 	else:
 		home.cold_streak += 1
 		report.add_event("hh_ev_cold", EveningReport.Tone.WARNING)
-		for member: Household.Member in home.alive_members():
+		for member: Household.Member in home.present_members():
 			member.cold = true
 			if home.cold_streak >= economy.deprivation_sick_evenings:
 				_fall_sick(member, report, "hh_ev_sick_cold")
 		var noa: Household.Member = home.get_member(Household.NOA)
 		var roll: float = rng.randf()
-		if home.cold_streak == 1 and noa != null and roll < economy.noa_cold_sick_chance:
+		if home.cold_streak == 1 and noa != null and noa.is_present() and roll < economy.noa_cold_sick_chance:
 			_fall_sick(noa, report, "hh_ev_noa_cough")
+
+	# 3 bis. Acte II : rations d'air (ESSOUFFLÉ·E, 2 soirs → MALADE).
+	for line: ExpenseLine in lines:
+		if line.ration_of == &"":
+			continue
+		var breather: Household.Member = home.get_member(line.ration_of)
+		if breather == null or not breather.is_present():
+			continue
+		if line.paid:
+			breather.breathless = false
+			breather.breathless_streak = 0
+			continue
+		breather.breathless = true
+		breather.breathless_streak += 1
+		report.add_event("hh_ev_breathless", EveningReport.Tone.WARNING, breather.id)
+		if breather.breathless_streak >= economy.deprivation_sick_evenings:
+			_fall_sick(breather, report, "hh_ev_sick_breath")
 
 	# 4. Oxygène de Dora (soirs pairs).
 	var dora: Household.Member = home.get_member(Household.DORA)
-	if _has_line(lines, LINE_OXYGEN) and not _is_paid(lines, LINE_OXYGEN) and dora != null and dora.is_alive():
+	if _has_line(lines, LINE_OXYGEN) and not _is_paid(lines, LINE_OXYGEN) and dora != null and dora.is_present():
 		home.oxygen_misses += 1
 		if home.oxygen_misses >= economy.oxygen_grave_misses:
 			if dora.health != Household.Health.GRAVELY_SICK:
@@ -210,6 +339,7 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 	if day_number >= HOSTILE_FROM_DAY and FlagCondition.gauge_value(merged, CaseConsequences.FLAG_TRUST) <= HOSTILE_TRUST \
 			and not FlagCondition.is_flag_true(merged, FLAG_HOSTILE):
 		report.flag_changes[FLAG_HOSTILE] = true
+	# Acte II : F1 (audit, Revue) > F3 > F2 > fin choisie (« Embarquer », F6).
 	if report.ending == EndingService.F1_ARRESTED:
 		pass
 	elif home.all_lost():
@@ -231,7 +361,7 @@ static func build_events(defs: Array[EveningEventDef], flags: Dictionary[StringN
 	var events: Array[EveningEvent] = []
 	var sorted: Array[EveningEventDef] = []
 	for def: EveningEventDef in defs:
-		if def != null and FlagCondition.check(def.condition, flags):
+		if def != null and FlagCondition.check(def.condition, flags) and def.economy_gauges_met(flags, economy):
 			sorted.append(def)
 	sorted.sort_custom(func(a: EveningEventDef, b: EveningEventDef) -> bool: return a.order < b.order)
 	for def: EveningEventDef in sorted:
@@ -246,7 +376,12 @@ static func build_events(defs: Array[EveningEventDef], flags: Dictionary[StringN
 			if option != null and FlagCondition.check(option.condition, flags):
 				event.options.append(option)
 		if def.kind == EveningEventDef.Kind.AUDIT:
-			event.audit = EndingService.audit_outcome(flags, economy)
+			if def.audit_id == EndingService.AUDIT_REVIEW:
+				event.audit = EndingService.review_outcome(flags, economy)
+			else:
+				event.audit = EndingService.audit_outcome(flags, economy)
+		for gauge: String in def.text_gauges:
+			event.text_args.append(FlagCondition.gauge_value(flags, StringName(gauge)))
 		events.append(event)
 	return events
 
@@ -331,6 +466,8 @@ static func _apply_events(report: EveningReport, events: Array[EveningEvent], ch
 				report.add_event(event.text_key, EveningReport.Tone.INFO)
 				for key: String in event.extra_keys:
 					report.add_event(key, EveningReport.Tone.INFO)
+				if event.def.household != &"":
+					effects.append(event.def.household)
 			EveningEventDef.Kind.CHOICE:
 				var chosen: StringName = choices.get(event.id, event.default_option)
 				var option: EveningOptionDef = event.get_option(chosen)
@@ -343,6 +480,10 @@ static func _apply_events(report: EveningReport, events: Array[EveningEvent], ch
 				report.event_spent += option.cost
 				report.gained += option.gain
 				CaseConsequences.add_all(report.flag_changes, flags, option.flags)
+				for gauge: StringName in option.set_gauges:
+					report.flag_changes[gauge] = option.set_gauges[gauge]
+				if option.ends_campaign != &"" and report.ending == EveningReport.ENDING_NONE:
+					report.ending = option.ends_campaign
 				if not option.result_key.is_empty():
 					report.event_texts.append(option.result_key)
 					report.add_event(option.result_key, EveningReport.Tone.INFO)
@@ -355,11 +496,35 @@ static func _apply_household_effect(report: EveningReport, effect: StringName) -
 	match effect:
 		EveningOptionDef.HOUSEHOLD_NOA_SICK:
 			var noa: Household.Member = report.household.get_member(Household.NOA)
-			if noa != null:
+			if noa != null and noa.is_present():
 				_fall_sick(noa, report, "hh_ev_noa_cough")
 		EveningOptionDef.HOUSEHOLD_ILAN_DETAINED:
 			report.household.detain_member(Household.ILAN)
 			report.add_event("hh_ev_ilan_detained", EveningReport.Tone.BAD, Household.ILAN)
+		EveningOptionDef.HOUSEHOLD_ILAN_RELEASED:
+			report.household.release_member(Household.ILAN)
+			report.add_event("hh_ev_ilan_released", EveningReport.Tone.WARNING, Household.ILAN)
+		EveningOptionDef.HOUSEHOLD_ILAN_SOUTE:
+			report.household.send_away(Household.ILAN, Household.AWAY_SOUTE)
+			report.add_event("hh_ev_ilan_soute", EveningReport.Tone.WARNING, Household.ILAN)
+		EveningOptionDef.HOUSEHOLD_ILAN_BACK:
+			report.household.bring_home(Household.ILAN, true)
+			report.add_event("hh_ev_ilan_back", EveningReport.Tone.WARNING, Household.ILAN)
+		EveningOptionDef.HOUSEHOLD_DORA_TYCHO:
+			report.household.send_away(Household.DORA, Household.AWAY_TYCHO)
+			report.add_event("hh_ev_dora_tycho", EveningReport.Tone.INFO, Household.DORA)
+
+
+## Soirée pivot (J10, D-076) : la Commission « reprend les dossiers » —
+## `suspicion := ⌊suspicion / diviseur⌋` (+1 si retenue à l'audit du J9),
+## avant les lettres de la soirée (double jeu : +2 ensuite).
+static func _apply_pivot(report: EveningReport, economy: EconomyDef, flags: Dictionary[StringName, Variant]) -> void:
+	var suspicion: int = FlagCondition.gauge_value(flags, CaseConsequences.FLAG_SUSPICION)
+	var halved: int = floori(float(suspicion) / economy.pivot_suspicion_divisor)
+	if FlagCondition.is_flag_true(flags, &"audit_retention"):
+		halved += 1
+	report.flag_changes[CaseConsequences.FLAG_SUSPICION] = halved
+	report.flag_changes[&"pivot_done"] = true
 
 
 static func _fall_sick(member: Household.Member, report: EveningReport, key: String) -> void:
@@ -371,6 +536,8 @@ static func _fall_sick(member: Household.Member, report: EveningReport, key: Str
 
 
 static func _group_of(line: ExpenseLine) -> StringName:
+	if line.ration_of != &"":
+		return GROUP_RATIONS
 	return &"meds" if line.member_id != &"" else line.id
 
 

@@ -9,11 +9,14 @@
 ## répartition des fins (et jour moyen d'une fin anticipée). `--presets=`
 ## liste de `SimProfile.PRESETS` (défaut : `default`, choix sans UI) ;
 ## `--days=N` limite la campagne aux N premiers jours.
+## M8 : campagne J1–J20 (pivot du J10, quota, rations, prélèvements, Revue du
+## J17, fins F1–F9 de D-078) ; profils Acte II `drift10`, `archiviste`,
+## `solidaire`, `overrun`, `mercenary2` (docs/ACT2.md §6).
 ##
 ## Usage (depuis la racine du projet) :
 ##   godot --headless --script res://tools/balance_sim.gd -- --seeds=200 --seed=1 \
 ##       --profiles=0.6,0.8,0.95 --spending=reasoned|default [--set=heating=6,starting_credits=10] \
-##       [--presets=default,loyal,luciole,mercenary,drift,negligent] [--days=10]
+##       [--presets=default,loyal,luciole,mercenary,drift,negligent,archiviste,solidaire] [--days=20]
 ## `--set` surcharge en mémoire des champs de l'`EconomyDef` (essais sans
 ## régénérer les données ; les valeurs retenues vont dans `build_data.gd`).
 extends SceneTree

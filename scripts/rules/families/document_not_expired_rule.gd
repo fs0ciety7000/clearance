@@ -5,6 +5,10 @@
 ## 30 jours ») : violation si `today − issue_date ≥ max_age_days`.
 ## Un document absent n'est pas une violation ici (cf. `RequireDocumentRule`).
 ## Anomalie détectée : `EXPIRED_DOCUMENT`.
+## Acte II (R27, firmware NX < 90 jours) : `field_path` désigne un champ date du
+## passager recopié sur le document (`firmware_date`) dont l'**âge** est
+## contrôlé (`max_age_days`) ; champ vide (pas de shunt `NX-`) = conforme ;
+## anomalie détectée paramétrable (`OUTDATED_FIRMWARE`).
 class_name DocumentNotExpiredRule
 extends Rule
 
@@ -14,14 +18,27 @@ const ISSUE_PATH: StringName = &"document.issue_date"
 @export var document_id: StringName = &""
 ## 0 = date d'expiration imprimée ; > 0 = âge maximal depuis l'émission, en jours.
 @export var max_age_days: int = 0
+## Acte II : champ daté contrôlé à la place de l'émission (`firmware_date`).
+@export var field_path: StringName = &""
+## Anomalies détectées (vide = `EXPIRED_DOCUMENT`).
+@export var detected_anomalies: Array[AnomalyType.Kind] = []
 
 
 ## Champ qui prouve la violation (expiration, ou émission si `max_age_days`).
 func get_evidence_path() -> StringName:
+	if field_path != &"":
+		return field_path
 	return ISSUE_PATH if max_age_days > 0 else EXPIRY_PATH
 
 
 func is_expired(doc: DocumentInstance, today: int) -> bool:
+	if field_path != &"":
+		var field: FieldDef = doc.type_def.find_field_by_truth_path(field_path) if doc.type_def != null else null
+		var value: Variant = doc.get_value(field.id) if field != null else null
+		if not value is int:
+			return false
+		var date: int = value
+		return date > 0 and today - date >= max_age_days
 	if max_age_days > 0:
 		return today - doc.issue_date >= max_age_days
 	return doc.expiry_date < today
@@ -42,6 +59,8 @@ func evaluate(case: Case, ctx: RuleContext) -> Array[Violation]:
 
 
 func get_detectable_anomalies() -> Array[AnomalyType.Kind]:
+	if not detected_anomalies.is_empty():
+		return detected_anomalies.duplicate()
 	return [AnomalyType.Kind.EXPIRED_DOCUMENT]
 
 

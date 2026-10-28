@@ -59,6 +59,14 @@ static func index_for(builder: CaseBuilder, kind: AnomalyType.Kind, start: int) 
 			AnomalyType.Kind.BANNED_FACTION:
 				if faction == &"thr":
 					return i
+			# Acte II : contrat de travail et permis (motif TRAVAIL) ; Dérivant.
+			AnomalyType.Kind.CONTRACT_MISMATCH:
+				var clean: GeneratedCase = builder.build_clean(i)
+				if clean != null and clean.case.has_own_document(&"work_contract") and clean.case.has_own_document(&"entry_permit"):
+					return i
+			AnomalyType.Kind.UNREGISTERED_VESSEL:
+				if faction == &"drv":
+					return i
 			_:
 				return i
 	return -1

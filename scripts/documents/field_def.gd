@@ -14,7 +14,9 @@ extends Resource
 
 ## Valeurs sérialisées en entier dans les `.tres` : on n'ajoute qu'à la fin.
 ## `LIST` (M7) : liste de codes (`PackedStringArray`, ex. implants déclarés).
-enum FieldKind { TEXT, DATE, ID_CODE, ENUM, PORTRAIT, NUMBER, BOOL, LIST }
+## `TIME` (Acte II) : heure du shift en minutes depuis minuit (ticket de file,
+## R29), affichée « HH:MM ».
+enum FieldKind { TEXT, DATE, ID_CODE, ENUM, PORTRAIT, NUMBER, BOOL, LIST, TIME }
 
 const DOCUMENT_PATH_PREFIX: String = "document."
 const DEFAULT_DATE_FORMAT: String = "DD.MM.YYYY"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DriftPassRule" format=3 uid="uid://cctii8h258ad4"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/drift_pass_rule.gd" id="1_5p6na"]
+
+[resource]
+script = ExtResource("1_5p6na")
+registered_vessels = PackedStringArray("LONG-RUBAN", "PIERRE-BLEUE", "NADIR", "VASQUE", "HELIODORE", "MAINSOLEIL", "CORAIL-9", "BASSE-MARÉE", "TESSARIDE", "CENDRE", "KALLIOPE", "LOINTAIN", "SAINT-ORBE", "VARECH")
+document_id = &"drift_pass"
+applies_to_faction_ids = Array[StringName]([&"drv"])
+require_valid = true
+id = &"r_drift_pass"
+title_key = "r_drift_pass_title"
+rulebook_text_key = "r_drift_pass_text"

@@ -1,6 +1,6 @@
 # CLEARANCE — Design System
 
-> Version 0.1 · Propriétaire : Design System / Senior Designer · Statut : **brouillon à valider**
+> Version 0.3 · Propriétaire : Design System / Senior Designer · Statut : **brouillon à valider**
 > Sources de vérité : ce document (intentions, règles) · `res://ui/theme/tokens.gd` (valeurs code, `class_name DS`) · `res://ui/theme/clearance_theme.tres` (thème Godot).
 > Les valeurs de base (couleurs, familles de police) sont fixées par le contrat de l'Orchestrateur. Ce document y ajoute uniquement des **nuances dérivées** (alpha, états).
 
@@ -105,6 +105,17 @@ Calcul : luminance relative sRGB, ratio (L1+0,05)/(L2+0,05). Seuils : AA texte n
 **Non-texte** : `line.subtle` sur `bg.panel` = 1,31:1 → une bordure `line.subtle` n'est **jamais** le seul indicateur d'un état ou d'une limite interactive. Le focus utilise `accent.cyan` (12,28:1) + glow.
 
 ---
+
+### 2.4 Voix narratives de l'Acte II (dérivées, 0.3)
+
+Deux locuteurs nouveaux (ACT2 §5, ARCHITECTURE §7.2) ne peuvent réutiliser ni une couleur d'état (rouge, ambre, vert), ni le jaune (la Commission serait confondue avec les bulletins du Bureau de Continuité, ACT2 §5 le proposait 🟡), ni le magenta (Lucioles), ni le gris (famille). Ils reçoivent deux teintes **hors familles sémantiques**, réservées au texte de locuteur, aux liserés et à des fonds 12 % — jamais à un état de jeu.
+
+| Token | Hex | Constante `DS` | Usage | Contraste (panel / elevated) | Icône (doublage) |
+|---|---|---|---|---|---|
+| `voice.commission` | `#8E9CFF` | `VOICE_COMMISSION` (+ `_12`) | Commission de Rééquilibrage (briefings, soirées de la Commission), onglet et cartes **Révocations**, interstitiel « CHAPITRE II », puce « ACTE II » | 7,5:1 / 6,9:1 (AAA) | registre à lignes |
+| `voice.brulants` | `#D9663F` | `VOICE_BRULANTS` (+ `_12`) | Brûlants (« encre noire ») : nom du locuteur et liseré, carte posée sur `bg.void` | 5,3:1 / 4,9:1 (AA) | flamme |
+
+Distinction : la braise (`#D9663F`, teinte 15°, saturation et luminance plus basses) reste séparée du rouge refus (`#FF3B3B`) et de l'ambre (`#FFA31A`) **par l'icône et le libellé de locuteur** — jamais par la couleur seule.
 
 ## 3. Typographie
 
@@ -239,6 +250,11 @@ Icônes sémantiques obligatoires (doublage de la couleur) :
 | Avertissement / règle nouvelle | amber | **Triangle** avec « ! » | `triangle-alert` |
 | Information / holo | cyan | **Carré chanfreiné** avec « i » | `info` (cadre custom) |
 | Consortium | yellow | Logo (hexagone) | custom |
+| Essoufflé·e (Acte II) | amber | Trois **souffles** ondulés | `wind` |
+| Absent·e (Soute, Tycho) | text.secondary | **Porte** + flèche sortante | `log-out` |
+| Scanner / compteur (Acte II) | source | **Réticule** (équerres + trait) | `scan-line` |
+| Commission (voix) | voice.commission | **Registre** (rectangle + lignes) | `file-text` |
+| Brûlants (voix) | voice.brulants | **Flamme** | `flame` |
 
 Les formes (cercle / octogone / losange / triangle / carré) restent distinctes en niveaux de gris : c'est le test de validation de toute nouvelle icône d'état.
 
@@ -587,3 +603,4 @@ Tenir un registre `CREDITS` (source, auteur, licence, URL, date) pour chaque ass
 
 - 0.1 — Création : tokens dérivés alpha, échelle typo, composants, motion, mapping Godot.
 - 0.2 — M4 (interface de comparaison) : tokens `PANEL_VEIL` (bg.panel 95 % + flou du décor, panneaux posés sur la vitre), `SUBTITLE_BG` (bg.void 85 %), `INSPECTION_VEIL` (bg.void 8 %), `FS_SUBTITLE` 18, `FS_TIMER_COMPACT` 28 (horloge de la barre 56 px), rythmes `STAMP_HOLD` 0,4 s, `DOC_STAGGER`, `CONCORDANT_HOLD`, `INCOMPARABLE_HOLD`, `NEXT_DEBOUNCE`, `SUBTITLE_MIN_HOLD` / `SUBTITLE_PER_CHAR`, `DOC_ZOOM` 1,5, `STAMP_TILT_MAX_DEG`, `FX_LINK_DASH_SPEED`. `ThemeBuilder.build(text_scale)` met à l'échelle les polices (`Settings.text_scale`) et ajoute les variations `DocTitle`, `DocIssuer`, `DataSmall`, `DataTitle`, `TimerLabel`, `TimerCompact`, `BodyLabel`, `BodyStrong`, `BodySmall`, `SubtitleText`, `PanelTitle`, `StampLabel`, `BrandLabel`, `KeyCap(Label)`, `BadgeLabel`, `BadgeNew`, `BadgeMagenta`, `ElevatedCard`, `VeilPanel`, `BarPanel`, `ToolbarPanel`, `SubtitlePanel`, `RuleCard(New)`, `DialogueQuestion`, `Toast*`, `CitationTicket`, `ButtonGhost`, `ToggleTab`, `ButtonTool`, `ButtonQuestion`. Icônes d'état dessinées (`scripts/ui/ui_icon.gd`) en attendant les SVG Lucide.
+- 0.3 — M8 (interfaces de l'Acte II) : voix `VOICE_COMMISSION` `#8E9CFF` et `VOICE_BRULANTS` `#D9663F` (+ variantes 12 %), §2.4 ; icônes dessinées `BREATH`, `AWAY`, `FLAME`, `SCANNER`, `REGISTER` ; composants `QuotaCounterView` (compteur sélectionnable de la barre d'état), `RevokedCardView`, liens suggérés du scanner (pointillé de la source, losanges creux, pastille ✓), boîte de confirmation « décision définitive » (`ButtonDanger`), `ChapterScreen` (chiffre romain dessiné).

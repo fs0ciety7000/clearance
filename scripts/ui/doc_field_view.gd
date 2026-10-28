@@ -16,13 +16,15 @@ var _portrait: PortraitView = null
 var _large: bool = false
 
 
-## Champ d'un document. `portrait_provider(appearance) -> Texture2D` optionnel.
-func setup(document_id: StringName, p_field: FieldDef, p_value: Variant, portrait_provider: Callable = Callable()) -> void:
+## Champ d'un document. `portrait_provider(appearance) -> Texture2D` optionnel ;
+## `label_text` remplace le libellé du type (« TITULAIRE » d'un document de tiers).
+func setup(document_id: StringName, p_field: FieldDef, p_value: Variant, portrait_provider: Callable = Callable(),
+		label_text: String = "") -> void:
 	field = p_field
 	value = p_value
 	ref = FieldRef.new(document_id, p_field.id)
 	comparable = p_field.comparable
-	display_label = UiText.field_label(p_field)
+	display_label = label_text if not label_text.is_empty() else UiText.field_label(p_field)
 	if p_field.kind == FieldDef.FieldKind.PORTRAIT:
 		_build_portrait(p_value, portrait_provider)
 	else:
@@ -74,8 +76,10 @@ func _build_text(label_text: String, value_text: String, large: bool) -> void:
 	_label.theme_type_variation = &"DocFieldLabel"
 	_label.uppercase = true
 	_label.text = label_text
-	_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_label.clip_text = true
+	# Libellé jamais tronqué (« VALIDE JUS… » au Steam Deck, QA-029) : faute de
+	# place il passe à la ligne, sans élargir le document.
+	if not large:
+		_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	if large:

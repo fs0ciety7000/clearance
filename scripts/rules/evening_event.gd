@@ -16,8 +16,10 @@ var extra_keys: PackedStringArray = []
 var options: Array[EveningOptionDef] = []
 ## Option choisie par défaut sans UI (vide pour une lettre ou un audit).
 var default_option: StringName = &""
-## Audit (J9) : `EndingService.audit_outcome()`.
+## Audit (J9) : `EndingService.audit_outcome()` ; Revue (J17) : `review_outcome()`.
 var audit: Dictionary = {}
+## Acte II : valeurs du gabarit de `text_key` (`%d`), ex. pages du registre.
+var text_args: Array = []
 
 
 func get_option(option_id: StringName) -> EveningOptionDef:

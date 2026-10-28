@@ -360,9 +360,21 @@ L'`AudioDirector` (nœud de `day.tscn`) est le **seul** écouteur audio de l'Eve
 | Escorte de la Garde (`escort_started` / `escort_finished`) | `station.door_open` / `station.door_close` | Garde 3D, lumière de porte jaune |
 | Sortie détenue / refusée scénarisée (`_exit_detain`, `_exit_deny`) | humeur nerveuse / en colère du bark de départ | sous-titre « [en partant] » |
 
+**M8 (interfaces de l'Acte II) — cues existantes réutilisées, aucun nouveau fichier ni branchement dans `AudioDirector`** :
+
+| Événement | Cue (déjà branchée) | Doublage visuel |
+|---|---|---|
+| Lien suggéré du scanner confirmé (`confirm_suggestion` → `discrepancy_check_requested`) | cue d'évaluation du lien puis `discrepancy_checked` (comme une sélection A → B) | pointillé → fil → discordance numérotée |
+| Compteur plein (`hall_quota_full`) | `amb.pa_announce` | compteur ambre « ATTEINT » + bandeau du haut-parleur |
+| Grève du J20 (`hall_j20_strike`, lumières coupées) | `amb.pa_announce` ; la sirène de fin de shift reste celle du `day_ended` existant | lampes du guichet éteintes, voile noir, fondu au noir avant le bilan |
+| Confirmation « Embarquer » (soirée du J10) | `ui.hover` / clics de boutons existants | boîte « QUITTER HALCYON ? » |
+
+À proposer à l'Audio Designer (post-M8) : une coupure de bourdonnement (« power down ») sur la grève du J20 et un *tick* discret par lien suggéré.
+
 **Accessibilité vérifiée** : chaque cue critique a son doublage visuel existant (timer : barre ambre/rouge ; tampon : animation + empreinte ; discordance : lien magenta + numéro ; concordance : chip ; citation : ticket ; règle nouvelle : badge NOUVEAU ; barks : sous-titres). « Réduire les effets » (`fx_intensity < 1`) coupe `ui.timer_critical_tick` et adoucit les tampons de 4 dB.
 
 ## Changelog
 
 - 0.1 — Création : intentions, bus, cue sheet, barks MVP, budget, mix, conventions, licences.
 - 0.2 — M6 : implémentation (§12), registre des licences (§10.1), bus layout à la racine.
+- 0.3 — M8 : interfaces de l'Acte II sans cue nouvelle (§12).

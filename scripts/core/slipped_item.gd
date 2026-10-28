@@ -15,7 +15,9 @@
 class_name SlippedItem
 extends RefCounted
 
-enum Kind { ENVELOPE, NOTE, DOCK_CARD }
+## Acte II (B27) : `FORM` (formulaire 27-B), `OBJECT` (l'écrou de Corvo),
+## `FILE` (le dossier de Ravel) — même mécanique que `NOTE`, ajoutés en fin.
+enum Kind { ENVELOPE, NOTE, DOCK_CARD, FORM, OBJECT, FILE }
 ## `NONE` = pas encore tranché ; `KEEP` = garder (tiroir) ; `RETURN` = rendre
 ## (fente) ou laisser ; `REPORT` = remettre à la Garde.
 enum Decision { NONE, KEEP, RETURN, REPORT }

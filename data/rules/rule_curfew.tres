@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CurfewRule" format=3 uid="uid://crak0qinc1vfq"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/curfew_rule.gd" id="1_ihkm2"]
+
+[resource]
+script = ExtResource("1_ihkm2")
+id = &"r_curfew"
+title_key = "r_curfew_title"
+rulebook_text_key = "r_curfew_text"
+category = 3

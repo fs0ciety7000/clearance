@@ -17,6 +17,12 @@ var document_db: Dictionary[StringName, DocumentTypeDef] = {}
 var identity_slots: Array[StringName] = FaceComparator.DEFAULT_IDENTITY_SLOTS.duplicate()
 ## Avis de recherche du jour (M7, R22), posé par le `CaseBuilder`.
 var wanted: Array[WantedNotice] = []
+## Acte II — liste des révocations du jour (R30), posée par le `CaseBuilder`.
+var revoked: Array[RevokedEntry] = []
+## Acte II — compteur du quota respiratoire du shift (R23, B22), tenu par le
+## `DayController` (paire « Compteur ↔ R23 » du Mode Inspection).
+var quota_used: int = 0
+var quota_max: int = 0
 
 
 func _init(p_today: int = 0, p_rule_set: RuleSet = null) -> void:
@@ -55,7 +61,27 @@ func find_wanted(notice_id: StringName) -> WantedNotice:
 	return null
 
 
-## Copie superficielle (mêmes bases, autre liste d'avis de recherche).
+func find_revoked(entry_id: StringName) -> RevokedEntry:
+	for entry: RevokedEntry in revoked:
+		if entry.id == entry_id:
+			return entry
+	return null
+
+
+## Vrai si le N° ID figure à l'onglet Révocations.
+func is_revoked(citizen_id: Variant) -> bool:
+	for entry: RevokedEntry in revoked:
+		if FieldValue.equals(entry.citizen_id, citizen_id):
+			return true
+	return false
+
+
+## Acte II : quota atteint (compteur ≥ maximum, quota actif).
+func is_quota_full() -> bool:
+	return quota_max > 0 and quota_used >= quota_max
+
+
+## Copie superficielle (mêmes bases, autres listes d'avis et de révocations).
 func duplicate_context() -> RuleContext:
 	var ctx: RuleContext = RuleContext.new(today, rule_set)
 	ctx.day_def = day_def
@@ -63,4 +89,7 @@ func duplicate_context() -> RuleContext:
 	ctx.document_db = document_db
 	ctx.identity_slots = identity_slots.duplicate()
 	ctx.wanted = wanted.duplicate()
+	ctx.revoked = revoked.duplicate()
+	ctx.quota_used = quota_used
+	ctx.quota_max = quota_max
 	return ctx

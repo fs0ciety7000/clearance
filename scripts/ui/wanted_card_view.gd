@@ -3,6 +3,8 @@
 ## motif, mention « MISE EN ATTENTE ». **Sélectionnable en Mode Inspection**
 ## comme un champ : `FieldRef.wanted(id)`, comparable au visage du passager ou
 ## au nom / aux prénoms d'un document (`DiscrepancyChecker`).
+## Acte II : avis « visage seul » (J20, sans nom) — « IDENTITÉ INCONNUE »,
+## seule la comparaison avec un visage est possible.
 class_name WantedCardView
 extends InspectableItem
 
@@ -21,7 +23,11 @@ func setup(p_notice: WantedNotice, p_number: int, portrait_provider: Callable = 
 	number = p_number
 	ref = p_notice.get_ref()
 	comparable = true
-	display_label = UiText.tf("rb_wanted_display", [p_number, p_notice.full_name().to_upper()], "AVIS %02d · %s")
+	var who: String = p_notice.full_name().strip_edges().to_upper()
+	var face_only: bool = who.is_empty()
+	if face_only:
+		who = UiText.t("rb_wanted_unknown", "IDENTITÉ INCONNUE")
+	display_label = UiText.tf("rb_wanted_display", [p_number, who], "AVIS %02d · %s")
 	tooltip_text = display_label
 	var margin: MarginContainer = MarginContainer.new()
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -47,12 +53,14 @@ func setup(p_notice: WantedNotice, p_number: int, portrait_provider: Callable = 
 	row.add_child(column)
 	_eyebrow = ScreenBase.eyebrow(UiText.tf("rb_wanted_number", [p_number], "AVIS N° %02d · RECHERCHÉ·E"), DS.STATE_RED)
 	column.add_child(_eyebrow)
-	_name = ScreenBase.label(p_notice.full_name().to_upper(), &"DataTitle", DS.TEXT_PRIMARY)
+	_name = ScreenBase.label(who, &"DataTitle", DS.TEXT_SECONDARY if face_only else DS.TEXT_PRIMARY)
 	_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_name.custom_minimum_size.x = 120.0
 	column.add_child(_name)
 	var reason: Label = ScreenBase.wrapped(UiText.t(p_notice.reason_key, ""), &"BodySmall", DS.TEXT_PRIMARY)
 	column.add_child(reason)
+	if face_only:
+		column.add_child(ScreenBase.chip(UiText.t("rb_wanted_face_only", "VISAGE SEUL"), UiIcon.Kind.SCANNER, DS.TEXT_SECONDARY))
 	var chip: PanelContainer = ScreenBase.chip(UiText.t("rb_wanted_action", "MISE EN ATTENTE"), UiIcon.Kind.DETAIN, DS.ACCENT_YELLOW)
 	column.add_child(chip)
 	margin.minimum_size_changed.connect(_sync_min_size.bind(margin))

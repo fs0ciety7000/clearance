@@ -60,6 +60,41 @@ extends Resource
 @export var rulebook_tabs: PackedStringArray = []
 
 
+@export_group("Acte II")
+## Quota respiratoire du guichet (R23, D-077) : entrées de ressortissants non
+## exemptés par jour ; 0 = pas de quota.
+@export var air_quota: int = 0
+## Acte I : approuver un Luciole **généré** en infraction donne
+## `lucioles_trust +1`. Faux à l'Acte II (QA §9, « F5 par accident », B24).
+@export var luciole_trust_on_breach: bool = true
+## Liste des révocations (R30, onglet « Révocations ») liée à des passagers du jour.
+@export var revocations: Array[RevocationDef] = []
+## N° ID révoqués sans passager (leurres de la liste, tirés du `day_seed`).
+@export var revoked_decoys: int = 0
+## Annonces conditionnelles ou horaires (`HallAnnouncementDef`).
+@export var announcements: Array[HallAnnouncementDef] = []
+## R28 : part des gravitaires C-4 de l'origine visée tirés en C-5 (porteurs
+## d'une attestation d'asile) les jours où l'attestation est exigée (QA-026).
+@export_range(0.0, 1.0) var asylum_class_rate: float = 0.30
+## Documents « de la règle du jour » : quand le passager en porte un,
+## `MISSING_DOCUMENT` / `EXPIRED_DOCUMENT` le visent en priorité (QA-026 :
+## R28 presque jamais exercée, l'attestation n'était qu'un candidat parmi 3–4).
+@export var focus_documents: Array[StringName] = []
+
+
+## Heure du shift (UI_FLOW §1) : 10:00 → 18:00, en minutes depuis minuit.
+const SHIFT_START_MIN: int = 10 * 60
+const SHIFT_LENGTH_MIN: int = 8 * 60
+
+
+## Heure du shift (minutes depuis minuit) pour une durée et un temps restant.
+static func minute_at(p_duration_sec: float, p_remaining_sec: float) -> int:
+	if p_duration_sec <= 0.0:
+		return SHIFT_START_MIN
+	var elapsed: float = clampf(1.0 - p_remaining_sec / p_duration_sec, 0.0, 1.0)
+	return SHIFT_START_MIN + floori(elapsed * SHIFT_LENGTH_MIN)
+
+
 ## Cas scénarisé prévu à cet index, ou null.
 func get_scripted_case(index: int) -> ScriptedCaseDef:
 	for scripted: ScriptedCaseDef in scripted_cases:

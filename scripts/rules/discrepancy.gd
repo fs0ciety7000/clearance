@@ -25,6 +25,9 @@ const REASON_WANTED_NO_MATCH: String = "disc_wanted_no_match"
 ## M7 (NARRATIVE §4.9) : marque au coin d'un document ↔ bulletin « Symboles
 ## subversifs » ; confirmée, elle documente un signalement (DÉTENTION, code 1).
 const REASON_SYMBOL_MATCH: String = "disc_symbol_match"
+## Acte II (R30) : N° ID ↔ entrée de l'onglet Révocations.
+const REASON_REVOKED_MATCH: String = "disc_revoked_match"
+const REASON_REVOKED_NO_MATCH: String = "disc_revoked_no_match"
 
 var a: FieldRef = null
 var b: FieldRef = null

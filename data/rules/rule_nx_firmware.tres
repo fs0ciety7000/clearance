@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DocumentNotExpiredRule" format=3 uid="uid://cilpors7skbfp"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/document_not_expired_rule.gd" id="1_6vayl"]
+
+[resource]
+script = ExtResource("1_6vayl")
+document_id = &"id_card"
+max_age_days = 90
+field_path = &"firmware_date"
+detected_anomalies = Array[int]([19])
+id = &"r_nx_firmware"
+title_key = "r_nx_firmware_title"
+rulebook_text_key = "r_nx_firmware_text"
+category = 1

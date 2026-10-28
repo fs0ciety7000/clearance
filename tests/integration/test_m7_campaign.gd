@@ -1,9 +1,9 @@
 ## M7 — campagne J1–J10 de bout en bout sans UI (`DayController` +
-## `NullBooth`, soirées par `Campaign` avec choix par défaut, J10 sans soirée
-## → fin) pour trois bots ; objets glissés dans un vrai shift (signaux
-## `item_slipped` / `item_decision_requested` / `item_decided`, refus
-## automatique) ; fins F1–F7 atteignables par des profils simulés
-## (`BalanceSimulator` + `SimProfile`) ; déterminisme.
+## `NullBooth`, soirées par `Campaign` avec choix par défaut) pour trois bots
+## jusqu'à la soirée pivot du J10 (D-076 : la campagne continue, Acte II) ;
+## objets glissés dans un vrai shift (signaux `item_slipped` /
+## `item_decision_requested` / `item_decided`, refus automatique) ;
+## déterminisme. La campagne J1–J20 et les fins F1–F9 : `test_act2_campaign.gd`.
 extends GutTest
 
 const DayHarness := preload("res://tests/helpers/day_harness.gd")
@@ -121,7 +121,7 @@ func _evening(summary: DaySummary) -> StringName:
 	return ending
 
 
-## Campagne complète ; renvoie la fin (anticipée ou du J10).
+## Campagne jusqu'à la soirée du J10 (pivot) ; renvoie la fin éventuelle.
 func _play_campaign(policy: Callable, decide: Callable = Callable()) -> StringName:
 	for day_number: int in range(1, 11):
 		assert_eq(GameState.current_day, day_number)
@@ -135,33 +135,41 @@ func _play_campaign(policy: Callable, decide: Callable = Callable()) -> StringNa
 	return &""
 
 
-func test_conscientious_agent_reaches_glory() -> void:
+func test_conscientious_agent_reaches_the_pivot_promoted() -> void:
 	var ending: StringName = await _play_campaign(func(_c: Case, key: CaseKey) -> VerdictKind.Kind: return key.expected_verdict)
-	assert_eq(ending, EndingService.F4_GLORY, "conformité 100 %, détentions, loyauté ≥ 3")
+	assert_eq(ending, EveningReport.ENDING_NONE, "D-076 : le J10 n'est plus terminal")
 	assert_almost_eq(Campaign.compliance(), 1.0, 0.001)
 	assert_eq(GameState.get_flag(&"final_detained"), true)
 	assert_eq(GameState.get_flag(&"inspector_test_passed"), true, "SC-12 refusé, enveloppe rendue d'office")
-	assert_eq(GameState.get_flag(&"ending"), String(EndingService.F4_GLORY))
-	assert_false(SaveService.has_save(0, DIR), "D-041 : la fin efface la sauvegarde")
+	assert_eq(GameState.get_flag(&"vannes_failed"), true, "Mira détenue : les vannes échouent")
+	assert_eq(GameState.get_flag(&"promotion_offered"), true, "anciennes conditions de F4 : C-2 à l'essai")
+	assert_eq(GameState.get_flag(EndingService.FLAG_ACT2), true)
+	assert_true(Campaign.is_act2())
+	assert_true(SaveService.has_save(0, DIR), "sauvegarde après la soirée pivot")
+	assert_eq(GameState.current_day, 11)
 	assert_eq(GameState.day_history.size(), 10)
 	assert_eq(_wanted.size(), 3, "avis de recherche publiés au J10")
 	assert_true(_announcements.has("hall_j7_okonkwo_citation"))
 	assert_true(GameState.case_memory.has("sc_22"), "mémoire des passagers")
-	var epilogue: Dictionary = Campaign.epilogue(ending)
-	assert_eq(epilogue["title_key"], "end_f4_title")
 
 
-func test_cautious_agent_never_detains_and_the_counter_reopens() -> void:
+func test_cautious_agent_never_detains_and_the_valves_abort() -> void:
 	var never_detain: Callable = func(_c: Case, key: CaseKey) -> VerdictKind.Kind:
 		return VK.DENY if key.expected_verdict == VK.DETAIN else key.expected_verdict
 	var ending: StringName = await _play_campaign(never_detain)
-	assert_eq(ending, EndingService.F7_REOPENS)
+	assert_eq(ending, EveningReport.ENDING_NONE)
 	assert_eq(GameState.get_flag(&"final_denied"), true)
 	assert_false(GameState.has_flag(&"final_detained"))
+	assert_eq(GameState.get_flag(&"vannes_aborted"), true, "Mira refusée : les vannes avortent")
+	assert_false(GameState.has_flag(&"promotion_offered"))
 
 
 func test_approve_all_bot_ends_the_campaign_cleanly() -> void:
 	var ending: StringName = await _play_campaign(func(_c: Case, _key: CaseKey) -> VerdictKind.Kind: return VK.APPROVE)
+	if ending == EveningReport.ENDING_NONE:
+		assert_true(Campaign.is_act2(), "pas de fin : l'Acte II commence")
+		assert_true(SaveService.has_save(0, DIR))
+		return
 	assert_true(EndingService.ALL_ENDINGS.has(ending), "fin connue : %s" % ending)
 	assert_false(SaveService.has_save(0, DIR))
 	assert_eq(GameState.get_flag(&"ending"), String(ending))
@@ -201,26 +209,14 @@ func test_detain_is_read_as_deny_before_day_seven() -> void:
 		assert_ne(result.verdict_kind, VK.DETAIN, "tampon DÉTENTION indisponible au J5")
 
 
-func test_simulated_profiles_reach_every_ending() -> void:
-	var expected: Dictionary[StringName, Array] = {
-		EndingService.F1_ARRESTED: [&"mercenary", 0.95],
-		EndingService.F2_REASSIGNED: [&"evicted", 0.95],
-		EndingService.F3_FAMILY_LOST: [&"negligent", 0.95],
-		EndingService.F4_GLORY: [&"default", 1.0],
-		EndingService.F5_AIR: [&"luciole", 1.0],
-		EndingService.F6_DRIFT: [&"drift", 1.0],
-		EndingService.F7_REOPENS: [&"drift", 1.0, true],
-	}
-	for ending: StringName in expected:
-		var spec: Array = expected[ending]
-		var preset: StringName = spec[0]
-		var accuracy: float = spec[1]
-		var profile: SimProfile = SimProfile.preset(preset, accuracy)
-		if spec.size() > 2:
-			profile.choices.erase(&"d09_drift")
-		var rows: Array[Dictionary] = BalanceSimulator.run_campaign(data, 7, accuracy, BalanceSimulator.Spending.REASONED, -1, profile)
-		var reached: StringName = rows[rows.size() - 1]["ending"]
-		assert_eq(reached, ending, "profil %s" % preset)
+func test_act_one_simulation_stops_at_the_pivot() -> void:
+	# J1–J10 seulement (`last_day = 10`) : soirée pivot jouée, aucune fin.
+	var rows: Array[Dictionary] = BalanceSimulator.run_campaign(data, 7, 1.0, BalanceSimulator.Spending.REASONED, 10,
+			SimProfile.preset(&"default", 1.0))
+	assert_eq(rows.size(), 10)
+	assert_eq(rows[9]["ending"], EveningReport.ENDING_NONE)
+	var choices: Dictionary = rows[9]["choices"]
+	assert_false(choices.has(&"d10_drift"), "pas de laissez-passer : pas de panneau du quai 6")
 
 
 func test_campaign_simulation_is_deterministic() -> void:

@@ -30,6 +30,9 @@
 ##   `lucioles_trust ≥ 2`, posé par le DayController ; mémorisé dans
 ##   `luciole_replied`) ; familles `implant`, `wanted` ; `exit_line_key()` pour
 ##   la dernière réplique au départ.
+## Acte II : répliques conditionnelles (`Case.line_overrides`, prioritaires),
+## familles `quota` (paire Compteur ↔ R23), `curfew`, `revoked`, `contract`
+## (`line_about_<famille>_generic`, docs/ACT2.md §4.0, §7.2).
 ## Ne connaît pas la clé de réponse ; le DayController la garde.
 class_name InspectionSession
 extends Node
@@ -77,11 +80,17 @@ const FAMILY_HEALTH: String = "health"
 const FAMILY_OTHER: String = "other"
 const FAMILY_IMPLANT: String = "implant"
 const FAMILY_WANTED: String = "wanted"
+## Acte II.
+const FAMILY_QUOTA: String = "quota"
+const FAMILY_CURFEW: String = "curfew"
+const FAMILY_REVOKED: String = "revoked"
+const FAMILY_CONTRACT: String = "contract"
 const FAMILIES: Array[String] = [FAMILY_FACE, FAMILY_ID_NUMBER, FAMILY_NAME, FAMILY_BIRTH, FAMILY_VALIDITY,
 		FAMILY_MISSING, FAMILY_ISSUER, FAMILY_ORIGIN, FAMILY_HEALTH, FAMILY_OTHER]
 ## M7 : familles à réplique unique (`line_about_<famille>_generic`, NARRATIVE
 ## §7.3) ; l'indignation (non constatée) reprend la famille « autre ».
-const GENERIC_FAMILIES: Array[String] = [FAMILY_IMPLANT, FAMILY_WANTED]
+const GENERIC_FAMILIES: Array[String] = [FAMILY_IMPLANT, FAMILY_WANTED, FAMILY_QUOTA, FAMILY_CURFEW,
+		FAMILY_REVOKED, FAMILY_CONTRACT]
 ## `truth_path` d'un champ → famille de réplique.
 const TRUTH_PATH_FAMILIES: Dictionary[StringName, String] = {
 	&"appearance": FAMILY_FACE,
@@ -98,6 +107,10 @@ const TRUTH_PATH_FAMILIES: Dictionary[StringName, String] = {
 	&"implants": FAMILY_IMPLANT,
 	&"document.mrz": FAMILY_ID_NUMBER,
 	&"document.seal_id": FAMILY_ISSUER,
+	# Acte II.
+	&"document.presented_at": FAMILY_CURFEW,
+	&"employer_code": FAMILY_CONTRACT,
+	&"firmware_date": FAMILY_VALIDITY,
 }
 
 var case: Case = null
@@ -246,7 +259,11 @@ func _confront_about(topic: StringName) -> void:
 	var found: Discrepancy = find_confirmed(reason, doc)
 	if found != null:
 		var family: String = family_of(found, case, ctx)
-		EventBus.interrogation_answered.emit(topic, scripted_line("about_" + reason, about_line(family, true)))
+		var line: String = scripted_line("about_" + reason, "")
+		if line.is_empty() and GENERIC_FAMILIES.has(family):
+			# Acte II : réplique dédiée par famille (`sc25_elena_about_quota`…).
+			line = scripted_line("about_" + family, "")
+		EventBus.interrogation_answered.emit(topic, line if not line.is_empty() else about_line(family, true))
 		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
 	else:
 		EventBus.interrogation_answered.emit(topic, about_line(family_of_reason(reason), false))
@@ -290,6 +307,8 @@ static func family_of(d: Discrepancy, p_case: Case, p_ctx: RuleContext) -> Strin
 			return FAMILY_IMPLANT
 		"wanted_match":
 			return FAMILY_WANTED
+		"revoked_match":
+			return FAMILY_REVOKED
 		"age_mismatch":
 			return FAMILY_BIRTH
 		"mrz_mismatch":
@@ -298,6 +317,18 @@ static func family_of(d: Discrepancy, p_case: Case, p_ctx: RuleContext) -> Strin
 			var rule_ref: FieldRef = d.a if d.a != null and d.a.is_rule() else d.b
 			var other: FieldRef = d.b if rule_ref == d.a else d.a
 			var rule: Rule = p_ctx.find_active_rule(rule_ref.field_id) if p_ctx != null and rule_ref != null else null
+			if rule is AirQuotaRule:
+				return FAMILY_QUOTA
+			if rule is CurfewRule:
+				return FAMILY_CURFEW
+			if rule is RevokedIdRule:
+				return FAMILY_REVOKED
+			if rule is ContractConsistentRule:
+				return FAMILY_CONTRACT
+			if rule is DriftPassRule and other != null and not other.is_rule():
+				var drift_field: FieldDef = p_case.get_field_def(other) if p_case != null else null
+				if drift_field != null and drift_field.truth_path == DriftPassRule.VESSEL_PATH:
+					return FAMILY_OTHER
 			if rule is RequireDocumentRule:
 				return FAMILY_MISSING
 			if rule is IssuerAllowedRule:
@@ -334,6 +365,14 @@ static func family_of_reason(reason: String) -> String:
 			return FAMILY_IMPLANT
 		"wanted", "wanted_match":
 			return FAMILY_WANTED
+		"quota":
+			return FAMILY_QUOTA
+		"curfew":
+			return FAMILY_CURFEW
+		"revoked", "revoked_match":
+			return FAMILY_REVOKED
+		"contract":
+			return FAMILY_CONTRACT
 	return FAMILY_OTHER
 
 
@@ -344,11 +383,7 @@ static func exit_line_key(p_case: Case, kind: VerdictKind.Kind) -> String:
 	if p_case == null:
 		return ""
 	var suffix: String = "exit_" + SlippedItem.VERDICT_NAMES[kind]
-	for tag: StringName in p_case.dialogue_tags:
-		var key: String = "%s_%s" % [tag, suffix]
-		if UiText.has(key):
-			return key
-	return LINE_EXIT_DETAIN if kind == VerdictKind.Kind.DETAIN else ""
+	return p_case.scripted_key(suffix, LINE_EXIT_DETAIN if kind == VerdictKind.Kind.DETAIN else "", UiText.has)
 
 
 static func family_of_truth_path(path: StringName) -> String:
@@ -373,11 +408,7 @@ static func _family_of_ref(ref: FieldRef, p_case: Case) -> String:
 func scripted_line(suffix: String, fallback: String) -> String:
 	if case == null:
 		return fallback
-	for tag: StringName in case.dialogue_tags:
-		var key: String = "%s_%s" % [tag, suffix]
-		if UiText.has(key):
-			return key
-	return fallback
+	return case.scripted_key(suffix, fallback, UiText.has)
 
 
 ## Vrai si une discordance confirmée a cette raison (`expired`, `mismatch`…)
@@ -393,6 +424,12 @@ func find_confirmed(reason: String, doc: StringName = &"") -> Discrepancy:
 			continue
 		if doc == &"" or (d.a != null and d.a.document_id == doc) or (d.b != null and d.b.document_id == doc):
 			return d
+	# Acte II : sujets par famille (`about_quota`, `about_curfew`, `about_revoked`,
+	# `about_contract`) débloqués par une discordance de cette famille.
+	if [FAMILY_QUOTA, FAMILY_CURFEW, FAMILY_REVOKED, FAMILY_CONTRACT].has(reason):
+		for d: Discrepancy in confirmed:
+			if family_of(d, case, ctx) == reason:
+				return d
 	return null
 
 

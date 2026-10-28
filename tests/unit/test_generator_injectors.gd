@@ -10,8 +10,10 @@ const K := AnomalyType.Kind
 
 ## Règle attendue par type (jour « toutes règles »).
 const EXPECTED_RULES: Dictionary[AnomalyType.Kind, Array] = {
-	K.EXPIRED_DOCUMENT: [&"r_id_card_valid", &"r_permit_valid", &"r_bioscan_valid"],
-	K.MISSING_DOCUMENT: [&"r_id_card_required", &"r_permit_required", &"r_bioscan_required"],
+	K.EXPIRED_DOCUMENT: [&"r_id_card_valid", &"r_permit_valid", &"r_bioscan_valid", &"r_contract_required", &"r_drift_pass",
+			&"r_asylum_required"],
+	K.MISSING_DOCUMENT: [&"r_id_card_required", &"r_permit_required", &"r_bioscan_required", &"r_contract_required",
+			&"r_drift_pass", &"r_asylum_required"],
 	K.PORTRAIT_MISMATCH: [&"r_portrait_match"],
 	K.IMPOSTOR_LOOKALIKE: [&"r_portrait_match"],
 	K.ID_MISMATCH: [&"r_identity_fields_match"],
@@ -24,17 +26,22 @@ const EXPECTED_RULES: Dictionary[AnomalyType.Kind, Array] = {
 	K.UNDECLARED_IMPLANT: [&"r_implants_declared"],
 	K.BANNED_IMPLANT: [&"r_banned_implants"],
 	K.RELATIVE_DOCUMENTS: [&"r_portrait_match", &"r_apparent_age"],
-	K.BANNED_FACTION: [&"r_tharsis_banned"],
+	K.BANNED_FACTION: [&"r_tharsis_banned", &"r_ter_closed"],
 	K.INVALID_SEAL: [&"r_seals_valid"],
 	K.MRZ_MISMATCH: [&"r_mrz_valid"],
+	# Acte II (docs/ACT2.md §2.4).
+	K.CONTRACT_MISMATCH: [&"r_contract_consistent"],
+	K.UNREGISTERED_VESSEL: [&"r_drift_pass"],
+	K.OUTDATED_FIRMWARE: [&"r_nx_firmware"],
 }
 ## Verdict attendu par type (R17 et R18 sont de sévérité 3 : DÉTENTION).
 const DETAIN_KINDS: Array[AnomalyType.Kind] = [K.IMPOSTOR_LOOKALIKE, K.RELATIVE_DOCUMENTS]
 ## Jamais tiré sans avis de recherche (testé à part, `test_m7_generation`).
-const NOTICE_ONLY: Array[AnomalyType.Kind] = [K.WANTED_PERSON]
+const NOTICE_ONLY: Array[AnomalyType.Kind] = [K.WANTED_PERSON, K.REVOKED_ID]
 ## Injectables seulement sur certains passagers (permis : pas les Nés-Halcyon ;
 ## origine interdite : THR) — refus d'injecter attendu sur les autres.
-const CONDITIONAL: Array[AnomalyType.Kind] = [K.PURPOSE_MISMATCH, K.BANNED_FACTION]
+const CONDITIONAL: Array[AnomalyType.Kind] = [K.PURPOSE_MISMATCH, K.BANNED_FACTION, K.CONTRACT_MISMATCH,
+		K.UNREGISTERED_VESSEL]
 
 var _kinds: Array[AnomalyType.Kind] = []
 ## `[builder, generated, kind]` pour chaque graine (un type imposé par graine).
@@ -85,6 +92,10 @@ func test_each_injector_triggers_its_rule() -> void:
 		if not CaseBuilder._is_proven(generated.key.anomalies[0], generated.key.expected_violations, builder.ctx):
 			failures.append("%s : champ corrompu non cité" % where)
 		var verdict: VerdictKind.Kind = VerdictKind.Kind.DETAIN if DETAIN_KINDS.has(kind) else VerdictKind.Kind.DENY
+		# Une naissance altérée sur la carte peut trahir l'âge apparent (R18,
+		# sévérité 3) : la DÉTENTION est alors juste (D-005).
+		if kind == K.NAME_MISMATCH and violated.has(&"r_apparent_age"):
+			verdict = VerdictKind.Kind.DETAIN
 		if generated.key.expected_verdict != verdict:
 			failures.append("%s : verdict %d" % [where, generated.key.expected_verdict])
 		if not generated.invariant_errors.is_empty():

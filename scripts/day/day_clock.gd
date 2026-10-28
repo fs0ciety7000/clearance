@@ -9,6 +9,10 @@ class_name DayClock
 extends Node
 
 const SLOW_FACTOR: float = 0.5
+## Heure du shift (UI_FLOW §1) : 10:00 → 18:00, en minutes depuis minuit
+## (constantes pures dans `DayDef`, lues aussi par les simulateurs).
+const SHIFT_START_MIN: int = DayDef.SHIFT_START_MIN
+const SHIFT_LENGTH_MIN: int = DayDef.SHIFT_LENGTH_MIN
 
 var duration_sec: float = 0.0
 var remaining_sec: float = 0.0
@@ -47,6 +51,16 @@ func advance(delta: float) -> void:
 		expired = true
 		running = false
 		EventBus.day_time_expired.emit()
+
+
+## Heure du shift (minutes depuis minuit) : 10:00 au début, 18:00 à la fin.
+func current_minute() -> int:
+	return minute_at(duration_sec, remaining_sec)
+
+
+## Heure du shift pour une durée et un temps restant donnés.
+static func minute_at(p_duration_sec: float, p_remaining_sec: float) -> int:
+	return DayDef.minute_at(p_duration_sec, p_remaining_sec)
 
 
 func _time_scale() -> float:

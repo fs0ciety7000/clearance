@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="DocumentTypeDef" format=3 uid="uid://dpc6wm1uklxj4"]
+
+[ext_resource type="Script" path="res://scripts/documents/field_def.gd" id="1_i1cxd"]
+[ext_resource type="Script" path="res://scripts/documents/document_type_def.gd" id="2_ludjg"]
+
+[sub_resource type="Resource" id="field_serial"]
+script = ExtResource("1_i1cxd")
+id = &"serial"
+label_key = "field_serial"
+kind = 2
+truth_path = &"document.serial"
+comparable = false
+
+[sub_resource type="Resource" id="field_presented_at"]
+script = ExtResource("1_i1cxd")
+id = &"presented_at"
+label_key = "field_presented_at"
+kind = 8
+truth_path = &"document.presented_at"
+display_order = 1
+
+[resource]
+script = ExtResource("2_ludjg")
+id = &"queue_ticket"
+title_key = "doc_queue_ticket_title"
+fields = Array[ExtResource("1_i1cxd")]([SubResource("field_serial"), SubResource("field_presented_at")])
+validity_days = Vector2i(1, 1)
+holo_tint_token = &"TEXT_SECONDARY"
+issuer_id = &"hall_guichets"
+serial_pattern = "TF-NNNN"

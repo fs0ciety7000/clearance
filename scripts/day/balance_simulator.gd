@@ -11,6 +11,9 @@
 ## `SimProfile`, audit du J9 ; dernier jour sans soirée → fin F1–F7 par
 ## `EndingService.evaluate_final`). Les tirages des jours 1–3 sont inchangés
 ## (mêmes graines, même ordre) : les mesures D-047 restent valables.
+## Acte II (docs/ACT2.md §6.4) : campagne J1–J20 — soirée pivot du J10
+## (« Embarquer » possible), rations, prélèvements, quota (`SimProfile.overrun`),
+## couvre-feu, Revue du J17, fin du J20 par `EndingService.evaluate_final_act2`.
 class_name BalanceSimulator
 extends RefCounted
 
@@ -24,7 +27,7 @@ enum Spending {
 }
 
 ## Postes suivis dans les rapports (les médicaments sont regroupés sous `meds`).
-const TRACKED_LINES: Array[StringName] = [&"rent", &"food", &"heating", &"oxygen", &"meds"]
+const TRACKED_LINES: Array[StringName] = [&"rent", &"food", &"heating", &"oxygen", &"meds", &"rations"]
 const PLAYER_SALT: String = "balance_player"
 ## Mêmes valeurs que `Campaign` (qui dépend du `GameState` : non chargé ici).
 const EVENING_SALT: String = "evening"
@@ -58,19 +61,26 @@ static func run_campaign(data: DataCatalog, campaign_seed: int, accuracy: float,
 		credits += summary.get_total_income()
 		processed += summary.get_processed_count()
 		correct += summary.get_correct_count()
+		var compliance: float = float(correct) / float(processed) if processed > 0 else 0.0
 		if not day.has_evening:
-			var compliance: float = float(correct) / float(processed) if processed > 0 else 0.0
 			var final_row: Dictionary = _final_row(day_number, summary, credits, household)
-			final_row["ending"] = EndingService.evaluate_final(flags, household, credits, compliance, economy)
+			if FlagCondition.is_flag_true(flags, EndingService.FLAG_ACT2):
+				final_row["ending"] = EndingService.evaluate_final_act2(flags, household, credits, compliance, economy)
+			else:
+				final_row["ending"] = EndingService.evaluate_final(flags, household, credits, compliance, economy)
 			final_row["flags"] = flags.duplicate()
+			final_row["present"] = household.present_count()
+			final_row["alive"] = household.alive_count()
 			rows.append(final_row)
 			break
 		if day_number == 3 and FlagCondition.is_flag_true(flags, &"lucioles_contact"):
 			_decide_note(flags, profile, economy)
 			if profile.report_note:
 				credits += economy.report_bonus
-		var events: Array[EveningEvent] = EveningService.build_events(day.evening_events, flags, economy)
-		var lines: Array[ExpenseLine] = EveningService.build_lines(economy, day_number, household)
+		var context: Dictionary[StringName, Variant] = EveningService.context_flags(flags, household, compliance,
+				economy.levy_for(day_number, credits))
+		var events: Array[EveningEvent] = EveningService.build_events(day.evening_events, context, economy)
+		var lines: Array[ExpenseLine] = EveningService.build_lines(economy, day_number, household, flags, credits)
 		EveningService.apply_line_costs(lines, events, profile.choices)
 		if profile.spending == &"rent_only" or profile.spending == &"none":
 			for line: ExpenseLine in lines:
@@ -88,12 +98,18 @@ static func run_campaign(data: DataCatalog, campaign_seed: int, accuracy: float,
 				choices[event.id] = wanted
 		var evening_seed: int = SeededRng.mix_string(day_seed, EVENING_SALT)
 		var report: EveningReport = EveningService.apply(economy, day_number, household, lines, credits, evening_seed,
-				events, choices, flags)
+				events, choices, context)
 		credits = report.balance_after
 		household = report.household
 		CaseConsequences.merge_into(flags, report.flag_changes)
+		if summary.get_overrun_count() > 0 or flags.has(&"overrun_yesterday"):
+			flags[&"overrun_yesterday"] = summary.get_overrun_count() > 0
+		if day_number == economy.pivot_day and not report.is_game_over():
+			flags[EndingService.FLAG_ACT2] = true
 		var row: Dictionary = _row(day_number, summary, report)
 		row["bribes"] = summary.get_bribe_total()
+		row["overruns"] = summary.get_overrun_count()
+		row["choices"] = report.choices.duplicate()
 		rows.append(row)
 		if report.is_game_over():
 			row["flags"] = flags.duplicate()
@@ -126,10 +142,17 @@ static func _final_row(day_number: int, summary: DaySummary, credits: int, house
 static func reasoned_selection(economy: EconomyDef, lines: Array[ExpenseLine], balance: int,
 		household: Household) -> void:
 	var order: Array[ExpenseLine] = []
-	for id: StringName in [&"rent", &"food", &"oxygen"]:
+	for id: StringName in [&"rent", &"food"]:
 		var line: ExpenseLine = _find(lines, id)
 		if line != null:
 			order.append(line)
+	# Acte II : rations des proches (essoufflement → maladie) avant l'oxygène.
+	for line: ExpenseLine in lines:
+		if line.ration_of != &"":
+			order.append(line)
+	var oxygen: ExpenseLine = _find(lines, &"oxygen")
+	if oxygen != null:
+		order.append(oxygen)
 	var meds: Array[ExpenseLine] = []
 	for line: ExpenseLine in lines:
 		line.paid = line.mandatory
@@ -169,6 +192,8 @@ static func _row(day_number: int, summary: DaySummary, report: EveningReport) ->
 		if line.paid:
 			continue
 		var group: StringName = &"meds" if line.member_id != &"" else line.id
+		if line.ration_of != &"":
+			group = &"rations"
 		if unpaid.has(group):
 			unpaid[group] += 1
 	var home: Household = report.household

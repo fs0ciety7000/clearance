@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AirQuotaRule" format=3 uid="uid://wgjfpamhl3pb"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/air_quota_rule.gd" id="1_sk3yu"]
+
+[resource]
+script = ExtResource("1_sk3yu")
+id = &"r_air_quota"
+title_key = "r_air_quota_title"
+rulebook_text_key = "r_air_quota_text"
+category = 4
+severity = 1

@@ -8,6 +8,11 @@
 ## sont, dans l'onglet « Règles »), sauf les entrées du bulletin des symboles
 ## (`SymbolCardView`, paire marque ↔ symbole, NARRATIVE §4.9) ; l'onglet
 ## Origines rappelle la tolérance « 00.00.AAAA » des Dérivants (§4.10, R07).
+## Acte II (ARCHITECTURE §7.2) : Codes employeurs (J12, R25 : table
+## `ContractConsistentRule.employer_codes`), Registre des cargos (J13, R26 :
+## `DriftPassRule.registered_vessels`, cargos retirés), Révocations (J17, R30 :
+## cartes `RevokedCardView` construites par le `RulebookPanel`) ; ligne
+## « firmware NX » de l'onglet Implants (R27) quand la règle est en vigueur.
 class_name RulebookReference
 extends RefCounted
 
@@ -16,10 +21,21 @@ const TAB_IMPLANTS: StringName = &"implants"
 const TAB_SYMBOLS: StringName = &"symbols"
 const TAB_SEALS: StringName = &"seals"
 const TAB_WANTED: StringName = &"wanted"
-const ORDER: Array[StringName] = [TAB_ORIGINS, TAB_IMPLANTS, TAB_SYMBOLS, TAB_SEALS, TAB_WANTED]
+const TAB_EMPLOYERS: StringName = &"employers"
+const TAB_VESSELS: StringName = &"vessels"
+const TAB_REVOKED: StringName = &"revoked"
+const ORDER: Array[StringName] = [TAB_ORIGINS, TAB_IMPLANTS, TAB_SYMBOLS, TAB_SEALS, TAB_WANTED, TAB_EMPLOYERS, TAB_VESSELS,
+		TAB_REVOKED]
+## Onglets construits par le `RulebookPanel` (cartes sélectionnables).
+const DYNAMIC_TABS: Array[StringName] = [TAB_WANTED, TAB_REVOKED]
+## Règles qui portent les registres de l'Acte II (`data/rules/`).
+const RULE_CONTRACT: StringName = &"r_contract_consistent"
+const RULE_DRIFT: StringName = &"r_drift_pass"
+const RULE_FIRMWARE: StringName = &"r_nx_firmware"
 ## Jour d'ouverture de chaque onglet (GDD §7) : pastille ambre « nouveau ».
 const INTRO_DAY: Dictionary[StringName, int] = {
 	TAB_ORIGINS: 4, TAB_IMPLANTS: 6, TAB_SYMBOLS: 7, TAB_SEALS: 9, TAB_WANTED: 10,
+	TAB_EMPLOYERS: 12, TAB_VESSELS: 13, TAB_REVOKED: 17,
 }
 ## Familles d'implants (LORE §8) : [code, légal si déclaré].
 const IMPLANT_FAMILIES: Array[Array] = [
@@ -45,6 +61,12 @@ static func tab_title(tab: StringName) -> String:
 			return UiText.t("rb_tab_seals", "Sceaux")
 		TAB_WANTED:
 			return UiText.t("rb_tab_wanted", "AVIS DE RECHERCHE")
+		TAB_EMPLOYERS:
+			return UiText.t("rb_tab_employers", "Codes employeurs")
+		TAB_VESSELS:
+			return UiText.t("rb_tab_vessels", "Registre des cargos")
+		TAB_REVOKED:
+			return UiText.t("rb_tab_revoked", "Révocations")
 	return String(tab)
 
 
@@ -59,18 +81,100 @@ static func catalog() -> DataCatalog:
 	return _catalog
 
 
-## Contenu d'un onglet de référence (hors avis de recherche).
-static func build(tab: StringName) -> Control:
+## Contenu d'un onglet de référence (hors avis de recherche et révocations) ;
+## `rule_ids` : règles en vigueur ce jour (ligne firmware de l'onglet Implants).
+static func build(tab: StringName, rule_ids: Array[StringName] = []) -> Control:
 	match tab:
 		TAB_ORIGINS:
 			return _origins()
 		TAB_IMPLANTS:
-			return _implants()
+			return _implants(rule_ids.has(RULE_FIRMWARE))
 		TAB_SYMBOLS:
 			return _symbols()
 		TAB_SEALS:
 			return _seals()
+		TAB_EMPLOYERS:
+			return _employers()
+		TAB_VESSELS:
+			return _vessels()
 	return ScreenBase.vbox()
+
+
+## Règle du catalogue (registres de l'Acte II), null si absente.
+static func catalog_rule(rule_id: StringName) -> Rule:
+	return catalog().rules.get(rule_id, null)
+
+
+## Codes employeurs (R25) triés par code : `[code, employeur]`.
+static func employer_rows() -> Array[PackedStringArray]:
+	var rows: Array[PackedStringArray] = []
+	var rule: ContractConsistentRule = catalog_rule(RULE_CONTRACT) as ContractConsistentRule
+	if rule == null:
+		return rows
+	for employer: String in rule.employer_codes:
+		rows.append(PackedStringArray([rule.employer_codes[employer], employer]))
+	rows.sort_custom(func(a: PackedStringArray, b: PackedStringArray) -> bool: return a[0] < b[0])
+	return rows
+
+
+## Nom affiché d'un employeur (QA-028) : clé `rb_emp_<code>` (« KA · Kessler-Ashe
+## Orbital »), sans le code déjà porté par la pastille CT-KA ; nom de la
+## règle à défaut.
+static func employer_name(code: String, fallback: String) -> String:
+	var text: String = UiText.t(ContractConsistentRule.label_key(code), fallback)
+	var prefix: String = code + " · "
+	return text.trim_prefix(prefix) if text.begins_with(prefix) else text
+
+
+## Cargos inscrits au registre (R26).
+static func registered_vessels() -> PackedStringArray:
+	var rule: DriftPassRule = catalog_rule(RULE_DRIFT) as DriftPassRule
+	return rule.registered_vessels if rule != null else PackedStringArray()
+
+
+static func _employers() -> Control:
+	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
+	box.name = "Employers"
+	box.add_child(_intro(UiText.t("rb_employers_intro",
+			"Contrat de travail : le code CT-XX correspond à l'employeur du permis d'entrée.")))
+	var grid: GridContainer = GridContainer.new()
+	grid.columns = 2
+	grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	grid.add_theme_constant_override("h_separation", DS.SPACE_3)
+	grid.add_theme_constant_override("v_separation", DS.SPACE_1)
+	box.add_child(grid)
+	for row: PackedStringArray in employer_rows():
+		var cap: PanelContainer = _code("CT-" + row[0], DS.ACCENT_CYAN)
+		cap.name = "Code_%s" % row[0]
+		grid.add_child(cap)
+		var employer: Label = ScreenBase.label(employer_name(row[0], row[1]), &"BodySmall", DS.TEXT_PRIMARY)
+		employer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		employer.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		employer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		employer.custom_minimum_size.x = 120.0
+		grid.add_child(employer)
+	return box
+
+
+static func _vessels() -> Control:
+	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
+	box.name = "Vessels"
+	box.add_child(_intro(UiText.t("rb_vessels_intro",
+			"Dérivants : le vaisseau du laissez-passer = nom de famille, inscrit au registre.")))
+	var flow: HFlowContainer = HFlowContainer.new()
+	flow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flow.add_theme_constant_override("h_separation", DS.SPACE_2)
+	flow.add_theme_constant_override("v_separation", DS.SPACE_2)
+	box.add_child(flow)
+	for vessel: String in registered_vessels():
+		var cap: PanelContainer = _code(vessel, DS.ACCENT_CYAN)
+		cap.name = "Vessel_%s" % vessel.validate_node_name()
+		flow.add_child(cap)
+	var removed: Label = ScreenBase.wrapped(UiText.t("rb_vessels_removed", "Retirés : SILLAGE (démantelé le 20.03.2187)."),
+			&"BodySmall", DS.STATE_AMBER)
+	removed.name = "RemovedNote"
+	box.add_child(removed)
+	return box
 
 
 static func _intro(text: String) -> Label:
@@ -138,10 +242,16 @@ static func _origins() -> Control:
 	return box
 
 
-static func _implants() -> Control:
+static func _implants(firmware: bool = false) -> Control:
 	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
 	box.add_child(_intro(UiText.t("rb_implants_intro",
 			"Comparez le visage du passager à « Implants déclarés » de sa carte (Mode Inspection).")))
+	if firmware:
+		# R27 (Acte II) : ligne firmware, lisible sans défiler.
+		var note: Label = ScreenBase.wrapped(UiText.t("rb_implants_firmware", "NX- : firmware de moins de 90 jours."),
+				&"BodySmall", DS.STATE_AMBER)
+		note.name = "FirmwareNote"
+		box.add_child(note)
 	for family: Array in IMPLANT_FAMILIES:
 		var code: String = family[0]
 		var legal: bool = family[1]

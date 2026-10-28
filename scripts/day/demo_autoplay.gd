@@ -100,8 +100,11 @@ func _run_case(case_id: StringName) -> void:
 	else:
 		_ask(InspectionSession.TOPIC_PURPOSE)
 	await _sleep(AFTER_ANSWER_SEC)
+	# Acte II : compteur QUOTA visible plein ⇒ refus documenté plutôt qu'une
+	# entrée imputée (D-077).
+	var quota_full: bool = controller.quota.is_full() and controller.quota.counts(case)
 	if _still(case_id):
-		await _stamp(case_id, VerdictKind.Kind.DENY if found != null else VerdictKind.Kind.APPROVE)
+		await _stamp(case_id, VerdictKind.Kind.DENY if found != null or quota_full else VerdictKind.Kind.APPROVE)
 
 
 func _compare(a: FieldRef, b: FieldRef) -> void:

@@ -10,7 +10,7 @@ extends RefCounted
 
 ## Propriétés adressables par un `truth_path` `document.<nom>`.
 const DOCUMENT_PROPERTIES: Array[StringName] = [
-	&"serial", &"issue_date", &"expiry_date", &"issuer_id", &"seal_id", &"mrz",
+	&"serial", &"issue_date", &"expiry_date", &"issuer_id", &"seal_id", &"mrz", &"presented_at",
 ]
 
 var type_def: DocumentTypeDef = null
@@ -26,6 +26,12 @@ var mrz: String = ""
 ## Marques visibles au zoom (M7) : `&"luciole"` = code Luciole n° 1 (LORE §7).
 var marks: Array[StringName] = []
 var values: Dictionary[StringName, Variant] = {}
+## Acte II — heure de présentation (minutes depuis minuit) du ticket de file
+## (R29, couvre-feu) ; −1 hors ticket.
+var presented_at: int = -1
+## Acte II — document **d'un tiers** (SC-27 : le contrat du chat) : ni comparé
+## par R07, ni lu par les règles du porteur (`Case.get_own_document`).
+var third_party: bool = false
 
 
 func _init(p_type_def: DocumentTypeDef = null) -> void:
@@ -85,6 +91,8 @@ func copy() -> DocumentInstance:
 	result.seal_id = seal_id
 	result.mrz = mrz
 	result.marks = marks.duplicate()
+	result.presented_at = presented_at
+	result.third_party = third_party
 	for key: StringName in values:
 		var value: Variant = values[key]
 		if value is PortraitValue:

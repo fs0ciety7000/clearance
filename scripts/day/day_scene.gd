@@ -25,9 +25,20 @@
 ## bulletin comparée si le passager porte la marque), `--flags=a,b:2` (drapeaux / jauges de
 ## démonstration), `--item=keep|return|report` (décision sur l'objet glissé),
 ## `--zoom-doc=<id>` (loupe sur un document).
+## M8 (Acte II) : `--screen=chapter2` (interstitiel « CHAPITRE II »),
+## `--lights-out` (avec `--screen=shift` : annonce de la grève du J20, lumières
+## coupées), `--confirm-scan` (premier lien suggéré du scanner confirmé),
+## `--rulebook-tab=employers|vessels|revoked` ; `--choose` passe par
+## `EveningScreen.request_choice` (confirmation d'« Embarquer »).
 ## Tous ces arguments passent par `DebugArgs` : ignorés dans un export
 ## *release*, et ceux qui modifient la partie (`--seed`, `--day`, `--screen`…)
 ## ne s'appliquent qu'à la première scène du processus (QA-017).
+## M8 (Acte II, ARCHITECTURE §7.2) : revenus du soir passés à la soirée
+## (`EveningScreen.set_income`) ; interstitiel « CHAPITRE II » après la soirée
+## pivot du J10 quand la campagne continue (`ChapterScreen`) ; annonce qui
+## termine le shift (`HallAnnouncementDef.ends_shift`, grève du J20) : les
+## lumières du guichet s'éteignent (`BoothDirector.lights_out`), voile noir qui
+## s'épaissit, puis fondu au noir complet avant le bilan.
 class_name DayScene
 extends Control
 
@@ -42,6 +53,10 @@ const AUTOPLAY_BRIEFING_SEC: float = 1.5
 const SIREN_DELAY_SEC: float = 1.2
 ## `--household=demo` : solde du matin (captures de la soirée).
 const DEMO_MORNING_CREDITS: int = 14
+## Grève du J20 : extinction des lumières, voile sur le guichet, fondu final.
+const LIGHTS_OUT_SEC: float = DS.DUR_DRAMATIC * 4.0
+const LIGHTS_OUT_VEIL: float = 0.62
+const BLACKOUT_SEC: float = DS.DUR_DRAMATIC * 2.5
 
 @onready var booth_container: SubViewportContainer = %BoothContainer
 @onready var booth_viewport: SubViewport = %BoothViewport
@@ -66,6 +81,9 @@ var screen_history: Array[StringName] = []
 var _autoplay: DemoAutoplay = null
 var _args: Dictionary = {}
 var _overlay: Control = null
+## Acte II : lumières coupées (grève du J20) et voile noir correspondant.
+var lights_out_active: bool = false
+var blackout: ColorRect = null
 
 
 func _ready() -> void:
@@ -91,6 +109,13 @@ func _ready() -> void:
 		GameState.add_credits(_arg("credits").to_int())
 	if not _args.has("no-ui"):
 		_load_ui()
+	blackout = ColorRect.new()
+	blackout.name = "Blackout"
+	blackout.color = Color(DS.BG_VOID, 0.0)
+	blackout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	blackout.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	blackout.visible = false
+	add_child(blackout)
 	_overlay = Control.new()
 	_overlay.name = "Screens"
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -105,6 +130,7 @@ func _ready() -> void:
 	intercom.spoke.connect(_on_intercom)
 	add_child(intercom)
 	EventBus.day_ended.connect(_on_day_ended)
+	EventBus.hall_announced.connect(_on_hall_announced)
 	if not day_controller.start_day(data, GameState.current_day, GameState.get_day_seed(), GameState.get_true_flags(),
 			Campaign.memory_for_day(data)):
 		return
@@ -199,7 +225,50 @@ func _on_day_ended(summary: DaySummary) -> void:
 	if _args.has("autoplay") and _autoplay != null:
 		_autoplay.queue_free()
 		_autoplay = null
+	if lights_out_active:
+		# Grève : plus de sirène, le Hall s'éteint jusqu'au noir complet.
+		blackout.visible = true
+		var tween: Tween = blackout.create_tween()
+		tween.tween_property(blackout, "color:a", 1.0, DS.DUR_FAST if Settings.reduce_motion else BLACKOUT_SEC)
+		tween.tween_callback(show_summary.bind(summary))
+		return
 	get_tree().create_timer(SIREN_DELAY_SEC).timeout.connect(show_summary.bind(summary))
+
+
+# ---------------------------------------------------------------------------
+# Acte II : lumières coupées (grève du J20)
+# ---------------------------------------------------------------------------
+
+func _on_hall_announced(text_key: String) -> void:
+	if ends_shift_announcement(text_key):
+		lights_out()
+
+
+## Vrai si l'annonce `text_key` du jour courant termine le shift (grève du J20).
+func ends_shift_announcement(text_key: String) -> bool:
+	if day_controller == null or day_controller.day == null:
+		return false
+	for def: HallAnnouncementDef in day_controller.day.announcements:
+		if def != null and def.ends_shift and def.text_key == text_key:
+			return true
+	return false
+
+
+## Les vitres s'éteignent : lampes du guichet coupées, voile noir sur l'écran
+## (l'annonce reste lisible au-dessus du voile partiel).
+func lights_out() -> void:
+	if lights_out_active:
+		return
+	lights_out_active = true
+	var duration: float = DS.DUR_FAST if Settings.reduce_motion else LIGHTS_OUT_SEC
+	if booth != null:
+		booth.lights_out(duration)
+	var comparison: ComparisonUI = ui as ComparisonUI
+	if comparison != null:
+		comparison.set_lights_out(duration)
+		return
+	blackout.visible = true
+	blackout.create_tween().tween_property(blackout, "color:a", LIGHTS_OUT_VEIL, duration)
 
 
 func show_summary(summary: DaySummary) -> void:
@@ -226,6 +295,8 @@ func show_evening(summary: DaySummary) -> void:
 	evening.setup(day_controller.day, GameState.credits, summary.get_total_income() if summary != null else 0, lines,
 			GameState.household, Campaign.luciole_note_pending(), consortium_advance())
 	evening.set_events(events)
+	evening.set_income(EveningService.income_lines(data.get_economy(), GameState.current_day, GameState.household,
+			Campaign.evening_flags()))
 	evening.luciole_decided.connect(Campaign.decide_luciole_note)
 	evening.confirmed.connect(func(confirmed_lines: Array[ExpenseLine]) -> void:
 		var report: EveningReport = Campaign.preview_evening(data, confirmed_lines, events, evening.get_choices())
@@ -237,12 +308,29 @@ func show_evening(summary: DaySummary) -> void:
 
 func _after_evening(choice: StringName) -> void:
 	if choice == &"next":
+		if chapter_two_pending():
+			show_chapter_two()
+			return
 		get_tree().reload_current_scene()
 		return
 	show_end(choice)
 
 
-## M7 : dernier jour sans soirée (J10, D-053) → évaluation de la fin.
+## Vrai juste après la soirée pivot du J10 si l'Acte II commence.
+func chapter_two_pending() -> bool:
+	return data != null and Campaign.is_act2() and GameState.current_day == data.get_economy().pivot_day + 1
+
+
+## Interstitiel « CHAPITRE II » puis le J11 (rechargement de la scène).
+func show_chapter_two() -> void:
+	var chapter: ChapterScreen = ChapterScreen.new()
+	chapter.name = "ChapterScreen"
+	chapter.setup(GameState.narrative_flags)
+	chapter.finished.connect(func(_choice: StringName) -> void: get_tree().reload_current_scene())
+	_open(chapter, &"chapter2")
+
+
+## Dernier jour sans soirée (J20 depuis D-076) → évaluation de la fin.
 func show_final(summary: DaySummary) -> void:
 	show_end(Campaign.close_final_day(data, summary))
 
@@ -306,6 +394,13 @@ func _debug_screen(which: String) -> void:
 			else:
 				_simulated_history()
 				show_end(StringName(_arg("ending", "demo_complete")))
+		"chapter2":
+			if briefing != null:
+				briefing.closed.disconnect(_on_briefing_closed)
+				briefing.queue_free()
+				briefing = null
+			GameState.set_flag(EndingService.FLAG_ACT2, true)
+			show_chapter_two()
 		"shift", "detain":
 			# M7 : premier passager appelé (objets glissés, onglets, avis, escorte).
 			if briefing != null:
@@ -351,6 +446,17 @@ func _debug_shift(_case_id: StringName, which: String) -> void:
 		comparison.set_inspection_active(true)
 		if not comparison.wanted_notices.is_empty() and tab == "wanted":
 			comparison.pick(comparison.wanted_notices[0].get_ref())
+		elif tab == "revoked" and not comparison.revocations.is_empty():
+			# Acte II : révocation du passager (sinon la première) ↔ son N° ID.
+			var entry: RevokedEntry = comparison.revocations[0]
+			for candidate: RevokedEntry in comparison.revocations:
+				if day_controller.current_case != null and candidate.case_index == day_controller.current_case.index:
+					entry = candidate
+			comparison.pick(entry.get_ref())
+			if day_controller.current_case != null:
+				var ids: Array[FieldRef] = day_controller.current_case.find_refs_by_truth_path(&"citizen_id")
+				if not ids.is_empty():
+					comparison.pick(ids[0])
 		elif tab == "symbols":
 			# §4.9 : marque luciole (A) ↔ bulletin des symboles (B), vraie comparaison.
 			for view: DocumentView in comparison.workbench.views:
@@ -359,6 +465,14 @@ func _debug_shift(_case_id: StringName, which: String) -> void:
 					comparison.pick(mark.ref)
 					comparison.pick(FieldRef.symbol(DocumentView.MARK_LUCIOLE))
 					break
+	if _args.has("confirm-scan"):
+		comparison.confirm_suggestion()
+	if _args.has("lights-out"):
+		var strike: String = "hall_j20_strike"
+		for def: HallAnnouncementDef in day_controller.day.announcements:
+			if def != null and def.ends_shift:
+				strike = def.text_key
+		EventBus.hall_announced.emit(strike)
 	if _args.has("ask"):
 		comparison.open_question_menu()
 	if which == "detain":
@@ -390,10 +504,10 @@ func _simulated_summary() -> DaySummary:
 
 func _simulated_history() -> void:
 	var balance: int = GameState.credits
-	for n: int in range(1, 11):
+	for n: int in range(1, maxi(GameState.current_day, 10) + 1):
 		var s: DaySummary = DaySimulator.simulate(data, n, SeededRng.day_seed(GameState.campaign_seed, n),
 				func(_c: Case, k: CaseKey, i: int) -> VerdictKind.Kind: return k.expected_verdict if i % 5 != 4 else VerdictKind.Kind.APPROVE)
-		var spent: int = 38 if n % 2 == 1 else 48
+		var spent: int = (38 if n % 2 == 1 else 48) if n <= 10 else maxi(s.get_net() - 3, 20)
 		balance += s.get_net() - spent
 		GameState.day_history.append({"day": n, "processed": s.get_processed_count(), "planned": s.planned_cases,
 				"correct": s.get_correct_count(), "citations": s.get_citation_count(), "wage": s.get_wage_total(),
@@ -412,7 +526,7 @@ func _debug_evening() -> void:
 	for pair: String in _arg("choose").split(",", false):
 		var parts: PackedStringArray = pair.split(":")
 		if parts.size() == 2:
-			evening.choose(StringName(parts[0]), StringName(parts[1]))
+			evening.request_choice(StringName(parts[0]), StringName(parts[1]))
 	if _args.has("step"):
 		evening.show_step(_arg("step").to_int())
 

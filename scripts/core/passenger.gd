@@ -27,6 +27,8 @@ const TRUTH_PATHS: Array[StringName] = [
 	&"given_name", &"family_name", &"birth_date", &"sex", &"faction_id",
 	&"origin_sector", &"citizen_id", &"citizen_class", &"appearance",
 	&"purpose", &"stay_days", &"employer", &"health_status", &"implants",
+	# Acte II (docs/ACT2.md B19) : contrat de travail, laissez-passer de dérive, firmware NX.
+	&"employer_code", &"post", &"vessel", &"firmware_date",
 ]
 
 var id: StringName = &""
@@ -55,6 +57,17 @@ var health_status: StringName = HEALTH_FIT
 ## un écart est une discordance (R15). Jamais une donnée d'apparence : les
 ## injecteurs peuvent la modifier sans toucher `appearance` (invariant §9.3).
 var implants: PackedStringArray = []
+## Acte II — code employeur du contrat (`CT-XX`, R25), dérivé de l'employeur
+## (table de `ContractConsistentRule`), vide sans contrat.
+var employer_code: String = ""
+## Acte II — poste du contrat de travail (`recycleur`, `soins`… R31).
+var post: StringName = &""
+## Acte II — vaisseau du laissez-passer de dérive (R26) : le nom de famille
+## d'un Dérivant.
+var vessel: String = ""
+## Acte II — date de la dernière mise à jour d'un shunt `NX-` (`GameDate`,
+## R27) ; 0 = aucun shunt (champ vide sur la carte).
+var firmware_date: int = 0
 
 
 static func has_truth_path(path: StringName) -> bool:

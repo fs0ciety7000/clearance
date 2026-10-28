@@ -20,11 +20,12 @@ func test_all_resources_load_without_error() -> void:
 
 
 func test_expected_content_counts() -> void:
-	assert_eq(_catalog.documents.size(), 4, "Carte, Permis, Bio-scan, Dérogation MIL (M7)")
+	assert_eq(_catalog.documents.size(), 8, "Carte, Permis, Bio-scan, Dérogation MIL (M7) + Contrat, Laissez-passer, Asile, Ticket (Acte II)")
 	assert_eq(_catalog.factions.keys().size(), 6, "origines : TYC, HAL, TER + CER, THR, DRV (M7)")
-	assert_eq(_catalog.rules.size(), 22, "R01–R22 (GDD §7)")
-	assert_eq(_catalog.days.keys().size(), 10)
-	for document_id: StringName in [&"id_card", &"entry_permit", &"bioscan", &"mil_waiver"]:
+	assert_eq(_catalog.rules.size(), 31, "R01–R22 (GDD §7) + R23–R31 (docs/ACT2.md)")
+	assert_eq(_catalog.days.keys().size(), 20)
+	for document_id: StringName in [&"id_card", &"entry_permit", &"bioscan", &"mil_waiver", &"work_contract", &"drift_pass",
+			&"asylum", &"queue_ticket"]:
 		assert_true(_catalog.documents.has(document_id), String(document_id))
 	for faction_id: StringName in [&"tyc", &"hal", &"ter", &"cer", &"thr", &"drv"]:
 		assert_true(_catalog.factions.has(faction_id), String(faction_id))
@@ -59,7 +60,9 @@ func test_documents() -> void:
 		assert_false(doc.title_key.is_empty(), label)
 		assert_true(doc.validity_days.x > 0 and doc.validity_days.x <= doc.validity_days.y, label + " validity_days")
 		assert_true(tokens.has(String(doc.holo_tint_token)), label + " holo_tint_token absent de DS")
-		assert_false(doc.issuer_id == &"" or doc.seal_id == &"" or doc.serial_pattern.is_empty(), label)
+		# Le ticket de file (Acte II, R29) n'a ni sceau ni validité.
+		var ticket: bool = doc.id == CaseBuilder.TICKET_DOCUMENT_ID
+		assert_false(doc.issuer_id == &"" or (doc.seal_id == &"" and not ticket) or doc.serial_pattern.is_empty(), label)
 		assert_gt(doc.fields.size(), 0, label)
 		var ids: Array[StringName] = []
 		var orders: Array[int] = []
@@ -76,7 +79,8 @@ func test_documents() -> void:
 				assert_eq(field.truth_path, &"appearance", where)
 			if field.kind == FieldDef.FieldKind.DATE:
 				assert_true(_is_date_path(field.truth_path), where + " DATE sur une donnée non datée")
-		assert_not_null(doc.find_field_by_truth_path(&"document.expiry_date"), label + " sans date d'expiration")
+		if not ticket:
+			assert_not_null(doc.find_field_by_truth_path(&"document.expiry_date"), label + " sans date d'expiration")
 
 
 func test_rules() -> void:
@@ -130,12 +134,15 @@ func test_days() -> void:
 	var numbers: Array[int] = []
 	numbers.assign(_catalog.days.keys())
 	numbers.sort()
-	assert_eq(numbers, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as Array[int])
+	var expected_days: Array[int] = []
+	for n: int in range(1, 21):
+		expected_days.append(n)
+	assert_eq(numbers, expected_days)
 	for n: int in numbers:
 		var day: DayDef = _catalog.days[n]
 		var label: String = "J%d" % n
-		# J1 = mardi 13.03.2187 (LORE §2, GDD §3.2).
-		assert_eq(day.game_date, GameDate.from_ymd(2187, 3, 12 + n), label)
+		# J1 = mardi 13.03.2187 (LORE §2, GDD §3.2) ; J20 = dimanche 01.04.2187 (ACT2 §2.1).
+		assert_eq(day.game_date, GameDate.from_ymd(2187, 3, 13) + n - 1, label)
 		assert_not_null(day.rule_set, label)
 		if day.rule_set == null:
 			continue
@@ -175,11 +182,24 @@ func test_days_follow_gdd_progression() -> void:
 			assert_true(_catalog.get_day(n).rule_set.has_rule(rule_id), "J%d garde %s" % [n, rule_id])
 	assert_eq(counts, [10, 14, 16, 17, 19, 21, 22] as Array[int])
 	assert_eq(_catalog.get_day(5).rule_set.required_document_ids, [&"id_card", &"entry_permit", &"bioscan"] as Array[StringName])
-	for n: int in range(1, 11):
+	# Acte II (docs/ACT2.md §2.1) : R23 → R31 de J11 à J18, respirations J19 et J20.
+	var act2: Array[int] = []
+	for n: int in range(11, 21):
+		act2.append(_catalog.get_day(n).rule_set.get_rule_ids().size())
+		for rule_id: StringName in _catalog.get_day(n - 1).rule_set.get_rule_ids():
+			assert_true(_catalog.get_day(n).rule_set.has_rule(rule_id), "J%d garde %s" % [n, rule_id])
+	assert_eq(act2, [23, 25, 26, 27, 28, 29, 30, 31, 31, 31] as Array[int])
+	var quotas: Array[int] = []
+	for n: int in range(1, 21):
 		var day: DayDef = _catalog.get_day(n)
 		assert_eq(day.detain_enabled, n >= 7, "J%d : DÉTENTION à partir du J7" % n)
-		assert_eq(day.has_evening, n < 10, "J%d : pas de soirée au J10 (D-053)" % n)
+		assert_eq(day.has_evening, n < 20, "J%d : soirée jusqu'au J19, pivot du J10 compris (D-076)" % n)
+		assert_eq(day.luciole_trust_on_breach, n <= 10, "J%d : confiance des Lucioles sur infraction (Acte I seulement)" % n)
+		if n >= 11:
+			quotas.append(day.air_quota)
+	assert_eq(quotas, [5, 5, 5, 5, 4, 4, 4, 4, 3, 3] as Array[int], "quota respiratoire (ACT2 §2.3)")
 	assert_eq(_catalog.get_day(10).wanted_notices.size(), 3, "avis de recherche du J10")
+	assert_gt(_catalog.get_day(10).evening_events.size(), 0, "soirée pivot du J10")
 
 
 func _check_scripted_cases(day: DayDef, label: String) -> void:
@@ -192,7 +212,14 @@ func _check_scripted_cases(day: DayDef, label: String) -> void:
 		var where: String = "%s %s" % [label, scripted.id]
 		assert_false(scripted.id == &"", where)
 		assert_between(scripted.at_index, 0, day.passenger_count - 1, where)
-		assert_false(indices.has(scripted.at_index), where + " index en double")
+		# Acte II (B25) : plusieurs définitions au même index si chacune, sauf la
+		# dernière, est conditionnelle (la première active l'emporte).
+		if indices.has(scripted.at_index):
+			var previous: ScriptedCaseDef = null
+			for other: ScriptedCaseDef in day.scripted_cases:
+				if other != scripted and other.at_index == scripted.at_index:
+					previous = other
+			assert_true(previous != null and previous.condition != null, where + " index en double sans condition")
 		indices.append(scripted.at_index)
 		for kind: AnomalyType.Kind in scripted.forced_anomalies:
 			assert_true(day.rule_set.can_detect(kind), "%s : %s non détectable" % [where, AnomalyType.name_of(kind)])
@@ -218,7 +245,7 @@ func _truth_path_exists(path: StringName) -> bool:
 
 
 func _is_date_path(path: StringName) -> bool:
-	return path in [&"birth_date", &"document.issue_date", &"document.expiry_date"]
+	return path in [&"birth_date", &"document.issue_date", &"document.expiry_date", &"firmware_date"]
 
 
 func _documents_with(path: StringName) -> int:

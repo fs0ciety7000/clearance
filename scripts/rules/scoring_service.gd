@@ -17,6 +17,11 @@
 ## - **Crédits** : `credit_per_correct` si correct, + prime de détention ; 0
 ##   sinon. L'amende dépend du rang de la citation dans la journée
 ##   (`fine_for`) : le DayController l'applique (`apply_citation`).
+## - **Quota respiratoire** (Acte II, R23 souple, D-077) : `quota_full` = le
+##   quota est atteint pour ce passager (compté). Passager en règle : REFUSÉ =
+##   correct et documenté d'office (`quota_refusal`) ; APPROUVÉ = correct mais
+##   imputé, **0 ₵** (`quota_overrun` posé par l'appelant, `QuotaTracker`).
+##   Un fraudeur approuvé reste une ENTRÉE IRRÉGULIÈRE.
 class_name ScoringService
 extends RefCounted
 
@@ -51,7 +56,7 @@ const LUCIOLE_REPORT_CODE: int = 1
 ## la visière) et `day` (RuleSet, barème) sont facultatifs : sans eux, pas de
 ## contrôle de procédure et barème par défaut.
 static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Case = null,
-		day: DayDef = null, detain_bonus: int = DEFAULT_DETAIN_BONUS) -> CaseResult:
+		day: DayDef = null, detain_bonus: int = DEFAULT_DETAIN_BONUS, quota_full: bool = false) -> CaseResult:
 	var result: CaseResult = CaseResult.new(case_id)
 	if verdict == null or key == null:
 		push_error("ScoringService.score: verdict ou clé manquant (%s)" % case_id)
@@ -65,6 +70,13 @@ static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Cas
 	result.expected_violations = key.expected_violations.duplicate()
 	result.verdict_correct = is_correct(verdict.kind, key.expected_verdict)
 	result.documented = is_documented(verdict.flagged, key.expected_violations)
+	result.quota_full = quota_full
+	var quota_denial: bool = quota_full and verdict.kind == VerdictKind.Kind.DENY \
+			and key.expected_verdict == VerdictKind.Kind.APPROVE
+	if quota_denial:
+		result.verdict_correct = true
+		result.documented = true
+		result.quota_refusal = true
 	if is_luciole_report(verdict, case):
 		result.luciole_report = true
 		result.verdict_correct = true
@@ -83,7 +95,9 @@ static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Cas
 				result.missed_violations = key.expected_violations.duplicate()
 				rule_id = _first_rule_id(key.expected_violations)
 		VerdictKind.Kind.DENY:
-			if key.expected_verdict == VerdictKind.Kind.APPROVE:
+			if quota_denial:
+				pass
+			elif key.expected_verdict == VerdictKind.Kind.APPROVE:
 				citation = CIT_UNJUSTIFIED_DENIAL
 			elif not result.documented:
 				citation = CIT_UNDOCUMENTED_DENIAL
@@ -121,6 +135,9 @@ static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Cas
 		result.wage = day.credit_per_correct if day != null else DEFAULT_CREDIT_PER_CORRECT
 		if verdict.kind == VerdictKind.Kind.DETAIN and key.expected_verdict == VerdictKind.Kind.DETAIN:
 			result.wage += detain_bonus
+		if quota_full and verdict.kind == VerdictKind.Kind.APPROVE:
+			# D-077 : entrée imputée au guichet, le cas ne rapporte rien.
+			result.wage = 0
 	result.credits_delta = result.wage
 	return result
 

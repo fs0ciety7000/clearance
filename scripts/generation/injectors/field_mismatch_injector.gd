@@ -2,7 +2,9 @@
 ## donnée (`truth_path`) est altérée sur **un** des documents qui la portent.
 ## Tous les champs de cette donnée deviennent des preuves (marqués utilisés),
 ## pour qu'aucune autre anomalie ne retire un document témoin.
-## Paramètres : `document_id` (document altéré), `field_path`.
+## Paramètres : `document_id` (document altéré), `field_path` ; Acte II :
+## `injected_value` (valeur imposée, SC-38 « Satō » ; `injected_value_from_case`
+## est résolu par le `CaseBuilder` en `injected_value`, SC-31/32).
 @abstract
 class_name FieldMismatchInjector
 extends AnomalyInjector
@@ -47,7 +49,8 @@ func inject(state: InjectionState) -> Anomaly:
 		return null
 	var target: FieldRef = targets[state.rng.randi_range(0, targets.size() - 1)]
 	var original: Variant = state.case.get_value(target)
-	var altered: Variant = alter(state, chosen_path, original)
+	var altered: Variant = state.params[&"injected_value"] if state.params.has(&"injected_value") \
+			else alter(state, chosen_path, original)
 	if altered == null or FieldValue.equals(original, altered):
 		return null
 	state.case.get_document(target.document_id).set_value(target.field_id, altered)

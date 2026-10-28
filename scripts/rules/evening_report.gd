@@ -33,6 +33,8 @@ var choices: Dictionary[StringName, StringName] = {}
 var flag_changes: Dictionary[StringName, Variant] = {}
 ## M7 : textes des événements de la soirée, dans l'ordre (lettres, résultats).
 var event_texts: PackedStringArray = []
+## Acte II : revenus récurrents crédités ce soir (`EveningService.income_lines`).
+var income_lines: Array[ExpenseLine] = []
 
 
 func add_event(key: String, tone: Tone, member: StringName = &"") -> void:

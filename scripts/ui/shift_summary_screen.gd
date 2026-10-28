@@ -10,6 +10,8 @@
 ## signalement » (objets remis à la Garde, jaune) avec le total versé ce soir ;
 ## décision sur l'objet glissé rappelée dans la ligne du registre.
 ## « RENTRER AU BLOC PÉTREL » → `finished(&"evening")`.
+## Acte II : tuile « ENTRÉES IMPUTÉES » (dépassements du quota), puces
+## « IMPUTÉE » / « REFUS QUOTA » dans le registre du guichet.
 class_name ShiftSummaryScreen
 extends ScreenBase
 
@@ -99,6 +101,13 @@ func _tiles() -> Control:
 				UiText.t("sum_reports_detail", "Objets remis à la Garde"), DS.ACCENT_YELLOW, UiIcon.Kind.LOGO)
 		report_tile.name = "ReportTile"
 		row.add_child(report_tile)
+	# Acte II (R23, D-077) : entrées imputées au guichet (0 ₵ chacune).
+	var overruns: int = summary.get_overrun_count()
+	if overruns > 0:
+		var overrun_tile: PanelContainer = stat_tile(UiText.t("ss_overruns", "Entrées imputées").to_upper(), str(overruns),
+				UiText.t("sum_overruns_detail", "Au-delà du quota · 0 ₵ chacune"), DS.STATE_AMBER, UiIcon.Kind.BREATH)
+		overrun_tile.name = "OverrunTile"
+		row.add_child(overrun_tile)
 	var total_detail: String = UiText.t("sum_net_detail", "Versé ce soir par la Banque Aurel")
 	if bribes > 0 or reports > 0:
 		total_detail = UiText.tf("sum_total_detail", [credits(summary.get_total_income(), true)], "Ce soir au total : %s")
@@ -153,6 +162,10 @@ func _ledger_row(result: CaseResult) -> Control:
 	var status_color: Color = DS.ACCENT_CYAN if result.correct else (DS.STATE_AMBER if result.verdict_correct else DS.STATE_RED)
 	var status_text: String = UiText.t("sum_ok", "Conforme") if result.correct else UiText.t(result.citation_reason_key, result.citation_reason_key)
 	line.add_child(chip(status_text, UiIcon.Kind.CHECK if result.correct else UiIcon.Kind.WARNING, status_color))
+	if result.quota_overrun:
+		line.add_child(chip(UiText.t("sum_item_overrun", "IMPUTÉE"), UiIcon.Kind.BREATH, DS.STATE_AMBER))
+	elif result.quota_refusal:
+		line.add_child(chip(UiText.t("sum_item_quota_refusal", "REFUS QUOTA"), UiIcon.Kind.BREATH, DS.TEXT_SECONDARY))
 	if result.bribe_credits > 0:
 		line.add_child(chip(UiText.tf("sum_item_bribe", [credits(result.bribe_credits, true)], "ENVELOPPE %s"), UiIcon.Kind.WARNING, DS.STATE_AMBER))
 	if result.report_credits > 0:

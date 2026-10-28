@@ -13,6 +13,9 @@ var cost: int = 0
 var mandatory: bool = false
 ## Proche concerné (médicaments), vide sinon.
 var member_id: StringName = &""
+## Acte II : proche dont c'est la ration d'air (`ration_<proche>`), vide sinon.
+## Ration non payée → ESSOUFFLÉ·E (M2).
+var ration_of: StringName = &""
 var paid: bool = false
 
 

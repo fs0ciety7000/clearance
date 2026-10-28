@@ -182,7 +182,7 @@ func required_width() -> float:
 			continue
 		count += 1
 		if control == _status:
-			total += STATUS_MIN_W
+			total += status_min_width()
 		else:
 			total += control.get_combined_minimum_size().x
 	total += _row.get_theme_constant(&"separation") * maxi(count - 1, 0)
@@ -190,6 +190,14 @@ func required_width() -> float:
 	if panel != null:
 		total += panel.get_minimum_size().x
 	return total
+
+
+## Largeur minimale de la ligne d'état à la taille de texte en vigueur : elle
+## tient sur deux lignes dans la barre (texte 1,5, plancher du Steam Deck :
+## QA-031) ; sinon la barre abandonne un palier de plus.
+func status_min_width() -> float:
+	var font_size: int = get_theme_font_size(&"font_size", &"BodySmall")
+	return STATUS_MIN_W * maxf(float(font_size) / DS.FS_BODY_S, 1.0)
 
 
 ## Recopie les polices du thème (BodySmall / BodyStrong) dans la ligne d'état

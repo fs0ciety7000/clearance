@@ -509,6 +509,8 @@ Joueur parfait (graine 20 871 315) : 40/50/55 ₵ gagnés, solde 24/28/47 ₵, t
 
 Lecture : les sept fins sont atteignables (F3 aussi par une politique « loyer seulement », F2 « rien payé », tests `test_m7_campaign.gd`) ; un joueur à 80 % garde le foyer debout (≥ 1 poste sacrifié : 29–35 % des soirs J4–J6, 16–21 % J7–J9) et finit le plus souvent sur F7, F4 demandant ≥ 85 % de conformité ; un joueur à 95 % paie tout et accumule (solde ≈ 260 ₵ au J10, 114 ₵ à 80 %) ; un joueur à 60 % s'effondre avant le J10 dans ~88 % des campagnes (amendes escaladées : net ≈ 10–20 ₵/jour) — à arbitrer (D-059 : plafond d'amendes ou prime d'assiduité).
 
+**État M8 — partie A, Acte II J10–J20 (logique et données, Gameplay Systems / Game Designer)** : campagne jouable J1–J20 avec l'UI actuelle (contrat ARCHITECTURE §7.2). Faits : pivot du J10 avec soirée (D-076 : suspicion ÷ 2, vannes, Ilan, promotion, « Embarquer » = F6), quota respiratoire souple (D-077), rations d'air (ESSOUFFLÉ·E → MALADE en 2 soirs), prélèvements J11/J17 (D-079 : 30 % au-delà de 40 ₵), salaire d'Ilan, scanner partiel, couvre-feu horodaté, révocations, R23–R31, 4 documents, anomalies 17–20, SC-23 → SC-50, briefings J11–J20, soirées J10–J19, Revue du J17, fins F1–F9 (D-078) et épilogues, sauvegarde v4. Équilibrage J1–J20 mesuré : docs/ACT2.md §6.5 — 80 % : J20 atteint 97,5 %, fin F7 par défaut ; 95 % : F4 90 % (`loyal`), F5 95 % (`luciole`), F6/F8/F9 100 % ; 60 % : aucune campagne n'atteint le J11 (l'Acte II reste réservé aux joueurs ≥ ~75 %). Écart ouvert : F1 par la Revue (47,5 % pour `mercenary2`, cible 90 %).
+
 ---
 
 ## 14. Métriques de playtest
