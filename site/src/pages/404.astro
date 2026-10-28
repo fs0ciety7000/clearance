@@ -1,0 +1,36 @@
+---
+import Base from '../layouts/Base.astro';
+import Mark from '../components/Mark.astro';
+import Icon from '../components/Icon.astro';
+import { t } from '../lib/i18n';
+const fr = t('fr'), en = t('en');
+---
+<Base lang="fr" title={fr.notFound.meta} description={fr.notFound.text} path="/404" noindex>
+  <main id="main" class="nf gridbg">
+    <div class="card chamfer chamfer-l">
+      <header><Mark size={22} /><span class="label">Consortium · Bureau de Continuité</span></header>
+      <p class="code mono">{fr.notFound.code}</p>
+      <h1>{fr.notFound.title}</h1>
+      <div class="stamp" aria-hidden="true"><Icon name="octagon" size={28} />{fr.notFound.title}</div>
+      <p>{fr.notFound.text}</p>
+      <p class="en" lang="en">{en.notFound.text}</p>
+      <div class="ctas">
+        <a class="btn btn-primary" href="/">{fr.notFound.back}</a>
+        <a class="btn btn-secondary" href="/en/" lang="en">{en.notFound.back}</a>
+      </div>
+    </div>
+  </main>
+</Base>
+<style>
+  .nf{min-height:100vh;min-height:100svh;display:grid;place-items:center;padding:24px}
+  .card{position:relative;width:min(560px,100%);background:var(--panel);border:1px solid var(--cyan-40);padding:32px;display:grid;gap:16px;overflow:hidden}
+  header{display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  header .label{color:var(--cyan);font-size:11px}
+  .code{color:var(--tx2);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+  h1{font-family:var(--f-display);font-weight:700;font-size:clamp(44px,10vw,72px);line-height:.9;text-transform:uppercase}
+  .stamp{position:absolute;right:24px;top:96px;display:inline-flex;gap:10px;align-items:center;color:var(--red);font-family:var(--f-display);font-weight:700;font-size:22px;text-transform:uppercase;padding:8px 14px;border:2px solid currentColor;outline:1px solid currentColor;outline-offset:3px;transform:rotate(-8deg);opacity:.9}
+  p{color:var(--tx2)}
+  .en{font-size:14px}
+  .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+  @media (max-width:520px){.stamp{position:static;transform:rotate(-4deg);justify-self:start}}
+</style>

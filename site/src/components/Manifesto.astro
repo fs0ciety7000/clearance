@@ -1,0 +1,70 @@
+---
+import { t, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const d = t(Astro.props.lang);
+// *mot* → mot mis en avant. Chaque mot devient un <span> pour la révélation au scroll.
+let inside = false;
+const words = d.manifesto.text.split(/\s+/).map((raw) => {
+  const opens = raw.startsWith('*');
+  if (opens) inside = true;
+  const hl = inside;
+  if (raw.replace(/^\*/, '').includes('*')) inside = false;
+  return { hl, w: raw.replace(/\*/g, '') };
+});
+---
+<section class="section manifesto" id="jeu" aria-labelledby="manifesto-label">
+  <div class="wrap">
+    <p class="kicker" id="manifesto-label">{d.manifesto.label}</p>
+    <h2 class="statement" data-words>
+      {words.map((x) => <><span class={x.hl ? 'w hl' : 'w'}>{x.w}</span>{' '}</>)}
+    </h2>
+    <ol class="pillars" data-stagger="110">
+      {d.manifesto.pillars.map((p) => (
+        <li data-reveal>
+          <span class="n mono">{p.n}</span>
+          <h3>{p.title}</h3>
+          <p>{p.text}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+<style>
+  .manifesto{padding-top:clamp(96px,12vw,168px)}
+  .statement{margin:clamp(28px,3vw,40px) 0 clamp(80px,10vw,140px);font-family:var(--f-display);font-weight:600;font-size:clamp(28px,4.4vw,64px);line-height:1.08;letter-spacing:-.01em;max-width:22ch;max-width:min(100%,1180px);color:var(--tx2);text-wrap:pretty}
+  /* éteint : #6A7484 (≥ 3:1 sur #07080C, grand texte) → allumé : tx2 / tx */
+  .w{transition:color .3s linear}
+  .hl{color:var(--tx)}
+  .js .statement .w:not(.on){color:#6A7484}
+  .pillars{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+  .pillars li{padding:28px 28px 8px 0;border-right:1px solid var(--line);margin-right:28px}
+  .pillars li:last-child{border-right:0;margin-right:0}
+  .n{display:block;font-size:12px;color:var(--yellow);letter-spacing:.1em;margin-bottom:40px}
+  h3{font-family:var(--f-display);font-weight:600;font-size:22px;line-height:1.15;text-transform:uppercase;letter-spacing:.01em;margin-bottom:12px}
+  .pillars p{color:var(--tx2);font-size:15.5px;line-height:1.6;max-width:32ch}
+  @media (max-width:980px){.pillars{grid-template-columns:1fr 1fr}.pillars li:nth-child(2){border-right:0;margin-right:0}.pillars li{border-bottom:1px solid var(--line);padding-bottom:28px}}
+  @media (max-width:560px){.pillars{grid-template-columns:1fr}.pillars li{border-right:0;margin-right:0}}
+  @media (prefers-reduced-motion:reduce){.js .statement .w:not(.on){color:inherit}}
+</style>
+<script>
+  // Allumage mot à mot lié au scroll.
+  const el = document.querySelector<HTMLElement>('[data-words]');
+  if (el) {
+    const ws = [...el.querySelectorAll<HTMLElement>('.w')], N = ws.length;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) ws.forEach((w) => w.classList.add('on'));
+    else {
+      let ticking = false, lit = -1;
+      const update = () => {
+        ticking = false;
+        const r = el.getBoundingClientRect(), vh = innerHeight;
+        const p = Math.min(1, Math.max(0, (0.85 * vh - r.top) / (0.5 * vh + r.height)));
+        const n = Math.round(p * N);
+        if (n === lit) return;
+        lit = n;
+        ws.forEach((w, i) => w.classList.toggle('on', i < n));
+      };
+      addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+      requestAnimationFrame(update);
+    }
+  }
+</script>

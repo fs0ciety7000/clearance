@@ -1,0 +1,50 @@
+---
+import { t, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const all = t(Astro.props.lang);
+const c = all.credits, f = all.faq;
+---
+<section class="section cf" aria-labelledby="cr-title">
+  <div class="wrap cols">
+    <div>
+      <p class="kicker">{c.label}</p>
+      <h2 class="h3" id="cr-title">{c.title}</h2>
+      <dl class="cr">
+        {c.groups.map((g) => <div><dt class="label">{g.name}</dt><dd>{g.items.map((i) => <span>{i}</span>)}</dd></div>)}
+      </dl>
+      <p class="note">{c.note}</p>
+    </div>
+    <div>
+      <p class="kicker">{f.label}</p>
+      <h2 class="h3">{f.title}</h2>
+      <div class="faq">
+        {f.items.map((x) => (
+          <details>
+            <summary><span>{x.q}</span><i aria-hidden="true"></i></summary>
+            <p>{x.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+  .cf{border-top:1px solid var(--line)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,7vw,120px)}
+  .h3{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,3vw,40px);text-transform:uppercase;line-height:1;margin:20px 0 32px}
+  .cr>div{display:grid;grid-template-columns:130px 1fr;gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+  .cr dt{font-size:11px;padding-top:3px}
+  .cr dd{display:grid;gap:4px;font-size:15px}
+  .note{margin-top:20px;font-size:13.5px;color:var(--tx2);line-height:1.6;max-width:52ch}
+  .faq{border-top:1px solid var(--line)}
+  details{border-bottom:1px solid var(--line)}
+  summary{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:60px;padding:14px 0;cursor:pointer;list-style:none;font-weight:600;font-size:16px}
+  summary::-webkit-details-marker{display:none}
+  summary i{position:relative;width:14px;height:14px;flex:none}
+  summary i::before,summary i::after{content:"";position:absolute;left:0;right:0;top:6px;height:2px;background:var(--cyan);transition:transform var(--dur-base) var(--ease)}
+  summary i::after{transform:rotate(90deg)}
+  details[open] summary i::after{transform:rotate(0)}
+  summary:hover span{color:var(--cyan)}
+  details p{padding:0 0 20px;color:var(--tx2);font-size:15.5px;line-height:1.6;max-width:60ch}
+  @media (max-width:900px){.cols{grid-template-columns:1fr}.cr>div{grid-template-columns:1fr;gap:4px}}
+</style>

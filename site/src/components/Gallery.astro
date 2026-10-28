@@ -1,0 +1,87 @@
+---
+import { Picture, getImage } from 'astro:assets';
+import Icon from './Icon.astro';
+import { shot } from '../lib/shots';
+import { t, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const d = t(Astro.props.lang).gallery;
+const keys = Object.keys(d.items);
+const spans = ['s7', 's5', 's4', 's4', 's4', 's5', 's7', 's4', 's4', 's4'];
+const full = await Promise.all(keys.map((k) => getImage({ src: shot(k), format: 'webp', width: Math.min(1920, shot(k).width), quality: 82 })));
+---
+<section class="section gal" id="galerie" aria-labelledby="gal-title">
+  <div class="wrap">
+    <header class="section-head head">
+      <div><p class="kicker">{d.label}</p><h2 class="h2" id="gal-title" data-reveal>{d.title}</h2></div>
+      <p class="label note">{d.note}</p>
+    </header>
+    <ul class="grid">
+      {keys.map((k, i) => (
+        <li class={spans[i]} data-reveal style={`--d:${(i % 3) * 80}ms`}>
+          <button type="button" class="thumb" data-open={i} data-full={full[i].src} data-w={full[i].attributes.width} data-h={full[i].attributes.height} aria-label={`${d.open} : ${d.items[k]}`}>
+            <Picture fallbackFormat="webp" src={shot(k)} alt={d.items[k]} formats={['avif', 'webp']} widths={[480, 800, 1200]} sizes={spans[i] === 's12' ? '(max-width: 900px) 92vw, 1360px' : '(max-width: 900px) 92vw, 50vw'} loading="lazy" decoding="async" />
+            <span class="cap"><span class="mono">{String(i + 1).padStart(2, '0')}</span>{d.items[k]}<Icon name="plus" size={16} /></span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  </div>
+  <dialog class="lb" data-lb aria-label={d.title}>
+    <div class="lb-in">
+      <img data-lb-img alt="" />
+      <p class="lb-cap mono" data-lb-cap></p>
+      <button type="button" class="lb-btn close" data-lb-close aria-label={d.close}><Icon name="close" size={22} /></button>
+      <button type="button" class="lb-btn prev" data-lb-prev aria-label={d.prev}><Icon name="chev-l" size={22} /></button>
+      <button type="button" class="lb-btn next" data-lb-next aria-label={d.next}><Icon name="chev-r" size={22} /></button>
+    </div>
+  </dialog>
+</section>
+<style>
+  .gal{border-top:1px solid var(--line)}
+  .head{grid-template-columns:1fr auto;align-items:end}
+  .head>div{display:grid;gap:24px}
+  .note{font-size:11px}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:clamp(190px,21vw,320px);gap:12px}
+  .s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}.s7{grid-column:span 7}.s12{grid-column:span 12}
+  .thumb{position:relative;display:block;width:100%;height:100%;overflow:hidden;background:var(--panel);border:1px solid var(--line);text-align:left}
+  .thumb :global(picture){display:block;width:100%;height:100%}
+  .thumb :global(img){width:100%;height:100%;object-fit:cover;object-position:50% 20%;transition:transform .7s var(--ease),filter .4s}
+  .thumb:hover :global(img){transform:scale(1.035)}
+  .cap{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding:28px 16px 12px;font-size:13.5px;font-weight:500;background:linear-gradient(to top,#07080CF2,#07080C00);color:var(--tx)}
+  .cap .mono{font-size:11px;color:var(--yellow)}
+  .cap :global(svg){margin-left:auto;color:var(--cyan);opacity:0;transition:opacity var(--dur-fast)}
+  .thumb:hover .cap :global(svg),.thumb:focus-visible .cap :global(svg){opacity:1}
+  .thumb:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .lb{padding:0;border:0;max-width:100vw;max-height:100vh;width:100vw;height:100vh;background:#07080CF7;color:var(--tx)}
+  .lb::backdrop{background:#07080CE6}
+  .lb-in{position:relative;width:100%;height:100%;display:grid;place-items:center;padding:64px clamp(12px,6vw,96px)}
+  .lb img{max-width:100%;max-height:calc(100vh - 140px);width:auto;height:auto;border:1px solid var(--cyan-40)}
+  .lb-cap{position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2)}
+  .lb-btn{position:absolute;width:48px;height:48px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line)}
+  .lb-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .close{top:12px;right:12px}.prev{left:12px;top:50%;transform:translateY(-50%)}.next{right:12px;top:50%;transform:translateY(-50%)}
+  @media (max-width:900px){.grid{grid-auto-rows:auto}.grid>li{grid-column:span 12}.thumb :global(img){aspect-ratio:16/9;height:auto}.head{grid-template-columns:1fr}}
+</style>
+<script>
+  const lb = document.querySelector<HTMLDialogElement>('[data-lb]');
+  if (lb) {
+    const btns = [...document.querySelectorAll<HTMLButtonElement>('[data-open]')];
+    const img = lb.querySelector<HTMLImageElement>('[data-lb-img]')!;
+    const cap = lb.querySelector<HTMLElement>('[data-lb-cap]')!;
+    let cur = 0;
+    const show = (i: number) => {
+      cur = (i + btns.length) % btns.length;
+      const b = btns[cur];
+      const alt = b.querySelector('img')?.alt ?? '';
+      img.src = b.dataset.full!; img.width = Number(b.dataset.w); img.height = Number(b.dataset.h); img.alt = alt;
+      cap.textContent = `${String(cur + 1).padStart(2, '0')} / ${btns.length} — ${alt}`;
+    };
+    btns.forEach((b, i) => b.addEventListener('click', () => { show(i); lb.showModal(); }));
+    lb.querySelector('[data-lb-close]')!.addEventListener('click', () => lb.close());
+    lb.querySelector('[data-lb-prev]')!.addEventListener('click', () => show(cur - 1));
+    lb.querySelector('[data-lb-next]')!.addEventListener('click', () => show(cur + 1));
+    lb.addEventListener('click', (e) => { if (e.target === lb || (e.target as HTMLElement).classList.contains('lb-in')) lb.close(); });
+    lb.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') show(cur - 1); if (e.key === 'ArrowRight') show(cur + 1); });
+    lb.addEventListener('close', () => btns[cur].focus());
+  }
+</script>

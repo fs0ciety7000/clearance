@@ -1,0 +1,132 @@
+---
+import { Picture } from 'astro:assets';
+import { shot } from '../lib/shots';
+import { t, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const d = t(Astro.props.lang);
+const p = d.passengers;
+const pic = { formats: ['avif', 'webp'] as ('avif' | 'webp')[], loading: 'lazy' as const, decoding: 'async' as const };
+---
+<section class="section pax" id="passagers" aria-labelledby="pax-title">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="kicker">{p.label}</p>
+      <h2 class="h2" id="pax-title" data-reveal>{p.title}</h2>
+      <p class="lede" data-reveal style="--d:.1s">{p.intro}</p>
+    </header>
+
+    <div class="lineup" data-reveal style="--y:40px">
+      <Picture fallbackFormat="webp" src={shot('m6_lineup')} alt={p.lineupAlt} widths={[640, 1024, 1440, 1920]} sizes="(max-width: 1400px) 100vw, 1360px" {...pic} />
+    </div>
+
+    <div class="bento">
+      <article class="cell visor" data-reveal>
+        <div class="compare" data-compare style="--p:50%">
+          <Picture fallbackFormat="webp" src={shot('m6_visor_up_crop')} alt={p.visor.altUp} widths={[600]} sizes="(max-width: 900px) 92vw, 600px" class="cmp-img" {...pic} />
+          <div class="cmp-top" aria-hidden="true">
+            <Picture fallbackFormat="webp" src={shot('m6_visor_down_crop')} alt="" widths={[600]} sizes="(max-width: 900px) 92vw, 600px" class="cmp-img" {...pic} />
+          </div>
+          <div class="cmp-line" aria-hidden="true"><span>◀ ▶</span></div>
+          <span class="cmp-tag l mono" aria-hidden="true">{p.visor.before}</span>
+          <span class="cmp-tag r mono" aria-hidden="true">{p.visor.after}</span>
+          <input type="range" min="0" max="100" value="50" aria-label={p.visor.range} data-range />
+        </div>
+        <div class="txt">
+          <h3>{p.visor.title}</h3>
+          <p>{p.visor.text}</p>
+        </div>
+      </article>
+
+      <article class="cell look" data-reveal style="--d:.08s">
+        <div class="portraits">
+          <Picture fallbackFormat="webp" src={shot('m6_portraits')} alt={p.lookalikes.alt} widths={[560, 1120]} sizes="(max-width: 900px) 92vw, 560px" {...pic} />
+        </div>
+        <div class="txt">
+          <h3>{p.lookalikes.title}</h3>
+          <p>{p.lookalikes.text}</p>
+        </div>
+      </article>
+
+      <article class="cell tessar" data-reveal>
+        <div class="txt">
+          <h3>{p.tessar.title}</h3>
+          <p>{p.tessar.text}</p>
+        </div>
+        <ul class="lex">
+          {p.tessar.lexicon.map((x) => (
+            <li><span class="ts">{x.ts}</span><span class="tr">{x.fr}</span></li>
+          ))}
+        </ul>
+      </article>
+
+      <article class="cell implants" data-reveal style="--d:.08s">
+        <div class="txt">
+          <h3>{p.implants.title}</h3>
+          <p>{p.implants.text}</p>
+        </div>
+        <ul class="imp">
+          {p.implants.items.map((x) => (
+            <li class={x.code === 'MIL-' ? 'mil' : ''}><b class="mono">{x.code}</b><span>{x.name}</span><small>{x.note}</small></li>
+          ))}
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .pax{border-top:1px solid var(--line);overflow:hidden}
+  .lineup{margin:0 calc(-1*var(--gut)) clamp(40px,5vw,72px);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+  .lineup :global(img){width:100%;max-height:520px;object-fit:cover;object-position:center 30%}
+  .bento{display:grid;grid-template-columns:7fr 5fr;gap:16px}
+  .cell{background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+  .txt{padding:clamp(22px,2.4vw,32px)}
+  h3{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,2.2vw,30px);text-transform:uppercase;line-height:1.05;margin-bottom:12px}
+  .txt p{color:var(--tx2);font-size:15.5px;line-height:1.6;max-width:46ch}
+  .look,.implants{grid-column:2}
+  .visor,.tessar{grid-column:1}
+
+  .compare{position:relative;aspect-ratio:600/376;background:var(--void);overflow:hidden;touch-action:pan-y}
+  .compare :global(.cmp-img){position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .cmp-top{position:absolute;inset:0;clip-path:inset(0 calc(100% - var(--p)) 0 0)}
+  .cmp-line{position:absolute;top:0;bottom:0;left:var(--p);width:2px;margin-left:-1px;background:var(--cyan);box-shadow:0 0 14px var(--cyan-60);pointer-events:none}
+  .cmp-line span{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--cyan);color:var(--void);font-size:10px;padding:8px 6px;letter-spacing:2px;white-space:nowrap}
+  .cmp-tag{position:absolute;top:14px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:5px 8px;background:#07080CCC;pointer-events:none}
+  .cmp-tag.l{left:14px;color:var(--amber)}
+  .cmp-tag.r{right:14px;color:var(--cyan)}
+  .compare input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0}
+  .compare:has(input:focus-visible){outline:2px solid var(--cyan);outline-offset:2px}
+
+  .portraits{background:#232A38;border-bottom:1px solid var(--line)}
+  .portraits :global(img){width:100%}
+
+  .tessar{justify-content:space-between}
+  .lex{border-top:1px solid var(--line)}
+  .lex li{display:grid;grid-template-columns:minmax(150px,.8fr) 1fr;gap:16px;padding:14px clamp(22px,2.4vw,32px);border-bottom:1px solid var(--line);align-items:baseline}
+  .lex li:last-child{border-bottom:0}
+  .ts{font-family:var(--f-display);font-weight:600;font-size:20px;color:var(--tx)}
+  .tr{font-size:14.5px;color:var(--tx2)}
+
+  .imp{display:grid;border-top:1px solid var(--line)}
+  .imp li{display:grid;grid-template-columns:64px 1fr;column-gap:16px;padding:12px clamp(22px,2.4vw,32px);border-bottom:1px solid var(--line)}
+  .imp li:last-child{border-bottom:0}
+  .imp b{grid-row:span 2;font-size:15px;color:var(--cyan);padding-top:2px}
+  .imp li.mil b{color:var(--red)}
+  .imp span{font-weight:600;font-size:15px}
+  .imp small{font-size:13.5px;color:var(--tx2)}
+
+  @media (max-width:900px){
+    .bento{grid-template-columns:1fr}
+    .look,.implants,.visor,.tessar{grid-column:auto}
+    .lex li{grid-template-columns:1fr;gap:2px}
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-compare]').forEach((c) => {
+    const r = c.querySelector<HTMLInputElement>('[data-range]')!;
+    const set = () => c.style.setProperty('--p', `${r.value}%`);
+    r.addEventListener('input', set);
+    set();
+  });
+</script>

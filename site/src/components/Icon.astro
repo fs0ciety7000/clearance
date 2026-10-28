@@ -1,0 +1,27 @@
+---
+// Icônes SVG inline, trait carré (DS §6).
+interface Props { name: 'arrow' | 'download' | 'diamond' | 'check' | 'octagon' | 'neq' | 'eq' | 'tri' | 'windows' | 'apple' | 'linux' | 'deck' | 'plus' | 'close' | 'menu' | 'chev-l' | 'chev-r' | 'copy' | 'up' | 'file'; size?: number; class?: string }
+const { name, size = 20, class: cls } = Astro.props;
+---
+<svg class={cls} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true" focusable="false">
+  {name === 'arrow' && <path d="M4 12h15M13 6l6 6-6 6" />}
+  {name === 'download' && <><path d="M12 3v12M6 10l6 6 6-6" /><path d="M4 20h16" /></>}
+  {name === 'diamond' && <path d="M12 3l9 9-9 9-9-9z" />}
+  {name === 'check' && <><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.7 2.7L16.5 9.5" /></>}
+  {name === 'octagon' && <><path d="M8.3 3h7.4L21 8.3v7.4L15.7 21H8.3L3 15.7V8.3z" /><path d="M9 9l6 6M15 9l-6 6" /></>}
+  {name === 'neq' && <><path d="M12 2.5l9.5 9.5-9.5 9.5L2.5 12z" /><path d="M8.5 10.5h7M8.5 13.5h7M13.5 8l-3 8" /></>}
+  {name === 'eq' && <><path d="M7 10h10M7 14h10" /></>}
+  {name === 'tri' && <><path d="M12 3l10 18H2z" /><path d="M12 10v5M12 17.5v.5" /></>}
+  {name === 'windows' && <><path d="M3 5.5l7.5-1v7H3zM12.5 4.2L21 3v8.5h-8.5zM3 12.5h7.5v7L3 18.5zM12.5 12.5H21V21l-8.5-1.2z" fill="currentColor" stroke="none" /></>}
+  {name === 'apple' && <path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.9-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.5-1-2.5-3.8zM14.1 5.8c.6-.8 1.1-1.8 1-2.8-.9 0-2 .6-2.6 1.4-.6.7-1.1 1.7-1 2.7 1 .1 2-.5 2.6-1.3z" fill="currentColor" stroke="none" />}
+  {name === 'linux' && <><path d="M12 3c-2.2 0-3.4 1.9-3.4 4.3 0 1.6.4 2.5-.6 4-1.2 1.7-2.5 3.6-2.5 5.6 0 .9.3 1.6.8 2.1M12 3c2.2 0 3.4 1.9 3.4 4.3 0 1.6-.4 2.5.6 4 1.2 1.7 2.5 3.6 2.5 5.6 0 .9-.3 1.6-.8 2.1" /><path d="M6.5 19.5c1 .9 3 1.5 5.5 1.5s4.5-.6 5.5-1.5" /><circle cx="10.4" cy="7.6" r=".6" fill="currentColor" /><circle cx="13.6" cy="7.6" r=".6" fill="currentColor" /><path d="M10.5 10l1.5 1 1.5-1" /></>}
+  {name === 'deck' && <><path d="M2 8h20v8H2z" /><circle cx="5.5" cy="12" r="1.3" /><circle cx="18.5" cy="12" r="1.3" /><path d="M8 10h8v4H8z" /></>}
+  {name === 'plus' && <path d="M12 5v14M5 12h14" />}
+  {name === 'close' && <path d="M6 6l12 12M18 6L6 18" />}
+  {name === 'menu' && <path d="M3 8h18M3 16h18" />}
+  {name === 'chev-l' && <path d="M15 5l-7 7 7 7" />}
+  {name === 'chev-r' && <path d="M9 5l7 7-7 7" />}
+  {name === 'copy' && <><path d="M8 8h12v12H8z" /><path d="M4 16V4h12" /></>}
+  {name === 'up' && <path d="M12 20V5M6 11l6-6 6 6" />}
+  {name === 'file' && <><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /></>}
+</svg>
