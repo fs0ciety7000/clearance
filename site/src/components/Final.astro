@@ -1,0 +1,56 @@
+---
+import Icon from './Icon.astro';
+import Mark from './Mark.astro';
+import { t, type Lang } from '../lib/i18n';
+import { DOWNLOAD_URL } from '../config';
+interface Props { lang: Lang }
+const all = t(Astro.props.lang);
+const d = all.final, f = all.footer;
+---
+<section class="final" aria-labelledby="final-title">
+  <div class="wrap in">
+    <div class="stamp" data-stamp-final aria-hidden="true">
+      <span class="s-ico"><Icon name="check" size={44} /></span>
+      <span class="s-txt">{d.stamp}</span>
+      <span class="s-meta mono">{d.stampMeta}</span>
+    </div>
+    <h2 class="h2" id="final-title">{d.title}</h2>
+    <p class="lede">{d.text}</p>
+    <a class="btn btn-primary big" href={DOWNLOAD_URL} rel="noopener"><Icon name="download" size={20} />{d.cta}</a>
+    <p class="label small">{d.private}</p>
+  </div>
+</section>
+<footer class="foot">
+  <div class="wrap row">
+    <a class="brand" href="#main"><Mark size={20} /><span>CLEARANCE</span></a>
+    <p class="slogan">{f.slogan}</p>
+    <a class="top mono" href="#main"><Icon name="up" size={16} />{f.top}</a>
+  </div>
+  <div class="wrap row2"><p>{f.rights}</p><p class="mono">v0.8.1</p></div>
+</footer>
+<style>
+  .final{position:relative;padding-block:clamp(120px,16vw,220px);border-top:1px solid var(--line);overflow:hidden;background:radial-gradient(900px 420px at 50% 100%,#FFE6000D,transparent 70%),var(--void)}
+  .in{display:grid;justify-items:center;text-align:center;gap:24px}
+  .in .h2{max-width:16ch}
+  .in .lede{margin-inline:auto}
+  .big{min-height:60px;padding:0 34px;font-size:15px;margin-top:12px}
+  .small{font-size:11px}
+  .stamp{position:relative;display:grid;justify-items:center;gap:6px;padding:18px 34px 14px;color:var(--green);border:3px solid currentColor;outline:1px solid currentColor;outline-offset:5px;transform:rotate(-4deg);margin-bottom:28px}
+  .s-txt{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,5vw,56px);letter-spacing:.08em;text-transform:uppercase;line-height:1}
+  .s-meta{font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.8}
+  .js .stamp{opacity:0}
+  .js .stamp.hit{animation:hit .5s var(--ease-impact) forwards}
+  @keyframes hit{0%{opacity:0;transform:rotate(-4deg) scale(1.7)}45%{opacity:1;transform:rotate(-4deg) scale(.95);box-shadow:0 0 60px -6px var(--green)}100%{opacity:1;transform:rotate(-4deg) scale(1);box-shadow:0 0 0 0 transparent}}
+  .foot{border-top:1px solid var(--line);padding:40px 0 max(32px,env(safe-area-inset-bottom))}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;letter-spacing:.1em;min-height:44px}
+  .slogan{color:var(--yellow);font-size:14px}
+  .top{display:inline-flex;gap:8px;align-items:center;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2);min-height:44px}
+  .top:hover{color:var(--cyan)}
+  .row2{display:flex;justify-content:space-between;gap:16px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--tx2);flex-wrap:wrap}
+  @media (prefers-reduced-motion:reduce){.js .stamp{opacity:1}.js .stamp.hit{animation:none}}
+</style>
+<script>
+  const s = document.querySelector('[data-stamp-final]');
+  if (s) new IntersectionObserver(([e], o) => { if (e.isIntersecting) { s.classList.add('hit'); o.disconnect(); } }, { threshold: 0.6 }).observe(s);
+</script>

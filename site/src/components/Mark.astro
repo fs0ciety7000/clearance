@@ -1,0 +1,9 @@
+---
+// Marque CLEARANCE : losange + chevron de l'icône du jeu (icon.svg).
+interface Props { size?: number }
+const { size = 22 } = Astro.props;
+---
+<svg width={size} height={size} viewBox="0 0 128 128" aria-hidden="true" focusable="false">
+  <path d="M64 22 L104 64 L64 106 L24 64 Z" fill="none" stroke="#00E5FF" stroke-width="10" stroke-linejoin="miter" />
+  <path d="M48 56 L64 72 L80 56" fill="none" stroke="#00E5FF" stroke-width="10" stroke-linecap="square" />
+</svg>
