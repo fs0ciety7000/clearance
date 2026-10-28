@@ -1,6 +1,9 @@
 ## Affichage du foyer (Ilan, Noa, Dora — GDD §5.4, LORE §11) : nom, rôle,
 ## état (icône + couleur + texte, jamais la couleur seule — UI_FLOW §6).
 ## Fonctions statiques partagées par le briefing, la soirée et l'écran de fin.
+## Acte II (ARCHITECTURE §7.2) : ESSOUFFLÉ·E (ambre, souffle), DANS LA SOUTE /
+## PARTIE À TYCHO (absent·e : gris secondaire, porte), MIS·E EN ATTENTE
+## (jaune Consortium, tampon DÉTENTION) — distinct de PERDU·E (muet, cadenas).
 class_name HouseholdView
 extends RefCounted
 
@@ -32,22 +35,32 @@ static func state_text(member: Household.Member) -> String:
 
 
 static func state_color(member: Household.Member) -> Color:
+	if member.health == Household.Health.LOST:
+		return DS.TEXT_MUTED
+	if member.detained:
+		return DS.ACCENT_YELLOW
+	if member.away != &"":
+		return DS.TEXT_SECONDARY
 	match member.health:
-		Household.Health.LOST:
-			return DS.TEXT_MUTED
 		Household.Health.GRAVELY_SICK, Household.Health.SICK:
 			return DS.STATE_RED
-	if member.hungry or member.cold:
+	if member.breathless or member.hungry or member.cold:
 		return DS.STATE_AMBER
 	return DS.ACCENT_CYAN
 
 
 static func state_icon(member: Household.Member) -> UiIcon.Kind:
+	if member.health == Household.Health.LOST:
+		return UiIcon.Kind.LOCK
+	if member.detained:
+		return UiIcon.Kind.DETAIN
+	if member.away != &"":
+		return UiIcon.Kind.AWAY
 	match member.health:
-		Household.Health.LOST:
-			return UiIcon.Kind.LOCK
 		Household.Health.GRAVELY_SICK, Household.Health.SICK:
 			return UiIcon.Kind.DENIED
+	if member.breathless:
+		return UiIcon.Kind.BREATH
 	if member.hungry or member.cold:
 		return UiIcon.Kind.WARNING
 	return UiIcon.Kind.CHECK

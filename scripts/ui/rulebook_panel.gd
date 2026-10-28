@@ -6,6 +6,9 @@
 ## Implants, Symboles subversifs, Sceaux (`RulebookReference`) et Avis de
 ## recherche (`WantedCardView`, sélectionnables comme un champ) ; les entrées du
 ## bulletin des symboles (`SymbolCardView`) le sont aussi (§4.9).
+## Acte II : onglets Codes employeurs, Registre des cargos et Révocations
+## (`RevokedCardView`, sélectionnables), ligne firmware NX, avis « visages
+## seuls » du J20 ; texte de R23 formaté avec le quota du jour (`quota_max`).
 class_name RulebookPanel
 extends PanelContainer
 
@@ -33,6 +36,11 @@ var wanted_notices: Array[WantedNotice] = []
 var wanted_cards: Array[WantedCardView] = []
 ## Entrées sélectionnables du bulletin des symboles (onglet affiché, §4.9).
 var symbol_cards: Array[SymbolCardView] = []
+## Acte II : révocations du jour (`revocations_published`) et leurs cartes.
+var revoked_entries: Array[RevokedEntry] = []
+var revoked_cards: Array[RevokedCardView] = []
+## Acte II : maximum du quota du jour (texte de R23 « %d entrées »).
+var quota_max: int = 0
 var portrait_provider: Callable = Callable()
 ## Marques des cartes masquées par l'onglet courant (clé `FieldRef.key()`).
 var _kept_marks: Dictionary[String, Array] = {}
@@ -176,6 +184,7 @@ func set_rulebook(p_entries: Array[RulebookEntry], p_today: int, p_day_number: i
 	entries = p_entries.duplicate()
 	reference_tabs = tabs.duplicate()
 	wanted_notices.clear()
+	revoked_entries.clear()
 	today = p_today
 	day_number = p_day_number
 	_day_label.text = UiText.tf("rb_day", [p_day_number], "JOUR %02d")
@@ -202,6 +211,19 @@ func set_wanted(notices: Array[WantedNotice], provider: Callable = Callable()) -
 	_show_tab(tab if _tab_ids.has(tab) else TAB_ALL)
 
 
+## Acte II : révocations du jour (`revocations_published`).
+func set_revoked(p_entries: Array[RevokedEntry]) -> void:
+	revoked_entries = p_entries.duplicate()
+	var tab: int = current_tab
+	_build_tabs()
+	_show_tab(tab if _tab_ids.has(tab) else TAB_ALL)
+
+
+## Reconstruit l'onglet courant (quota du jour connu après `day_started`).
+func refresh_cards() -> void:
+	_show_tab(current_tab if _tab_ids.has(current_tab) else TAB_ALL)
+
+
 ## Identifiant d'onglet d'une référence (`origins` → −10…).
 static func reference_tab_id(tab: StringName) -> int:
 	return TAB_REFERENCE_BASE - RulebookReference.ORDER.find(tab)
@@ -219,6 +241,8 @@ func visible_reference_tabs() -> Array[StringName]:
 		if not reference_tabs.has(String(tab)):
 			continue
 		if tab == RulebookReference.TAB_WANTED and wanted_notices.is_empty():
+			continue
+		if tab == RulebookReference.TAB_REVOKED and revoked_entries.is_empty():
 			continue
 		tabs.append(tab)
 	return tabs
@@ -266,6 +290,9 @@ func _build_tabs() -> void:
 		if tab == RulebookReference.TAB_WANTED:
 			button.text += " ·%d" % wanted_notices.size()
 			button.add_theme_color_override(&"font_color", DS.STATE_RED)
+		elif tab == RulebookReference.TAB_REVOKED:
+			button.text += " ·%d" % revoked_entries.size()
+			button.add_theme_color_override(&"font_color", DS.VOICE_COMMISSION)
 		elif RulebookReference.is_new(tab, day_number):
 			button.text += " ·" + UiText.t("rb_tab_new", "NEW")
 			button.add_theme_color_override(&"font_color", DS.STATE_AMBER)
@@ -306,6 +333,7 @@ func _show_tab(id: int) -> void:
 	cards.clear()
 	wanted_cards.clear()
 	symbol_cards.clear()
+	revoked_cards.clear()
 	_scroll.tooltip_text = ""
 	if _reference_view != null:
 		_reference_view.queue_free()
@@ -320,7 +348,7 @@ func _show_tab(id: int) -> void:
 		if id != TAB_ALL and entry.category != id:
 			continue
 		var card: RuleCardView = RuleCardView.new()
-		card.setup(entry, i + 1)
+		card.setup(entry, i + 1, quota_max)
 		card.picked.connect(_on_item_picked)
 		_list.add_child(card)
 		card.set_inspection_active(inspection_active)
@@ -344,13 +372,21 @@ func _list_items() -> Array[InspectableItem]:
 		items.append(card)
 	for card: SymbolCardView in symbol_cards:
 		items.append(card)
+	for card: RevokedCardView in revoked_cards:
+		items.append(card)
 	return items
 
 
 ## Contenu d'un onglet de référence ; avis de recherche = cartes sélectionnables.
 func _show_reference(tab: StringName, marks: Dictionary[String, Array]) -> void:
+	if tab == RulebookReference.TAB_REVOKED:
+		_show_revoked(marks)
+		return
 	if tab != RulebookReference.TAB_WANTED:
-		_reference_view = RulebookReference.build(tab)
+		var rule_ids: Array[StringName] = []
+		for entry: RulebookEntry in entries:
+			rule_ids.append(entry.rule_id)
+		_reference_view = RulebookReference.build(tab, rule_ids)
 		_reference_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_list.add_child(_reference_view)
 		for node: Node in _reference_view.find_children("Symbol_*", "", true, false):
@@ -364,6 +400,13 @@ func _show_reference(tab: StringName, marks: Dictionary[String, Array]) -> void:
 		return
 	# Consigne en infobulle : la place va aux avis (portrait lisible).
 	_scroll.tooltip_text = UiText.t("rb_wanted_intro", "Par le nom ou par le visage : mise en attente.")
+	if faces_only():
+		# J20 : avis sans nom — la comparaison passe par le visage seul.
+		var banner: Label = ScreenBase.wrapped(UiText.t("wanted_faces_only", "AVIS DU JOUR · VISAGES SEULS"), &"DocFieldLabel",
+				DS.STATE_RED)
+		banner.name = "FacesOnly"
+		_reference_view = banner
+		_list.add_child(banner)
 	for i: int in wanted_notices.size():
 		var card: WantedCardView = WantedCardView.new()
 		card.name = "Wanted_%s" % wanted_notices[i].id
@@ -373,6 +416,42 @@ func _show_reference(tab: StringName, marks: Dictionary[String, Array]) -> void:
 		card.set_inspection_active(inspection_active)
 		_restore_marks(card, marks)
 		wanted_cards.append(card)
+
+
+## Vrai si tous les avis du jour sont « visages seuls » (J20, sans nom).
+func faces_only() -> bool:
+	if wanted_notices.is_empty():
+		return false
+	for notice: WantedNotice in wanted_notices:
+		if not notice.full_name().strip_edges().is_empty():
+			return false
+	return true
+
+
+## Onglet Révocations : une carte sélectionnable par N° ID révoqué.
+func _show_revoked(marks: Dictionary[String, Array]) -> void:
+	var intro: Label = ScreenBase.wrapped(UiText.t("rb_revoked_intro",
+			"Commission de Rééquilibrage · N° ID révoqués. Mode Inspection : comparez au N° ID de la carte."), &"BodySmall")
+	intro.name = "RevokedIntro"
+	_reference_view = intro
+	_list.add_child(intro)
+	for i: int in revoked_entries.size():
+		var card: RevokedCardView = RevokedCardView.new()
+		card.name = "Revoked_%s" % revoked_entries[i].id
+		card.setup(revoked_entries[i], i + 1)
+		card.picked.connect(_on_item_picked)
+		_list.add_child(card)
+		card.set_inspection_active(inspection_active)
+		_restore_marks(card, marks)
+		revoked_cards.append(card)
+
+
+## Carte de révocation affichée (null si l'onglet n'est pas ouvert).
+func get_revoked_card(entry_id: StringName) -> RevokedCardView:
+	for card: RevokedCardView in revoked_cards:
+		if card.entry.id == entry_id:
+			return card
+	return null
 
 
 ## Rétablit sélection et discordances d'une carte recréée (changement d'onglet).
@@ -413,6 +492,12 @@ func find_item(ref: FieldRef, reveal: bool = false) -> InspectableItem:
 		var wanted_id: int = reference_tab_id(RulebookReference.TAB_WANTED)
 		if _tab_ids.has(wanted_id) and current_tab != wanted_id:
 			_show_tab(wanted_id)
+			return find_item(ref, false)
+		return null
+	if reveal and ref.is_revoked():
+		var revoked_id: int = reference_tab_id(RulebookReference.TAB_REVOKED)
+		if _tab_ids.has(revoked_id) and current_tab != revoked_id:
+			_show_tab(revoked_id)
 			return find_item(ref, false)
 		return null
 	if reveal and ref.is_symbol():

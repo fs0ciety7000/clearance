@@ -3,11 +3,15 @@
 ## CONCORDANT (cyan fin, dissolution), DISCORDANCE (magenta 3 px + lueur,
 ## épinglée, numérotée), INCOMPARABLE (gris qui se rétracte vers A).
 ## Dessine aussi le cadre « VISAGE » sur la vue 3D en Mode Inspection.
+## Acte II (scanner partiel, ACT2 §2.5 M3) : liens **suggérés** en pointillés
+## dans la couleur de la source (ACV-2 ambre, boîtier des Lucioles magenta),
+## losanges creux, visibles même hors Mode Inspection ; le joueur les confirme
+## (`ComparisonUI.confirm_suggestion`) : ils deviennent alors une évaluation.
 ## Plein écran, transparent aux clics.
 class_name LinkLayer
 extends Control
 
-enum State { EVALUATING, CONCORDANT, DISCORDANT, INCOMPARABLE }
+enum State { EVALUATING, CONCORDANT, DISCORDANT, INCOMPARABLE, SUGGESTED }
 
 ## Un lien affiché.
 class Link:
@@ -20,6 +24,8 @@ class Link:
 	var alpha: float = 1.0
 	var pulse: float = 0.0
 	var age: float = 0.0
+	## Acte II : couleur de la source d'un lien suggéré.
+	var tint: Color = DS.STATE_AMBER
 
 ## `rect_provider(ref: FieldRef) -> Rect2` : rectangle global de la cible
 ## (taille nulle = cible invisible).
@@ -43,6 +49,54 @@ var _time: float = 0.0
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+## Acte II : lien suggéré par le scanner partiel (pointillé, couleur `tint`).
+func add_suggested(p: FieldRef, q: FieldRef, tint: Color) -> Link:
+	var link: Link = find_link(p, q)
+	if link == null:
+		link = Link.new()
+		link.a = p
+		link.b = q
+		links.append(link)
+	elif link.state != State.SUGGESTED:
+		return link
+	link.state = State.SUGGESTED
+	link.tint = tint
+	link.progress = 1.0
+	link.alpha = 1.0
+	link.age = 0.0
+	return link
+
+
+## Liens suggérés encore affichés (non confirmés).
+func suggested_links() -> Array[Link]:
+	var result: Array[Link] = []
+	for link: Link in links:
+		if link.state == State.SUGGESTED:
+			result.append(link)
+	return result
+
+
+## Retire un lien suggéré (ignoré, ou remplacé par l'évaluation).
+func remove_suggested(p: FieldRef, q: FieldRef) -> void:
+	var link: Link = find_link(p, q)
+	if link != null and link.state == State.SUGGESTED:
+		links.erase(link)
+		queue_redraw()
+
+
+## Point milieu global d'un lien (pastille « CONFIRMER »), `Vector2.INF` si
+## une extrémité est invisible (Rulebook replié, document hors champ).
+func link_midpoint(link: Link) -> Vector2:
+	var ra: Rect2 = _local_rect(link.a)
+	var rb: Rect2 = _local_rect(link.b)
+	if ra.size == Vector2.ZERO or rb.size == Vector2.ZERO:
+		return Vector2.INF
+	var sa: Array[Vector2] = anchor(ra, rb.get_center())
+	var sb: Array[Vector2] = anchor(rb, ra.get_center())
+	var pts: PackedVector2Array = curve(sa[0], sa[1], sb[0], sb[1])
+	return get_global_transform() * pts[pts.size() >> 1]
 
 
 func clear() -> void:
@@ -240,6 +294,14 @@ func _draw_link(link: Link) -> void:
 			var g: Color = Color(DS.TEXT_SECONDARY, link.alpha)
 			_draw_dashed(shown, g, 1.5, 0.0)
 			_diamond(sa[0], 3.5, g)
+		State.SUGGESTED:
+			# Pointillé de la source, défilant (≤ 20 px/s), losanges creux.
+			var tint: Color = Color(link.tint, 0.9 if inspection_active else 0.7)
+			if fx_intensity > 0.0:
+				draw_polyline(pts, Color(link.tint, 0.12 * fx_intensity), 5.0, true)
+			_draw_dashed(pts, tint, 2.0, -_time * DS.FX_LINK_DASH_SPEED * fx_intensity)
+			_diamond(sa[0], 4.5, tint, false)
+			_diamond(sb[0], 4.5, tint, false)
 		State.DISCORDANT:
 			var m: Color = Color(DS.ACCENT_MAGENTA, dim)
 			if fx_intensity > 0.0:

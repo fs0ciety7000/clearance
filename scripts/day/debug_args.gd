@@ -18,7 +18,7 @@ extends RefCounted
 const FEATURE: String = "debug_args"
 ## Arguments appliqués une seule fois par processus.
 const ONE_SHOT: PackedStringArray = ["seed", "day", "household", "flags", "credits", "start-case", "screen",
-		"ending", "step", "item", "rulebook-tab", "inspect", "ask", "zoom-doc"]
+		"ending", "step", "item", "rulebook-tab", "inspect", "ask", "zoom-doc", "lights-out", "confirm-scan", "choose"]
 ## Marqueur (métadonnée d'`Engine`, durée du processus) : arguments consommés.
 const CONSUMED_META: StringName = &"clearance_debug_args_consumed"
 

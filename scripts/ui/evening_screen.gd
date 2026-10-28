@@ -18,6 +18,12 @@
 ## audit qui arrête l'agent·e (F1) clôt la séquence. « VALIDER ET DORMIR »
 ## attend que chaque choix soit fait (sinon `confirm()` complète par les choix
 ## par défaut, D-058 : tests, joueur pressé).
+## M8 (Acte II, ARCHITECTURE §7.2) : textes à valeurs formatés (`text_args`,
+## `%d` : prélèvement, pages du registre), section **Revenus** (salaire d'Ilan,
+## `set_income`), **rations d'air** groupées (« qui respire ce soir ? », proches
+## absents grisés), postes défilants, **confirmation** avant une option qui
+## termine la campagne (« Embarquer », F6 au J10) ; soirée pivot du J10
+## (panneaux des vannes, d'Ilan, du double jeu, de la promotion, du quai 6).
 class_name EveningScreen
 extends ScreenBase
 
@@ -32,7 +38,16 @@ const REPORT_WIDTH: float = 760.0
 const EVENT_ACCENTS: Dictionary[StringName, Color] = {
 	&"d05_heat": DS.ACCENT_MAGENTA, &"d07_tag": DS.ACCENT_MAGENTA, &"d08_package": DS.STATE_RED,
 	&"d09_ilan": DS.ACCENT_MAGENTA,
+	# Acte II : la Nuit des vannes (J10) et la Commission.
+	&"d10_vannes_opened": DS.ACCENT_MAGENTA, &"d10_vannes_aborted": DS.ACCENT_MAGENTA, &"d10_vannes_failed": DS.ACCENT_MAGENTA,
+	&"d10_double": DS.STATE_AMBER, &"d10_promo": DS.ACCENT_YELLOW, &"d10_drift": DS.ACCENT_CYAN,
+	&"d11_levy": DS.VOICE_COMMISSION, &"d14_lease": DS.VOICE_COMMISSION, &"d17_review": DS.VOICE_COMMISSION,
+	&"d17_list": DS.VOICE_COMMISSION, &"d13_scanner": DS.ACCENT_MAGENTA, &"d16_unplug": DS.ACCENT_MAGENTA,
+	&"d19_registre": DS.ACCENT_MAGENTA,
 }
+## Hauteur d'une ligne de dépense (rations : plus compactes, groupées).
+const ROW_H: float = 56.0
+const RATION_ROW_H: float = 48.0
 
 var day_number: int = 1
 var game_date: int = 0
@@ -76,6 +91,11 @@ var _events_label: Label = null
 var _events_row: HBoxContainer = null
 var _confirm_hint: Label = null
 var _base_costs: Dictionary[StringName, int] = {}
+## Acte II : revenus du soir (salaire d'Ilan), crédités avec la soirée.
+var incomes: Array[ExpenseLine] = []
+## Acte II : boîte de confirmation d'une option qui termine la campagne.
+var confirm_layer: Control = null
+var _pending_final: Array[StringName] = []
 
 
 func setup(p_day: DayDef, p_balance: int, p_shift_net: int, p_lines: Array[ExpenseLine], p_household: Household,
@@ -91,6 +111,18 @@ func setup(p_day: DayDef, p_balance: int, p_shift_net: int, p_lines: Array[Expen
 	_base_costs.clear()
 	for line: ExpenseLine in lines:
 		_base_costs[line.id] = line.cost
+
+
+## Acte II : revenus du soir (`EveningService.income_lines`), avant l'entrée dans l'arbre.
+func set_income(p_lines: Array[ExpenseLine]) -> void:
+	incomes = p_lines.duplicate()
+
+
+func income_total() -> int:
+	var total: int = 0
+	for line: ExpenseLine in incomes:
+		total += line.cost
+	return total
 
 
 ## M7 : événements du soir (`Campaign.prepare_events`), avant l'entrée dans l'arbre.
@@ -164,6 +196,12 @@ func _budget() -> VBoxContainer:
 		head_box.add_child(_money_row(UiText.t("ev_advance", "Avance du Consortium (prise de poste)"),
 				credits(consortium_advance, true), DS.ACCENT_YELLOW))
 	head_box.add_child(_money_row(UiText.t("ev_shift_net", "Net du shift (salaire − amendes)"), credits(shift_net, true), DS.TEXT_SECONDARY))
+	if not incomes.is_empty():
+		var income_head: Label = eyebrow(UiText.t("ev_incomes", "REVENUS DU FOYER"), DS.STATE_GREEN)
+		income_head.name = "Incomes"
+		head_box.add_child(income_head)
+		for income: ExpenseLine in incomes:
+			head_box.add_child(_money_row(UiText.t(income.label_key, String(income.id)), credits(income.cost, true), DS.STATE_GREEN))
 	_bonus_row = _money_row(UiText.t("ev_report_bonus", "Prime de signalement (Consortium)"), "", DS.ACCENT_YELLOW)
 	_bonus_row.visible = false
 	head_box.add_child(_bonus_row)
@@ -172,11 +210,25 @@ func _budget() -> VBoxContainer:
 	_available_label = available_row.get_child(available_row.get_child_count() - 1)
 	head_box.add_child(available_row)
 	box.add_child(eyebrow(UiText.t("ev_lines", "DÉPENSES DU SOIR — COCHEZ CE QUE VOUS PAYEZ")))
+	# Acte II : jusqu'à 12 postes — la liste défile, les totaux restent visibles.
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.name = "Lines"
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list: VBoxContainer = vbox(DS.SPACE_2)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	var rations: Array[ExpenseLine] = []
 	for line: ExpenseLine in lines:
+		if is_ration(line):
+			rations.append(line)
+			continue
 		var row: Button = _expense_row(line)
 		_rows.append(row)
-		box.add_child(row)
-	box.add_child(spacer(false, true))
+		list.add_child(row)
+	if not rations.is_empty():
+		list.add_child(_rations_group(rations))
 	var totals: PanelContainer = panel(&"ElevatedCard")
 	box.add_child(totals)
 	var totals_box: VBoxContainer = vbox(DS.SPACE_1)
@@ -207,13 +259,50 @@ func _money_row(caption: String, value: String, color: Color, value_variation: S
 	return row
 
 
+## Ration d'air (Acte II, M2) : la vôtre ou celle d'un proche.
+static func is_ration(line: ExpenseLine) -> bool:
+	return line.ration_of != &"" or line.id == EveningService.LINE_RATION_SELF
+
+
+## Rations groupées : « qui respire ce soir ? », la vôtre prélevée d'office,
+## une case par proche présent ; les proches absents ou en attente sont
+## rappelés grisés (pas de ration, ACT2 §2.5 M2).
+func _rations_group(rations: Array[ExpenseLine]) -> Control:
+	var group: PanelContainer = panel()
+	group.name = "Rations"
+	group.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.BG_PANEL, DS.STATE_AMBER))
+	var box: VBoxContainer = vbox(DS.SPACE_2)
+	group.add_child(box)
+	var head: HBoxContainer = hbox(DS.SPACE_2)
+	box.add_child(head)
+	head.add_child(UiIcon.make(UiIcon.Kind.BREATH, DS.STATE_AMBER, DS.ICON_S))
+	head.add_child(eyebrow(UiText.t("ev_rations", "RATIONS D'AIR · QUI RESPIRE CE SOIR ?"), DS.STATE_AMBER))
+	for line: ExpenseLine in rations:
+		var row: Button = _expense_row(line, RATION_ROW_H)
+		_rows.append(row)
+		box.add_child(row)
+	for member: Household.Member in household.members:
+		if member.is_alive() and not member.is_present():
+			var absent: HBoxContainer = hbox(DS.SPACE_3)
+			absent.name = "Absent_%s" % member.id
+			absent.modulate.a = 0.6
+			absent.add_child(UiIcon.make(HouseholdView.state_icon(member), DS.TEXT_MUTED, DS.ICON_S))
+			var text: Label = label(UiText.tf("ev_ration_absent", [HouseholdView.member_name(member.id), HouseholdView.state_text(member)],
+					"%s · %s — pas de ration ce soir"), &"CaptionLabel", DS.TEXT_SECONDARY)
+			text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			absent.add_child(text)
+			box.add_child(absent)
+	return group
+
+
 ## Ligne de dépense : case à cocher DS + libellé + note + coût (bouton bascule).
-func _expense_row(line: ExpenseLine) -> Button:
+func _expense_row(line: ExpenseLine, height: float = ROW_H) -> Button:
 	var row: Button = Button.new()
+	row.name = "Line_%s" % line.id
 	row.toggle_mode = true
 	row.theme_type_variation = &"ButtonQuestion"
 	row.focus_mode = Control.FOCUS_ALL
-	row.custom_minimum_size = Vector2(0, 60)
+	row.custom_minimum_size = Vector2(0, height)
 	row.button_pressed = line.paid
 	row.disabled = line.mandatory
 	row.set_meta(&"line", line)
@@ -338,9 +427,9 @@ func effective_balance() -> int:
 
 
 ## Fonds de la soirée avant dépenses et événements : solde du shift + prime de
-## signalement éventuelle.
+## signalement éventuelle + revenus du foyer (Acte II : salaire d'Ilan).
 func funds() -> int:
-	return balance + report_bonus
+	return balance + report_bonus + income_total()
 
 
 ## Effet net des événements (retenue d'audit, coûts et gains des options).
@@ -450,6 +539,35 @@ func _event_accent(event: EveningEvent) -> Color:
 	return DS.ACCENT_CYAN
 
 
+## Texte d'un événement, valeurs (`text_args`) substituées aux `%d` dans
+## l'ordre ; jamais de `%d` brut à l'écran (valeur manquante : « — »).
+static func event_text(event: EveningEvent) -> String:
+	return format_args(UiText.t(event.text_key, ""), event.text_args)
+
+
+## Substitue `%d` / `%s` dans l'ordre (sans erreur si le nombre diffère).
+static func format_args(text: String, args: Array) -> String:
+	var result: String = ""
+	var index: int = 0
+	var i: int = 0
+	while i < text.length():
+		var c: String = text[i]
+		if c == "%" and i + 1 < text.length():
+			var spec: String = text[i + 1]
+			if spec == "d" or spec == "s":
+				result += str(args[index]) if index < args.size() else "—"
+				index += 1
+				i += 2
+				continue
+			if spec == "%":
+				result += "%"
+				i += 2
+				continue
+		result += c
+		i += 1
+	return result
+
+
 func show_step(index: int) -> void:
 	_show_step(index)
 
@@ -485,7 +603,9 @@ func _show_step(index: int) -> void:
 		title.custom_minimum_size.x = 120.0
 		box.add_child(title)
 	if not event.text_key.is_empty():
-		box.add_child(wrapped(UiText.t(event.text_key, ""), &"BodyLabel", DS.TEXT_PRIMARY))
+		var body: Label = wrapped(event_text(event), &"BodyLabel", DS.TEXT_PRIMARY)
+		body.name = "EventText"
+		box.add_child(body)
 	for key: String in event.extra_keys:
 		box.add_child(wrapped(UiText.t(key, ""), &"BodySmall"))
 	if is_skipped(event):
@@ -594,6 +714,11 @@ func _option_row(event: EveningEvent, option: EveningOptionDef, group: ButtonGro
 	reason.name = "Reason"
 	reason.visible = false
 	texts.add_child(reason)
+	if option.ends_campaign != &"":
+		var final_chip: PanelContainer = chip(UiText.t("ev_option_final", "FIN DE LA CAMPAGNE"), UiIcon.Kind.WARNING, DS.STATE_AMBER)
+		final_chip.name = "FinalChip"
+		final_chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		content.add_child(final_chip)
 	if option.cost != 0 or option.gain != 0:
 		var amount: Label = label(credits(option.gain - option.cost, true), &"DataTitle")
 		amount.name = "Amount"
@@ -602,9 +727,91 @@ func _option_row(event: EveningEvent, option: EveningOptionDef, group: ButtonGro
 		amount.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		content.add_child(amount)
 	row.pressed.connect(func() -> void:
-		if not choose(event.id, option.id):
+		if not request_choice(event.id, option.id):
 			_refresh_options())
 	return row
+
+
+## Choix du joueur (bouton) : une option qui termine la campagne demande
+## d'abord une confirmation explicite (« Embarquer », F6 au J10) ; les autres
+## sont appliquées tout de suite (`choose`).
+func request_choice(event_id: StringName, option_id: StringName) -> bool:
+	var event: EveningEvent = get_event(event_id)
+	var option: EveningOptionDef = event.get_option(option_id) if event != null else null
+	if option == null:
+		return false
+	if option.ends_campaign != &"" and choices.get(event_id, &"") != option_id:
+		if event.is_choice() and can_afford(event, option) and not is_skipped(event) and _report_layer == null:
+			_open_final_confirm(event, option)
+		return false
+	return choose(event_id, option_id)
+
+
+## Boîte « Quitter Halcyon ? » : CONFIRMER applique le choix, ANNULER le laisse en suspens.
+func _open_final_confirm(event: EveningEvent, option: EveningOptionDef) -> void:
+	close_final_confirm()
+	_pending_final = [event.id, option.id]
+	confirm_layer = Control.new()
+	confirm_layer.name = "FinalConfirm"
+	confirm_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	confirm_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(confirm_layer)
+	var scrim: ColorRect = ColorRect.new()
+	scrim.color = DS.SCRIM
+	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	confirm_layer.add_child(scrim)
+	var center: CenterContainer = CenterContainer.new()
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	confirm_layer.add_child(center)
+	var card: PanelContainer = panel(&"HoloPanel")
+	card.custom_minimum_size.x = 640.0
+	center.add_child(card)
+	var box: VBoxContainer = vbox(DS.SPACE_4)
+	card.add_child(box)
+	var head: HBoxContainer = hbox(DS.SPACE_2)
+	box.add_child(head)
+	head.add_child(UiIcon.make(UiIcon.Kind.WARNING, DS.STATE_AMBER, DS.ICON_M))
+	head.add_child(eyebrow(UiText.t("ev_final_eyebrow", "DÉCISION DÉFINITIVE"), DS.STATE_AMBER))
+	var title: Label = label(UiText.t("ev_final_title", "QUITTER HALCYON ?"), &"DisplayLabel", DS.TEXT_PRIMARY)
+	title.name = "FinalTitle"
+	box.add_child(title)
+	var choice: Label = wrapped("« %s »" % UiText.t(option.label_key, String(option.id)), &"BodyStrong", DS.STATE_AMBER)
+	choice.custom_minimum_size.x = 400.0
+	box.add_child(choice)
+	box.add_child(wrapped(UiText.t("ev_final_text", "La partie s'arrête ce soir : vous quittez Halcyon, et le Guichet 04 ne rouvrira pas pour vous."),
+			&"BodyLabel", DS.TEXT_PRIMARY))
+	var buttons: HBoxContainer = hbox(DS.SPACE_3)
+	box.add_child(buttons)
+	buttons.add_child(spacer())
+	var cancel: Button = button(UiText.t("ev_final_cancel", "RESTER ENCORE UN PEU"), &"ButtonGhost")
+	cancel.name = "Cancel"
+	cancel.pressed.connect(close_final_confirm)
+	buttons.add_child(cancel)
+	var accept: Button = button(UiText.t("ev_final_accept", "CONFIRMER LE DÉPART"), &"ButtonDanger")
+	accept.name = "Accept"
+	accept.pressed.connect(accept_final_confirm)
+	buttons.add_child(accept)
+	cancel.grab_focus.call_deferred()
+
+
+## Confirme l'option en attente (bouton CONFIRMER, tests).
+func accept_final_confirm() -> bool:
+	if _pending_final.size() != 2:
+		return false
+	var event_id: StringName = _pending_final[0]
+	var option_id: StringName = _pending_final[1]
+	close_final_confirm()
+	return choose(event_id, option_id)
+
+
+func close_final_confirm() -> void:
+	_pending_final.clear()
+	if confirm_layer != null:
+		confirm_layer.queue_free()
+		confirm_layer = null
+	_refresh_options()
 
 
 func _refresh_options() -> void:

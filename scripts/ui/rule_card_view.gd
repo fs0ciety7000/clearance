@@ -10,7 +10,15 @@ var _text: Label = null
 var _number: Label = null
 
 
-func setup(p_entry: RulebookEntry, p_number: int) -> void:
+## Texte d'une règle ; R23 (« %d entrées par jour ») reçoit le quota du jour.
+static func rule_text(p_entry: RulebookEntry, quota: int = 0) -> String:
+	var text: String = UiText.t(p_entry.text_key, UiText.t(p_entry.title_key, String(p_entry.rule_id)))
+	if text.contains("%d"):
+		return text.replace("%d", str(quota) if quota > 0 else "—")
+	return text
+
+
+func setup(p_entry: RulebookEntry, p_number: int, quota: int = 0) -> void:
 	entry = p_entry
 	number = p_number
 	ref = p_entry.ref if p_entry.ref != null else FieldRef.rulebook_rule(p_entry.rule_id)
@@ -50,7 +58,7 @@ func setup(p_entry: RulebookEntry, p_number: int) -> void:
 	_text.theme_type_variation = &"BodySmall"
 	_text.add_theme_color_override(&"font_color", DS.TEXT_PRIMARY)
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_text.text = UiText.t(p_entry.text_key, title)
+	_text.text = rule_text(p_entry, quota)
 	_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_text.custom_minimum_size.x = 120.0
 	column.add_child(_text)

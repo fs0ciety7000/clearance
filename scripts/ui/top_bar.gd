@@ -1,6 +1,7 @@
 ## Barre d'état (UI_FLOW §2.2 zone A, DS §7.6) : marque Consortium, lieu /
 ## guichet / jour / date, horloge de shift (heure + progression + fin),
-## passagers traités, crédits. Seuils : ambre « FIN DE SHIFT PROCHE » à 30 min
+## passagers traités, crédits. Acte II : compteur du quota respiratoire
+## (`QuotaCounterView`, sélectionnable en Mode Inspection, masqué sans quota). Seuils : ambre « FIN DE SHIFT PROCHE » à 30 min
 ## in-game de la fin ; rouge à `DS.TIMER_CRITICAL_SECONDS` réelles.
 class_name TopBar
 extends PanelContainer
@@ -21,6 +22,9 @@ var _end_label: Label = null
 var _progress_bar: Control = null
 var _processed: Label = null
 var _credits: Label = null
+## Acte II : compteur « QUOTA n/max » (R23).
+var quota_view: QuotaCounterView = null
+var _quota_line: ColorRect = null
 
 
 func _ready() -> void:
@@ -90,6 +94,13 @@ func _ready() -> void:
 	row.add_child(_end_label)
 	row.add_child(_vline())
 	_processed = _stat(row, UiText.t("bar_processed", "TRAITÉS"), DS.TEXT_PRIMARY)
+	_quota_line = _vline()
+	_quota_line.visible = false
+	row.add_child(_quota_line)
+	quota_view = QuotaCounterView.new()
+	quota_view.name = "QuotaCounter"
+	quota_view.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(quota_view)
 	row.add_child(_vline())
 	_credits = _stat(row, UiText.t("bar_credits", "CRÉDITS"), DS.ACCENT_YELLOW)
 	set_clock(1.0, 1.0)
@@ -166,6 +177,12 @@ func get_clock_text() -> String:
 
 func set_processed(count: int) -> void:
 	_processed.text = "%02d" % count
+
+
+## Acte II : compteur du quota (`quota_changed`) ; `maximum` 0 le masque.
+func set_quota(used: int, maximum: int) -> void:
+	quota_view.set_quota(used, maximum)
+	_quota_line.visible = quota_view.visible
 
 
 func set_credits(credits: int) -> void:

@@ -1738,7 +1738,7 @@ end2_f9_l5,"Au troisième jour, le quota respiratoire est suspendu « pour révi
 end2_f9_l6_registre,"Le matin, les noms du Puits 9. L'après-midi, le silence des vitres. La station a entendu les deux."
 end2_f9_l6,Personne n'est promu. Personne n'est révoqué. Pour l'instant.
 end2_f9_l7,"Vous rentrez à pied au milieu des autres. Il pleut, même ici. Ensemble, c'est moins froid."
-chapter2_title,ACTE II — RÉÉQUILIBRAGE
+chapter2_title,RÉÉQUILIBRAGE
 chapter2_sub,Vendredi 23.03.2187 — dimanche 01.04.2187
 spk_commission,COMMISSION DE RÉÉQUILIBRAGE · I. BEAUMONT
 spk_sato,SATO · GUICHET 03
@@ -1879,3 +1879,48 @@ end2_f6_title,À LA DÉRIVE
 end2_f7_title,LE GUICHET ROUVRE LUNDI
 end2_f8_title,LE REGISTRE
 end2_f9_title,LES VITRES ÉTEINTES
+tb_quota_caption,QUOTA
+tb_quota_value,%d / %d
+tb_quota_reached,ATTEINT · %d / %d
+tb_quota_tip,Entrées imputables du jour. Mode Inspection : comparez le compteur à la règle du quota.
+tag_companion_child,[un enfant lui tient la main]
+tag_prop_cat_crate,[une caisse de transport miaule]
+tag_prop_drone,[un drone bourdonne au-dessus de son épaule]
+tag_prop_shunt_led,[une LED clignote derrière son oreille]
+wb_scanner_confirm,CONFIRMER
+wb_scanner_pending,%d liens à confirmer
+wb_scanner_pending_one,%d lien à confirmer
+wb_scanner_done,dates conformes
+wb_scanner_src_luciole,BOÎTIER MAGENTA · SCAN
+wb_scanner_src_acv,ACV-2 · SCAN CONSORTIUM
+disc_revoked_detail,N° ID %s révoqué — %s n'est plus citoyen·ne.
+disc_quota_detail,Règle %02d — quota atteint (%d / %d) : refus justifié.
+rb_wanted_face_only,VISAGE SEUL
+rb_wanted_unknown,IDENTITÉ INCONNUE
+rb_revoked_display,RÉVOCATION %02d · %s
+rb_revoked_action,NON CITOYEN·NE
+rb_revoked_intro,Commission de Rééquilibrage · N° ID révoqués. Mode Inspection : comparez au N° ID de la carte.
+rb_employers_intro,Contrat de travail : le code CT-XX correspond à l'employeur du permis d'entrée.
+rb_vessels_intro,"Dérivants : le vaisseau du laissez-passer = nom de famille, inscrit au registre."
+ev_incomes,REVENUS DU FOYER
+ev_rations,RATIONS D'AIR · QUI RESPIRE CE SOIR ?
+ev_ration_absent,%s · %s — pas de ration ce soir
+ev_option_final,FIN DE LA CAMPAGNE
+ev_final_eyebrow,DÉCISION DÉFINITIVE
+ev_final_title,QUITTER HALCYON ?
+ev_final_text,"La partie s'arrête ce soir : vous quittez Halcyon avec les vôtres, et le Guichet 04 ne rouvrira pas pour vous."
+ev_final_cancel,RESTER ENCORE UN PEU
+ev_final_accept,CONFIRMER LE DÉPART
+chapter2_eyebrow,CHAPITRE II · HALCYON GATE · GUICHET 04
+chapter2_numeral,II
+chapter2_recap_opened,"Le 22 mars, l'Anneau C a respiré une heure. Le lendemain, la station compte son air."
+chapter2_recap_aborted,"Le 22 mars, les vannes ont grincé, puis plus rien. Le lendemain, la station compte son air."
+chapter2_recap_failed,"Le 22 mars, les vannes n'ont pas bougé. Le lendemain, la station compte son air."
+chapter2_recap_quota,"La Commission de Rééquilibrage prend le Hall : un quota d'entrées par guichet, un compteur dans chaque cabine."
+chapter2_saved,Partie sauvegardée
+chapter2_continue,PRENDRE SON POSTE · JOUR 11
+sum_overruns_detail,Au-delà du quota · 0 ₵ chacune
+sum_item_overrun,IMPUTÉE
+sum_item_quota_refusal,REFUS QUOTA
+end_act2_chip,ACTE II
+doc_third_party,DOCUMENT D'UN TIERS

@@ -25,6 +25,11 @@ enum Kind {
 	SEAL_HEXAGON, ## sceau « hexagone solaire »
 	SEAL_ORBIT, ## sceau « croix en orbite »
 	SEAL_RING, ## sceau « anneau barré »
+	BREATH, ## Acte II : trois souffles (ESSOUFFLÉ·E, rations d'air)
+	AWAY, ## Acte II : porte et flèche sortante (absent·e : Soute, Tycho)
+	FLAME, ## Acte II : flamme (voix des Brûlants)
+	SCANNER, ## Acte II : réticule de balayage (scanner partiel, compteur)
+	REGISTER, ## Acte II : registre à lignes (Commission, révocations)
 }
 
 @export var kind: Kind = Kind.DIAMOND:
@@ -149,6 +154,37 @@ static func draw_icon(canvas: CanvasItem, p_kind: Kind, rect: Rect2, p_color: Co
 			canvas.draw_arc(c, r.size.x * 0.5, 0.0, TAU, 32, p_color, p_stroke, true)
 			canvas.draw_arc(c, r.size.x * 0.3, 0.0, TAU, 24, p_color, p_stroke, true)
 			canvas.draw_line(c + Vector2(-9, 4) * u, c + Vector2(9, -4) * u, p_color, p_stroke * 1.6)
+		Kind.BREATH:
+			for i: int in 3:
+				var y: float = (-5.0 + 5.0 * i) * u
+				var length: float = (9.0 - 2.0 * absf(i - 1.0)) * u
+				var wave: PackedVector2Array = []
+				for k: int in 9:
+					var t: float = float(k) / 8.0
+					wave.append(c + Vector2(-length + 2.0 * length * t, 0.0) + Vector2(0.0, y + sin(t * TAU) * 1.4 * u))
+				canvas.draw_polyline(wave, p_color, p_stroke, true)
+		Kind.AWAY:
+			var door: PackedVector2Array = [c + Vector2(1, -9) * u, c + Vector2(-8, -9) * u, c + Vector2(-8, 9) * u, c + Vector2(1, 9) * u]
+			canvas.draw_polyline(door, p_color, p_stroke, true)
+			canvas.draw_line(c + Vector2(-3, 0) * u, c + Vector2(9, 0) * u, p_color, p_stroke)
+			canvas.draw_polyline([c + Vector2(5, -4) * u, c + Vector2(9, 0) * u, c + Vector2(5, 4) * u], p_color, p_stroke, true)
+		Kind.FLAME:
+			var flame: PackedVector2Array = [c + Vector2(0, -10) * u, c + Vector2(5, -2) * u, c + Vector2(6, 4) * u, c + Vector2(3, 9) * u,
+					c + Vector2(-3, 9) * u, c + Vector2(-6, 4) * u, c + Vector2(-4, -1) * u, c + Vector2(-1, 2) * u]
+			canvas.draw_polyline(closed(flame), p_color, p_stroke, true)
+			canvas.draw_line(c + Vector2(0, 3) * u, c + Vector2(0, 7) * u, p_color, p_stroke)
+		Kind.SCANNER:
+			var l: float = 5.0 * u
+			for corner: Vector2 in [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]:
+				var dx: float = l if corner.x < c.x else -l
+				var dy: float = l if corner.y < c.y else -l
+				canvas.draw_polyline([corner + Vector2(dx, 0), corner, corner + Vector2(0, dy)], p_color, p_stroke, true)
+			canvas.draw_line(c + Vector2(-7, 0) * u, c + Vector2(7, 0) * u, p_color, p_stroke)
+			canvas.draw_rect(Rect2(c + Vector2(-1.5, -1.5) * u, Vector2(3, 3) * u), p_color)
+		Kind.REGISTER:
+			canvas.draw_rect(Rect2(c + Vector2(-7, -9) * u, Vector2(14, 18) * u), p_color, false, p_stroke)
+			for y: float in [-4.0, 0.0, 4.0]:
+				canvas.draw_line(c + Vector2(-4, y) * u, c + Vector2(4, y) * u, p_color, p_stroke)
 
 
 ## Icône du sceau d'un document (`seal_id` des `.tres`).

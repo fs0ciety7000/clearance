@@ -3,6 +3,8 @@
 ## passer au premier plan en restant **dans** le plan (jamais au-dessus de la
 ## vitre, §4.4), affiche l'état vide, le cadre du Mode Inspection, le bandeau
 ## de résultat et l'empreinte du tampon.
+## Acte II : pastille du scanner partiel dans l'en-tête (source ACV-2 ambre ou
+## boîtier des Lucioles magenta, nombre de liens suggérés à confirmer).
 class_name Workbench
 extends Control
 
@@ -12,6 +14,8 @@ signal document_focused(doc: DocumentInstance)
 signal background_clicked()
 ## Documents mis en place (après `present()`, une passe de mise en page).
 signal layout_done()
+## Acte II : « CONFIRMER » de la pastille du scanner (lien suggéré suivant).
+signal scanner_confirm_pressed()
 
 enum BannerKind { DISCORDANT, CONCORDANT, INCOMPARABLE, INFO }
 
@@ -44,6 +48,13 @@ var _banner_text: Label = null
 var _banner_tween: Tween = null
 var _stamp: StampMark = null
 var _unavailable_reason: String = ""
+## Acte II : pastille de source du scanner partiel (masquée sans scanner).
+var scanner_chip: PanelContainer = null
+var _scanner_label: Label = null
+var _scanner_count: Label = null
+var _scanner_icon: UiIcon = null
+var _scanner_text: String = ""
+var scanner_button: Button = null
 ## Échelle de base des documents posés (≤ 1) : la plus grande pièce tient dans
 ## la hauteur du plan, sous l'en-tête et au-dessus de la barre d'outils.
 var fit_scale: float = 1.0
@@ -441,6 +452,84 @@ func _build_header() -> void:
 	_mode_label.uppercase = true
 	_mode_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	right.add_child(_mode_label)
+	_build_scanner_chip()
+
+
+func _build_scanner_chip() -> void:
+	scanner_chip = PanelContainer.new()
+	scanner_chip.name = "ScannerChip"
+	scanner_chip.mouse_filter = Control.MOUSE_FILTER_PASS
+	scanner_chip.visible = false
+	add_child(scanner_chip)
+	var row: HBoxContainer = HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", DS.SPACE_2)
+	scanner_chip.add_child(row)
+	_scanner_icon = UiIcon.make(UiIcon.Kind.SCANNER, DS.STATE_AMBER, DS.ICON_S)
+	row.add_child(_scanner_icon)
+	_scanner_label = Label.new()
+	_scanner_label.theme_type_variation = &"DocFieldLabel"
+	_scanner_label.uppercase = true
+	_scanner_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_scanner_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(_scanner_label)
+	var sep: Label = Label.new()
+	sep.theme_type_variation = &"DocFieldLabel"
+	sep.text = "·"
+	sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(sep)
+	_scanner_count = Label.new()
+	_scanner_count.theme_type_variation = &"DocFieldLabel"
+	_scanner_count.uppercase = true
+	_scanner_count.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_scanner_count.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_scanner_count)
+	scanner_button = Button.new()
+	scanner_button.name = "ScannerConfirm"
+	scanner_button.theme_type_variation = &"ButtonGhost"
+	scanner_button.focus_mode = Control.FOCUS_NONE
+	scanner_button.text = UiText.t("wb_scanner_confirm", "CONFIRMER")
+	scanner_button.pressed.connect(func() -> void: scanner_confirm_pressed.emit())
+	row.add_child(scanner_button)
+
+
+## Acte II : pastille du scanner (`text` vide la masque).
+func set_scanner(text: String, color: Color, pending: int) -> void:
+	_scanner_text = text
+	scanner_chip.visible = not text.is_empty()
+	if text.is_empty():
+		return
+	_scanner_label.text = text
+	_scanner_label.add_theme_color_override(&"font_color", color)
+	for state: StringName in [&"font_color", &"font_hover_color", &"font_focus_color"]:
+		scanner_button.add_theme_color_override(state, color)
+	_scanner_count.add_theme_color_override(&"font_color", color)
+	_scanner_icon.color = color
+	scanner_chip.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL.blend(Color(color, 0.12)), Color(color, 0.6),
+			DS.BORDER_HAIRLINE, DS.CHAMFER_S, DS.SPACE_2))
+	set_scanner_count(pending)
+
+
+func set_scanner_count(pending: int) -> void:
+	if _scanner_count == null:
+		return
+	_scanner_count.text = UiText.plural("wb_scanner_pending", pending, "%d lien à confirmer", "%d liens à confirmer") \
+			if pending > 0 else UiText.t("wb_scanner_done", "dates conformes")
+	scanner_button.visible = pending > 0
+	_place_scanner_chip()
+
+
+## Pastille juste après le titre du plan (jamais sur l'état du Mode Inspection).
+func _place_scanner_chip() -> void:
+	if scanner_chip == null or not scanner_chip.visible:
+		return
+	scanner_chip.reset_size()
+	var left: float = _title.position.x + _title.get_combined_minimum_size().x + DS.SPACE_4
+	scanner_chip.position = Vector2(left, (HEADER_H - scanner_chip.size.y) * 0.5 + DS.SPACE_1)
+
+
+func get_scanner_text() -> String:
+	return _scanner_text if scanner_chip.visible else ""
 
 
 func _refresh_header() -> void:
@@ -450,6 +539,7 @@ func _refresh_header() -> void:
 		_title.text = UiText.t("wb_title_empty", "PLAN DE TRAVAIL · VIDE")
 	else:
 		_title.text = UiText.plural("wb_title_count", views.size(), "PLAN DE TRAVAIL · %d DOCUMENT", "PLAN DE TRAVAIL · %d DOCUMENTS")
+	_place_scanner_chip.call_deferred()
 	if inspection_active:
 		_mode_label.text = UiText.t("wb_mode_active", "MODE INSPECTION ACTIF")
 		_mode_label.add_theme_color_override(&"font_color", DS.ACCENT_CYAN)

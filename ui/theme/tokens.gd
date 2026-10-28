@@ -58,6 +58,13 @@ const GREEN_12 := Color("#2EFF9A1F")
 const GREEN_24 := Color("#2EFF9A3D")
 const GREEN_60 := Color("#2EFF9A99")
 
+# 0.3 — voix de l'Acte II (BriefingScreen, sous-titres) : teintes hors des
+# familles sémantiques (ni état, ni marque) pour rester distinctes des voix
+# existantes (Consortium jaune, Inspection ambre, Lucioles magenta, famille gris).
+const VOICE_COMMISSION := Color("#8E9CFF") # bleu de registre : Commission de Rééquilibrage
+const VOICE_COMMISSION_12 := Color("#8E9CFF1F")
+const VOICE_BRULANTS := Color("#D9663F") # braise éteinte : Brûlants (encre noire)
+const VOICE_BRULANTS_12 := Color("#D9663F1F")
 const TEXT_ON_ACCENT := Color("#07080C") # texte sur fond jaune/cyan/vert/ambre plein
 const SCRIM := Color("#07080CB8") # voile modal (72 %)
 const DISABLED_FG := Color("#4E5868")

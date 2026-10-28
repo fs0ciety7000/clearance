@@ -6,6 +6,9 @@
 ## Déplaçable (glisser), zoomable (molette / double-clic) et mis au premier plan
 ## par le `Workbench`, qui le contraint au plan de travail. En Mode Inspection
 ## le document est figé et ses champs deviennent sélectionnables.
+## Acte II : document **d'un tiers** (`DocumentInstance.third_party`, SC-27)
+## signalé par une puce « TIERS » (jamais comparé aux papiers du porteur) ;
+## document sans sceau (ticket de file) : pas de sceau dessiné.
 class_name DocumentView
 extends PanelContainer
 
@@ -226,6 +229,11 @@ func _build_header(def: DocumentTypeDef, show_serial: bool) -> Control:
 	title.uppercase = true
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	titles.add_child(title)
+	if instance.third_party:
+		var third: PanelContainer = ScreenBase.chip(UiText.t("doc_third_party", "DOCUMENT D'UN TIERS"), UiIcon.Kind.INFO, DS.TEXT_SECONDARY)
+		third.name = "ThirdParty"
+		third.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		titles.add_child(third)
 	var side: VBoxContainer = VBoxContainer.new()
 	side.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	side.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -236,9 +244,10 @@ func _build_header(def: DocumentTypeDef, show_serial: bool) -> Control:
 		serial.text = instance.serial
 		serial.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		side.add_child(serial)
-	var seal: UiIcon = UiIcon.make(UiIcon.seal_kind(instance.seal_id), _tint, DS.ICON_L + DS.SPACE_2)
-	seal.size_flags_horizontal = Control.SIZE_SHRINK_END
-	side.add_child(seal)
+	if instance.seal_id != &"":
+		var seal: UiIcon = UiIcon.make(UiIcon.seal_kind(instance.seal_id), _tint, DS.ICON_L + DS.SPACE_2)
+		seal.size_flags_horizontal = Control.SIZE_SHRINK_END
+		side.add_child(seal)
 	_header = header
 	return header
 

@@ -15,6 +15,9 @@
 ## Continuité** pour une DÉTENTION (un 3ᵉ acteur, hors pool, uniforme gris et
 ## brassard jaune, entre par la porte de la station, encadre le passager puis
 ## repart avec lui vers l'Anneau B).
+## M8 (Acte II) : accessoires des cas scénarisés (`PropDecor` : enfant, caisse
+## du chat, drone, LED de shunt) ; grève du J20 : `lights_out()` éteint les
+## lampes du guichet (la ville reste visible par la baie).
 class_name BoothDirector
 extends Node3D
 
@@ -83,6 +86,10 @@ const GUARD_EXIT: Array[Vector3] = [GUARD_SPOT, Vector3(1.6, 0, -1.05), Vector3(
 const GUARD_WAIT_MAX_SEC: float = 4.0
 const GUARD_FOLLOW_DELAY_SEC: float = 0.55
 
+## Acte II — lumières coupées (grève du J20) : énergie résiduelle.
+const LIGHTS_OUT_KEEP: float = 0.06
+const LIGHTS_OUT_CITY: float = 0.35
+
 const FLAG_ARRIVED: int = 1
 const FLAG_DOCUMENTS: int = 2
 const FLAG_DEPARTED: int = 4
@@ -108,6 +115,8 @@ var inspection_mode: bool = false
 var guard: PassengerActor = null
 ## Cas escorté (vide si aucune escorte en cours).
 var escort_case_id: StringName = &""
+## Acte II : lampes éteintes (grève du J20).
+var lights_dimmed: bool = false
 
 var _by_case: Dictionary[StringName, PassengerActor] = {}
 var _cases: Dictionary[StringName, Case] = {}
@@ -227,6 +236,7 @@ func _on_case_presented(case: Case) -> void:
 	actor.assign(case.case_id, _serial, SeededRng.hash_string(String(case.case_id)))
 	actor.apply_appearance(case.passenger_presented.appearance)
 	actor.apply_markings(case.passenger_presented.implants, has_magenta_thread(case))
+	actor.apply_props(case.dialogue_tags)
 	_by_case[case.case_id] = actor
 	_cases[case.case_id] = case
 	_desk_actor = actor
@@ -695,10 +705,28 @@ func _update_glass() -> void:
 	mat.set_shader_parameter(&"fx_intensity", Settings.fx_intensity)
 
 
+## Acte II — grève du J20 (« les vitres s'éteignent ») : fondu des lampes du
+## guichet et du Hall vers 6 % de leur énergie ; la lumière de la ville
+## (`HalcyonSpill`) garde 35 %. Propriétés de nœuds seulement (rien de partagé
+## n'est modifié : la scène suivante repart éclairée).
+func lights_out(duration: float) -> void:
+	lights_dimmed = true
+	var lights_root: Node = get_node_or_null(^"Lights")
+	if lights_root == null:
+		return
+	for child: Node in lights_root.get_children():
+		var light: Light3D = child as Light3D
+		if light == null:
+			continue
+		var keep: float = LIGHTS_OUT_CITY if light.name == &"HalcyonSpill" else LIGHTS_OUT_KEEP
+		var tween: Tween = create_tween()
+		tween.tween_property(light, ^"light_energy", light.light_energy * keep, maxf(duration, 0.01)).set_trans(Tween.TRANS_SINE)
+
+
 func _pulse_light(light: OmniLight3D, color: Color, energy: float, duration: float) -> void:
 	if light == null:
 		return
 	light.light_color = color
-	light.light_energy = energy
+	light.light_energy = energy * (LIGHTS_OUT_KEEP if lights_dimmed else 1.0)
 	var tween: Tween = create_tween()
 	tween.tween_property(light, ^"light_energy", 0.0, duration).set_ease(Tween.EASE_IN)
