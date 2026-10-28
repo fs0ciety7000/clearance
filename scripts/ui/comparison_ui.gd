@@ -988,8 +988,7 @@ func _return_documents() -> void:
 
 
 func _clear_rulebook_marks() -> void:
-	for item: InspectableItem in rulebook.get_items():
-		item.clear_marks()
+	rulebook.clear_item_marks()
 
 
 ## Oublie le cas courant (nouveau cas, ou retour au guichet vide).
@@ -1103,6 +1102,13 @@ func _status_text() -> String:
 		var rule_number: int = _rule_number_of(last)
 		if rule_number > 0:
 			rule_part = UiText.tf("st_rule", [rule_number], " · règle %02d")
+		# §4.9 : la paire marque ↔ bulletin ne débloque pas de question, elle
+		# documente un signalement (DÉTENTION).
+		if last.reason_key == Discrepancy.REASON_SYMBOL_MATCH:
+			var title: String = UiText.t("st_discordance_one_title", "⚠ 1 discordance") if count == 1 \
+					else UiText.tf("st_discordances_title", [count], "⚠ %d discordances")
+			return _bb(title, DS.ACCENT_MAGENTA) + UiText.t("st_symbol_report",
+					" · marque luciole relevée : DÉTENTION = signalement documenté.")
 		if count == 1:
 			return _bb(UiText.t("st_discordance_one_title", "⚠ 1 discordance"), DS.ACCENT_MAGENTA) \
 					+ UiText.tf("st_discordance_one", [rule_part], " documentée%s · question débloquée.")
@@ -1229,7 +1235,7 @@ func _refresh_doc_flags() -> void:
 func _find_item(ref: FieldRef) -> InspectableItem:
 	if ref == null or ref.is_passenger_face():
 		return null
-	if ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted():
+	if ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted() or ref.is_symbol():
 		return rulebook.find_item(ref, true)
 	return workbench.find_item(ref)
 
@@ -1244,7 +1250,7 @@ func _rect_of(ref: FieldRef) -> Rect2:
 	if item == null or not item.is_visible_in_tree():
 		return Rect2()
 	var rect: Rect2 = item.get_global_rect()
-	if (ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted()) and rulebook.collapsed:
+	if (ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted() or ref.is_symbol()) and rulebook.collapsed:
 		return Rect2()
 	return rect
 

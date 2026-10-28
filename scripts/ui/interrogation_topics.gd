@@ -30,6 +30,9 @@ const DOC_SEPARATOR: String = ":"
 static func topic_for(result: Discrepancy) -> StringName:
 	if result == null or not result.confirmed:
 		return &""
+	# Marque ↔ bulletin des symboles (§4.9) : un signalement, pas une question.
+	if result.reason_key == Discrepancy.REASON_SYMBOL_MATCH:
+		return &""
 	var reason: String = result.reason_key.trim_prefix("disc_")
 	var doc: StringName = &""
 	for ref: FieldRef in [result.a, result.b]:

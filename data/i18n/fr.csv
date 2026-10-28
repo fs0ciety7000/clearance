@@ -215,6 +215,7 @@ ui_discordance,DISCORDANCE
 wb_mode_verdict,VERDICT TRANSMIS
 st_discordance_one_title,⚠ 1 discordance
 st_discordance_one, documentée%s · question débloquée.
+st_symbol_report, · marque luciole relevée : DÉTENTION = signalement documenté.
 conc_valid_detail,Valide jusqu'au %s ≥ date du jour %s
 conc_generic,Aucune discordance constatée.
 conc_detail,%s : %s = %s
@@ -1083,6 +1084,7 @@ rb_symbols_intro,Bulletin du Bureau de Continuité · symboles subversifs relev�
 rb_symbol_luciole_title,Luciole · encre magenta
 rb_symbol_luciole_text,"Petit insecte lumineux dessiné au coin d'un document, visible à la loupe. Marque du réseau des Lucioles."
 rb_symbol_luciole_action,À SIGNALER · DÉTENTION DOCUMENTÉE
+doc_mark_label,Marque au coin du document
 rb_seals_intro,Sceaux en vigueur au 21.03.2187 : tout ancien modèle est refusé.
 rb_wanted_intro,Par le nom ou par le visage : mise en attente. Mode Inspection : comparez l'avis au visage du passager ou à ses papiers.
 rb_wanted_display,AVIS %02d · %s

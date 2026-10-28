@@ -4,7 +4,8 @@
 ## replié, il ne reste qu'une languette avec le compteur de nouveautés.
 ## M7 : seconde rangée « BULLETINS » (`DayDef.rulebook_tabs`) — Origines,
 ## Implants, Symboles subversifs, Sceaux (`RulebookReference`) et Avis de
-## recherche (`WantedCardView`, sélectionnables comme un champ).
+## recherche (`WantedCardView`, sélectionnables comme un champ) ; les entrées du
+## bulletin des symboles (`SymbolCardView`) le sont aussi (§4.9).
 class_name RulebookPanel
 extends PanelContainer
 
@@ -30,7 +31,11 @@ var cards: Array[RuleCardView] = []
 var reference_tabs: PackedStringArray = []
 var wanted_notices: Array[WantedNotice] = []
 var wanted_cards: Array[WantedCardView] = []
+## Entrées sélectionnables du bulletin des symboles (onglet affiché, §4.9).
+var symbol_cards: Array[SymbolCardView] = []
 var portrait_provider: Callable = Callable()
+## Marques des cartes masquées par l'onglet courant (clé `FieldRef.key()`).
+var _kept_marks: Dictionary[String, Array] = {}
 
 var _content: VBoxContainer = null
 var _day_label: Label = null
@@ -175,6 +180,7 @@ func set_rulebook(p_entries: Array[RulebookEntry], p_today: int, p_day_number: i
 	day_number = p_day_number
 	_day_label.text = UiText.tf("rb_day", [p_day_number], "JOUR %02d")
 	today_item.clear_marks()
+	_kept_marks.clear()
 	today_item.set_value_text(UiText.date(p_today))
 	var new_count: int = 0
 	for entry: RulebookEntry in entries:
@@ -288,13 +294,19 @@ func _show_tab(id: int) -> void:
 	current_tab = id
 	for i: int in _tab_buttons.size():
 		_tab_buttons[i].set_pressed_no_signal(_tab_ids[i] == id)
-	# Conserver les marques (sélection, discordances) des cartes recréées.
-	var marks: Dictionary[String, Array] = {}
+	# Conserver les marques (sélection, discordances) des cartes recréées,
+	# y compris au retour d'un détour par un autre onglet.
+	var marks: Dictionary[String, Array] = _kept_marks
 	for card: InspectableItem in _list_items():
-		marks[card.ref.key()] = [card.selected, card.flag_numbers.duplicate()]
+		if card.selected or card.is_flagged():
+			marks[card.ref.key()] = [card.selected, card.flag_numbers.duplicate()]
+		else:
+			marks.erase(card.ref.key())
 		card.queue_free()
 	cards.clear()
 	wanted_cards.clear()
+	symbol_cards.clear()
+	_scroll.tooltip_text = ""
 	if _reference_view != null:
 		_reference_view.queue_free()
 		_reference_view = null
@@ -330,6 +342,8 @@ func _list_items() -> Array[InspectableItem]:
 		items.append(card)
 	for card: WantedCardView in wanted_cards:
 		items.append(card)
+	for card: SymbolCardView in symbol_cards:
+		items.append(card)
 	return items
 
 
@@ -339,6 +353,14 @@ func _show_reference(tab: StringName, marks: Dictionary[String, Array]) -> void:
 		_reference_view = RulebookReference.build(tab)
 		_reference_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_list.add_child(_reference_view)
+		for node: Node in _reference_view.find_children("Symbol_*", "", true, false):
+			var symbol: SymbolCardView = node as SymbolCardView
+			if symbol == null:
+				continue
+			symbol.picked.connect(_on_item_picked)
+			symbol.set_inspection_active(inspection_active)
+			_restore_marks(symbol, marks)
+			symbol_cards.append(symbol)
 		return
 	# Consigne en infobulle : la place va aux avis (portrait lisible).
 	_scroll.tooltip_text = UiText.t("rb_wanted_intro", "Par le nom ou par le visage : mise en attente.")
@@ -349,14 +371,20 @@ func _show_reference(tab: StringName, marks: Dictionary[String, Array]) -> void:
 		card.picked.connect(_on_item_picked)
 		_list.add_child(card)
 		card.set_inspection_active(inspection_active)
-		var key: String = card.ref.key()
-		if marks.has(key):
-			var mark: Array = marks[key]
-			var was_selected: bool = mark[0]
-			card.set_selected(was_selected)
-			for n: int in mark[1]:
-				card.add_flag(n)
+		_restore_marks(card, marks)
 		wanted_cards.append(card)
+
+
+## Rétablit sélection et discordances d'une carte recréée (changement d'onglet).
+static func _restore_marks(card: InspectableItem, marks: Dictionary[String, Array]) -> void:
+	var key: String = card.ref.key()
+	if not marks.has(key):
+		return
+	var mark: Array = marks[key]
+	var was_selected: bool = mark[0]
+	card.set_selected(was_selected)
+	for n: int in mark[1]:
+		card.add_flag(n)
 
 
 ## Onglet précédent / suivant ([ / ], LB / RB).
@@ -387,6 +415,12 @@ func find_item(ref: FieldRef, reveal: bool = false) -> InspectableItem:
 			_show_tab(wanted_id)
 			return find_item(ref, false)
 		return null
+	if reveal and ref.is_symbol():
+		var symbols_id: int = reference_tab_id(RulebookReference.TAB_SYMBOLS)
+		if _tab_ids.has(symbols_id) and current_tab != symbols_id:
+			_show_tab(symbols_id)
+			return find_item(ref, false)
+		return null
 	if reveal and current_tab != TAB_ALL:
 		_show_tab(TAB_ALL)
 		return find_item(ref, false)
@@ -402,12 +436,27 @@ func show_reference_tab(tab: StringName) -> bool:
 	return true
 
 
+## Entrée du bulletin des symboles affichée (null si l'onglet n'est pas ouvert).
+func get_symbol_card(symbol_id: StringName) -> SymbolCardView:
+	for card: SymbolCardView in symbol_cards:
+		if card.symbol_id == symbol_id:
+			return card
+	return null
+
+
 ## Carte d'avis de recherche affichée (null si l'onglet n'est pas ouvert).
 func get_wanted_card(notice_id: StringName) -> WantedCardView:
 	for card: WantedCardView in wanted_cards:
 		if card.notice.id == notice_id:
 			return card
 	return null
+
+
+## Fin de cas : efface sélection et discordances, cartes masquées comprises.
+func clear_item_marks() -> void:
+	_kept_marks.clear()
+	for item: InspectableItem in get_items():
+		item.clear_marks()
 
 
 func set_inspection_active(enabled: bool) -> void:

@@ -5,7 +5,9 @@
 ## document). L'onglet Avis de recherche (J10) est construit par le
 ## `RulebookPanel` (cartes sélectionnables `WantedCardView`).
 ## Contenu informatif : non sélectionnable (les règles R10, R15, R16, R20 le
-## sont, dans l'onglet « Règles »).
+## sont, dans l'onglet « Règles »), sauf les entrées du bulletin des symboles
+## (`SymbolCardView`, paire marque ↔ symbole, NARRATIVE §4.9) ; l'onglet
+## Origines rappelle la tolérance « 00.00.AAAA » des Dérivants (§4.10, R07).
 class_name RulebookReference
 extends RefCounted
 
@@ -23,6 +25,8 @@ const INTRO_DAY: Dictionary[StringName, int] = {
 const IMPLANT_FAMILIES: Array[Array] = [
 	["OPT", true], ["NX", true], ["KIN", true], ["DER", true], ["MIL", false],
 ]
+## Symboles du bulletin (J7+) : identifiants de marque (`DocumentInstance.marks`).
+const SYMBOLS: Array[StringName] = [&"luciole"]
 ## Documents et sceau en vigueur (ordre d'affichage).
 const SEAL_DOCUMENTS: Array[StringName] = [&"id_card", &"entry_permit", &"bioscan", &"mil_waiver"]
 
@@ -113,6 +117,12 @@ static func _code(text: String, color: Color = DS.ACCENT_CYAN) -> PanelContainer
 static func _origins() -> Control:
 	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
 	box.add_child(_intro(UiText.t("rb_origins_intro", "Le 1er chiffre du bloc ID (HG-N…) désigne l'origine du titulaire.")))
+	# §4.10 (D-068) : naissance « 00.00.AAAA » des Dérivants, comparée par
+	# année (R07). Sous l'intro : lisible sans défiler.
+	var drv_note: Label = ScreenBase.wrapped(UiText.t("rb_origins_drv_birth",
+			"DRV · Dérivants : naissance « 00.00.AAAA » tolérée (année seule)."), &"BodySmall", DS.STATE_AMBER)
+	drv_note.name = "DrvBirthNote"
+	box.add_child(drv_note)
 	var factions: Array[FactionDef] = []
 	for faction: FactionDef in catalog().factions.values():
 		factions.append(faction)
@@ -145,21 +155,16 @@ static func _implants() -> Control:
 	return box
 
 
+## Bulletin des symboles : une `SymbolCardView` **sélectionnable** par symbole
+## (nommée `Symbol_<id>`, câblée par le `RulebookPanel`, NARRATIVE §4.9).
 static func _symbols() -> Control:
 	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
 	box.add_child(_intro(UiText.t("rb_symbols_intro", "Bulletin du Bureau de Continuité · symboles subversifs relevés aux quais.")))
-	var glyph: Control = Control.new()
-	glyph.custom_minimum_size = Vector2(64, 64)
-	glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	glyph.draw.connect(func() -> void:
-		glyph.draw_rect(Rect2(Vector2.ZERO, glyph.size), DS.BG_PANEL)
-		glyph.draw_rect(Rect2(Vector2.ZERO, glyph.size), DS.MAGENTA_24, false, 1.0)
-		SlippedItemView.draw_luciole(glyph, glyph.size * 0.5 + Vector2(0, 4), DS.SPACE_4, DS.ACCENT_MAGENTA))
-	var side: PanelContainer = ScreenBase.chip(UiText.t("rb_symbol_luciole_action", "À SIGNALER · MISE EN ATTENTE DOCUMENTÉE"),
-			UiIcon.Kind.WARNING, DS.STATE_AMBER)
-	box.add_child(_row(glyph, UiText.t("rb_symbol_luciole_title", "Luciole (encre magenta)"),
-			UiText.t("rb_symbol_luciole_text", "Dessin d'insecte lumineux au coin d'un document, visible à la loupe. Marque du réseau des Lucioles."),
-			side, DS.ACCENT_MAGENTA))
+	for symbol_id: StringName in SYMBOLS:
+		var card: SymbolCardView = SymbolCardView.new()
+		card.name = "Symbol_%s" % symbol_id
+		card.setup(symbol_id)
+		box.add_child(card)
 	return box
 
 

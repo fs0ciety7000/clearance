@@ -21,7 +21,8 @@
 ## M7 : `--screen=shift` (briefing fermé, premier passager appelé),
 ## `--screen=detain` (idem puis tampon DÉTENTION : escorte de la Garde),
 ## `--rulebook-tab=wanted|origins|implants|symbols|seals` (+ `--inspect` : Mode
-## Inspection, premier avis sélectionné), `--flags=a,b:2` (drapeaux / jauges de
+## Inspection, premier avis sélectionné ; `symbols` : paire marque luciole ↔
+## bulletin comparée si le passager porte la marque), `--flags=a,b:2` (drapeaux / jauges de
 ## démonstration), `--item=keep|return|report` (décision sur l'objet glissé),
 ## `--zoom-doc=<id>` (loupe sur un document).
 ## Tous ces arguments passent par `DebugArgs` : ignorés dans un export
@@ -350,6 +351,14 @@ func _debug_shift(_case_id: StringName, which: String) -> void:
 		comparison.set_inspection_active(true)
 		if not comparison.wanted_notices.is_empty() and tab == "wanted":
 			comparison.pick(comparison.wanted_notices[0].get_ref())
+		elif tab == "symbols":
+			# §4.9 : marque luciole (A) ↔ bulletin des symboles (B), vraie comparaison.
+			for view: DocumentView in comparison.workbench.views:
+				var mark: DocMarkView = view.get_mark_item(DocumentView.MARK_LUCIOLE)
+				if mark != null:
+					comparison.pick(mark.ref)
+					comparison.pick(FieldRef.symbol(DocumentView.MARK_LUCIOLE))
+					break
 	if _args.has("ask"):
 		comparison.open_question_menu()
 	if which == "detain":

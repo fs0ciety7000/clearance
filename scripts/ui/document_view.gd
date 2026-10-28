@@ -38,6 +38,8 @@ const TOKENS: GDScript = preload("res://ui/theme/tokens.gd")
 var instance: DocumentInstance = null
 var fields: Array[DocFieldView] = []
 var portrait_field: DocFieldView = null
+## M7 : marques au coin (luciole), sélectionnables en Mode Inspection (§4.9).
+var mark_items: Array[DocMarkView] = []
 ## Zoom courant (1 = lecture normale, `DS.DOC_ZOOM` = loupe).
 var zoom: float = 1.0
 var inspection_active: bool = false
@@ -54,6 +56,7 @@ var flag_count: int = 0:
 var _tint: Color = DS.ACCENT_CYAN
 var _header: Control = null
 var _content: VBoxContainer = null
+var _footer: Control = null
 var _hovered: bool = false
 var _dragging: bool = false
 var _drag_last: Vector2 = Vector2.ZERO
@@ -119,7 +122,9 @@ func build(p_instance: DocumentInstance, portrait_provider: Callable = Callable(
 	_fill_rows(rows, body_fields, portrait_provider)
 	if mrz_def != null:
 		_content.add_child(_build_mrz(mrz_def, portrait_provider))
-	_content.add_child(_build_footer())
+	_footer = _build_footer()
+	_content.add_child(_footer)
+	_build_marks()
 	_update_style()
 
 
@@ -136,13 +141,23 @@ func get_document_id() -> StringName:
 	return instance.get_document_id() if instance != null else &""
 
 
-## Tous les éléments sélectionnables (photo comprise).
+## Marque `mark_id` affichée (null si le document ne la porte pas).
+func get_mark_item(mark_id: StringName) -> DocMarkView:
+	for item: DocMarkView in mark_items:
+		if item.mark_id == mark_id:
+			return item
+	return null
+
+
+## Tous les éléments sélectionnables (photo et marques comprises).
 func get_items() -> Array[InspectableItem]:
 	var items: Array[InspectableItem] = []
 	if portrait_field != null:
 		items.append(portrait_field)
 	for item: DocFieldView in fields:
 		items.append(item)
+	for mark: DocMarkView in mark_items:
+		items.append(mark)
 	return items
 
 
@@ -281,6 +296,30 @@ func _build_mrz(field: FieldDef, portrait_provider: Callable) -> Control:
 	return item
 
 
+## Marque luciole (M7) : élément sélectionnable porté par le pied (Control
+## libre, hors du tri du conteneur), recentré sur `luciole_mark_position()`
+## après chaque tri (taille du document, zoom compris via l'échelle).
+func _build_marks() -> void:
+	if not has_luciole_mark():
+		return
+	var mark: DocMarkView = DocMarkView.new()
+	mark.setup(get_document_id(), MARK_LUCIOLE, MARK_SIZE_PX)
+	mark.picked.connect(_on_item_picked)
+	mark.fx_intensity = fx_intensity
+	_footer.add_child(mark)
+	mark_items.append(mark)
+	_content.sort_children.connect(_place_marks)
+	_place_marks()
+
+
+func _place_marks() -> void:
+	if _footer == null:
+		return
+	var origin: Vector2 = _content.position + _footer.position
+	for mark: DocMarkView in mark_items:
+		mark.center_on(luciole_mark_position() - origin)
+
+
 ## Pied décoratif : code-barres dérivé du n° de série (text.muted, DS §7.1 [5]).
 func _build_footer() -> Control:
 	var footer: Control = Control.new()
@@ -367,8 +406,7 @@ func _draw() -> void:
 	var corner: float = DS.SPACE_3
 	draw_polyline([Vector2(0, rect.end.y - corner), Vector2(0, rect.end.y), Vector2(corner, rect.end.y)], _tint, DS.BORDER_STRONG)
 	draw_polyline([Vector2(rect.end.x - corner, 0), Vector2(rect.end.x, 0), Vector2(rect.end.x, corner)], DS.ACCENT_CYAN, DS.BORDER_STRONG)
-	if has_luciole_mark():
-		SlippedItemView.draw_luciole(self, luciole_mark_position(), MARK_SIZE_PX, Color(DS.ACCENT_MAGENTA, 0.85))
+	# La luciole est dessinée par sa `DocMarkView` (sélectionnable, M7 §4.9).
 	# Badge « flagged » : losange magenta + compteur (DS §7.1).
 	if flag_count > 0:
 		var center: Vector2 = Vector2(rect.end.x - DS.SPACE_2, -DS.SPACE_2)
