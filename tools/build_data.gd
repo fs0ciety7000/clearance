@@ -39,13 +39,25 @@ const FK := FieldDef.FieldKind
 const CAT := Rule.RuleCategory
 
 ## Noms de famille distinctifs des personnages (NARRATIVE §1, §4 ; LORE §5.3) :
-## jamais tirés pour un passager généré (QA-002). Les noms courants des
-## personnages secondaires (Mensah, Hadid, Duval…) restent tirables : seul leur
-## nom complet est réservé (`reserved_full_names`, calculé depuis les `DayDef`).
+## jamais tirés pour un passager généré (QA-002). QA-022 : s'y ajoutent, calculés
+## depuis les `DayDef`, les noms de famille de **tous** les personnages
+## scénarisés des deux actes (Navarro, Kerr, Sato, Mensah…) et des avis nommés ;
+## `reserved_full_names` (nom complet) reste le filet des noms non réservés.
 const RESERVED_FAMILY_NAMES: PackedStringArray = ["Okonkwo", "Vasquez-Orlov", "Ravel", "Valcourt", "Petrenko",
 		"Whitmore", "Novak", "Montclair", "Achebe-Sörensen", "Moreno-Lind", "Long-Ruban", "Basse-Marée",
 		# Acte II (docs/ACT2.md §8.5) : récurrents et le cargo démantelé.
 		"Lindgren", "Beaumont", "Oyelaran-Holm", "Lindqvist-Rey", "Sillage"]
+## QA-022 : noms de famille de figurants ajoutés après les 15 du LORE §5 pour
+## les origines dont la réserve tirable fondait (TYC et HAL : 5 noms sur 15 une
+## fois les personnages réservés ; TER : 8) — 15 noms tirables au moins.
+## Proposition au Lore Master (LORE §5 à compléter).
+const EXTRA_FAMILY_NAMES: Dictionary[StringName, PackedStringArray] = {
+	&"tyc": ["Ostrowski", "Varga", "Lindahl-Moreau", "Kuznetsova", "Abebe", "Rasmussen", "Tanaka-Roy", "Soto-Berg",
+			"Hallorann", "Mendes-Ivers"],
+	&"hal": ["Delaunay", "Ashworth", "Kobayashi", "Sorel", "Vidal-Mori", "Thorne", "Achterberg", "Nakamura",
+			"Castelli", "Hargreave"],
+	&"ter": ["Owusu", "Bello", "Chaudhry", "Kamau", "Sarr", "Mwangi", "Touré"],
+}
 ## Prénoms du foyer de l'agent·e (LORE §6, NARRATIVE §1.2) : jamais générés.
 const RESERVED_HOUSEHOLD_NAMES: PackedStringArray = ["Ilan", "Noa", "Dora"]
 
@@ -177,20 +189,21 @@ func _build_name_pools() -> Dictionary[StringName, NamePool]:
 				["Mira", "Ilse", "Anouk", "Yara", "Rosalind", "Elena", "Sabine"],
 				["Tomás", "Dmitri", "Lev", "Bastien", "Kasimir", "Joaquín", "Arkady"],
 				["Noor"],
-				["Vasquez-Orlov", "Brandt", "Kowalczyk", "Moreno-Lind", "Petrenko", "Achebe-Sörensen", "Duval",
-				"Halvorsen", "Navarro", "Ivanova", "Lindqvist-Rey", "Mbeki", "Castellanos", "Novak", "Oyelaran-Holm"]),
+				PackedStringArray(["Vasquez-Orlov", "Brandt", "Kowalczyk", "Moreno-Lind", "Petrenko", "Achebe-Sörensen", "Duval",
+				"Halvorsen", "Navarro", "Ivanova", "Lindqvist-Rey", "Mbeki", "Castellanos", "Novak", "Oyelaran-Holm"])
+				+ PackedStringArray(EXTRA_FAMILY_NAMES[&"tyc"])),
 		_pool(&"hal",
 				["Céleste", "Ophélie", "Margaux", "Adaeze", "Mei", "Isadora", "Philippa"],
 				["Auguste", "Hiro", "Soren", "Valentin", "Corentin", "Kenji", "Aurelio"],
 				["Lin"],
-				["Valcourt", "Hsu", "Aurel", "Delacroix-Tan", "Whitmore", "Okafor", "Langlois", "Sato", "Ferreira",
-				"Lindgren", "Beaumont", "Choi", "Ravel", "Montclair", "Adeyemi"]),
+				PackedStringArray(["Valcourt", "Hsu", "Aurel", "Delacroix-Tan", "Whitmore", "Okafor", "Langlois", "Sato", "Ferreira",
+				"Lindgren", "Beaumont", "Choi", "Ravel", "Montclair", "Adeyemi"]) + PackedStringArray(EXTRA_FAMILY_NAMES[&"hal"])),
 		_pool(&"ter",
 				["Amara", "Fatou", "Leila", "Ana-Lucía", "Priya", "Inès", "Ngozi", "Samira"],
 				["Rahul", "Mateus", "Kwame", "Tariq", "Emeka", "Bilal", "Diego"],
 				[],
-				["Diallo", "Ramanathan", "Haddad", "Okonkwo", "Silva", "Mensah", "Rahman", "Benali", "Gutiérrez",
-				"Abara", "Nair", "Mahmoud", "Tembo", "Quispe", "Ferhat"]),
+				PackedStringArray(["Diallo", "Ramanathan", "Haddad", "Okonkwo", "Silva", "Mensah", "Rahman", "Benali", "Gutiérrez",
+				"Abara", "Nair", "Mahmoud", "Tembo", "Quispe", "Ferhat"]) + PackedStringArray(EXTRA_FAMILY_NAMES[&"ter"])),
 		# M7 : LORE §5.4–§5.6 (prénoms répartis F / M / épicènes).
 		_pool(&"cer",
 				["Zuri", "Oksana", "Ilka", "Suvi", "Nadia", "Linnea"],
@@ -1345,6 +1358,24 @@ func _wanted(id: StringName, scripted_id: StringName, index: int, given: String,
 ## avis de recherche dont le nom de famille est tirable. Tri : déterministe.
 func _reserve_character_names(pools: Dictionary[StringName, NamePool]) -> void:
 	var full_names: Dictionary[String, bool] = {}
+	# QA-022 : le nom de famille de **chaque** personnage scénarisé des deux
+	# actes (identité présentée et vraie identité) et de chaque avis de
+	# recherche nommé est réservé, pas seulement son nom complet.
+	var character_families: Dictionary[String, bool] = {}
+	for name: String in RESERVED_FAMILY_NAMES:
+		character_families[name] = true
+	for day: DayDef in _days:
+		for scripted: ScriptedCaseDef in day.scripted_cases:
+			for family_value: Variant in [scripted.passenger_overrides.get(&"family_name", ""),
+					scripted.truth_overrides.get(&"family_name", "")]:
+				if not str(family_value).is_empty():
+					character_families[str(family_value)] = true
+		for notice: WantedNoticeDef in day.wanted_notices:
+			if not notice.family_name.is_empty():
+				character_families[notice.family_name] = true
+	var reserved_families: Array[String] = []
+	reserved_families.assign(character_families.keys())
+	reserved_families.sort()
 	for day: DayDef in _days:
 		for scripted: ScriptedCaseDef in day.scripted_cases:
 			var family: String = str(scripted.passenger_overrides.get(&"family_name", ""))
@@ -1360,7 +1391,7 @@ func _reserve_character_names(pools: Dictionary[StringName, NamePool]) -> void:
 	for id: StringName in pools:
 		var pool: NamePool = pools[id]
 		var reserved: PackedStringArray = []
-		for name: String in RESERVED_FAMILY_NAMES:
+		for name: String in reserved_families:
 			if pool.family_names.has(name):
 				reserved.append(name)
 		for name: String in RESERVED_HOUSEHOLD_NAMES:

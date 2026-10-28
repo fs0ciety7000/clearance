@@ -793,7 +793,33 @@ func _open_final_confirm(event: EveningEvent, option: EveningOptionDef) -> void:
 	accept.name = "Accept"
 	accept.pressed.connect(accept_final_confirm)
 	buttons.add_child(accept)
+	# Boîte modale au clavier / à la manette (QA-021) : le focus tourne entre
+	# ses deux boutons, jamais vers les postes derrière le voile.
+	_trap_focus(cancel, accept)
+	_trap_focus(accept, cancel)
 	cancel.grab_focus.call_deferred()
+
+
+## Tab, Maj+Tab et les quatre directions de `from` mènent à `other` ou à lui-même.
+static func _trap_focus(from: Button, other: Button) -> void:
+	var to: NodePath = from.get_path_to(other)
+	var me: NodePath = NodePath(".")
+	from.focus_next = to
+	from.focus_previous = to
+	from.focus_neighbor_left = to
+	from.focus_neighbor_right = to
+	from.focus_neighbor_top = me
+	from.focus_neighbor_bottom = me
+
+
+## Échap / B (`cancel`, `ui_cancel`) dans la boîte « QUITTER HALCYON ? » :
+## annule (QA-021) ; le menu pause ne s'ouvre pas par-dessus.
+func _input(event: InputEvent) -> void:
+	if confirm_layer == null or not is_visible_in_tree():
+		return
+	if event.is_action_pressed(&"cancel", false, true) or event.is_action_pressed(&"ui_cancel", false, true):
+		close_final_confirm()
+		get_viewport().set_input_as_handled()
 
 
 ## Confirme l'option en attente (bouton CONFIRMER, tests).
@@ -808,10 +834,26 @@ func accept_final_confirm() -> bool:
 
 func close_final_confirm() -> void:
 	_pending_final.clear()
+	var was_open: bool = confirm_layer != null
 	if confirm_layer != null:
 		confirm_layer.queue_free()
 		confirm_layer = null
 	_refresh_options()
+	if was_open:
+		_refocus_after_confirm()
+
+
+## Focus rendu à l'option qui avait ouvert la boîte (sinon VALIDER).
+func _refocus_after_confirm() -> void:
+	for row: Button in option_buttons.values():
+		if not is_instance_valid(row) or not row.is_visible_in_tree() or row.disabled:
+			continue
+		var option: EveningOptionDef = row.get_meta(&"option")
+		if option != null and option.ends_campaign != &"":
+			row.grab_focus.call_deferred()
+			return
+	if confirm_button != null and confirm_button.is_visible_in_tree():
+		confirm_button.grab_focus.call_deferred()
 
 
 func _refresh_options() -> void:
@@ -909,7 +951,8 @@ func _footer() -> Control:
 
 ## Valide les dépenses (le mot non tranché est brûlé en silence).
 func confirm() -> void:
-	if _report_layer != null:
+	# Boîte « QUITTER HALCYON ? » ouverte : elle seule répond (QA-021).
+	if _report_layer != null or confirm_layer != null:
 		return
 	if luciole_pending:
 		_decide_luciole(false)

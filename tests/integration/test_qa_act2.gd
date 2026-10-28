@@ -145,9 +145,9 @@ func _households() -> Array[Household]:
 
 
 ## QA-019 : briefing du J11, vannes ouvertes (cas le plus fréquent des campagnes
-## réelles) : la clé `msg_cons_day11_albedo` n'existe pas dans `fr.csv`, le
-## bulletin affiche « msg_cons_day11_albedo » — et remplace l'annonce du
-## prélèvement (même groupe `levy`).
+## réelles) : la clé `msg_cons_day11_albedo` manquait dans `fr.csv` et le
+## bulletin Albédo évinçait l'annonce du prélèvement (même groupe `levy`).
+## Aucune clé brute aux briefings J10–J20 ; le prélèvement est toujours annoncé.
 func test_act_two_briefings_have_no_raw_key() -> void:
 	var raw: PackedStringArray = []
 	var variants: Array[Array] = [[], [&"vannes_opened"], [&"vannes_failed"], [&"vannes_aborted"],
@@ -167,10 +167,18 @@ func test_act_two_briefings_have_no_raw_key() -> void:
 				for key: String in [content.directive_key, content.directive_title_key, content.slogan_key]:
 					if not UiText.has(key) and not raw.has("J%d %s" % [n, key]):
 						raw.append("J%d %s" % [n, key])
-	if not raw.is_empty():
-		pending("QA-019 : clés absentes de fr.csv au briefing : %s" % ", ".join(raw))
-		return
-	assert_eq(raw.size(), 0)
+	assert_eq(raw, PackedStringArray(), "QA-019 : clés absentes de fr.csv au briefing")
+	# Le bulletin du J11 annonce toujours le prélèvement, Albédo ou non.
+	for flag_set: Array in variants:
+		for home: Household in _households():
+			var flags: Dictionary[StringName, Variant] = {EndingService.FLAG_ACT2: true, &"lucioles_trust": 3}
+			for flag: StringName in flag_set:
+				flags[flag] = true
+			var content: BriefingContent = BriefingContent.build(data.get_day(11), flags, home, 0)
+			var levy_announced: bool = false
+			for message: Dictionary in content.messages:
+				levy_announced = levy_announced or UiText.t(str(message["text"])).contains("Prélèvement de Rééquilibrage")
+			assert_true(levy_announced, "J11 %s : prélèvement annoncé" % [flag_set])
 
 
 ## QA-020 : J12+, quatre documents (carte, permis, bio-scan, contrat) en
@@ -179,8 +187,10 @@ func test_act_two_briefings_have_no_raw_key() -> void:
 ## sous le document suivant — y compris le champ visé par un lien du scanner.
 func test_four_documents_keep_their_expiry_dates_visible() -> void:
 	var ui: ComparisonUI = UI_SCENE.instantiate() as ComparisonUI
-	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child_autofree(ui)
+	# Écran 1920×1080 (la fenêtre de GUT est plus haute).
+	ui.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	ui.size = Vector2(1920, 1080)
 	ui.workbench.reduce_motion = true
 	var day: DayDef = data.get_day(12)
 	EventBus.day_started.emit(day, day.rule_set.build_rulebook())
@@ -206,10 +216,112 @@ func test_four_documents_keep_their_expiry_dates_visible() -> void:
 			if cover.intersects(rect) and cover.intersection(rect).get_area() > rect.get_area() * 0.25:
 				hidden.append("%s (sous %s)" % [views[i].get_document_id(), views[j].get_document_id()])
 				break
-	if not hidden.is_empty():
-		pending("QA-020 : expiration masquée au placement initial (1080p, 4 documents) : %s" % ", ".join(hidden))
-		return
-	assert_eq(hidden.size(), 0)
+	assert_eq(hidden.size(), 0, "QA-020 : expiration visible au placement initial (1080p, 4 documents) : %s" % ", ".join(hidden))
+	assert_false(ui.workbench.is_stacked(), "1080p, 4 documents : tous côte à côte (les piles n'y grossiraient pas le texte)")
+	assert_gte(ui.workbench.fit_scale, ui.workbench.min_fit_scale(), "échelle lisible")
+
+
+## Critère de bascule (QA-020 / QA-004) : ≥ 12 px physiques pour les valeurs
+## des champs, échelle de la fenêtre comprise.
+func test_document_scale_targets_twelve_physical_pixels() -> void:
+	assert_almost_eq(Workbench.readable_scale_for(16.0, 1.0, 0.72), 0.75, 0.001, "1080p : valeurs 16 px")
+	assert_almost_eq(Workbench.readable_scale_for(18.0, 1280.0 / 1920.0, 0.72), 1.0, 0.001, "Deck : plancher 18 px × 0,67")
+	assert_almost_eq(Workbench.readable_scale_for(24.0, 1.0, 0.48), 0.5, 0.001, "texte 1,5 en 1080p")
+	assert_almost_eq(Workbench.readable_scale_for(40.0, 1.0, 0.72), 0.72, 0.001, "jamais sous l'échelle minimale")
+
+
+## QA-020 : cinq documents (J20, figure finale + ticket de file) : la largeur ne
+## suffit plus côte à côte, le plan range des piles à onglets. Chaque document
+## de devant est entier, chaque document du fond montre son onglet (titre), et
+## la touche n (`focus_document`) l'amène devant sans rien couvrir.
+func test_five_documents_stack_with_readable_tabs() -> void:
+	var ui: ComparisonUI = UI_SCENE.instantiate() as ComparisonUI
+	add_child_autofree(ui)
+	# Écran 1920×1080 (la fenêtre de GUT est plus haute).
+	ui.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	ui.size = Vector2(1920, 1080)
+	ui.workbench.reduce_motion = true
+	var day: DayDef = data.get_day(20)
+	EventBus.day_started.emit(day, day.rule_set.build_rulebook())
+	EventBus.day_phase_changed.emit(DayPhase.Kind.WAITING_CASE, &"")
+	var case: Case = CaseFactory.valid_case([CaseFactory.ID_CARD, CaseFactory.PERMIT, CaseFactory.BIOSCAN])
+	case.documents.append(CaseFactory.document(&"work_contract", case.passenger_presented))
+	case.documents.append(CaseFactory.document(&"queue_ticket", case.passenger_presented))
+	case.index = 0
+	EventBus.case_presented.emit(case)
+	EventBus.day_phase_changed.emit(DayPhase.Kind.ARRIVING, case.case_id)
+	EventBus.day_phase_changed.emit(DayPhase.Kind.INSPECTING, case.case_id)
+	EventBus.documents_presented.emit(case.case_id)
+	await wait_seconds(1.0)
+	var bench: Workbench = ui.workbench
+	assert_eq(bench.views.size(), 5, "cinq documents posés")
+	assert_gte(bench.fit_scale, bench.min_fit_scale(), "échelle lisible")
+	for view: DocumentView in bench.views:
+		var covered: float = _covered_ratio(bench, view, Rect2(Vector2.ZERO, Vector2(view.size.x, view.tab_height())))
+		assert_lt(covered, 0.25, "%s : onglet visible" % view.get_document_id())
+		if bench.is_front(view):
+			assert_lt(_covered_ratio(bench, view, Rect2(Vector2.ZERO, view.size)), 0.02, "%s : document de devant entier" % view.get_document_id())
+	for i: int in bench.views.size():
+		assert_true(bench.focus_document(i), "touche %d" % (i + 1))
+		var view: DocumentView = bench.views[i]
+		assert_true(bench.is_front(view))
+		assert_lt(_covered_ratio(bench, view, Rect2(Vector2.ZERO, view.size)), 0.02, "%s devant : entier" % view.get_document_id())
+
+
+## QA-023 : paire concordante comparée puis documents rendus avant la fin du
+## surlignage (1,5 s) : aucun rappel sur un champ libéré (journal propre),
+## le surlignage s'efface sinon normalement.
+func test_concordant_mark_survives_documents_leaving_early() -> void:
+	var ui: ComparisonUI = UI_SCENE.instantiate() as ComparisonUI
+	add_child_autofree(ui)
+	# Écran 1920×1080 (la fenêtre de GUT est plus haute).
+	ui.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	ui.size = Vector2(1920, 1080)
+	ui.workbench.reduce_motion = true
+	var day: DayDef = data.get_day(12)
+	EventBus.day_started.emit(day, day.rule_set.build_rulebook())
+	EventBus.day_phase_changed.emit(DayPhase.Kind.WAITING_CASE, &"")
+	var case: Case = CaseFactory.valid_case([CaseFactory.ID_CARD, CaseFactory.PERMIT])
+	case.index = 0
+	EventBus.case_presented.emit(case)
+	EventBus.day_phase_changed.emit(DayPhase.Kind.ARRIVING, case.case_id)
+	EventBus.day_phase_changed.emit(DayPhase.Kind.INSPECTING, case.case_id)
+	EventBus.documents_presented.emit(case.case_id)
+	await wait_process_frames(3)
+	var context: RuleContext = CaseFactory.context(day.rule_set, day.game_date)
+	var fields: Array[StringName] = [&"family_name", &"given_name"]
+	for pass_index: int in 2:
+		var a: FieldRef = FieldRef.new(CaseFactory.ID_CARD, fields[pass_index])
+		var b: FieldRef = FieldRef.new(CaseFactory.PERMIT, fields[pass_index])
+		ui.set_inspection_active(true)
+		ui.pick(a)
+		ui.pick(b)
+		var result: Discrepancy = DiscrepancyChecker.check(case, a, b, context)
+		assert_eq(result.result, Discrepancy.Result.CONCORDANT)
+		EventBus.discrepancy_checked.emit(result)
+		var item: InspectableItem = ui.workbench.find_item(a)
+		assert_true(item.concordant, "paire surlignée")
+		if pass_index == 0:
+			await wait_seconds(DS.CONCORDANT_HOLD + DS.DUR_BASE + 0.2)
+			assert_false(item.concordant, "surlignage effacé après %.1f s" % DS.CONCORDANT_HOLD)
+		else:
+			ui.workbench.clear(false)
+			await wait_seconds(DS.CONCORDANT_HOLD + DS.DUR_BASE + 0.2)
+			assert_eq(ui.workbench.views.size(), 0, "documents rendus avant la fin du surlignage, sans erreur")
+
+
+## Part de `local` (repère du document) couverte par les documents affichés
+## au-dessus de lui.
+func _covered_ratio(bench: Workbench, view: DocumentView, local: Rect2) -> float:
+	var rect: Rect2 = Rect2(view.get_global_transform() * local.position, local.size * view.get_global_transform().get_scale())
+	var worst: float = 0.0
+	for other: DocumentView in bench.views:
+		if other == view or other.get_index() < view.get_index():
+			continue
+		var cover: Rect2 = other.get_global_rect().intersection(rect)
+		if cover.has_area():
+			worst = maxf(worst, cover.get_area() / rect.get_area())
+	return worst
 
 
 func _evening(day_number: int, flags: Dictionary[StringName, Variant], balance: int = 60) -> EveningScreen:
@@ -247,37 +359,53 @@ func test_quit_halcyon_confirmation_is_modal() -> void:
 	var accept: Control = screen.confirm_layer.find_child("Accept", true, false) as Control
 	var next: Control = accept.find_next_valid_focus()
 	var escapes: bool = next != null and not screen.confirm_layer.is_ancestor_of(next)
+	var previous: Control = accept.find_prev_valid_focus()
 	screen.confirm()
 	var validated_behind: bool = screen.confirm_layer != null and screen.choices.has(&"d10_drift")
-	if escapes or validated_behind:
-		pending("QA-021 : focus hors de la boîte (%s) ; validation acceptée boîte ouverte : %s" % [
-				next.name if next != null else "—", validated_behind])
-		return
-	assert_false(escapes)
+	assert_false(escapes, "QA-021 : Tab reste dans la boîte (%s)" % [String(next.name) if next != null else "—"])
+	assert_true(previous != null and screen.confirm_layer.is_ancestor_of(previous), "Maj+Tab reste dans la boîte")
+	assert_false(validated_behind, "VALIDER ignoré boîte ouverte")
+	assert_not_null(screen.confirm_layer, "boîte toujours ouverte")
+	# Échap = annuler (« Rester »), le choix reste en suspens.
+	var escape: InputEventAction = InputEventAction.new()
+	escape.action = &"cancel"
+	escape.pressed = true
+	screen._input(escape)
+	assert_null(screen.confirm_layer, "Échap ferme la boîte")
+	var chosen: StringName = screen.choices.get(&"d10_drift", &"")
+	assert_ne(chosen, &"board", "« Embarquer » non choisi")
 
 
-## QA-022 : noms de famille des personnages de l'Acte II tirés pour des
-## passagers générés les jours mêmes où ils apparaissent : « Navarro » (Elena,
-## J11–J12 ; ex. graine 3 : « Tomás Navarro » 1ᵉʳ passager du J11 et du J12),
-## « Kerr » (les trois Ren Kerr, J13), « Sato » (Sato révoqué, J17).
+## QA-022 : noms de famille des personnages tirés pour des passagers générés
+## (« Tomás Navarro » le jour d'Elena Navarro, « Soren Sato » le jour de la
+## révocation de Sato, un Kerr au J13). Depuis le correctif, le nom de famille
+## de **chaque** personnage scénarisé des deux actes est réservé : aucun
+## passager généré ne le porte, quel que soit le jour.
 func test_act_two_character_surnames_are_not_drawn_for_generated_passengers() -> void:
-	var watched: Dictionary[String, Array] = {"Navarro": [11, 12], "Kerr": [13], "Sato": [12, 16, 17]}
+	var families: Dictionary[String, bool] = {}
+	for day: DayDef in data.days.values():
+		for scripted: ScriptedCaseDef in day.scripted_cases:
+			for value: Variant in [scripted.passenger_overrides.get(&"family_name", ""),
+					scripted.truth_overrides.get(&"family_name", "")]:
+				if not str(value).is_empty():
+					families[str(value)] = true
+	for family: String in ["Navarro", "Kerr", "Sato", "Lindgren", "Beaumont", "Okonkwo"]:
+		assert_true(families.has(family), "personnage %s" % family)
 	var hits: PackedStringArray = []
-	for campaign: int in range(1, 13):
-		for family: String in watched:
-			for n: int in watched[family]:
-				var day: DayDef = data.get_day(n)
-				var builder: CaseBuilder = CaseBuilder.new(data, day, SeededRng.day_seed(campaign, n), [])
-				for i: int in day.passenger_count:
-					if builder.get_scripted_case(i) != null:
-						continue
-					var p: Passenger = builder.build(i).case.passenger_presented
-					if p.family_name == family:
-						hits.append("graine %d J%d #%d %s %s" % [campaign, n, i, p.given_name, p.family_name])
-	if not hits.is_empty():
-		pending("QA-022 : %d passagers générés homonymes de famille (%s…)" % [hits.size(), ", ".join(hits.slice(0, 3))])
-		return
-	assert_eq(hits.size(), 0)
+	var generated: int = 0
+	for campaign: int in range(1, 7):
+		for n: int in range(1, data.get_last_day_number() + 1):
+			var day: DayDef = data.get_day(n)
+			var builder: CaseBuilder = CaseBuilder.new(data, day, SeededRng.day_seed(campaign, n), [])
+			for i: int in day.passenger_count:
+				if builder.get_scripted_case(i) != null:
+					continue
+				var p: Passenger = builder.build(i).case.passenger_presented
+				generated += 1
+				if families.has(p.family_name):
+					hits.append("graine %d J%d #%d %s %s" % [campaign, n, i, p.given_name, p.family_name])
+	assert_gt(generated, 1000, "passagers générés")
+	assert_eq(hits, PackedStringArray(), "QA-022 : passagers générés homonymes d'un personnage")
 
 
 # ---------------------------------------------------------------------------
@@ -358,23 +486,119 @@ func test_strike_lights_out_ignores_spam() -> void:
 ## QA-024 : note des postes du soir lue en clé par défaut `ev_note_<id>`
 ## (`ExpenseLine`) : « ev_note_levy » sous le Prélèvement de Rééquilibrage
 ## (J11, J17 : toute épargne > 40 ₵) et « ev_note_lease » sous la location de
-## l'ACV-2 (J14–J19) s'affichent en clair.
+## l'ACV-2 (J14–J19) s'affichaient en clair. Tous les jours, foyers malades ou
+## absents, drapeaux de l'Acte II.
 func test_evening_line_notes_are_translated() -> void:
 	var economy: EconomyDef = data.get_economy()
 	var raw: PackedStringArray = []
-	for n: int in range(10, 20):
+	for n: int in range(1, data.get_last_day_number() + 1):
 		for variant: int in 2:
 			var flags: Dictionary[StringName, Variant] = {}
 			if variant == 1:
-				flags = {PartialScanner.FLAG_CONSORTIUM: true, EveningService.FLAG_ILAN_JOB: true, &"meter_refused": true}
-			var home: Household = Household.new()
-			var lines: Array[ExpenseLine] = EveningService.build_lines(economy, n, home, flags, 200)
-			lines.append_array(EveningService.income_lines(economy, n, home, flags))
-			for line: ExpenseLine in lines:
-				for key: String in [line.label_key, line.note_key]:
-					if not key.is_empty() and not UiText.has(key) and not raw.has(key):
-						raw.append(key)
-	if not raw.is_empty():
-		pending("QA-024 : notes de postes non traduites : %s" % ", ".join(raw))
+				flags = {PartialScanner.FLAG_CONSORTIUM: true, EveningService.FLAG_ILAN_JOB: true, &"meter_refused": true,
+						EndingService.FLAG_ACT2: true}
+			for home: Household in _evening_households():
+				var lines: Array[ExpenseLine] = EveningService.build_lines(economy, n, home, flags, 200)
+				lines.append_array(EveningService.income_lines(economy, n, home, flags))
+				for line: ExpenseLine in lines:
+					for key: String in [line.label_key, line.note_key]:
+						if not key.is_empty() and not UiText.has(key) and not raw.has(key):
+							raw.append(key)
+	assert_eq(raw, PackedStringArray(), "notes de postes non traduites")
+
+
+func _evening_households() -> Array[Household]:
+	var homes: Array[Household] = _households()
+	var sick: Household = Household.new()
+	var grave: Household = Household.new()
+	for member: Household.Member in sick.members:
+		member.health = Household.Health.SICK
+	for member: Household.Member in grave.members:
+		member.health = Household.Health.GRAVELY_SICK
+	homes.append_array([sick, grave])
+	return homes
+
+
+## QA-024 / QA-028 : **toute clé référencée par les données** (`data/` :
+## briefings, soirées et options, annonces, avis, révocations, cas scénarisés,
+## objets glissés, documents, règles, factions) existe dans `fr.csv`. Parcours
+## réflexif des propriétés stockées : `*_key`, `key` (`ConditionalKey`),
+## `*_keys` ; ressources, tableaux et dictionnaires imbriqués.
+func test_every_data_referenced_key_exists_in_fr_csv() -> void:
+	var missing: PackedStringArray = []
+	var seen: Dictionary[int, bool] = {}
+	var roots: Array = []
+	roots.append_array(data.factions.values())
+	roots.append_array(data.documents.values())
+	roots.append_array(data.rules.values())
+	roots.append_array(data.rule_sets.values())
+	roots.append_array(data.days.values())
+	roots.append(data.get_economy())
+	for root: Variant in roots:
+		_collect_missing_keys(root, "", missing, seen)
+	assert_gt(seen.size(), 100, "parcours des données")
+	assert_eq(missing, PackedStringArray(), "clés des données absentes de fr.csv")
+
+
+## QA-030 : la barrière de mixage (autoload) tourne à chaque image, pause
+## comprise, avant `AudioServer.update()` ; elle rend la main aussitôt.
+func test_audio_mix_barrier_is_always_processing() -> void:
+	var barrier: Node = get_tree().root.get_node_or_null("AudioMixBarrier")
+	assert_not_null(barrier, "autoload AudioMixBarrier")
+	if barrier == null:
 		return
-	assert_eq(raw.size(), 0)
+	assert_eq(barrier.process_mode, Node.PROCESS_MODE_ALWAYS)
+	assert_true(barrier.is_processing())
+	var start: int = Time.get_ticks_msec()
+	for i: int in 100:
+		barrier.call(&"sync_with_mixer")
+	assert_lt(Time.get_ticks_msec() - start, 1000, "100 barrières en moins d'une seconde")
+
+
+## QA-028 (données) : chaque code employeur de R25 a son libellé `rb_emp_*`.
+func test_employer_codes_have_label_keys() -> void:
+	var found: int = 0
+	for rule: Rule in data.rules.values():
+		var consistent: ContractConsistentRule = rule as ContractConsistentRule
+		if consistent == null:
+			continue
+		for employer: String in consistent.employer_codes:
+			found += 1
+			var key: String = ContractConsistentRule.label_key(consistent.employer_codes[employer])
+			assert_true(UiText.has(key), "%s → %s" % [employer, key])
+			assert_true(UiText.t(key).ends_with(employer), "%s : libellé « %s »" % [key, UiText.t(key)])
+	assert_eq(found, 13, "13 codes employeurs")
+
+
+func _collect_missing_keys(value: Variant, prop: String, missing: PackedStringArray, seen: Dictionary[int, bool]) -> void:
+	match typeof(value):
+		TYPE_OBJECT:
+			if not value is Resource:
+				return
+			var res: Resource = value
+			if seen.has(res.get_instance_id()):
+				return
+			seen[res.get_instance_id()] = true
+			for info: Dictionary in res.get_property_list():
+				var name: String = info["name"]
+				var usage: int = info["usage"]
+				if (usage & PROPERTY_USAGE_STORAGE) == 0 or name == "script" or name.begins_with("resource_"):
+					continue
+				_collect_missing_keys(res.get(name), name, missing, seen)
+		TYPE_ARRAY:
+			for item: Variant in value:
+				_collect_missing_keys(item, prop, missing, seen)
+		TYPE_DICTIONARY:
+			var dict: Dictionary = value
+			for item: Variant in dict.values():
+				_collect_missing_keys(item, prop, missing, seen)
+		TYPE_PACKED_STRING_ARRAY:
+			if prop.ends_with("_keys"):
+				for key: String in value:
+					if not UiText.has(key) and not missing.has(key):
+						missing.append(key)
+		TYPE_STRING, TYPE_STRING_NAME:
+			var key: String = str(value)
+			if (prop == "key" or prop.ends_with("_key")) and not key.is_empty() and not UiText.has(key) \
+					and not missing.has(key):
+				missing.append(key)

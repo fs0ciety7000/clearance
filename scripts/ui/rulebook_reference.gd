@@ -117,6 +117,15 @@ static func employer_rows() -> Array[PackedStringArray]:
 	return rows
 
 
+## Nom affiché d'un employeur (QA-028) : clé `rb_emp_<code>` (« KA · Kessler-Ashe
+## Orbital »), sans le code déjà porté par la pastille CT-KA ; nom de la
+## règle à défaut.
+static func employer_name(code: String, fallback: String) -> String:
+	var text: String = UiText.t(ContractConsistentRule.label_key(code), fallback)
+	var prefix: String = code + " · "
+	return text.trim_prefix(prefix) if text.begins_with(prefix) else text
+
+
 ## Cargos inscrits au registre (R26).
 static func registered_vessels() -> PackedStringArray:
 	var rule: DriftPassRule = catalog_rule(RULE_DRIFT) as DriftPassRule
@@ -138,7 +147,7 @@ static func _employers() -> Control:
 		var cap: PanelContainer = _code("CT-" + row[0], DS.ACCENT_CYAN)
 		cap.name = "Code_%s" % row[0]
 		grid.add_child(cap)
-		var employer: Label = ScreenBase.label(row[1], &"BodySmall", DS.TEXT_PRIMARY)
+		var employer: Label = ScreenBase.label(employer_name(row[0], row[1]), &"BodySmall", DS.TEXT_PRIMARY)
 		employer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		employer.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		employer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

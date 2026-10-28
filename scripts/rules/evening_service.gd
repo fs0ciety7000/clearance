@@ -361,7 +361,7 @@ static func build_events(defs: Array[EveningEventDef], flags: Dictionary[StringN
 	var events: Array[EveningEvent] = []
 	var sorted: Array[EveningEventDef] = []
 	for def: EveningEventDef in defs:
-		if def != null and FlagCondition.check(def.condition, flags):
+		if def != null and FlagCondition.check(def.condition, flags) and def.economy_gauges_met(flags, economy):
 			sorted.append(def)
 	sorted.sort_custom(func(a: EveningEventDef, b: EveningEventDef) -> bool: return a.order < b.order)
 	for def: EveningEventDef in sorted:

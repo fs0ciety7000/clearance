@@ -238,6 +238,26 @@ func test_act2_data_keys_are_translated() -> void:
 	assert_eq(missing.size(), 0, ", ".join(missing.slice(0, 12)))
 
 
+## R28 (revue d'architecture) : les seuils des soirées du J19 (grève, registre)
+## sont lus dans l'`EconomyDef` (une seule source) : `balance_sim --set=` les règle.
+func test_day19_thresholds_read_economy_def() -> void:
+	var defs: Array[EveningEventDef] = data.get_day(19).evening_events
+	var tuned: EconomyDef = economy.duplicate() as EconomyDef
+	var flags: Dictionary[StringName, Variant] = _flags({"solidarite": 2, "registre": 2})
+	var ids: Array[StringName] = []
+	for event: EveningEvent in EveningService.build_events(defs, flags, economy):
+		ids.append(event.id)
+	assert_false(ids.has(&"d19_strike"), "solidarite 2 < 3")
+	assert_false(ids.has(&"d19_registre"), "registre 2 < 3")
+	tuned.strike_solidarity_threshold = 2
+	tuned.registre_threshold = 2
+	ids.clear()
+	for event: EveningEvent in EveningService.build_events(defs, flags, tuned):
+		ids.append(event.id)
+	assert_true(ids.has(&"d19_strike"), "seuil de grève lu dans l'EconomyDef")
+	assert_true(ids.has(&"d19_registre"), "seuil du registre lu dans l'EconomyDef")
+
+
 # --- Sauvegarde v4 ---------------------------------------------------------------
 
 func test_save_migration_v3_to_v4() -> void:

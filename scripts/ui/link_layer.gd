@@ -89,14 +89,19 @@ func remove_suggested(p: FieldRef, q: FieldRef) -> void:
 ## Point milieu global d'un lien (pastille « CONFIRMER »), `Vector2.INF` si
 ## une extrémité est invisible (Rulebook replié, document hors champ).
 func link_midpoint(link: Link) -> Vector2:
+	var pts: PackedVector2Array = link_points(link)
+	return pts[pts.size() >> 1] if not pts.is_empty() else Vector2.INF
+
+
+## Points de la courbe d'un lien (repère global), vide si un bout manque.
+func link_points(link: Link) -> PackedVector2Array:
 	var ra: Rect2 = _local_rect(link.a)
 	var rb: Rect2 = _local_rect(link.b)
 	if ra.size == Vector2.ZERO or rb.size == Vector2.ZERO:
-		return Vector2.INF
+		return PackedVector2Array()
 	var sa: Array[Vector2] = anchor(ra, rb.get_center())
 	var sb: Array[Vector2] = anchor(rb, ra.get_center())
-	var pts: PackedVector2Array = curve(sa[0], sa[1], sb[0], sb[1])
-	return get_global_transform() * pts[pts.size() >> 1]
+	return get_global_transform() * curve(sa[0], sa[1], sb[0], sb[1])
 
 
 func clear() -> void:

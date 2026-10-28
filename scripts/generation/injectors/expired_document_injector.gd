@@ -45,7 +45,7 @@ func inject(state: InjectionState) -> Anomaly:
 		by_document[rule_document] = max_age
 	var candidates: Array[StringName] = []
 	candidates.assign(by_document.keys())
-	candidates = state.filter_documents(candidates)
+	candidates = state.prefer_focus_documents(state.filter_documents(candidates))
 	if candidates.is_empty():
 		return null
 	var document_id: StringName = candidates[state.rng.randi_range(0, candidates.size() - 1)]

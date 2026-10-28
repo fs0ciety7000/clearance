@@ -112,14 +112,12 @@ speaker_key = "spk_consortium"
 text_key = "msg_cons_day11_albedo"
 condition = SubResource("d11_resource_19")
 group = &"levy"
-priority = 3
 
 [sub_resource type="Resource" id="d11_resource_20"]
 script = ExtResource("2_c7ns0")
 speaker_key = "spk_consortium"
 text_key = "msg_cons_day11_levy"
 group = &"levy"
-priority = 3
 
 [sub_resource type="Resource" id="d11_resource_22"]
 script = ExtResource("3_creyv")

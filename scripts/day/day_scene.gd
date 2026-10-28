@@ -330,7 +330,7 @@ func show_chapter_two() -> void:
 	_open(chapter, &"chapter2")
 
 
-## M7 : dernier jour sans soirée (J10, D-053) → évaluation de la fin.
+## Dernier jour sans soirée (J20 depuis D-076) → évaluation de la fin.
 func show_final(summary: DaySummary) -> void:
 	show_end(Campaign.close_final_day(data, summary))
 

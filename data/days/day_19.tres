@@ -143,12 +143,6 @@ options = Array[ExtResource("6_rcqyb")]([SubResource("d19_resource_31"), SubReso
 text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d19_resource_34"]
-script = ExtResource("3_31xvo")
-gauges_min = Dictionary[StringName, int]({
-&"solidarite": 3
-})
-
-[sub_resource type="Resource" id="d19_resource_35"]
 script = ExtResource("6_rcqyb")
 id = &"join"
 label_key = "evt_d19_strike_opt_join"
@@ -159,7 +153,7 @@ flags = Dictionary[StringName, int]({
 })
 default_rank = 1
 
-[sub_resource type="Resource" id="d19_resource_36"]
+[sub_resource type="Resource" id="d19_resource_35"]
 script = ExtResource("6_rcqyb")
 id = &"abstain"
 label_key = "evt_d19_strike_opt_abstain"
@@ -169,19 +163,15 @@ result_key = "evt_d19_strike_res_abstain"
 script = ExtResource("4_yylab")
 id = &"d19_strike"
 order = 1
-condition = SubResource("d19_resource_34")
 title_key = "evt_d19_strike_title"
 text_key = "evt_d19_strike_text"
-options = Array[ExtResource("6_rcqyb")]([SubResource("d19_resource_35"), SubResource("d19_resource_36")])
+options = Array[ExtResource("6_rcqyb")]([SubResource("d19_resource_34"), SubResource("d19_resource_35")])
 text_gauges = PackedStringArray()
-
-[sub_resource type="Resource" id="d19_resource_38"]
-script = ExtResource("3_31xvo")
-gauges_min = Dictionary[StringName, int]({
-&"registre": 3
+economy_gauges_min = Dictionary[StringName, StringName]({
+&"solidarite": &"strike_solidarity_threshold"
 })
 
-[sub_resource type="Resource" id="d19_resource_39"]
+[sub_resource type="Resource" id="d19_resource_37"]
 script = ExtResource("6_rcqyb")
 id = &"send"
 label_key = "evt_d19_registre_opt_send"
@@ -192,7 +182,7 @@ flags = Dictionary[StringName, int]({
 })
 default_rank = 1
 
-[sub_resource type="Resource" id="d19_resource_40"]
+[sub_resource type="Resource" id="d19_resource_38"]
 script = ExtResource("6_rcqyb")
 id = &"surrender"
 label_key = "evt_d19_registre_opt_surrender"
@@ -207,28 +197,30 @@ set_gauges = Dictionary[StringName, int]({
 &"registre": 0
 })
 
-[sub_resource type="Resource" id="d19_resource_41"]
+[sub_resource type="Resource" id="d19_resource_39"]
 script = ExtResource("6_rcqyb")
 id = &"keep"
 label_key = "evt_d19_registre_opt_keep"
 result_key = "evt_d19_registre_res_keep"
 
-[sub_resource type="Resource" id="d19_resource_37"]
+[sub_resource type="Resource" id="d19_resource_36"]
 script = ExtResource("4_yylab")
 id = &"d19_registre"
 order = 2
-condition = SubResource("d19_resource_38")
 title_key = "evt_d19_registre_title"
 text_key = "evt_d19_registre_text"
-options = Array[ExtResource("6_rcqyb")]([SubResource("d19_resource_39"), SubResource("d19_resource_40"), SubResource("d19_resource_41")])
+options = Array[ExtResource("6_rcqyb")]([SubResource("d19_resource_37"), SubResource("d19_resource_38"), SubResource("d19_resource_39")])
 text_gauges = PackedStringArray("registre")
+economy_gauges_min = Dictionary[StringName, StringName]({
+&"registre": &"registre_threshold"
+})
 
-[sub_resource type="Resource" id="d19_resource_42"]
+[sub_resource type="Resource" id="d19_resource_40"]
 script = ExtResource("7_mubvo")
 id = &"revoked_ravel"
 scripted_case_id = &"sc_45"
 
-[sub_resource type="Resource" id="d19_resource_43"]
+[sub_resource type="Resource" id="d19_resource_41"]
 script = ExtResource("7_mubvo")
 id = &"revoked_generated"
 at_index = 6
@@ -440,9 +432,8 @@ anomaly_weights = Dictionary[int, float]({
 15: 0.06,
 16: 0.06,
 17: 0.07,
-18: 0.05,
-19: 0.07,
-20: 0.08
+18: 0.2,
+19: 0.07
 })
 scripted_cases = Array[ExtResource("10_o4k2f")]([SubResource("scripted_sc_45"), SubResource("scripted_sc_46"), SubResource("scripted_sc_47")])
 intro_text_key = "day19_intro"
@@ -462,9 +453,10 @@ detain_enabled = true
 bribe_amounts = Vector2i(20, 30)
 wanted_notices = Array[ExtResource("13_qeywd")]([SubResource("d19_resource_13")])
 briefing_messages = Array[ExtResource("2_2edrp")]([SubResource("d19_resource_14"), SubResource("d19_resource_16"), SubResource("d19_resource_18"), SubResource("d19_resource_20"), SubResource("d19_resource_22"), SubResource("d19_resource_24"), SubResource("d19_resource_26"), SubResource("d19_resource_28")])
-evening_events = Array[ExtResource("4_yylab")]([SubResource("d19_resource_29"), SubResource("d19_resource_33"), SubResource("d19_resource_37")])
+evening_events = Array[ExtResource("4_yylab")]([SubResource("d19_resource_29"), SubResource("d19_resource_33"), SubResource("d19_resource_36")])
 rulebook_tabs = PackedStringArray("origins", "implants", "symbols", "seals", "wanted", "employers", "vessels", "revoked")
 air_quota = 3
 luciole_trust_on_breach = false
-revocations = Array[ExtResource("7_mubvo")]([SubResource("d19_resource_42"), SubResource("d19_resource_43")])
+revocations = Array[ExtResource("7_mubvo")]([SubResource("d19_resource_40"), SubResource("d19_resource_41")])
 revoked_decoys = 4
+focus_documents = Array[StringName]([&"asylum"])

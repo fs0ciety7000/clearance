@@ -25,6 +25,24 @@ const GRID_STEP: float = 32.0
 ## Échelle minimale d'ajustement des documents à la hauteur du plan (QA-015) :
 ## en dessous, le texte deviendrait illisible ; le zoom de lecture reste dispo.
 const MIN_FIT_SCALE: float = 0.72
+## Métadonnée d'un document : index de sa pile (−1 : déplacé à la main).
+const META_PILE: StringName = &"workbench_pile"
+## Marge latérale minimale et écart minimal entre colonnes de documents
+## (resserrés pour que quatre documents tiennent côte à côte en 1080p, QA-020).
+const SIDE_MARGIN: float = DS.SPACE_4
+const MIN_GAP: float = DS.SPACE_2
+## Écart relatif d'échelle en deçà duquel deux dispositions se valent : la
+## plus large (plus de documents visibles) l'emporte.
+const LAYOUT_TIE: float = 0.03
+
+## Plan de mise en page (QA-020) : documents regroupés en colonnes (« piles »)
+## et échelle commune. Chaque pile montre en entier son document de devant ;
+## ceux de derrière ne laissent dépasser que leur onglet (émetteur + titre).
+class LayoutPlan:
+	extends RefCounted
+	## Index des documents par pile, du devant (0) vers le fond.
+	var piles: Array[PackedInt32Array] = []
+	var scale: float = 1.0
 
 var views: Array[DocumentView] = []
 ## M7 : objets glissés posés sur le plan (enveloppe, mot, carte de quai).
@@ -33,6 +51,9 @@ var inspection_active: bool = false
 var reduce_motion: bool = false
 var fx_intensity: float = 1.0
 var inspection_available: bool = false
+## Échelle du texte (`Settings.text_scale`, posée par l'UI) : abaisse
+## l'échelle minimale des documents quand le texte est agrandi.
+var text_scale: float = 1.0
 
 var _title: Label = null
 var _mode_label: Label = null
@@ -63,6 +84,12 @@ var fit_scale: float = 1.0
 var _doc_targets: Array[Rect2] = []
 ## Vrai entre `present()` et la mise en place des documents (une image).
 var layout_pending: bool = false
+## Piles de documents (index dans `views`, du devant vers le fond, QA-020).
+var _piles: Array[PackedInt32Array] = []
+## Animations d'arrivée en cours (interrompues si le plan est redimensionné).
+var _arrivals: Array[Tween] = []
+## Vrai après la passe de mesure des documents (mise en place à la suivante).
+var _measured: bool = false
 
 
 func _ready() -> void:
@@ -106,12 +133,60 @@ func present(documents: Array[DocumentInstance], portrait_provider: Callable = C
 	# (autowrap) n'ont leur hauteur définitive qu'une fois la largeur connue,
 	# et l'échelle d'ajustement en dépend (QA-015).
 	layout_pending = true
+	_measured = false
 	if not get_tree().process_frame.is_connected(_on_layout_frame):
 		get_tree().process_frame.connect(_on_layout_frame, CONNECT_ONE_SHOT)
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and not views.is_empty() and not layout_pending:
+		_relayout.call_deferred()
+
+
+## Plan redimensionné (Rulebook replié, texte 1,5…) : les documents restés à
+## leur place par défaut sont reposés, sans animation ; rien ne bouge si le
+## joueur en a déplacé ou zoomé un.
+func _relayout() -> void:
+	if views.is_empty() or layout_pending or not is_inside_tree():
+		return
+	for view: DocumentView in views:
+		if not is_instance_valid(view) or view.get_meta(META_PILE, -1) < 0 or not is_equal_approx(view.zoom, 1.0):
+			return
+	var previous: float = fit_scale
+	var targets: Array[Vector2] = default_layout()
+	if is_equal_approx(previous, fit_scale) and _same_targets(targets):
+		return
+	for tween: Tween in _arrivals:
+		if tween.is_valid():
+			tween.kill()
+	_arrivals.clear()
+	_doc_targets.clear()
+	for i: int in views.size():
+		views[i].position = targets[i]
+		views[i].scale = Vector2(fit_scale, fit_scale)
+		views[i].pivot_offset = Vector2.ZERO
+		views[i].modulate.a = 1.0
+		_doc_targets.append(Rect2(targets[i], views[i].size * fit_scale))
+	_refresh_header()
+
+
+func _same_targets(targets: Array[Vector2]) -> bool:
+	for i: int in views.size():
+		if not views[i].position.is_equal_approx(targets[i]):
+			return false
+	return true
+
+
 func _on_layout_frame() -> void:
 	if not layout_pending or not is_inside_tree():
+		return
+	if not _measured:
+		# Première passe : chaque document prend sa largeur ; ses libellés
+		# repliés (QA-029) ne donnent leur hauteur définitive qu'à la suivante.
+		_measured = true
+		for view: DocumentView in views:
+			view.size = view.get_combined_minimum_size()
+		get_tree().process_frame.connect(_on_layout_frame, CONNECT_ONE_SHOT)
 		return
 	_arrange_views()
 	layout_pending = false
@@ -119,9 +194,9 @@ func _on_layout_frame() -> void:
 
 
 func _arrange_views() -> void:
+	_arrivals.clear()
 	for view: DocumentView in views:
 		view.size = view.get_combined_minimum_size()
-	fit_scale = compute_fit_scale()
 	var targets: Array[Vector2] = default_layout()
 	_doc_targets.clear()
 	var slot: Vector2 = Vector2(size.x * 0.5, -DS.SPACE_4)
@@ -140,6 +215,7 @@ func _arrange_views() -> void:
 		view.pivot_offset = Vector2(view.size.x * 0.5, 0.0)
 		view.modulate.a = 0.0
 		var tween: Tween = create_tween().set_parallel(true)
+		_arrivals.append(tween)
 		var delay: float = DS.DOC_STAGGER * i
 		tween.tween_property(view, "modulate:a", 1.0, DS.DUR_FAST).set_delay(delay)
 		tween.tween_property(view, "scale", Vector2(fit_scale, fit_scale), DS.DUR_SLOW).set_delay(delay).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
@@ -148,15 +224,279 @@ func _arrange_views() -> void:
 	_refresh_header()
 
 
-## Échelle qui fait tenir le plus haut document dans la hauteur utile du plan.
+## Échelle des documents posés (calculée par `default_layout()`).
 func compute_fit_scale() -> float:
-	var tallest: float = 0.0
-	for view: DocumentView in views:
-		tallest = maxf(tallest, view.get_combined_minimum_size().y)
-	var available: float = size.y - HEADER_H - DS.SPACE_4
-	if tallest <= 0.0 or available <= 0.0 or tallest <= available:
+	return _plan_layout().scale
+
+
+## Cherche, du plus grand nombre de colonnes au plus petit, la première
+## disposition où les valeurs des champs restent ≥ 12 px **physiques**
+## (`readable_scale()` : échelle de la fenêtre et `text_scale` comprises,
+## plancher du Design System, QA-004) : tous côte à côte si la place le
+## permet, sinon des piles à onglets. Si aucune n'y parvient (Steam Deck,
+## plan trop bas pour la carte), la disposition au texte le plus grand —
+## à 3 % près, celle qui montre le plus de documents —, jamais sous
+## `min_fit_scale()` (les colonnes se resserrent alors).
+func _plan_layout() -> LayoutPlan:
+	var best: LayoutPlan = LayoutPlan.new()
+	var n: int = views.size()
+	if n == 0:
+		return best
+	best.scale = -1.0
+	var target: float = readable_scale()
+	for columns: int in range(n, 0, -1):
+		for piles: Array[PackedInt32Array] in _groupings(n, columns):
+			var plan: LayoutPlan = LayoutPlan.new()
+			plan.piles = piles
+			plan.scale = _scale_for(piles)
+			if plan.scale >= target - 0.001:
+				return plan
+			# Colonnes décroissantes : moins de documents visibles seulement
+			# pour un texte nettement plus grand.
+			if plan.scale > best.scale * (1.0 + LAYOUT_TIE) + 0.001:
+				best = plan
+	best.scale = maxf(best.scale, min_fit_scale())
+	return best
+
+
+## Échelle des documents qui donne ≥ `DS.FS_CAPTION` px physiques aux
+## valeurs des champs (`DocFieldValue`), selon l'échelle de la fenêtre.
+func readable_scale() -> float:
+	var value_px: float = float(get_theme_font_size(&"font_size", &"DocFieldValue"))
+	var screen: float = get_viewport().get_final_transform().get_scale().x if is_inside_tree() else 1.0
+	return readable_scale_for(value_px, screen, min_fit_scale())
+
+
+## Pure : échelle de document pour `DS.FS_CAPTION` px physiques avec des
+## valeurs de `value_px` px logiques sur un écran à l'échelle `screen`.
+static func readable_scale_for(value_px: float, screen: float, floor_scale: float) -> float:
+	if value_px <= 0.0 or screen <= 0.0:
+		return floor_scale
+	return maxf(DS.FS_CAPTION / (value_px * screen), floor_scale)
+
+
+## Échelle minimale lisible : `MIN_FIT_SCALE` au texte 1 ; avec un texte
+## agrandi (1,5), le document peut descendre d'autant, son texte reste au moins
+## aussi grand qu'au texte 1 à l'échelle minimale (QA-031).
+func min_fit_scale() -> float:
+	return MIN_FIT_SCALE / maxf(text_scale, 1.0)
+
+
+## Regroupements candidats de `n` documents en `columns` piles : la carte
+## d'identité (premier document, pivot des comparaisons) seule devant sa pile,
+## les autres répartis dans l'ordre ; ou une répartition alternée.
+func _groupings(n: int, columns: int) -> Array[Array]:
+	var result: Array[Array] = []
+	if columns >= n:
+		var alone: Array[PackedInt32Array] = []
+		for i: int in n:
+			alone.append(PackedInt32Array([i]))
+		result.append(alone)
+		return result
+	var contiguous: Array[PackedInt32Array] = [PackedInt32Array([0])]
+	if columns == 1:
+		var all: PackedInt32Array = []
+		for i: int in n:
+			all.append(i)
+		contiguous[0] = all
+		result.append(contiguous)
+		return result
+	var rest: int = n - 1
+	var start: int = 1
+	for c: int in range(columns - 1):
+		var count: int = floori(float(rest) / (columns - 1)) + (1 if c < rest % (columns - 1) else 0)
+		var pile: PackedInt32Array = []
+		for i: int in range(start, start + count):
+			pile.append(i)
+		contiguous.append(pile)
+		start += count
+	result.append(contiguous)
+	var alternate: Array[PackedInt32Array] = []
+	for c: int in columns:
+		alternate.append(PackedInt32Array())
+	for i: int in n:
+		alternate[i % columns].append(i)
+	result.append(alternate)
+	return result
+
+
+func _available() -> Vector2:
+	var reserve: float = 0.0
+	for item_view: SlippedItemView in items:
+		if is_instance_valid(item_view):
+			reserve = maxf(reserve, item_view.get_combined_minimum_size().x + DS.SPACE_4)
+	return Vector2(maxf(size.x - SIDE_MARGIN * 2.0 - reserve, 1.0), maxf(size.y - HEADER_H - DS.SPACE_4, 1.0))
+
+
+## Taille d'une pile à l'échelle 1 : largeur du plus large, hauteur des onglets
+## du fond + document de devant (ou d'un document du fond plus haut).
+func _pile_size(pile: PackedInt32Array) -> Vector2:
+	var width: float = 0.0
+	var height: float = 0.0
+	var offsets: Array[float] = _pile_offsets(pile)
+	for k: int in pile.size():
+		var min_size: Vector2 = views[pile[k]].get_combined_minimum_size()
+		width = maxf(width, min_size.x)
+		height = maxf(height, offsets[k] + min_size.y)
+	return Vector2(width, height)
+
+
+## Décalage vertical (échelle 1) de chaque document d'une pile : les documents
+## du fond en haut, onglet après onglet, le document de devant en dessous.
+func _pile_offsets(pile: PackedInt32Array) -> Array[float]:
+	var offsets: Array[float] = []
+	offsets.resize(pile.size())
+	var y: float = 0.0
+	for k: int in range(pile.size() - 1, 0, -1):
+		offsets[k] = y
+		y += views[pile[k]].tab_height()
+	if not pile.is_empty():
+		offsets[0] = y
+	return offsets
+
+
+func _scale_for(piles: Array[PackedInt32Array]) -> float:
+	var available: Vector2 = _available()
+	var width: float = 0.0
+	var height: float = 0.0
+	for pile: PackedInt32Array in piles:
+		var pile_size: Vector2 = _pile_size(pile)
+		width += pile_size.x
+		height = maxf(height, pile_size.y)
+	var room_w: float = available.x - MIN_GAP * maxi(piles.size() - 1, 0)
+	if width <= 0.0 or height <= 0.0:
 		return 1.0
-	return clampf(available / tallest, MIN_FIT_SCALE, 1.0)
+	return minf(1.0, minf(room_w / width, available.y / height))
+
+
+## Positions par défaut (QA-020) : colonnes de gauche à droite, légèrement
+## décalées en hauteur quand tout tient côte à côte (posées « à la main »),
+## piles à onglets sinon ; resserrées si la largeur manque encore. Les objets
+## glissés déjà reçus gardent une colonne libre à droite (QA-015). Fixe
+## `fit_scale` et l'ordre d'affichage (document de devant au-dessus).
+func default_layout() -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	result.resize(views.size())
+	var plan: LayoutPlan = _plan_layout()
+	fit_scale = plan.scale
+	_piles = plan.piles
+	var available: Vector2 = _available()
+	var widths: Array[float] = []
+	var total: float = 0.0
+	for pile: PackedInt32Array in _piles:
+		var pile_w: float = _pile_size(pile).x * fit_scale
+		widths.append(pile_w)
+		total += pile_w
+	var gap: float = DS.SPACE_10
+	if _piles.size() > 1:
+		gap = clampf((available.x - total) / (_piles.size() - 1), MIN_GAP, DS.SPACE_10)
+	var used: float = total + gap * maxi(_piles.size() - 1, 0)
+	var squeeze: float = 1.0
+	if used > available.x and _piles.size() > 1:
+		# Repli (échelle minimale atteinte) : colonnes qui se chevauchent.
+		var last: float = widths[widths.size() - 1]
+		squeeze = maxf(available.x - last, 0.0) / (used - last)
+	var x: float = SIDE_MARGIN + maxf((available.x - used) * 0.5, 0.0)
+	var hand: Array[float] = [DS.SPACE_4, 0.0, DS.SPACE_6, DS.SPACE_2, DS.SPACE_4]
+	var side_by_side: bool = _piles.size() == views.size()
+	for p: int in _piles.size():
+		var pile: PackedInt32Array = _piles[p]
+		var offsets: Array[float] = _pile_offsets(pile)
+		var pile_h: float = _pile_size(pile).y * fit_scale
+		var top: float = HEADER_H + (hand[p % hand.size()] if side_by_side else 0.0)
+		top = minf(top, maxf(size.y - pile_h - DS.SPACE_4, HEADER_H))
+		for k: int in pile.size():
+			var view: DocumentView = views[pile[k]]
+			view.set_meta(META_PILE, p)
+			var y: float = top + offsets[k] * fit_scale
+			y = minf(y, maxf(size.y - view.get_combined_minimum_size().y * fit_scale - DS.SPACE_4, HEADER_H))
+			result[pile[k]] = Vector2(x, y)
+		x += (widths[p] + gap) * squeeze
+	_restack()
+	return result
+
+
+## Ordre d'affichage : pile par pile, le fond d'abord, le devant au-dessus.
+func _restack() -> void:
+	for pile: PackedInt32Array in _piles:
+		for k: int in range(pile.size() - 1, -1, -1):
+			var view: DocumentView = views[pile[k]]
+			if is_instance_valid(view) and view.get_parent() == _docs_layer:
+				_docs_layer.move_child(view, _docs_layer.get_child_count() - 1)
+	# Les objets glissés restent posés sur les documents.
+	for item_view: SlippedItemView in items:
+		if is_instance_valid(item_view) and item_view.get_parent() == _docs_layer:
+			_docs_layer.move_child(item_view, _docs_layer.get_child_count() - 1)
+
+
+## Vrai si au moins un document est rangé derrière un autre (piles à onglets).
+func is_stacked() -> bool:
+	for pile: PackedInt32Array in _piles:
+		if pile.size() > 1:
+			return true
+	return false
+
+
+## Document de devant de sa pile (toujours vrai hors piles).
+func is_front(view: DocumentView) -> bool:
+	var p: int = view.get_meta(META_PILE, -1)
+	if p < 0 or p >= _piles.size():
+		return true
+	return _piles[p][0] == views.find(view)
+
+
+## Passe le document n° `index` (0 = premier posé) au premier plan (touches
+## 1–9, QA-020). Faux si l'index n'existe pas.
+func focus_document(index: int) -> bool:
+	if index < 0 or index >= views.size() or layout_pending:
+		return false
+	bring_to_front(views[index])
+	return true
+
+
+## Document amené devant sa pile : il prend la place du document de devant,
+## les autres redeviennent des onglets (documents déplacés à la main exclus).
+func _promote_in_pile(view: DocumentView) -> void:
+	var p: int = view.get_meta(META_PILE, -1)
+	var index: int = views.find(view)
+	if p < 0 or p >= _piles.size() or index < 0 or _piles[p].size() < 2 or _piles[p][0] == index:
+		return
+	var pile: PackedInt32Array = _piles[p]
+	var anchor: Vector2 = views[pile[pile.size() - 1]].position
+	for k: int in pile.size():
+		anchor = Vector2(minf(anchor.x, views[pile[k]].position.x), minf(anchor.y, views[pile[k]].position.y))
+	var reordered: PackedInt32Array = [index]
+	for k: int in pile.size():
+		if pile[k] != index:
+			reordered.append(pile[k])
+	_piles[p] = reordered
+	var offsets: Array[float] = _pile_offsets(reordered)
+	for k: int in range(reordered.size() - 1, -1, -1):
+		var member: DocumentView = views[reordered[k]]
+		_docs_layer.move_child(member, _docs_layer.get_child_count() - 1)
+		var target: Vector2 = Vector2(anchor.x, anchor.y + offsets[k] * fit_scale)
+		if reduce_motion:
+			member.position = target
+		else:
+			member.create_tween().tween_property(member, "position", target, DS.DUR_FAST).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+## Un document déplacé ou zoomé à la main quitte sa pile (sa place n'est plus
+## recalculée) ; les autres gardent la leur.
+func _undock(view: DocumentView) -> void:
+	var p: int = view.get_meta(META_PILE, -1)
+	if p < 0 or p >= _piles.size():
+		return
+	var index: int = views.find(view)
+	var pile: PackedInt32Array = _piles[p]
+	var kept: PackedInt32Array = []
+	for k: int in pile.size():
+		if pile[k] != index:
+			kept.append(pile[k])
+	if kept.is_empty():
+		return
+	_piles[p] = kept
+	view.set_meta(META_PILE, -1)
 
 
 func _reset_pivot(view: DocumentView) -> void:
@@ -288,36 +628,8 @@ func clear(animated: bool = true) -> void:
 		else:
 			view.queue_free()
 	views.clear()
+	_piles.clear()
 	_refresh_header()
-
-
-## Positions par défaut : de gauche à droite, légèrement décalées en hauteur
-## (posées « à la main »), resserrées si la largeur manque. Les objets glissés
-## déjà reçus gardent une colonne libre à droite (QA-015).
-func default_layout() -> Array[Vector2]:
-	var result: Array[Vector2] = []
-	var margin: float = DS.SPACE_8
-	var reserve: float = 0.0
-	for item_view: SlippedItemView in items:
-		if is_instance_valid(item_view):
-			reserve = maxf(reserve, item_view.get_combined_minimum_size().x + DS.SPACE_4)
-	var available: float = maxf(size.x - margin * 2.0 - reserve, 1.0)
-	var total: float = 0.0
-	for view: DocumentView in views:
-		total += view.get_combined_minimum_size().x * fit_scale
-	var gap: float = DS.SPACE_10
-	if views.size() > 1:
-		gap = minf(DS.SPACE_10, (available - total) / (views.size() - 1))
-	var used: float = total + gap * maxi(views.size() - 1, 0)
-	var x: float = margin + maxf((available - used) * 0.5, 0.0)
-	var offsets: Array[float] = [DS.SPACE_4, 0.0, DS.SPACE_6, DS.SPACE_2, DS.SPACE_4]
-	for i: int in views.size():
-		var min_size: Vector2 = views[i].get_combined_minimum_size() * fit_scale
-		var y: float = HEADER_H + offsets[i % offsets.size()]
-		y = minf(y, maxf(size.y - min_size.y - DS.SPACE_4, HEADER_H))
-		result.append(Vector2(x, y))
-		x += min_size.x + gap
-	return result
 
 
 func get_view(document_id: StringName) -> DocumentView:
@@ -353,8 +665,10 @@ func set_fx_intensity(value: float) -> void:
 		view.set_fx_intensity(value)
 
 
-## Met un document au premier plan (glow.2) et émet `document_focused`.
+## Met un document au premier plan (glow.2) et émet `document_focused` ; dans
+## une pile à onglets, il passe devant les autres (QA-020).
 func bring_to_front(view: DocumentView) -> void:
+	_promote_in_pile(view)
 	_docs_layer.move_child(view, _docs_layer.get_child_count() - 1)
 	for other: DocumentView in views:
 		other.active = other == view
@@ -386,6 +700,7 @@ func zoom_view(view: DocumentView, steps: int) -> void:
 	if is_equal_approx(target, view.zoom):
 		return
 	bring_to_front(view)
+	_undock(view)
 	var center: Vector2 = view.position + view.size * view.scale * 0.5
 	view.zoom = target
 	# Le zoom de lecture s'applique à l'échelle d'ajustement du plan.
@@ -407,6 +722,7 @@ func _on_grabbed(view: DocumentView) -> void:
 
 
 func _on_drag_moved(view: DocumentView, relative: Vector2) -> void:
+	_undock(view)
 	view.position += relative
 	clamp_view(view)
 
@@ -539,6 +855,9 @@ func _refresh_header() -> void:
 		_title.text = UiText.t("wb_title_empty", "PLAN DE TRAVAIL · VIDE")
 	else:
 		_title.text = UiText.plural("wb_title_count", views.size(), "PLAN DE TRAVAIL · %d DOCUMENT", "PLAN DE TRAVAIL · %d DOCUMENTS")
+		if is_stacked():
+			# Piles à onglets : touches 1–n pour passer un document devant (QA-020).
+			_title.text += " · " + UiText.tf("wb_stack_hint", [views.size()], "TOUCHES 1–%d")
 	_place_scanner_chip.call_deferred()
 	if inspection_active:
 		_mode_label.text = UiText.t("wb_mode_active", "MODE INSPECTION ACTIF")

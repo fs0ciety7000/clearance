@@ -246,4 +246,9 @@ func _finish(code: int) -> void:
 	Engine.time_scale = 1.0
 	print("QA_DONE issues=%d" % _issues.size())
 	SaveService.delete()
-	get_tree().quit(code)
+	# Sons arrêtés et retirés par l'AudioServer avant de quitter (QA-025).
+	var barrier: Node = get_tree().root.get_node_or_null("AudioMixBarrier")
+	if barrier != null:
+		barrier.call(&"quit_after_silence", code)
+	else:
+		get_tree().quit(code)

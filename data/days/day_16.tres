@@ -317,7 +317,7 @@ anomaly_weights = Dictionary[int, float]({
 15: 0.05,
 16: 0.06,
 17: 0.07,
-18: 0.05,
+18: 0.2,
 19: 0.07
 })
 scripted_cases = Array[ExtResource("10_jv5vn")]([SubResource("scripted_sc_38"), SubResource("scripted_sc_39")])
@@ -343,3 +343,4 @@ rulebook_tabs = PackedStringArray("origins", "implants", "symbols", "seals", "wa
 air_quota = 4
 luciole_trust_on_breach = false
 announcements = Array[ExtResource("1_knv8h")]([SubResource("d16_resource_32")])
+focus_documents = Array[StringName]([&"asylum"])

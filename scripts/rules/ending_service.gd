@@ -4,8 +4,9 @@
 ##   l'Inspecteur est réussi ; ≥ 4 → F1 immédiate ; 2–3 → retenue de 30 ₵ (+ 30 ₵
 ##   confisqués si l'enveloppe de Ravel a été gardée), `loyalty −1`,
 ##   `audit_retention` ; ≤ 1 → `audit_clean`.
-## - **Fin de campagne** (`evaluate_final`, après le bilan du J10, pas de
-##   soirée) : priorité F1 > F3 > F2 > F5 > F6 > F4 > F7 (conditions exactes de
+## - **Fin de campagne de l'Acte I** (`evaluate_final`, après le bilan du
+##   dernier jour quand les données s'arrêtent avant l'Acte II — simulation
+##   `--days=10`, tests) : priorité F1 > F3 > F2 > F5 > F6 > F4 > F7 (conditions exactes de
 ##   NARRATIVE §6.1 ; F2 et F3 sont anticipées, évaluées le soir par
 ##   `EveningService`, mais F3 est revérifiée ici).
 ## - **Épilogue** (`epilogue`) : titre + lignes (clés `end_fN_*`), lignes
@@ -173,7 +174,8 @@ static func is_burners_variant2(flags: Dictionary[StringName, Variant]) -> bool:
 	return FlagCondition.is_flag_true(flags, &"sc47_kasimir_passed") or is_burners_variant(flags)
 
 
-## Fin de campagne après le bilan du J10 (`credits` : solde après le bilan).
+## Fin de campagne de l'Acte I, après le bilan du dernier jour sans Acte II
+## (`credits` : solde après le bilan) ; au J20 : `evaluate_final_act2`.
 static func evaluate_final(flags: Dictionary[StringName, Variant], household: Household, credits: int,
 		compliance: float, economy: EconomyDef) -> StringName:
 	var alive: int = household.alive_count() if household != null else 3

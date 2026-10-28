@@ -22,6 +22,7 @@ config/icon="res://icon.svg"
 EventBus="*res://scripts/autoload/event_bus.gd"
 Settings="*res://scripts/autoload/settings.gd"
 GameState="*res://scripts/autoload/game_state.gd"
+AudioMixBarrier="*res://scripts/autoload/audio_mix_barrier.gd"
 
 [debug]
 

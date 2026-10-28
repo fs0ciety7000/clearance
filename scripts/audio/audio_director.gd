@@ -97,8 +97,10 @@ var _drop_left: float = 0.0
 var _last_a: FieldRef = null
 var _holding: Dictionary[VerdictKind.Kind, bool] = {}
 var _bark_cache: Dictionary[String, AudioStreamWAV] = {}
-## Barks en cours de rendu : [task_id, cache_key, buffer holder, acteur|null, line_key].
+## Barks en cours de rendu : [task_id, `BarkJob`, cache_key, acteur|null, line_key].
 var _pending_barks: Array[Array] = []
+## Plus aucun bark accepté (sortie de l'arbre, libération) : QA-030.
+var _closing: bool = false
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _paused_fx: bool = false
 ## UI dont les signaux publics sont branchés.
@@ -131,11 +133,32 @@ func _ready() -> void:
 	_drop_left = _rng.randf_range(DROP_MIN_SEC, DROP_MAX_SEC)
 
 
+## Synthèse d'un bark dans un thread de travail (QA-030) : objet autonome qui
+## ne référence **aucun** nœud — ni le directeur (`self` d'une lambda), ni un
+## acteur, ni l'arbre. Le thread ne lit que `phrase` / `profile` / `mood`
+## (immuables pendant le rendu) et n'écrit que `samples` ; le thread principal
+## ne lit `samples` qu'après `wait_for_task_completion`.
+class BarkJob:
+	extends RefCounted
+	var phrase: String = ""
+	var profile: TessarVoice.Profile = null
+	var mood: StringName = &""
+	var samples: PackedFloat32Array = PackedFloat32Array()
+
+	func run() -> void:
+		samples = TessarVoice.synthesize(phrase, profile, mood)
+
+
+func _enter_tree() -> void:
+	_closing = false
+
+
 func _exit_tree() -> void:
-	for pending: Array in _pending_barks:
-		var task: int = pending[0]
-		WorkerThreadPool.wait_for_task_completion(task)
-	_pending_barks.clear()
+	# QA-030 : plus aucun bark après la sortie de l'arbre (signaux émis par les
+	# nœuds frères pendant `reload_current_scene`), puis attente de tous les
+	# rendus en cours avant que la scène ne soit libérée.
+	_closing = true
+	_join_barks()
 	_apply_ducks(0.0, 0.0)
 	AudioBuses.set_effect_enabled(AudioBuses.MUSIC, AudioBuses.FX_MUFFLE, false)
 	_bark_cache.clear()
@@ -146,6 +169,29 @@ func _exit_tree() -> void:
 ## Arrête tous les lecteurs (pools, ambiances, musique, émetteurs) : un flux
 ## encore joué à la fermeture du jeu reste référencé par l'AudioServer
 ## (« ObjectDB instances leaked », « resources still in use », QA-016).
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		# Libéré sans être sorti de l'arbre (tests, `free()` direct) : aucun
+		# thread ne doit survivre au directeur.
+		_closing = true
+		_join_barks()
+
+
+## Dans l'arbre et pas en fermeture : sinon aucun son (QA-025 : « Playback can
+## only happen when a node is inside the scene tree ») et aucun flux remis dans
+## le cache d'`AudioCueBank` après `clear_cache()` (ressources retenues à la sortie).
+func _is_active() -> bool:
+	return not _closing and is_inside_tree()
+
+
+## Attend la fin de tous les rendus en cours (thread principal) et les oublie.
+func _join_barks() -> void:
+	for pending: Array in _pending_barks:
+		var task: int = pending[0]
+		WorkerThreadPool.wait_for_task_completion(task)
+	_pending_barks.clear()
+
+
 static func _stop_all_players(node: Node) -> void:
 	for child: Node in node.get_children():
 		if child is AudioStreamPlayer:
@@ -256,6 +302,8 @@ func audio_for_case(case_id: StringName) -> PassengerAudio:
 
 ## Joue une cue 2D de la cue sheet ; renvoie vrai si elle a obtenu une voix.
 func play_cue(cue: StringName, pitch: float = 1.0) -> bool:
+	if not _is_active():
+		return false
 	if not AudioCueBank.has_cue(cue):
 		push_warning("AudioDirector: cue inconnue %s" % cue)
 		return false
@@ -277,6 +325,8 @@ func play_cue(cue: StringName, pitch: float = 1.0) -> bool:
 
 ## Joue une cue après `delay` secondes (temps de jeu, pause comprise).
 func play_cue_later(cue: StringName, delay: float) -> void:
+	if not _is_active():
+		return # scène sortie de l'arbre (signal tardif d'un acteur) : pas d'arbre, pas de minuteur
 	get_tree().create_timer(delay, true).timeout.connect(func() -> void:
 		if is_inside_tree():
 			play_cue(cue))
@@ -315,6 +365,8 @@ func played_cues() -> Array[StringName]:
 # ---------------------------------------------------------------------------
 
 func start_ambience() -> void:
+	if not _is_active():
+		return
 	for cue: StringName in AMBIENCE_LOOPS:
 		var p: AudioStreamPlayer = ambience_players[cue]
 		if p.playing:
@@ -337,7 +389,7 @@ func stop_ambience(fade_sec: float = AMBIENCE_FADE_OUT_SEC) -> void:
 
 ## État musical (`mus.*`) ; fondu enchaînée, sans effet si déjà actif.
 func set_music(cue: StringName) -> void:
-	if cue == music_cue:
+	if cue == music_cue or not _is_active():
 		return
 	music_cue = cue
 	var old: AudioStreamPlayer = music_players[_music_index]
@@ -376,6 +428,8 @@ func _fade(p: AudioStreamPlayer, target_db: float, seconds: float, stop_after: b
 ## Fait parler le passager d'un cas : `line_key` → phrase Tessar (`text` = le
 ## sous-titre FR, pour la longueur et l'intonation).
 func bark(case: Case, line_key: String, text: String, mood: StringName = TessarVoice.MOOD_NEUTRAL) -> void:
+	if not _is_active():
+		return
 	var pa: PassengerAudio = audio_for_case(case.case_id if case != null else &"")
 	var profile: TessarVoice.Profile = pa.profile if pa != null else TessarVoice.profile_for(case.passenger_presented if case != null else null)
 	var phrase: String = TessarVoice.phrase_for(line_key, text)
@@ -388,10 +442,14 @@ func bark(case: Case, line_key: String, text: String, mood: StringName = TessarV
 		_cache_bark(key, wav)
 		_say(pa, wav, line_key)
 		return
-	var holder: Array[PackedFloat32Array] = [PackedFloat32Array()]
-	var task: int = WorkerThreadPool.add_task(func() -> void:
-		holder[0] = TessarVoice.synthesize(phrase, profile, mood), false, "TessarBark")
-	_pending_barks.append([task, key, holder, pa, line_key])
+	var job: BarkJob = BarkJob.new()
+	job.phrase = phrase
+	job.profile = profile
+	job.mood = mood
+	# Méthode d'un `RefCounted` gardé par `_pending_barks` (pas de lambda : une
+	# lambda capture `self`, le nœud, dans le thread de travail).
+	var task: int = WorkerThreadPool.add_task(job.run, false, "TessarBark")
+	_pending_barks.append([task, job, key, pa, line_key])
 
 
 func _poll_barks() -> void:
@@ -404,14 +462,17 @@ func _poll_barks() -> void:
 			continue
 		WorkerThreadPool.wait_for_task_completion(task)
 		_pending_barks.remove_at(i)
-		var holder: Array[PackedFloat32Array] = pending[2]
-		var wav: AudioStreamWAV = AudioDsp.to_wav(holder[0], TessarVoice.SAMPLE_RATE)
-		var key: String = pending[1]
+		var job: BarkJob = pending[1]
+		var wav: AudioStreamWAV = AudioDsp.to_wav(job.samples, TessarVoice.SAMPLE_RATE)
+		var key: String = pending[2]
 		_cache_bark(key, wav)
-		var pa: PassengerAudio = pending[3]
 		var line_key: String = pending[4]
-		if pa != null and not is_instance_valid(pa):
-			continue
+		# Émetteur libéré pendant le rendu : ne jamais typer une instance
+		# libérée (QA-012) — voix 2D de secours.
+		var holder: Variant = pending[3]
+		var pa: PassengerAudio = null
+		if is_instance_valid(holder):
+			pa = holder
 		_say(pa, wav, line_key)
 
 
@@ -422,7 +483,9 @@ func _cache_bark(key: String, wav: AudioStreamWAV) -> void:
 
 
 func _say(pa: PassengerAudio, wav: AudioStreamWAV, line_key: String) -> void:
-	if pa != null and pa.actor != null and pa.actor.visible:
+	if not _is_active():
+		return
+	if pa != null and pa.is_inside_tree() and pa.actor != null and pa.actor.visible:
 		pa.say(wav, line_key)
 	else:
 		voice_2d.stop()
@@ -682,6 +745,8 @@ func _on_documents_presented(case_id: StringName) -> void:
 		docs = clampi(_current_case.documents.size(), 1, 3)
 	for i: int in docs:
 		play_cue_later(&"booth.holo_on", 0.25 + HOLO_STAGGER_SEC * i)
+	if not _is_active():
+		return
 	hum_player.stream = AudioCueBank.stream_of(&"booth.holo_hum")
 	if hum_player.stream != null and not hum_player.playing:
 		hum_player.volume_db = AudioCueBank.volume_db_of(&"booth.holo_hum")

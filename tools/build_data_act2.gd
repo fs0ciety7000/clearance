@@ -56,7 +56,17 @@ const F_STANDARD: Dictionary[StringName, float] = {&"tyc": 0.28, &"hal": 0.17, &
 const F_DRIFT: Dictionary[StringName, float] = {&"tyc": 0.26, &"hal": 0.16, &"ter": 0.18, &"cer": 0.13, &"thr": 0.11, &"drv": 0.16}
 const F_TER: Dictionary[StringName, float] = {&"tyc": 0.26, &"hal": 0.16, &"ter": 0.24, &"cer": 0.12, &"thr": 0.12, &"drv": 0.10}
 
+## R28 (QA-026) : jour de la règle et part des TER C-4 tirés en C-5 (asile).
+const ASYLUM_FIRST_DAY: int = 15
+const ASYLUM_CLASS_RATE_FIRST_DAY: float = 1.0
+const ASYLUM_CLASS_RATE: float = 0.30
 ## Ordre des types de `anomaly_weights` (docs/ACT2.md §2.2, colonnes J11 → J20).
+## QA-026 : `UNREGISTERED_VESSEL` ne s'applique qu'aux `DRV` porteurs d'un
+## laissez-passer (≈ 10 % de la file) — son poids est un poids **conditionnel**,
+## relevé à 0,20 dès le J14 pour que R26 reste exercée (≈ 2 % des anomalies) ;
+## J15 : `EXPIRED_DOCUMENT` / `MISSING_DOCUMENT` relevés (attestation d'asile) ;
+## `REVOKED_ID` n'est jamais tiré au hasard (entrées de `DayDef.revocations`,
+## comme `WANTED_PERSON`) : poids 0 (il ne faisait que consommer des tirages).
 const WEIGHT_KINDS: Array[AnomalyType.Kind] = [K.EXPIRED_DOCUMENT, K.MISSING_DOCUMENT, K.PORTRAIT_MISMATCH,
 		K.ID_MISMATCH, K.NAME_MISMATCH, K.ORIGIN_ID_MISMATCH, K.PURPOSE_MISMATCH, K.WRONG_ISSUER, K.BIOSCAN_UNFIT,
 		K.UNDECLARED_IMPLANT, K.BANNED_IMPLANT, K.IMPOSTOR_LOOKALIKE, K.RELATIVE_DOCUMENTS, K.BANNED_FACTION,
@@ -66,13 +76,13 @@ const WEIGHTS: Dictionary[int, Array] = {
 	11: [0.05, 0.05, 0.03, 0.05, 0.05, 0.04, 0.05, 0.04, 0.04, 0.06, 0.05, 0.08, 0.07, 0.07, 0.07, 0.06, 0.08, 0, 0, 0, 0],
 	12: [0.05, 0.07, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.06, 0.22, 0, 0, 0],
 	13: [0.05, 0.06, 0.03, 0.05, 0.05, 0.04, 0.05, 0.04, 0.04, 0.06, 0.05, 0.07, 0.06, 0.07, 0.06, 0.06, 0.06, 0.10, 0.15, 0, 0],
-	14: [0.05, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.06, 0.08, 0.07, 0.18, 0],
-	15: [0.07, 0.09, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.06, 0.06, 0.06, 0.07, 0.05, 0.06, 0.07, 0.05, 0.08, 0],
-	16: [0.05, 0.05, 0.03, 0.04, 0.04, 0.03, 0.05, 0.03, 0.03, 0.05, 0.04, 0.07, 0.05, 0.06, 0.05, 0.05, 0.06, 0.07, 0.05, 0.07, 0],
-	17: [0.04, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.06, 0.06, 0.05, 0.06, 0.18],
-	18: [0.04, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.06, 0.05, 0.15, 0.05, 0.05, 0.06, 0.06, 0.04, 0.06, 0.09],
-	19: [0.05, 0.05, 0.03, 0.05, 0.05, 0.04, 0.05, 0.04, 0.04, 0.06, 0.05, 0.07, 0.06, 0.08, 0.06, 0.06, 0.06, 0.07, 0.05, 0.07, 0.08],
-	20: [0.04, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.07, 0.05, 0.07, 0.05, 0.05, 0.12, 0.06, 0.04, 0.06, 0.07],
+	14: [0.05, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.06, 0.08, 0.20, 0.18, 0],
+	15: [0.10, 0.12, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.06, 0.06, 0.06, 0.07, 0.05, 0.06, 0.07, 0.20, 0.08, 0],
+	16: [0.05, 0.05, 0.03, 0.04, 0.04, 0.03, 0.05, 0.03, 0.03, 0.05, 0.04, 0.07, 0.05, 0.06, 0.05, 0.05, 0.06, 0.07, 0.20, 0.07, 0],
+	17: [0.04, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.06, 0.06, 0.20, 0.06, 0],
+	18: [0.04, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.06, 0.05, 0.15, 0.05, 0.05, 0.06, 0.06, 0.20, 0.06, 0],
+	19: [0.05, 0.05, 0.03, 0.05, 0.05, 0.04, 0.05, 0.04, 0.04, 0.06, 0.05, 0.07, 0.06, 0.08, 0.06, 0.06, 0.06, 0.07, 0.20, 0.07, 0],
+	20: [0.04, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0.03, 0.03, 0.05, 0.04, 0.07, 0.05, 0.07, 0.05, 0.05, 0.12, 0.06, 0.20, 0.06, 0],
 }
 
 
@@ -207,6 +217,12 @@ static func _act2_day(n: int, rule_set: RuleSet, duration: float, count: int, co
 	d.rulebook_tabs = tabs
 	d.air_quota = quota
 	d.luciole_trust_on_breach = false
+	# QA-026 : R28 (attestation d'asile, J15+) réellement exercée — plus de
+	# porteurs le jour de la règle, attestation visée en priorité par
+	# MISSING_DOCUMENT / EXPIRED_DOCUMENT quand le passager en porte une.
+	if n >= ASYLUM_FIRST_DAY:
+		d.focus_documents = [&"asylum"]
+		d.asylum_class_rate = ASYLUM_CLASS_RATE_FIRST_DAY if n == ASYLUM_FIRST_DAY else ASYLUM_CLASS_RATE
 	return d
 
 
@@ -247,8 +263,11 @@ static func _day11(rs: RuleSet) -> DayDef:
 		_msg("spk_lucioles", "msg_luc_day11_opened", V_LUCIOLES, _all([&"vannes_opened"]), &"luc", 2),
 		_msg("spk_lucioles", "msg_luc_day11_aborted", V_LUCIOLES, _cond([&"vannes_aborted"], [], {&"lucioles_trust": 1}), &"luc", 2),
 		_msg("spk_brulants", "msg_brul_day11", V_BRULANTS, _all([&"vannes_failed"]), &"luc", 2),
-		_msg("spk_consortium", "msg_cons_day11_albedo", V_CONSORTIUM, _all([&"vannes_opened"]), &"levy", 3),
-		_msg("spk_consortium", "msg_cons_day11_levy", V_CONSORTIUM, null, &"levy", 3),
+		# QA-019 : le bulletin Albédo (vannes ouvertes) porte aussi l'annonce du
+		# prélèvement (même groupe : un seul bulletin) ; priorité 0 : le joueur
+		# est toujours prévenu des 30 % retenus le soir (plafond de 4 messages).
+		_msg("spk_consortium", "msg_cons_day11_albedo", V_CONSORTIUM, _all([&"vannes_opened"]), &"levy", 0),
+		_msg("spk_consortium", "msg_cons_day11_levy", V_CONSORTIUM, null, &"levy", 0),
 		_family_msg("spk_dora", "msg_dora_day11_arrested", _all([&"ilan_arrested_vannes"])),
 		_family("msg_ilan_day11"),
 	]
@@ -434,7 +453,8 @@ static func _day14(rs: RuleSet) -> DayDef:
 # --- J15 — mardi 27.03 : attestation d'asile, quota 4 ------------------------
 
 static func _day15(rs: RuleSet) -> DayDef:
-	var d: DayDef = _act2_day(15, rs, 750.0, 17, [0.40, 0.38, 0.17, 0.05], F_STANDARD, 0.38, 0.08, 4,
+	# QA-026 : file plus gravitaire le jour de l'attestation d'asile (R28).
+	var d: DayDef = _act2_day(15, rs, 750.0, 17, [0.40, 0.38, 0.17, 0.05], F_TER, 0.38, 0.08, 4,
 			_tabs(["employers", "vessels"]))
 	var lindgren: ScriptedCaseDef = _lindgren_again(&"sc_36", 4, [K.EXPIRED_DOCUMENT], &"sc36_lindgren",
 			{&"document_id": &"id_card", &"expired_days": 1}, {&"sc36_lindgren_passed": 0}, {&"sc36_lindgren_refused": 0})
@@ -665,10 +685,13 @@ static func _day19(rs: RuleSet) -> DayDef:
 	var drift: EveningEventDef = _event(&"d19_drift", EveningEventDef.Kind.CHOICE, 0, _all([&"drift2_offer"]), "evt_d19_drift")
 	drift.options = [_option(&"buy", "evt_d19_drift", 60, 0, {&"drift2_passes_bought": 0}, 1),
 			_option(&"keep", "evt_d19_drift", 0, 0, {}, 0)]
-	var strike: EveningEventDef = _event(&"d19_strike", EveningEventDef.Kind.CHOICE, 1, _gauge(&"solidarite", 3), "evt_d19_strike")
+	# Seuils lus dans l'`EconomyDef` à l'exécution (R28 : une seule source).
+	var strike: EveningEventDef = _event(&"d19_strike", EveningEventDef.Kind.CHOICE, 1, null, "evt_d19_strike")
+	strike.economy_gauges_min = {&"solidarite": &"strike_solidarity_threshold"}
 	strike.options = [_option(&"join", "evt_d19_strike", 0, 0, {&"strike_joined": 0, &"loyalty": -2}, 1),
 			_option(&"abstain", "evt_d19_strike", 0, 0, {}, 0)]
-	var registre: EveningEventDef = _event(&"d19_registre", EveningEventDef.Kind.CHOICE, 2, _gauge(&"registre", 3), "evt_d19_registre")
+	var registre: EveningEventDef = _event(&"d19_registre", EveningEventDef.Kind.CHOICE, 2, null, "evt_d19_registre")
+	registre.economy_gauges_min = {&"registre": &"registre_threshold"}
 	registre.text_gauges = ["registre"]
 	var surrender: EveningOptionDef = _option(&"surrender", "evt_d19_registre", 0, 20, {&"registre_surrendered": 0, &"loyalty": 2}, -1)
 	surrender.set_gauges = {&"registre": 0}

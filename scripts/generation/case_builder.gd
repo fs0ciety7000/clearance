@@ -57,9 +57,6 @@ const TICKET_DOCUMENT_ID: StringName = &"queue_ticket"
 const NX_PREFIX: String = "NX-"
 ## Firmware d'un shunt `NX-` généré propre : 0–80 jours (R27 : < 90).
 const FIRMWARE_MAX_AGE: int = 80
-## Part des gravitaires C-4 tolérés en C-5 les jours où l'attestation d'asile
-## est exigée (R28, J15+).
-const ASYLUM_C5_RATE: float = 0.30
 const ASYLUM_CLASS: StringName = &"C-5"
 const ASYLUM_FROM_CLASS: StringName = &"C-4"
 const WANTED_DEDUPE_SALT: String = "wanted_dedupe"
@@ -711,7 +708,8 @@ func _post_generate_act2(truth: Passenger, overrides: Dictionary, index: int) ->
 			_assign_employer_code(truth)
 	if not overrides.has(&"citizen_class") and truth.citizen_class == ASYLUM_FROM_CLASS and _asylum_class_required(truth):
 		var class_rng: SeededRng = SeededRng.new(SeededRng.mix(case_seed, SALT_CONTRACT + 1))
-		if class_rng.chance(ASYLUM_C5_RATE):
+		# Part des C-4 tolérés en C-5 (R28, J15+) : `DayDef.asylum_class_rate`.
+		if class_rng.chance(day.asylum_class_rate):
 			truth.citizen_class = ASYLUM_CLASS
 
 

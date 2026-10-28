@@ -57,4 +57,5 @@ func _process(delta: float) -> void:
 		return
 	image.save_png(_out)
 	print("QA_CAPTURE %s %dx%d" % [_out, image.get_width(), image.get_height()])
-	get_tree().quit(0)
+	# Sons arrêtés et retirés par l'AudioServer avant de quitter (QA-025).
+	get_tree().root.get_node("AudioMixBarrier").call(&"quit_after_silence", 0)

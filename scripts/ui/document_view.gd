@@ -32,6 +32,8 @@ const COMPACT_KINDS: Array[FieldDef.FieldKind] = [
 const WIDE_FIELD_IDS: Array[StringName] = [&"employer", &"origin_sector", &"mrz"]
 const MRZ_FIELD_ID: StringName = &"mrz"
 const SERIAL_PATH: StringName = &"document.serial"
+## Champ renommé « TITULAIRE » sur un document d'un tiers (QA-028).
+const HOLDER_PATH: StringName = &"family_name"
 ## M7 — marque « luciole » (code 1) : petit dessin magenta au coin bas-droit,
 ## lisible à la loupe (`DS.DOC_ZOOM`), discret à l'échelle 1.
 const MARK_LUCIOLE: StringName = &"luciole"
@@ -144,6 +146,18 @@ func get_document_id() -> StringName:
 	return instance.get_document_id() if instance != null else &""
 
 
+## Hauteur de l'« onglet » (repère local, échelle 1) : bandeau émetteur + titre,
+## seule partie visible d'un document rangé derrière un autre dans une pile
+## du plan de travail (QA-020).
+func tab_height() -> float:
+	var top: float = DS.SPACE_4
+	var box: StyleBox = get_theme_stylebox(&"panel")
+	if box != null:
+		top = box.get_margin(SIDE_TOP)
+	var header: float = _header.get_combined_minimum_size().y if _header != null else float(DS.SPACE_10)
+	return top + header + DS.SPACE_3
+
+
 ## Marque `mark_id` affichée (null si le document ne la porte pas).
 func get_mark_item(mark_id: StringName) -> DocMarkView:
 	for item: DocMarkView in mark_items:
@@ -254,7 +268,11 @@ func _build_header(def: DocumentTypeDef, show_serial: bool) -> Control:
 
 func _make_field(field: FieldDef, portrait_provider: Callable) -> DocFieldView:
 	var item: DocFieldView = DocFieldView.new()
-	item.setup(get_document_id(), field, instance.get_value(field.id), portrait_provider)
+	var label_text: String = ""
+	if instance.third_party and field.truth_path == HOLDER_PATH:
+		# Document d'un tiers (SC-27) : le nom est celui du titulaire, pas du porteur.
+		label_text = UiText.t("field_holder", "Titulaire")
+	item.setup(get_document_id(), field, instance.get_value(field.id), portrait_provider, label_text)
 	item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	item.picked.connect(_on_item_picked)
 	if field.kind != FieldDef.FieldKind.PORTRAIT:

@@ -28,14 +28,15 @@ func test_name_pools_follow_lore() -> void:
 		assert_eq(pool.id, faction.id)
 		assert_same(pool, Gen.data().name_pools[faction.id], "ressource partagée")
 		assert_eq(pool.all_given_names().size(), 15, "LORE §5 : 15 prénoms (%s)" % faction.id)
-		assert_eq(pool.family_names.size(), 15, "LORE §5 : 15 noms (%s)" % faction.id)
+		assert_gte(pool.family_names.size(), 15, "LORE §5 : 15 noms au moins (%s)" % faction.id)
+		assert_gte(pool.get_family_names().size(), 12, "QA-022 : réserve tirable (%s)" % faction.id)
 		for given: String in pool.given_names_f:
 			assert_false(pool.given_names_m.has(given) or pool.given_names_x.has(given), given)
 	var ter: NamePool = Gen.data().name_pools[&"ter"]
 	assert_true(ter.family_names.has("Okonkwo"), "Okonkwo reste au LORE…")
 	assert_true(ter.is_reserved("Okonkwo"))
 	assert_false(ter.get_family_names().has("Okonkwo"), "…mais n'est jamais tiré")
-	assert_eq(ter.get_family_names().size(), 14)
+	assert_eq(ter.get_family_names().size(), ter.family_names.size() - ter.reserved_names.size())
 
 
 func test_name_pool_filters_by_sex() -> void:

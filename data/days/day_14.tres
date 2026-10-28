@@ -411,7 +411,7 @@ anomaly_weights = Dictionary[int, float]({
 15: 0.05,
 16: 0.06,
 17: 0.08,
-18: 0.07,
+18: 0.2,
 19: 0.18
 })
 scripted_cases = Array[ExtResource("10_fio5f")]([SubResource("scripted_sc_34"), SubResource("scripted_sc_35a"), SubResource("scripted_sc_35b"), SubResource("scripted_sc_35c")])

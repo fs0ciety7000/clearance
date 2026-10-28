@@ -73,6 +73,13 @@ extends Resource
 @export var revoked_decoys: int = 0
 ## Annonces conditionnelles ou horaires (`HallAnnouncementDef`).
 @export var announcements: Array[HallAnnouncementDef] = []
+## R28 : part des gravitaires C-4 de l'origine visée tirés en C-5 (porteurs
+## d'une attestation d'asile) les jours où l'attestation est exigée (QA-026).
+@export_range(0.0, 1.0) var asylum_class_rate: float = 0.30
+## Documents « de la règle du jour » : quand le passager en porte un,
+## `MISSING_DOCUMENT` / `EXPIRED_DOCUMENT` le visent en priorité (QA-026 :
+## R28 presque jamais exercée, l'attestation n'était qu'un candidat parmi 3–4).
+@export var focus_documents: Array[StringName] = []
 
 
 ## Heure du shift (UI_FLOW §1) : 10:00 → 18:00, en minutes depuis minuit.

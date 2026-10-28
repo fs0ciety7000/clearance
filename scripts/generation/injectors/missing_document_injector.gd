@@ -19,7 +19,7 @@ func inject(state: InjectionState) -> Anomaly:
 			continue
 		if require.applies_to(state.case) and state.is_document_untouched(required):
 			candidates.append(required)
-	candidates = state.filter_documents(candidates)
+	candidates = state.prefer_focus_documents(state.filter_documents(candidates))
 	if candidates.is_empty():
 		return null
 	var document_id: StringName = candidates[state.rng.randi_range(0, candidates.size() - 1)]

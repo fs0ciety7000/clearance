@@ -263,8 +263,8 @@ duration_sec = 750.0
 passenger_count = 17
 anomaly_count_weights = PackedFloat32Array(0.4, 0.38, 0.17, 0.05)
 anomaly_weights = Dictionary[int, float]({
-0: 0.07,
-1: 0.09,
+0: 0.1,
+1: 0.12,
 2: 0.03,
 3: 0.04,
 4: 0.04,
@@ -281,18 +281,18 @@ anomaly_weights = Dictionary[int, float]({
 15: 0.05,
 16: 0.06,
 17: 0.07,
-18: 0.05,
+18: 0.2,
 19: 0.08
 })
 scripted_cases = Array[ExtResource("10_jg357")]([SubResource("scripted_sc_36"), SubResource("scripted_sc_37")])
 intro_text_key = "day15_intro"
 faction_weights = Dictionary[StringName, float]({
-&"cer": 0.13,
+&"cer": 0.12,
 &"drv": 0.1,
-&"hal": 0.17,
-&"ter": 0.2,
+&"hal": 0.16,
+&"ter": 0.24,
 &"thr": 0.12,
-&"tyc": 0.28
+&"tyc": 0.26
 })
 visor_down_rate = 0.2
 legit_noise_rate = 0.38
@@ -306,3 +306,5 @@ evening_events = Array[ExtResource("4_fat5y")]([SubResource("d15_resource_21"), 
 rulebook_tabs = PackedStringArray("origins", "implants", "symbols", "seals", "wanted", "employers", "vessels")
 air_quota = 4
 luciole_trust_on_breach = false
+asylum_class_rate = 1.0
+focus_documents = Array[StringName]([&"asylum"])

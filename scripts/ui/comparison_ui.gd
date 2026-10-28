@@ -202,6 +202,8 @@ func _min_text_px() -> int:
 
 func _rebuild_theme(text_scale: float) -> void:
 	theme = ThemeBuilder.build(text_scale, _min_text_px())
+	if workbench != null:
+		workbench.text_scale = text_scale
 	if tool_bar != null:
 		tool_bar.refresh_fonts()
 
@@ -238,6 +240,7 @@ func _build() -> void:
 	workbench.offset_bottom = -TOOLBAR_H
 	workbench.reduce_motion = reduce_motion
 	workbench.fx_intensity = fx_intensity
+	workbench.text_scale = _text_scale()
 	add_child(workbench)
 	workbench.field_picked.connect(_on_item_picked)
 	workbench.document_focused.connect(_on_document_focused)
@@ -257,6 +260,7 @@ func _build() -> void:
 	add_child(rulebook)
 	rulebook.item_picked.connect(_on_item_picked)
 	rulebook.collapse_changed.connect(_on_rulebook_collapsed)
+	rulebook.resized.connect(_sync_workbench_bounds)
 
 	top_bar = TopBar.new()
 	top_bar.name = "TopBar"
@@ -312,7 +316,10 @@ func _build() -> void:
 	tool_bar.anchor_right = 1.0
 	tool_bar.anchor_bottom = 1.0
 	tool_bar.offset_top = -TOOLBAR_H
+	# Une barre plus haute que prévu grandit vers le haut, jamais hors de l'écran (QA-031).
+	tool_bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(tool_bar)
+	tool_bar.resized.connect(_sync_workbench_bounds)
 	tool_bar.inspection_toggled.connect(set_inspection_active)
 	tool_bar.interrogate_pressed.connect(toggle_question_menu)
 	tool_bar.next_pressed.connect(request_next_case)
@@ -681,6 +688,23 @@ func _show_suggestions() -> void:
 			else UiText.t("wb_scanner_src_acv", "ACV-2 · CONSORTIUM")
 	workbench.set_scanner(label, tint, pending_suggestion_count())
 	_refresh_suggestion_buttons()
+	_front_suggested_document()
+
+
+## Le document visé par le premier lien suggéré passe devant sa pile : le champ
+## pointé par le scanner n'est jamais caché sous un autre document (QA-020).
+func _front_suggested_document() -> void:
+	if workbench.layout_pending:
+		await workbench.layout_done
+	for link: Discrepancy in suggestions:
+		if selection.is_requested(link.a, link.b):
+			continue
+		for ref: FieldRef in [link.a, link.b]:
+			var view: DocumentView = workbench.get_view(ref.document_id)
+			if view != null and not workbench.is_front(view):
+				workbench.bring_to_front(view)
+			if view != null:
+				return
 
 
 ## Liens suggérés encore à confirmer.
@@ -744,7 +768,9 @@ func _refresh_suggestion_buttons() -> void:
 		check.offset_right = -DS.SPACE_1
 		check.offset_bottom = -DS.SPACE_1
 		button.add_child(check)
-		button.tooltip_text = "%s — %s" % [UiText.t("wb_scanner_confirm", "CONFIRMER"), describe(link)]
+		var source: String = UiText.t("wb_scanner_luciole", "‹lumika› · suggestion") if scanner_source == SCANNER_LUCIOLE \
+				else UiText.t("wb_scanner_acv", "ACV-2 · suggestion")
+		button.tooltip_text = "%s — %s\n%s" % [source, describe(link), UiText.t("wb_scanner_confirm", "CONFIRMER")]
 		button.visible = false
 		button.pressed.connect(confirm_suggestion.bind(i))
 		_suggestion_layer.add_child(button)
@@ -761,14 +787,41 @@ func _place_suggestion_buttons() -> void:
 	for button: Button in _suggestion_buttons:
 		var index: int = button.name.trim_prefix("Confirm_").to_int()
 		var mid: Vector2 = Vector2.INF
+		button.reset_size()
 		if index < suggestions.size():
 			for link: LinkLayer.Link in shown:
 				if InspectionSelection.pair_key(link.a, link.b) == InspectionSelection.pair_key(suggestions[index].a, suggestions[index].b):
-					mid = links.link_midpoint(link)
+					mid = _suggestion_anchor(link, button.size * get_global_transform().get_scale())
 		button.visible = mid != Vector2.INF
 		if button.visible:
-			button.reset_size()
 			button.position = (inv * mid - button.size * 0.5).round()
+
+
+## Point du lien où poser sa pastille (repère global) : le plus près du milieu
+## hors de tout document, pour ne jamais couvrir de texte (QA-029) ; le
+## milieu à défaut.
+func _suggestion_anchor(link: LinkLayer.Link, chip: Vector2) -> Vector2:
+	var points: PackedVector2Array = links.link_points(link)
+	if points.is_empty():
+		return Vector2.INF
+	var covers: Array[Rect2] = []
+	for view: DocumentView in workbench.views:
+		if is_instance_valid(view) and view.visible:
+			covers.append(view.get_global_rect())
+	var middle: int = points.size() >> 1
+	for step: int in points.size():
+		for index: int in [middle + step, middle - step]:
+			if index < 0 or index >= points.size():
+				continue
+			var rect: Rect2 = Rect2(points[index] - chip * 0.5, chip).grow(DS.SPACE_1)
+			var clear_spot: bool = true
+			for cover: Rect2 in covers:
+				if cover.intersects(rect):
+					clear_spot = false
+					break
+			if clear_spot:
+				return points[index]
+	return points[middle]
 
 
 ## Didascalie d'arrivée : accessoire d'ambiance (enfant, caisse, drone, LED),
@@ -848,7 +901,11 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 			for item: InspectableItem in [item_a, item_b]:
 				if item != null:
 					item.set_concordant(true)
-					get_tree().create_timer(DS.CONCORDANT_HOLD + DS.DUR_BASE).timeout.connect(_unmark_concordant.bind(item))
+					# Minuteur porté par le champ (QA-023) : libéré avec lui si le
+					# passager part avant la fin, jamais rappelé sur un objet libéré.
+					var unmark: Tween = item.create_tween()
+					unmark.tween_interval(DS.CONCORDANT_HOLD + DS.DUR_BASE)
+					unmark.tween_callback(item.set_concordant.bind(false))
 			workbench.show_banner(Workbench.BannerKind.CONCORDANT, UiText.t("res_concordant", "CONCORDANT"), describe(result), DS.CONCORDANT_HOLD)
 		_:
 			links.resolve(result, 0)
@@ -1531,7 +1588,22 @@ func _on_document_focused(doc: DocumentInstance) -> void:
 func _on_rulebook_collapsed(collapsed: bool) -> void:
 	var width: float = RulebookPanel.COLLAPSED_WIDTH if collapsed else RULEBOOK_WIDTH
 	rulebook.offset_left = -(width + DS.SPACE_4)
-	workbench.offset_right = -(width + DS.SPACE_4 * 2.0) if collapsed else -WORKBENCH_RIGHT_GAP
+	_sync_workbench_bounds()
+
+
+## Le plan de travail suit les bords réels du Rulebook et de la barre d'outils,
+## qui grandissent avec le texte 1,5 : aucun document sous le Rulebook ni sous
+## la barre (QA-020, QA-031).
+func _sync_workbench_bounds() -> void:
+	if workbench == null or rulebook == null or tool_bar == null:
+		return
+	var right_gap: float = RulebookPanel.COLLAPSED_WIDTH + DS.SPACE_4 * 2.0 if rulebook.collapsed else WORKBENCH_RIGHT_GAP
+	if rulebook.is_inside_tree() and size.x > 0.0:
+		right_gap = maxf(right_gap, size.x - rulebook.position.x + DS.SPACE_2)
+	var bar: float = maxf(TOOLBAR_H, tool_bar.size.y)
+	workbench.offset_right = -right_gap
+	workbench.offset_bottom = -bar
+	rulebook.offset_bottom = -(bar + DS.SPACE_2)
 
 
 func _select_a(ref: FieldRef) -> void:
@@ -1552,10 +1624,6 @@ func _clear_selected_marks() -> void:
 		if item.selected:
 			item.set_selected(false)
 
-
-func _unmark_concordant(item: InspectableItem) -> void:
-	if is_instance_valid(item):
-		item.set_concordant(false)
 
 
 func _pulse_item(item: InspectableItem) -> void:
@@ -1666,6 +1734,7 @@ func _input(event: InputEvent) -> void:
 	else:
 		_handle_stamp_input(event)
 		_handle_question_keys(event)
+		_handle_document_keys(event)
 
 
 func _handle_stamp_input(event: InputEvent) -> void:
@@ -1698,6 +1767,18 @@ func _handle_question_keys(event: InputEvent) -> void:
 		if topic != &"":
 			ask(topic)
 			_handled()
+
+
+## Touches 1–9 hors menu de questions : document n au premier plan (piles à
+## onglets du plan de travail, QA-020).
+func _handle_document_keys(event: InputEvent) -> void:
+	var key: InputEventKey = event as InputEventKey
+	if question_menu_open or key == null or not key.pressed or key.echo or key.is_command_or_control_pressed() \
+			or not documents_shown:
+		return
+	var n: int = key.physical_keycode - KEY_0
+	if n >= 1 and n <= 9 and workbench.focus_document(n - 1):
+		_handled()
 
 
 func _handled() -> void:

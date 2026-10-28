@@ -300,9 +300,8 @@ anomaly_weights = Dictionary[int, float]({
 15: 0.05,
 16: 0.06,
 17: 0.06,
-18: 0.04,
-19: 0.06,
-20: 0.09
+18: 0.2,
+19: 0.06
 })
 scripted_cases = Array[ExtResource("10_74qmr")]([SubResource("scripted_sc_42"), SubResource("scripted_sc_43"), SubResource("scripted_sc_44")])
 intro_text_key = "day18_intro"
@@ -328,3 +327,4 @@ air_quota = 4
 luciole_trust_on_breach = false
 revocations = Array[ExtResource("7_ydt3f")]([SubResource("d18_resource_26")])
 revoked_decoys = 4
+focus_documents = Array[StringName]([&"asylum"])

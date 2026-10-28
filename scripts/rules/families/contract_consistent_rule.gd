@@ -20,6 +20,12 @@ const CODE_PATH: StringName = &"employer_code"
 @export var posts: PackedStringArray = []
 
 
+## Clé i18n du libellé d'un code pour l'onglet « Codes employeurs »
+## (`rb_emp_ka` → « KA · Kessler-Ashe Orbital » ; QA-028).
+static func label_key(code: String) -> String:
+	return "rb_emp_%s" % code.to_lower()
+
+
 ## Code attendu pour un employeur (comparaison normalisée), vide si inconnu.
 func code_for(employer: Variant) -> String:
 	for name: String in employer_codes:

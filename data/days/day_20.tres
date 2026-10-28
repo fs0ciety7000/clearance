@@ -385,9 +385,8 @@ anomaly_weights = Dictionary[int, float]({
 15: 0.05,
 16: 0.12,
 17: 0.06,
-18: 0.04,
-19: 0.06,
-20: 0.07
+18: 0.2,
+19: 0.06
 })
 scripted_cases = Array[ExtResource("8_8rq7x")]([SubResource("scripted_sc_48"), SubResource("scripted_sc_49a"), SubResource("scripted_sc_49b"), SubResource("scripted_sc_50a"), SubResource("scripted_sc_50b")])
 intro_text_key = "day20_intro"
@@ -414,3 +413,4 @@ luciole_trust_on_breach = false
 revocations = Array[ExtResource("5_wowgs")]([SubResource("d20_resource_29")])
 revoked_decoys = 4
 announcements = Array[ExtResource("1_xyq50")]([SubResource("d20_resource_30"), SubResource("d20_resource_32")])
+focus_documents = Array[StringName]([&"asylum"])

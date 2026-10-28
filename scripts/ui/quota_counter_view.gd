@@ -9,6 +9,15 @@ extends InspectableItem
 
 var used: int = 0
 var maximum: int = 0
+## Barre d'état compacte (QA-031, palier 8) : une seule ligne « QUOTA n/max »
+## (« QUOTA ATTEINT » plein), sans légende au-dessus.
+var compact: bool = false:
+	set(value):
+		if compact == value:
+			return
+		compact = value
+		if _value != null:
+			set_quota(used, maximum)
 
 var _caption: Label = null
 var _value: Label = null
@@ -61,11 +70,15 @@ func set_quota(p_used: int, p_maximum: int) -> void:
 	visible = maximum > 0
 	comparable = maximum > 0
 	_caption.text = UiText.t("tb_quota_caption", "QUOTA")
-	if is_full():
+	_caption.visible = not compact
+	if compact:
+		_value.text = UiText.t("tb_quota_full", "QUOTA ATTEINT") if is_full() \
+				else UiText.tf("tb_quota", [used, maximum], "QUOTA %d/%d")
+	elif is_full():
 		_value.text = UiText.tf("tb_quota_reached", [used, maximum], "ATTEINT · %d / %d")
 	else:
 		_value.text = UiText.tf("tb_quota_value", [used, maximum], "%d / %d")
-	display_label = "%s %s" % [_caption.text, _value.text]
+	display_label = _value.text if compact else "%s %s" % [_caption.text, _value.text]
 	tooltip_text = UiText.t("tb_quota_tip", "Entrées imputables du jour. Mode Inspection : comparez le compteur à la règle du quota.")
 	_refresh_content()
 	queue_redraw()

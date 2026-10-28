@@ -7,7 +7,8 @@
 ## `DayController` ; la soirée débite les dépenses et remplace le foyer.
 ## M7 : événements du soir (`prepare_events`, choix par défaut sans UI),
 ## gains et drapeaux des événements, audit du J9 (F1), dernier jour sans soirée
-## (`close_final_day` : évaluation des fins F1–F7, épilogue), mémoire des
+## (`close_final_day` : J20 depuis D-076, fins F1–F9 ; F1–F7 si les données
+## s'arrêtent avant l'Acte II ; épilogue), mémoire des
 ## passagers (`memory_for_day`), jauges `loyalty` / `lucioles_trust` /
 ## `suspicion`.
 ## Acte II (docs/ACT2.md, D-076 → D-079, ARCHITECTURE §7.2) : la soirée du J10
@@ -138,14 +139,16 @@ static func close_evening(data: DataCatalog, summary: DaySummary, report: Evenin
 	return ending
 
 
-## Le jour courant n'a pas de soirée (J10, D-053) : le bilan enchaîne sur la fin.
+## Le jour courant n'a pas de soirée (`DayDef.has_evening` faux : J20 depuis
+## D-076 ; le J10 a une soirée pivot) : le bilan enchaîne sur la fin.
 static func has_evening(data: DataCatalog) -> bool:
 	var day: DayDef = data.get_day(GameState.current_day)
 	return day == null or day.has_evening
 
 
-## Dernier jour (sans soirée) : historique, évaluation de la fin (F1–F7,
-## `EndingService.evaluate_final`, crédits après le bilan), effacement de la
+## Dernier jour (sans soirée, J20) : historique, évaluation de la fin (Acte II :
+## F1–F9, `EndingService.evaluate_final_act2` ; sinon F1–F7,
+## `evaluate_final` ; crédits après le bilan), effacement de la
 ## sauvegarde (D-041). Renvoie la fin atteinte.
 static func close_final_day(data: DataCatalog, summary: DaySummary, save_slot: int = SaveService.DEFAULT_SLOT,
 		save_dir: String = SaveService.DEFAULT_DIR) -> StringName:

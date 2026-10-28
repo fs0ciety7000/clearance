@@ -1429,6 +1429,7 @@ day11_slogan,Chaque souffle se compte.
 msg_comm_day11,"Je suis Isadora Beaumont. La station a perdu une heure d'air cette nuit. Nous allons la rembourser, ensemble, guichet par guichet."
 msg_comm_day11_failed,Je suis Isadora Beaumont. La nuit a été calme grâce aux guichets vigilants. Le calme a un coût : nous allons le répartir.
 msg_cons_day11_levy,"Prélèvement de Rééquilibrage : 30 % de l'épargne du personnel au-delà de 40 ₵, retenus ce soir. Le Consortium remercie votre contribution."
+msg_cons_day11_albedo,"La Commission rouvre le dossier Albédo pour éclairer la nuit du 22 : toute information est rémunérée. Ce soir, Prélèvement de Rééquilibrage : 30 % de l'épargne au-delà de 40 ₵."
 msg_luc_day11_opened,Une heure. L'Anneau C a respiré une heure. Les enfants ont ouvert les hublots. Nous recommencerons.
 msg_luc_day11_aborted,La vanne s'est refermée trop vite. Il manquait des mains. Il en manquera moins.
 msg_brul_day11,"[encre noire] Ils ont Mira. Les Veilleurs prient. Nous, on compte. — K."
@@ -1477,7 +1478,7 @@ day16_slogan,"La nuit, l'air se repose. Vous aussi."
 msg_echo_sc37_turned_away,Brève : une ressortissante gravitaire en règle et son enfant ont été refoulés pour quota atteint. La Commission rappelle que le quota protège tout le monde.
 msg_comm_day16,"Demain, Revue de Rééquilibrage des guichets. Les dossiers propres n'ont rien à craindre. Les autres non plus : la Commission est juste."
 msg_sato_day16,"Collègue ! Je passerai à votre vitre pendant ma pause. Officieusement. Ne vous préparez pas, c'est le principe."
-msg_ilan_day16,"Ilan a reçu un mot. Ilan ne l'a pas encore ouvert. Il est sur la table, à côté de ton bol."
+msg_ilan_day16,"On m'a glissé un mot. Je ne l'ai pas encore ouvert. Il est sur la table, à côté de ton bol."
 day17_directive_title,Directive n° 17 — Révocations
 day17_intro,"Revue de Rééquilibrage. Le Bureau publie la liste des numéros révoqués (onglet Révocations) : leur titulaire n'est plus citoyen et se voit refuser l'entrée. Aucune exception, y compris pour le personnel."
 day17_slogan,Nul n'est au-dessus de la Continuité.
@@ -1807,6 +1808,7 @@ wb_object_label,OBJET
 wb_file_label,DOSSIER
 wb_scanner_acv,ACV-2 · suggestion
 wb_scanner_luciole,‹lumika› · suggestion
+wb_stack_hint,TOUCHES 1–%d
 hh_state_breathless,ESSOUFFLÉ·E
 hh_state_away_soute,DANS LA SOUTE
 hh_state_away_tycho,PARTIE À TYCHO
@@ -1870,6 +1872,9 @@ hh_ev_ilan_back,"Ilan est rentré·e de la Soute, amaigri·e et malade."
 hh_ev_dora_tycho,Dora est partie pour Tycho. Sa couchette sent encore la poussière.
 ev_note_ration,"Non payée : essoufflement, puis maladie au deuxième soir."
 ev_note_oxygen_free,Ration de fidélité : offerte par la Commission.
+ev_note_levy,30 % de l'épargne au-delà de 40 ₵. Retenu d'office. Le Consortium remercie.
+ev_note_lease,"Retenue d'office, chaque soir, tant que le boîtier jaune reste vissé au guichet."
+ev_note_inc_ilan_job,Huit crédits par soir pour poser des compteurs chez les voisins.
 disc_revoked_match,N° ID RÉVOQUÉ — le titulaire n'est plus citoyen.
 disc_revoked_no_match,Ce numéro ne figure pas aux révocations.
 end2_f1_title,MISE EN ATTENTE

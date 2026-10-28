@@ -1202,7 +1202,7 @@ Formats existants : `BriefingMessageDef` (au plus 4 messages, priorité, groupe 
 | `msg_dora_day11_arrested` *(si `ilan_arrested_vannes`, emplacement foyer)* | Ilan n'est pas rentré·e. La Garde dit « Anneau B ». Noa garde sa couchette chaude. |
 | `msg_ilan_day11_hiding` *(si `ilan_in_hiding`)* | Un mot sous la porte, de l'écriture d'Ilan : « Je vais bien. Ne cherche pas. Embrasse-les. » |
 
-Note Albédo : `msg_cons_day11_albedo` (bulletin, groupe du prélèvement si `vannes_opened`) — « La Commission rouvre le dossier Albédo pour éclairer les événements du 22. Toute information est rémunérée. »
+Note Albédo : `msg_cons_day11_albedo` (bulletin, groupe du prélèvement si `vannes_opened`, priorité 0) — « La Commission rouvre le dossier Albédo pour éclairer la nuit du 22 : toute information est rémunérée. Ce soir, Prélèvement de Rééquilibrage : 30 % de l'épargne au-delà de 40 ₵. » (QA-019 : le bulletin Albédo reprend l'annonce du prélèvement, qu'il remplace dans le groupe `levy`.)
 
 #### J12 — samedi 24.03
 
@@ -1269,7 +1269,7 @@ Note Albédo : `msg_cons_day11_albedo` (bulletin, groupe du prélèvement si `va
 | `msg_echo_sc37_turned_away` | Brève : une ressortissante gravitaire en règle et son enfant ont été refoulés pour quota atteint. La Commission rappelle que le quota protège tout le monde. |
 | `msg_comm_day16` | Demain, Revue de Rééquilibrage des guichets. Les dossiers propres n'ont rien à craindre. Les autres non plus : la Commission est juste. |
 | `msg_sato_day16` | Collègue ! Je passerai à votre vitre pendant ma pause. Officieusement. Ne vous préparez pas, c'est le principe. |
-| `msg_ilan_day16` | Ilan a reçu un mot. Ilan ne l'a pas encore ouvert. Il est sur la table, à côté de ton bol. |
+| `msg_ilan_day16` | On m'a glissé un mot. Je ne l'ai pas encore ouvert. Il est sur la table, à côté de ton bol. *(QA-027 : Ilan parle à la 1ʳᵉ personne)* |
 
 #### J17 — jeudi 29.03
 
