@@ -3,9 +3,8 @@
 .godot/
 # Les fichiers *.import SONT versionnés (paramètres d'import des assets).
 
-# Exports : les presets peuvent contenir des chemins/identifiants locaux.
-# On versionne un modèle sans secret : export_presets.example.cfg
-export_presets.cfg
+# Exports : export_presets.cfg est VERSIONNÉ (sans secret, D-069 ; les données
+# sensibles vont dans .godot/export_credentials.cfg). Sorties d'export ignorées :
 build/
 exports/
 

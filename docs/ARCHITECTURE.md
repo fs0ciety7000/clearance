@@ -4,6 +4,8 @@
 >
 > Documents liés : [`AGENTS.md`](../AGENTS.md) · [`DECISIONS.md`](../DECISIONS.md) · [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) · [`docs/UI_FLOW.md`](UI_FLOW.md) · [`docs/BOOTH_SCENE.md`](BOOTH_SCENE.md) (visuel du guichet, 3D Designer) · [`docs/ASSETS.md`](ASSETS.md) (rigs, clips, atlas, licences) · [`docs/AUDIO.md`](AUDIO.md) (Audio Designer) · [`docs/NARRATIVE.md`](NARRATIVE.md) (Scénariste)
 >
+> **Révision 3.2** (2026-10-28, M8 export) : §16 passé de « plan » à « état réel » (presets versionnés, icônes, `export_all.sh`, `smoke_export.sh`, CI, bug d'export des `PackedStringArray`) ; §15 (outils d'export).
+>
 > **Révision 3.1** (2026-10-28, corrections de la passe QA — `docs/QA.md`) : R18, R23, R25 résolus ; §4 (réglages de session), §5 (noms réservés, dates « année seule », symboles), §6.3 (signalement du code 1), §10 (sauvegarde atomique, borne du jour, version), §15 (`qa_boot.gd`), §16.4 (filtres d'export).
 >
 > **Révision 3** (2026-10-27, passe documentaire après M7 — jeu complet J1–J10, 414 tests GUT) : le document décrit désormais **le code réel**. Les notes « Implémenté en Mx » des révisions précédentes ont été fondues dans les sections concernées. Sections réécrites : §2–§14 ; **nouvelles** : §15 « Outils et pipelines », §16 « Export et distribution ». La numérotation §1–§14 est conservée (renvois des autres documents).
@@ -87,7 +89,7 @@ graph TD
 ```
 res://
 ├── project.godot               # autoloads, actions d'entrée, avertissements de typage (Godot Architect)
-├── icon.svg                    # seule icône (pas encore de .ico/.icns, §16)
+├── icon.svg                    # source des icônes (.ico/.icns générés dans assets/icons/, §16.6)
 ├── default_bus_layout.tres     # bus audio, GÉNÉRÉ par tools/build_audio.gd (D-049)
 ├── .gutconfig.json             # tests/unit + tests/integration, préfixe test_
 ├── addons/gut/                 # GUT 9.7.1 — VERSIONNÉ (D-008)
@@ -145,7 +147,7 @@ res://
 - **`scripts/day/`** mélange des `Node` (services de la scène de jour) et des `RefCounted` statiques (campagne, simulateurs) : ils partagent le même domaine (le jour / la campagne) et dépendent tous de `GameState` ou de services de jour, donc ni de `core` ni de `ui`.
 - **`scripts/booth/`** : scripts 3D (ni `Control`, ni cœur headless). `NullBooth`/`SilentBooth` y vivent car ils servent aussi au mode `--no-booth`.
 - **`res://ui/`** ne contient que `theme/` (R10 résolu).
-- Fichiers générés versionnés : `*.import`, `*.uid` (D-027), `.tres` de `data/`, `booth.tscn`, assets audio et passager. Ignorés : `.godot/`, `*.translation`, `art_src/downloads/`, `export_presets.cfg` (⚠️ §16).
+- Fichiers générés versionnés : `*.import`, `*.uid` (D-027), `.tres` de `data/`, `booth.tscn`, assets audio et passager. Ignorés : `.godot/`, `*.translation`, `art_src/downloads/`, `build/` (exports). `export_presets.cfg` est versionné sans secret (§16.2).
 
 ---
 
@@ -647,7 +649,7 @@ Sérialisation stable : `CaseSerializer` (tests de déterminisme). 🎯 Golden f
 - **Conventions** : un test par branche de règle ; propriétés sur graines plutôt qu'exemples ; temps simulé (jamais d'attente réelle) ; aucune dépendance au GPU (portraits en esquisse CPU) ; nouvelles données ⇒ `test_data_integrity` mis à jour ; tout outil qui change une valeur d'équilibrage met à jour `test_balance`.
 - **Bacs à sable** (hors CI) : `scenes/passenger/passenger_demo.tscn`, `scenes/ui/comparison_ui_demo.tscn` ; captures via les arguments de `DayScene` (`--screen=…`, `--autoplay`…).
 - **Hors GUT** : rendu, animation, feel, perf → playtests QA.
-- 🎯 Non couverts : golden files du générateur ; test de **non-mutation** des Resources partagées (R7) ; smoke test d'un build exporté (§16).
+- 🎯 Non couverts : golden files du générateur ; test de **non-mutation** des Resources partagées (R7) — le build exporté est couvert hors GUT par `tools/smoke_export.sh` (§16.8).
 
 ---
 
@@ -660,7 +662,7 @@ Sérialisation stable : `CaseSerializer` (tests de déterminisme). 🎯 Golden f
 | R3 | Portraits procéduraux | ✅ Résolu | Rendu du même rig (`PortraitService`, D-018) |
 | R4 | Localisation | ✅ Résolu (FR) | Clés partout, `fr.csv`, `UiText` (D-040). 🎯 Autres langues : non prévues |
 | R5 | Équilibrage opaque | ✅ Résolu | `gen_stats`, `balance_sim`, `test_balance` |
-| R6 | Version moteur | 🟡 Partiel | 4.7.2 figé (D-003, `install_godot.sh`) ; pas de CI (§16) |
+| R6 | Version moteur | 🟢 | 4.7.2 figé (D-003, `install_godot.sh`, modèles d'export compris) ; CI de build sur tag / à la main (§16.7) |
 | R7 | Resources partagées mutées | 🟡 Ouvert | Règle respectée par convention ; aucun test de non-mutation |
 | R8 | Format des dialogues | ✅ Résolu autrement | Pas de `DialogueDef` : clés `<dialogue_id>_<suffixe>` dans `fr.csv` |
 | R9 | Temps réel vs horloge | ✅ Résolu | `duration_sec` réel + ralenti d'accessibilité |
@@ -713,7 +715,7 @@ Tous les outils sont des scripts `extends SceneTree` lancés en headless depuis 
 
 | Outil | Génère / fait | Quand le relancer | Déterminisme | Prérequis |
 |---|---|---|---|---|
-| `install_godot.sh` | Installe Godot 4.7.2 (Linux x86_64) dans `/opt/godot` + lien `/usr/local/bin/godot` (GUT 9.7.1 est versionné dans `addons/gut` : rien à cloner) | Nouvelle machine / CI | Version figée | `curl`, `unzip`, droits root |
+| `install_godot.sh` | Installe Godot 4.7.2 (Linux x86_64) dans `/opt/godot` + lien `/usr/local/bin/godot` ; `--templates` / `--templates-only` : modèles d'export 4.7.2 (GUT 9.7.1 est versionné dans `addons/gut` : rien à cloner) | Nouvelle machine / CI | Version figée | `curl`, `unzip`, droits root |
 | `fetch_assets.sh` | Télécharge les packs CC0 (Kenney Animated Characters ×3, Sci-fi / Interface / Impact Sounds ; Quaternius UAL Standard via itch.io) dans `art_src/downloads/` (ignoré par git) | Avant `build_audio.sh` ou une mise à jour des sources personnage | Dépend des sites (liens résolus à la volée) | `curl`, `unzip`, `python3`, réseau |
 | `build_data.gd` | **Tous les `.tres` de `data/`** : documents, origines, réserves de noms, catalogue d'apparences, économie, 22 règles, RuleSets et `DayDef` J1–J10 (cas scénarisés, briefings, soirées, avis) | À chaque changement de contenu (Game Designer, Scénariste, Lore) — jamais d'édition manuelle durable (D-029) | **Oui** : UID conservés, identifiants de sous-ressources stables (`_tag_subresources`) | `godot --headless --import` fait au préalable ; puis `test_data_integrity` |
 | `build_booth_greybox.gd` | `scenes/booth/booth.tscn` (décor greybox, nœuds contractuels §8 bis.1) | Seulement pour modifier le décor | **Non** pour les `unique_id` des nœuds (diff complet à chaque régénération) ; géométrie identique | Autoloads chargés (attend une frame) |
@@ -726,65 +728,78 @@ Tous les outils sont des scripts `extends SceneTree` lancés en headless depuis 
 | `qa_boot.gd` | Lanceur des nœuds QA qui ont besoin des autoloads (un `--script` est compilé avant leur enregistrement) : attend une image puis ajoute `--qa-node=<script>` à la racine | — | — | `godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_campaign.gd …` |
 | `qa_campaign.gd` (QA) | Campagne J1–J10 dans la **vraie** `day.tscn` (booth 3D compris) jouée par `--autoplay`, accélérée (`Engine.time_scale`) ; contrôle à chaque soir sauvegarde relue = `GameState`, solde affiché ; lignes `QA_DAY` / `QA_END` | Avant une livraison, après un changement de flux de jour | Oui à graine fixe (`--qa-seed`) | **Lancé par `qa_boot.gd`** (jamais directement), `--headless` possible avec le booth ; `--no-booth` sans erreur (QA-012) ; détail dans `docs/QA.md` §11 |
 | `qa_perf.gd` (QA) | Temps moyen / p95 par image au guichet | Après un changement du booth | — | Par `qa_boot.gd`, rendu réel (xvfb, `--rendering-driver opengl3`) |
+| `build_icons.gd` | `assets/icons/icon.ico`, `icon.icns`, `icon_1024.png` depuis `icon.svg` (§16.6) | Changement d'`icon.svg` | Oui (octet pour octet, même version de Godot) | — |
+| `export_all.sh` (+ `write_engine_licenses.gd`) | Exports release et archives `build/dist/CLEARANCE-<version>-<plateforme>.(zip\|tar.gz)` + `SHA256SUMS` (§16.3) | Chaque livraison (CI sur tag) | Archives à dates figées (`SOURCE_DATE_EPOCH`) | Godot 4.7.2 + modèles d'export, `zip`, `tar` |
+| `smoke_export.sh` | Lance l'export Linux release (titre) et un export debug en `--autoplay` J1/J4/J7/J10 ; échoue sur toute erreur (§16.8) | Après `export_all.sh`, à chaque changement de Godot | Graine fixe | Build Linux présent |
 | `balance_sim.gd` | Rapport console : par profil (précision) et par soir, revenu, solde, foyer, fins F1–F7 ; `--set=champ=valeur` surcharge l'`EconomyDef` en mémoire | Après un changement d'économie, de paie ou de soirées (`-- --seeds=200 --profiles=0.6,0.8,0.95 --presets=…`) | Oui | Données à jour ; reporter les valeurs retenues dans `build_data.gd` puis `test_balance` |
 
 **Ordre type d'une régénération complète** : `install_godot.sh` → `fetch_assets.sh` → `godot --headless --import` → `build_passenger_bonemaps` → import → `build_passenger_anims` → `build_passenger_skins` → `build_passenger_impostor` → `build_audio.sh` → `build_data` → (`build_booth_greybox` si besoin) → import → suite GUT.
 
 ---
 
-## 16. Export et distribution (préparatoire — jalon M8)
+## 16. Export et distribution (état réel — jalon M8)
 
-> Plan seulement : rien n'est implémenté. Cibles validées : PC d'entrée de gamme et **Steam Deck** (D-023).
+> **Implémenté** (2026-10-28, Godot 4.7.2-stable, version 0.8.0). Cibles : PC d'entrée de gamme et **Steam Deck** (D-023). Décisions : D-069 à D-072 (proposées).
 
 ### 16.1 Prérequis
 
-- **Modèles d'export 4.7.2-stable** (`Godot_v4.7.2-stable_export_templates.tpz`) installés dans `<données Godot>/export_templates/4.7.2.stable/` (Linux : `~/.local/share/godot/…`, Windows : `%APPDATA%\Godot\…`, macOS : `~/Library/Application Support/Godot/…`). À ajouter à `install_godot.sh` (CI).
-- **Version du jeu** : ✅ `application/config/version = "0.8.0"` dans `project.godot`, lue par `SaveService.game_version()` et l'écran titre (R23).
-- `godot --headless --import` avant tout export (génère notamment `fr.fr.translation`).
+- **Godot 4.7.2-stable** + **modèles d'export 4.7.2.stable** dans `<données Godot>/export_templates/4.7.2.stable/` (Linux : `~/.local/share/godot/…`, macOS : `~/Library/Application Support/Godot/…`, Windows : `%APPDATA%\Godot\…`) : `bash tools/install_godot.sh --templates` (ou `--templates-only` sans root). `tools/export_all.sh` vérifie la version de Godot et la présence de chaque modèle requis avant d'exporter, et échoue sinon.
+- **Version** : `application/config/version` (`project.godot`, D-063) est la seule source : les champs de version des presets restent vides, Godot la reprend (Windows `FileVersion`/`ProductVersion` = `0.8.0.0`, macOS `CFBundleShortVersionString`/`CFBundleVersion` = `0.8.0`), le script la lit pour nommer les archives, la CI vérifie que le tag `vX.Y.Z` la reproduit.
+- `project.godot` : `rendering/textures/vram_compression/import_etc2_astc=true` (exigé par l'export macOS universel / arm64 ; aucune texture n'est en compression VRAM aujourd'hui, l'import n'a rien changé) et **`editor/export/convert_text_resources_to_binary=false`** (§16.4, bug).
 
-### 16.2 Presets
+### 16.2 Presets (`export_presets.cfg`, versionné)
 
-| Preset | Plateforme | Notes |
+| Preset | Sortie (`build/…`) | Réglages notables |
 |---|---|---|
-| `Windows Desktop` | x86_64 | `.exe` + `.pck` (ou PCK embarqué) ; icône `.ico` ; signature Authenticode optionnelle (SmartScreen) |
-| `Linux` | x86_64 | **Couvre le Steam Deck** (SteamOS natif, Vulkan / Forward+) ; tester en 1280×800, manette (actions déjà mappées dans `project.godot`) |
-| `macOS` | universel (x86_64 + arm64) | `.app` / `.dmg` ; icône `.icns` ; signature + notarisation (16.5) |
+| `Windows Desktop` | `windows/CLEARANCE.exe` + `.pck` | x86_64, PCK séparé, `application/modify_resources=true` (icône + infos de version écrites par Godot, **sans rcedit**), éditeur « Studio CLEARANCE », pas de signature (`codesign/enable=false`) |
+| `macOS` | `macos/CLEARANCE.zip` (contient `CLEARANCE.app`) | **universel** x86_64 + arm64, `com.clearance.game`, catégorie `public.app-category.games`, min. macOS 10.13 (Intel) / 11.00 (arm64), `icon.icns`, signature **intégrée ad hoc** (`codesign/codesign=1`), notarisation désactivée, aucun *entitlement*, S3TC/BPTC + ETC2/ASTC |
+| `Linux` | `linux/CLEARANCE.x86_64` + `.pck` | x86_64 = **Steam Deck** (SteamOS natif, Vulkan / Forward+) |
+| `Linux ARM64` | `linux-arm64/CLEARANCE.arm64` + `.pck` | facultatif (`export_all.sh all`), non testé sur matériel |
 
-### 16.3 `export_presets.cfg` : stratégie
+Aucun secret dans le fichier (champs d'identité, certificats, Apple ID vides) : Godot range les données sensibles dans `.godot/export_credentials.cfg` (ignoré) ; en CI elles passeront par les variables `GODOT_*` (§16.7). Aucune fonctionnalité personnalisée : les **arguments de debug sont inactifs en release** (D-064).
 
-État actuel : le fichier est ignoré par `.gitignore`, dont le commentaire annonce un `export_presets.example.cfg` **qui n'existe pas**. Proposition :
-1. **Versionner `export_presets.cfg`** (retirer la ligne de `.gitignore`) : depuis Godot 4.3, les données sensibles (mots de passe, clé de chiffrement) sont écrites à part dans `.godot/export_credentials.cfg`, déjà ignoré avec `.godot/`. Vérifier avant le premier commit qu'aucun chemin local ni identifiant ne s'y trouve.
-2. **Secrets par variables d'environnement** (CI) — noms à vérifier dans la doc 4.7 : `GODOT_SCRIPT_ENCRYPTION_KEY` (si chiffrement), `GODOT_MACOS_CODESIGN_CERTIFICATE_FILE` / `_PASSWORD`, `GODOT_MACOS_NOTARIZATION_API_UUID` / `_API_KEY` / `_API_KEY_ID`, `GODOT_WINDOWS_CODESIGN_IDENTITY` / `_PASSWORD`. Secrets GitHub côté CI, jamais dans le dépôt.
-3. Chemins de sortie relatifs (`build/<plateforme>/`, déjà ignoré).
-4. Consigner la décision dans `DECISIONS.md` et corriger le commentaire de `.gitignore`.
+### 16.3 Script de build : `tools/export_all.sh`
+
+`bash tools/export_all.sh [windows|macos|linux|linux-arm64|all…]` (défaut : les trois plateformes) : contrôle Godot 4.7.2 + modèles, `--import`, prépare `CREDITS.txt` et `licenses/` (copie des notices OFL / Kenney / Quaternius, `GODOT_ENGINE.txt` généré par `tools/write_engine_licenses.gd` depuis le binaire Godot : licence MIT + composants tiers), puis pour chaque plateforme : `--export-release` (journal `build/export_<p>.log`, échec si code ≠ 0, ligne `ERROR` ou fichier absent) et archive dans `build/dist/` :
+
+| Archive | Contenu | Taille (0.8.0) |
+|---|---|---|
+| `CLEARANCE-0.8.0-windows.zip` | `CLEARANCE-0.8.0-windows/` : `.exe` (109 Mo), `.pck` (7,7 Mo), `CREDITS.txt`, `licenses/` (6 fichiers) | 43 Mo |
+| `CLEARANCE-0.8.0-macos.zip` | zip de Godot (`CLEARANCE.app`, binaire universel 171 Mo, droits Unix conservés) + `CREDITS.txt` et `licenses/` **à côté** du `.app` (dedans, ils invalideraient la signature) | 65 Mo |
+| `CLEARANCE-0.8.0-linux.tar.gz` | `CLEARANCE-0.8.0-linux/` : binaire 0755, `.pck`, `CREDITS.txt`, `licenses/` | 34 Mo |
+
+Archives reproductibles (hors zip macOS produit par Godot) : dates figées au dernier commit (`SOURCE_DATE_EPOCH`), ordre trié, propriétaire 0, `gzip -n`. `build/dist/SHA256SUMS` en fin de build. `build/` est ignoré par git.
 
 ### 16.4 Contenu exporté
 
-- Mode `export_filter="all_resources"` avec `exclude_filter` (à poser dans chaque preset) :
-  `tests/*, tools/*, addons/gut/*, .gutconfig.json, scenes/passenger/passenger_demo.tscn, scenes/ui/comparison_ui_demo.tscn, scripts/booth/passenger_demo.gd, scripts/ui/comparison_ui_demo.gd, scripts/ui/demo_booth_backdrop.gd`.
-- `art_src/` et `docs/` sont invisibles pour Godot (`.gdignore`, R25) : ni importés ni exportés.
-- `include_filter` pour les fichiers non-ressources à distribuer : licences `assets/fonts/OFL-*.txt` (obligatoire OFL) et `assets/models/passenger/License_*.txt` (+ un fichier `CREDITS` généré depuis `docs/ASSETS.md`).
-- `DemoAutoplay` et `NullBooth` restent (référencés par `DayScene`) ; les arguments de debug sont neutralisés en build *release* par `DebugArgs` (R18). Un preset de test peut les réactiver avec la fonctionnalité personnalisée `debug_args` (`custom_features`).
-- Le plugin éditeur GUT est déclaré dans `project.godot` ; il n'est pas chargé à l'exécution, l'exclure de l'export est sans effet de bord (à confirmer par le smoke test).
-- Vérifier sur un build réel : chargement de `res://data` par `DataCatalog` (`.tres` convertis en binaire + `.remap`), traduction `fr.fr.translation`, `passenger_anims.res`, sauvegarde dans `user://` (R24). **Smoke test** proposé : lancer le binaire exporté en headless avec `--day=10 --no-booth --autoplay` (en build debug) et vérifier l'absence d'erreur.
+- `export_filter="all_resources"` ; **exclusions** (chaque preset) : `tests/*, tools/*, addons/gut/*, .gutconfig.json`, scènes et scripts de démo (`passenger_demo.tscn/.gd`, `comparison_ui_demo.tscn/.gd`, `demo_booth_backdrop.gd`). `art_src/`, `docs/` et `assets/icons/` portent un `.gdignore` : ni importés ni exportés ; les `.md` et `CREDITS.txt` ne sont pas des ressources.
+- **Inclusions** (non-ressources) : `assets/fonts/OFL-*.txt`, `assets/models/passenger/License_*.txt` (notices aussi présentes dans le `.pck`).
+- Contenu vérifié en listant le `.pck` (format v4) : 678 fichiers, 7,6 Mo ; aucun test, outil, fichier GUT, démo, capture, source ou document. `DemoAutoplay` et `NullBooth` restent (référencés par `DayScene`).
+- ⚠️ **Bug Godot 4.7.2 contourné** : la conversion des `.tres` en binaire à l'export (`convert_text_resources_to_binary`, activée par défaut) **vide les propriétés `PackedStringArray`** des Resources scriptées (`NamePool` : plus aucun prénom ni nom, `FactionDef.origin_sectors`, `employers`…) : le générateur échoue dans le jeu exporté alors que l'éditeur et GUT sont verts. Les `.tres` sont donc exportés en texte (`editor/export/convert_text_resources_to_binary=false` ; taille du `.pck` inchangée, 7,7 Mo). À réévaluer à chaque version de Godot avec `tools/smoke_export.sh` (qui détecte la régression).
 
-### 16.5 Signature macOS
+### 16.5 Signature
 
-| Option | Coût | Effet | Usage |
+| Plateforme | État | Effet pour le joueur | Évolution |
 |---|---|---|---|
-| **Ad hoc** (`codesign -s -`, ou `rcodesign` depuis Linux) | Gratuit | Exigée sur Apple Silicon ; Gatekeeper bloque au premier lancement (clic droit → Ouvrir, ou `xattr -dr com.apple.quarantine`) | Tests internes, playtests |
-| **Developer ID + notarisation** (`notarytool`, ou `rcodesign notary-submit`) | Compte Apple Developer (99 $/an) | Lancement sans avertissement ; *hardened runtime* + *entitlements* minimaux (pas de JIT, pas de micro) | Distribution publique (Steam, itch.io) |
-
-Recommandation : ad hoc dès M8 pour itérer, Developer ID avant toute diffusion publique (décision client : coût du compte).
+| macOS | **Ad hoc** (signature intégrée de Godot, sans identité ni secret) : vérifié par lecture des Mach-O, `CodeDirectory` ad hoc (flags `0x10002`, *hardened runtime*) sur les deux tranches, identifiant `com.clearance.game`, `_CodeSignature/CodeResources` présent. `codesign --verify` / `spctl` indisponibles sous Linux : à confirmer sur un Mac | Gatekeeper bloque au premier lancement : clic droit > Ouvrir, ou `xattr -dr com.apple.quarantine CLEARANCE.app` (README « Builds ») | Developer ID + notarisation (compte Apple 99 $/an, décision client) : `codesign/codesign=3` (rcodesign) ou runner macOS, secrets CI §16.7 |
+| Windows | Non signé | SmartScreen : « Informations complémentaires > Exécuter quand même » | Authenticode (`osslsigncode` + certificat en secret CI) |
+| Linux | — | — | — |
 
 ### 16.6 Icônes
 
-`icon.svg` (seule source) → `icon.ico` multi-résolution (16, 32, 48, 64, 128, 256) pour Windows et `icon.icns` (jusqu'à 1024) pour macOS, via un futur `tools/build_icons.sh` (`rsvg-convert` + ImageMagick / `png2icns`), sorties versionnées dans `assets/icons/` et référencées par les presets (`application/icon`). Windows : vérifier si l'exportateur 4.7.2 modifie les ressources PE sans outil externe, sinon configurer `rcedit`. Linux / Steam Deck : icône fournie par Steam (bibliothèque), pas de `.desktop` requis.
+`tools/build_icons.gd` (headless, rastériseur SVG de Godot, sans outil externe, sortie identique à chaque exécution) : `icon.svg` → `assets/icons/icon.ico` (16, 24, 32, 48, 64, 128, 256 px, entrées PNG), `icon.icns` (`icp4`…`ic10`, 16 → 1024 px @1x/@2x), `icon_1024.png` (référence). Fichiers versionnés. **Windows** : l'exportateur 4.7.2 réécrit lui-même les ressources PE (`application/modify_resources`) : groupe d'icônes (Godot régénère 16/32/48/64/128/256 depuis l'`.ico`) et `VERSIONINFO`, vérifiés avec `llvm-readobj --coff-resources` ; **rcedit n'est plus nécessaire**. **macOS** : `icon.icns` copié dans `Contents/Resources/`, `CFBundleIconFile`. **Linux / Steam Deck** : icône fournie par Steam (bibliothèque), pas de `.desktop`.
 
-### 16.7 CI GitHub Actions (proposition)
+### 16.7 CI GitHub Actions (`.github/workflows/build.yml`)
 
-1. **`test`** (à chaque push / PR) : conteneur Ubuntu, `install_godot.sh`, cache `.godot/`, `godot --headless --import`, suite GUT (code retour), en option `gen_stats --campaigns=20` (invariants).
-2. **`export`** (tag `v*` ou manuel) : matrice Windows / Linux / macOS depuis Linux (modèles d'export en cache) ; exclusions §16.4 ; artefacts `build/<plateforme>/`.
-3. **`sign-macos`** (tag, runner `macos-latest` ou `rcodesign` sur Linux) : signature Developer ID + notarisation avec les secrets §16.3.
-4. **`release`** : archives + empreintes ; plus tard `steamcmd` (dépôts Windows / Linux / macOS, branche bêta).
-Les outils de génération (§15) ne tournent **pas** en CI (sorties versionnées) ; un job manuel peut vérifier que `build_data.gd` ne produit aucun diff.
+Déclencheurs : **`workflow_dispatch`** et **tags `v*`** uniquement (jamais à chaque push). Un job `ubuntu-24.04` : `install_godot.sh` (4.7.2 figée) → modèles d'export (cache `actions/cache`, clé = version) → contrôle tag = version → `--import` → **suite GUT** → `export_all.sh` → `smoke_export.sh` → artefact `build/dist/*` (30 jours) → sur tag, **Release GitHub** (pré-version) par `gh release create`. Aucun secret requis ; emplacements commentés pour la signature macOS (certificat `.p12`, clé API de notarisation) et Windows (`.pfx`), via secrets GitHub et variables `GODOT_MACOS_*` / `GODOT_WINDOWS_*` (noms à confirmer dans la doc 4.7 avant activation). Plus tard : `steamcmd` (dépôts Windows / Linux / macOS, branche bêta).
+
+### 16.8 Vérifications
+
+| Vérification | Comment | Résultat (0.8.0) |
+|---|---|---|
+| Écran titre, binaire **release** Linux | `./CLEARANCE.x86_64 --headless --quit-after 300` ; capture réelle xvfb + `--rendering-driver opengl3` + `--write-movie` | ✅ aucune erreur ; capture `docs/mockups/m8_export_linux_title.png` (polices, traduction, « Démo · v0.8.0 ») |
+| Arguments de debug inactifs en release (D-064) | `override.cfg` (`run/main_scene` = `day.tscn`, un binaire exporté refuse un chemin de scène en ligne de commande) + `-- --day=10 --seed=7 --credits=999 --screen=evening` | ✅ release : briefing **J01**, solde 20 ₵ ; même commande sur un export *debug* : **J10**, solde 1019 ₵ |
+| Partie jouée dans un export | `tools/smoke_export.sh` : export *debug* + `--autoplay` J1, J4, J7, J10 (booth 3D compris), échec sur toute ligne `ERROR` | ✅ (a détecté le bug §16.4) |
+| Windows | taille des fichiers, ressources PE (icône, version, éditeur) | ✅ ; **non lancé** (pas de Windows/Wine) |
+| macOS | structure du `.app`, `Info.plist` (version, bundle id, `LSMinimumSystemVersionByArchitecture`, catégorie), signature ad hoc lue dans les Mach-O | ✅ ; **non lancé**, `codesign`/`spctl`/`rcodesign` indisponibles |
+| Steam Deck | — | à faire sur matériel (1280×800, manette) |

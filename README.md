@@ -63,6 +63,31 @@ Notes :
 - Les avertissements GDScript des `addons/` sont exclus par défaut (GUT n'est pas typé statiquement) ; le code du projet, lui, traite `untyped_declaration` comme une erreur.
 - `push_error()` fait échouer un test GUT sauf s'il est attendu (`assert_push_error_count`).
 
+## Builds
+
+Exports release Windows / macOS / Linux (+ Steam Deck) reproductibles, détails dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §16.
+
+Prérequis : Godot **4.7.2-stable** et ses modèles d'export (`bash tools/install_godot.sh --templates`, ou depuis l'éditeur : *Éditeur > Gérer les modèles d'export*), `zip`, `tar`.
+
+```bash
+bash tools/export_all.sh            # windows macos linux (ou : linux, all = + linux-arm64)
+bash tools/smoke_export.sh          # facultatif : lance les exports Linux (titre + J1/J4/J7/J10)
+```
+
+| Archive (`build/dist/`) | Contenu |
+|---|---|
+| `CLEARANCE-<version>-windows.zip` | `CLEARANCE.exe` (x86_64, icône + infos de version) + `CLEARANCE.pck` |
+| `CLEARANCE-<version>-macos.zip` | `CLEARANCE.app` universel (Intel + Apple Silicon, macOS 10.13 / 11+), signé **ad hoc** |
+| `CLEARANCE-<version>-linux.tar.gz` | `CLEARANCE.x86_64` (bit exécutable conservé) + `CLEARANCE.pck` — **Steam Deck** compris |
+
+Chaque archive contient aussi `CREDITS.txt` et `licenses/` (polices OFL, Kenney et Quaternius CC0, moteur Godot MIT et composants tiers) ; `build/dist/SHA256SUMS` donne les empreintes. `build/` n'est jamais versionné. Version : `application/config/version` de `project.godot` (seule source). CI : workflow **Build** (GitHub Actions), lancé à la main ou par un tag `v*` (Release GitHub).
+
+> **macOS — application non notarisée.** Au premier lancement, Gatekeeper bloque l'app : **clic droit (ou Ctrl+clic) sur `CLEARANCE.app` > Ouvrir**, puis *Ouvrir* ; ou, dans le Terminal : `xattr -dr com.apple.quarantine /chemin/vers/CLEARANCE.app`. Sur macOS 15+, passer par *Réglages Système > Confidentialité et sécurité > Ouvrir quand même*.
+>
+> **Windows** : l'exécutable n'est pas signé ; SmartScreen peut afficher « Windows a protégé votre ordinateur » → *Informations complémentaires > Exécuter quand même*.
+
+Icônes (`assets/icons/icon.ico`, `icon.icns`) régénérées depuis `icon.svg` par `godot --headless --script res://tools/build_icons.gd`.
+
 ## Feuille de route MVP
 
 1. Structure de projet Godot 4

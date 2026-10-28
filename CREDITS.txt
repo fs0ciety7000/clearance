@@ -1,0 +1,31 @@
+CLEARANCE — Crédits et licences / Credits and licenses
+=====================================================
+
+Jeu / Game
+  Studio CLEARANCE — conception, code, narration, son, interface.
+
+Moteur / Engine
+  Godot Engine (MIT) — https://godotengine.org
+  Notice complète du moteur et de ses composants tiers :
+  licenses/GODOT_ENGINE.txt
+
+Polices / Fonts — SIL Open Font License 1.1
+  Chakra Petch  — The Chakra Petch Project Authors   licenses/OFL-ChakraPetch.txt
+  Inter         — The Inter Project Authors          licenses/OFL-Inter.txt
+  JetBrains Mono — The JetBrains Mono Project Authors licenses/OFL-JetBrainsMono.txt
+  Source : https://github.com/google/fonts
+
+Personnages et animations / Characters and animations — CC0 1.0
+  Kenney — Animated Characters (Protagonists, Survivors, Retro), modèle et skins
+    https://kenney.nl                                licenses/License_Kenney.txt
+  Quaternius — Universal Animation Library [Standard]
+    https://quaternius.com                           licenses/License_Quaternius_UAL.txt
+  (modèles retargetés, skins converties en cartes de zones, silhouette dérivée)
+
+Sons / Sounds — CC0 1.0
+  Kenney — Impact Sounds, Interface Sounds, Sci-Fi Sounds (https://kenney.nl)
+  retravaillés et complétés par des sons synthétisés par le studio.
+  Musiques et ambiances : studio CLEARANCE.
+
+Les ressources CC0 n'exigent pas d'attribution ; elles sont créditées par
+courtoisie. CC0 assets require no attribution; credited as a courtesy.
