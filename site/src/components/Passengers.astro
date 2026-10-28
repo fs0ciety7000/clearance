@@ -95,7 +95,8 @@ const pic = { formats: ['avif', 'webp'] as ('avif' | 'webp')[], loading: 'lazy' 
   .cmp-tag.l{left:14px;color:var(--amber)}
   .cmp-tag.r{right:14px;color:var(--cyan)}
   .compare input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0}
-  .compare:has(input:focus-visible){outline:2px solid var(--cyan);outline-offset:2px}
+  .compare:has(input:focus-visible){box-shadow:inset 0 0 0 2px var(--cyan)}
+  .compare:has(input:focus-visible) .cmp-line{width:4px;margin-left:-2px}
 
   .portraits{background:#232A38;border-bottom:1px solid var(--line)}
   .portraits :global(img){width:100%}
@@ -111,7 +112,7 @@ const pic = { formats: ['avif', 'webp'] as ('avif' | 'webp')[], loading: 'lazy' 
   .imp li{display:grid;grid-template-columns:64px 1fr;column-gap:16px;padding:12px clamp(22px,2.4vw,32px);border-bottom:1px solid var(--line)}
   .imp li:last-child{border-bottom:0}
   .imp b{grid-row:span 2;font-size:15px;color:var(--cyan);padding-top:2px}
-  .imp li.mil b{color:var(--red)}
+  .imp li.mil b{color:var(--amber)}
   .imp span{font-weight:600;font-size:15px}
   .imp small{font-size:13.5px;color:var(--tx2)}
 

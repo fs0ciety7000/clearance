@@ -16,7 +16,7 @@ Node ≥ 22.23.4 (exigence d'Astro 7.4) — l'image Docker utilise `node:24-alpi
 | Variable | Défaut | Rôle |
 |---|---|---|
 | `SITE_URL` | `https://clearance.cardormedia.com` | canonical, sitemap, Open Graph |
-| `PUBLIC_DOWNLOAD_URL` | `https://github.com/fs0ciety7000/clearance/releases` | cible des boutons « Télécharger la démo ». **Le dépôt est privé** : remplacer par une page publique (itch.io, Steam, Release publique) avant d'annoncer le site. |
+| `PUBLIC_DOWNLOAD_URL` | `https://github.com/fs0ciety7000/clearance/releases` | cible des boutons « Télécharger la démo ». **Aucune release n'est encore publiée** : publier la v0.8.1 (tag `v0.8.1`, workflow *Build*) ou pointer vers une page itch.io / Steam avant d'annoncer le site. |
 
 ## Contenu
 

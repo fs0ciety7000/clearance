@@ -38,6 +38,7 @@ const keys = ['m7_envelope', 'm8_symbol_report', 'm5_evening'];
   .card{--tone:var(--yellow);position:relative;background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;transition:border-color var(--dur-base)}
   .card::before{content:"";position:absolute;left:-1px;top:-1px;width:56px;height:3px;background:var(--tone);z-index:2}
   .card.magenta{--tone:var(--magenta)}
+  .card.amber{--tone:var(--amber)}
   .card.cyan{--tone:var(--cyan)}
   .card:hover{border-color:color-mix(in srgb,var(--tone) 55%,transparent)}
   .shot{aspect-ratio:4/3;overflow:hidden;border-bottom:1px solid var(--line);background:var(--void)}

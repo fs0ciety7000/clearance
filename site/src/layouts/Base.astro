@@ -6,7 +6,7 @@ import inter from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff
 import mono from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url';
 import type { Lang } from '../lib/i18n';
 import { t } from '../lib/i18n';
-import { VERSION, DOWNLOAD_URL } from '../config';
+import { VERSION } from '../config';
 
 interface Props {
   lang: Lang;
@@ -35,8 +35,11 @@ const ld = {
   operatingSystem: 'Windows, macOS, Linux, SteamOS',
   applicationCategory: 'Game',
   softwareVersion: VERSION,
+  playMode: 'SinglePlayer',
+  screenshot: og,
   author: { '@type': 'Organization', name: 'Studio CLEARANCE' },
-  offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', url: DOWNLOAD_URL, availability: 'https://schema.org/InStock' },
+  publisher: { '@type': 'Organization', name: 'Studio CLEARANCE' },
+  // `offers` volontairement absent tant qu'aucune version n'est publiée au lien de téléchargement.
 };
 ---
 <!doctype html>
@@ -64,6 +67,7 @@ const ld = {
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="CLEARANCE" />
     <meta property="og:locale" content={d.locale} />
+    <meta property="og:locale:alternate" content={lang === 'fr' ? 'en_US' : 'fr_FR'} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />

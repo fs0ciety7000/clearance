@@ -37,8 +37,8 @@ ul,ol{padding:0;list-style:none}
 /* ---------- Typo ---------- */
 .mono{font-family:var(--f-mono)}
 .label{font-family:var(--f-mono);font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--tx2)}
-.kicker{display:flex;align-items:center;gap:12px;font-family:var(--f-mono);font-size:12px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--yellow)}
-.kicker::before{content:"";width:8px;height:8px;background:currentColor;transform:rotate(45deg);flex:none}
+.kicker{display:flex;align-items:center;gap:12px;font-family:var(--f-mono);font-size:12px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--tx2)}
+.kicker::before{content:"";width:8px;height:8px;background:var(--cyan);transform:rotate(45deg);flex:none}
 .h2{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,5.2vw,76px);line-height:.98;letter-spacing:-.015em;text-transform:uppercase;text-wrap:balance}
 .lede{font-size:clamp(16px,1.25vw,19px);line-height:1.6;color:var(--tx2);max-width:36rem;text-wrap:pretty}
 

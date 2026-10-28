@@ -20,8 +20,13 @@ const icon = { windows: 'windows', macos: 'apple', linux: 'linux', deck: 'deck' 
       ))}
     </ul>
     <div class="split">
-      <div class="deck frame" data-reveal style="--y:40px">
+      <div class="left" data-reveal style="--y:40px">
+      <div class="deck frame">
         <Picture fallbackFormat="webp" src={shot('m9_booth_j1_deck')} alt={d.deckAlt} formats={['avif', 'webp']} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 50vw" loading="lazy" decoding="async" />
+      </div>
+          <ul class="os">
+            {d.notes.map((n) => <li><Icon name="tri" size={16} /><span><b>{n.os}</b> — {n.text}</span></li>)}
+          </ul>
       </div>
       <div class="specs" data-reveal style="--d:.1s">
         <h3>{d.specsTitle}</h3>
@@ -29,9 +34,6 @@ const icon = { windows: 'windows', macos: 'apple', linux: 'linux', deck: 'deck' 
           {d.specs.map(([k, v]) => <div><dt class="label">{k}</dt><dd>{v}</dd></div>)}
         </dl>
         <p class="note">{d.specsNote}</p>
-        <ul class="os">
-          {d.notes.map((n) => <li><Icon name="tri" size={16} /><span><b>{n.os}</b> — {n.text}</span></li>)}
-        </ul>
         <div class="dl">
           <a class="btn btn-primary" href={DOWNLOAD_URL} rel="noopener"><Icon name="download" size={18} />{d.download}</a>
           <span class="label">{d.downloadNote}</span>
@@ -55,7 +57,7 @@ const icon = { windows: 'windows', macos: 'apple', linux: 'linux', deck: 'deck' 
   dt{font-size:11px;padding-top:3px}
   dd{font-size:15px;line-height:1.5}
   .note{font-size:13.5px;color:var(--tx2);margin:16px 0 20px;line-height:1.55}
-  .os{display:grid;gap:10px;margin-bottom:28px}
+  .os{display:grid;gap:10px;margin-top:28px}
   .os li{display:flex;gap:10px;font-size:14px;color:var(--tx2);line-height:1.5}
   .os :global(svg){color:var(--amber);flex:none;margin-top:2px}
   .os b{color:var(--tx);font-weight:600}

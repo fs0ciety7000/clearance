@@ -4,20 +4,34 @@ interface Props { lang: Lang }
 const d = t(Astro.props.lang);
 const items = [...d.ticker, ...d.ticker];
 ---
-<div class="ticker" aria-hidden="true">
-  <div class="track">
+<div class="ticker" data-ticker>
+  <button type="button" class="pause" data-pause aria-pressed="false" aria-label={d.tickerPause}><i></i><i></i></button>
+  <div class="track" aria-hidden="true">
     {[0, 1].map(() => (
       <ul>{items.map((s, i) => <li class={i % 2 ? 'ts' : ''}>{s}</li>)}</ul>
     ))}
   </div>
 </div>
 <style>
-  .ticker{position:relative;overflow:hidden;border-block:1px solid var(--line);background:var(--panel);padding:14px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+  .ticker{position:relative;overflow:hidden;border-block:1px solid var(--line);background:var(--panel);padding:14px 0;}
+  .track{-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
   .track{display:flex;width:max-content;animation:marquee 60s linear infinite}
+  .ticker:hover .track,.ticker.paused .track{animation-play-state:paused}
+  .pause{position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:2;width:40px;height:40px;display:flex;align-items:center;justify-content:center;gap:4px;background:var(--panel);border:1px solid var(--line)}
+  .pause i{width:3px;height:12px;background:var(--tx2)}
+  .ticker.paused .pause i:first-child{width:0;height:0;background:none;border-left:10px solid var(--tx2);border-top:6px solid transparent;border-bottom:6px solid transparent}
+  .ticker.paused .pause i:last-child{display:none}
+  .pause:hover i{background:var(--cyan)}
+  .pause:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
   ul{display:flex;flex:none}
   li{display:flex;align-items:center;font-family:var(--f-mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx2);white-space:nowrap}
   li.ts{color:var(--tx);text-transform:none;letter-spacing:.04em}
   li::after{content:"";width:6px;height:6px;margin:0 28px;background:var(--yellow);transform:rotate(45deg)}
   @keyframes marquee{to{transform:translateX(-50%)}}
-  @media (prefers-reduced-motion:reduce){.track{animation:none}}
+  @media (prefers-reduced-motion:reduce){.track{animation:none}.pause{display:none}}
 </style>
+<script>
+  const tk = document.querySelector<HTMLElement>('[data-ticker]');
+  const pb = tk?.querySelector<HTMLButtonElement>('[data-pause]');
+  pb?.addEventListener('click', () => { const on = tk!.classList.toggle('paused'); pb.setAttribute('aria-pressed', String(on)); });
+</script>

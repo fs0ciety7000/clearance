@@ -2,7 +2,6 @@
 import { getImage } from 'astro:assets';
 import Icon from './Icon.astro';
 import { shot } from '../lib/shots';
-import logoSvg from '../assets/brand/icon.svg?url';
 import logoPng from '../assets/brand/icon_1024.png?url';
 import { t, type Lang } from '../lib/i18n';
 interface Props { lang: Lang }
@@ -10,7 +9,8 @@ const all = t(Astro.props.lang);
 const d = all.press;
 const pressKeys = ['m9_booth_j1', 'm6_day3_autoplay', 'm7_envelope', 'm8_symbol_report', 'm7_implants', 'm9_booth_j1_deck'];
 const pngs = await Promise.all(pressKeys.map((k) => getImage({ src: shot(k), format: 'png', width: shot(k).width })));
-const files: Record<string, string> = { 'logo-svg': logoSvg, 'logo-png': logoPng };
+const files: Record<string, string> = { 'logo-svg': '/press/clearance-icon.svg', 'logo-png': logoPng };
+const names: Record<string, string> = { 'logo-svg': 'clearance-icon.svg', 'logo-png': 'clearance-icon-1024.png' };
 ---
 <section class="section press" id="presse" aria-labelledby="press-title">
   <div class="wrap">
@@ -23,6 +23,11 @@ const files: Record<string, string> = { 'logo-svg': logoSvg, 'logo-png': logoPng
       <div data-reveal>
         <h3>{d.factsTitle}</h3>
         <dl class="facts">{d.facts.map(([k, v]) => <div><dt class="label">{k}</dt><dd>{v}</dd></div>)}</dl>
+        <h3>{d.assetsTitle}</h3>
+        <ul class="assets">
+          {d.assets.map((a) => <li><a href={files[a.key]} download={names[a.key]}><Icon name="file" size={18} /><span>{a.label}</span><small class="mono">{a.meta}</small><Icon name="download" size={16} /></a></li>)}
+          {pressKeys.map((k, i) => <li><a href={pngs[i].src} download={`clearance-${k}.png`}><Icon name="file" size={18} /><span>{d.shotsLabel} · {all.gallery.items[k]}</span><small class="mono">{pngs[i].attributes.width} × {pngs[i].attributes.height}</small><Icon name="download" size={16} /></a></li>)}
+        </ul>
       </div>
       <div class="texts" data-reveal style="--d:.1s">
         {[{ t: d.shortTitle, v: d.short, id: 'pr-short' }, { t: d.longTitle, v: d.long, id: 'pr-long' }].map((x) => (
@@ -31,11 +36,6 @@ const files: Record<string, string> = { 'logo-svg': logoSvg, 'logo-png': logoPng
             <p id={x.id}>{x.v}</p>
           </div>
         ))}
-        <h3>{d.assetsTitle}</h3>
-        <ul class="assets">
-          {d.assets.map((a) => <li><a href={files[a.key]} download><Icon name="file" size={18} /><span>{a.label}</span><small class="mono">{a.meta}</small><Icon name="download" size={16} /></a></li>)}
-          {pressKeys.map((k, i) => <li><a href={pngs[i].src} download={`clearance-${k}.png`}><Icon name="file" size={18} /><span>{d.shotsLabel} · {all.gallery.items[k]}</span><small class="mono">{pngs[i].attributes.width} × {pngs[i].attributes.height}</small><Icon name="download" size={16} /></a></li>)}
-        </ul>
         <p class="contact">{d.contact}</p>
       </div>
     </div>
@@ -54,7 +54,7 @@ const files: Record<string, string> = { 'logo-svg': logoSvg, 'logo-png': logoPng
   .blurb p{margin-top:12px;color:var(--tx);font-size:15.5px;line-height:1.65}
   .copy{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);border:1px solid var(--cyan-40)}
   .copy:hover{background:var(--cyan-12)}
-  .texts>h3{margin-top:40px}
+  .cols>div>h3+.assets,.facts+h3{margin-top:40px}
   .assets{border-top:1px solid var(--line)}
   .assets a{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);font-size:14.5px;transition:background var(--dur-fast),color var(--dur-fast);min-height:48px}
   .assets a:hover{background:var(--cyan-08);color:var(--cyan)}

@@ -48,7 +48,7 @@ const full = await Promise.all(keys.map((k) => getImage({ src: shot(k), format: 
   .thumb :global(img){width:100%;height:100%;object-fit:cover;object-position:50% 20%;transition:transform .7s var(--ease),filter .4s}
   .thumb:hover :global(img){transform:scale(1.035)}
   .cap{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding:28px 16px 12px;font-size:13.5px;font-weight:500;background:linear-gradient(to top,#07080CF2,#07080C00);color:var(--tx)}
-  .cap .mono{font-size:11px;color:var(--yellow)}
+  .cap .mono{font-size:11px;color:var(--cyan)}
   .cap :global(svg){margin-left:auto;color:var(--cyan);opacity:0;transition:opacity var(--dur-fast)}
   .thumb:hover .cap :global(svg),.thumb:focus-visible .cap :global(svg){opacity:1}
   .thumb:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
@@ -65,7 +65,7 @@ const full = await Promise.all(keys.map((k) => getImage({ src: shot(k), format: 
 <script>
   const lb = document.querySelector<HTMLDialogElement>('[data-lb]');
   if (lb) {
-    const btns = [...document.querySelectorAll<HTMLButtonElement>('[data-open]')];
+    const btns = [...document.querySelectorAll<HTMLButtonElement>('.gal [data-open]')];
     const img = lb.querySelector<HTMLImageElement>('[data-lb-img]')!;
     const cap = lb.querySelector<HTMLElement>('[data-lb-cap]')!;
     let cur = 0;
@@ -73,15 +73,15 @@ const full = await Promise.all(keys.map((k) => getImage({ src: shot(k), format: 
       cur = (i + btns.length) % btns.length;
       const b = btns[cur];
       const alt = b.querySelector('img')?.alt ?? '';
-      img.src = b.dataset.full!; img.width = Number(b.dataset.w); img.height = Number(b.dataset.h); img.alt = alt;
+      img.removeAttribute('src'); img.src = b.dataset.full!; img.width = Number(b.dataset.w); img.height = Number(b.dataset.h); img.alt = alt;
       cap.textContent = `${String(cur + 1).padStart(2, '0')} / ${btns.length} — ${alt}`;
     };
-    btns.forEach((b, i) => b.addEventListener('click', () => { show(i); lb.showModal(); }));
+    btns.forEach((b, i) => b.addEventListener('click', () => { show(i); document.documentElement.style.overflow = 'hidden'; lb.showModal(); }));
     lb.querySelector('[data-lb-close]')!.addEventListener('click', () => lb.close());
     lb.querySelector('[data-lb-prev]')!.addEventListener('click', () => show(cur - 1));
     lb.querySelector('[data-lb-next]')!.addEventListener('click', () => show(cur + 1));
     lb.addEventListener('click', (e) => { if (e.target === lb || (e.target as HTMLElement).classList.contains('lb-in')) lb.close(); });
     lb.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') show(cur - 1); if (e.key === 'ArrowRight') show(cur + 1); });
-    lb.addEventListener('close', () => btns[cur].focus());
+    lb.addEventListener('close', () => { document.documentElement.style.overflow = ''; btns[cur].focus(); });
   }
 </script>
