@@ -550,6 +550,11 @@ opt_fx_hint,"Scanlines, scintillement, lueurs des hologrammes."
 opt_fx_full,COMPLETS
 opt_fx_reduced,RÉDUITS
 opt_fx_off,DÉSACTIVÉS
+opt_quality,Qualité graphique
+opt_quality_hint,"Guichet 3D : ombres, lueurs, pluie. Visage jamais dégradé."
+opt_quality_low,BAS
+opt_quality_medium,MOYEN
+opt_quality_high,ÉLEVÉ
 opt_reduce_motion,Réduire les animations
 opt_reduce_motion_hint,"Marche du passager raccourcie (≤ 1 s), sans travelling ; dès le passager suivant."
 opt_subtitles,Sous-titres

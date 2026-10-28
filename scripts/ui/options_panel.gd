@@ -3,7 +3,9 @@
 ## l'écran titre. **Accessibilité en premier** : taille du texte 90–150 %
 ## (`text_scale`, D-026), effets visuels Complets / Réduits / Désactivés
 ## (`fx_intensity`), « Réduire les animations » (`reduce_motion` : marche du
-## passager ≤ 1 s dès le passager suivant), sous-titres, horloge ralentie.
+## passager ≤ 1 s dès le passager suivant), sous-titres, horloge ralentie,
+## qualité graphique du guichet 3D Bas / Moyen / Élevé (`graphics_quality`,
+## M9 ; « Auto » par défaut = Moyen sur Steam Deck, Élevé ailleurs).
 ## Puis **Audio** : un volume par bus (docs/AUDIO.md §2) et « Son mono »
 ## (`audio_mono`, audition unilatérale, AUDIO.md §9). Chaque réglage passe
 ## par `Settings.set_value()` (persisté dans `user://settings.cfg`).
@@ -16,6 +18,7 @@ const SLIDER_WIDTH: float = 360.0
 const VOLUME_KEYS: Array[StringName] = [Settings.KEY_VOLUME_MASTER, Settings.KEY_VOLUME_MUSIC, Settings.KEY_VOLUME_AMBIENCE,
 		Settings.KEY_VOLUME_SFX, Settings.KEY_VOLUME_VOICE, Settings.KEY_VOLUME_UI]
 const FX_KEYS: Array[String] = ["opt_fx_full", "opt_fx_reduced", "opt_fx_off"]
+const QUALITY_KEYS: Array[String] = ["opt_quality_low", "opt_quality_medium", "opt_quality_high"]
 
 var back_button: Button = null
 ## Contrôles par clé de réglage (tests).
@@ -29,6 +32,7 @@ func _ready() -> void:
 	_add_slider(Settings.KEY_TEXT_SCALE, UiText.t("opt_text_scale", "Taille du texte"), Settings.TEXT_SCALE_MIN,
 			Settings.TEXT_SCALE_MAX, Settings.TEXT_SCALE_STEP, true)
 	_add_fx_row()
+	_add_quality_row()
 	_add_toggle(Settings.KEY_REDUCE_MOTION, UiText.t("opt_reduce_motion", "Réduire les animations"),
 			UiText.t("opt_reduce_motion_hint", "Marche du passager raccourcie (≤ 1 s), pas de travelling."))
 	_add_toggle(Settings.KEY_SUBTITLES, UiText.t("opt_subtitles", "Sous-titres"),
@@ -115,6 +119,32 @@ func _add_fx_row() -> void:
 		buttons.add_child(b)
 		if i == 0:
 			controls[Settings.KEY_FX_INTENSITY] = b
+
+
+## Qualité graphique : le bouton actif reflète le niveau effectif (« Auto »
+## résolu) ; un clic fixe le niveau choisi.
+func _add_quality_row() -> void:
+	var row: HBoxContainer = _row(UiText.t("opt_quality", "Qualité graphique"),
+			UiText.t("opt_quality_hint", "Guichet 3D : ombres, lueurs, pluie. Visage jamais dégradé."))
+	var group: ButtonGroup = ButtonGroup.new()
+	var buttons: HBoxContainer = ScreenBase.hbox(0)
+	row.add_child(buttons)
+	var current: int = Settings.graphics_quality_level()
+	for i: int in QUALITY_KEYS.size():
+		var b: Button = Button.new()
+		b.theme_type_variation = &"ToggleTab"
+		b.toggle_mode = true
+		b.button_group = group
+		b.text = UiText.t(QUALITY_KEYS[i], QUALITY_KEYS[i])
+		b.custom_minimum_size = Vector2(120, DS.HIT_TARGET_MIN)
+		b.focus_mode = Control.FOCUS_ALL
+		b.button_pressed = i == current
+		b.toggled.connect(func(on: bool) -> void:
+			if on:
+				Settings.set_value(Settings.KEY_GRAPHICS_QUALITY, float(i)))
+		buttons.add_child(b)
+		if i == 0:
+			controls[Settings.KEY_GRAPHICS_QUALITY] = b
 
 
 func _add_toggle(key: StringName, caption: String, hint: String) -> void:

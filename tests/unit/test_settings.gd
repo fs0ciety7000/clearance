@@ -35,8 +35,9 @@ func test_default_values() -> void:
 
 func test_expected_key_set() -> void:
 	var keys: Array[StringName] = _settings.call(&"get_keys")
-	assert_eq(keys.size(), 12)
+	assert_eq(keys.size(), 13)
 	assert_has(keys, &"audio_mono", "mode mono (docs/AUDIO.md §9, M6)")
+	assert_has(keys, &"graphics_quality", "qualité graphique du guichet (M9)")
 
 
 func test_typed_properties_read_defaults() -> void:
@@ -52,6 +53,19 @@ func test_fx_intensity_snaps_to_levels() -> void:
 	assert_eq(_value(&"fx_intensity"), 0.0)
 	_set_no_persist(&"fx_intensity", 3)
 	assert_eq(_value(&"fx_intensity"), 1.0)
+
+
+func test_graphics_quality_defaults_to_auto_and_snaps() -> void:
+	var expected: Array[Array] = [[1.4, 1.0], [7, 2.0], [-3.0, -1.0], [0.0, 0.0]]
+	var quality: float = _value(&"graphics_quality")
+	assert_eq(quality, -1.0, "Auto par défaut")
+	for pair: Array in expected:
+		_set_no_persist(&"graphics_quality", pair[0])
+		quality = _value(&"graphics_quality")
+		var wanted: float = pair[1]
+		assert_eq(quality, wanted)
+	var level: int = _settings.call(&"graphics_quality_level")
+	assert_eq(level, 0)
 
 
 func test_volume_and_text_scale_are_clamped() -> void:

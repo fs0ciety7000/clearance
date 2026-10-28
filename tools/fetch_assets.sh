@@ -8,18 +8,38 @@ DL="$ROOT/art_src/downloads"
 mkdir -p "$DL"
 
 kenney() {  # $1 = slug de la page kenney.nl/assets/<slug>
-  local url
-  url=$(curl -sSL "https://kenney.nl/assets/$1" | grep -oE 'https://kenney.nl/media/[^"]+\.zip' | head -1)
+  # Lien signé demandé par la page (« Continue without donating… ») :
+  # GET /download-link/<id hex> avec le Referer de la page et ses cookies.
+  local jar url id
+  jar=$(mktemp)
+  id=$(curl -sSL -c "$jar" -b "$jar" "https://kenney.nl/assets/$1" | grep -oE "data-download-id='[0-9a-f]+'" | head -1 | grep -oE "[0-9a-f]{6,}")
+  if [ -n "$id" ]; then
+    url=$(curl -sSL -c "$jar" -b "$jar" -H "Referer: https://kenney.nl/assets/$1" "https://kenney.nl/download-link/$id" \
+      | python3 -c "import sys,json;print(json.load(sys.stdin).get('url',''))")
+  else  # ancien format de page : lien direct vers le zip
+    url=$(curl -sSL "https://kenney.nl/assets/$1" | grep -oE 'https://kenney.nl/media/[^"]+\.zip' | head -1)
+  fi
+  rm -f "$jar"
   [ -n "$url" ] || { echo "Kenney : lien introuvable pour $1" >&2; return 1; }
   mkdir -p "$DL/$1" && curl -sSfL -o "$DL/$1/pack.zip" "$url"
   (cd "$DL/$1" && unzip -qo pack.zip && rm pack.zip)
   echo "OK  kenney/$1"
 }
 
+ambientcg() {  # $1 = identifiant AmbientCG (matériau PBR CC0), version 1K-JPG
+  mkdir -p "$DL/ambientcg/$1" && curl -sSfL -o "$DL/ambientcg/$1/pack.zip" "https://ambientcg.com/get?file=$1_1K-JPG.zip"
+  (cd "$DL/ambientcg/$1" && unzip -qo pack.zip && rm pack.zip)
+  echo "OK  ambientcg/$1"
+}
+
 # Personnages (CC0)
 kenney animated-characters-protagonists
 kenney animated-characters-survivors
 kenney animated-characters-retro
+# Décor du guichet (CC0, M9) : ville de l'Anneau vue par la baie (tools/build_booth.gd)
+kenney city-kit-commercial
+# Couches PBR du décor (CC0, 1K) : chrome usé, tôles rivetées, béton, bandes de danger, tôle perforée
+for m in Metal050C MetalPlates001 Concrete044B PaintedMetal016 SheetMetal001; do ambientcg "$m"; done
 # Audio (CC0)
 kenney sci-fi-sounds
 kenney interface-sounds

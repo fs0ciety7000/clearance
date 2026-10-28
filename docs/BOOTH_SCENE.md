@@ -1,6 +1,6 @@
 # BOOTH_SCENE — Mise en scène du guichet et du passager
 
-> Auteur : 3D Designer / Asset Lead · Statut : **proposition v0.1, à valider** (client, Orchestrateur, Godot Architect, UI/UX, Design System)
+> Auteur : 3D Designer / Asset Lead · Statut : **proposition v0.1, à valider** (client, Orchestrateur, Godot Architect, UI/UX, Design System) · **M9 : décor définitif livré, voir §17** (les §6, §13 et §14 décrivent l'intention et le greybox ; §17 fait foi pour l'état réel).
 > Périmètre : contenu visuel de `res://scenes/booth/booth.tscn` et de `res://scenes/passenger/passenger_actor.tscn` (rig, modèle, anims, visage, apparence). Le **code** de l'acteur et du guichet appartient au Godot Architect ; ce document fixe ce que le code doit piloter.
 > Documents liés : [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) (palette, §5 effets, §11 assets) · [`ARCHITECTURE.md`](ARCHITECTURE.md) (§3, §7 signaux) · [`UI_FLOW.md`](UI_FLOW.md) (§2 layout, §4 passager/vitre) · [`ASSETS.md`](ASSETS.md) (sources, pipeline, registre).
 > Rappel D-007 : documents et Rulebook = **surcouche 2D**. Tout ce qui suit (vitre comprise) ne concerne que la **vue 3D, zone B** (y 56–432 px à 1080p).
@@ -172,6 +172,8 @@ Le DS (§1 principes 2 et 6) réserve **le cyan à l'information** et **le magen
 ---
 
 ## 6. Décor
+
+> État réel (M9) : §17 — la baie donne sur la ville de l'Anneau (pas de quai sous la pluie : la « pluie » est la condensation des conduites de recyclage, LORE §3) ; pas de `ReflectionProbe` ni de kit `.glb` importé, décor fusionné par outil.
 
 | Élément | Position | Contenu | Coût |
 |---|---|---|---|
@@ -426,7 +428,7 @@ Cible proposée (à confirmer) : 1080p60 sur GPU d'entrée de gamme récent (cla
 | Guichet (vitre, cadre, hygiaphone) | ≤ 10 k tris, ≤ 6 draws |
 | Hall + décor | ≤ 40 k tris, ≤ 20 draws (atlas de textures partagés) |
 | Pluie | 3 quads, 1 matériau |
-| **Total scène** | **≤ 70 k tris, ≤ 40 draws**, 1 lumière ombrée (atlas d'ombres 2048) + ≤ 6 omni |
+| **Total scène** | **≤ 70 k tris, ≤ 40 draws**, 1 lumière ombrée (atlas d'ombres 2048) + ≤ 6 omni — M9 : décor 7 draws / ≈ 31 k tris, 9 omni (§17.3) |
 | Textures 3D (VRAM) | ≤ 96 Mo |
 | Temps GPU de la bande 3D | ≤ 3 ms |
 | Post-process | glow + brouillard de profondeur ; MSAA 2× dans le SubViewport ; pas de SSAO/SSR/SDFGI/volumétrique/TAA |
@@ -482,3 +484,78 @@ Captures réelles (xvfb, `opengl3`) : `docs/mockups/m6_walk.png`, `m6_desk.png`,
 | Portrait | Même rig + `AppearanceApplier`, posé sur la 1ʳᵉ image d'`idle`, recul 1,75 m (épaules → crâne) | — |
 | File | `imp_silhouette.res` : modèle posé en `idle`, simplifié à 400 tris, orienté vers la place suivante | — |
 | Perf (llvmpipe, rendu logiciel, 1920×376) | Guichet vide 13,1 FPS / 56 draws ; avec passager 12,1 FPS / 74 draws (+18 dont ombres), ≈ +3,7 k primitives ; acteur ≈ 1,6 k tris corps + ≤ 2 k pièces (≤ 8 k) | **FPS GPU non mesurable ici** (pas de GPU) : à vérifier sur la config cible. Le décor greybox dépasse déjà le budget de 40 draws (56) |
+
+---
+
+## 17. Implémenté en M9 — décor définitif du guichet (2026-10-28, 3D Designer / Asset Lead, appui Godot Architect)
+
+Générateur : `tools/build_booth.gd` (remplace `build_booth_greybox.gd`, supprimé). Sources CC0 : `bash tools/fetch_assets.sh` (AmbientCG ×5, Kenney City Kit Commercial). Ordre : `godot --headless --script res://tools/build_booth.gd -- --textures` → `godot --headless --import` → `godot --headless --script res://tools/build_booth.gd`.
+
+### 17.1 Ce qu'on voit (cadre FOV 14°, bande 1920×376)
+Le cadre ne montre qu'une **bande horizontale** du monde (à 12 m : y ≈ 0,1 → 3 m) : ni sol ni plafond ne sont visibles. Le décor est donc composé comme une suite de plans verticaux, du guichet vers la ville.
+
+| Plan | Contenu | Remarques de lisibilité |
+|---|---|---|
+| Guichet (z 0) | Montants blindés (tôles rivetées AmbientCG, 2 × 30 rivets), liserés chromés usés, traverses ; **hygiaphone** : lunette chromée, grille perforée (tôle perforée AmbientCG), 4 vis, anneau sombre, LED cyan fixe (énergie 0,9 ≤ 1,5) ; fente et comptoir hors champ | Lampe intérieure `BoothInterior` sur le **calque 2** (cadre et hygiaphone seulement, jamais le passager) |
+| Pilier HALCYON (−1,1 ; −2,6) | Béton (condensation qui ruisselle), collier riveté, cornières chromées, bande de danger au pied, enseigne verticale jaune (marque Consortium, lettres TextMesh), affiche « GLOIRE AU CONSORTIUM » | Occulte toujours la tête de file (contrat §2) |
+| File (z −3,9 → −6,6) | Barrières **magnétiques** (LORE §3) : poteaux chromés, barre teal désaturée + champ additif ondulant ; silhouettes `QueueImpostors` inchangées | — |
+| Colonnes | 4 colonnes aux **bords** du cadre (jamais devant une enseigne ni derrière le visage) : béton, collier, bande de danger, conduite de recyclage chromée ; écran « ANNEAU B › PORTE 2 » | — |
+| Portique (z ≈ −8,8) | Néon HALCYON / GATE · ANNEAU A (jaune marque), écran des départs (teal désaturé, 4 lignes), TRANSIT·7 (rose monde, seul néon instable ≤ 2 Hz, hors fenêtre utile), **CONTRÔLE · GUICHET 04** déplacé à droite du passager (visible entre la bulle et le panneau de file, aussi en 1280×800), hologramme additif de l'« Œil » du Consortium (hexagone solaire) | Lettres en triangles (TextMesh cuits) : 0 draw supplémentaire, nettes au zoom visage |
+| Mur du fond (z −10) | Soubassement béton, appui chromé (ligne d'horizon derrière les épaules), **grande baie** à meneaux tous les 3 m décalés (aucun ne « pousse » dans la tête), graffiti **luciole** magenta (3 traits + 1 point, LORE §7) — l'unique magenta du décor, discret, hors fenêtre utile | — |
+| Ville de l'Anneau (z −44 → −90) | 26 tours Kenney City Kit (skyscrapers + low-detail) posées sur un sol qui **se relève vers les bords** (courbure de l'anneau habitable) ; silhouettes en aplats sombres non éclairés, vitrages = grille de fenêtres procédurale (allumées au hasard, moyennée au loin contre le moiré) ; halo additif teal / rose | Fond calme derrière le visage : tours sombres, fenêtres ≤ 0,75 d'énergie, brouillard |
+| Pluie | 3 nappes additives entre z −7,4 et −9,6 (condensation des conduites) | — |
+
+Palette : rims et néons d'ambiance en **palette monde désaturée** (D-051) ; jaune pur = marque Consortium seulement ; cyan = LED de l'hygiaphone, fente ; magenta = graffiti luciole seulement.
+
+### 17.2 Maillages fusionnés (5 draw calls) et matériaux
+
+| Nœud `Decor/…` | Fichier | Triangles | Matériau |
+|---|---|---|---|
+| `StaticNear` | `assets/models/booth/booth_static_near.res` | ≈ 2,4 k | `booth_decor.gdshader` (partagé) |
+| `StaticFar` | `booth_static_far.res` | ≈ 1,5 k | idem |
+| `Emissive` | `booth_emissive.res` | ≈ 28 k (dont 17,6 k vitrages + silhouettes de la ville) | `booth_emissive.gdshader` (non éclairé) |
+| `Holo` | `booth_holo.res` | ≈ 0,3 k | `booth_holo.gdshader` (additif, sans brouillard) |
+| `Rain` | `booth_rain.res` | 6 | `rain_sheet.gdshader` (additif) |
+| + `BoothFront/Glass`, `QueueImpostors` | (sous-ressources de la scène) | 2 + 6 × 400 | `booth_glass`, `impostor_silhouette` |
+
+- **`booth_decor.gdshader`** : 2 `Texture2DArray` (5 couches AmbientCG 512 px : chrome usé Metal050C, tôles rivetées MetalPlates001, béton Concrete044B, bandes de danger PaintedMetal016, tôle perforée SheetMetal001) ; par sommet : couche (UV2.x), mouillé (UV2.y), teinte + facteur métal (COLOR) ; UV = tuilage en mètres (continu entre pièces) ; filets de condensation animés sur les faces verticales ; **reflets analytiques** (plafonniers, néons, intérieur du guichet) en émission — pas de `Sky` (en Compatibilité un Sky posé pour les reflets s'affiche aussi en fond) ni de `ReflectionProbe`.
+- **`booth_emissive.gdshader`** : énergie et mode par sommet (fixe, néon instable ≤ 2 Hz, écran holo, vitrages) ; `fx_intensity` 0 = tout fixe.
+- **`booth_glass.gdshader`** enrichi : filets de condensation qui glissent (figés à fx 0,5), crasse des bords et autour de l'hygiaphone, rayures ; zone dégagée du visage inchangée (≤ 20 % des effets).
+- Le décor ne projette **aucune ombre** ; seule la `KeyLight` est ombrée (passager). LOD et occlusion : inutiles (cadre fixe, tout est dans le champ ou culled par frustum).
+
+### 17.3 Lumières et environnement
+`KeyLight` (inchangée : lampe sur le visage, seule ombrée), `RimLeft`, `RimRight`, `Fill`, `HalcyonSpill`, `SlotGlow`, `GateLight` (contrat), **`BoothInterior`** (nouvelle, calque 2 : cadre + hygiaphone), `HallTeal` / `HallRose` (portée 4,5 m : n'atteignent pas le guichet — ≤ 8 lumières par objet en Compatibilité). `WorldEnvironment` : fond `bg.void`, ambiance couleur, AgX, glow léger (seuil 1), brouillard exponentiel 0,024 ; pas de SSR/SSAO/SSIL/SDFGI/volumétrique.
+
+### 17.4 Performance (mesures réelles, xvfb + `opengl3`, `RenderingServer` / `viewport_get_render_info` du `SubViewport` du booth)
+
+| Situation | Avant (greybox) | Après (M9) |
+|---|---|---|
+| Guichet vide (draws décor) | **56** | **7** |
+| J1, passager au guichet (draws de la bande 3D) | 84 | 34 |
+| J7, premier passager (bande 3D / image entière) | 71,5 / 382 | 22 / 333 |
+| J7, détention + escorte (bande 3D) | 87 | 37 |
+| Primitives, guichet vide | 24,8 k | 35,1 k |
+
+Le reste des draws avec passager vient des acteurs (≈ 27 par passager : pièces attachées aux os) et de l'UI (≈ 300) : prochains leviers. **FPS logiciel non représentatif** (llvmpipe : le décor PBR coûte plus en rastérisation CPU — guichet vide ≈ 6 i/s en Moyen/Élevé, 13 en Bas, contre 10 pour le greybox) ; à mesurer sur GPU (Steam Deck, R27).
+
+### 17.5 Qualité graphique (`Settings.graphics_quality`, Options › Accessibilité)
+
+| Niveau | Ombre `KeyLight` | Glow | MSAA (SubViewport) | Pluie | Normal maps / ruissellement animé |
+|---|---|---|---|---|---|
+| Bas | ✗ | ✗ | off | 1 nappe | ✗ / figé |
+| **Moyen** (défaut Steam Deck) | ✓ | ✓ | 2× | 2 nappes | ✓ / animé |
+| Élevé (défaut ailleurs) | ✓ | ✓ (+ bloom) | 4× | 3 nappes | ✓ / animé |
+
+« Auto » (valeur par défaut) = Moyen sur Steam Deck (`SteamDeck=1`), Élevé ailleurs. La résolution 3D n'est jamais réduite. Capture : `docs/mockups/m9_quality_low_high.png`.
+
+### 17.6 Déterminisme
+`build_booth.gd` n'a aucune source aléatoire (hachages de positions), conserve les UID des `.res`, puis **normalise `booth.tscn`** : `unique_id` = hachage du chemin du nœud (Godot 4.7.2 les tire au hasard), identifiants `ext_resource` / `sub_resource` renumérotés dans l'ordre, paramètres de shader nuls retirés. Vérifié : deux exécutions → fichiers identiques (scène, 5 maillages, 2 textures). Une retouche dans l'éditeur reste possible mais sera écrasée au prochain build : la reporter dans l'outil.
+
+### 17.7 Captures (réelles, xvfb + `opengl3`)
+`docs/mockups/m9_before_after.png` (bande 3D avant/après, J1 et J7 détention), `m9_booth_j1.png`, `m9_booth_j7_detain.png` (1920×1080), `m9_booth_j1_deck.png`, `m9_booth_j7_detain_deck.png` (1280×800), `m9_quality_low_high.png`.
+
+### 17.8 À valider / suite
+- **Décisions proposées** : (a) décor fusionné généré par outil + scène normalisée (plutôt qu'une scène éditée à la main : la fusion des maillages exige un outil, et la scène reste reproductible) ; (b) baie sur la ville de l'Anneau au lieu du quai sous la pluie (cohérence LORE §3 : station en orbite, pluie = condensation) ; (c) réglage « Qualité graphique » Auto/Bas/Moyen/Élevé ; (d) reflets analytiques sans Sky ; (e) un seul magenta (graffiti luciole) dans le décor.
+- Design System : textes du décor en Chakra Petch (JetBrains Mono variable produit des contours qui se croisent : `TextMesh` échoue sur Q, 3, ›).
+- Mesure GPU réelle (Steam Deck en Moyen) ; draws des acteurs (pièces d'apparence à fusionner par acteur).
+- Git LFS : +4,2 Mo de PNG (textures) et +2,2 Mo de `.res`.

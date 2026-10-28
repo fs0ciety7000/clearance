@@ -22,6 +22,13 @@ Personnages et animations / Characters and animations — CC0 1.0
     https://quaternius.com                           licenses/License_Quaternius_UAL.txt
   (modèles retargetés, skins converties en cartes de zones, silhouette dérivée)
 
+Décor du guichet / Booth set — CC0 1.0
+  Kenney — City Kit (Commercial) : silhouettes de la ville de l'Anneau
+    https://kenney.nl                                licenses/License_Kenney.txt
+  AmbientCG — Metal050C, MetalPlates001, Concrete044B, PaintedMetal016,
+    SheetMetal001 (textures PBR 1K) — https://ambientcg.com
+  (maillages fusionnés et textures recomposées par le studio)
+
 Sons / Sounds — CC0 1.0
   Kenney — Impact Sounds, Interface Sounds, Sci-Fi Sounds (https://kenney.nl)
   retravaillés et complétés par des sons synthétisés par le studio.

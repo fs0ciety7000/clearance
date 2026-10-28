@@ -41,6 +41,11 @@ const KEY_SUBTITLES: StringName = &"subtitles"
 const KEY_CLOCK_SLOW_ACCESSIBILITY: StringName = &"clock_slow_accessibility"
 ## Audio mono (audition unilatérale, docs/AUDIO.md §9) : somme L/R sur `Master`.
 const KEY_AUDIO_MONO: StringName = &"audio_mono"
+## « Qualité graphique » du guichet 3D (M9, BOOTH_SCENE §13) : -1 Auto
+## (Steam Deck → Moyen, sinon Élevé), 0 Bas, 1 Moyen, 2 Élevé. Appliquée par
+## `BoothQuality` (scripts/booth).
+const KEY_GRAPHICS_QUALITY: StringName = &"graphics_quality"
+const QUALITY_AUTO: float = -1.0
 
 const FX_LEVELS: PackedFloat32Array = [1.0, 0.5, 0.0]
 const TEXT_SCALE_MIN: float = 0.9
@@ -61,6 +66,7 @@ const DEFAULTS: Dictionary = {
 	&"subtitles": true,
 	&"clock_slow_accessibility": false,
 	&"audio_mono": false,
+	&"graphics_quality": -1.0,
 }
 
 ## Réglage de volume → nom du bus audio (docs/AUDIO.md §2).
@@ -152,6 +158,20 @@ func get_float(key: StringName) -> float:
 func get_bool(key: StringName) -> bool:
 	var value: Variant = get_value(key)
 	return value if value is bool else false
+
+
+## Niveau de qualité effectif (0 Bas, 1 Moyen, 2 Élevé) : « Auto » vaut Moyen
+## sur Steam Deck, Élevé ailleurs.
+func graphics_quality_level() -> int:
+	var value: float = get_float(KEY_GRAPHICS_QUALITY)
+	if value < 0.0:
+		return 1 if is_steam_deck() else 2
+	return int(value)
+
+
+## Steam Deck (variable `SteamDeck=1` posée par Steam sur la console).
+static func is_steam_deck() -> bool:
+	return OS.get_environment("SteamDeck") == "1"
 
 
 ## Volume linéaire (0..1) d'un réglage `volume_*`.
@@ -304,6 +324,8 @@ func _sanitize(key: StringName, value: Variant) -> Variant:
 		return _nearest_fx_level(number)
 	if key == KEY_TEXT_SCALE:
 		return clampf(snappedf(number, TEXT_SCALE_STEP), TEXT_SCALE_MIN, TEXT_SCALE_MAX)
+	if key == KEY_GRAPHICS_QUALITY:
+		return clampf(roundf(number), QUALITY_AUTO, 2.0)
 	return clampf(number, 0.0, 1.0) # volumes
 
 

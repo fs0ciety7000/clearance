@@ -81,11 +81,12 @@ res://assets/
       animations/    anim_walk.res, anim_idle.res, anim_present_documents.res, anim_leave.res,
                      anim_react_angry.res, anim_react_nervous.res, anim_shrug.res, anim_talk.res
       bonemap_humanoid.tres   (BoneMap partagé par toutes les sources)
-    booth/           env_booth_frame.glb, prop_hygiaphone.glb, prop_doc_slot.glb
-    station/         env_hall_*.glb, prop_pillar_halcyon.glb, prop_stanchion.glb, prop_gate.glb
+    booth/           (M9, réel) booth_static_near.res, booth_static_far.res, booth_emissive.res, booth_holo.res,
+                     booth_rain.res — décor fusionné généré par tools/build_booth.gd (pas de station/ séparé)
   textures/
     passenger/       tex_face_round_atlas.png …, tex_face_overlay_atlas.png, tex_chr_decals_atlas.png, tex_chr_detail_a.png
-    booth/           tex_glass_drops_n.png, tex_glass_grime_m.png, tex_glass_reflect_e.png
+    booth/           (M9, réel) tex_booth_albedo_rough.png, tex_booth_normal_metal.png (Texture2DArray, 5 couches) ;
+                     la vitre reste procédurale (pas de tex_glass_*)
     station/         tex_concrete_wet_a.png / _n / _orm …
   materials/         mat_chr_toon.tres, mat_face_dither.tres, mat_booth_glass.tres, mat_impostor.tres …
   shaders/           chr_toon.gdshader, face_dither.gdshader, booth_glass.gdshader, rain_sheet.gdshader,
@@ -243,7 +244,10 @@ L'Asset Lead (avec le Lore Master pour les poids par faction) remplit les option
 - Transition d'expression = seuil de dither animé sur 120 ms.
 
 ### 7.4 `booth_glass.gdshader`, `rain_sheet.gdshader`, `impostor_silhouette.gdshader`
-Spécifiés dans BOOTH_SCENE §4.2, §6 et §11. Tous lisent l'uniform global `fx_intensity` du Design System.
+Spécifiés dans BOOTH_SCENE §4.2, §6 et §11. Ils lisent `fx_intensity` (paramètre posé par `BoothDirector` / `BoothQuality`). M9 : `rain_sheet` lit ses paramètres par sommet (3 nappes = 1 maillage) et `layers` (qualité).
+
+### 7.5 Décor définitif (M9) : `booth_decor`, `booth_emissive`, `booth_holo`
+Décrits dans BOOTH_SCENE §17.2 : un matériau PBR à `Texture2DArray` pour tout le statique éclairé (couche / mouillé / teinte / métal par sommet, reflets analytiques en émission), un matériau non éclairé pour néons, lettres cuites, écrans et ville, un matériau additif pour hologrammes et voiles.
 
 ---
 
@@ -267,6 +271,12 @@ Les fichiers `*.import` sont **versionnés** (ARCHITECTURE §3).
 **Réglages effectifs M6** (passager) : `chr_kenney_medium.fbx` — LOD ✗, Light Baking Disabled, animations ✗, `retarget/bone_map` = `bonemap_kenney.tres`, squelette renommé `GeneralSkeleton`, Rest Fixer (Apply Node Transforms, Normalize Position Tracks, Fix Silhouette). `anim_ual1_standard.glb` — mêmes réglages de retarget avec `bonemap_ual.tres`, *Remove Immutable Tracks* ✗ ; **écart** : les options *Remove Tracks* (`except_bone_transform`, `unimportant_positions`, `unmapped_bones`) sont **désactivées** — en Godot 4.7.2 elles produisent des erreurs `Index p_track out of bounds` à l'import et vident les clips ; le filtrage (os mappés sans doigts, position de `Hips` seule) est fait par `tools/build_passenger_anims.gd`. Cartes de zones : *Lossless*, mipmaps ✗, `detect_3d/compress_to` = 0, échantillonnage *nearest* dans `chr_toon.gdshader`.
 
 **Régénération complète** : `bash tools/fetch_assets.sh` (sources) → `godot --headless --script res://tools/build_passenger_bonemaps.gd` → `godot --headless --import` → `build_passenger_anims.gd` → `build_passenger_skins.gd` → `build_passenger_impostor.gd`.
+
+**Réglages effectifs M9** (décor du guichet, `tools/build_booth.gd`) :
+- Textures : `tex_booth_albedo_rough.png` (albédo sRGB + rugosité en alpha) et `tex_booth_normal_metal.png` (normale OpenGL RG + métal B + occlusion A), 5 couches 512 px empilées verticalement (Lanczos depuis le 1K AmbientCG ; tôle perforée : trous mis au noir via la carte d'opacité) ; importeur **`2d_array_texture`** (`slices/vertical=5`), VRAM Compressed (S3TC/BPTC + ETC2/ASTC), mipmaps ✓, `channel_pack` optimisé. Échantillonnage `filter_linear_mipmap` (sans anisotrope : cadre frontal).
+- Maillages : `ArrayMesh` `.res` binaires générés (`ARRAY_FLAG_COMPRESS_ATTRIBUTES`), UID conservés ; aucun `.glb` importé : les modèles Kenney City Kit sont lus à la génération par `GLTFDocument` depuis `art_src/downloads/` (couleurs prises dans `colormap.png`, cellules « ardoise » = vitrages), puis fusionnés.
+- Enseignes : `TextMesh` (Chakra Petch Bold / SemiBold) cuits en triangles dans le maillage émissif — pas de `Label3D` (1 draw par étiquette).
+- Ordre : `fetch_assets.sh` → `build_booth.gd -- --textures` → `godot --headless --import` → `build_booth.gd`.
 
 ---
 
@@ -293,6 +303,13 @@ Les fichiers `*.import` sont **versionnés** (ARCHITECTURE §3).
 | Kenney Animated Characters — **skins** (8 : criminalMaleA, cyborgFemaleA, skaterFemaleA, skaterMaleA, survivorFemaleA, survivorMaleB, humanFemaleA, humanMaleA ; zombies écartés) | idem | CC0 1.0 | Kenney | oui : converties en **cartes de zones** recolorables (visage peint effacé) par `tools/build_passenger_skins.gd` | sources `art_src/kenney_skins/*.png` (versionnées, non importées) → `assets/textures/passenger/tex_chr_zones_*.png` |
 | Quaternius **Universal Animation Library [Standard]** (`UAL1_Standard.glb`, sans root motion) | quaternius.itch.io/universal-animation-library (0 $), 2026-10-27 | CC0 1.0 | Quaternius | oui : retarget profil humanoïde, découpes, redressement de la tête, couches procédurales, repères | `assets/models/passenger/anim_ual1_standard.glb` (+ `.import`, `bonemap_ual.tres`, `License_Quaternius_UAL.txt`) → `passenger_anims.res` |
 | Silhouette de file (dérivée du modèle Kenney posé en `idle`, 400 triangles) | généré (`tools/build_passenger_impostor.gd`) | CC0 (dérivé) | Kenney / studio | oui (pose figée + simplification meshoptimizer) | `assets/models/passenger/imp_silhouette.res` |
+| Kenney **City Kit (Commercial)** — `building-skyscraper-a…e`, `low-detail-building-b/d/i/l/wide-b` + `colormap.png` | kenney.nl/assets/city-kit-commercial, 2026-10-28 (`tools/fetch_assets.sh`) | CC0 1.0 | Kenney | oui : lus par `GLTFDocument` à la génération, recolorés (silhouettes sombres, vitrages émissifs), mis à l'échelle et inclinés (courbure de l'anneau), fusionnés | dans `assets/models/booth/booth_emissive.res` (sources non versionnées : `art_src/downloads/city-kit-commercial/`) |
+| AmbientCG **Metal050C** (métal rayé, « chrome usé ») | ambientcg.com/view?id=Metal050C, 1K-JPG, 2026-10-28 (`fetch_assets.sh`) | CC0 1.0 | AmbientCG (Lennart Demes) | oui : 512 px, recomposé (couche 0) | `assets/textures/booth/tex_booth_albedo_rough.png` + `tex_booth_normal_metal.png` |
+| AmbientCG **MetalPlates001** (tôles rivetées) | ambientcg.com/view?id=MetalPlates001, 1K-JPG, 2026-10-28 | CC0 1.0 | AmbientCG | oui : 512 px, couche 1 | idem |
+| AmbientCG **Concrete044B** (béton en panneaux, épaufré) | ambientcg.com/view?id=Concrete044B, 1K-JPG, 2026-10-28 | CC0 1.0 | AmbientCG | oui : 512 px, couche 2 | idem |
+| AmbientCG **PaintedMetal016** (bandes de danger rouillées) | ambientcg.com/view?id=PaintedMetal016, 1K-JPG, 2026-10-28 | CC0 1.0 | AmbientCG | oui : 512 px, couche 3, teinte assombrie | idem |
+| AmbientCG **SheetMetal001** (tôle perforée, grille d'hygiaphone) | ambientcg.com/view?id=SheetMetal001, 1K-JPG, 2026-10-28 | CC0 1.0 | AmbientCG | oui : 512 px, couche 4, trous au noir (opacité) | idem |
+| Décor fusionné du guichet (5 maillages) | généré (`tools/build_booth.gd`) | CC0 (dérivé) / studio | studio + sources ci-dessus | — | `assets/models/booth/booth_static_near.res`, `booth_static_far.res`, `booth_emissive.res`, `booth_holo.res`, `booth_rain.res` |
 
 ---
 
@@ -302,5 +319,6 @@ Les fichiers `*.import` sont **versionnés** (ARCHITECTURE §3).
 2. **Git LFS** : oui / non ?
 3. ~~Base personnage~~ → **tranché en M6** : Kenney (squelette + maillage) + clips Quaternius UAL retargetés ; tête Kenney réduite pour tenir le cadrage buste (§5.4).
 4. Implants en cyan émissif (= information) et palette monde désaturée des rims : **à valider Design System**.
+5. M9 : Git LFS pour `assets/textures/booth/*.png` (4,2 Mo) et `assets/models/booth/*.res` (2,2 Mo) ?
 
 *Acquis* : animations Quaternius UAL (CC0) en priorité, Mixamo en complément (Orchestrateur ; D-011 à mettre à jour) ; portrait par rendu du modèle 3D (`PortraitRenderer`).
