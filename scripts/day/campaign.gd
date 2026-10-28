@@ -10,6 +10,13 @@
 ## (`close_final_day` : évaluation des fins F1–F7, épilogue), mémoire des
 ## passagers (`memory_for_day`), jauges `loyalty` / `lucioles_trust` /
 ## `suspicion`.
+## Acte II (docs/ACT2.md, D-076 → D-079, ARCHITECTURE §7.2) : la soirée du J10
+## est un pivot (`act2_started` si la campagne continue) ; drapeaux de contexte
+## du foyer et de la conformité pour les conditions du soir
+## (`EveningService.context_flags`) ; postes selon les drapeaux et le solde
+## (rations, prélèvements, ACV-2) ; `overrun_yesterday` (entrées imputées la
+## veille, briefing de la Commission) ; fin du J20 par
+## `EndingService.evaluate_final_act2`, épilogues `end2_*`.
 class_name Campaign
 extends RefCounted
 
@@ -22,6 +29,8 @@ const FLAG_LOYALTY: StringName = &"loyalty"
 const FLAG_TRUST: StringName = &"lucioles_trust"
 const FLAG_SUSPICION: StringName = &"suspicion"
 const FLAG_ENDING: StringName = &"ending"
+## Acte II : au moins une entrée imputée au quota la veille.
+const FLAG_OVERRUN_YESTERDAY: StringName = &"overrun_yesterday"
 ## Signaler le mot des Lucioles (GDD §4.7) : confiance −2.
 const REPORT_TRUST_DELTA: int = -2
 ## Graine de la soirée (Noa malade au premier soir sans chauffage…).
@@ -52,14 +61,21 @@ static func prepare_events(data: DataCatalog) -> Array[EveningEvent]:
 	var defs: Array[EveningEventDef] = []
 	if day != null:
 		defs = day.evening_events
-	return EveningService.build_events(defs, GameState.narrative_flags, data.get_economy())
+	return EveningService.build_events(defs, evening_flags(), data.get_economy())
+
+
+## Drapeaux du soir : narratifs + contexte (foyer, conformité), jamais sauvegardés.
+static func evening_flags() -> Dictionary[StringName, Variant]:
+	var levy: int = DataCatalog.load_economy().levy_for(GameState.current_day, GameState.credits)
+	return EveningService.context_flags(GameState.narrative_flags, GameState.household, compliance(), levy)
 
 
 ## Postes de la soirée du jour courant, présélectionnés (coûts imposés par les
 ## événements et les choix déjà faits).
 static func prepare_evening(data: DataCatalog, events: Array[EveningEvent] = [],
 		choices: Dictionary[StringName, StringName] = {}) -> Array[ExpenseLine]:
-	var lines: Array[ExpenseLine] = EveningService.build_lines(data.get_economy(), GameState.current_day, GameState.household)
+	var lines: Array[ExpenseLine] = EveningService.build_lines(data.get_economy(), GameState.current_day, GameState.household,
+			GameState.narrative_flags, GameState.credits)
 	EveningService.apply_line_costs(lines, events, choices)
 	EveningService.default_selection(lines, GameState.credits)
 	return lines
@@ -78,7 +94,7 @@ static func preview_evening(data: DataCatalog, lines: Array[ExpenseLine], events
 	if chosen.is_empty() and not events.is_empty():
 		chosen = default_choices(events, lines)
 	return EveningService.apply(data.get_economy(), GameState.current_day, GameState.household, lines,
-			GameState.credits, evening_seed(), events, chosen, GameState.narrative_flags)
+			GameState.credits, evening_seed(), events, chosen, evening_flags())
 
 
 ## Valide la soirée : débit, foyer, historique, passage au jour suivant,
@@ -90,6 +106,11 @@ static func close_evening(data: DataCatalog, summary: DaySummary, report: Evenin
 	GameState.household = report.household
 	for flag: StringName in report.flag_changes:
 		GameState.set_flag(flag, report.flag_changes[flag])
+	# Acte II : entrées imputées aujourd'hui → briefing de la Commission demain.
+	var overruns: int = summary.get_overrun_count() if summary != null else 0
+	if overruns > 0 or GameState.has_flag(FLAG_OVERRUN_YESTERDAY):
+		GameState.set_flag(FLAG_OVERRUN_YESTERDAY, overruns > 0)
+	var pivot: bool = GameState.current_day == data.get_economy().pivot_day and report.ending == EveningReport.ENDING_NONE
 	var entry: Dictionary = {
 		"processed": summary.get_processed_count() if summary != null else 0,
 		"planned": summary.planned_cases if summary != null else 0,
@@ -104,6 +125,8 @@ static func close_evening(data: DataCatalog, summary: DaySummary, report: Evenin
 		"balance": GameState.credits,
 	}
 	GameState.record_day_entry(entry)
+	if pivot:
+		GameState.set_flag(EndingService.FLAG_ACT2, true)
 	var ending: StringName = report.ending
 	if ending == EveningReport.ENDING_NONE and GameState.current_day > data.get_last_day_number():
 		ending = ENDING_DEMO_COMPLETE
@@ -139,8 +162,13 @@ static func close_final_day(data: DataCatalog, summary: DaySummary, save_slot: i
 		"gained": summary.get_bribe_total() + summary.get_report_total() if summary != null else 0,
 		"balance": GameState.credits,
 	})
-	var ending: StringName = EndingService.evaluate_final(GameState.narrative_flags, GameState.household, GameState.credits,
-			compliance(), data.get_economy())
+	var ending: StringName
+	if is_act2():
+		ending = EndingService.evaluate_final_act2(GameState.narrative_flags, GameState.household, GameState.credits,
+				compliance(), data.get_economy())
+	else:
+		ending = EndingService.evaluate_final(GameState.narrative_flags, GameState.household, GameState.credits,
+				compliance(), data.get_economy())
 	GameState.set_flag(FLAG_ENDING, String(ending))
 	SaveService.delete(save_slot, save_dir)
 	return ending
@@ -150,7 +178,14 @@ static func close_final_day(data: DataCatalog, summary: DaySummary, save_slot: i
 static func epilogue(ending: StringName) -> Dictionary:
 	if not EndingService.ALL_ENDINGS.has(ending):
 		return {}
+	if is_act2():
+		return EndingService.epilogue_act2(ending, GameState.narrative_flags, GameState.household)
 	return EndingService.epilogue(ending, GameState.narrative_flags, GameState.household)
+
+
+## Acte II commencé (soirée pivot du J10 passée sans fin).
+static func is_act2() -> bool:
+	return GameState.get_flag(EndingService.FLAG_ACT2, false) == true
 
 
 ## Le mot des Lucioles (SC-05) attend une décision du joueur ce soir.

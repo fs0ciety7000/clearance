@@ -47,4 +47,13 @@ static func to_display(value: Variant, field: FieldDef) -> String:
 		FieldDef.FieldKind.LIST:
 			var codes: PackedStringArray = normalize(value)
 			return ", ".join(codes) if not codes.is_empty() else "—"
+		FieldDef.FieldKind.TIME:
+			var minutes: int = value
+			return format_time(minutes)
 	return str(value)
+
+
+## « 15:59 » (minutes depuis minuit, Acte II : ticket de file).
+static func format_time(minutes: int) -> String:
+	var m: int = posmod(minutes, 24 * 60)
+	return "%02d:%02d" % [m / 60, m % 60]

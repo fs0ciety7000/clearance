@@ -29,4 +29,5 @@ func inject(state: InjectionState) -> Anomaly:
 			kept.append(doc)
 	state.case.documents = kept
 	state.mark(document_id, &"")
+	ExpiredDocumentInjector._mark_conditions(state, document_id)
 	return make_anomaly(get_kind(), document_id, &"", String(document_id), null)

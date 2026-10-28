@@ -7,7 +7,9 @@ const ALLOWED_PARAMS: Array[StringName] = [&"document_id", &"expired_days", &"tr
 		&"field_path", &"photo_noise",
 		# M7 : injecteurs (motif, implants, parent, origine interdite, MRZ) et codes Lucioles.
 		&"employer", &"implant", &"relative_given_name", &"relative_birth", &"purpose", &"component", &"mrz_value",
-		&"mrz_issuer", &"permit_suffix", &"mark_document_id"]
+		&"mrz_issuer", &"permit_suffix", &"mark_document_id",
+		# Acte II : contrat, vaisseau, firmware, valeur injectée (imposée ou reprise d'un cas), poste.
+		&"contract_code", &"vessel", &"firmware_age_days", &"injected_value", &"injected_value_from_case", &"post"]
 
 
 func test_catalog_loads_name_pools_and_appearance_catalog() -> void:

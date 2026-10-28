@@ -1,4 +1,4 @@
-## Table des injecteurs disponibles par type d'anomalie : les 17 types de
+## Table des injecteurs disponibles par type d'anomalie : les 21 types de
 ## `AnomalyType.Kind` (M3 : 9 types ; M7 : `PURPOSE_MISMATCH`, implants,
 ## `RELATIVE_DOCUMENTS`, `BANNED_FACTION`, `INVALID_SEAL`, `MRZ_MISMATCH`,
 ## `WANTED_PERSON` — ce dernier n'est jamais tiré au hasard).
@@ -25,6 +25,11 @@ static func create_all() -> Dictionary[AnomalyType.Kind, AnomalyInjector]:
 		InvalidSealInjector.new(),
 		MrzMismatchInjector.new(),
 		WantedPersonInjector.new(),
+		# Acte II (docs/ACT2.md B18).
+		ContractMismatchInjector.new(),
+		UnregisteredVesselInjector.new(),
+		OutdatedFirmwareInjector.new(),
+		RevokedIdInjector.new(),
 	]
 	var result: Dictionary[AnomalyType.Kind, AnomalyInjector] = {}
 	for injector: AnomalyInjector in injectors:

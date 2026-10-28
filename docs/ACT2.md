@@ -1692,6 +1692,26 @@ Le quota souple ne coûte que si le joueur choisit de dépasser : chaque dépass
 - Vérifier les seuils : F4 `loyalty ≥ 7`, F5 `lucioles_trust ≥ 7`, double jeu 7/7, Revue 5/3. Ajuster les **seuils**, pas les règles (GDD §14), puis `air_quota`, puis `duration_sec`.
 - Mesurer le temps par cas (ACV-2 : gain attendu ~5 s) en playtest humain.
 
+### 6.5 Mesuré (M8 partie A, Gameplay Systems)
+
+`godot --headless --script res://tools/balance_sim.gd -- --seeds=40 --profiles=0.6,0.8,0.95 --presets=…` (graine 1, soirées « raisonnables » : loyer > nourriture > rations > oxygène > soins urgents > chauffage ; barème §6.1 appliqué tel quel, `review_arrest_score` 5 / `review_demote_score` 3). Profils Acte II ajoutés à `SimProfile` : `drift10` (embarque au J10), `archiviste`, `solidaire`, `overrun`, `mercenary2` (rend les enveloppes à l'Acte I, les garde à partir du J11).
+
+| Profil | 60 % | 80 % | 95 % |
+|---|---|---|---|
+| `default` | F2 55 % (J6) · F3 45 % (J7,8) | **F7 97,5 %** · F2 2,5 % | F7 100 % |
+| `loyal` | F2 47,5 % · F3 52,5 % | F7 100 % (conformité < 0,85) | **F4 90 %** · F7 10 % |
+| `luciole` | F2 65 % · F3 35 % | F5 80 % · F1 15 % (J17) · F2/F3 5 % | **F5 95 %** · F1 5 % (Revue) |
+| `drift` | F2/F3 100 % | F6 55 % (J20) · F7 42,5 % | **F6 100 %** (J20) |
+| `drift10` | F2/F3 100 % | F6 57,5 % (J10) · F7 40 % | F6 100 % (J10) |
+| `archiviste` | F2/F3 100 % | **F8 97,5 %** | **F8 100 %** |
+| `solidaire` | F2/F3 100 % | **F9 97,5 %** | **F9 100 %** |
+| `overrun` | F2/F3 100 % | F7 92,5 % · F1 5 % | F7 97,5 % · F1 2,5 % |
+| `mercenary` (enveloppes dès le J4) | F1 57,5 % (audit J9) · F2/F3 | F1 100 % (audit J9) | F1 100 % (audit J9) |
+| `mercenary2` (enveloppes dès le J11) | F2/F3 95 % · F1 5 % | F1 60 % (Revue J17) · F7 37,5 % | **F1 47,5 %** (Revue) · F7 52,5 % |
+| `negligent` / `evicted` | F3 (J6) / F2 (J3) | idem | idem |
+
+Cibles §6.3 : 60 % — J11 atteint **0 %** (≤ 15 % ✅), J20 0 % (≤ 5 % ✅) ; 80 % — J20 atteint 97,5 % (≥ 85 % ✅), aucune fin F3 à 80 % (`alive ≥ 2` non mesuré séparément), ≥ 1 poste sacrifié 18 % des soirs au J11 (cible 20–35 % : un peu bas, le prélèvement du J11 restant inférieur au surplus de l'Acte I) ; fins dominantes conformes (F7 / F9 / F8 / F6) et F4 nulle à 80 % ✅ ; 95 % — F4 90 % ✅, F5 95 % ✅, F6 100 % ✅, F8 100 % ✅, F9 100 % ✅. **Écart** : « F1 par la Revue ≥ 90 % (`mercenary`) » non atteint — un `mercenary` qui garde les enveloppes dès le J4 est arrêté par l'audit du J9 (Acte I, D-059 inchangé) et n'atteint jamais la Revue ; le profil `mercenary2` (enveloppes à partir du J11) n'y est arrêté que dans 47,5 % des campagnes (`review_arrest_score = 4` : 67,5 %, mais `luciole` passe alors à 12,5 % de F1). Seuils laissés à 5 / 3 en attente d'arbitrage (D-080 proposé). Toutes les fins F1–F9 sont atteintes par au moins un profil (`tests/integration/test_act2_campaign.gd`).
+
 ---
 
 ## 7. Clés i18n

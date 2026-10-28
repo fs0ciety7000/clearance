@@ -24,6 +24,10 @@ var slipped_items: Array[SlippedItem] = []
 var luciole_codes: PackedInt32Array = []
 ## Mise en scène de l'arrivée (`&"knock_three"` : code 5), vide sinon.
 var presentation: StringName = &""
+## Acte II — répliques conditionnelles résolues à la construction (B25) :
+## suffixe (`arrival`, `confront`, `stay`…) → clé (`sc36_lindgren_arrival_refused`),
+## prioritaires sur `<dialogue_id>_<suffixe>`. Lues par `scripted_key()`.
+var line_overrides: Dictionary[String, String] = {}
 
 
 func get_item(item_id: StringName) -> SlippedItem:
@@ -49,6 +53,32 @@ func get_document(document_id: StringName) -> DocumentInstance:
 
 func has_document(document_id: StringName) -> bool:
 	return get_document(document_id) != null
+
+
+## Acte II — document du porteur (jamais un document d'un tiers, SC-27).
+func get_own_document(document_id: StringName) -> DocumentInstance:
+	for doc: DocumentInstance in documents:
+		if doc.get_document_id() == document_id and not doc.third_party:
+			return doc
+	return null
+
+
+func has_own_document(document_id: StringName) -> bool:
+	return get_own_document(document_id) != null
+
+
+## Clé de réplique d'un passager scénarisé pour un suffixe : variante
+## conditionnelle (`line_overrides`), sinon `<dialogue_id>_<suffixe>` si
+## `exists` la connaît (callable `func(key: String) -> bool`, ex. `UiText.has`),
+## sinon `fallback`.
+func scripted_key(suffix: String, fallback: String, exists: Callable) -> String:
+	if line_overrides.has(suffix):
+		return line_overrides[suffix]
+	for tag: StringName in dialogue_tags:
+		var key: String = "%s_%s" % [tag, suffix]
+		if exists.call(key):
+			return key
+	return fallback
 
 
 func get_document_ids() -> Array[StringName]:
@@ -89,10 +119,14 @@ func remove_visor() -> bool:
 	return true
 
 
-## Toutes les références de champs portant ce `truth_path`, dans l'ordre des documents.
-func find_refs_by_truth_path(path: StringName) -> Array[FieldRef]:
+## Toutes les références de champs portant ce `truth_path`, dans l'ordre des
+## documents (Acte II : jamais ceux d'un document d'un tiers, SC-27, sauf
+## `include_third_party`).
+func find_refs_by_truth_path(path: StringName, include_third_party: bool = false) -> Array[FieldRef]:
 	var refs: Array[FieldRef] = []
 	for doc: DocumentInstance in documents:
+		if doc.third_party and not include_third_party:
+			continue
 		for field: FieldDef in doc.type_def.fields:
 			if field.truth_path == path:
 				refs.append(FieldRef.new(doc.get_document_id(), field.id))

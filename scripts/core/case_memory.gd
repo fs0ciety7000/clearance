@@ -73,15 +73,21 @@ static func resolve(data: DataCatalog, day: DayDef, campaign_seed: int, memory: 
 	var result: Dictionary = memory.duplicate(true)
 	if day == null:
 		return result
+	var sources: Array[StringName] = []
 	for scripted: ScriptedCaseDef in day.scripted_cases:
-		if scripted == null:
+		if scripted != null:
+			sources.append(scripted.appearance_from_case)
+			sources.append(scripted.identity_from_case)
+	# Acte II : avis d'une personne absente de la file (visage mémorisé).
+	for notice: WantedNoticeDef in day.wanted_notices:
+		if notice != null:
+			sources.append(notice.memory_case_id)
+	for source: StringName in sources:
+		if source == &"" or result.has(String(source)):
 			continue
-		for source: StringName in [scripted.appearance_from_case, scripted.identity_from_case]:
-			if source == &"" or result.has(String(source)):
-				continue
-			var entry: Dictionary = recall(data, campaign_seed, source)
-			if not entry.is_empty():
-				result[String(source)] = entry
+		var entry: Dictionary = recall(data, campaign_seed, source)
+		if not entry.is_empty():
+			result[String(source)] = entry
 	return result
 
 

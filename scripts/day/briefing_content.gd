@@ -18,7 +18,8 @@ const SPEAKER_TREASURY: String = "spk_treasury"
 const MSG_ADVANCE: String = "msg_consortium_advance"
 ## Nature du message (couleur du locuteur, DS §7.10) : Consortium, mentor,
 ## famille ; M7 : Lucioles (magenta), Inspection (jaune). On n'ajoute qu'à la fin.
-enum Voice { CONSORTIUM, MENTOR, FAMILY, LUCIOLES, INSPECTION }
+## Acte II : COMMISSION (Commission de Rééquilibrage), BRULANTS (encre noire).
+enum Voice { CONSORTIUM, MENTOR, FAMILY, LUCIOLES, INSPECTION, COMMISSION, BRULANTS }
 ## Au plus 4 messages par briefing (NARRATIVE §3).
 const MAX_MESSAGES: int = 4
 
@@ -53,8 +54,9 @@ static func build(day: DayDef, flags: Dictionary[StringName, Variant], household
 	if n == 1 and advance > 0:
 		content.advance_credits = advance
 	# M7 (J4+) : table de messages conditionnels des données (NARRATIVE §3, B11).
+	# Acte II : conditions sur l'état du foyer (`EveningService.context_flags`).
 	if not day.briefing_messages.is_empty():
-		content._add_from_table(day.briefing_messages, flags, household, n)
+		content._add_from_table(day.briefing_messages, EveningService.context_flags(flags, household), household, n)
 		return content
 	# Échos des choix de la veille (GDD §11.1 : « écho parfois dans le bulletin »).
 	if n == 2:
@@ -79,7 +81,9 @@ func _add_from_table(defs: Array[BriefingMessageDef], flags: Dictionary[StringNa
 	var used_groups: Array[StringName] = []
 	var family_key: String = family_message_key(on_day, household)
 	var ilan: Household.Member = household.get_member(Household.ILAN) if household != null else null
-	var ilan_away: bool = ilan != null and ilan.detained
+	# Ilan mis·e en attente ou absent·e (Soute) : ses messages sont omis ; les
+	# messages du foyer d'un autre locuteur (Dora) restent (Acte II).
+	var ilan_away: bool = ilan != null and (ilan.detained or ilan.away != &"")
 	var family_index: int = -1
 	var family_picked: bool = false
 	for i: int in defs.size():
@@ -89,7 +93,15 @@ func _add_from_table(defs: Array[BriefingMessageDef], flags: Dictionary[StringNa
 		if def.family_slot:
 			if family_index < 0:
 				family_index = i
-			if ilan_away:
+			if ilan_away and def.speaker_key == SPEAKER_ILAN:
+				continue
+			if def.speaker_key != SPEAKER_ILAN:
+				# Acte II : message d'un autre proche dans l'emplacement foyer.
+				if FlagCondition.check(def.condition, flags):
+					if def.group != &"":
+						used_groups.append(def.group)
+					family_picked = true
+					picked.append([i, def.priority, def.speaker_key, def.text_key, def.voice])
 				continue
 			if family_key != "msg_family_ok":
 				family_picked = true

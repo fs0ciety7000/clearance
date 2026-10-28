@@ -4,8 +4,9 @@
 ## - `LETTER` : texte seul (lettre, récit), effets automatiques (`flags`,
 ##   `line_costs`) dès qu'il est affiché ;
 ## - `CHOICE` : options (`EveningOptionDef`), une seule choisie ;
-## - `AUDIT` : audit de l'Inspecteur Ravel (J9, `EndingService.audit_outcome`),
-##   résultat automatique, peut terminer la partie (F1).
+## - `AUDIT` : audit de l'Inspecteur Ravel (J9, `EndingService.audit_outcome`)
+##   ou Revue de Rééquilibrage (J17, `audit_id = review`), résultat automatique,
+##   peut terminer la partie (F1).
 ## Affichage : par `order` croissant (au J9 : audit → aveu → déposition →
 ## laissez-passer). `condition` nulle = toujours. `text_variants` : première
 ## variante vraie à la place de `text_key` ; `extra_keys` : lignes ajoutées.
@@ -26,6 +27,16 @@ enum Kind { LETTER, CHOICE, AUDIT }
 ## Effets automatiques (lettres) : deltas de drapeaux, coûts de postes imposés.
 @export var flags: Dictionary[StringName, int] = {}
 @export var line_costs: Dictionary[StringName, int] = {}
+
+@export_group("Acte II")
+## Audit paramétré (B30) : vide = audit du J9 (`EndingService.audit_outcome`),
+## `review` = Revue de Rééquilibrage du J17 (`EndingService.review_outcome`).
+@export var audit_id: StringName = &""
+## Effet automatique sur le foyer d'une lettre (`EveningOptionDef.HOUSEHOLD_*`).
+@export var household: StringName = &""
+## Jauges dont la valeur remplit le texte (`%d`, ex. pages du registre au J19),
+## dans l'ordre : `EveningEvent.text_args`.
+@export var text_gauges: PackedStringArray = []
 
 
 func get_option(option_id: StringName) -> EveningOptionDef:

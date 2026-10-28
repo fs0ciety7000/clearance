@@ -288,7 +288,7 @@ func get_rulebook_entry() -> RulebookEntry
 | `MrzConsistentRule` | `document_id` | R21 |
 | `WantedRule` | `document_id` (lit `RuleContext.wanted`) | R22 |
 
-### 6.2 Les 22 règles (`data/rules/`, introduites cumulativement)
+### 6.2 Les 31 règles (`data/rules/`, introduites cumulativement)
 
 | Jour | Règles (id, sévérité) |
 |---|---|
@@ -302,6 +302,16 @@ func get_rulebook_entry() -> RulebookEntry
 | J8 | R18 `r_apparent_age` (**3**), R19 `r_tharsis_banned` (2) |
 | J9 | R20 `r_seals_valid`, R21 `r_mrz_valid` (2) |
 | J10 | R22 `r_wanted_detain` (**3**) |
+| J11 | R23 `r_air_quota` (`AirQuotaRule`, quota souple : **jamais de violation**, D-077), R24 `r_contract_required` (2) |
+| J12 | R25 `r_contract_consistent` (`ContractConsistentRule`, code employeur ↔ registre, 2) |
+| J13 | R26 `r_drift_pass` (`DriftPassRule` : laissez-passer requis, vaisseau inscrit = nom de famille, 2) |
+| J14 | R27 `r_nx_firmware` (`DocumentNotExpiredRule` sur `firmware`, > 90 j, 2) |
+| J15 | R28 `r_asylum_required` (TER C-5, 2) |
+| J16 | R29 `r_curfew` (`CurfewRule` : ticket de file ≥ 16:00, VISITE/TOURISME refusés, HAL exemptés, 2) |
+| J17 | R30 `r_revoked_ids` (`RevokedIdRule`, lit `RuleContext.revoked`, 2) |
+| J18–J20 | R31 `r_ter_closed` (`FactionBannedRule` + `exempt_posts` : RECYCLEUR / SOINS / HYDROPONIE, 2) |
+
+Familles ajoutées en M8 : `AirQuotaRule`, `ContractConsistentRule`, `DriftPassRule` (hérite de `RequireDocumentRule`), `CurfewRule`, `RevokedIdRule`. `RequireDocumentRule` gagne `applies_to_faction_ids` / `applies_to_purposes` / `applies_to_classes`, `require_valid` (« non expiré ») ; `DocumentNotExpiredRule` gagne `field_path` ; `FactionBannedRule` gagne `exempt_posts` / `contract_id`. Documents d'un **tiers** (`DocumentInstance.third_party`, SC-27) : jamais comparés (`INCOMPARABLE`), ignorés par R07/R10.
 
 ### 6.3 Comparaison (mode Inspection)
 
@@ -313,7 +323,7 @@ func get_rulebook_entry() -> RulebookEntry
 
 ## 7. Catalogue des signaux `EventBus`
 
-Source : `scripts/autoload/event_bus.gd` (31 signaux, tous typés). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
+Source : `scripts/autoload/event_bus.gd` (34 signaux, tous typés ; 3 ajoutés en M8, §7.2). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
 
 | Signal | Paramètres | Émetteurs → Écouteurs (état réel) |
 |---|---|---|
@@ -324,7 +334,9 @@ Source : `scripts/autoload/event_bus.gd` (31 signaux, tous typés). Convention :
 | `day_ended` | `summary: DaySummary` | DayController → DayScene (sirène puis bilan), AudioDirector |
 | `day_phase_changed` | `phase: DayPhase.Kind, case_id: StringName` | DayController → ComparisonUI (tampon, « Suivant »), AudioDirector, OkonkwoIntercom |
 | `wanted_notices_published` | `notices: Array[WantedNotice]` | DayController (juste après `day_started`) → ComparisonUI (onglet Avis du Rulebook) |
-| `hall_announced` | `text_key: String` | DayController (après le n-ième cas) → ComparisonUI (sous-titre haut-parleur), AudioDirector (carillon) |
+| `hall_announced` | `text_key: String` | DayController (après le n-ième cas, à une heure du shift, `hall_quota_full`) → ComparisonUI (sous-titre haut-parleur), AudioDirector (carillon) |
+| `quota_changed` | `used: int, maximum: int` | DayController (début du shift, puis après chaque entrée imputée ; `maximum` 0 = pas de quota) → ⚠️ **aucun écouteur UI** (M8, §7.2) |
+| `revocations_published` | `entries: Array[RevokedEntry]` | DayController (juste après `wanted_notices_published`, J17+) → ⚠️ **aucun écouteur UI** (M8) |
 | **Passager** | | |
 | `next_case_requested` | — | ComparisonUI (« Suivant »), DemoAutoplay, DayScene (debug) → DayController (ignoré hors `WAITING_CASE`) |
 | `case_presented` | `case: Case` | DayController → BoothDirector, ComparisonUI, AudioDirector, OkonkwoIntercom, NullBooth/SilentBooth |
@@ -334,6 +346,7 @@ Source : `scripts/autoload/event_bus.gd` (31 signaux, tous typés). Convention :
 | `passenger_reaction_triggered` | `reaction: PassengerReaction.Kind` | InspectionSession → BoothDirector, ComparisonUI, AudioDirector |
 | `passenger_departed` | `case_id` | BoothDirector (guichet libéré, `ClearMark`) / NullBooth → DayController, AudioDirector |
 | `inspection_target_picked` | `ref: FieldRef` | BoothDirector (clic visage) → ComparisonUI, BoothDirector (travelling visage) |
+| `scanner_suggested` | `case_id, links: Array[Discrepancy], source: StringName` | DayController (au premier `documents_presented`, si scanner partiel) → ⚠️ **aucun écouteur UI** (M8) |
 | `item_slipped` | `item: SlippedItem` | DayController (au premier `documents_presented`) → ComparisonUI, AudioDirector |
 | `item_decision_requested` | `item_id, decision: SlippedItem.Decision` | ComparisonUI → DayController (ignoré hors `INSPECTING` ou si non autorisé) |
 | `item_decided` | `item, decision` | DayController (décision, ou **défaut au tampon**) → ComparisonUI, AudioDirector |
@@ -379,6 +392,27 @@ Depuis la partie B de M7 (D-061), les comportements « par défaut » du contrat
 | **Bilan** | `DaySummary.get_bribe_total()`, `get_report_total()`, `get_total_income()` | Tuile « DIVERS NON DÉCLARÉ », puces par cas. | Lu par la soirée / les simulateurs. |
 
 🎯 Restent à trancher côté UI/UX : rendu italique des fragments Tessar (NARRATIVE §7.1, recopiés sans astérisques dans `fr.csv`).
+
+### 7.2 Contrat UI M8 — Acte II (J10–J20)
+
+Logique livrée (M8 partie A) ; **l'UI actuelle joue J1–J20 sans régression** grâce aux comportements par défaut ci-dessous. Colonnes : ce que la logique expose, ce que l'UI doit faire, ce qui se passe sans UI.
+
+| Sujet | API logique | À faire côté UI | Sans UI / UI actuelle |
+|---|---|---|---|
+| **Quota respiratoire** (R23, D-077) | `quota_changed(used, maximum)` ; `DayController.quota` (`QuotaTracker` : `used`, `maximum`, `overruns`, `is_full()`, `counts(case)`) ; `FieldRef.quota_counter()` (paire Compteur ↔ R23 confirmée si plein, famille `quota`) ; `CaseResult.quota_counted/quota_full/quota_refusal/quota_overrun` ; `DaySummary.get_overrun_count()/get_quota_refusal_count()` ; annonce `hall_quota_full` | Compteur « QUOTA n/max » dans la barre du haut (sélectionnable en Inspection) ; tuile bilan « dépassements » ; puce « refus quota » | Signal ignoré ; refus quota correct et documenté d'office ; entrée au-delà du quota = 0 ₵, sans citation ; 3ᵉ dépassement `suspicion +1` |
+| **Nouveaux documents** | `work_contract`, `drift_pass`, `asylum`, `queue_ticket` ; `FieldDef.FieldKind.TIME` (`FieldValue.format_time`, `DocumentInstance.presented_at`) ; champ `firmware` de la carte (dates) ; `DocumentInstance.third_party` | Gabarits `DocumentView` (ticket sans sceau, heure HH:MM) ; mention « tiers » sur un document de tiers | Rendus par le gabarit générique actuel |
+| **Couvre-feu** (R29) | Heure figée à la construction du cas (`CaseBuilder.presentation_minute` = horloge du shift à « Suivant ») ; annonce horaire `hall_j16_curfew` (`HallAnnouncementDef.at_minute`) | Rien de plus que le ticket et le sous-titre | Annonce émise à l'heure du shift |
+| **Révocations** (R30) | `revocations_published(entries)` ; `RevokedEntry` (`citizen_id`, noms, `reason_key` optionnel, `get_ref()` = `FieldRef.revoked(id)`) ; `disc_revoked_match/no_match` | Onglet « Révocations » du Rulebook (`rb_tab_revoked`), entrées sélectionnables | R30 évaluée ; aucune preuve par défaut |
+| **Registres** | `ContractConsistentRule.employer_codes` / `posts`, `DriftPassRule.registered_vessels` (via `RulebookEntry`) | Onglets « Employeurs » et « Vaisseaux » ; ligne firmware NX ; avis **« visages seuls »** du J20 (`WantedNotice` sans nom) | — |
+| **Scanner partiel** (M3) | `scanner_suggested(case_id, links, source)` (`PartialScanner.SOURCE_LUCIOLE` / `SOURCE_ACV`) ; liens = discordances date ↔ jour, zéro faux positif | Liens pointillés entre champs + pastille de source (magenta / ambre) ; le joueur doit encore épingler | Signal ignoré |
+| **Répliques** | `Case.line_overrides`, `Case.scripted_key(suffix, fallback, exists)` ; sujets `about_quota`, `about_curfew`, `about_revoked`, `about_contract` (familles d'`InspectionSession`) | `ComparisonUI` doit lire `scripted_key` (et non la clé brute) pour les répliques d'arrivée / présentation / départ | Sous-titres d'interrogation corrects ; répliques d'arrivée variantes non affichées |
+| **Annonces** | `HallAnnouncementDef` (`after_case`, `at_minute`, `condition`, `ends_shift`) ; `DayController.shift_ended_early` | J20 : `hall_j20_strike` coupe les lumières → fondu noir avant le bilan | Shift clos après l'annonce ; bilan normal |
+| **Briefings J11–J20** | `BriefingContent.Voice.COMMISSION`, `BRULANTS` ; `spk_note` (mots de Dora / Ilan) | Couleurs des deux voix (tokens DS) | — |
+| **Soirées J10–J19** | `EveningEvent.text_args` (`levy_amount`, valeurs de `set_gauges`) ; audit `review` (J17) ; `EveningOptionDef.ends_campaign` (F6 « Embarquer », J10) ; `ExpenseLine.ration_of`, lignes `ration_self` (obligatoire), `levy`, `lease` ; `EveningReport.income_lines` (salaire d'Ilan) | Formatage `%d` des textes à valeurs ; **confirmation** avant une option `ends_campaign` ; section « Revenus » ; rations groupées | Choix par défaut (`default_rank`) : jamais « Embarquer » ; textes affichés avec `%d` brut |
+| **Foyer** | `Household.Member.breathless/breathless_streak/away` ; `state_key()` : `hh_state_breathless`, `hh_state_away_soute`, `hh_state_away_tycho`, `hh_state_detained` ; `present_count()` | `HouseholdView` : états ESSOUFFLÉ·E / DANS LA SOUTE / PARTIE À TYCHO / MIS·E EN ATTENTE | Clés d'état déjà traduites |
+| **Chapitre II** | `Campaign.is_act2()` (drapeau `act2_started` posé à la clôture de la soirée du J10) | Interstitiel « CHAPITRE II » après la soirée du J10 | Enchaînement direct sur le J11 |
+| **Fins** | `EndingService` F1–F9 (`ACT2_PRIORITY`, `evaluate_final_act2`, `epilogue_act2` : `end2_fN_title`, `end_eyebrow_f8_registre` / `f9_strike`, `act = 2`) | `EndScreen` : titres / surtitres F8–F9, épilogue Acte II | `Campaign.close_final_day()` choisit Acte I ou II |
+| **Accessoires du booth** | Étiquettes `companion_child`, `prop_cat_crate`, `prop_drone`, `prop_shunt_led` (`Case.dialogue_tags`) | Props / sous-titres d'ambiance (3D Designer) | Ignorées |
 
 ---
 
@@ -607,8 +641,8 @@ Sérialisation stable : `CaseSerializer` (tests de déterminisme). 🎯 Golden f
 
 - **Quand** : automatiquement à la validation de la soirée (`Campaign.close_evening`), jamais en plein shift (D-041). Toute fin efface la sauvegarde (`SaveService.delete()`, idempotent).
 - **Où / format** : `user://saves/slot_0.json` (un seul emplacement utilisé), JSON texte ; préférences séparées dans `user://settings.cfg`. Jamais de `.tres` dans `user://` (D-008).
-- **Format v3** (`SaveService.VERSION = 3` ; `game_version` = `SaveService.game_version()`, lu dans `application/config/version` de `project.godot`, actuellement `0.8.1`) : `version`, `game_version`, `saved_at`, `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags`, `day_history` (détail par jour : traités, corrects, citations, salaire, amendes, dépenses, solde), `household`, `case_memory`.
-- **Migrations** (`SaveService.migrate`, en chaîne) : v1 → v2 (foyer par défaut, historique complété) ; v2 → v3 (`case_memory` vide, `suspicion +1` rétroactif si SC-02 approuvée, D-052/D-057). Version inconnue ou future ⇒ refus.
+- **Format v4** (`SaveService.VERSION = 4` ; `game_version` = `SaveService.game_version()`, lu dans `application/config/version` de `project.godot`, actuellement `0.8.1`) : `version`, `game_version`, `saved_at`, `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags`, `day_history` (détail par jour : traités, corrects, citations, salaire, amendes, dépenses, solde), `household`, `case_memory`.
+- **Migrations** (`SaveService.migrate`, en chaîne) : v1 → v2 (foyer par défaut, historique complété) ; v2 → v3 (`case_memory` vide, `suspicion +1` rétroactif si SC-02 approuvée, D-052/D-057) ; v3 → v4 (M8 : champs `breathless`, `breathless_streak`, `away` du foyer ; un proche `lost` **et** `detained` redevient `well` + `detained` — « mis·e en attente » distinct de PERDU, D-076). Version inconnue ou future ⇒ refus.
 - **Lecture** : JSON → migrations → validation de schéma (`SCHEMA`, `1 ≤ jour ≤ SaveService.last_day()`, dernier `day_NN.tres` de `data/days` — QA-003) ; nombres JSON lus par `as_int()`. **Écriture atomique** (QA-018) : `.tmp` écrit et vidé, puis renommé **par-dessus** la sauvegarde (jamais de suppression préalable) ; si la plateforme refuse d'écraser, l'ancienne passe d'abord en `.bak`. Lecture de secours : sauvegarde principale absente ou refusée ⇒ `.tmp`, puis `.bak` ; `has_save` / `delete` couvrent les trois fichiers.
 - Responsables : `SaveService` (pur, dossier paramétrable pour les tests) ; `GameState.save_to_slot()` / `load_from_slot()` ; écran titre « Continuer ».
 - ✅ Version unique : `application/config/version` (`project.godot`) ; l'écran titre l'affiche (QA-013, UI).

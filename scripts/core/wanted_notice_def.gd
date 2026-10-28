@@ -18,3 +18,11 @@ extends Resource
 @export var family_name: String = ""
 ## Motif affiché (`wanted_novak_reason`…).
 @export var reason_key: String = ""
+## Acte II (B28) : condition sur les drapeaux du matin (null = toujours).
+@export var condition: FlagCondition = null
+## Acte II : avis « visages seuls » (J20) — aucun nom publié ; reconnaissance
+## par le visage uniquement.
+@export var faces_only: bool = false
+## Acte II : personne absente de la file (Kasimir au J20) : visage repris de la
+## mémoire d'un cas scénarisé antérieur (`CaseMemory`) ; personne ne correspond.
+@export var memory_case_id: StringName = &""

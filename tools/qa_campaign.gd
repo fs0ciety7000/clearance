@@ -1,5 +1,5 @@
 ## Campagne QA réelle (docs/QA.md §2) — la vraie scène de jour (`day.tscn` :
-## booth 3D, `ComparisonUI`, écrans, `reload_current_scene`) jouée du J1 au J10
+## booth 3D, `ComparisonUI`, écrans, `reload_current_scene`) jouée du J1 au J20 (fin anticipée possible)
 ## par le bot `--autoplay`, accélérée par `Engine.time_scale`.
 ##
 ## Le pilote ne fait que ce que ferait un joueur pressé : ferme le bilan,
@@ -11,7 +11,7 @@
 ##
 ## Usage (racine du projet ; lancé par `tools/qa_boot.gd`, autoloads requis) :
 ##   godot --headless --script res://tools/qa_boot.gd -- --autoplay \
-##       --qa-seed=7 --qa-profile=default --qa-speed=8 [--no-booth] [--approve-all]
+##       --qa-seed=7 --qa-profile=default --qa-speed=8 [--qa-credits=N] [--no-booth] [--approve-all]
 ## (`--autoplay` est lu par `DayScene` ; ne pas passer `--seed` : il relance une
 ## partie neuve à chaque rechargement de scène, cf. QA.md.)
 extends Node
@@ -23,6 +23,9 @@ const DAY_TIMEOUT_MSEC: int = 420_000
 var _seed: int = 7
 var _profile: SimProfile = null
 var _speed: float = 8.0
+## `--qa-credits=N` : solde de départ (le bot `--autoplay`, ~70 % de précision,
+## s'effondre sinon avant l'Acte II ; permet de jouer la vraie scène jusqu'au J20).
+var _credits: int = -1
 var _data: DataCatalog = null
 var _day_started_msec: int = 0
 var _last_day: int = 0
@@ -38,6 +41,8 @@ func _ready() -> void:
 			_seed = arg.trim_prefix("--qa-seed=").to_int()
 		elif arg.begins_with("--qa-speed="):
 			_speed = maxf(arg.trim_prefix("--qa-speed=").to_float(), 1.0)
+		elif arg.begins_with("--qa-credits="):
+			_credits = arg.trim_prefix("--qa-credits=").to_int()
 		elif arg.begins_with("--qa-profile="):
 			_profile = SimProfile.preset(StringName(arg.trim_prefix("--qa-profile=")))
 	if _profile == null:
@@ -45,6 +50,8 @@ func _ready() -> void:
 	_data = DataCatalog.load_from()
 	SaveService.delete()
 	Campaign.new_game(_data, _seed)
+	if _credits >= 0:
+		GameState.credits = _credits
 	Engine.time_scale = _speed
 	print("QA_START seed=%d profile=%s speed=%.1f" % [_seed, _profile.name, _speed])
 	get_tree().change_scene_to_file(DAY_SCENE)
@@ -80,7 +87,7 @@ func _process(_delta: float) -> void:
 
 
 func _on_new_day() -> void:
-	# Après la fin (J10 ou fin anticipée), la sauvegarde est effacée (D-041).
+	# Après la fin (J20 ou fin anticipée), la sauvegarde est effacée (D-041).
 	if _last_day > 0 and not GameState.has_flag(Campaign.FLAG_ENDING):
 		_check_save_roundtrip()
 	_last_day = GameState.current_day

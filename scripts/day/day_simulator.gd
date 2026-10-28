@@ -47,6 +47,10 @@ static func simulate(data: DataCatalog, day_number: int, day_seed: int, policy: 
 ## cas : `CaseConsequences`), mémoire des passagers (`memory`, modifiée),
 ## objets glissés (décision du `profile`, crédits), DÉTENTION seulement si le
 ## jour l'autorise, phrase de passe, cas scénarisés non traités.
+## Acte II : quota respiratoire (`QuotaTracker` ; au-delà du quota, un passager
+## en règle est refusé, ou approuvé et imputé si `profile.overrun`), heure de
+## présentation (`present_minute` : ticket de file, couvre-feu), contexte du
+## shift des effets, fin anticipée sur une annonce (grève du J20).
 static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile: SimProfile,
 		flags: Dictionary[StringName, Variant], memory: Dictionary, rng: SeededRng) -> DaySummary:
 	var day: DayDef = data.get_day(day_number)
@@ -54,16 +58,25 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 	for flag: StringName in flags:
 		if FlagCondition.is_flag_true(flags, flag):
 			true_flags.append(flag)
-	var builder: CaseBuilder = CaseBuilder.new(data, day, day_seed, true_flags, memory)
+	var builder: CaseBuilder = CaseBuilder.new(data, day, day_seed, true_flags, memory, flags)
 	var summary: DaySummary = DaySummary.new()
 	summary.day_number = day_number
 	summary.planned_cases = day.passenger_count
 	var citations: int = 0
+	var quota: QuotaTracker = QuotaTracker.for_day(day)
+	var timed: bool = _has_curfew(day)
 	for i: int in day.passenger_count:
+		if timed:
+			builder.presentation_minute = present_minute(day, i, profile, rng)
 		var generated: GeneratedCase = builder.build(i)
 		var case: Case = generated.case
 		var correct: bool = rng.chance(profile.accuracy)
 		var kind: VerdictKind.Kind = profile.verdict_for(case, generated.key, correct, day.detain_enabled)
+		var quota_full: bool = quota.before_verdict(case)
+		if quota_full and generated.key.expected_verdict == VerdictKind.Kind.APPROVE and not profile.forces(case):
+			# Quota atteint (D-077) : refus correct, ou entrée imputée (0 ₵).
+			var approve: bool = profile.overrun if correct else not profile.overrun
+			kind = VerdictKind.Kind.APPROVE if approve else VerdictKind.Kind.DENY
 		case.remove_visor()
 		var verdict: Verdict = Verdict.new(case.case_id, kind)
 		if kind != VerdictKind.Kind.APPROVE:
@@ -72,7 +85,9 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		# Interrogatoire systématique (R08) : une question posée.
 		verdict.questions_asked = [TOPIC_PURPOSE]
 		var result: CaseResult = ScoringService.score(verdict, generated.key, case.case_id, case, day,
-				data.get_economy().detain_bonus)
+				data.get_economy().detain_bonus, quota_full)
+		result.quota_counted = quota.counts(case)
+		result.quota_overrun = quota.after_verdict(case, kind)
 		result.passenger_label = case.passenger_presented.short_label()
 		if result.has_citation():
 			citations += 1
@@ -90,12 +105,44 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 				and FlagCondition.gauge_value(flags, CaseConsequences.FLAG_TRUST) >= CaseConsequences.PASSWORD_TRUST
 		result.narrative_changes = CaseConsequences.compute(scripted, case, result.verdict_kind,
 				not generated.key.expected_violations.is_empty(), result.password_answered, day_number, flags,
-				result.luciole_report)
+				result.luciole_report, CaseConsequences.contexts_for(day, case, result), day.luciole_trust_on_breach)
 		CaseConsequences.merge_into(flags, result.narrative_changes)
 		if scripted != null:
 			memory[String(scripted.id)] = CaseMemory.snapshot(day_number, case, result.verdict_kind)
 		summary.add_result(result)
+		if _ends_shift(day, summary.results.size(), flags):
+			break
+	# Cas scénarisés restés dans la file (grève : `flags_if_unprocessed`).
+	for scripted_left: ScriptedCaseDef in builder.get_active_scripted_cases():
+		if scripted_left.at_index >= summary.results.size() and not scripted_left.flags_if_unprocessed.is_empty():
+			CaseConsequences.add_all(summary.unprocessed_changes, flags, scripted_left.flags_if_unprocessed)
+	CaseConsequences.merge_into(flags, summary.unprocessed_changes)
 	return summary
+
+
+## Acte II : heure de présentation simulée du cas `index` (minutes depuis
+## minuit) : file régulière de 10:00 à 18:00 (`profile.pace` < 1 = plus rapide)
+## et dispersion de ±20 min (docs/ACT2.md §6.4).
+static func present_minute(day: DayDef, index: int, profile: SimProfile, rng: SeededRng) -> int:
+	var share: float = (index + 0.5) / float(maxi(day.passenger_count, 1))
+	var minute: float = DayDef.SHIFT_START_MIN + share * DayDef.SHIFT_LENGTH_MIN * profile.pace
+	return clampi(roundi(minute) + rng.randi_range(-20, 20), DayDef.SHIFT_START_MIN,
+			DayDef.SHIFT_START_MIN + DayDef.SHIFT_LENGTH_MIN)
+
+
+static func _has_curfew(day: DayDef) -> bool:
+	for rule: Rule in day.rule_set.rules:
+		if rule is CurfewRule:
+			return true
+	return false
+
+
+## Annonce qui arrête le shift après `processed` cas (grève du J20).
+static func _ends_shift(day: DayDef, processed: int, flags: Dictionary[StringName, Variant]) -> bool:
+	for def: HallAnnouncementDef in day.announcements:
+		if def != null and def.ends_shift and def.after_case == processed and FlagCondition.check(def.condition, flags):
+			return true
+	return false
 
 
 ## Discordances confirmées qui prouvent les violations d'un cas, telles qu'un

@@ -1,0 +1,93 @@
+[gd_resource type="Resource" script_class="DocumentTypeDef" format=3 uid="uid://5qap3ip3c4co"]
+
+[ext_resource type="Script" path="res://scripts/documents/field_def.gd" id="1_8kwer"]
+[ext_resource type="Script" path="res://scripts/documents/document_type_def.gd" id="2_17rln"]
+
+[sub_resource type="Resource" id="field_serial"]
+script = ExtResource("1_8kwer")
+id = &"serial"
+label_key = "field_serial"
+kind = 2
+truth_path = &"document.serial"
+
+[sub_resource type="Resource" id="field_family_name"]
+script = ExtResource("1_8kwer")
+id = &"family_name"
+label_key = "field_family_name"
+truth_path = &"family_name"
+display_order = 1
+
+[sub_resource type="Resource" id="field_given_name"]
+script = ExtResource("1_8kwer")
+id = &"given_name"
+label_key = "field_given_name"
+truth_path = &"given_name"
+display_order = 2
+
+[sub_resource type="Resource" id="field_citizen_id"]
+script = ExtResource("1_8kwer")
+id = &"citizen_id"
+label_key = "field_citizen_id"
+kind = 2
+truth_path = &"citizen_id"
+display_order = 3
+
+[sub_resource type="Resource" id="field_employer"]
+script = ExtResource("1_8kwer")
+id = &"employer"
+label_key = "field_employer"
+truth_path = &"employer"
+display_order = 4
+
+[sub_resource type="Resource" id="field_contract_code"]
+script = ExtResource("1_8kwer")
+id = &"contract_code"
+label_key = "field_contract_code"
+kind = 2
+truth_path = &"employer_code"
+display_order = 5
+
+[sub_resource type="Resource" id="field_post"]
+script = ExtResource("1_8kwer")
+id = &"post"
+label_key = "field_post"
+kind = 3
+truth_path = &"post"
+display_order = 6
+
+[sub_resource type="Resource" id="field_issue_date"]
+script = ExtResource("1_8kwer")
+id = &"issue_date"
+label_key = "field_issue_date"
+kind = 1
+truth_path = &"document.issue_date"
+display_order = 7
+format = "DD.MM.YYYY"
+
+[sub_resource type="Resource" id="field_expiry_date"]
+script = ExtResource("1_8kwer")
+id = &"expiry_date"
+label_key = "field_expiry_date"
+kind = 1
+truth_path = &"document.expiry_date"
+display_order = 8
+format = "DD.MM.YYYY"
+
+[sub_resource type="Resource" id="field_seal"]
+script = ExtResource("1_8kwer")
+id = &"seal"
+label_key = "field_seal"
+kind = 3
+truth_path = &"document.seal_id"
+display_order = 9
+
+[resource]
+script = ExtResource("2_17rln")
+id = &"work_contract"
+title_key = "doc_work_contract_title"
+fields = Array[ExtResource("1_8kwer")]([SubResource("field_serial"), SubResource("field_family_name"), SubResource("field_given_name"), SubResource("field_citizen_id"), SubResource("field_employer"), SubResource("field_contract_code"), SubResource("field_post"), SubResource("field_issue_date"), SubResource("field_expiry_date"), SubResource("field_seal")])
+validity_days = Vector2i(90, 1095)
+holo_tint_token = &"ACCENT_CYAN"
+issuer_id = &"bureau_contrats"
+seal_id = &"seal_corporate"
+serial_pattern = "CT-{EMP}-NNNN"

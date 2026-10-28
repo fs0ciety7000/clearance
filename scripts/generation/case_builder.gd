@@ -13,6 +13,14 @@
 ## civils (jours R15), motif exempté pour une origine interdite (R19), bande
 ## MRZ (recalculée après injection), codes Lucioles, objets glissés
 ## (scénarisés et enveloppes générées `bribe_rate`), `truth_overrides`.
+## Acte II (docs/ACT2.md B20, B25, B28) : documents conditionnels (contrat de
+## travail pour le motif TRAVAIL, laissez-passer des `DRV`, attestation des `TER`
+## C-5), code employeur / poste / vaisseau / firmware NX, gravitaires du J18 sur
+## un poste en pénurie (R31), liste des révocations liée aux index (R30, comme
+## D-056), avis conditionnels ou « visages seuls », ticket de file à l'heure de
+## présentation (`presentation_minute`, R29), cas scénarisés conditionnels
+## (plusieurs au même index), visages fixés, répliques conditionnelles,
+## documents d'un tiers, valeur injectée reprise d'un autre cas.
 class_name CaseBuilder
 extends RefCounted
 
@@ -38,6 +46,22 @@ const SALT_PRESENTATION: int = 4
 const SALT_IMPLANTS: int = 5
 const SALT_BRIBE: int = 6
 const SALT_LUCIOLE: int = 7
+# Acte II : flux nouveaux (n'altèrent pas les tirages des jours 1–10).
+const SALT_FIRMWARE: int = 8
+const SALT_CONTRACT: int = 9
+const SALT_THIRD_PARTY: int = 10
+const SALT_TICKET: int = 11
+const REVOKED_SALT: String = "revoked_decoys"
+## Acte II : documents des nouvelles règles.
+const TICKET_DOCUMENT_ID: StringName = &"queue_ticket"
+const NX_PREFIX: String = "NX-"
+## Firmware d'un shunt `NX-` généré propre : 0–80 jours (R27 : < 90).
+const FIRMWARE_MAX_AGE: int = 80
+## Part des gravitaires C-4 tolérés en C-5 les jours où l'attestation d'asile
+## est exigée (R28, J15+).
+const ASYLUM_C5_RATE: float = 0.30
+const ASYLUM_CLASS: StringName = &"C-5"
+const ASYLUM_FROM_CLASS: StringName = &"C-4"
 const WANTED_DEDUPE_SALT: String = "wanted_dedupe"
 const TAG_LUCIOLE: StringName = &"luciole"
 const TAG_LUCIOLE_PASSWORD: StringName = &"luciole_password"
@@ -67,16 +91,26 @@ var _injectors: Dictionary[AnomalyType.Kind, AnomalyInjector] = {}
 ## Contexte du contrôle « cas propre » (sans avis de recherche).
 var _clean_ctx: RuleContext = null
 var _flag_values: Dictionary[StringName, Variant] = {}
+## Acte II : index des passagers générés révoqués (onglet Révocations).
+var revoked_indices: Array[int] = []
+## Acte II (R29) : heure de présentation (minutes depuis minuit) du prochain
+## cas construit, imprimée sur le ticket de file ; −1 = pas de ticket (outils,
+## tests). Posée par le `DayController` (horloge) ou le `DaySimulator`.
+var presentation_minute: int = -1
 
 
+## `p_flag_values` (Acte II) : valeurs des drapeaux et jauges (conditions des
+## cas scénarisés, avis, révocations, répliques) ; à défaut, les drapeaux vrais.
 func _init(p_data: DataCatalog, p_day: DayDef, p_day_seed: int, p_flags: Array[StringName] = [],
-		p_memory: Dictionary = {}) -> void:
+		p_memory: Dictionary = {}, p_flag_values: Dictionary[StringName, Variant] = {}) -> void:
 	data = p_data
 	day = p_day
 	day_seed = p_day_seed
 	flags = p_flags.duplicate()
 	memory = p_memory
 	_flag_values = FlagCondition.from_true_flags(flags)
+	for flag: StringName in p_flag_values:
+		_flag_values[flag] = p_flag_values[flag]
 	ctx = RuleContext.for_day(day, data.factions, data.documents)
 	if data.appearance_catalog != null:
 		ctx.identity_slots = data.appearance_catalog.get_identity_slots()
@@ -87,23 +121,40 @@ func _init(p_data: DataCatalog, p_day: DayDef, p_day_seed: int, p_flags: Array[S
 			day.faction_weights, day.game_date)
 	_apply_continuity()
 	_build_wanted_notices()
+	_build_revocations()
 
 
 ## Avis de recherche du jour (publiés par le DayController, lus par R22).
 func get_wanted_notices() -> Array[WantedNotice]:
 	return ctx.wanted
 
-## Cas scénarisés du jour dont le drapeau requis est satisfait.
+
+## Acte II : liste des révocations du jour (publiée par le DayController, R30).
+func get_revocations() -> Array[RevokedEntry]:
+	return ctx.revoked
+
+
+## Valeurs des drapeaux narratifs vues par ce jour (conditions).
+func get_flag_values() -> Dictionary[StringName, Variant]:
+	return _flag_values
+
+
+## Cas scénarisés du jour dont le drapeau requis est satisfait (Acte II : et
+## la condition) ; au plus un par index (le premier de l'ordre des données).
 func get_active_scripted_cases() -> Array[ScriptedCaseDef]:
 	var result: Array[ScriptedCaseDef] = []
+	var taken: Array[int] = []
 	for scripted: ScriptedCaseDef in day.scripted_cases:
 		if scripted == null or (scripted.requires_flag != &"" and not flags.has(scripted.requires_flag)):
+			continue
+		if taken.has(scripted.at_index) or not FlagCondition.check(scripted.condition, _flag_values):
 			continue
 		var forbidden: bool = false
 		for flag: StringName in scripted.forbids_flags:
 			forbidden = forbidden or flags.has(flag)
 		if not forbidden:
 			result.append(scripted)
+			taken.append(scripted.at_index)
 	return result
 
 
@@ -129,6 +180,8 @@ func build(index: int) -> GeneratedCase:
 		return _build(index, scripted, scripted.forced_anomalies, scripted.injection_params, true)
 	if wanted_indices.has(index):
 		return _build(index, null, [AnomalyType.Kind.WANTED_PERSON], {}, true)
+	if revoked_indices.has(index):
+		return _build(index, null, [AnomalyType.Kind.REVOKED_ID], {}, true)
 	return _build(index, null, [], {}, false)
 
 
@@ -153,6 +206,8 @@ func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kin
 	var case_seed: int = SeededRng.case_seed(day_seed, index)
 	var rng: SeededRng = SeededRng.new(case_seed)
 	var overrides: Dictionary = _overrides_for(scripted)
+	if not forced.is_empty():
+		params = _resolve_params(params)
 	var faction: FactionDef = data.factions.get(entry.faction_id, null)
 	if faction == null:
 		push_error("CaseBuilder: origine inconnue « %s » (jour %d, cas %d)" % [entry.faction_id, day.day_number, index])
@@ -178,15 +233,20 @@ func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kin
 		_post_generate(truth, faction, overrides, attempt_rng.fork(SALT_IMPLANTS), index)
 		c = _make_clean_case(truth, attempt_rng.fork(SALT_DOCUMENTS), result.photo_noise, extra_documents)
 		c.case_id = case_id
+		_add_third_party_documents(c, truth, scripted, attempt_rng.fork(SALT_THIRD_PARTY))
 		c.index = index
 		c.case_seed = case_seed
 		result.clean_attempts = attempt + 1
-		result.clean_violation_count = RuleEngine.validate(c, day.rule_set, _clean_ctx).size()
+		_apply_document_dates(c, scripted)
+		result.clean_violation_count = _clean_violations(c, scripted, forced)
 		if result.clean_violation_count == 0:
 			break
 		if attempt == MAX_CLEAN_ATTEMPTS - 1:
 			push_error("CaseBuilder: aucun cas propre après %d essais (jour %d, cas %d, seed %d)"
 					% [MAX_CLEAN_ATTEMPTS, day.day_number, index, case_seed])
+
+	# Acte II (R29) : ticket de file à l'heure de présentation (hors contrôle « cas propre »).
+	_add_queue_ticket(c, truth, rng.fork(SALT_TICKET))
 
 	# 5. Injection.
 	var state: InjectionState = InjectionState.new()
@@ -239,6 +299,10 @@ func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kin
 		_apply_luciole_codes(c, scripted.luciole_codes, params)
 		if scripted.slipped_item != null:
 			c.slipped_items.append(scripted.slipped_item.instantiate(c.case_id, 0, _flag_values))
+		for variant: ConditionalKey in scripted.line_variants:
+			if variant != null and variant.replaces != "" and not c.line_overrides.has(variant.replaces) \
+					and FlagCondition.check(variant.condition, _flag_values):
+				c.line_overrides[variant.replaces] = variant.key
 	elif not exact:
 		_draw_luciole(c, rng.fork(SALT_LUCIOLE))
 		_draw_bribe(c, anomalies, rng.fork(SALT_BRIBE))
@@ -256,7 +320,7 @@ func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kin
 func _make_clean_case(truth: Passenger, rng: SeededRng, photo_noise: bool, extra: Array[StringName] = []) -> Case:
 	var c: Case = Case.new()
 	c.passenger_presented = truth.copy()
-	var document_ids: Array[StringName] = required_documents_for(truth.faction_id)
+	var document_ids: Array[StringName] = required_documents_for_passenger(truth)
 	for document_id: StringName in extra:
 		if not document_ids.has(document_id):
 			document_ids.append(document_id)
@@ -275,13 +339,31 @@ func _make_clean_case(truth: Passenger, rng: SeededRng, photo_noise: bool, extra
 	return c
 
 
-## Documents exigés par les règles actives pour cette origine (R04 : `HAL` dispensé).
+## Documents exigés par les règles actives pour cette origine (R04 : `HAL`
+## dispensé) — règles inconditionnelles seulement (voir
+## `required_documents_for_passenger` pour l'Acte II).
 func required_documents_for(faction_id: StringName) -> Array[StringName]:
 	var ids: Array[StringName] = []
 	for rule: Rule in day.rule_set.rules:
 		if rule is RequireDocumentRule:
 			var require: RequireDocumentRule = rule
-			if not require.exempt_faction_ids.has(faction_id) and not ids.has(require.document_id):
+			if require.is_conditional() or require.exempt_faction_ids.has(faction_id) or ids.has(require.document_id):
+				continue
+			if not require.applies_to_faction_ids.is_empty() and not require.applies_to_faction_ids.has(faction_id):
+				continue
+			ids.append(require.document_id)
+	return ids
+
+
+## Documents exigés pour un passager vrai (Acte II) : règles inconditionnelles,
+## puis règles conditionnées au motif du permis (R24) ou à la classe (R28).
+func required_documents_for_passenger(p: Passenger) -> Array[StringName]:
+	var ids: Array[StringName] = required_documents_for(p.faction_id)
+	var has_permit: bool = ids.has(&"entry_permit")
+	for rule: Rule in day.rule_set.rules:
+		if rule is RequireDocumentRule:
+			var require: RequireDocumentRule = rule
+			if require.is_conditional() and not ids.has(require.document_id) and require.requires_for(p, has_permit):
 				ids.append(require.document_id)
 	return ids
 
@@ -396,10 +478,16 @@ func _apply_continuity() -> void:
 		var source: StringName = scripted.appearance_from_case
 		if source == &"":
 			source = scripted.identity_from_case
-		if source == &"":
+		var remembered: PassengerAppearance = null
+		if scripted.fixed_appearance_seed != 0:
+			# Acte II : visage fixé une fois pour toutes (Okonkwo, Ilan).
+			var fixed_faction: StringName = StringName(str(_overrides_for(scripted).get(&"faction_id", &"tyc")))
+			remembered = appearance_gen.generate(SeededRng.new(scripted.fixed_appearance_seed), fixed_faction)
+			remembered.traits[PassengerAppearance.SLOT_HEADWEAR] = PassengerAppearance.OPTION_NONE
+		elif source == &"":
 			continue
-		var entry: Dictionary = _memory_entry(source)
-		var remembered: PassengerAppearance = CaseMemory.appearance_of(entry)
+		else:
+			remembered = CaseMemory.appearance_of(_memory_entry(source))
 		var roster_entry: AppearanceRoster.Entry = roster.get_entry(scripted.at_index)
 		if remembered == null or roster_entry == null:
 			continue
@@ -420,7 +508,10 @@ func _apply_continuity() -> void:
 func _build_wanted_notices() -> void:
 	var notice_indices: Array[int] = []
 	for def: WantedNoticeDef in day.wanted_notices:
-		if def == null:
+		if def == null or not FlagCondition.check(def.condition, _flag_values):
+			continue
+		if def.memory_case_id != &"":
+			_add_memory_notice(def)
 			continue
 		var index: int = def.at_index
 		var scripted: ScriptedCaseDef = null
@@ -440,6 +531,9 @@ func _build_wanted_notices() -> void:
 		notice.id = def.id
 		notice.given_name = def.given_name if not def.given_name.is_empty() else presented.given_name
 		notice.family_name = def.family_name if not def.family_name.is_empty() else presented.family_name
+		if def.faces_only:
+			notice.given_name = ""
+			notice.family_name = ""
 		notice.appearance = DocumentFactory.official_photo_of(presented.appearance.without_visor())
 		notice.reason_key = def.reason_key
 		notice.case_index = index
@@ -482,6 +576,7 @@ func _post_generate(truth: Passenger, faction: FactionDef, overrides: Dictionary
 		for code: Variant in codes:
 			weights.append(faction.implant_weights[code])
 		truth.implants = PackedStringArray([str(rng.weighted_pick(codes, weights))])
+	_post_generate_act2(truth, overrides, index)
 	if overrides.has(&"purpose"):
 		return
 	for rule: Rule in day.rule_set.rules:
@@ -489,6 +584,13 @@ func _post_generate(truth: Passenger, faction: FactionDef, overrides: Dictionary
 		if banned != null and banned.is_banned_origin(truth.faction_id) and not banned.exempt_purposes.is_empty() \
 				and not banned.exempt_purposes.has(truth.purpose):
 			truth.purpose = banned.exempt_purposes[0]
+		elif banned != null and banned.is_banned_origin(truth.faction_id) and not banned.exempt_posts.is_empty():
+			# R31 (J18) : un gravitaire en règle travaille sur un poste en pénurie.
+			truth.purpose = Passenger.PURPOSE_WORK
+			if not overrides.has(&"post") and not banned.exempt_posts.has(truth.post):
+				var post_rng: SeededRng = SeededRng.new(SeededRng.mix(SeededRng.case_seed(day_seed, index), SALT_CONTRACT + 100))
+				truth.post = banned.exempt_posts[post_rng.randi_range(0, banned.exempt_posts.size() - 1)]
+			_assign_employer_code(truth)
 
 
 func _has_rule(script: Script) -> bool:
@@ -580,3 +682,214 @@ func _draw_bribe(c: Case, anomalies: Array[Anomaly], rng: SeededRng) -> void:
 		var table: Dictionary = BRIBE_KEEP_EFFECTS[key]
 		item.effects[StringName(str(key))] = table.duplicate(true)
 	c.slipped_items.append(item)
+
+
+# ---------------------------------------------------------------------------
+# Acte II (docs/ACT2.md B20, B25, B28)
+# ---------------------------------------------------------------------------
+
+## Champs de l'Acte II du passager vrai : vaisseau (`DRV`), firmware d'un shunt
+## `NX-`, code employeur et poste (contrat), classe C-5 tolérée (asile). Flux
+## aléatoires propres (`SALT_FIRMWARE`, `SALT_CONTRACT`) : les tirages des
+## jours 1–10 sont inchangés.
+func _post_generate_act2(truth: Passenger, overrides: Dictionary, index: int) -> void:
+	var case_seed: int = SeededRng.case_seed(day_seed, index)
+	if truth.faction_id == &"drv" and not overrides.has(&"vessel"):
+		truth.vessel = truth.family_name.to_upper()
+	if not overrides.has(&"firmware_date") and truth.firmware_date == 0:
+		for code: String in truth.implants:
+			if code.begins_with(NX_PREFIX):
+				var firmware_rng: SeededRng = SeededRng.new(SeededRng.mix(case_seed, SALT_FIRMWARE))
+				truth.firmware_date = day.game_date - firmware_rng.randi_range(0, FIRMWARE_MAX_AGE)
+				break
+	var contract_rule: ContractConsistentRule = _contract_rule()
+	if contract_rule != null:
+		var contract_rng: SeededRng = SeededRng.new(SeededRng.mix(case_seed, SALT_CONTRACT))
+		if not overrides.has(&"post") and truth.post == &"" and not contract_rule.posts.is_empty():
+			truth.post = StringName(contract_rule.posts[contract_rng.randi_range(0, contract_rule.posts.size() - 1)])
+		if not overrides.has(&"employer_code"):
+			_assign_employer_code(truth)
+	if not overrides.has(&"citizen_class") and truth.citizen_class == ASYLUM_FROM_CLASS and _asylum_class_required(truth):
+		var class_rng: SeededRng = SeededRng.new(SeededRng.mix(case_seed, SALT_CONTRACT + 1))
+		if class_rng.chance(ASYLUM_C5_RATE):
+			truth.citizen_class = ASYLUM_CLASS
+
+
+func _contract_rule() -> ContractConsistentRule:
+	for rule: Rule in day.rule_set.rules:
+		if rule is ContractConsistentRule:
+			return rule as ContractConsistentRule
+	return null
+
+
+func _assign_employer_code(truth: Passenger) -> void:
+	var contract_rule: ContractConsistentRule = _contract_rule()
+	if contract_rule != null:
+		truth.employer_code = contract_rule.code_for(truth.employer)
+
+
+## Une règle active exige un document pour la classe C-5 de cette origine (R28).
+func _asylum_class_required(truth: Passenger) -> bool:
+	for rule: Rule in day.rule_set.rules:
+		if rule is RequireDocumentRule:
+			var require: RequireDocumentRule = rule
+			if require.applies_to_classes.has(ASYLUM_CLASS) and (require.applies_to_faction_ids.is_empty() \
+					or require.applies_to_faction_ids.has(truth.faction_id)):
+				return true
+	return false
+
+
+## `injected_value_from_case` : valeur du champ `field_path` du cas propre d'un
+## autre cas scénarisé du jour (SC-31/32 : permis échangés).
+func _resolve_params(params: Dictionary) -> Dictionary:
+	if not params.has(&"injected_value_from_case"):
+		return params
+	var resolved: Dictionary = params.duplicate()
+	var source: StringName = StringName(str(params[&"injected_value_from_case"]))
+	var path: StringName = StringName(str(params.get(&"field_path", "citizen_id")))
+	for scripted: ScriptedCaseDef in get_active_scripted_cases():
+		if scripted.id == source:
+			var other: GeneratedCase = build_clean(scripted.at_index)
+			if other != null and Passenger.has_truth_path(path):
+				resolved[&"injected_value"] = other.case.passenger_presented.get_truth(path)
+	resolved.erase(&"injected_value_from_case")
+	return resolved
+
+
+## Documents d'un tiers (SC-27) : valeurs imposées, `third_party`.
+func _add_third_party_documents(c: Case, truth: Passenger, scripted: ScriptedCaseDef, rng: SeededRng) -> void:
+	if scripted == null or scripted.third_party_documents.is_empty():
+		return
+	for key: Variant in scripted.third_party_documents:
+		var document_id: StringName = StringName(str(key))
+		var def: DocumentTypeDef = data.documents.get(document_id, null)
+		var spec: Variant = scripted.third_party_documents[key]
+		if def == null or not spec is Dictionary:
+			push_error("CaseBuilder: document de tiers « %s » invalide (%s)" % [document_id, scripted.id])
+			continue
+		var values: Dictionary = spec
+		var holder: Passenger = truth.copy()
+		var overrides: Dictionary = values.duplicate()
+		overrides.erase(&"serial")
+		holder.apply_overrides(overrides)
+		var doc: DocumentInstance = DocumentFactory.create(def, holder, day.game_date, rng.fork(SeededRng.hash_string(document_id)),
+				appearance_gen, false, 30)
+		if values.has(&"serial"):
+			doc.serial = str(values[&"serial"])
+		doc.third_party = true
+		c.documents.append(doc)
+
+
+## Ticket de file (R29, J16+) : ajouté si une `CurfewRule` est active et que
+## l'heure de présentation est connue (`presentation_minute` ≥ 0).
+func _add_queue_ticket(c: Case, truth: Passenger, rng: SeededRng) -> void:
+	if presentation_minute < 0 or not _has_rule(CurfewRule):
+		return
+	var def: DocumentTypeDef = data.documents.get(TICKET_DOCUMENT_ID, null)
+	if def == null:
+		return
+	var ticket: DocumentInstance = DocumentFactory.create(def, truth, day.game_date, rng, appearance_gen, false, 1)
+	ticket.presented_at = presentation_minute
+	c.documents.append(ticket)
+
+
+## Avis d'une personne absente de la file (visage tiré de la mémoire d'un cas
+## antérieur) : aucun passager ne correspond, les visages du jour en diffèrent.
+func _add_memory_notice(def: WantedNoticeDef) -> void:
+	var entry: Dictionary = _memory_entry(def.memory_case_id)
+	var remembered: PassengerAppearance = CaseMemory.appearance_of(entry)
+	if remembered == null:
+		return
+	var notice: WantedNotice = WantedNotice.new()
+	notice.id = def.id
+	notice.given_name = "" if def.faces_only else (def.given_name if not def.given_name.is_empty() else str(entry.get("given_name", "")))
+	notice.family_name = "" if def.faces_only else (def.family_name if not def.family_name.is_empty() else str(entry.get("family_name", "")))
+	notice.appearance = DocumentFactory.official_photo_of(remembered.without_visor())
+	notice.reason_key = def.reason_key
+	notice.case_index = -1
+	ctx.wanted.append(notice)
+
+
+## Liste des révocations (R30) : N° ID présentés par les passagers visés
+## (cas propres), puis leurres tirés du `day_seed`. Aucune autre carte du jour
+## ne porte ces numéros (tirages indépendants, 32⁴ × 10³ combinaisons).
+func _build_revocations() -> void:
+	for def: RevocationDef in day.revocations:
+		if def == null or not FlagCondition.check(def.condition, _flag_values):
+			continue
+		var index: int = def.at_index
+		var scripted: ScriptedCaseDef = null
+		if def.scripted_case_id != &"":
+			index = -1
+			for candidate: ScriptedCaseDef in get_active_scripted_cases():
+				if candidate.id == def.scripted_case_id:
+					scripted = candidate
+					index = candidate.at_index
+		if index < 0 or index >= day.passenger_count or wanted_indices.has(index):
+			continue
+		var generated: GeneratedCase = build_clean(index)
+		if generated == null:
+			continue
+		var presented: Passenger = generated.case.passenger_presented
+		var entry: RevokedEntry = RevokedEntry.new()
+		entry.id = def.id
+		entry.citizen_id = presented.citizen_id
+		entry.given_name = presented.given_name
+		entry.family_name = presented.family_name
+		entry.reason_key = def.reason_key
+		entry.case_index = index
+		ctx.revoked.append(entry)
+		if scripted == null:
+			revoked_indices.append(index)
+	if day.revoked_decoys <= 0:
+		return
+	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(day_seed, REVOKED_SALT))
+	var faction_ids: Array[StringName] = []
+	faction_ids.assign(data.factions.keys())
+	faction_ids.sort()
+	for n: int in day.revoked_decoys:
+		var faction: FactionDef = data.factions[faction_ids[rng.randi_range(0, faction_ids.size() - 1)]]
+		var entry: RevokedEntry = RevokedEntry.new()
+		entry.id = StringName("revoked_decoy_%d" % n)
+		entry.citizen_id = PassengerGenerator.make_citizen_id(rng, faction)
+		if faction.name_pool != null:
+			var sex: StringName = PassengerGenerator.SEXES[rng.randi_range(0, 1)]
+			entry.given_name = faction.name_pool.pick_given_name(rng, sex)
+			entry.family_name = faction.name_pool.pick_family_name(rng)
+		ctx.revoked.append(entry)
+
+
+## Dates imposées des documents d'un cas scénarisé (`document_dates`, SC-48).
+func _apply_document_dates(c: Case, scripted: ScriptedCaseDef) -> void:
+	if scripted == null or scripted.document_dates.is_empty():
+		return
+	for key: Variant in scripted.document_dates:
+		var doc: DocumentInstance = c.get_own_document(StringName(str(key)))
+		var spec: Variant = scripted.document_dates[key]
+		if doc == null or not spec is Dictionary:
+			continue
+		var dates: Dictionary = spec
+		if dates.has("issue"):
+			doc.issue_date = SaveService.as_int(dates["issue"])
+		if dates.has("expiry"):
+			doc.expiry_date = SaveService.as_int(dates["expiry"])
+
+
+## Violations du cas propre (contrôle §9.2 étape 4). Acte II : pour un cas
+## scénarisé, celles des règles qui détectent une anomalie **imposée** sont
+## admises (l'identité scénarisée porte déjà l'infraction : le Sillage de
+## Corvo, SC-33 — l'injecteur la confirme ensuite).
+func _clean_violations(c: Case, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kind]) -> int:
+	var violations: Array[Violation] = RuleEngine.validate(c, day.rule_set, _clean_ctx)
+	if scripted == null or forced.is_empty():
+		return violations.size()
+	var count: int = 0
+	for violation: Violation in violations:
+		var rule: Rule = day.rule_set.get_rule(violation.rule_id)
+		var explained: bool = false
+		if rule != null:
+			for kind: AnomalyType.Kind in forced:
+				explained = explained or rule.get_detectable_anomalies().has(kind)
+		if not explained:
+			count += 1
+	return count

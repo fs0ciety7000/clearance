@@ -57,3 +57,26 @@ extends Resource
 @export var luciole_codes: PackedInt32Array = []
 ## Étiquettes de dialogue supplémentaires (`luciole_password`…).
 @export var extra_tags: Array[StringName] = []
+
+@export_group("Acte II")
+## Condition d'activation (B25), en plus de `requires_flag` / `forbids_flags`.
+## Plusieurs définitions peuvent viser le même index : la **première** active
+## l'emporte (SC-35 a/b/c, SC-49, SC-50 a/b).
+@export var condition: FlagCondition = null
+## Visage fixé une fois pour toutes (Okonkwo, Ilan) : graine de
+## `AppearanceGenerator.generate` (0 = visage du roster).
+@export var fixed_appearance_seed: int = 0
+## Répliques conditionnelles (`ConditionalKey.replaces` = suffixe remplacé),
+## résolues sur les drapeaux du matin (`Case.line_overrides`).
+@export var line_variants: Array[ConditionalKey] = []
+## Documents d'un tiers (SC-27) : `{document_id: {truth_path: valeur}}` ; le
+## document est ajouté au dossier, marqué `third_party`, valeurs imposées
+## (`serial` accepté).
+@export var third_party_documents: Dictionary = {}
+## Répondre à la phrase de passe donne `lucioles_trust +1` (faux pour un
+## Brûlant, SC-47) ; `flags_on_password` posés à la réponse.
+@export var password_grants_trust: bool = true
+@export var flags_on_password: Dictionary[StringName, int] = {}
+## Dates imposées des documents du cas propre : `{document_id: {issue: jour,
+## expiry: jour}}` (`GameDate`), ex. SC-48 (carte qui expire aujourd'hui).
+@export var document_dates: Dictionary = {}

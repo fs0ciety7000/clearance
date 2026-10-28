@@ -1,6 +1,6 @@
 ## M7 — branchements minimaux de `day.tscn` (jeu jouable J1–J10 sans écrans
 ## dédiés) : le J10 démarre avec la mémoire des passagers (SC-22 a le visage
-## de SC-04) et publie l'avis de recherche ; il n'a pas de soirée (D-053) ;
+## de SC-04) et publie l'avis de recherche ; il a une soirée pivot (D-076) ;
 ## l'écran de fin affiche l'épilogue d'une fin M7.
 extends GutTest
 
@@ -36,7 +36,7 @@ func test_day_ten_starts_with_memory_and_wanted_notices() -> void:
 	assert_eq(scene.day_controller.day.day_number, 10)
 	assert_true(scene.day_controller.builder.memory.has("sc_04"), "mémoire recalculée (CaseMemory.recall)")
 	assert_eq(_notices.size(), 3, "avis de recherche publié avec le jour")
-	assert_false(Campaign.has_evening(scene.data), "pas de soirée au J10 (D-053)")
+	assert_true(Campaign.has_evening(scene.data), "soirée pivot au J10 (D-076)")
 	var mira: GeneratedCase = scene.day_controller.builder.build(10)
 	assert_eq(mira.scripted_id, &"sc_22")
 	assert_true(mira.case.passenger_presented.appearance.is_face_covered())

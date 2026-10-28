@@ -25,6 +25,11 @@ const WANTED_DOCUMENT_ID: StringName = &"__wanted__"
 const SYMBOLS_DOCUMENT_ID: StringName = &"__symbols__"
 ## Préfixe du champ d'une marque de document : `mark:<mark_id>`.
 const MARK_PREFIX: String = "mark:"
+## Acte II — onglet « Révocations » du Rulebook (R30) : `(__revoked__, <entry_id>)`.
+const REVOKED_DOCUMENT_ID: StringName = &"__revoked__"
+## Acte II — compteur QUOTA de la barre d'état (R23) : `(__counter__, quota)`.
+const COUNTER_DOCUMENT_ID: StringName = &"__counter__"
+const QUOTA_FIELD_ID: StringName = &"quota"
 
 var document_id: StringName = &""
 var field_id: StringName = &""
@@ -62,6 +67,24 @@ static func mark(p_document_id: StringName, mark_id: StringName) -> FieldRef:
 	return FieldRef.new(p_document_id, StringName(MARK_PREFIX + String(mark_id)))
 
 
+## Acte II — entrée de l'onglet Révocations (R30).
+static func revoked(entry_id: StringName) -> FieldRef:
+	return FieldRef.new(REVOKED_DOCUMENT_ID, entry_id)
+
+
+## Acte II — compteur QUOTA de la barre d'état (paire « Compteur ↔ R23 »).
+static func quota_counter() -> FieldRef:
+	return FieldRef.new(COUNTER_DOCUMENT_ID, QUOTA_FIELD_ID)
+
+
+func is_revoked() -> bool:
+	return document_id == REVOKED_DOCUMENT_ID
+
+
+func is_quota_counter() -> bool:
+	return document_id == COUNTER_DOCUMENT_ID and field_id == QUOTA_FIELD_ID
+
+
 func is_symbol() -> bool:
 	return document_id == SYMBOLS_DOCUMENT_ID
 
@@ -95,7 +118,8 @@ func is_rule() -> bool:
 ## Vrai pour un champ d'un vrai document du passager.
 func is_document_field() -> bool:
 	return document_id != PASSENGER_DOCUMENT_ID and document_id != RULEBOOK_DOCUMENT_ID \
-			and document_id != WANTED_DOCUMENT_ID and document_id != &""
+			and document_id != WANTED_DOCUMENT_ID and document_id != REVOKED_DOCUMENT_ID \
+			and document_id != COUNTER_DOCUMENT_ID and document_id != SYMBOLS_DOCUMENT_ID and document_id != &""
 
 
 func equals(other: FieldRef) -> bool:

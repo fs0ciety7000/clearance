@@ -40,6 +40,10 @@ const EXPECTED_SIGNALS: Dictionary = {
 	&"item_decided": 2,
 	&"wanted_notices_published": 1,
 	&"hall_announced": 1,
+	# Acte II (ARCHITECTURE §7.2).
+	&"quota_changed": 2,
+	&"revocations_published": 1,
+	&"scanner_suggested": 3,
 }
 
 

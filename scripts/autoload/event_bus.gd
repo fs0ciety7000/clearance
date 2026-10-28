@@ -28,6 +28,16 @@ signal day_phase_changed(phase: DayPhase.Kind, case_id: StringName)
 signal wanted_notices_published(notices: Array[WantedNotice])
 ## M7 — DayController (après le n-ième cas, `DayDef.hall_announcements`) → UI, audio.
 signal hall_announced(text_key: String)
+## Acte II — DayController (début du jour, après chaque tampon) → barre d'état
+## (compteur `QUOTA used/max`, « QUOTA ATTEINT » quand `used >= maximum`).
+## `maximum = 0` : pas de quota ce jour.
+signal quota_changed(used: int, maximum: int)
+## Acte II — DayController (après `day_started`) → Rulebook (onglet Révocations, R30).
+signal revocations_published(entries: Array[RevokedEntry])
+## Acte II — DayController (aux documents, si un scanner partiel est branché)
+## → plan de travail : liens suggérés (pointillés) à confirmer d'un clic
+## (`discrepancy_check_requested`). `source` : `acv` (Consortium) ou `luciole`.
+signal scanner_suggested(case_id: StringName, links: Array[Discrepancy], source: StringName)
 
 # --- Passager -----------------------------------------------------------------
 
