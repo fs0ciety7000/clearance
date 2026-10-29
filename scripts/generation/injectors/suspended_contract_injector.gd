@@ -16,8 +16,19 @@ func get_kind() -> AnomalyType.Kind:
 func inject(state: InjectionState) -> Anomaly:
 	for rule: Rule in active_rules(state, ContractSuspendedRule):
 		var lockout: ContractSuspendedRule = rule
-		if not lockout.faction_ids.has(Rule.visible_origin(state.case)) or state.ctx.has_valid_summons(state.case):
+		if (not lockout.any_origin and not lockout.faction_ids.has(Rule.visible_origin(state.case))) \
+				or state.ctx.has_valid_summons(state.case):
 			continue
+		# M12 (R42) : cadre de Kessler-Ashe (classe C-1 / C-2 lue sur la carte).
+		if not lockout.classes.is_empty() and not lockout.targets(state.case):
+			var class_field: StringName = field_for(state.case, lockout.card_id, &"citizen_class")
+			if class_field == &"" or not state.is_free(lockout.card_id, class_field):
+				continue
+			var cadre: StringName = lockout.classes[state.rng.randi_range(0, lockout.classes.size() - 1)]
+			state.case.get_own_document(lockout.card_id).set_value(class_field, cadre)
+			state.truth.citizen_class = cadre
+			state.case.passenger_presented.citizen_class = cadre
+			state.mark(lockout.card_id, class_field)
 		var contract: DocumentInstance = state.case.get_own_document(lockout.contract_id)
 		var code_field: StringName = field_for(state.case, lockout.contract_id, ContractSuspendedRule.CODE_PATH)
 		if contract == null or code_field == &"" or not state.is_free(lockout.contract_id, code_field) \
@@ -51,6 +62,8 @@ func inject(state: InjectionState) -> Anomaly:
 				state.mark(lockout.contract_id, serial_field)
 		state.mark(lockout.contract_id, code_field)
 		state.mark(lockout.card_id, field_for(state.case, lockout.card_id, &"faction_id"))
+		if not lockout.classes.is_empty():
+			state.mark(lockout.card_id, field_for(state.case, lockout.card_id, &"citizen_class"))
 		return make_anomaly(get_kind(), lockout.contract_id, code_field, original, code)
 	return null
 
@@ -58,6 +71,12 @@ func inject(state: InjectionState) -> Anomaly:
 ## Employeur du registre R25 portant ce code, vide sinon.
 static func _employer_of(state: InjectionState, code: String) -> String:
 	for rule: Rule in state.get_rule_set().rules:
+		# M12 (R42, sans R25) : registre recopié dans la règle des cadres.
+		var cadres: ContractSuspendedRule = rule as ContractSuspendedRule
+		if cadres != null and not cadres.employer_codes.is_empty():
+			for employer: String in cadres.employer_codes:
+				if cadres.employer_codes[employer] == code:
+					return employer
 		var consistent: ContractConsistentRule = rule as ContractConsistentRule
 		if consistent == null:
 			continue

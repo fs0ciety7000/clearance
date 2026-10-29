@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RevokedIdRule" format=3 uid="uid://1ajignca6g4h"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/revoked_id_rule.gd" id="1_olimr"]
+
+[resource]
+script = ExtResource("1_olimr")
+list_title_key = "rb_tab_council"
+honor_reinstatements = true
+id = &"r_ep_council_list"
+title_key = "r_ep_council_list_title"
+rulebook_text_key = "r_ep_council_list_text"
+category = 1

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="GardeUnitDef" format=3 uid="uid://b6j2dx172hie1"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_fylq3"]
+[ext_resource type="Resource" path="res://data/rules/rule_wanted_detain.tres" id="2_0h78u"]
+[ext_resource type="Script" path="res://scripts/core/garde_unit_def.gd" id="3_utg5l"]
+
+[resource]
+script = ExtResource("3_utg5l")
+id = &"u15"
+title_key = "garde_unit_u15"
+rules = Array[ExtResource("1_fylq3")]([ExtResource("2_0h78u")])
+tier = 3
+prerequisites = Array[StringName]([&"u11"])
+rulebook_tabs = PackedStringArray("wanted")
+renews_lists = PackedStringArray("wanted")

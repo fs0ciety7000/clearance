@@ -31,10 +31,11 @@ func inject(state: InjectionState) -> Anomaly:
 		if rule is DocumentNotExpiredRule and rule.get_detectable_anomalies().has(get_kind()):
 			var expiry_rule: DocumentNotExpiredRule = rule
 			rule_document = expiry_rule.document_id
-			max_age = expiry_rule.max_age_days
+			# M12 (EV-03) : âge maximal surchargé en cours de shift.
+			max_age = expiry_rule.effective_max_age(state.ctx, state.case)
 		elif rule is RequireDocumentRule and (rule as RequireDocumentRule).require_valid:
 			var require: RequireDocumentRule = rule
-			if not require.applies_to(state.case):
+			if not require.applies_to(state.case, state.ctx):
 				continue
 			rule_document = require.document_id
 		else:
@@ -58,6 +59,9 @@ func inject(state: InjectionState) -> Anomaly:
 	var doc: DocumentInstance = state.case.get_own_document(document_id)
 	var max_days: int = EARLY_DAYS_MAX if state.get_day_number() <= EARLY_DAY_LIMIT else LATE_DAYS_MAX
 	var days: int = maxi(state.param_int(&"expired_days", state.rng.randi_range(1, max_days)), 1)
+	# M12 (Garde, anomalie subtile) : expiré la veille.
+	if state.param_bool(CaseBuilder.SUBTLE_PARAM, false):
+		days = 1
 	var today: int = state.ctx.today
 	var duration: int = doc.expiry_date - doc.issue_date
 	var anomaly: Anomaly

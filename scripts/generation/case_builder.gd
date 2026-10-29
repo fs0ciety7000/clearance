@@ -92,6 +92,20 @@ const LUCIOLE_CODE_DAYS: Dictionary[int, int] = {1: 3, 2: 5, 3: 5, 4: 7, 5: 4, 6
 ## Effets d'une enveloppe générée gardée (GDD §5.5).
 const BRIBE_KEEP_EFFECTS: Dictionary = {&"keep": {&"suspicion": 1}}
 const ENVELOPE_LABEL_KEY: String = "wb_envelope_label"
+## M12 (R39) : carte de répondant (monde B de l'épilogue).
+const SPONSOR_CARD_ID: StringName = &"sponsor_card"
+## M12 (R41) : part des bio-scans de ressortissants de Tycho émis par un
+## émetteur agréé autre que celui du type (Dispensaire de Tycho, monde D).
+const ALT_ISSUER_RATE: float = 0.6
+const SALT_ISSUER: int = 15
+const SALT_SUBTLE: int = 17
+## M12 : paramètre d'injection « anomalie subtile » (Garde, `DayDef.subtle_rate`).
+const SUBTLE_PARAM: StringName = &"subtle"
+## M12 : fenêtre d'exercice d'une directive de Garde (passagers qui la suivent).
+const EXERCISE_WINDOW: int = 5
+const EXERCISE_SALT: String = "garde_exercise"
+const LISTS_SALT: String = "garde_lists"
+const STOLEN_SALT: String = "stolen_list"
 
 var data: DataCatalog = null
 var day: DayDef = null
@@ -128,6 +142,23 @@ var _no_family: Array[int] = []
 var _clean_ids: Dictionary[int, String] = {}
 var _active: Array[ScriptedCaseDef] = []
 var _active_ready: bool = false
+## M12 : nombre de passagers déjà construits par `build` (le prochain est cet
+## index) — situe les changements de règles appliqués juste avant lui.
+var _built_count: int = 0
+## M12 : passagers générés imposés (exercice d'une directive de Garde, porteurs
+## d'une liste nommée) : index → `{kinds, params, overrides, visor, rule_id}`.
+var _forced: Dictionary[int, Dictionary] = {}
+## M12 : types exclus du tirage d'un passager (au plus 3 violations de la règle
+## nouvelle dans les 5 passagers qui suivent une directive) : index → types.
+var _excluded_kinds: Dictionary[int, Array] = {}
+## M12 : listes renouvelées par le dernier `on_rules_changed` (`wanted`,
+## `revoked`, `stolen`…), à republier par le `DayController`.
+var changed_lists: PackedStringArray = []
+## M12 : essai d'un cas imposé (exercice) — erreurs consignées sans `push_error`.
+var _probing: bool = false
+## M12 : règles retirées par un événement de station (motif `sev_*`) : leur
+## rétablissement n'est pas une directive (pas d'exercice ni de listes).
+var _event_retired: Array[StringName] = []
 
 
 ## `p_flag_values` (Acte II) : valeurs des drapeaux et jauges (conditions des
@@ -142,6 +173,7 @@ func _init(p_data: DataCatalog, p_day: DayDef, p_day_seed: int, p_flags: Array[S
 	_flag_values = FlagCondition.from_true_flags(flags)
 	for flag: StringName in p_flag_values:
 		_flag_values[flag] = p_flag_values[flag]
+	_apply_rule_replacements()
 	ctx = RuleContext.for_day(day, data.factions, data.documents)
 	if data.appearance_catalog != null:
 		ctx.identity_slots = data.appearance_catalog.get_identity_slots()
@@ -175,6 +207,26 @@ func get_revocations() -> Array[RevokedEntry]:
 ## Valeurs des drapeaux narratifs vues par ce jour (conditions).
 func get_flag_values() -> Dictionary[StringName, Variant]:
 	return _flag_values
+
+
+## M12 (SC-89a) : règles remplacées pour tout le jour par un cas scénarisé actif
+## (`ScriptedCaseDef.rule_replacements`) — sur une copie de shift du jour
+## (`DayDef.make_shift_copy`, ou celle que le `DayController` a fournie), jamais
+## sur le `.tres` partagé : retrait de la règle d'origine puis ajout de la
+## variante du cas, au même rang (sans badge NOUVEAU).
+func _apply_rule_replacements() -> void:
+	var replacements: Array[Rule] = []
+	for scripted: ScriptedCaseDef in _compute_active_scripted_cases():
+		for rule: Rule in scripted.rule_replacements:
+			if rule != null and day.rule_set != null and day.rule_set.has_rule(rule.id):
+				replacements.append(rule)
+	if replacements.is_empty():
+		return
+	if not day.rule_set.is_shift_copy:
+		day = day.make_shift_copy()
+	for rule: Rule in replacements:
+		var changes: Array[RuleChangeDef] = [RuleChangeDef.retire(rule.id), RuleChangeDef.add(rule, false)]
+		day.rule_set.apply_changes(changes, StringName("scripted_%s" % rule.id))
 
 
 ## Cas scénarisés du jour dont le drapeau requis est satisfait (Acte II : et
@@ -255,11 +307,52 @@ func build_day() -> Array[GeneratedCase]:
 	return result
 
 
+## M12 (EV-06 « Foule nerveuse », Garde) : la file s'allonge en cours de shift
+## (`day.passenger_count` augmenté par le `DayController`) — le roster suit,
+## avec les tirages de chaque nouvel index (entrées existantes inchangées).
+func ensure_capacity() -> void:
+	if roster == null or day.passenger_count <= roster.size():
+		return
+	var old_size: int = roster.size()
+	appearance_gen.extend_day_roster(roster, day.passenger_count, day.faction_weights, day.game_date)
+	# Hors du plan du jour (répondants, R34/R37) : jamais en visite familiale ;
+	# une origine fermée sauf répondant (R37) devient née-Halcyon.
+	for i: int in range(old_size, roster.size()):
+		_no_family.append(i)
+		for rule: Rule in day.rule_set.rules:
+			var banned: FactionBannedRule = rule as FactionBannedRule
+			if banned != null and banned.exempt_if_sponsored and banned.exempt_posts.is_empty() \
+					and banned.exempt_purposes.is_empty() and banned.is_banned_origin(roster.get_entry(i).faction_id):
+				roster.get_entry(i).faction_id = &"hal"
+
+
+## M12 (EV-06) : la file passe à `count` passagers (jamais moins) ; le
+## roster suit. Le `DayController` peut aussi augmenter `day.passenger_count`
+## directement : `build` étend alors le roster de lui-même.
+func extend_queue(count: int) -> void:
+	if count > day.passenger_count:
+		day.passenger_count = count
+	ensure_capacity()
+
+
 ## Cas `index` du jour (scénarisé s'il y a lieu, sinon tirage selon le `DayDef`).
 func build(index: int) -> GeneratedCase:
+	_built_count = maxi(_built_count, index + 1)
 	var scripted: ScriptedCaseDef = get_scripted_case(index)
 	if scripted != null:
 		return _build(index, scripted, scripted.forced_anomalies, scripted.injection_params, true)
+	# M12 : passager imposé (exercice d'une directive, porteur d'une liste
+	# nommée) — sauf si ses types ne sont plus détectables (règle retirée entre
+	# la directive et sa présentation : tirage ordinaire).
+	if _forced.has(index):
+		var spec: Dictionary = _forced[index]
+		var forced_kinds: Array[AnomalyType.Kind] = _kinds_of(spec)
+		var still: bool = true
+		for kind: AnomalyType.Kind in forced_kinds:
+			still = still and day.rule_set.can_detect(kind)
+		if still:
+			return _build(index, null, forced_kinds, spec.get("params", {}), true)
+		_forced.erase(index)
 	if wanted_indices.has(index):
 		return _build(index, null, [AnomalyType.Kind.WANTED_PERSON], {}, true)
 	if revoked_indices.has(index):
@@ -285,14 +378,21 @@ func build_with(index: int, anomalies: Array[AnomalyType.Kind], params: Dictiona
 func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kind], params: Dictionary,
 		exact: bool) -> GeneratedCase:
 	var result: GeneratedCase = GeneratedCase.new()
+	ensure_capacity()
 	var entry: AppearanceRoster.Entry = roster.get_entry(index)
 	if entry == null:
 		return null
 	var case_seed: int = SeededRng.case_seed(day_seed, index)
 	var rng: SeededRng = SeededRng.new(case_seed)
 	var overrides: Dictionary = _overrides_for(scripted)
+	if scripted == null and _forced.has(index):
+		overrides = _forced[index].get("overrides", {})
 	if not forced.is_empty():
 		params = _resolve_params(params)
+	elif not exact and scripted == null and day.subtle_rate > 0.0 and ctx.modifier(RuleChangeDef.MOD_NO_SUBTLE) <= 0 \
+			and rng.fork(SALT_SUBTLE).chance(day.subtle_rate):
+		# M12 (Garde, §2.5) : anomalies plus fines (veille, un caractère, diacritique).
+		params = {SUBTLE_PARAM: true}
 	var faction: FactionDef = data.factions.get(entry.faction_id, null)
 	if faction == null:
 		push_error("CaseBuilder: origine inconnue « %s » (jour %d, cas %d)" % [entry.faction_id, day.day_number, index])
@@ -323,12 +423,14 @@ func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kin
 		c.case_seed = case_seed
 		result.clean_attempts = attempt + 1
 		_apply_document_dates(c, scripted)
+		_apply_issuers(c, truth, scripted, attempt_rng.fork(SALT_ISSUER))
+		_apply_shift_overrides(c, truth, attempt_rng.fork(SALT_ISSUER + 1))
 		# Cas scénarisé : ses anomalies imposées expliquent aussi le contrôle de
 		# `build_clean` (avis de recherche de Mira, SC-82b, fermée par R37).
 		result.clean_violation_count = _clean_violations(c, scripted, scripted.forced_anomalies if scripted != null else forced)
 		if result.clean_violation_count == 0:
 			break
-		if attempt == MAX_CLEAN_ATTEMPTS - 1:
+		if attempt == MAX_CLEAN_ATTEMPTS - 1 and not _probing:
 			push_error("CaseBuilder: aucun cas propre après %d essais (jour %d, cas %d, seed %d) : %s"
 					% [MAX_CLEAN_ATTEMPTS, day.day_number, index, case_seed,
 					_clean_violation_ids(c, scripted, scripted.forced_anomalies if scripted != null else forced)])
@@ -356,9 +458,11 @@ func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kin
 		result.requested_anomalies = forced.size()
 		for kind: AnomalyType.Kind in forced:
 			var anomaly: Anomaly = _inject(kind, state)
-			if anomaly == null:
+			if anomaly == null and not _probing:
 				push_error("CaseBuilder: anomalie imposée %s impossible (jour %d, cas %d)"
 						% [AnomalyType.name_of(kind), day.day_number, index])
+			elif anomaly == null:
+				result.invariant_errors.append("anomalie imposée %s impossible" % AnomalyType.name_of(kind))
 			else:
 				anomalies.append(anomaly)
 	else:
@@ -379,6 +483,10 @@ func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kin
 		if noise_rng.chance(minf(rate, VISOR_RATE_CAP)):
 			truth.appearance.traits[PassengerAppearance.SLOT_HEADWEAR] = PassengerAppearance.VISOR_DOWN
 			c.passenger_presented.appearance.traits[PassengerAppearance.SLOT_HEADWEAR] = PassengerAppearance.VISOR_DOWN
+	if scripted == null and _forced.has(index) and bool(_forced[index].get("visor", false)):
+		# M12 : exercice de R06 (visage découvert) — visière baissée.
+		truth.appearance.traits[PassengerAppearance.SLOT_HEADWEAR] = PassengerAppearance.VISOR_DOWN
+		c.passenger_presented.appearance.traits[PassengerAppearance.SLOT_HEADWEAR] = PassengerAppearance.VISOR_DOWN
 	result.visor_down = c.passenger_presented.appearance.is_face_covered()
 	if scripted != null and scripted.dialogue_id != &"":
 		c.dialogue_tags.append(scripted.dialogue_id)
@@ -404,8 +512,8 @@ func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kin
 	# 7. Clé calculée sur le cas final, invariants.
 	result.case = c
 	result.key = RuleEngine.build_case_key(c, truth, anomalies, day.rule_set, ctx)
-	result.invariant_errors = check_invariants(result, ctx)
-	if not result.invariant_errors.is_empty():
+	result.invariant_errors.append_array(check_invariants(result, ctx))
+	if not result.invariant_errors.is_empty() and not _probing:
 		push_error("CaseBuilder: invariants violés (jour %d, cas %d, seed %d) : %s"
 				% [day.day_number, index, case_seed, "; ".join(result.invariant_errors)])
 	return result
@@ -453,12 +561,35 @@ func required_documents_for(faction_id: StringName) -> Array[StringName]:
 ## puis règles conditionnées au motif du permis (R24) ou à la classe (R28).
 func required_documents_for_passenger(p: Passenger) -> Array[StringName]:
 	var ids: Array[StringName] = required_documents_for(p.faction_id)
+	# M12 (R39) : un·e protégé·e porteur d'un répondant présente une carte de
+	# répondant au lieu du permis.
+	for rule: Rule in day.rule_set.rules:
+		var welcome: RequireDocumentRule = rule as RequireDocumentRule
+		if welcome != null and welcome.exempt_if_sponsor and not p.sponsor_id.is_empty() and ids.has(welcome.document_id):
+			ids.erase(welcome.document_id)
+			if data.documents.has(SPONSOR_CARD_ID) and not ids.has(SPONSOR_CARD_ID):
+				ids.append(SPONSOR_CARD_ID)
 	var has_permit: bool = ids.has(&"entry_permit")
 	for rule: Rule in day.rule_set.rules:
 		if rule is RequireDocumentRule:
 			var require: RequireDocumentRule = rule
 			if require.is_conditional() and not ids.has(require.document_id) and require.requires_for(p, has_permit):
 				ids.append(require.document_id)
+	# M12 (R42, monde D sans permis ni R24) : un passager au motif TRAVAIL
+	# présente son contrat (« contrat éventuel »).
+	var cadres: ContractSuspendedRule = _rule_of(ContractSuspendedRule) as ContractSuspendedRule
+	if cadres != null and cadres.any_origin and p.purpose == Passenger.PURPOSE_WORK and not ids.has(cadres.contract_id) \
+			and not p.employer.is_empty():
+		ids.append(cadres.contract_id)
+	# M12 (B54, EV-08) : document dispensé par une surcharge de shift en vigueur
+	# (TRANSIT sans bio-scan de 13:00 à 14:00) — jamais produit dans ce cas.
+	if ctx != null and day.rule_set.is_shift_copy:
+		for rule: Rule in day.rule_set.rules:
+			var exempted: RequireDocumentRule = rule as RequireDocumentRule
+			if exempted != null and ids.has(exempted.document_id) \
+					and day.rule_set.get_param(exempted.id, RequireDocumentRule.PARAM_EXEMPT, false, p.faction_id, p.purpose,
+					ctx.now_minute if ctx.now_minute >= 0 else presentation_minute) == true:
+				ids.erase(exempted.document_id)
 	return ids
 
 
@@ -474,8 +605,14 @@ func get_drawable_kinds() -> Array[AnomalyType.Kind]:
 func _inject_random(state: InjectionState, result: GeneratedCase) -> Array[Anomaly]:
 	var anomalies: Array[Anomaly] = []
 	var count: int = maxi(state.rng.weighted_index(day.anomaly_count_weights), 0)
+	# M12 (classe B, D-129 règle 4) : au plus `max_anomalies` par passager.
+	var cap: int = ctx.modifier(RuleChangeDef.MOD_MAX_ANOMALIES)
+	if cap > 0:
+		count = mini(count, cap)
 	result.requested_anomalies = count
 	var candidates: Array[AnomalyType.Kind] = get_drawable_kinds()
+	for excluded: Variant in _excluded_kinds.get(state.case.index, []):
+		candidates.erase(excluded)
 	for n: int in count:
 		while not candidates.is_empty():
 			var weights: PackedFloat32Array = []
@@ -554,7 +691,7 @@ static func _is_proven(anomaly: Anomaly, violations: Array[Violation], p_ctx: Ru
 func _overrides_for(scripted: ScriptedCaseDef, with_sponsor: bool = true) -> Dictionary:
 	if scripted == null:
 		return {}
-	var sponsored: bool = with_sponsor and scripted.sponsor_case_id != &""
+	var sponsored: bool = with_sponsor and (scripted.sponsor_case_id != &"" or scripted.sponsor_index >= 0)
 	if scripted.identity_from_case == &"" and not sponsored:
 		return scripted.passenger_overrides
 	var result: Dictionary = {}
@@ -562,10 +699,13 @@ func _overrides_for(scripted: ScriptedCaseDef, with_sponsor: bool = true) -> Dic
 		result = CaseMemory.identity_overrides(_memory_entry(scripted.identity_from_case))
 	for key: Variant in scripted.passenger_overrides:
 		result[key] = scripted.passenger_overrides[key]
-	if sponsored:
+	if sponsored and scripted.sponsor_case_id != &"":
 		var sponsor: ScriptedCaseDef = _find_in(get_active_scripted_cases(), scripted.sponsor_case_id)
 		if sponsor != null:
 			result[&"sponsor_id"] = peek_citizen_id(sponsor.at_index)
+	elif sponsored and scripted.sponsor_index >= 0:
+		# M12 (SC-95) : répondant généré plus tôt dans la file.
+		result[&"sponsor_id"] = peek_citizen_id(scripted.sponsor_index)
 	return result
 
 
@@ -586,6 +726,9 @@ func _apply_continuity() -> void:
 			var fixed_faction: StringName = StringName(str(_overrides_for(scripted, false).get(&"faction_id", &"tyc")))
 			remembered = appearance_gen.generate(SeededRng.new(scripted.fixed_appearance_seed), fixed_faction)
 			remembered.traits[PassengerAppearance.SLOT_HEADWEAR] = PassengerAppearance.OPTION_NONE
+		elif scripted.appearance_from_photo != &"":
+			# M12 (SC-84b, B59) : visage de la photo présentée par un cas antérieur.
+			remembered = _photo_appearance(scripted.appearance_from_photo)
 		elif source == &"":
 			continue
 		else:
@@ -603,6 +746,15 @@ func _apply_continuity() -> void:
 		var faction: Variant = _overrides_for(scripted, false).get(&"faction_id", null)
 		if faction != null:
 			roster_entry.faction_id = StringName(str(faction))
+
+
+## M12 (B59) : apparence de la photo présentée par un cas antérieur
+## (`CaseMemory.photo_appearance_of`, lot A) ; null si absente (visage du roster).
+func _photo_appearance(scripted_id: StringName) -> PassengerAppearance:
+	var entry: Dictionary = _memory_entry(scripted_id)
+	if entry.is_empty():
+		return null
+	return CaseMemory.photo_appearance_of(entry)
 
 
 ## Avis de recherche : identité et portrait des passagers visés, calculés
@@ -687,6 +839,10 @@ func _post_generate(truth: Passenger, faction: FactionDef, overrides: Dictionary
 		return
 	for rule: Rule in day.rule_set.rules:
 		var banned: FactionBannedRule = rule as FactionBannedRule
+		# M12 (R38) : ressortissant de Tycho en règle = contrat Kessler-Ashe valide.
+		if banned != null and not banned.exempt_contract_codes.is_empty() and banned.is_banned_origin(truth.faction_id):
+			_give_exempt_contract(truth, banned, overrides)
+			continue
 		# Acte III : protégé·e d'un répondant (R31, R37) ou convoqué·e (R36) : exempté·e.
 		if banned != null and ((banned.exempt_if_sponsored and not truth.sponsor_id.is_empty())
 				or (banned.summons_exempt and not truth.summons_id.is_empty())):
@@ -701,6 +857,26 @@ func _post_generate(truth: Passenger, faction: FactionDef, overrides: Dictionary
 				var post_rng: SeededRng = SeededRng.new(SeededRng.mix(SeededRng.case_seed(day_seed, index), SALT_CONTRACT + 100))
 				truth.post = banned.exempt_posts[post_rng.randi_range(0, banned.exempt_posts.size() - 1)]
 			_assign_employer_code(truth)
+
+
+## M12 (R38) : motif TRAVAIL et employeur au code exempté (`KA`) ; le contrat
+## est produit par R24 (motif TRAVAIL). Surcharges explicites respectées
+## (SC-93a : Dora en VISITE FAMILIALE, refusée par R38).
+func _give_exempt_contract(truth: Passenger, banned: FactionBannedRule, overrides: Dictionary) -> void:
+	if overrides.has(&"purpose") and truth.purpose != Passenger.PURPOSE_WORK:
+		return
+	truth.purpose = Passenger.PURPOSE_WORK
+	if overrides.has(&"employer"):
+		_assign_employer_code(truth)
+		return
+	var contract_rule: ContractConsistentRule = _contract_rule()
+	if contract_rule == null:
+		return
+	for employer: String in contract_rule.employer_codes:
+		if banned.exempt_contract_codes.has(contract_rule.employer_codes[employer]):
+			truth.employer = employer
+			truth.employer_code = contract_rule.employer_codes[employer]
+			return
 
 
 func _has_rule(script: Script) -> bool:
@@ -818,6 +994,9 @@ func _post_generate_act2(truth: Passenger, overrides: Dictionary, index: int) ->
 				truth.firmware_date = day.game_date - firmware_rng.randi_range(0, FIRMWARE_MAX_AGE)
 				break
 	var contract_rule: ContractConsistentRule = _contract_rule()
+	if contract_rule == null and not overrides.has(&"employer_code"):
+		# M12 (R42) : code employeur sans R25 (monde D).
+		_assign_employer_code(truth)
 	if contract_rule != null:
 		var contract_rng: SeededRng = SeededRng.new(SeededRng.mix(case_seed, SALT_CONTRACT))
 		if not overrides.has(&"post") and truth.post == &"" and not contract_rule.posts.is_empty():
@@ -842,6 +1021,11 @@ func _assign_employer_code(truth: Passenger) -> void:
 	var contract_rule: ContractConsistentRule = _contract_rule()
 	if contract_rule != null:
 		truth.employer_code = contract_rule.code_for(truth.employer)
+		return
+	# M12 (R42, monde D sans R25) : registre recopié dans la règle des cadres.
+	var cadres: ContractSuspendedRule = _rule_of(ContractSuspendedRule) as ContractSuspendedRule
+	if cadres != null and not cadres.employer_codes.is_empty():
+		truth.employer_code = cadres.employer_codes.get(truth.employer, "00")
 
 
 ## Une règle active exige un document pour la classe C-5 de cette origine (R28).
@@ -1000,6 +1184,57 @@ func _apply_document_dates(c: Case, scripted: ScriptedCaseDef) -> void:
 			doc.expiry_date = SaveService.as_int(dates["expiry"])
 
 
+## M12 : émetteurs imposés d'un cas scénarisé (`document_issuers`, SC-101) ;
+## R41 (monde D) : bio-scan d'un ressortissant de Tycho généré émis par un autre
+## émetteur agréé que celui du type (Dispensaire de Tycho), `ALT_ISSUER_RATE`.
+func _apply_issuers(c: Case, truth: Passenger, scripted: ScriptedCaseDef, rng: SeededRng) -> void:
+	if scripted != null and not scripted.document_issuers.is_empty():
+		for key: Variant in scripted.document_issuers:
+			var doc: DocumentInstance = c.get_own_document(StringName(str(key)))
+			if doc != null:
+				doc.issuer_id = StringName(str(scripted.document_issuers[key]))
+		return
+	if scripted != null or truth.faction_id != &"tyc":
+		return
+	for rule: Rule in day.rule_set.rules:
+		var issuer_rule: IssuerAllowedRule = rule as IssuerAllowedRule
+		if issuer_rule == null or issuer_rule.allowed_issuer_ids.size() < 2:
+			continue
+		var doc: DocumentInstance = c.get_own_document(issuer_rule.document_id)
+		if doc == null or doc.type_def == null:
+			continue
+		var others: Array[StringName] = []
+		for issuer: StringName in issuer_rule.allowed_issuer_ids:
+			if issuer != doc.type_def.issuer_id:
+				others.append(issuer)
+		if not others.is_empty() and rng.chance(ALT_ISSUER_RATE):
+			doc.issuer_id = others[rng.randi_range(0, others.size() - 1)]
+
+
+## M12 (B54, événements de station) : un document propre respecte les
+## surcharges de shift en vigueur — bio-scan d'un ressortissant de Tycho émis
+## il y a moins de 7 jours pendant l'alerte de quarantaine (EV-03, `max_age_days`
+## surchargé). Sans copie de shift : rien (tirages inchangés).
+func _apply_shift_overrides(c: Case, truth: Passenger, rng: SeededRng) -> void:
+	if not day.rule_set.is_shift_copy:
+		return
+	for rule: Rule in day.rule_set.rules:
+		var age_rule: DocumentNotExpiredRule = rule as DocumentNotExpiredRule
+		if age_rule == null or age_rule.max_age_days <= 0 or age_rule.field_path != &"":
+			continue
+		var limit: Variant = day.rule_set.get_param(age_rule.id, &"max_age_days", age_rule.max_age_days, truth.faction_id,
+				truth.purpose, ctx.now_minute if ctx != null else -1)
+		if not limit is int:
+			continue
+		var max_age: int = limit
+		var doc: DocumentInstance = c.get_own_document(age_rule.document_id)
+		if doc == null or max_age <= 0 or day.game_date - doc.issue_date < max_age:
+			continue
+		var duration: int = doc.expiry_date - doc.issue_date
+		doc.issue_date = day.game_date - rng.randi_range(0, max_age - 1)
+		doc.expiry_date = doc.issue_date + duration
+
+
 ## Violations du cas propre (contrôle §9.2 étape 4). Acte II : pour un cas
 ## scénarisé, celles des règles qui détectent une anomalie **imposée** sont
 ## admises (l'identité scénarisée porte déjà l'infraction : le Sillage de
@@ -1014,6 +1249,11 @@ func _clean_violation_ids(c: Case, scripted: ScriptedCaseDef, forced: Array[Anom
 	var ids: Array[StringName] = []
 	for violation: Violation in violations:
 		var rule: Rule = day.rule_set.get_rule(violation.rule_id)
+		# M12 : une liste nommée du shift (cartes volées, EV-07) est calculée
+		# depuis les cas propres eux-mêmes (comme les avis, D-056) : ignorée ici.
+		var listed: RevokedIdRule = rule as RevokedIdRule
+		if listed != null and listed.list_label != &"" and listed.list_label != &"revoked":
+			continue
 		var explained: bool = false
 		if rule != null and scripted != null:
 			for kind: AnomalyType.Kind in forced:
@@ -1081,7 +1321,7 @@ func sponsor_index_of(index: int) -> int:
 ## (D-087). Renvoie l'entrée ajoutée, ou null. Appelé par le `DayController`
 ## et le `DaySimulator` après chaque tampon (et par `build_day`).
 func record_verdict(case: Case, verdict: VerdictKind.Kind) -> LedgerEntry:
-	if case == null or verdict != VerdictKind.Kind.APPROVE or SponsorRule.find_in(day.rule_set) == null:
+	if case == null or verdict != VerdictKind.Kind.APPROVE or not SponsorRule.keeps_ledger(day.rule_set):
 		return null
 	var faction: Variant = PurposeConsistentRule._value(case, &"id_card", &"faction_id")
 	var citizen_class: Variant = PurposeConsistentRule._value(case, &"id_card", &"citizen_class")
@@ -1146,9 +1386,18 @@ func _plan_act3() -> void:
 				var rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.mix(day_seed, i), SUMMONS_SALT))
 				if rng.chance(day.summons_rate):
 					summoned_numbers[i] = _summons_number(i)
-	# 2. Répondants (R34) : liens imposés, puis plan générique.
-	if SponsorRule.find_in(day.rule_set) == null:
+	# 2. Répondants (R34 ; M12 : R39) : liens imposés, puis plan générique.
+	if not SponsorRule.keeps_ledger(day.rule_set):
 		return
+	# M12 (SC-95) : répondants générés désignés par un cas scénarisé (`sponsor_index`).
+	for scripted: ScriptedCaseDef in _active:
+		var forced_sponsor: int = scripted.sponsor_index
+		if forced_sponsor < 0 or forced_sponsor >= day.passenger_count or special.has(forced_sponsor):
+			continue
+		if not sponsor_indices.has(forced_sponsor):
+			sponsor_indices.append(forced_sponsor)
+		roster.get_entry(forced_sponsor).faction_id = &"hal"
+		reserved.append(forced_sponsor)
 	var forced_factions: Array[StringName] = []
 	var blocked_factions: Array[StringName] = []
 	for rule: Rule in day.rule_set.rules:
@@ -1212,7 +1461,7 @@ func _plan_act3() -> void:
 			continue
 		wards[i] = sponsor
 		load[sponsor] = load.get(sponsor, 0) + 1
-	# Répondants générés effectivement sollicités.
+	# Répondants générés effectivement sollicités (et désignés, M12).
 	for ward: int in wards:
 		var sponsor_index: int = wards[ward]
 		if get_scripted_case(sponsor_index) == null and not sponsor_indices.has(sponsor_index):
@@ -1278,11 +1527,14 @@ func _post_generate_act3(truth: Passenger, faction: FactionDef, index: int) -> v
 		truth.citizen_class = &"C-3"
 	# R35 : aucun ressortissant de Tycho généré en règle avec un contrat CT-KA.
 	var lockout: ContractSuspendedRule = _rule_of(ContractSuspendedRule) as ContractSuspendedRule
-	if lockout != null and not summoned_numbers.has(index) and lockout.suspends(truth.faction_id, truth.employer_code):
+	if lockout != null and not summoned_numbers.has(index) \
+			and lockout.suspends(truth.faction_id, truth.employer_code, truth.citizen_class):
 		var others: PackedStringArray = []
 		var contract_rule: ContractConsistentRule = _contract_rule()
 		for employer: String in faction.employers:
-			if contract_rule == null or not lockout.suspended_codes.has(contract_rule.code_for(employer)):
+			var code: String = contract_rule.code_for(employer) if contract_rule != null \
+					else str(lockout.employer_codes.get(employer, ""))
+			if not lockout.suspended_codes.has(code):
 				others.append(employer)
 		if not others.is_empty():
 			var employer_rng: SeededRng = SeededRng.new(SeededRng.mix(case_seed, SALT_PLAN + 1))
@@ -1427,3 +1679,350 @@ func _expiry_checked(document_id: StringName) -> bool:
 		if require != null and require.require_valid and require.document_id == document_id:
 			return true
 	return false
+
+
+# ---------------------------------------------------------------------------
+# M12 (B54, B56, B58) : règles mutées en cours de shift, Garde, événements
+# ---------------------------------------------------------------------------
+
+## Crochet du `DayController` (ARCHITECTURE §11.3) après chaque différence de
+## règles appliquée, juste avant de construire le passager `_built_count` :
+## - liste nommée d'une règle ajoutée (EV-07 « Cartes volées ») : porteurs
+##   parmi les passagers suivants, plus des leurres (`ctx.set_list`) ;
+## - Garde de nuit : avis et révocations renouvelés à chaque directive
+##   (U15, U20 ; D-056 : avant les passagers visés) et **exercice garanti** de
+##   la règle nouvelle (1 ou 2 des 5 passagers suivants la violent, aucun
+##   autre tirage de ses types : au plus 3).
+## `changed_lists` nomme les listes à republier (`wanted`, `revoked`, `stolen`).
+func on_rules_changed(diff: RuleDiff) -> void:
+	changed_lists = PackedStringArray()
+	if diff == null:
+		return
+	var start: int = _built_count
+	for rule_id: StringName in diff.retired:
+		if str(day.rule_set.retired_note_keys.get(rule_id, "")).begins_with("sev_") and not _event_retired.has(rule_id):
+			_event_retired.append(rule_id)
+	var fresh: Array[Rule] = []
+	var ids: Array[StringName] = diff.added.duplicate()
+	for rule_id: StringName in diff.restored:
+		if _event_retired.has(rule_id):
+			_event_retired.erase(rule_id)
+		else:
+			ids.append(rule_id)
+	for rule_id: StringName in ids:
+		var rule: Rule = day.rule_set.get_rule(rule_id)
+		if rule == null:
+			continue
+		var listed: RevokedIdRule = rule as RevokedIdRule
+		if listed != null and listed.list_label != &"" and listed.list_label != &"revoked":
+			_publish_named_list(listed, start)
+			continue
+		fresh.append(rule)
+	if day.mode != DayDef.MODE_GARDE or fresh.is_empty():
+		return
+	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.mix(day_seed, start), EXERCISE_SALT))
+	var carriers: Array[int] = _renew_garde_lists(start, fresh, rng)
+	_plan_exercise(fresh, start, carriers, rng)
+
+
+## Index libres de la fenêtre `[start, start + size)` (ni scénarisés, ni imposés,
+## ni porteurs d'un avis ou d'une révocation), dans l'ordre.
+func _free_window(start: int, size: int) -> Array[int]:
+	var result: Array[int] = []
+	for i: int in range(start, mini(start + size, day.passenger_count)):
+		if get_scripted_case(i) != null or _forced.has(i) or wanted_indices.has(i) or revoked_indices.has(i):
+			continue
+		result.append(i)
+	return result
+
+
+## EV-07 : bulletin de `list_size` N° ID (un ou deux porteurs parmi les dix
+## passagers suivants, après le premier ; leurres sinon).
+func _publish_named_list(rule: RevokedIdRule, start: int) -> void:
+	var size: int = 3
+	if data != null:
+		for event: StationEventDef in data.events.values():
+			if event.list_label == rule.list_label and event.list_size > 0:
+				size = event.list_size
+	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.mix(day_seed, start), STOLEN_SALT))
+	var entries: Array[RevokedEntry] = []
+	var window: Array = rng.shuffled(_free_window(start + 1, 10))
+	var carriers: int = mini(rng.randi_range(1, 2), window.size())
+	for k: int in carriers:
+		var index: int = window[k]
+		var generated: GeneratedCase = build_clean(index)
+		if generated == null:
+			continue
+		var presented: Passenger = generated.case.passenger_presented
+		var entry: RevokedEntry = RevokedEntry.new()
+		entry.id = StringName("%s_%02d" % [rule.list_label, index])
+		entry.citizen_id = presented.citizen_id
+		entry.given_name = presented.given_name
+		entry.family_name = presented.family_name
+		entry.reason_key = "revoked_reason_%s" % rule.list_label
+		entry.case_index = index
+		entries.append(entry)
+		_forced[index] = {"kinds": [AnomalyType.Kind.REVOKED_ID], "params": {}, "overrides": {}, "rule_id": rule.id}
+	while entries.size() < size:
+		entries.append(_decoy_entry(rng, StringName("%s_decoy_%d" % [rule.list_label, entries.size()]),
+				"revoked_reason_%s" % rule.list_label))
+	ctx.set_list(rule.list_label, entries)
+	changed_lists.append(String(rule.list_label))
+
+
+## N° ID sans passager (leurre d'une liste), d'une origine tirée.
+func _decoy_entry(rng: SeededRng, id: StringName, reason_key: String) -> RevokedEntry:
+	var faction_ids: Array[StringName] = []
+	faction_ids.assign(data.factions.keys())
+	faction_ids.sort()
+	var faction: FactionDef = data.factions[faction_ids[rng.randi_range(0, faction_ids.size() - 1)]]
+	var entry: RevokedEntry = RevokedEntry.new()
+	entry.id = id
+	entry.citizen_id = PassengerGenerator.make_citizen_id(rng, faction)
+	if faction.name_pool != null:
+		var sex: StringName = PassengerGenerator.SEXES[rng.randi_range(0, 1)]
+		entry.given_name = faction.name_pool.pick_given_name(rng, sex)
+		entry.family_name = faction.name_pool.pick_family_name(rng)
+	entry.reason_key = reason_key
+	return entry
+
+
+## Garde : avis (U15) et révocations (U20) renouvelés à chaque directive — un
+## porteur parmi les 5 passagers suivants (toujours si la règle est nouvelle,
+## une fois sur deux sinon) et des leurres. Renvoie les porteurs choisis.
+func _renew_garde_lists(start: int, fresh: Array[Rule], rng: SeededRng) -> Array[int]:
+	var carriers: Array[int] = []
+	var lists_rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.mix(day_seed, start), LISTS_SALT))
+	var wanted_rule: Rule = _rule_of(WantedRule)
+	if wanted_rule != null:
+		var notices: Array[WantedNotice] = []
+		var kept: Array[int] = []
+		for i: int in wanted_indices:
+			if i < start:
+				kept.append(i)
+		wanted_indices = kept
+		var window: Array[int] = _free_window(start, EXERCISE_WINDOW)
+		if not window.is_empty() and (fresh.has(wanted_rule) or rng.chance(0.5)):
+			var index: int = window[rng.randi_range(0, window.size() - 1)]
+			var generated: GeneratedCase = build_clean(index)
+			if generated != null:
+				var presented: Passenger = generated.case.passenger_presented
+				var notice: WantedNotice = WantedNotice.new()
+				notice.id = StringName("wanted_garde_%03d" % index)
+				notice.given_name = presented.given_name
+				notice.family_name = presented.family_name
+				notice.appearance = DocumentFactory.official_photo_of(presented.appearance.without_visor())
+				notice.reason_key = "wanted_generated_reason"
+				notice.case_index = index
+				notices.append(notice)
+				wanted_indices.append(index)
+				carriers.append(index)
+		notices.append(_decoy_notice(lists_rng, StringName("wanted_garde_decoy_%03d" % start)))
+		ctx.wanted = notices
+		_dedupe_faces_from(start, carriers)
+		changed_lists.append("wanted")
+	var revoked_rule: RevokedIdRule = null
+	for rule: Rule in day.rule_set.rules:
+		var listed: RevokedIdRule = rule as RevokedIdRule
+		if listed != null and (listed.list_label == &"" or listed.list_label == &"revoked"):
+			revoked_rule = listed
+	if revoked_rule != null:
+		var entries: Array[RevokedEntry] = []
+		var kept_revoked: Array[int] = []
+		for i: int in revoked_indices:
+			if i < start:
+				kept_revoked.append(i)
+		revoked_indices = kept_revoked
+		var window: Array[int] = _free_window(start, EXERCISE_WINDOW)
+		if not window.is_empty() and (fresh.has(revoked_rule) or rng.chance(0.5)):
+			var index: int = window[rng.randi_range(0, window.size() - 1)]
+			var generated: GeneratedCase = build_clean(index)
+			if generated != null:
+				var presented: Passenger = generated.case.passenger_presented
+				var entry: RevokedEntry = RevokedEntry.new()
+				entry.id = StringName("revoked_garde_%03d" % index)
+				entry.citizen_id = presented.citizen_id
+				entry.given_name = presented.given_name
+				entry.family_name = presented.family_name
+				entry.case_index = index
+				entries.append(entry)
+				revoked_indices.append(index)
+				carriers.append(index)
+		for n: int in maxi(day.revoked_decoys, 1):
+			entries.append(_decoy_entry(lists_rng, StringName("revoked_garde_decoy_%03d_%d" % [start, n]), ""))
+		ctx.revoked = entries
+		changed_lists.append("revoked")
+	return carriers
+
+
+## Avis d'une personne absente de la file (visage et nom tirés).
+func _decoy_notice(rng: SeededRng, id: StringName) -> WantedNotice:
+	var faction_ids: Array[StringName] = []
+	faction_ids.assign(day.faction_weights.keys())
+	faction_ids.sort()
+	var faction_id: StringName = faction_ids[rng.randi_range(0, faction_ids.size() - 1)] if not faction_ids.is_empty() else &"tyc"
+	var notice: WantedNotice = WantedNotice.new()
+	notice.id = id
+	notice.appearance = DocumentFactory.official_photo_of(appearance_gen.generate(rng, faction_id).without_visor())
+	var faction: FactionDef = data.factions.get(faction_id, null)
+	if faction != null and faction.name_pool != null:
+		var sex: StringName = PassengerGenerator.SEXES[rng.randi_range(0, 1)]
+		notice.given_name = faction.name_pool.pick_given_name(rng, sex)
+		notice.family_name = faction.name_pool.pick_family_name(rng)
+	notice.reason_key = "wanted_generated_reason"
+	notice.case_index = -1
+	return notice
+
+
+## Aucun visage à venir (hors porteurs) identique à un avis en vigueur.
+func _dedupe_faces_from(start: int, carriers: Array[int]) -> void:
+	for i: int in range(start, mini(roster.size(), start + EXERCISE_WINDOW * 4)):
+		if carriers.has(i) or get_scripted_case(i) != null:
+			continue
+		var entry: AppearanceRoster.Entry = roster.get_entry(i)
+		var rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.mix(day_seed, i), WANTED_DEDUPE_SALT))
+		for notice: WantedNotice in ctx.wanted:
+			var guard: int = 0
+			while guard < 8 and FaceComparator.compare(notice.appearance, entry.appearance, ctx.identity_slots).is_empty():
+				guard += 1
+				var slot: StringName = ctx.identity_slots[rng.randi_range(0, ctx.identity_slots.size() - 1)]
+				entry.appearance.traits[slot] = appearance_gen.reroll_slot(rng, entry.appearance, slot, entry.faction_id)
+
+
+## Exercice garanti d'une directive de Garde (M12 §2.4) : 1 ou 2 des 5
+## passagers suivants violent une règle nouvelle (cas imposé vérifié par le
+## moteur) ; les autres passagers de la fenêtre ne tirent pas ses types.
+func _plan_exercise(fresh: Array[Rule], start: int, carriers: Array[int], rng: SeededRng) -> void:
+	var kinds: Array[AnomalyType.Kind] = []
+	var needs_case: Array[Rule] = []
+	for rule: Rule in fresh:
+		for kind: AnomalyType.Kind in rule.get_detectable_anomalies():
+			if not kinds.has(kind):
+				kinds.append(kind)
+		# Avis et révocations : exercés par leurs porteurs.
+		if rule is WantedRule or (rule is RevokedIdRule and carriers.size() > 0):
+			continue
+		needs_case.append(rule)
+	var window: Array[int] = _free_window(start, EXERCISE_WINDOW)
+	for carrier: int in carriers:
+		window.erase(carrier)
+	# Les cas imposés d'abord parmi les premiers passagers de la fenêtre :
+	# aucun événement n'y commence (`GardeDef.event_quiet_after_directive`), la
+	# règle nouvelle y est donc toujours en vigueur.
+	var quiet: int = 2
+	var order: Array = rng.shuffled(window.slice(0, quiet))
+	order.append_array(rng.shuffled(window.slice(quiet)))
+	var target: int = rng.randi_range(1, 2) if not needs_case.is_empty() else 0
+	var planted: int = 0
+	for raw: Variant in order:
+		var index: int = raw
+		if planted < target:
+			var rule: Rule = needs_case[planted % needs_case.size()]
+			if _plant_exercise(rule, index, rng):
+				planted += 1
+				continue
+		if not kinds.is_empty():
+			_excluded_kinds[index] = kinds.duplicate()
+
+
+## Passager `index` imposé pour violer `rule` : options essayées dans l'ordre
+## jusqu'à ce que le moteur cite la règle (procédures : passager concerné).
+func _plant_exercise(rule: Rule, index: int, rng: SeededRng) -> bool:
+	var entry: AppearanceRoster.Entry = roster.get_entry(index)
+	var roster_faction: StringName = entry.faction_id
+	for spec: Dictionary in _exercise_options(rule, index, rng):
+		_forced[index] = spec
+		# L'origine imposée est aussi celle du roster (réserve de noms, bloc ID).
+		var overrides: Dictionary = spec.get("overrides", {})
+		entry.faction_id = StringName(str(overrides.get(&"faction_id", roster_faction)))
+		_probing = true
+		var probe: GeneratedCase = _build(index, null, _kinds_of(spec), spec.get("params", {}), true)
+		_probing = false
+		if probe != null and probe.invariant_errors.is_empty() and probe.clean_violation_count == 0 \
+				and _exercises(rule, spec, probe):
+			_clean_ids.erase(index)
+			return true
+		_forced.erase(index)
+	entry.faction_id = roster_faction
+	return false
+
+
+static func _kinds_of(spec: Dictionary) -> Array[AnomalyType.Kind]:
+	var kinds: Array[AnomalyType.Kind] = []
+	kinds.assign(spec.get("kinds", []))
+	return kinds
+
+
+## Le cas imposé exerce la règle : violation citée, ou procédure applicable
+## (R06 : visière baissée ; R08 : ressortissant de Tycho).
+static func _exercises(rule: Rule, spec: Dictionary, probe: GeneratedCase) -> bool:
+	if rule is ProcedureRule:
+		var procedure: ProcedureRule = rule
+		if procedure.procedure_id == ProcedureRule.PROCEDURE_FACE_UNCOVERED:
+			return probe.visor_down
+		return procedure.applies_to(probe.case)
+	if _kinds_of(spec).is_empty():
+		return false
+	for violation: Violation in probe.key.expected_violations:
+		if violation.rule_id == rule.id:
+			return true
+	return false
+
+
+## Options d'exercice d'une règle (types détectables, origine, classe, motif,
+## document visé), de la plus directe à la plus large.
+func _exercise_options(rule: Rule, index: int, rng: SeededRng) -> Array[Dictionary]:
+	var options: Array[Dictionary] = []
+	var roster_faction: StringName = roster.get_entry(index).faction_id
+	# Ressortissant ordinaire (ni Né-Halcyon dispensé de permis, ni Tharsien
+	# refusé hors DIPLOMATIQUE quand R19 est active).
+	var not_hal: StringName = roster_faction if roster_faction != &"hal" and roster_faction != &"thr" else &"tyc"
+	if rule is ProcedureRule:
+		var procedure: ProcedureRule = rule
+		if procedure.procedure_id == ProcedureRule.PROCEDURE_FACE_UNCOVERED:
+			options.append({"kinds": [], "params": {}, "overrides": {}, "visor": true})
+		else:
+			var faction: StringName = procedure.applies_to_faction_ids[0] if not procedure.applies_to_faction_ids.is_empty() else not_hal
+			options.append({"kinds": [], "params": {}, "overrides": {&"faction_id": faction}})
+		return options
+	var overrides: Dictionary = {}
+	var document_id: StringName = &""
+	if rule is RequireDocumentRule:
+		var require: RequireDocumentRule = rule
+		document_id = require.document_id
+		var faction: StringName = not_hal
+		if not require.applies_to_faction_ids.is_empty():
+			faction = require.applies_to_faction_ids[0]
+		elif require.exempt_faction_ids.is_empty():
+			faction = roster_faction if roster_faction != &"thr" else not_hal
+		overrides[&"faction_id"] = faction
+		if not require.applies_to_classes.is_empty():
+			overrides[&"citizen_class"] = require.applies_to_classes[0]
+		if not require.applies_to_purposes.is_empty():
+			overrides[&"purpose"] = require.applies_to_purposes[0]
+	elif rule is DocumentNotExpiredRule:
+		var expiry: DocumentNotExpiredRule = rule
+		document_id = expiry.document_id
+		overrides[&"faction_id"] = not_hal if document_id == &"entry_permit" else roster_faction
+		if expiry.field_path == &"firmware_date":
+			overrides[&"implants"] = PackedStringArray(["NX-12"])
+	elif rule is FactionBannedRule:
+		var banned: FactionBannedRule = rule
+		overrides[&"faction_id"] = banned.banned_faction_ids[0] if not banned.banned_faction_ids.is_empty() else not_hal
+	elif rule is PurposeConsistentRule or rule is ContractConsistentRule:
+		overrides[&"faction_id"] = &"tyc" if rule is ContractConsistentRule else not_hal
+		if rule is ContractConsistentRule:
+			overrides[&"purpose"] = Passenger.PURPOSE_WORK
+	elif rule is BannedImplantsRule or rule is ImplantsDeclaredRule:
+		overrides[&"faction_id"] = roster_faction
+	var params: Dictionary = {}
+	if document_id != &"":
+		params[&"document_id"] = document_id
+	var kinds: Array = rng.shuffled(rule.get_detectable_anomalies())
+	for kind: AnomalyType.Kind in kinds:
+		if kind == AnomalyType.Kind.WANTED_PERSON or kind == AnomalyType.Kind.REVOKED_ID:
+			continue
+		options.append({"kinds": [kind], "params": params.duplicate(), "overrides": overrides.duplicate(), "rule_id": rule.id})
+		# Repli : sans les surcharges (origine du roster).
+		options.append({"kinds": [kind], "params": params.duplicate(), "overrides": {}, "rule_id": rule.id})
+	return options

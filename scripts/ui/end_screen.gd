@@ -24,24 +24,8 @@ extends ScreenBase
 const COLUMNS: Array[String] = ["end_col_day", "end_col_processed", "end_col_correct", "end_col_citations",
 		"end_col_wage", "end_col_fines", "end_col_spent", "end_col_balance"]
 ## Drapeaux dont la trace est rappelée, dans l'ordre de la campagne (J1 → J10).
-const NARRATIVE_FLAGS: Array[StringName] = [&"sc02_mercy", &"sc02_turned_away", &"sc03_passed", &"met_mira",
-		&"sc05_helped", &"lucioles_reported", &"lucioles_note_burned",
-		&"sc06_reunited", &"sc07_bribe_kept", &"sc07_bribe_returned", &"noa_birthday_gift", &"lucioles_heating_accepted",
-		&"inspector_bribe_taken", &"inspector_test_passed", &"inspector_test_failed", &"sc11_veteran_passed",
-		&"sc13_detained", &"sc13_passed", &"sc14_bribe_kept", &"sc16_hana_passed", &"sc16_family_split",
-		&"sc17_detained", &"sc17_passed", &"neighbor_denounced", &"neighbor_helped", &"brulants_package",
-		&"sc18_note_reported", &"sc18_note_kept", &"audit_retention", &"audit_clean",
-		&"ilan_supported", &"ilan_forbidden", &"ilan_denounced", &"okonkwo_denounced", &"okonkwo_warned",
-		&"drift_passes_bought", &"sc20_detained", &"sc20_passed", &"sc21_bribe_kept",
-		&"final_detained", &"final_passed", &"final_denied", &"final_unprocessed",
-		# Acte II (J10 → J20).
-		&"vannes_opened", &"drift_stayed", &"sc25_elena_turned_away", &"quota_overrun", &"sc28_tariq_refused",
-		&"sc35_okonkwo_detained", &"sc35_okonkwo_helped", &"colleagues_listed", &"sc41_sato_spared", &"sc43_mateus_detained",
-		&"beaumont_defied", &"sc45_ravel_spared", &"ilan_joined_soute", &"dora_departed", &"registre_sent", &"strike_joined",
-		# Acte III (J20 → J30).
-		&"amnesty_signed", &"sc53_anouk_detained", &"sc59_beaumont_spared", &"noa_coached", &"ilan_scab", &"ilan_tycho",
-		&"dora_testimony", &"sc70_montclair_refused", &"sc73_celeste_refused", &"tycho_list_saved", &"tycho_list_reported",
-		&"names_given", &"deposition_truth", &"deposition_loyal", &"strike2_joined", &"pont"]
+## Drapeaux tracés à l'écran de fin : liste tenue par `EndingService` (M12, B63).
+const NARRATIVE_FLAGS: Array[StringName] = EndingService.TRACE_FLAGS
 ## Au plus autant de traces affichées (les plus récentes l'emportent).
 const MAX_TRACES: int = 9
 ## Rythme de lecture de l'épilogue (une ligne toutes les ~1,9 s).
@@ -149,11 +133,7 @@ static func icon_of(p_ending: StringName) -> UiIcon.Kind:
 ## Clés des traces des choix (drapeaux vrais ou jauges non nulles), au plus
 ## `MAX_TRACES`, dans l'ordre de la campagne.
 static func trace_keys(p_flags: Dictionary[StringName, Variant]) -> PackedStringArray:
-	var keys: PackedStringArray = []
-	for flag: StringName in NARRATIVE_FLAGS:
-		var value: Variant = p_flags.get(flag, false)
-		if (value is bool and value) or ((value is int or value is float) and value != 0):
-			keys.append("end_trace_%s" % flag)
+	var keys: PackedStringArray = EndingService.traces(p_flags)
 	return keys.slice(maxi(keys.size() - MAX_TRACES, 0))
 
 

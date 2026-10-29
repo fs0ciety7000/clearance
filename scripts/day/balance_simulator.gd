@@ -70,11 +70,22 @@ static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: f
 	var processed: int = SaveService.as_int(start.get("processed", 0))
 	var correct: int = SaveService.as_int(start.get("correct", 0))
 	var rows: Array[Dictionary] = []
+	# M12 (B58) : calendrier des événements de station (fonction pure de la graine).
+	var schedule: Dictionary = event_schedule(data, campaign_seed) if profile.station_events else {}
 	for day_number: int in range(SaveService.as_int(start.get("day", 1)), final_day + 1):
 		var day: DayDef = data.get_day(day_number)
 		var day_seed: int = SeededRng.day_seed(campaign_seed, day_number)
 		var rng: SeededRng = SeededRng.new(SeededRng.mix_string(day_seed, PLAYER_SALT))
-		var summary: DaySummary = DaySimulator.play_day(data, day_number, day_seed, profile, flags, memory, rng)
+		# M12 (B59) : pseudo-drapeaux de verdict `cm_*` du matin (jamais conservés).
+		var pseudo: Array[StringName] = []
+		for flag: StringName in CaseMemory.pseudo_flag_names(memory):
+			if not flags.has(flag):
+				flags[flag] = true
+				pseudo.append(flag)
+		var plan: StationEventPlan = schedule.get(day_number, null)
+		var summary: DaySummary = DaySimulator.play_day(data, day_number, day_seed, profile, flags, memory, rng, plan)
+		for flag: StringName in pseudo:
+			flags.erase(flag)
 		credits += summary.get_total_income()
 		processed += summary.get_processed_count()
 		correct += summary.get_correct_count()
@@ -139,6 +150,15 @@ static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: f
 			row["flags"] = flags.duplicate()
 			break
 	return rows
+
+
+## M12 (B58) : calendrier des événements de station d'une campagne (jour →
+## `StationEventPlan`), vide sans données.
+static func event_schedule(data: DataCatalog, campaign_seed: int) -> Dictionary:
+	var def: StationEventsDef = data.station_events if data.station_events != null else StationEventService.load_def()
+	if def == null:
+		return {}
+	return StationEventService.schedule(campaign_seed, def, data.days)
 
 
 ## Mot des Lucioles du J3 : signalé (loyauté +1, confiance −2) ou brûlé.
@@ -259,3 +279,185 @@ static func _find(lines: Array[ExpenseLine], id: StringName) -> ExpenseLine:
 		if line.id == id:
 			return line
 	return null
+
+
+
+# ---------------------------------------------------------------------------
+# M12 : Garde de nuit (docs/M12.md §2, §6.1 ; B62)
+# ---------------------------------------------------------------------------
+
+const GARDE_PLAYER_SALT: String = "garde_player"
+
+
+## Joue une garde (code canonique ou saisi) sans scène, comme le
+## `DayController` en mode garde (ARCHITECTURE §11.5) : `GardeRun.after_case`
+## puis changements mis en attente et appliqués avant le passager suivant
+## (`CaseBuilder.on_rules_changed`), paliers recopiés dans le jour de shift.
+## Verdict juste avec la probabilité du profil (`SimProfile.garde_accuracy`),
+## refus documentés par les preuves visibles, visière retirée, question posée.
+## `player_seed` : flux des tirages du joueur (indépendant de la file).
+## Renvoie `{score, passengers, directives, palier, errors, citations,
+## violations_without_evidence, exercised, directives_seen, events}` ;
+## `max_passengers` borne la garde (0 = file du gabarit).
+## `trace` (facultatif) reçoit `"<case_id> <N° ID> <verdict attendu>"` par passager.
+static func run_garde(data: DataCatalog, code: String, profile: SimProfile, player_seed: int = 0,
+		max_passengers: int = 0, def: GardeDef = null, events_def: StationEventsDef = null,
+		trace: PackedStringArray = PackedStringArray()) -> Dictionary:
+	var garde_def: GardeDef = def if def != null else (data.garde if data.garde != null else GardeService.load_def())
+	var catalog: StationEventsDef = events_def if events_def != null else data.station_events
+	var run: GardeRun = GardeService.new_run(code, garde_def, catalog)
+	if run == null:
+		return {}
+	var day: DayDef = GardeService.make_day(garde_def, run)
+	var builder: CaseBuilder = CaseBuilder.new(data, day, run.queue_seed, [], {}, {})
+	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.mix(run.run_seed, player_seed), GARDE_PLAYER_SALT))
+	var limit: int = day.passenger_count if max_passengers <= 0 else mini(max_passengers, day.passenger_count)
+	var stats: Dictionary = {"citations": 0, "violations_without_evidence": 0, "events": 0, "directives_seen": [],
+			"exercised": {}, "insoluble": [], "invariant_failures": [],
+			"citation_keys": []}
+	var window_rules: Array[StringName] = []
+	var window_left: int = 0
+	var window_hit: bool = false
+	var window_number: int = 0
+	var index: int = 0
+	while not run.ended and index < limit:
+		var ctx: RuleContext = builder.ctx
+		builder.presentation_minute = run.clock_minute()
+		ctx.now_minute = builder.presentation_minute
+		if ctx.has_pending_changes():
+			var diff: RuleDiff = ctx.apply_pending()
+			if not diff.is_empty():
+				_apply_garde_units(day, run)
+				builder.on_rules_changed(diff)
+		var generated: GeneratedCase = builder.build(index)
+		index += 1
+		if generated == null or generated.case == null:
+			break
+		var case: Case = generated.case
+		var key: CaseKey = generated.key
+		trace.append("%s %s %d" % [case.case_id, case.passenger_presented.citizen_id, key.expected_verdict])
+		if not generated.invariant_errors.is_empty():
+			(stats["invariant_failures"] as Array).append("%s %s" % [case.case_id, "; ".join(generated.invariant_errors)])
+		# Exercice d'une directive : une violation de ses règles dans la fenêtre.
+		if window_left > 0:
+			window_hit = window_hit or _exercises_any(case, key, window_rules, generated)
+			window_left -= 1
+			if window_left == 0:
+				(stats["exercised"] as Dictionary)[window_number] = window_hit
+		var correct: bool = rng.chance(profile.garde_accuracy(run.tier_index, run.active_units.size()))
+		var kind: VerdictKind.Kind = profile.verdict_for(case, key, correct, day.detain_enabled)
+		case.remove_visor()
+		if not _has_evidence(case, key, ctx):
+			stats["violations_without_evidence"] = int(stats["violations_without_evidence"]) + 1
+			(stats["insoluble"] as Array).append(String(case.case_id))
+		var verdict: Verdict = Verdict.new(case.case_id, kind)
+		if kind != VerdictKind.Kind.APPROVE:
+			verdict.flagged = _garde_evidence(case, key, ctx)
+		verdict.questions_asked = [DaySimulator.TOPIC_PURPOSE]
+		verdict.elapsed_sec = 30.0
+		var result: CaseResult = ScoringService.score(verdict, key, case.case_id, case, day, 0)
+		builder.record_verdict(case, kind)
+		if result.has_citation():
+			stats["citations"] = int(stats["citations"]) + 1
+			(stats["citation_keys"] as Array).append("%s %s %s" % [case.case_id, result.citation_reason_key,
+					result.citation_rule_id])
+		var step: Dictionary = run.after_case(result, ctx)
+		if step["over"]:
+			break
+		for row: Dictionary in step["queued"]:
+			var source: StringName = row.get("source", &"")
+			if row.get("revert", false):
+				ctx.queue_revert(source)
+			else:
+				var changes: Array[RuleChangeDef] = []
+				for change: Variant in row.get("changes", []):
+					if change is RuleChangeDef:
+						changes.append(change)
+				ctx.queue_changes(changes, source)
+		for plan: StationEventPlan in step["events_ended"]:
+			if plan.list_label != &"":
+				var empty: Array[RevokedEntry] = []
+				ctx.set_list(plan.list_label, empty)
+		stats["events"] = int(stats["events"]) + (step["events_started"] as Array).size()
+		if step["tier_changed"]:
+			GardeService.apply_tier(day, run.current_tier())
+		var directive: Dictionary = step["directive"]
+		if not directive.is_empty():
+			(stats["directives_seen"] as Array).append(String(directive["unit_id"]))
+			var unit: GardeUnitDef = directive.get("unit", null)
+			if unit != null and StringName(directive["action"]) != GardeService.ACTION_RETIRE:
+				window_rules = unit.rule_ids()
+				window_left = garde_def.directive_every
+				window_hit = false
+				window_number = int(directive["number"])
+	if not run.ended:
+		run.quit()
+	stats["score"] = run.score
+	stats["passengers"] = run.passengers
+	stats["directives"] = run.directives
+	stats["palier"] = run.tier_index
+	stats["errors"] = run.errors.size()
+	stats["game_date"] = run.game_date
+	return stats
+
+
+## Preuves d'un refus en Garde : pour chaque violation, la première paire de
+## ses références que le comparateur confirme (toutes les paires essayées :
+## une discordance sur un document du milieu reste trouvable, comme pour un
+## joueur qui compare chaque document).
+static func _garde_evidence(case: Case, key: CaseKey, ctx: RuleContext) -> Array[Discrepancy]:
+	var found: Array[Discrepancy] = []
+	for violation: Violation in key.expected_violations:
+		var refs: Array[FieldRef] = violation.refs
+		var done: bool = false
+		for i: int in refs.size():
+			for j: int in range(i + 1, refs.size()):
+				var result: Discrepancy = DiscrepancyChecker.check(case, refs[i], refs[j], ctx)
+				if result.confirmed:
+					found.append(result)
+					done = true
+					break
+			if done:
+				break
+	return found
+
+
+## Unités actives : tampon DÉTENTION et onglets (comme le `DayController`).
+static func _apply_garde_units(day: DayDef, run: GardeRun) -> void:
+	for unit_id: StringName in run.active_units:
+		var unit: GardeUnitDef = run.def.get_unit(unit_id)
+		if unit != null and unit.enables_detain:
+			day.detain_enabled = true
+
+
+## Le cas exerce l'une des règles : violation citée, ou procédure applicable
+## (R06 : visière ; R08 : ressortissant de Tycho).
+static func _exercises_any(case: Case, key: CaseKey, rule_ids: Array[StringName], generated: GeneratedCase) -> bool:
+	for violation: Violation in key.expected_violations:
+		if rule_ids.has(violation.rule_id):
+			return true
+	if rule_ids.has(&"r_face_uncovered") and generated.visor_down:
+		return true
+	if rule_ids.has(&"r_tycho_interview") and Rule.visible_origin(case) == &"tyc":
+		return true
+	return false
+
+
+## Toute violation attendue a une preuve citable (paire confirmée), sauf les
+## violations à une seule référence (règle seule : document absent…).
+static func _has_evidence(case: Case, key: CaseKey, ctx: RuleContext) -> bool:
+	for violation: Violation in key.expected_violations:
+		var refs: Array[FieldRef] = violation.refs
+		if refs.size() < 2:
+			continue
+		var found: bool = false
+		for i: int in refs.size():
+			for j: int in range(i + 1, refs.size()):
+				if DiscrepancyChecker.check(case, refs[i], refs[j], ctx).confirmed:
+					found = true
+					break
+			if found:
+				break
+		if not found:
+			return false
+	return true

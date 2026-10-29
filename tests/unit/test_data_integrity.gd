@@ -20,12 +20,12 @@ func test_all_resources_load_without_error() -> void:
 
 
 func test_expected_content_counts() -> void:
-	assert_eq(_catalog.documents.size(), 8, "Carte, Permis, Bio-scan, Dérogation MIL (M7) + Contrat, Laissez-passer, Asile, Ticket (Acte II)")
+	assert_eq(_catalog.documents.size(), 9, "Carte, Permis, Bio-scan, Dérogation MIL (M7) + Contrat, Laissez-passer, Asile, Ticket (Acte II) + Carte de répondant (M12, R39)")
 	assert_eq(_catalog.factions.keys().size(), 6, "origines : TYC, HAL, TER + CER, THR, DRV (M7)")
-	assert_eq(_catalog.rules.size(), 37, "R01–R22 (GDD §7) + R23–R31 (docs/ACT2.md) + R32–R37 (docs/ACT3.md)")
+	assert_eq(_catalog.rules.size(), 42, "R01–R22 (GDD §7) + R23–R31 (docs/ACT2.md) + R32–R37 (docs/ACT3.md) + R38–R42 (docs/M12.md)")
 	assert_eq(_catalog.days.keys().size(), 30)
 	for document_id: StringName in [&"id_card", &"entry_permit", &"bioscan", &"mil_waiver", &"work_contract", &"drift_pass",
-			&"asylum", &"queue_ticket"]:
+			&"asylum", &"queue_ticket", &"sponsor_card"]:
 		assert_true(_catalog.documents.has(document_id), String(document_id))
 	for faction_id: StringName in [&"tyc", &"hal", &"ter", &"cer", &"thr", &"drv"]:
 		assert_true(_catalog.factions.has(faction_id), String(faction_id))

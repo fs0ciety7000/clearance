@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RuleSet" format=3 uid="uid://hgppw701rfep"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_5o7jl"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_required.tres" id="2_a8ylw"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_valid.tres" id="3_vbwax"]
+[ext_resource type="Resource" path="res://data/rules/rule_portrait_match.tres" id="4_6oyep"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fields_match.tres" id="5_bj47r"]
+[ext_resource type="Script" path="res://scripts/rules/rule_set.gd" id="6_n3wkk"]
+
+[resource]
+script = ExtResource("6_n3wkk")
+id = &"rs_garde"
+rules = Array[ExtResource("1_5o7jl")]([ExtResource("2_a8ylw"), ExtResource("3_vbwax"), ExtResource("4_6oyep"), ExtResource("5_bj47r")])
+required_document_ids = Array[StringName]([&"id_card"])

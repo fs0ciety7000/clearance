@@ -62,6 +62,18 @@ var overrun: bool = false
 var pace: float = 1.0
 ## M11 (D-102) : joueur en mode Récit (amendes à 0 ₵).
 var story_mode: bool = false
+## M12 (Garde de nuit, docs/M12.md §6.1) : précision « dégressive » — 95 % au
+## palier 0, −4 points par palier, −0,5 point par unité active au-delà de 6
+## (sinon `accuracy` constante).
+var garde_decay: bool = false
+## M12 (B58) : campagne avec le calendrier des événements de station
+## (`StationEventService.schedule`) appliqué par le `DaySimulator`
+## (`balance_sim --events=on|compare`).
+var station_events: bool = false
+const GARDE_DECAY_START: float = 0.95
+const GARDE_DECAY_PER_TIER: float = 0.04
+const GARDE_DECAY_PER_UNIT: float = 0.005
+const GARDE_DECAY_FREE_UNITS: int = 6
 
 ## Préfixe d'un préréglage en mode Récit (`story_default`, `story_luciole`…).
 const STORY_PREFIX: String = "story_"
@@ -234,3 +246,22 @@ func option_for(event: EveningEvent) -> EveningOptionDef:
 static func day_of(case: Case) -> int:
 	var text: String = String(case.case_id)
 	return text.substr(1, 2).to_int() if text.begins_with("d") and text.length() >= 3 else 0
+
+
+## M12 : profil de Garde à précision dégressive (`balance_sim --garde --decay`).
+static func garde_decaying() -> SimProfile:
+	var p: SimProfile = SimProfile.new()
+	p.name = &"garde_decay"
+	p.accuracy = GARDE_DECAY_START
+	p.garde_decay = true
+	return p
+
+
+## M12 : précision du joueur simulé en Garde selon le palier et les unités
+## actives (constante sans `garde_decay`).
+func garde_accuracy(tier: int, active_units: int) -> float:
+	if not garde_decay:
+		return accuracy
+	var value: float = GARDE_DECAY_START - GARDE_DECAY_PER_TIER * tier \
+			- GARDE_DECAY_PER_UNIT * maxi(active_units - GARDE_DECAY_FREE_UNITS, 0)
+	return clampf(value, 0.0, 1.0)

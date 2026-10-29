@@ -18,6 +18,14 @@
 ## depuis un état synthétique de ce climat (solde selon la précision).
 ## M11 : `--story` joue chaque préréglage en mode Récit (D-102 : amendes à
 ## 0 ₵) ; équivalent à `--presets=story_<nom>` (`SimProfile.STORY_PREFIX`).
+## M12 (docs/M12.md §6) : `--garde` joue des gardes de nuit (bots constants de
+## `--profiles=`, `--decay` : bot dégressif) sur `--seeds` codes libres tirés
+## de `--seed`, `--daily=N` : N graines du jour consécutives (UTC) ; médiane,
+## p10, p90, directives, paliers, cas sans preuve. `--events=on|off|compare`
+## (campagne) : calendrier des événements de station appliqué (B58) ;
+## `compare` joue chaque graine avec et sans événements et imprime l'écart de
+## répartition des fins (D-060 : ≤ 3 points) et de solde les jours
+## d'événement.
 ##
 ## Usage (depuis la racine du projet) :
 ##   godot --headless --script res://tools/balance_sim.gd -- --seeds=200 --seed=1 \
@@ -39,6 +47,12 @@ var _days: int = -1
 var _climate: String = ""
 ## M11 : préréglages joués en mode Récit (`--story`).
 var _story: bool = false
+## M12 : gardes de nuit (`--garde`), bot dégressif (`--decay`), graines du jour (`--daily=N`).
+var _garde: bool = false
+var _decay: bool = false
+var _daily: int = 0
+## M12 : événements de station en campagne (`--events=on|off|compare`).
+var _events: String = "on"
 
 ## État synthétique du J21 par climat : drapeaux et jauges (docs/ACT3.md §1.3).
 const CLIMATES: Dictionary[String, Dictionary] = {
@@ -74,6 +88,18 @@ func _init() -> void:
 			e.starting_credits, e.rent, e.air_tax, e.food, e.heating, e.oxygen, e.medicine_per_member,
 			e.noa_cold_sick_chance, e.deprivation_sick_evenings, e.untreated_worsen_evenings])
 	var start: int = Time.get_ticks_msec()
+	if _garde:
+		_run_garde(data)
+		print("Durée : %d ms" % (Time.get_ticks_msec() - start))
+		quit(0)
+		return
+	if _events == "compare":
+		for preset: StringName in _presets:
+			for accuracy: float in _profiles:
+				_compare_events(data, accuracy, preset)
+		print("Durée : %d ms" % (Time.get_ticks_msec() - start))
+		quit(0)
+		return
 	if _story:
 		for i: int in _presets.size():
 			if not String(_presets[i]).begins_with(SimProfile.STORY_PREFIX):
@@ -113,6 +139,14 @@ func _parse_args() -> void:
 				_climate = ""
 		elif arg == "--story":
 			_story = true
+		elif arg == "--garde":
+			_garde = true
+		elif arg == "--decay":
+			_decay = true
+		elif arg.begins_with("--daily="):
+			_daily = maxi(arg.trim_prefix("--daily=").to_int(), 0)
+		elif arg.begins_with("--events="):
+			_events = arg.trim_prefix("--events=")
 		elif arg == "--spending=default":
 			_spending = BalanceSimulator.Spending.DEFAULT
 
@@ -146,8 +180,9 @@ func _run_profile(data: DataCatalog, accuracy: float, preset: StringName = &"def
 	for n: int in _seeds:
 		var rows: Array[Dictionary] = []
 		if _climate.is_empty():
-			rows = BalanceSimulator.run_campaign(data, SeededRng.mix(_seed, n), accuracy, _spending, last,
-					SimProfile.preset(preset, accuracy))
+			var profile: SimProfile = SimProfile.preset(preset, accuracy)
+			profile.station_events = _events == "on"
+			rows = BalanceSimulator.run_campaign(data, SeededRng.mix(_seed, n), accuracy, _spending, last, profile)
 		else:
 			rows = BalanceSimulator.run_campaign_from(data, SeededRng.mix(_seed, n), accuracy, _spending, last,
 					SimProfile.preset(preset, accuracy), _climate_start(accuracy))
@@ -218,3 +253,155 @@ func _climate_start(accuracy: float) -> Dictionary:
 	var processed: int = 300
 	return {"day": 21, "credits": credits, "flags": flags, "household": Household.new(), "processed": processed,
 			"correct": roundi(processed * accuracy)}
+
+
+
+# ---------------------------------------------------------------------------
+# M12 : Garde de nuit (`--garde`) et événements de station (`--events=compare`)
+# ---------------------------------------------------------------------------
+
+## Codes des gardes simulées : codes libres tirés de `--seed`, ou `--daily=N`
+## graines du jour consécutives à partir du 29.10.2026 (UTC).
+func _garde_codes() -> PackedStringArray:
+	var codes: PackedStringArray = []
+	if _daily > 0:
+		var base: int = Time.get_unix_time_from_datetime_string("2026-10-29T12:00:00")
+		for d: int in _daily:
+			codes.append(GardeService.daily_code(base + d * 86400))
+		return codes
+	for n: int in _seeds:
+		codes.append(GardeService.code_from_bits(SeededRng.mix(_seed, n)))
+	return codes
+
+
+func _run_garde(data: DataCatalog) -> void:
+	var codes: PackedStringArray = _garde_codes()
+	var profiles: Array[SimProfile] = []
+	if _decay:
+		profiles.append(SimProfile.garde_decaying())
+	else:
+		for accuracy: float in _profiles:
+			profiles.append(SimProfile.preset(&"default", accuracy))
+	print("garde : %d code(s)%s" % [codes.size(), " (graines du jour)" if _daily > 0 else ""])
+	for profile: SimProfile in profiles:
+		var scores: Array[int] = []
+		var directives: Array[int] = []
+		var paliers: Dictionary[int, int] = {}
+		var events: int = 0
+		var insoluble: int = 0
+		var passengers: int = 0
+		var exercised: int = 0
+		var windows: int = 0
+		for i: int in codes.size():
+			var r: Dictionary = BalanceSimulator.run_garde(data, codes[i], profile, i)
+			scores.append(int(r["score"]))
+			directives.append(int(r["directives"]))
+			paliers[int(r["palier"])] = paliers.get(int(r["palier"]), 0) + 1
+			events += int(r["events"])
+			insoluble += int(r["violations_without_evidence"])
+			passengers += int(r["passengers"])
+			var ex: Dictionary = r["exercised"]
+			for k: Variant in ex:
+				windows += 1
+				if ex[k]:
+					exercised += 1
+		var label: String = "dégressif" if profile.garde_decay else "%d %%" % roundi(profile.accuracy * 100.0)
+		print("== Garde · bot %s ==" % label)
+		print("score : médiane %.1f · moyenne %.1f · p10 %d · p90 %d · max %d" % [_percentile(scores, 0.5), _mean(scores),
+				roundi(_percentile(scores, 0.1)), roundi(_percentile(scores, 0.9)), scores.max()])
+		print("directives vues : médiane %.1f · ≥ 1 : %.1f %% · ≥ 4 : %.1f %%" % [_percentile(directives, 0.5),
+				100.0 * _count_at_least(directives, 1) / codes.size(), 100.0 * _count_at_least(directives, 4) / codes.size()])
+		print("paliers atteints : %s · événements : %.2f par garde" % [paliers, float(events) / codes.size()])
+		print("passagers : %d · cas sans preuve citable : %d · directives exercées : %d / %d" % [passengers, insoluble,
+				exercised, windows])
+
+
+## Campagne avec et sans événements de station sur les mêmes graines :
+## répartition des fins, écart par fin (D-060 : ≤ 3 points), nombre
+## d'événements par campagne, écart de solde les jours d'événement.
+func _compare_events(data: DataCatalog, accuracy: float, preset: StringName) -> void:
+	var last: int = _days if _days >= 1 else data.get_last_day_number()
+	var with_events: Dictionary[String, int] = {}
+	var without: Dictionary[String, int] = {}
+	var per_campaign: Array[int] = []
+	var delta_sum: float = 0.0
+	var delta_days: int = 0
+	var types: Dictionary[String, int] = {}
+	for n: int in _seeds:
+		var campaign_seed: int = SeededRng.mix(_seed, n)
+		var plain_profile: SimProfile = SimProfile.preset(preset, accuracy)
+		var rows_plain: Array[Dictionary] = BalanceSimulator.run_campaign(data, campaign_seed, accuracy, _spending, last,
+				plain_profile)
+		var event_profile: SimProfile = SimProfile.preset(preset, accuracy)
+		event_profile.station_events = true
+		var rows_events: Array[Dictionary] = BalanceSimulator.run_campaign(data, campaign_seed, accuracy, _spending, last,
+				event_profile)
+		var a: String = str(rows_plain[rows_plain.size() - 1]["ending"])
+		var b: String = str(rows_events[rows_events.size() - 1]["ending"])
+		without[a] = without.get(a, 0) + 1
+		with_events[b] = with_events.get(b, 0) + 1
+		var schedule: Dictionary = BalanceSimulator.event_schedule(data, campaign_seed)
+		per_campaign.append(schedule.size())
+		for day_number: Variant in schedule:
+			var plan: StationEventPlan = schedule[day_number]
+			types[String(plan.event.id)] = types.get(String(plan.event.id), 0) + 1
+			for row: Dictionary in rows_events:
+				if int(row["day"]) == int(day_number):
+					for plain_row: Dictionary in rows_plain:
+						if int(plain_row["day"]) == int(day_number):
+							delta_sum += float(int(row["income"]) - int(plain_row["income"]))
+							delta_days += 1
+	print("")
+	print("== Événements · profil %d %% · %s ==" % [roundi(accuracy * 100.0), preset])
+	var names: Array[String] = []
+	for key: String in with_events:
+		if not names.has(key):
+			names.append(key)
+	for key: String in without:
+		if not names.has(key):
+			names.append(key)
+	names.sort()
+	var worst: float = 0.0
+	var parts: PackedStringArray = []
+	for ending_name: String in names:
+		var p_with: float = 100.0 * with_events.get(ending_name, 0) / _seeds
+		var p_without: float = 100.0 * without.get(ending_name, 0) / _seeds
+		worst = maxf(worst, absf(p_with - p_without))
+		parts.append("%s %.1f → %.1f" % [ending_name if ending_name != "" else "—", p_without, p_with])
+	print("fins (sans → avec) : " + " · ".join(parts))
+	print("écart maximal : %.1f point(s) (D-060 : ≤ 3)" % worst)
+	var in_range: int = 0
+	for count: int in per_campaign:
+		if count >= 3 and count <= 6:
+			in_range += 1
+	print("événements par campagne : moyenne %.2f · 3 à 6 : %.1f %% · types %s" % [_mean(per_campaign),
+			100.0 * in_range / maxi(per_campaign.size(), 1), types])
+	print("revenu un jour d'événement : écart moyen %.2f ₵ (sur %d jours)" % [delta_sum / maxi(delta_days, 1), delta_days])
+
+
+static func _percentile(values: Array[int], q: float) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted: Array[int] = values.duplicate()
+	sorted.sort()
+	var pos: float = q * (sorted.size() - 1)
+	var lo: int = floori(pos)
+	var hi: int = mini(lo + 1, sorted.size() - 1)
+	return lerpf(float(sorted[lo]), float(sorted[hi]), pos - lo)
+
+
+static func _mean(values: Array[int]) -> float:
+	if values.is_empty():
+		return 0.0
+	var total: int = 0
+	for v: int in values:
+		total += v
+	return float(total) / values.size()
+
+
+static func _count_at_least(values: Array[int], minimum: int) -> int:
+	var count: int = 0
+	for v: int in values:
+		if v >= minimum:
+			count += 1
+	return count

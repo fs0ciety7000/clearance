@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FactionBannedRule" format=3 uid="uid://cxa0l3tv2dkc4"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/faction_banned_rule.gd" id="1_dbusa"]
+
+[resource]
+script = ExtResource("1_dbusa")
+banned_faction_ids = Array[StringName]([&"tyc"])
+exempt_purposes = Array[StringName]([])
+exempt_contract_codes = PackedStringArray("KA")
+id = &"r_ep_tycho_ka"
+title_key = "r_ep_tycho_ka_title"
+rulebook_text_key = "r_ep_tycho_ka_text"
+category = 2

@@ -1,0 +1,367 @@
+[gd_resource type="Resource" script_class="CharacterTableDef" format=3 uid="uid://bxmc5if8l1k5x"]
+
+[ext_resource type="Script" path="res://scripts/core/character_def.gd" id="1_pdx7a"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="2_1k7v0"]
+[ext_resource type="Script" path="res://scripts/core/character_table_def.gd" id="3_acxa0"]
+
+[sub_resource type="Resource" id="chr_resource_1"]
+script = ExtResource("1_pdx7a")
+id = &"chr_premiers"
+case_ids = Array[StringName]([&"tuto_concordant", &"tuto_missing_document", &"sc_85a", &"sc_85b", &"sc_90"])
+display_name = "dos_name_premiers"
+blurb_key = "dos_chr_premiers"
+
+[sub_resource type="Resource" id="chr_resource_2"]
+script = ExtResource("1_pdx7a")
+id = &"chr_technicien"
+case_ids = Array[StringName]([&"sc_01", &"sc_83a", &"sc_83b"])
+display_name = "dos_name_technicien"
+faction = &"hal"
+blurb_key = "dos_chr_technicien"
+
+[sub_resource type="Resource" id="chr_resource_3"]
+script = ExtResource("1_pdx7a")
+id = &"chr_amara"
+case_ids = Array[StringName]([&"sc_02", &"sc_06", &"sc_61"])
+display_name = "dos_name_amara"
+faction = &"ter"
+blurb_key = "dos_chr_amara"
+
+[sub_resource type="Resource" id="chr_resource_4"]
+script = ExtResource("1_pdx7a")
+id = &"chr_mineur"
+case_ids = Array[StringName]([&"sc_03", &"sc_84a"])
+display_name = "dos_name_mineur"
+faction = &"tyc"
+blurb_key = "dos_chr_mineur"
+
+[sub_resource type="Resource" id="chr_resource_5"]
+script = ExtResource("1_pdx7a")
+id = &"chr_mira"
+case_ids = Array[StringName]([&"sc_04", &"sc_22", &"sc_50b", &"sc_82b", &"sc_93b", &"sc_96b", &"sc_96d", &"sc_100b", &"sc_103"])
+display_name = "dos_name_mira"
+faction = &"tyc"
+blurb_key = "dos_chr_mira"
+
+[sub_resource type="Resource" id="chr_resource_6"]
+script = ExtResource("1_pdx7a")
+id = &"chr_lev"
+case_ids = Array[StringName]([&"sc_05", &"sc_13", &"sc_66"])
+display_name = "dos_name_lev"
+faction = &"tyc"
+blurb_key = "dos_chr_lev"
+
+[sub_resource type="Resource" id="chr_resource_7"]
+script = ExtResource("1_pdx7a")
+id = &"chr_valcourt"
+case_ids = Array[StringName]([&"sc_07", &"sc_51"])
+display_name = "dos_name_valcourt"
+faction = &"hal"
+blurb_key = "dos_chr_valcourt"
+
+[sub_resource type="Resource" id="chr_resource_8"]
+script = ExtResource("1_pdx7a")
+id = &"chr_dmitri"
+case_ids = Array[StringName]([&"sc_08", &"sc_24", &"sc_63", &"sc_101"])
+display_name = "dos_name_dmitri"
+faction = &"tyc"
+blurb_key = "dos_chr_dmitri"
+
+[sub_resource type="Resource" id="chr_resource_9"]
+script = ExtResource("1_pdx7a")
+id = &"chr_noor"
+case_ids = Array[StringName]([&"sc_09", &"sc_57"])
+display_name = "dos_name_noor"
+faction = &"tyc"
+blurb_key = "dos_chr_noor"
+
+[sub_resource type="Resource" id="chr_resource_10"]
+script = ExtResource("1_pdx7a")
+id = &"chr_yara"
+case_ids = Array[StringName]([&"sc_10", &"sc_65", &"sc_95"])
+display_name = "dos_name_yara"
+faction = &"tyc"
+blurb_key = "dos_chr_yara"
+
+[sub_resource type="Resource" id="chr_resource_11"]
+script = ExtResource("1_pdx7a")
+id = &"chr_mazur"
+case_ids = Array[StringName]([&"sc_11", &"sc_29", &"sc_78"])
+display_name = "dos_name_mazur"
+faction = &"thr"
+blurb_key = "dos_chr_mazur"
+
+[sub_resource type="Resource" id="chr_resource_12"]
+script = ExtResource("1_pdx7a")
+id = &"chr_ravel"
+case_ids = Array[StringName]([&"sc_12", &"sc_45"])
+display_name = "dos_name_ravel"
+faction = &"hal"
+blurb_key = "dos_chr_ravel"
+
+[sub_resource type="Resource" id="chr_resource_13"]
+script = ExtResource("1_pdx7a")
+id = &"chr_kaito"
+case_ids = Array[StringName]([&"sc_14", &"sc_86a", &"sc_86b"])
+display_name = "dos_name_kaito"
+faction = &"cer"
+blurb_key = "dos_chr_kaito"
+
+[sub_resource type="Resource" id="chr_resource_14"]
+script = ExtResource("1_pdx7a")
+id = &"chr_idris"
+case_ids = Array[StringName]([&"sc_15", &"sc_87"])
+display_name = "dos_name_idris"
+faction = &"thr"
+blurb_key = "dos_chr_idris"
+
+[sub_resource type="Resource" id="chr_resource_15"]
+script = ExtResource("1_pdx7a")
+id = &"chr_hana"
+case_ids = Array[StringName]([&"sc_16", &"sc_67"])
+display_name = "dos_name_hana"
+faction = &"thr"
+blurb_key = "dos_chr_hana"
+
+[sub_resource type="Resource" id="chr_resource_16"]
+script = ExtResource("1_pdx7a")
+id = &"chr_fatou"
+case_ids = Array[StringName]([&"sc_17", &"sc_37", &"sc_88a", &"sc_88b"])
+display_name = "dos_name_fatou"
+faction = &"ter"
+blurb_key = "dos_chr_fatou"
+
+[sub_resource type="Resource" id="chr_resource_17"]
+script = ExtResource("1_pdx7a")
+id = &"chr_sefa"
+case_ids = Array[StringName]([&"sc_18", &"sc_89a", &"sc_89b"])
+display_name = "dos_name_sefa"
+faction = &"drv"
+blurb_key = "dos_chr_sefa"
+
+[sub_resource type="Resource" id="chr_resource_18"]
+script = ExtResource("1_pdx7a")
+id = &"chr_wren"
+case_ids = Array[StringName]([&"sc_19", &"sc_46", &"sc_72", &"sc_102"])
+display_name = "dos_name_wren"
+faction = &"drv"
+blurb_key = "dos_chr_wren"
+
+[sub_resource type="Resource" id="chr_resource_20"]
+script = ExtResource("2_1k7v0")
+all_of = Array[StringName]([&"sc20_detained"])
+
+[sub_resource type="Resource" id="chr_resource_19"]
+script = ExtResource("1_pdx7a")
+id = &"chr_arkady"
+case_ids = Array[StringName]([&"sc_20"])
+display_name = "dos_name_arkady"
+true_name = "dos_name_arkady_true"
+known_name_if = SubResource("chr_resource_20")
+known_on_ending = true
+faction = &"tyc"
+blurb_key = "dos_chr_arkady"
+
+[sub_resource type="Resource" id="chr_resource_21"]
+script = ExtResource("1_pdx7a")
+id = &"chr_montclair"
+case_ids = Array[StringName]([&"sc_21", &"sc_70"])
+display_name = "dos_name_montclair"
+faction = &"hal"
+blurb_key = "dos_chr_montclair"
+
+[sub_resource type="Resource" id="chr_resource_22"]
+script = ExtResource("1_pdx7a")
+id = &"chr_lindgren"
+case_ids = Array[StringName]([&"sc_23", &"sc_36", &"sc_44", &"sc_49a", &"sc_49b", &"sc_64", &"sc_77", &"sc_81b_lindgren", &"sc_97"])
+display_name = "dos_name_lindgren"
+faction = &"hal"
+blurb_key = "dos_chr_lindgren"
+
+[sub_resource type="Resource" id="chr_resource_23"]
+script = ExtResource("1_pdx7a")
+id = &"chr_elena"
+case_ids = Array[StringName]([&"sc_25", &"sc_26", &"sc_74", &"sc_99"])
+display_name = "dos_name_elena"
+faction = &"tyc"
+blurb_key = "dos_chr_elena"
+
+[sub_resource type="Resource" id="chr_resource_24"]
+script = ExtResource("1_pdx7a")
+id = &"chr_margaux"
+case_ids = Array[StringName]([&"sc_27", &"sc_60", &"sc_80"])
+display_name = "dos_name_margaux"
+faction = &"hal"
+blurb_key = "dos_chr_margaux"
+
+[sub_resource type="Resource" id="chr_resource_25"]
+script = ExtResource("1_pdx7a")
+id = &"chr_tariq"
+case_ids = Array[StringName]([&"sc_28", &"sc_62"])
+display_name = "dos_name_tariq"
+faction = &"ter"
+blurb_key = "dos_chr_tariq"
+
+[sub_resource type="Resource" id="chr_resource_26"]
+script = ExtResource("1_pdx7a")
+id = &"chr_kerr_ceres"
+case_ids = Array[StringName]([&"sc_30", &"sc_31", &"sc_32", &"sc_69"])
+display_name = "dos_name_kerr_ceres"
+faction = &"cer"
+blurb_key = "dos_chr_kerr_ceres"
+
+[sub_resource type="Resource" id="chr_resource_27"]
+script = ExtResource("1_pdx7a")
+id = &"chr_corvo"
+case_ids = Array[StringName]([&"sc_33"])
+display_name = "dos_name_corvo"
+faction = &"drv"
+blurb_key = "dos_chr_corvo"
+
+[sub_resource type="Resource" id="chr_resource_28"]
+script = ExtResource("1_pdx7a")
+id = &"chr_hiro"
+case_ids = Array[StringName]([&"sc_34"])
+display_name = "dos_name_hiro"
+faction = &"hal"
+blurb_key = "dos_chr_hiro"
+
+[sub_resource type="Resource" id="chr_resource_29"]
+script = ExtResource("1_pdx7a")
+id = &"chr_okonkwo"
+case_ids = Array[StringName]([&"sc_35a", &"sc_35b", &"sc_35c", &"sc_75a", &"sc_75b", &"sc_75c", &"sc_75d", &"sc_92a", &"sc_92b", &"sc_92c"])
+display_name = "dos_name_okonkwo"
+faction = &"ter"
+blurb_key = "dos_chr_okonkwo"
+
+[sub_resource type="Resource" id="chr_resource_30"]
+script = ExtResource("1_pdx7a")
+id = &"chr_sato"
+case_ids = Array[StringName]([&"sc_38", &"sc_41", &"sc_54", &"sc_76", &"sc_81b_sato", &"sc_91a", &"sc_91b"])
+display_name = "dos_name_sato"
+faction = &"hal"
+blurb_key = "dos_chr_sato"
+
+[sub_resource type="Resource" id="chr_resource_31"]
+script = ExtResource("1_pdx7a")
+id = &"chr_leila"
+case_ids = Array[StringName]([&"sc_39"])
+display_name = "dos_name_leila"
+faction = &"ter"
+blurb_key = "dos_chr_leila"
+
+[sub_resource type="Resource" id="chr_resource_32"]
+script = ExtResource("1_pdx7a")
+id = &"chr_valentin"
+case_ids = Array[StringName]([&"sc_40", &"sc_55", &"sc_81b_valentin"])
+display_name = "dos_name_valentin"
+faction = &"hal"
+blurb_key = "dos_chr_valentin"
+
+[sub_resource type="Resource" id="chr_resource_33"]
+script = ExtResource("1_pdx7a")
+id = &"chr_beaumont"
+case_ids = Array[StringName]([&"sc_42", &"sc_59", &"sc_81b_beaumont", &"sc_94a", &"sc_94b"])
+display_name = "dos_name_beaumont"
+faction = &"hal"
+blurb_key = "dos_chr_beaumont"
+
+[sub_resource type="Resource" id="chr_resource_34"]
+script = ExtResource("1_pdx7a")
+id = &"chr_mateus"
+case_ids = Array[StringName]([&"sc_43"])
+display_name = "dos_name_mateus"
+faction = &"ter"
+blurb_key = "dos_chr_mateus"
+
+[sub_resource type="Resource" id="chr_resource_35"]
+script = ExtResource("1_pdx7a")
+id = &"chr_kasimir"
+case_ids = Array[StringName]([&"sc_47", &"sc_71a", &"sc_71b", &"sc_71c"])
+display_name = "dos_name_kasimir"
+faction = &"tyc"
+blurb_key = "dos_chr_kasimir"
+
+[sub_resource type="Resource" id="chr_resource_36"]
+script = ExtResource("1_pdx7a")
+id = &"chr_paz"
+case_ids = Array[StringName]([&"sc_48", &"sc_52"])
+display_name = "dos_name_paz"
+faction = &"cer"
+blurb_key = "dos_chr_paz"
+
+[sub_resource type="Resource" id="chr_resource_37"]
+script = ExtResource("1_pdx7a")
+id = &"chr_ilan"
+case_ids = Array[StringName]([&"sc_50a", &"sc_93c"])
+display_name = "dos_name_ilan"
+faction = &"tyc"
+blurb_key = "dos_chr_ilan"
+
+[sub_resource type="Resource" id="chr_resource_38"]
+script = ExtResource("1_pdx7a")
+id = &"chr_anouk"
+case_ids = Array[StringName]([&"sc_53"])
+display_name = "dos_name_anouk"
+faction = &"tyc"
+blurb_key = "dos_chr_anouk"
+
+[sub_resource type="Resource" id="chr_resource_39"]
+script = ExtResource("1_pdx7a")
+id = &"chr_okafor"
+case_ids = Array[StringName]([&"sc_56", &"sc_81", &"sc_98"])
+display_name = "dos_name_okafor"
+faction = &"hal"
+blurb_key = "dos_chr_okafor"
+
+[sub_resource type="Resource" id="chr_resource_40"]
+script = ExtResource("1_pdx7a")
+id = &"chr_ophelie"
+case_ids = Array[StringName]([&"sc_58"])
+display_name = "dos_name_ophelie"
+faction = &"hal"
+blurb_key = "dos_chr_ophelie"
+
+[sub_resource type="Resource" id="chr_resource_41"]
+script = ExtResource("1_pdx7a")
+id = &"chr_kerr_hal"
+case_ids = Array[StringName]([&"sc_68", &"sc_81b_kerr"])
+display_name = "dos_name_kerr_hal"
+faction = &"hal"
+blurb_key = "dos_chr_kerr_hal"
+
+[sub_resource type="Resource" id="chr_resource_42"]
+script = ExtResource("1_pdx7a")
+id = &"chr_celeste"
+case_ids = Array[StringName]([&"sc_73"])
+display_name = "dos_name_celeste"
+faction = &"hal"
+blurb_key = "dos_chr_celeste"
+
+[sub_resource type="Resource" id="chr_resource_43"]
+script = ExtResource("1_pdx7a")
+id = &"chr_adeyemi"
+case_ids = Array[StringName]([&"sc_79"])
+display_name = "dos_name_adeyemi"
+faction = &"hal"
+blurb_key = "dos_chr_adeyemi"
+
+[sub_resource type="Resource" id="chr_resource_44"]
+script = ExtResource("1_pdx7a")
+id = &"chr_dora"
+case_ids = Array[StringName]([&"sc_82a", &"sc_93a", &"sc_96a", &"sc_96c", &"sc_100a"])
+display_name = "dos_name_dora"
+faction = &"tyc"
+blurb_key = "dos_chr_dora"
+
+[sub_resource type="Resource" id="chr_resource_45"]
+script = ExtResource("1_pdx7a")
+id = &"chr_titulaire"
+case_ids = Array[StringName]([&"sc_84b"])
+display_name = "dos_name_titulaire"
+faction = &"tyc"
+blurb_key = "dos_chr_titulaire"
+
+[resource]
+script = ExtResource("3_acxa0")
+characters = Array[ExtResource("1_pdx7a")]([SubResource("chr_resource_1"), SubResource("chr_resource_2"), SubResource("chr_resource_3"), SubResource("chr_resource_4"), SubResource("chr_resource_5"), SubResource("chr_resource_6"), SubResource("chr_resource_7"), SubResource("chr_resource_8"), SubResource("chr_resource_9"), SubResource("chr_resource_10"), SubResource("chr_resource_11"), SubResource("chr_resource_12"), SubResource("chr_resource_13"), SubResource("chr_resource_14"), SubResource("chr_resource_15"), SubResource("chr_resource_16"), SubResource("chr_resource_17"), SubResource("chr_resource_18"), SubResource("chr_resource_19"), SubResource("chr_resource_21"), SubResource("chr_resource_22"), SubResource("chr_resource_23"), SubResource("chr_resource_24"), SubResource("chr_resource_25"), SubResource("chr_resource_26"), SubResource("chr_resource_27"), SubResource("chr_resource_28"), SubResource("chr_resource_29"), SubResource("chr_resource_30"), SubResource("chr_resource_31"), SubResource("chr_resource_32"), SubResource("chr_resource_33"), SubResource("chr_resource_34"), SubResource("chr_resource_35"), SubResource("chr_resource_36"), SubResource("chr_resource_37"), SubResource("chr_resource_38"), SubResource("chr_resource_39"), SubResource("chr_resource_40"), SubResource("chr_resource_41"), SubResource("chr_resource_42"), SubResource("chr_resource_43"), SubResource("chr_resource_44"), SubResource("chr_resource_45")])

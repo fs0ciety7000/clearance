@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GardeUnitDef" format=3 uid="uid://r3i1lfr8xfy5"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_rkjki"]
+[ext_resource type="Resource" path="res://data/rules/rule_tycho_interview.tres" id="2_5a1jh"]
+[ext_resource type="Script" path="res://scripts/core/garde_unit_def.gd" id="3_jyjsc"]
+
+[resource]
+script = ExtResource("3_jyjsc")
+id = &"u06"
+title_key = "garde_unit_u06"
+rules = Array[ExtResource("1_rkjki")]([ExtResource("2_5a1jh")])
+tier = 2
+rulebook_tabs = PackedStringArray()
+renews_lists = PackedStringArray()

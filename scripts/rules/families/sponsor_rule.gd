@@ -86,6 +86,56 @@ static func has_valid_sponsor(case: Case, ctx: RuleContext) -> bool:
 	return rule != null and rule.applies_to(case) and rule.is_sponsor_valid(case, ctx)
 
 
+## M12 (R39) : Répondant lu sur n'importe quel document **propre** du cas
+## (permis, carte de répondant), vide sinon.
+static func sponsor_id_of(case: Case) -> String:
+	if case == null:
+		return ""
+	for doc: DocumentInstance in case.documents:
+		if doc.is_foreign() or doc.type_def == null:
+			continue
+		var field: FieldDef = doc.type_def.find_field_by_truth_path(SPONSOR_PATH)
+		if field == null:
+			continue
+		var value: Variant = doc.get_value(field.id)
+		if value != null and not str(value).is_empty():
+			return str(value)
+	return ""
+
+
+## M12 (R39) : référence du champ Répondant renseigné, ou null.
+static func find_sponsor_ref(case: Case) -> FieldRef:
+	if case == null:
+		return null
+	for doc: DocumentInstance in case.documents:
+		if doc.is_foreign() or doc.type_def == null:
+			continue
+		var field: FieldDef = doc.type_def.find_field_by_truth_path(SPONSOR_PATH)
+		if field != null and doc.get_value(field.id) != null and not str(doc.get_value(field.id)).is_empty():
+			return FieldRef.new(doc.get_document_id(), field.id)
+	return null
+
+
+## M12 (R39) : le cas présente un Répondant inscrit à la Main courante (ou
+## contrôle « cas propre » : tenu pour valide), sans condition de motif.
+static func has_listed_sponsor(case: Case, ctx: RuleContext) -> bool:
+	var sponsor: String = sponsor_id_of(case)
+	if sponsor.is_empty() or ctx == null:
+		return false
+	return ctx.trust_documents or ctx.find_ledger_by_citizen(sponsor) != null
+
+
+## Vrai si le RuleSet tient une Main courante (R34, ou M12 : règle de
+## document levée par un répondant, R39).
+static func keeps_ledger(rule_set: RuleSet) -> bool:
+	if rule_set == null:
+		return false
+	for rule: Rule in rule_set.rules:
+		if rule is SponsorRule or (rule is RequireDocumentRule and (rule as RequireDocumentRule).exempt_if_sponsor):
+			return true
+	return false
+
+
 func is_violated(case: Case, ctx: RuleContext) -> bool:
 	return applies_to(case) and not is_sponsor_valid(case, ctx)
 

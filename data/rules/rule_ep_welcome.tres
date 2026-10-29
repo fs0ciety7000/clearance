@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RequireDocumentRule" format=3 uid="uid://bdddbomvjv5o0"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/require_document_rule.gd" id="1_l0jet"]
+
+[resource]
+script = ExtResource("1_l0jet")
+document_id = &"entry_permit"
+exempt_faction_ids = Array[StringName]([&"hal"])
+exempt_if_sponsor = true
+id = &"r_ep_welcome"
+title_key = "r_ep_welcome_title"
+rulebook_text_key = "r_ep_welcome_text"

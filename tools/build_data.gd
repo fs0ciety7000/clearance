@@ -32,10 +32,16 @@ const DAYS_DIR: String = "res://data/days"
 const NAMES_DIR: String = "res://data/names"
 const APPEARANCE_DIR: String = "res://data/appearance"
 const ECONOMY_DIR: String = "res://data/economy"
+## M12 (docs/M12.md) : épilogue J31, Garde de nuit, événements de station, Dossier.
+const EPILOGUE_DIR: String = "res://data/epilogue"
+const GARDE_DIR: String = "res://data/garde"
+const EVENTS_DIR: String = "res://data/events"
+const DOSSIER_DIR: String = "res://data/dossier"
 
 const K := AnomalyType.Kind
 const Act2 := preload("res://tools/build_data_act2.gd")
 const Act3 := preload("res://tools/build_data_act3.gd")
+const M12 := preload("res://tools/build_data_m12.gd")
 const FK := FieldDef.FieldKind
 const CAT := Rule.RuleCategory
 
@@ -69,7 +75,8 @@ const RESERVED_HOUSEHOLD_NAMES: PackedStringArray = ["Ilan", "Noa", "Dora"]
 ## Scripts de données chargés par ce générateur. Un script qui ne s'analyse pas
 ## ne bloque pas l'exécution (appels « Nonexistent function », `_build()`
 ## interrompu sans bruit) : vérifiés avant toute écriture.
-const DATA_SCRIPTS: PackedStringArray = ["res://tools/build_data_act2.gd", "res://tools/build_data_act3.gd"]
+const DATA_SCRIPTS: PackedStringArray = ["res://tools/build_data_act2.gd", "res://tools/build_data_act3.gd",
+		"res://tools/build_data_m12.gd"]
 
 ## Compte les erreurs moteur et de script (`push_error`, erreurs d'exécution)
 ## émises pendant la génération : toute erreur fait échouer le build.
@@ -146,10 +153,58 @@ func _build() -> void:
 		_save(act3_sets[i], DAYS_DIR, "ruleset_day_%02d" % (i + 21))
 	for day: DayDef in Act3.build_days(act3_sets):
 		_save_day(day)
+	_build_m12(rules)
 	_build_economy()
 	_reserve_character_names(pools)
-	assert(docs.size() == 8)
+	assert(docs.size() == 9)
 	_completed = true
+
+
+# ---------------------------------------------------------------------------
+# M12 « Rejouabilité » (docs/M12.md, `tools/build_data_m12.gd`)
+# ---------------------------------------------------------------------------
+
+## Épilogue J31 (RuleSets et jours des quatre mondes, `epilogue.tres`), Garde
+## de nuit (socle, unités U01 → U20, `garde.tres`), événements EV-01 → EV-08,
+## table des personnages du Dossier. Les échos (SC-83 → SC-89) sont ajoutés aux
+## jours de campagne par `_save_day`.
+func _build_m12(rules: Dictionary[StringName, Rule]) -> void:
+	for dir: String in [EPILOGUE_DIR, GARDE_DIR, EVENTS_DIR, DOSSIER_DIR]:
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
+	var sets: Dictionary[StringName, RuleSet] = M12.build_epilogue_rule_sets(rules)
+	for world: StringName in sets:
+		_save(sets[world], EPILOGUE_DIR, "ruleset_day31_%s" % world)
+	var days: Dictionary[StringName, DayDef] = M12.build_epilogue_days(sets)
+	for world: StringName in days:
+		var day: DayDef = days[world]
+		for scripted: ScriptedCaseDef in day.scripted_cases:
+			scripted.resource_scene_unique_id = "scripted_%s" % scripted.id
+		var counter: Array[int] = [0]
+		_tag_subresources(day, "d31%s" % world, counter)
+		_save(day, EPILOGUE_DIR, "day_31_%s" % world)
+	var epilogue: EpilogueDef = M12.build_epilogue(days)
+	var epilogue_counter: Array[int] = [0]
+	_tag_subresources(epilogue, "epi", epilogue_counter)
+	_save(epilogue, EPILOGUE_DIR, "epilogue")
+	var garde_rules: RuleSet = M12.build_garde_rule_set(rules)
+	_save(garde_rules, GARDE_DIR, "ruleset_garde")
+	var units: Array[GardeUnitDef] = M12.build_garde_units(rules)
+	for unit: GardeUnitDef in units:
+		_save(unit, GARDE_DIR, "unit_%s" % unit.id)
+	var garde: GardeDef = M12.build_garde(garde_rules, units)
+	var garde_counter: Array[int] = [0]
+	_tag_subresources(garde, "garde", garde_counter)
+	_save(garde, GARDE_DIR, "garde")
+	var events: Array[StationEventDef] = M12.build_events()
+	for event: StationEventDef in events:
+		var event_counter: Array[int] = [0]
+		_tag_subresources(event, String(event.id), event_counter)
+		_save(event, EVENTS_DIR, String(event.id))
+	_save(M12.build_station_events(events), EVENTS_DIR, "station_events")
+	var characters: CharacterTableDef = M12.build_characters()
+	var character_counter: Array[int] = [0]
+	_tag_subresources(characters, "chr", character_counter)
+	_save(characters, DOSSIER_DIR, "characters")
 
 
 # ---------------------------------------------------------------------------
@@ -557,6 +612,24 @@ func _build_documents() -> Dictionary[StringName, DocumentTypeDef]:
 	]
 	result[ticket.id] = ticket
 
+	# M12 (R39 « Accueil », monde B de l'épilogue) : carte de répondant — le N° ID
+	# d'un·e Né·e-Halcyon admis·e aujourd'hui à cette vitre tient lieu de permis.
+	var sponsor_card: DocumentTypeDef = _doc(&"sponsor_card", &"conseil_air", &"seal_council_air",
+			"CR-NNNN", Vector2i(1, 3), &"ACCENT_CYAN")
+	sponsor_card.fields = [
+		_field(&"serial", FK.ID_CODE, &"document.serial"),
+		_field(&"family_name", FK.TEXT, &"family_name"),
+		_field(&"given_name", FK.TEXT, &"given_name"),
+		_field(&"birth_date", FK.DATE, &"birth_date"),
+		_field(&"citizen_id", FK.ID_CODE, &"citizen_id"),
+		_field(&"sponsor", FK.ID_CODE, &"sponsor_id"),
+		_field(&"issue_date", FK.DATE, &"document.issue_date"),
+		_field(&"expiry_date", FK.DATE, &"document.expiry_date"),
+		_field(&"issuer", FK.ENUM, &"document.issuer_id", false),
+		_field(&"seal", FK.ENUM, &"document.seal_id"),
+	]
+	result[sponsor_card.id] = sponsor_card
+
 	for doc: DocumentTypeDef in result.values():
 		for i: int in doc.fields.size():
 			doc.fields[i].display_order = i
@@ -721,6 +794,8 @@ func _build_rules() -> Dictionary[StringName, Rule]:
 
 	# --- Acte III : R32–R37 (docs/ACT3.md §2.4) ---
 	rules.append_array(Act3.build_rules())
+	# --- M12 : R38–R42, épilogue J31 (docs/M12.md §1.5–§1.8) ---
+	rules.append_array(M12.build_rules())
 	var result: Dictionary[StringName, Rule] = {}
 	for rule: Rule in rules:
 		result[rule.id] = rule
@@ -1502,7 +1577,11 @@ func _add_full_name(names: Dictionary[String, bool], given: Variant, family: Var
 
 
 ## Sauvegarde d'un jour : identifiants stables pour toutes ses sous-ressources.
+## M12 : échos SC-83 → SC-89 ajoutés avant (index libre vérifié).
 func _save_day(day: DayDef) -> void:
+	for problem: String in M12.extend_day(day):
+		push_error("build_data: écho M12 — %s" % problem)
+		_failures += 1
 	_days.append(day)
 	for scripted: ScriptedCaseDef in day.scripted_cases:
 		scripted.resource_scene_unique_id = "scripted_%s" % scripted.id

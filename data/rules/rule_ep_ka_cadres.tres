@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ContractSuspendedRule" format=3 uid="uid://titbwufbfrhj"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/contract_suspended_rule.gd" id="1_kyhi2"]
+
+[resource]
+script = ExtResource("1_kyhi2")
+faction_ids = Array[StringName]([])
+suspended_codes = PackedStringArray("KA")
+any_origin = true
+classes = Array[StringName]([&"C-1", &"C-2"])
+employer_codes = Dictionary[String, String]({
+"Autorité de Transit": "AT",
+"Banque Aurel": "BA",
+"Bureau de Continuité": "BC",
+"Commission de Rééquilibrage": "CR",
+"Dispensaire de Tycho": "DT",
+"Délégation tharsienne": "DL",
+"Hydroponie Ceres-Verte": "CV",
+"Kessler-Ashe Orbital": "KA",
+"Meridian Biosystèmes": "MB",
+"Ondine Synaptique": "ON",
+"Prospection indépendante": "PI",
+"Valcourt-Hsu Logistique": "VH",
+"Équipage indépendant": "EQ"
+})
+id = &"r_ep_ka_cadres"
+title_key = "r_ep_ka_cadres_title"
+rulebook_text_key = "r_ep_ka_cadres_text"

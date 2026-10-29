@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="StationEventDef" format=3 uid="uid://c2p2vr8nrpclc"]
+
+[ext_resource type="Script" path="res://scripts/core/rule_change_def.gd" id="1_btlni"]
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="2_bpm60"]
+
+[sub_resource type="Resource" id="ev_05_resource_1"]
+script = ExtResource("1_btlni")
+op = 1
+rule_id = &"r_seals_valid"
+note_key = "sev_blackout_title"
+
+[sub_resource type="Resource" id="ev_05_resource_2"]
+script = ExtResource("1_btlni")
+op = 5
+modifier = &"clock_frozen"
+amount = 1
+
+[sub_resource type="Resource" id="ev_05_resource_3"]
+script = ExtResource("1_btlni")
+op = 1
+rule_id = &"r_seals_valid"
+note_key = "sev_blackout_title"
+
+[resource]
+script = ExtResource("2_bpm60")
+id = &"ev_05"
+key = &"blackout"
+window_kind = 3
+changes = Array[ExtResource("1_btlni")]([SubResource("ev_05_resource_1"), SubResource("ev_05_resource_2")])
+announce_key = "sev_blackout_announce"
+title_key = "sev_blackout_title"
+rulebook_key = "sev_blackout_title"
+end_key = "sev_blackout_end"
+garde_window_passengers = 2
+garde_changes = Array[ExtResource("1_btlni")]([SubResource("ev_05_resource_3")])

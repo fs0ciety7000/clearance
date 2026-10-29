@@ -1,0 +1,144 @@
+[gd_resource type="Resource" script_class="GardeDef" format=3 uid="uid://ccl1hofe5xdqf"]
+
+[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_uanu8"]
+[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_2t8sc"]
+[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="3_f8ltt"]
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="4_yko7b"]
+[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="5_16cic"]
+[ext_resource type="Resource" path="res://data/garde/ruleset_garde.tres" id="6_ewmsh"]
+[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="7_is5ov"]
+[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="8_2omgq"]
+[ext_resource type="Script" path="res://scripts/core/summons_def.gd" id="9_nanak"]
+[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="10_ru0ou"]
+[ext_resource type="Script" path="res://scripts/core/garde_def.gd" id="11_6ppir"]
+[ext_resource type="Script" path="res://scripts/core/garde_tier_def.gd" id="12_adtmi"]
+[ext_resource type="Script" path="res://scripts/core/garde_unit_def.gd" id="13_iyauo"]
+[ext_resource type="Resource" path="res://data/garde/unit_u01.tres" id="14_c5w0t"]
+[ext_resource type="Resource" path="res://data/garde/unit_u02.tres" id="15_des1a"]
+[ext_resource type="Resource" path="res://data/garde/unit_u03.tres" id="16_vtth7"]
+[ext_resource type="Resource" path="res://data/garde/unit_u04.tres" id="17_16adt"]
+[ext_resource type="Resource" path="res://data/garde/unit_u05.tres" id="18_mell4"]
+[ext_resource type="Resource" path="res://data/garde/unit_u06.tres" id="19_bj4fe"]
+[ext_resource type="Resource" path="res://data/garde/unit_u07.tres" id="20_ow40q"]
+[ext_resource type="Resource" path="res://data/garde/unit_u08.tres" id="21_ki4cu"]
+[ext_resource type="Resource" path="res://data/garde/unit_u09.tres" id="22_nnu1g"]
+[ext_resource type="Resource" path="res://data/garde/unit_u10.tres" id="23_o85da"]
+[ext_resource type="Resource" path="res://data/garde/unit_u11.tres" id="24_5mb2s"]
+[ext_resource type="Resource" path="res://data/garde/unit_u12.tres" id="25_0qxkq"]
+[ext_resource type="Resource" path="res://data/garde/unit_u13.tres" id="26_t8i7b"]
+[ext_resource type="Resource" path="res://data/garde/unit_u14.tres" id="27_3u3e7"]
+[ext_resource type="Resource" path="res://data/garde/unit_u15.tres" id="28_8wpu3"]
+[ext_resource type="Resource" path="res://data/garde/unit_u16.tres" id="29_5d8ta"]
+[ext_resource type="Resource" path="res://data/garde/unit_u17.tres" id="30_njm3k"]
+[ext_resource type="Resource" path="res://data/garde/unit_u18.tres" id="31_msqha"]
+[ext_resource type="Resource" path="res://data/garde/unit_u19.tres" id="32_gwoc2"]
+[ext_resource type="Resource" path="res://data/garde/unit_u20.tres" id="33_w5p87"]
+
+[sub_resource type="Resource" id="garde_resource_1"]
+script = ExtResource("7_is5ov")
+day_number = 0
+game_date = 31896
+rule_set = ExtResource("6_ewmsh")
+duration_sec = 0.0
+passenger_count = 400
+anomaly_count_weights = PackedFloat32Array(0.45, 0.45, 0.1, 0)
+anomaly_weights = Dictionary[int, float]({
+0: 0.1,
+1: 0.06,
+2: 0.06,
+3: 0.07,
+4: 0.07,
+5: 0.05,
+6: 0.05,
+7: 0.05,
+8: 0.04,
+9: 0.05,
+10: 0.04,
+11: 0.05,
+12: 0.04,
+13: 0.05,
+14: 0.05,
+15: 0.06,
+17: 0.05,
+18: 0.2,
+19: 0.05
+})
+intro_text_key = "garde_intro"
+credit_per_correct = 0
+penalty_per_error = 0
+faction_weights = Dictionary[StringName, float]({
+&"cer": 0.15,
+&"drv": 0.08,
+&"hal": 0.2,
+&"ter": 0.2,
+&"thr": 0.12,
+&"tyc": 0.25
+})
+visor_down_rate = 0.1
+legit_noise_rate = 0.2
+free_citations_per_day = 0
+penalty_escalated = 0
+has_evening = false
+rulebook_tabs = PackedStringArray()
+luciole_trust_on_breach = false
+revoked_decoys = 3
+mode = &"garde"
+economy_disabled = true
+untimed = true
+subtle_rate = 0.1
+
+[sub_resource type="Resource" id="garde_resource_2"]
+script = ExtResource("12_adtmi")
+name_key = "garde_tier_0"
+anomaly_count_weights = PackedFloat32Array(0.45, 0.45, 0.1, 0)
+subtle_rate = 0.1
+
+[sub_resource type="Resource" id="garde_resource_3"]
+script = ExtResource("12_adtmi")
+index = 1
+name_key = "garde_tier_1"
+from_passenger = 21
+anomaly_count_weights = PackedFloat32Array(0.4, 0.42, 0.15, 0.03)
+subtle_rate = 0.25
+legit_noise_rate = 0.3
+visor_down_rate = 0.15
+
+[sub_resource type="Resource" id="garde_resource_4"]
+script = ExtResource("12_adtmi")
+index = 2
+name_key = "garde_tier_2"
+from_passenger = 41
+anomaly_count_weights = PackedFloat32Array(0.36, 0.4, 0.19, 0.05)
+subtle_rate = 0.4
+legit_noise_rate = 0.35
+visor_down_rate = 0.2
+
+[sub_resource type="Resource" id="garde_resource_5"]
+script = ExtResource("12_adtmi")
+index = 3
+name_key = "garde_tier_3"
+from_passenger = 61
+anomaly_count_weights = PackedFloat32Array(0.33, 0.38, 0.22, 0.07)
+subtle_rate = 0.55
+legit_noise_rate = 0.4
+visor_down_rate = 0.2
+
+[sub_resource type="Resource" id="garde_resource_6"]
+script = ExtResource("12_adtmi")
+index = 4
+name_key = "garde_tier_4"
+from_passenger = 101
+anomaly_count_weights = PackedFloat32Array(0.3, 0.38, 0.24, 0.08)
+subtle_rate = 0.65
+legit_noise_rate = 0.4
+visor_down_rate = 0.2
+rotation = true
+
+[resource]
+script = ExtResource("11_6ppir")
+day_template = SubResource("garde_resource_1")
+units = Array[ExtResource("13_iyauo")]([ExtResource("14_c5w0t"), ExtResource("15_des1a"), ExtResource("16_vtth7"), ExtResource("17_16adt"), ExtResource("18_mell4"), ExtResource("19_bj4fe"), ExtResource("20_ow40q"), ExtResource("21_ki4cu"), ExtResource("22_nnu1g"), ExtResource("23_o85da"), ExtResource("24_5mb2s"), ExtResource("25_0qxkq"), ExtResource("26_t8i7b"), ExtResource("27_3u3e7"), ExtResource("28_8wpu3"), ExtResource("29_5d8ta"), ExtResource("30_njm3k"), ExtResource("31_msqha"), ExtResource("32_gwoc2"), ExtResource("33_w5p87")])
+tiers = Array[ExtResource("12_adtmi")]([SubResource("garde_resource_2"), SubResource("garde_resource_3"), SubResource("garde_resource_4"), SubResource("garde_resource_5"), SubResource("garde_resource_6")])
+tier_unlock_directive = PackedInt32Array(1, 4, 9)
+date_min = 31896
+date_max = 32109

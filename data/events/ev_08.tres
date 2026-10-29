@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="StationEventDef" format=3 uid="uid://ca6l8xbkpa6bm"]
+
+[ext_resource type="Script" path="res://scripts/core/rule_change_def.gd" id="1_4vn10"]
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="2_xf5tb"]
+
+[sub_resource type="Resource" id="ev_08_resource_1"]
+script = ExtResource("1_4vn10")
+op = 4
+rule_id = &"r_bioscan_required"
+params = Dictionary[StringName, Variant]({
+&"exempt": true
+})
+purposes = Array[StringName]([&"transit"])
+from_minute = 780
+to_minute = 840
+
+[sub_resource type="Resource" id="ev_08_resource_2"]
+script = ExtResource("1_4vn10")
+op = 4
+rule_id = &"r_bioscan_required"
+params = Dictionary[StringName, Variant]({
+&"exempt": true
+})
+purposes = Array[StringName]([&"transit"])
+
+[resource]
+script = ExtResource("2_xf5tb")
+id = &"ev_08"
+key = &"exemption"
+required_rule_id = &"r_bioscan_required"
+day_min = 5
+day_max = 22
+window_kind = 2
+clock_from = 780
+clock_to = 840
+changes = Array[ExtResource("1_4vn10")]([SubResource("ev_08_resource_1")])
+announce_key = "sev_exemption_announce"
+title_key = "sev_exemption_title"
+rulebook_key = "sev_exemption_rb"
+garde_required_unit = &"u07"
+garde_changes = Array[ExtResource("1_4vn10")]([SubResource("ev_08_resource_2")])

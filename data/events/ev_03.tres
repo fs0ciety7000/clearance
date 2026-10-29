@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="StationEventDef" format=3 uid="uid://dfsbhoyljw17o"]
+
+[ext_resource type="Script" path="res://scripts/core/rule_change_def.gd" id="1_cq3vd"]
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="2_tkup7"]
+
+[sub_resource type="Resource" id="ev_03_resource_1"]
+script = ExtResource("1_cq3vd")
+op = 4
+rule_id = &"r_bioscan_valid"
+params = Dictionary[StringName, Variant]({
+&"max_age_days": 7
+})
+faction_ids = Array[StringName]([&"tyc"])
+
+[sub_resource type="Resource" id="ev_03_resource_2"]
+script = ExtResource("1_cq3vd")
+op = 5
+modifier = &"max_anomalies"
+amount = 1
+
+[sub_resource type="Resource" id="ev_03_resource_3"]
+script = ExtResource("1_cq3vd")
+op = 5
+modifier = &"no_subtle"
+amount = 1
+
+[resource]
+script = ExtResource("2_tkup7")
+id = &"ev_03"
+key = &"quarantine"
+event_class = 2
+required_rule_id = &"r_bioscan_valid"
+day_min = 5
+day_max = 22
+window_kind = 1
+changes = Array[ExtResource("1_cq3vd")]([SubResource("ev_03_resource_1"), SubResource("ev_03_resource_2"), SubResource("ev_03_resource_3")])
+announce_key = "sev_quarantine_announce"
+title_key = "sev_quarantine_title"
+rulebook_key = "sev_quarantine_rb"
+garde_window_passengers = 10
+garde_required_unit = &"u07"
