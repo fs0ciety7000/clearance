@@ -11,8 +11,14 @@ const CLASS_B: int = 2
 @export var events: Array[StationEventDef] = []
 ## Jours éligibles → classes permises (masque `CLASS_A | CLASS_B`).
 @export var eligible_days: Dictionary[int, int] = {}
-## Probabilité d'un événement par jour éligible.
+## Probabilité d'un événement par jour éligible (tirage v1, indépendant par
+## jour) : **non lue** depuis le calendrier stratifié (D-136) ; conservée pour
+## les données et la documentation (0,30 × 18 jours ≈ 5).
 @export_range(0.0, 1.0) var probability: float = 0.30
+## Calendrier stratifié (D-136) : nombre d'événements par campagne tiré
+## uniformément entre ces bornes (3 à 6 : moyenne 4,5).
+@export var min_per_campaign: int = 3
+@export var max_per_campaign: int = 6
 ## Au plus n fois chaque type par campagne.
 @export var max_per_type: int = 2
 ## Pas d'événement le lendemain d'un événement.

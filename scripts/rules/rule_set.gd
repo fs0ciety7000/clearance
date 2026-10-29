@@ -234,7 +234,8 @@ func _apply_one(change: RuleChangeDef, diff: RuleDiff) -> StringName:
 				return &""
 			_known[change.rule.id] = change.rule
 			_drop_retired(change.rule.id)
-			rules.append(change.rule)
+			# Règle d'origine remplacée (SC-89a) : à sa place ; nouvelle : à la fin.
+			_insert_at_origin(change.rule)
 			if change.mark_new and not new_rule_ids.has(change.rule.id):
 				new_rule_ids.append(change.rule.id)
 			diff.added.append(change.rule.id)
@@ -299,15 +300,20 @@ func _restore(rule_id: StringName) -> bool:
 	if has_rule(rule_id) or not _known.has(rule_id):
 		return false
 	_drop_retired(rule_id)
-	var rule: Rule = _known[rule_id]
-	var rank: int = _origin_rank(rule_id)
+	_insert_at_origin(_known[rule_id])
+	return true
+
+
+## Insère une règle à son rang d'origine (avant la première règle de rang
+## supérieur) ; une règle hors de l'ordre d'origine va à la fin.
+func _insert_at_origin(rule: Rule) -> void:
+	var rank: int = _origin_rank(rule.id)
 	var at: int = rules.size()
 	for i: int in rules.size():
 		if rules[i] != null and _origin_rank(rules[i].id) > rank:
 			at = i
 			break
 	rules.insert(at, rule)
-	return true
 
 
 func _origin_rank(rule_id: StringName) -> int:

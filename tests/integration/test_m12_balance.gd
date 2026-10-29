@@ -1,5 +1,5 @@
 ## M12 (docs/M12.md §6 ; B56, B62) — équilibrage et propriétés de la Garde de
-## nuit (bots constants 80 % et 90 %, aucun cas insoluble, exercice garanti,
+## nuit (bots constants 80 % et 90 %, bot dégressif (D-136), aucun cas insoluble, exercice garanti,
 ## déterminisme quels que soient les verdicts) et calendrier des événements de
 ## station (nombre par campagne, jours et classes permis).
 extends GutTest
@@ -43,6 +43,19 @@ func test_garde_median_with_a_90_percent_bot() -> void:
 	assert_between(median, 23.0, 27.0, "médiane %.1f" % median)
 
 
+## Bot dégressif (95 % au palier 0, −4 points par palier, −0,5 point par unité
+## active au-delà de 6) : médiane entre 30 et 40 (D-136, mesuré ≈ 36).
+func test_garde_median_with_the_decaying_bot() -> void:
+	var scores: Array[int] = []
+	var profile: SimProfile = SimProfile.garde_decaying()
+	for n: int in 200:
+		var r: Dictionary = BalanceSimulator.run_garde(data, GardeService.code_from_bits(SeededRng.mix(4711, n)), profile, n)
+		scores.append(int(r["score"]))
+	scores.sort()
+	var median: float = _median(scores)
+	assert_between(median, 30.0, 40.0, "médiane %.1f" % median)
+
+
 ## Joueur parfait sur ≈ 10 000 passagers : aucune citation, toute violation a
 ## une preuve citable, aucun invariant violé, directives exercées.
 func test_no_insoluble_case_over_ten_thousand_passengers() -> void:
@@ -79,8 +92,8 @@ func test_garde_is_deterministic_whatever_the_verdicts() -> void:
 		assert_eq(a.slice(0, common), b.slice(0, common), code)
 
 
-## Calendrier : 4 à 5 événements en moyenne (M12 §3.4), jamais un jour exclu,
-## jamais de classe B un jour « A seulement ».
+## Calendrier : 4 à 5 événements en moyenne (M12 §3.4), 3 à 6 dans ≥ 90 % des
+## graines (D-136), jamais un jour exclu, jamais de classe B un jour « A seulement ».
 func test_event_schedule_counts_and_days() -> void:
 	var counts: Array[int] = []
 	var def: StationEventsDef = data.station_events
@@ -98,6 +111,5 @@ func test_event_schedule_counts_and_days() -> void:
 		in_range += 1 if c >= 3 and c <= 6 else 0
 	var mean: float = float(total) / counts.size()
 	assert_between(mean, 4.0, 5.0, "moyenne %.2f" % mean)
-	# Cible M12 §6.2 : ≥ 90 %. Tirage indépendant par jour (`schedule`, lot A) :
-	# ≈ 78 % mesuré ; seuil de non-régression ici, écart signalé (rapport M12 B).
-	assert_gte(float(in_range) / counts.size(), 0.72, "3 à 6 événements : %d / %d" % [in_range, counts.size()])
+	# Cible M12 §6.2 : ≥ 90 % des graines entre 3 et 6 (calendrier stratifié, D-136).
+	assert_gte(float(in_range) / counts.size(), 0.90, "3 à 6 événements : %d / %d" % [in_range, counts.size()])

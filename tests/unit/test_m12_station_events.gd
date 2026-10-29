@@ -300,3 +300,49 @@ func test_class_b_plan_adds_free_citation_and_story_mode_same_calendar() -> void
 	dc.call(&"_begin", data.get_day(b_day), 7, [] as Array[StringName], {}, plans)
 	assert_eq(dc.day.free_citations_per_day, base + 1, "+1 avertissement gratuit (classe B)")
 	assert_eq(data.get_day(b_day).free_citations_per_day, base, "données intactes")
+
+
+## D-136 : calendrier stratifié — nombre cible uniforme entre les bornes
+## (3 à 6), un jour par strate, contraintes intactes, rattrapage d'une strate
+## sans jour possible, bornes de données respectées.
+func test_stratified_schedule_counts_and_strata() -> void:
+	var data: DataCatalog = CaseFactory.catalog()
+	var def: StationEventsDef = _catalog()
+	assert_eq(def.min_per_campaign, 3)
+	assert_eq(def.max_per_campaign, 6)
+	var histogram: Dictionary[int, int] = {}
+	var in_range: int = 0
+	var runs: int = 400
+	for campaign_seed: int in range(1, runs + 1):
+		var schedule: Dictionary[int, StationEventPlan] = StationEventService.schedule(campaign_seed, def, data.days)
+		histogram[schedule.size()] = histogram.get(schedule.size(), 0) + 1
+		in_range += 1 if schedule.size() >= 3 and schedule.size() <= 6 else 0
+		assert_lte(schedule.size(), def.max_per_campaign, "graine %d : au plus 6" % campaign_seed)
+		var days: Array = schedule.keys()
+		for i: int in range(1, days.size()):
+			assert_gt(int(days[i]), int(days[i - 1]) + 1, "graine %d : jours croissants, jamais consécutifs" % campaign_seed)
+	assert_gte(float(in_range) / runs, 0.95, "3 à 6 événements : %s" % histogram)
+	for count: int in [3, 4, 5, 6]:
+		assert_gt(histogram.get(count, 0), runs / 10, "%d événements : tiré (%s)" % [count, histogram])
+	# Strates : consécutives, de tailles égales à un jour près, sans perte.
+	var numbers: Array[int] = [4, 5, 6, 7, 8, 12, 13, 14, 15, 16, 18, 19, 22, 23, 25, 26, 27, 28]
+	var strata: Array[Array] = StationEventService.strata(numbers, 4)
+	assert_eq(strata.size(), 4)
+	var flat: Array[int] = []
+	for stratum: Array in strata:
+		assert_between(stratum.size(), 4, 5)
+		for value: Variant in stratum:
+			flat.append(int(value))
+	assert_eq(flat, numbers, "toutes les strates, dans l'ordre")
+	assert_eq(StationEventService.strata(numbers, 0).size(), 0)
+	assert_eq(StationEventService.strata([4, 5] as Array[int], 6).size(), 2, "pas plus de strates que de jours")
+	# Bornes de données : 0 à 0 → aucun événement ; 2 jours seulement → rattrapage borné.
+	var none: StationEventsDef = _catalog()
+	none.min_per_campaign = 0
+	none.max_per_campaign = 0
+	assert_eq(StationEventService.schedule(3, none, data.days).size(), 0, "cible 0 : aucun événement")
+	var few: StationEventsDef = _catalog()
+	few.eligible_days = {6: StationEventsDef.CLASS_A | StationEventsDef.CLASS_B, 7: StationEventsDef.CLASS_A}
+	for campaign_seed: int in range(1, 30):
+		assert_eq(StationEventService.schedule(campaign_seed, few, data.days).size(), 1,
+				"deux jours consécutifs : un seul événement")

@@ -20,3 +20,9 @@ var note_key: String = ""
 ## Acte III (M1) : règle **retirée** affichée barrée un jour, avec son motif
 ## (`note_key` : `rb_retired_quais`, `rb_retired_curfew`) ; jamais évaluée.
 var retired: bool = false
+## M12 (B55) : liste nommée lue par la règle (`RevokedIdRule.list_label` :
+## `stolen`, `council`…), vide sinon — l'UI n'a pas à lire la ressource
+## (souvent une sous-ressource sans chemin).
+var list_label: StringName = &""
+## M12 : intitulé de l'onglet de cette liste (`rb_tab_stolen`, `rb_tab_council`), vide sinon.
+var list_title_key: String = ""

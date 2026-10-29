@@ -23,6 +23,14 @@ extends Rule
 @export var honor_reinstatements: bool = false
 
 
+## Ligne du Rulebook : expose la liste lue (`list_label`, `list_title_key`).
+func get_rulebook_entry() -> RulebookEntry:
+	var entry: RulebookEntry = super.get_rulebook_entry()
+	entry.list_label = list_label
+	entry.list_title_key = list_title_key
+	return entry
+
+
 ## Entrées de la liste lue par cette règle.
 func entries(ctx: RuleContext) -> Array[RevokedEntry]:
 	if ctx == null:

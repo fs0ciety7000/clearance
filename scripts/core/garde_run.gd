@@ -118,7 +118,7 @@ func after_case(result: CaseResult, ctx: RuleContext = null) -> Dictionary:
 				"verdict": SlippedItem.VERDICT_NAMES[result.verdict_kind],
 				"expected": SlippedItem.VERDICT_NAMES[result.expected_verdict],
 				"citation": result.citation_reason_key, "rule_id": String(result.citation_rule_id),
-				"label": result.passenger_label})
+				"label": result.passenger_label, "violations": violation_refs(result)})
 		step["error"] = true
 	else:
 		var points: int = points_for_correct(ctx)
@@ -206,7 +206,28 @@ func to_record() -> Dictionary:
 		"passengers": passengers,
 		"end_reason": String(end_reason),
 		"errors": errors.duplicate(true),
+		"clock_minute": clock_minute(),
 	}
+
+
+## Références des documents en cause d'une erreur (futur écran REVOIR) :
+## violations manquées (approbation fautive, refus non motivé), sinon toutes
+## les violations du cas ; `[{rule_id, reason_key, refs: ["document.champ"]}]`.
+static func violation_refs(result: CaseResult) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	if result == null:
+		return rows
+	var source: Array[Violation] = result.missed_violations if not result.missed_violations.is_empty() \
+			else result.expected_violations
+	for violation: Violation in source:
+		if violation == null:
+			continue
+		var refs: Array[String] = []
+		for ref: FieldRef in violation.refs:
+			if ref != null:
+				refs.append("%s.%s" % [ref.document_id, ref.field_id])
+		rows.append({"rule_id": String(violation.rule_id), "reason_key": violation.reason_key, "refs": refs})
+	return rows
 
 
 func _event_running() -> bool:

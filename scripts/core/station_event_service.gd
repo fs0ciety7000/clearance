@@ -3,12 +3,18 @@
 ##
 ## `schedule()` : calendrier d'une campagne, **fonction pure** de la graine de
 ## campagne et des données (jamais sauvegardé ; reprendre un jour redonne le
-## même événement). Par jour éligible, dans l'ordre : probabilité
-## `StationEventsDef.probability`, pas d'événement le lendemain d'un
-## événement, chaque type au plus `max_per_type` fois, type tiré uniformément
-## parmi ceux dont la classe (jour « A seulement » ou « A+B »), les bornes de
-## jour et la règle prérequise sont satisfaites **et** dont la fenêtre peut se
-## placer entre les cas scénarisés (`place`). Classe B : `free_citations_bonus`.
+## même événement). **Stratifié** (D-136) : un nombre cible d'événements est
+## tiré entre `StationEventsDef.min_per_campaign` et `max_per_campaign`
+## (uniforme : 3 à 6, moyenne 4,5) ; les jours éligibles présents sont coupés
+## en autant de strates consécutives et un jour est tiré dans chaque strate ;
+## une strate sans jour possible est rattrapée sur les jours restants. Un jour
+## n'est retenu que si : pas le lendemain ni la veille d'un événement
+## (`no_consecutive_days`), et au moins un type y est possible — au plus
+## `max_per_type` fois, classe (jour « A seulement » ou « A+B »), bornes de
+## jour, règle prérequise active, fenêtre plaçable entre les cas scénarisés
+## (`place`). Le type est tiré uniformément parmi les possibles, avec la
+## graine du jour (salée `station_event_v<version>`). Classe B :
+## `free_citations_bonus`.
 class_name StationEventService
 extends RefCounted
 
@@ -33,43 +39,103 @@ static func schedule(campaign_seed: int, def: StationEventsDef, days: Dictionary
 	var result: Dictionary[int, StationEventPlan] = {}
 	if def == null:
 		return result
-	var counts: Dictionary[StringName, int] = {}
-	var last_day: int = -100
-	var numbers: Array = def.eligible_days.keys()
+	var numbers: Array[int] = []
+	for value: Variant in def.eligible_days.keys():
+		if days.get(int(value), null) != null:
+			numbers.append(int(value))
 	numbers.sort()
-	for value: Variant in numbers:
-		var number: int = int(value)
-		var day: DayDef = days.get(number, null)
-		if day == null:
-			continue
-		if def.no_consecutive_days and number == last_day + 1:
-			continue
-		var rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.day_seed(campaign_seed, number),
-				"station_event_v%d" % def.version))
-		if not rng.chance(def.probability):
-			continue
-		var classes: int = def.eligible_days[number]
-		var candidates: Array[StationEventDef] = []
-		for event: StationEventDef in def.events:
-			if event == null or counts.get(event.id, 0) >= def.max_per_type:
-				continue
-			if not is_allowed_on(event, day, classes):
-				continue
-			if place(event, day, SeededRng.new(0)) == null:
-				continue
-			candidates.append(event)
-		if candidates.is_empty():
-			continue
-		var chosen: StationEventDef = candidates[rng.randi_range(0, candidates.size() - 1)]
-		var plan: StationEventPlan = place(chosen, day, rng)
-		if plan == null:
-			continue
-		if chosen.is_class_b():
-			plan.free_citations_bonus = def.class_b_free_citations
-		result[number] = plan
-		counts[chosen.id] = counts.get(chosen.id, 0) + 1
-		last_day = number
+	if numbers.is_empty():
+		return result
+	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(campaign_seed, "station_event_count_v%d" % def.version))
+	var target: int = target_count(def, rng, numbers.size())
+	var counts: Dictionary[StringName, int] = {}
+	var missed: int = 0
+	for stratum: Array[int] in strata(numbers, target):
+		var placed: bool = false
+		for value: Variant in rng.shuffled(stratum):
+			if _try_day(int(value), campaign_seed, def, days, counts, result):
+				placed = true
+				break
+		if not placed:
+			missed += 1
+	if missed > 0:
+		# Rattrapage : jours restants, dans un ordre tiré.
+		var rest: Array = []
+		for number: int in numbers:
+			if not result.has(number):
+				rest.append(number)
+		for value: Variant in rng.shuffled(rest):
+			if missed == 0:
+				break
+			if _try_day(int(value), campaign_seed, def, days, counts, result):
+				missed -= 1
+	var ordered: Dictionary[int, StationEventPlan] = {}
+	var keys: Array = result.keys()
+	keys.sort()
+	for value: Variant in keys:
+		ordered[int(value)] = result[int(value)]
+	return ordered
+
+
+## Nombre cible d'événements (D-136) : uniforme entre `min_per_campaign` et
+## `max_per_campaign`, borné par les jours disponibles (un sur deux au plus
+## sans jours consécutifs).
+static func target_count(def: StationEventsDef, rng: SeededRng, available: int) -> int:
+	var low: int = maxi(def.min_per_campaign, 0)
+	var high: int = maxi(def.max_per_campaign, low)
+	var cap: int = (available + 1) / 2 if def.no_consecutive_days else available
+	return mini(rng.randi_range(low, high), cap)
+
+
+## `numbers` (croissants) coupés en `count` strates consécutives de tailles
+## égales à un jour près.
+static func strata(numbers: Array[int], count: int) -> Array[Array]:
+	var result: Array[Array] = []
+	var size: int = numbers.size()
+	if count <= 0 or size == 0:
+		return result
+	count = mini(count, size)
+	for k: int in count:
+		var stratum: Array[int] = []
+		for i: int in range(k * size / count, (k + 1) * size / count):
+			stratum.append(numbers[i])
+		result.append(stratum)
 	return result
+
+
+## Tente un événement le jour `number` (contraintes de `schedule`) ; vrai si posé.
+static func _try_day(number: int, campaign_seed: int, def: StationEventsDef, days: Dictionary[int, DayDef],
+		counts: Dictionary[StringName, int], result: Dictionary[int, StationEventPlan]) -> bool:
+	if result.has(number):
+		return false
+	if def.no_consecutive_days and (result.has(number - 1) or result.has(number + 1)):
+		return false
+	var day: DayDef = days.get(number, null)
+	if day == null:
+		return false
+	var classes: int = def.eligible_days.get(number, 0)
+	var candidates: Array[StationEventDef] = []
+	for event: StationEventDef in def.events:
+		if event == null or counts.get(event.id, 0) >= def.max_per_type:
+			continue
+		if not is_allowed_on(event, day, classes):
+			continue
+		if place(event, day, SeededRng.new(0)) == null:
+			continue
+		candidates.append(event)
+	if candidates.is_empty():
+		return false
+	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.day_seed(campaign_seed, number),
+			"station_event_v%d" % def.version))
+	var chosen: StationEventDef = candidates[rng.randi_range(0, candidates.size() - 1)]
+	var plan: StationEventPlan = place(chosen, day, rng)
+	if plan == null:
+		return false
+	if chosen.is_class_b():
+		plan.free_citations_bonus = def.class_b_free_citations
+	result[number] = plan
+	counts[chosen.id] = counts.get(chosen.id, 0) + 1
+	return true
 
 
 ## Plan du jour `day_number` (null sans événement).

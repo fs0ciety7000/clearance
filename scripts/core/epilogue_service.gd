@@ -201,7 +201,15 @@ static func sanitize_seed(raw: Dictionary) -> Dictionary:
 	return epi
 
 
-## Drapeaux du matin du J31 (graine) : `act3_started` toujours vrai.
+## Préfixe du pseudo-drapeau de la fin du J31 (`epi_ending_f1`, `epi_ending_f10`…).
+const ENDING_FLAG_PREFIX: String = "epi_ending_"
+
+
+## Drapeaux du matin du J31 (graine) : `act3_started` toujours vrai, plus les
+## pseudo-drapeaux recalculés (jamais dans la graine, D-125) — fin
+## `epi_ending_<clé>` (`ending_flag`) et foyer `hh_*`
+## (`EveningService.context_flags` sur `household_of`). Un vrai drapeau de
+## même nom l'emporte.
 static func morning_flags(epi: Dictionary) -> Dictionary[StringName, Variant]:
 	var flags: Dictionary[StringName, Variant] = {}
 	var raw: Variant = epi.get("flags", {})
@@ -210,7 +218,28 @@ static func morning_flags(epi: Dictionary) -> Dictionary[StringName, Variant]:
 		for key: Variant in dict:
 			flags[StringName(str(key))] = json_value(dict[key])
 	flags[EndingService.FLAG_ACT3] = true
+	var pseudo: Dictionary[StringName, Variant] = pseudo_flags(epi)
+	for flag: StringName in pseudo:
+		if not flags.has(flag):
+			flags[flag] = pseudo[flag]
 	return flags
+
+
+## Pseudo-drapeaux du J31 : `epi_ending_<clé>` (vrai) et foyer `hh_*`
+## (`hh_<proche>_present|alive|held|away|sick`, `hh_any_sick`, jauges
+## `hh_alive`, `hh_present`).
+static func pseudo_flags(epi: Dictionary) -> Dictionary[StringName, Variant]:
+	var empty: Dictionary[StringName, Variant] = {}
+	var result: Dictionary[StringName, Variant] = EveningService.context_flags(empty, household_of(epi))
+	var flag: StringName = ending_flag(StringName(str(epi.get("ending_key", ""))))
+	if flag != &"":
+		result[flag] = true
+	return result
+
+
+## `epi_ending_<clé>` (`f1`, `f5c`, `f10`…) ; vide sans clé.
+static func ending_flag(key: StringName) -> StringName:
+	return StringName(ENDING_FLAG_PREFIX + String(key)) if key != &"" else &""
 
 
 static func household_of(epi: Dictionary) -> Household:

@@ -21,6 +21,7 @@ static func simulate(data: DataCatalog, day_number: int, day_seed: int, policy: 
 		undocumented_indices: Array[int] = []) -> DaySummary:
 	var day: DayDef = data.get_day(day_number)
 	var builder: CaseBuilder = CaseBuilder.new(data, day, day_seed, [])
+	day = builder.day
 	var summary: DaySummary = DaySummary.new()
 	summary.day_number = day_number
 	summary.planned_cases = day.passenger_count
@@ -78,6 +79,8 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		if FlagCondition.is_flag_true(flags, flag):
 			true_flags.append(flag)
 	var builder: CaseBuilder = CaseBuilder.new(data, day, day_seed, true_flags, memory, flags)
+	# SC-89a (`rule_replacements`) : notation sur le jour (et le RuleSet) du générateur.
+	day = builder.day
 	var summary: DaySummary = DaySummary.new()
 	summary.day_number = day_number
 	summary.planned_cases = day.passenger_count

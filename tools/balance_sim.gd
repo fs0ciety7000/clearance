@@ -306,7 +306,7 @@ func _run_garde(data: DataCatalog) -> void:
 				if ex[k]:
 					exercised += 1
 		var label: String = "dégressif" if profile.garde_decay else "%d %%" % roundi(profile.accuracy * 100.0)
-		print("== Garde · bot %s ==" % label)
+		print("== Garde · bot %s ==%s" % [label, " (cible D-136 : médiane 30 à 40)" if profile.garde_decay else ""])
 		print("score : médiane %.1f · moyenne %.1f · p10 %d · p90 %d · max %d" % [_percentile(scores, 0.5), _mean(scores),
 				roundi(_percentile(scores, 0.1)), roundi(_percentile(scores, 0.9)), scores.max()])
 		print("directives vues : médiane %.1f · ≥ 1 : %.1f %% · ≥ 4 : %.1f %%" % [_percentile(directives, 0.5),

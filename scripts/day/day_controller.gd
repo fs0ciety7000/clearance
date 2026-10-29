@@ -201,6 +201,9 @@ func _begin(source: DayDef, day_seed: int, flags: Array[StringName], memory: Dic
 		if not true_flags.has(flag):
 			true_flags.append(flag)
 	builder = CaseBuilder.new(data, day, day_seed, true_flags, memory, morning)
+	# Mutation portée par un cas scénarisé (SC-89a : `rule_replacements`) : le
+	# shift suit le jour du générateur (même copie, même RuleSet que `ctx`).
+	day = builder.day
 	summary = DaySummary.new()
 	summary.day_number = day.day_number
 	summary.planned_cases = day.passenger_count
@@ -620,7 +623,7 @@ func _prepare_rules_for(index: int) -> void:
 
 ## Après application d'une différence : tampon DÉTENTION et onglets ouverts
 ## par une directive (Garde), générateur prévenu (`CaseBuilder.on_rules_changed`,
-## lot B), puis `rules_changed`.
+## lot B), puis `rules_changed` et republication des listes renouvelées.
 func _on_rules_applied(diff: RuleDiff) -> void:
 	if mode == DayDef.MODE_GARDE and garde_run != null:
 		for unit_id: StringName in garde_run.active_units:
@@ -632,9 +635,32 @@ func _on_rules_applied(diff: RuleDiff) -> void:
 			for tab: String in unit.rulebook_tabs:
 				if not day.rulebook_tabs.has(tab):
 					day.rulebook_tabs.append(tab)
+	var lists: PackedStringArray = []
 	if builder.has_method(&"on_rules_changed"):
 		builder.call(&"on_rules_changed", diff)
+		lists = builder.changed_lists.duplicate()
+		builder.changed_lists = PackedStringArray()
 	EventBus.rules_changed.emit(diff)
+	_publish_changed_lists(lists)
+
+
+## Republie les listes renouvelées par `CaseBuilder.on_rules_changed`
+## (`changed_lists`) : avis (`wanted_notices_published`), révocations
+## (`revocations_published`), listes nommées (`rule_list_published`, EV-07
+## `stolen`). Après `rules_changed` : l'onglet existe avant sa liste.
+func _publish_changed_lists(lists: PackedStringArray) -> void:
+	var done: PackedStringArray = []
+	for label: String in lists:
+		if done.has(label):
+			continue
+		done.append(label)
+		match label:
+			"wanted":
+				EventBus.wanted_notices_published.emit(builder.get_wanted_notices())
+			"revoked", "":
+				EventBus.revocations_published.emit(builder.get_revocations())
+			_:
+				EventBus.rule_list_published.emit(StringName(label), builder.ctx.get_list(StringName(label)))
 
 
 ## Effets du contrôleur avant la citation : EV-02 (comparateur en panne), un
