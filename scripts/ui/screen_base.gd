@@ -27,6 +27,8 @@ const BRACKET: float = 28.0
 var opaque: bool = true
 var _root_margin: MarginContainer = null
 var _applied_min_px: int = -1
+## Focus d'appoint et défilement à la manette (M11).
+var focus_guard: FocusGuard = null
 var _closing: bool = false
 
 
@@ -40,8 +42,18 @@ func _ready() -> void:
 	_apply_theme()
 	EventBus.settings_changed.connect(_on_settings_changed)
 	get_viewport().size_changed.connect(_on_viewport_resized)
+	InputPrompts.ensure(get_tree())
 	_build()
+	# Manette / clavier : une direction sans focus le rend au contrôle par
+	# défaut de l'écran ; stick droit / Pg↑ Pg↓ font défiler (UI_FLOW §9).
+	focus_guard = FocusGuard.attach(self, default_focus)
 	_appear()
+
+
+## À surcharger : contrôle qui reçoit le focus par défaut (manette, clavier).
+## Null : premier contrôle focalisable de l'écran.
+func default_focus() -> Control:
+	return null
 
 
 ## À surcharger : construit le contenu (appelé une fois, dans `_ready`).
@@ -93,6 +105,10 @@ func _apply_theme() -> void:
 func _on_settings_changed(key: StringName, _value: Variant) -> void:
 	if key == Settings.KEY_TEXT_SCALE:
 		_apply_theme()
+	elif key == Settings.KEY_COLOR_VISION:
+		# Palette changée (DESIGN_SYSTEM §2.5) : thème reconstruit, tracés redessinés.
+		_apply_theme()
+		propagate_call(&"queue_redraw")
 
 
 func _on_viewport_resized() -> void:
@@ -118,7 +134,7 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), DS.BG_VOID if opaque else DS.SCRIM)
 	if not opaque:
 		return
-	var grid: Color = DS.LINE_SUBTLE
+	var grid: Color = Palette.LINE_SUBTLE
 	grid.a = 0.35
 	var x: float = GRID_STEP
 	while x < size.x:
@@ -168,7 +184,7 @@ static func wrapped(text: String, variation: StringName = &"BodyLabel", color: V
 
 
 ## Sur-titre en capitales (label DS, tracking).
-static func eyebrow(text: String, color: Color = DS.TEXT_SECONDARY) -> Label:
+static func eyebrow(text: String, color: Color = Palette.TEXT_SECONDARY) -> Label:
 	var l: Label = label(text, &"DocFieldLabel", color)
 	l.uppercase = true
 	return l
@@ -206,7 +222,7 @@ static func spacer(expand_h: bool = true, expand_v: bool = false) -> Control:
 
 
 ## Filet horizontal `line.subtle` (ou couleur donnée).
-static func rule_line(color: Color = DS.LINE_SUBTLE, thickness: int = DS.BORDER_HAIRLINE) -> ColorRect:
+static func rule_line(color: Color = Palette.LINE_SUBTLE, thickness: int = DS.BORDER_HAIRLINE) -> ColorRect:
 	var line: ColorRect = ColorRect.new()
 	line.color = color
 	line.custom_minimum_size = Vector2(0, thickness)
@@ -216,7 +232,7 @@ static func rule_line(color: Color = DS.LINE_SUBTLE, thickness: int = DS.BORDER_
 
 ## En-tête de section : icône + titre en capitales + filet qui remplit la ligne
 ## + compteur optionnel.
-static func section(title: String, icon: UiIcon.Kind = UiIcon.Kind.DIAMOND, color: Color = DS.TEXT_SECONDARY,
+static func section(title: String, icon: UiIcon.Kind = UiIcon.Kind.DIAMOND, color: Color = Palette.TEXT_SECONDARY,
 		side: String = "") -> HBoxContainer:
 	var row: HBoxContainer = hbox(DS.SPACE_2)
 	row.add_child(UiIcon.make(icon, color, DS.ICON_S))

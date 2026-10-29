@@ -97,7 +97,7 @@ func _ready() -> void:
 	shift.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(shift)
 	_shift_caption = shift
-	_clock_icon = UiIcon.make(UiIcon.Kind.WARNING, DS.STATE_AMBER, DS.ICON_M)
+	_clock_icon = UiIcon.make(UiIcon.Kind.WARNING, Palette.STATE_AMBER, DS.ICON_M)
 	_clock_icon.visible = false
 	row.add_child(_clock_icon)
 	_clock = Label.new()
@@ -219,7 +219,7 @@ func _spacer() -> Control:
 
 func _vline() -> ColorRect:
 	var line: ColorRect = ColorRect.new()
-	line.color = DS.LINE_SUBTLE
+	line.color = Palette.LINE_SUBTLE
 	line.custom_minimum_size = Vector2(1, DS.SPACE_8)
 	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return line
@@ -270,17 +270,18 @@ func set_clock(remaining_sec: float, duration_sec: float) -> void:
 	var color: Color = DS.TEXT_PRIMARY
 	match state:
 		ClockState.WARNING:
-			color = DS.STATE_AMBER
+			color = Palette.STATE_AMBER
 			_end_label.text = UiText.t("bar_shift_ending", "FIN DE SHIFT PROCHE")
 		ClockState.CRITICAL:
-			color = DS.STATE_RED
-			_end_label.text = UiText.t("bar_shift_ending", "FIN DE SHIFT PROCHE")
+			color = Palette.STATE_RED
+			# Critique ≠ avertissement par le texte et l'icône, pas la couleur seule (M11).
+			_end_label.text = UiText.t("bar_shift_critical", "FIN DE SHIFT IMMINENTE")
 		_:
 			_end_label.text = UiText.tf("bar_shift_end", [UiText.clock(UiText.SHIFT_END_MIN)], "FIN %s")
 	if changed:
 		queue_compaction()
 	_clock.add_theme_color_override(&"font_color", color)
-	_end_label.add_theme_color_override(&"font_color", color if state != ClockState.NORMAL else DS.TEXT_SECONDARY)
+	_end_label.add_theme_color_override(&"font_color", color if state != ClockState.NORMAL else Palette.TEXT_SECONDARY)
 	_clock_icon.visible = state != ClockState.NORMAL
 	_clock_icon.kind = UiIcon.Kind.DENIED if state == ClockState.CRITICAL else UiIcon.Kind.WARNING
 	_clock_icon.color = color
@@ -316,13 +317,13 @@ func set_credits(credits: int) -> void:
 
 func _draw_progress() -> void:
 	var rect: Rect2 = Rect2(Vector2.ZERO, _progress_bar.size)
-	_progress_bar.draw_rect(rect, DS.LINE_SUBTLE)
+	_progress_bar.draw_rect(rect, Palette.LINE_SUBTLE)
 	var color: Color = DS.ACCENT_CYAN
 	match clock_state:
 		ClockState.WARNING:
-			color = DS.STATE_AMBER
+			color = Palette.STATE_AMBER
 		ClockState.CRITICAL:
-			color = DS.STATE_RED
+			color = Palette.STATE_RED
 	_progress_bar.draw_rect(Rect2(rect.position, Vector2(rect.size.x * clampf(progress, 0.0, 1.0), rect.size.y)), color)
 	# Graduations horaires (1 par heure de shift).
 	var hours: int = roundi((UiText.SHIFT_END_MIN - UiText.SHIFT_START_MIN) / 60.0)

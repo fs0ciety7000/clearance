@@ -1,6 +1,6 @@
 # CLEARANCE — Design System
 
-> Version 0.3 · Propriétaire : Design System / Senior Designer · Statut : **brouillon à valider**
+> Version 0.5 · Propriétaire : Design System / Senior Designer · Statut : **brouillon à valider**
 > Sources de vérité : ce document (intentions, règles) · `res://ui/theme/tokens.gd` (valeurs code, `class_name DS`) · `res://ui/theme/clearance_theme.tres` (thème Godot).
 > Les valeurs de base (couleurs, familles de police) sont fixées par le contrat de l'Orchestrateur. Ce document y ajoute uniquement des **nuances dérivées** (alpha, états).
 
@@ -17,7 +17,7 @@
    - **Non-diégétique** (méta, pour le joueur) : menus pause/options, sous-titres, tutoriels contextuels, notifications système d'accessibilité. **Aucun effet holo**, contraste maximal, style plat.
    - En cas de doute : si l'information est nécessaire pour ne pas perdre injustement, elle doit aussi exister en non-diégétique (option).
 6. **Le Consortium est jaune, la rébellion est magenta.** Le jaune = autorité, marque, action officielle. Le magenta = ce qui cloche (anomalie détectée, voix dissidente). Ce couple narratif ne doit jamais être brouillé.
-7. **Accessible par défaut.** Options obligatoires : réduction des effets, échelle UI (90–150 %, `Settings.text_scale` 0,9–1,5 ; en dessous de 90 % le minimum de 12 px n'est plus tenu), mode daltonien (renfort des formes, pas de changement de palette), sous-titres, timer désactivable/ralenti.
+7. **Accessible par défaut.** Options obligatoires : réduction des effets, échelle UI (90–150 %, `Settings.text_scale` 0,9–1,5 ; en dessous de 90 % le minimum de 12 px n'est plus tenu), vision des couleurs (palettes distinguables **en plus** des formes, §2.5 — M11), scintillement holographique coupable séparément (§5), sous-titres, timer désactivable/ralenti, commandes complètes à la manette (UI_FLOW §9).
 
 ---
 
@@ -117,6 +117,60 @@ Deux locuteurs nouveaux (ACT2 §5, ARCHITECTURE §7.2) ne peuvent réutiliser ni
 
 Distinction : la braise (`#D9663F`, teinte 15°, saturation et luminance plus basses) reste séparée du rouge refus (`#FF3B3B`) et de l'ambre (`#FFA31A`) **par l'icône et le libellé de locuteur** — jamais par la couleur seule.
 
+### 2.5 Vision des couleurs : palettes alternatives (M11, `Palette`)
+
+Réglage **« Vision des couleurs »** (`Settings.color_vision`, Options › Accessibilité) : *Aucune* (0) · *Protan · Deutan* (1) · *Tritan* (2) · *Contraste élevé* (3). Les tokens de base de `DS` restent figés (contrat, données `holo_tint_token`) ; l'UI lit les couleurs d'**état** et de **voix** dans `Palette` (`res://ui/theme/palette.gd`) sous le même nom (`Palette.STATE_RED`…), que le réglage remplace par une variante (`Palette.apply`, appelé par `Settings`). En mode *Aucune*, `Palette` = `DS` à l'identique (testé). Les variantes alpha (`_12`, `_24`, `_60`) suivent leur base. Inchangés dans tous les modes : `accent.cyan` (information, focus, concordance au fil), `accent.yellow` (Consortium), fonds, `text.primary`.
+
+| Token (rôle) | Contrat | Protan · Deutan | Tritan | Contraste élevé |
+|---|---|---|---|---|
+| `state.green` (approuvé, concordant validé) | `#2EFF9A` | `#4A90F0` bleu | `#C8FF66` vert-jaune | = |
+| `state.red` (refus, critique) | `#FF3B3B` | `#FF3D1F` vermillon | `#FF2D1A` | `#FF6B6B` |
+| `accent.magenta` (discordance, Lucioles) | `#FF2E88` | `#F0B0C8` rose pâle | `#C266FF` violet | `#FF66AE` |
+| `state.amber` (avertissement, nouveau) | `#FFA31A` | `#FFF0A0` paille | `#E0C890` sable | = |
+| `voice.commission` | `#8E9CFF` | `#B0A0FF` | = | `#A9B4FF` |
+| `voice.brulants` | `#D9663F` | `#A88A70` | = | `#F08A5D` |
+| `text.secondary` | `#8A97A8` | = | = | `#C2CCD8` |
+| `line.subtle` | `#232A38` | = | = | `#5A6780` (3,32:1, bordure lisible) |
+
+**Choix des teintes** — simulation Machado et al. 2009 (sévérité 1,0, RVB linéaire) puis écart CIEDE2000 entre les quatre paires critiques : approuvé/refusé, concordance/discordance (vert/magenta), refus/avertissement, discordance/refus. Protan·Deutan joue sur l'axe bleu ↔ jaune et la **clarté** (refus sombre, discordance et avertissement très clairs) ; Tritan sur l'axe rouge ↔ vert.
+
+| ΔE00 minimal des paires critiques | normal | protanopie | deutéranopie | tritanopie |
+|---|---|---|---|---|
+| Contrat (Aucune) | 20,0 | 24,8 | **12,8** | **6,5** (magenta ≈ rouge) |
+| Protan · Deutan | 32,3 | **21,1** (bleu/rose) | **24,0** | 27,5 |
+| Tritan | 39,6 | 31,7 | 19,2 | **29,6** |
+| Contraste élevé | 18,1 | 21,4 | 13,2 | 4,8 |
+
+Le contraste élevé vise la basse vision (états plus clairs, neutres renforcés), pas un daltonisme. Le test GUT `test_palettes_separate_critical_pairs_under_simulation` refait la simulation (CIE76 ≥ 35, nettement au-dessus du contrat en deutéranopie / tritanopie).
+
+**Contrastes WCAG mesurés** (texte AA ≥ 4,5:1 sur `bg.panel` / `bg.elevated` / `bg.void`, testé dans les 4 modes par `test_palette_text_contrast_is_wcag_aa_in_every_mode`) :
+
+| Couleur | panel | elevated | void | Couleur | panel | elevated | void |
+|---|---|---|---|---|---|---|---|
+| `#4A90F0` | 5,88 | 5,36 | 6,23 | `#C266FF` | 5,97 | 5,45 | 6,33 |
+| `#FF3D1F` | 5,34 | 4,87 | 5,66 | `#E0C890` | 11,54 | 10,53 | 12,23 |
+| `#F0B0C8` | 10,57 | 9,64 | 11,20 | `#FF6B6B` | 6,80 | 6,21 | 7,21 |
+| `#FFF0A0` | 16,39 | 14,95 | 17,37 | `#FF66AE` | 6,98 | 6,37 | 7,40 |
+| `#B0A0FF` | 8,38 | 7,65 | 8,88 | `#F08A5D` | 7,64 | 6,97 | 8,10 |
+| `#A88A70` | 5,88 | 5,36 | 6,23 | `#A9B4FF` | 9,59 | 8,75 | 10,16 |
+| `#C8FF66` | 16,14 | 14,73 | 17,11 | `#C2CCD8` | 11,62 | 10,60 | 12,32 |
+| `#FF2D1A` | 5,07 | **4,63** | 5,38 | | | | |
+
+Texte foncé `#07080C` sur ces accents pleins (boutons, badges) : ≥ 5,38:1 partout.
+
+**Jamais la couleur seule (audit M11)** — chaque état reste lisible en niveaux de gris, dans les quatre modes :
+
+| Élément | Porteur hors couleur |
+|---|---|
+| Bandeau DISCORDANCE / CONCORDANT / INCOMPARABLE | icône **losange ≠** (avant M11 : triangle, confondu avec l'avertissement) / coche / « = » + titre en toutes lettres |
+| Champ en discordance | hachures diagonales, bordure 2 px, **losange ≠** (avant : triangle) et pastille numérotée ①② ; champ A : pastille « A » |
+| Fils du comparateur | discordance : trait plein 3 px + losange numéroté au milieu ; concordance : trait fin 1 px qui se dissout ; évaluation / incomparable : pointillés |
+| Liens suggérés du scanner | pointillés + losanges creux + **glyphe de la source** au milieu (réticule ACV-2, luciole du boîtier) — avant M11 la source ne se lisait qu'à la couleur |
+| Cadre « VISAGE » | discordance : coins pleins + « ≠ » devant le libellé ; sélection : « A » |
+| Tampons | cercle-coche / octogone-croix / carré à barres + libellé |
+| Horloge du shift | avertissement : triangle « FIN DE SHIFT PROCHE » ; critique : **octogone « FIN DE SHIFT IMMINENTE »** (avant : même texte) |
+| Compteur QUOTA, foyer, marques des documents | texte d'état (« QUOTA ATTEINT », « malade »…), pastilles numérotées |
+
 ## 3. Typographie
 
 ### 3.1 Familles (Google Fonts, OFL 1.1)
@@ -146,6 +200,7 @@ JetBrains Mono est **obligatoire** pour toute valeur à comparer (ID, dates, cod
 | `data.s` | JetBrains Mono 400 | 14 | 1,35 | 0 | Telle quelle | Tableaux denses, historique, n° de citation |
 | `timer` | JetBrains Mono 700 | 44 | 1,0 | −2 % | — | Horloge de service (chiffres tabulaires, pas de saut de largeur) |
 | `caption` | Inter 500 | 12 | 1,3 | +2 % | Phrase | Mentions légales, légendes. **Taille minimale absolue** |
+| `data.doc` (M11) | JetBrains Mono 500 | 18 | 1,35 | 0 | Telle quelle | Valeur d'un document **posé sur le plan de travail** (`DocValue`, `FS_DATA_DOC`) : le plan réduit les documents (`fit_scale` 0,73–0,95), elle part donc plus grande que `data`. Plancher sur écran réduit : `DOC_VALUE_MIN_PHYSICAL` = 13 px physiques à l'échelle 1 (Steam Deck : 20 px logiques) |
 
 Règles :
 - **Minimum 12 px @1080p**, et **14 px pour tout texte lu en jeu sous contrainte de temps** (labels exceptés car en capitales + tracking).
@@ -229,6 +284,7 @@ Règles absolues :
 3. Option **« Effets visuels » : Complets / Réduits / Désactivés** → `fx_intensity` 1 / 0,5 / 0. En « Désactivés » : aucun flicker, aucun glitch, aucun bruit, transitions en fondu simple ≤ 160 ms. Respecter aussi le réglage OS « reduce motion » si détectable.
 4. Les effets **renforcent** la sémantique, ils ne la portent jamais (un document falsifié a aussi un DocField flagged, pas seulement un glitch).
 5. Pluie / reflets du monde 3D derrière les hologrammes : le panneau holo applique un voile `bg.panel` à ≥ 85 % d'opacité derrière les zones de texte pour garantir les contrastes du §2.3.
+6. **« Scintillement holographique »** (M11, `Settings.holo_flicker`, actif par défaut) : coupé, il fige le scintillement du cadre, le défilement des scanlines et les glitchs, **sans toucher aux lueurs** (glow) ni au niveau « Effets visuels » — pour les joueurs gênés par le mouvement lumineux mais qui veulent garder la lisibilité des halos. Appliqué aux HoloDocuments (`DocumentView`). Le scintillement du shader 3D `booth_holo` (logo, barrières) suit encore `fx_intensity` seul : sa lecture de `holo_flicker` est proposée au 3D Designer (propriétaire de `scripts/booth/`).
 
 ---
 
@@ -411,6 +467,12 @@ Diégétique : ticket imprimé par le Consortium qui sort d'une fente du poste.
 
 ---
 
+### 7.11 PromptGlyph — invite de commande (M11)
+
+**Anatomie** : glyphe **dessiné** (aucune image, `scripts/ui/prompt_glyph.gd`) d'une action de `project.godot`, qui suit le dernier périphérique (`InputPrompts`) : touche (cadre chanfreiné `chamfer.s`, nom en `KeyCapLabel`) · bouton de façade (cercle, lettre A B X Y ; formes ✕ ○ □ △ PlayStation) · tranche / gâchette (onglet aux coins hauts coupés : LB, RT, L1, R2) · croix directionnelle (branche pleine) · stick (cercle, flèche ou double cercle pour le clic) · bouton système (VUE, MENU). Trait `text.secondary`, texte `text.primary`, fond `bg.void` : **monochrome**, un glyphe ne porte jamais d'état. Hauteur = police `KeyCapLabel` + 12 px (suit l'échelle du texte et le plancher Deck).
+
+Usages : barre d'outils (Inspection, Interroger, Suivant), onglets et repli du Rulebook, carte « question débloquée », menu pause, rappel des commandes (Options, briefing du J1 : clavier **et** manette côte à côte). Les phrases (ligne d'état, aides du passager, tampons « maintenir … ») prennent le nom court (`InputPrompts.text_for`) : « ESPACE », « LT », « CROIX ».
+
 ## 8. Motion
 
 ### 8.1 Durées
@@ -548,6 +610,12 @@ Police par défaut du thème : **Inter 400, 16 px**, couleur `text.primary`.
 
 Règle : **aucune couleur ou taille en dur dans les scènes**. Une scène utilise soit une type variation, soit une constante `DS.*` (pour les overrides dynamiques : timer, états calculés). Les composants complexes (DiscrepancyLink, Stamp, HoloDocument) sont des scènes `.tscn` avec script, qui lisent leurs valeurs dans `DS`.
 
+### 10.3 bis Palette active et documents (M11)
+
+- `Palette` (`res://ui/theme/palette.gd`) : couleurs d'état et de voix **dynamiques** (même nom que dans `DS`) ; tout script d'UI les lit là, jamais dans `DS` (sinon le mode de vision des couleurs l'ignore). Une donnée qui nomme un token (`holo_tint_token`, accents d'événements de la soirée) passe par `Palette.token(&"STATE_RED")`.
+- Thème : changement de palette → `ScreenBase`, `ComparisonUI` et le menu pause reconstruisent leur thème et redessinent ; les panneaux déjà construits avec une couleur imposée la gardent jusqu'au prochain cas / écran (formes et icônes inchangées).
+- `ThemeBuilder.build(text_scale, min_px, doc_min_px)` : `doc_min_px` = plancher des valeurs de documents (`doc_min_px_for(échelle)` : 20 px au Deck, 0 en 1080p et pour les fenêtres minuscules / headless) ; variation `DocValue`.
+
 ### 10.4 Contenu de `tokens.gd`
 
 `class_name DS extends RefCounted`, **constantes seulement** (pas de fonctions, pas d'état) :
@@ -604,4 +672,5 @@ Tenir un registre `CREDITS` (source, auteur, licence, URL, date) pour chaque ass
 - 0.1 — Création : tokens dérivés alpha, échelle typo, composants, motion, mapping Godot.
 - 0.2 — M4 (interface de comparaison) : tokens `PANEL_VEIL` (bg.panel 95 % + flou du décor, panneaux posés sur la vitre), `SUBTITLE_BG` (bg.void 85 %), `INSPECTION_VEIL` (bg.void 8 %), `FS_SUBTITLE` 18, `FS_TIMER_COMPACT` 28 (horloge de la barre 56 px), rythmes `STAMP_HOLD` 0,4 s, `DOC_STAGGER`, `CONCORDANT_HOLD`, `INCOMPARABLE_HOLD`, `NEXT_DEBOUNCE`, `SUBTITLE_MIN_HOLD` / `SUBTITLE_PER_CHAR`, `DOC_ZOOM` 1,5, `STAMP_TILT_MAX_DEG`, `FX_LINK_DASH_SPEED`. `ThemeBuilder.build(text_scale)` met à l'échelle les polices (`Settings.text_scale`) et ajoute les variations `DocTitle`, `DocIssuer`, `DataSmall`, `DataTitle`, `TimerLabel`, `TimerCompact`, `BodyLabel`, `BodyStrong`, `BodySmall`, `SubtitleText`, `PanelTitle`, `StampLabel`, `BrandLabel`, `KeyCap(Label)`, `BadgeLabel`, `BadgeNew`, `BadgeMagenta`, `ElevatedCard`, `VeilPanel`, `BarPanel`, `ToolbarPanel`, `SubtitlePanel`, `RuleCard(New)`, `DialogueQuestion`, `Toast*`, `CitationTicket`, `ButtonGhost`, `ToggleTab`, `ButtonTool`, `ButtonQuestion`. Icônes d'état dessinées (`scripts/ui/ui_icon.gd`) en attendant les SVG Lucide.
 - 0.3 — M8 (interfaces de l'Acte II) : voix `VOICE_COMMISSION` `#8E9CFF` et `VOICE_BRULANTS` `#D9663F` (+ variantes 12 %), §2.4 ; icônes dessinées `BREATH`, `AWAY`, `FLAME`, `SCANNER`, `REGISTER` ; composants `QuotaCounterView` (compteur sélectionnable de la barre d'état), `RevokedCardView`, liens suggérés du scanner (pointillé de la source, losanges creux, pastille ✓), boîte de confirmation « décision définitive » (`ButtonDanger`), `ChapterScreen` (chiffre romain dessiné).
+- 0.5 — M11 « Confort » (lot B) : §2.5 palettes de vision des couleurs (`Palette`, réglage `color_vision`, contrastes et simulations mesurés), audit « jamais la couleur seule » (losange ≠ pour la discordance au bandeau et aux champs, glyphe de source des liens du scanner, « ≠ » du cadre VISAGE, horloge critique libellée) ; §5 règle 6 « Scintillement holographique » (`holo_flicker`) ; token `FS_DATA_DOC` 18 et `DOC_VALUE_MIN_PHYSICAL` 13, variation `DocValue` (D-085 rév.) ; composant §7.11 `PromptGlyph`. Carte d'identité redessinée (champs sous la photo, bande MRZ sans libellé).
 - 0.4 — M9 (interfaces de l'Acte III) : icônes dessinées `SCALES` (balance : Arbitrage, Enquête, convocations) et `STRIKE` (règle / document retiré·e) ; composants `LedgerCardView` (liseré vert, surlignage de la dernière entrée), `SummonsCardView` (ambre de l'Enquête), règle retirée barrée (texte `text.muted`), compteur QUOTA « SUSPENDU » gris, carte plein cadre « FIN DE L'ACTE II » (couleur de la fin rappelée), chiffre romain paramétrable (Ⅲ, ambre) ; F10 « LE PONT » en `state.green`. Aucun token nouveau.

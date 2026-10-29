@@ -2765,3 +2765,41 @@ end_variant_derive,VARIANTE · DÉRIVE
 end_variant_tycho,VARIANTE · TYCHO
 end_figure_dora,DERNIÈRE NAVETTE · DORA
 end_figure_mira,DERNIÈRE NAVETTE · MIRA
+bar_shift_critical,FIN DE SHIFT IMMINENTE
+opt_color_vision,Vision des couleurs
+opt_color_vision_hint,Couleurs d'état distinguables ; icônes et motifs restent affichés.
+opt_cv_none,AUCUNE
+opt_cv_protan,PROTAN · DEUTAN
+opt_cv_tritan,TRITAN
+opt_cv_contrast,CONTRASTE ÉLEVÉ
+opt_holo_flicker,Scintillement holographique
+opt_holo_flicker_hint,"Scintillement et défilement des hologrammes, indépendants des lueurs."
+opt_controls,COMMANDES
+opt_pad_glyphs,Glyphes de manette
+opt_pad_glyphs_hint,"Les invites suivent le dernier appareil utilisé, clavier ou manette."
+opt_pad_auto,AUTO
+opt_pad_xbox,XBOX · DECK
+opt_pad_ps,PLAYSTATION
+ctl_accept,Valider · choisir un champ
+ctl_cancel,Annuler · retour
+ctl_next,Passager suivant
+ctl_inspect,Mode Inspection
+ctl_ask,Interroger
+ctl_face,Visage (inspection)
+ctl_approve,APPROUVÉ (maintenir)
+ctl_deny,REFUSÉ (maintenir)
+ctl_detain,DÉTENTION (maintenir)
+ctl_rulebook,Rulebook
+ctl_rulebook_tabs,Onglet du Rulebook
+ctl_doc_next,Document suivant
+ctl_zoom,Loupe (hors inspection)
+ctl_scroll,Faire défiler
+ctl_pause,Pause
+st_pick_b_fmt,"Champ A sélectionné — choisissez le champ B (document, règle, date du jour ou visage). %s : annuler."
+st_pick_a_pad,Mode Inspection — croix : de champ en champ · %s : choisir le premier champ.
+st_inspect_fmt,Documents posés — %s : Mode Inspection · maintenez %s / %s pour tamponner.
+pp_idle_hint_fmt,Appuyez sur l'intercom (%s) pour faire avancer le passager suivant.
+pp_visor_hint_fmt,Visage masqué : demandez le retrait de la visière (%s).
+tb_hint_hold,maintenir %s
+wb_stack_hint_pad,%s ← → : DOCUMENT DEVANT
+wb_mode_hint_fmt,%s · MODE INSPECTION

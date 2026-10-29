@@ -149,12 +149,12 @@ func show_menu(items: Array[Dictionary]) -> void:
 		var luciole: bool = item.get("luciole", false)
 		if luciole:
 			# Réponse à la phrase de passe (code 4) : voix des Lucioles, magenta.
-			button.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+			button.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 			button.text = "%d   ◆ %s" % [i + 1, text]
 		elif unlocked:
-			button.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+			button.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 		elif asked:
-			button.add_theme_color_override(&"font_color", DS.TEXT_SECONDARY)
+			button.add_theme_color_override(&"font_color", Palette.TEXT_SECONDARY)
 		var topic: StringName = item.get("topic", &"")
 		button.pressed.connect(_on_question_pressed.bind(topic))
 		button.custom_minimum_size.y = DS.HIT_TARGET_MIN - DS.SPACE_1
@@ -191,7 +191,7 @@ func _make_unlocked_card(card: Dictionary) -> Control:
 	var row: HBoxContainer = HBoxContainer.new()
 	row.add_theme_constant_override("separation", DS.SPACE_3)
 	panel.add_child(row)
-	row.add_child(UiIcon.make(UiIcon.Kind.WARNING, DS.ACCENT_MAGENTA, DS.ICON_M))
+	row.add_child(UiIcon.make(UiIcon.Kind.WARNING, Palette.ACCENT_MAGENTA, DS.ICON_M))
 	var column: VBoxContainer = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", DS.SPACE_1)
@@ -199,7 +199,7 @@ func _make_unlocked_card(card: Dictionary) -> Control:
 	var title: Label = Label.new()
 	title.theme_type_variation = &"DocFieldLabel"
 	title.uppercase = true
-	title.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+	title.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 	var number: int = card.get("number", 0)
 	title.text = UiText.tf("pp_unlocked", [number], "QUESTION DÉBLOQUÉE · DISCORDANCE %d")
 	column.add_child(title)
@@ -211,7 +211,6 @@ func _make_unlocked_card(card: Dictionary) -> Control:
 	var keys: HBoxContainer = HBoxContainer.new()
 	keys.add_theme_constant_override("separation", DS.SPACE_1)
 	keys.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	keys.add_child(RulebookPanel.make_keycap("Q"))
-	keys.add_child(RulebookPanel.make_keycap("Y"))
+	keys.add_child(PromptGlyph.make(&"interrogate"))
 	row.add_child(keys)
 	return panel

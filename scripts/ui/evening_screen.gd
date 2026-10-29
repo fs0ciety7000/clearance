@@ -44,20 +44,20 @@ signal event_choice_made(event_id: StringName, option_id: StringName)
 const LEFT_RATIO: float = 1.25
 const REPORT_WIDTH: float = 760.0
 ## Couleur de liseré par événement (DS §7.10 : Lucioles magenta, Brûlants rouge).
-const EVENT_ACCENTS: Dictionary[StringName, Color] = {
-	&"d05_heat": DS.ACCENT_MAGENTA, &"d07_tag": DS.ACCENT_MAGENTA, &"d08_package": DS.STATE_RED,
-	&"d09_ilan": DS.ACCENT_MAGENTA,
+const EVENT_ACCENTS: Dictionary[StringName, StringName] = {
+	&"d05_heat": &"ACCENT_MAGENTA", &"d07_tag": &"ACCENT_MAGENTA", &"d08_package": &"STATE_RED",
+	&"d09_ilan": &"ACCENT_MAGENTA",
 	# Acte II : la Nuit des vannes (J10) et la Commission.
-	&"d10_vannes_opened": DS.ACCENT_MAGENTA, &"d10_vannes_aborted": DS.ACCENT_MAGENTA, &"d10_vannes_failed": DS.ACCENT_MAGENTA,
-	&"d10_double": DS.STATE_AMBER, &"d10_promo": DS.ACCENT_YELLOW, &"d10_drift": DS.ACCENT_CYAN,
-	&"d11_levy": DS.VOICE_COMMISSION, &"d14_lease": DS.VOICE_COMMISSION, &"d17_review": DS.VOICE_COMMISSION,
-	&"d17_list": DS.VOICE_COMMISSION, &"d13_scanner": DS.ACCENT_MAGENTA, &"d16_unplug": DS.ACCENT_MAGENTA,
-	&"d19_registre": DS.ACCENT_MAGENTA,
+	&"d10_vannes_opened": &"ACCENT_MAGENTA", &"d10_vannes_aborted": &"ACCENT_MAGENTA", &"d10_vannes_failed": &"ACCENT_MAGENTA",
+	&"d10_double": &"STATE_AMBER", &"d10_promo": &"ACCENT_YELLOW", &"d10_drift": &"ACCENT_CYAN",
+	&"d11_levy": &"VOICE_COMMISSION", &"d14_lease": &"VOICE_COMMISSION", &"d17_review": &"VOICE_COMMISSION",
+	&"d17_list": &"VOICE_COMMISSION", &"d13_scanner": &"ACCENT_MAGENTA", &"d16_unplug": &"ACCENT_MAGENTA",
+	&"d19_registre": &"ACCENT_MAGENTA",
 	# Acte III : l'Enquête (Ravel, voix INSPECTION ambre), l'Arbitre (registre).
-	&"d22_q1": DS.STATE_AMBER, &"d26_q2": DS.STATE_AMBER, &"d28_q3": DS.STATE_AMBER,
-	&"d29_deposition": DS.STATE_AMBER, &"d29_verdict": DS.STATE_AMBER, &"d20_double": DS.STATE_AMBER,
-	&"d20_flat": DS.ACCENT_YELLOW, &"d20_drift": DS.ACCENT_CYAN, &"d20_drift_refused": DS.ACCENT_CYAN,
-	&"d21_loan": DS.VOICE_COMMISSION, &"d27_loan": DS.VOICE_COMMISSION, &"d25_levy": DS.VOICE_COMMISSION,
+	&"d22_q1": &"STATE_AMBER", &"d26_q2": &"STATE_AMBER", &"d28_q3": &"STATE_AMBER",
+	&"d29_deposition": &"STATE_AMBER", &"d29_verdict": &"STATE_AMBER", &"d20_double": &"STATE_AMBER",
+	&"d20_flat": &"ACCENT_YELLOW", &"d20_drift": &"ACCENT_CYAN", &"d20_drift_refused": &"ACCENT_CYAN",
+	&"d21_loan": &"VOICE_COMMISSION", &"d27_loan": &"VOICE_COMMISSION", &"d25_levy": &"VOICE_COMMISSION",
 }
 ## Acte III : carte de fin d'acte (J20, panneau 0) — préfixe des événements,
 ## durée de lecture avant de passer seule (ACT3 §1.2 : « 3 s, passable »).
@@ -174,6 +174,15 @@ func set_events(p_events: Array[EveningEvent]) -> void:
 	step = 0
 
 
+## Manette / clavier (M11) : carte de fin d'acte, rapport, puis bouton de
+## validation de la soirée.
+func default_focus() -> Control:
+	for candidate: Button in [_act_card_button, _report_button, confirm_button, next_button]:
+		if candidate != null and is_instance_valid(candidate) and candidate.is_visible_in_tree() and not candidate.disabled:
+			return candidate
+	return null
+
+
 func _build() -> void:
 	if not events.is_empty():
 		# Présélection en tenant compte des événements imposés (retenue d'audit…).
@@ -221,13 +230,13 @@ func _header() -> Control:
 	var box: VBoxContainer = vbox(DS.SPACE_3)
 	var top: HBoxContainer = hbox(DS.SPACE_3)
 	box.add_child(top)
-	top.add_child(UiIcon.make(UiIcon.Kind.INFO, DS.TEXT_SECONDARY, DS.ICON_M))
+	top.add_child(UiIcon.make(UiIcon.Kind.INFO, Palette.TEXT_SECONDARY, DS.ICON_M))
 	var org: VBoxContainer = vbox(0)
 	top.add_child(org)
 	org.add_child(eyebrow(UiText.t("ev_location", "BLOC PÉTREL · ANNEAU C · CABINE 9 m²")))
 	org.add_child(label(UiText.t("ev_subtitle", "Couchette triple, réchaud, recycleur d'air bruyant ; dehors, les Anneaux illuminés."), &"CaptionLabel"))
 	top.add_child(spacer())
-	var time: Label = label(UiText.t("ev_time", "19:40"), &"DataTitle", DS.TEXT_SECONDARY)
+	var time: Label = label(UiText.t("ev_time", "19:40"), &"DataTitle", Palette.TEXT_SECONDARY)
 	time.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(time)
 	box.add_child(rule_line())
@@ -245,28 +254,28 @@ func _budget() -> VBoxContainer:
 	head.add_child(head_box)
 	var morning: int = balance - shift_net - consortium_advance
 	if consortium_advance == 0 or morning != 0:
-		head_box.add_child(_money_row(UiText.t("ev_morning", "Solde du matin"), credits(morning), DS.TEXT_SECONDARY))
+		head_box.add_child(_money_row(UiText.t("ev_morning", "Solde du matin"), credits(morning), Palette.TEXT_SECONDARY))
 	if consortium_advance > 0:
 		head_box.add_child(_money_row(UiText.t("ev_advance", "Avance du Consortium (prise de poste)"),
 				credits(consortium_advance, true), DS.ACCENT_YELLOW))
-	head_box.add_child(_money_row(UiText.t("ev_shift_net", "Net du shift (salaire − amendes)"), credits(shift_net, true), DS.TEXT_SECONDARY))
+	head_box.add_child(_money_row(UiText.t("ev_shift_net", "Net du shift (salaire − amendes)"), credits(shift_net, true), Palette.TEXT_SECONDARY))
 	var letter_incomes: Array[EveningEvent] = []
 	for event: EveningEvent in events:
 		if letter_gain(event) > 0:
 			letter_incomes.append(event)
 	if not incomes.is_empty() or not letter_incomes.is_empty():
-		var income_head: Label = eyebrow(UiText.t("ev_incomes", "REVENUS DU FOYER"), DS.STATE_GREEN)
+		var income_head: Label = eyebrow(UiText.t("ev_incomes", "REVENUS DU FOYER"), Palette.STATE_GREEN)
 		income_head.name = "Incomes"
 		head_box.add_child(income_head)
 		for income: ExpenseLine in incomes:
 			var income_row: HBoxContainer = _money_row(UiText.t(income.label_key, String(income.id)), credits(income.cost, true),
-					DS.STATE_GREEN)
+					Palette.STATE_GREEN)
 			income_row.name = "Income_%s" % income.id
 			head_box.add_child(income_row)
 		# Acte III : aides versées par une lettre du soir (rappel, caisse des vitres).
 		for event: EveningEvent in letter_incomes:
 			var key: String = LETTER_INCOME_KEYS.get(event.id, event.title_key)
-			var gain_row: HBoxContainer = _money_row(UiText.t(key, String(event.id)), credits(letter_gain(event), true), DS.STATE_GREEN)
+			var gain_row: HBoxContainer = _money_row(UiText.t(key, String(event.id)), credits(letter_gain(event), true), Palette.STATE_GREEN)
 			gain_row.name = "Income_%s" % event.id
 			head_box.add_child(gain_row)
 	_bonus_row = _money_row(UiText.t("ev_report_bonus", "Prime de signalement (Consortium)"), "", DS.ACCENT_YELLOW)
@@ -289,7 +298,7 @@ func _budget() -> VBoxContainer:
 	_lines_scroll = scroll
 	# Indice visible quand des postes sont sous le bord (QA-034) : un poste non
 	# vu (la ration d'un proche) ne passe jamais pour absent.
-	_more_hint = label("", &"CaptionLabel", DS.STATE_AMBER)
+	_more_hint = label("", &"CaptionLabel", Palette.STATE_AMBER)
 	_more_hint.name = "MoreLines"
 	_more_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_more_hint.visible = false
@@ -321,7 +330,7 @@ func _budget() -> VBoxContainer:
 	var after_row: HBoxContainer = _money_row(UiText.t("ev_after", "Solde après la soirée"), "", DS.TEXT_PRIMARY, &"DataTitle")
 	_after_label = after_row.get_child(after_row.get_child_count() - 1)
 	totals_box.add_child(after_row)
-	_after_hint = label("", &"CaptionLabel", DS.STATE_RED)
+	_after_hint = label("", &"CaptionLabel", Palette.STATE_RED)
 	_after_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	totals_box.add_child(_after_hint)
 	return box
@@ -362,13 +371,13 @@ static func is_ration(line: ExpenseLine) -> bool:
 func _rations_group(rations: Array[ExpenseLine]) -> Control:
 	var group: PanelContainer = panel()
 	group.name = "Rations"
-	group.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.BG_PANEL, DS.STATE_AMBER))
+	group.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.BG_PANEL, Palette.STATE_AMBER))
 	var box: VBoxContainer = vbox(DS.SPACE_1)
 	group.add_child(box)
 	var head: HBoxContainer = hbox(DS.SPACE_2)
 	box.add_child(head)
-	head.add_child(UiIcon.make(UiIcon.Kind.BREATH, DS.STATE_AMBER, DS.ICON_S))
-	head.add_child(eyebrow(UiText.t("ev_rations", "RATIONS D'AIR · QUI RESPIRE CE SOIR ?"), DS.STATE_AMBER))
+	head.add_child(UiIcon.make(UiIcon.Kind.BREATH, Palette.STATE_AMBER, DS.ICON_S))
+	head.add_child(eyebrow(UiText.t("ev_rations", "RATIONS D'AIR · QUI RESPIRE CE SOIR ?"), Palette.STATE_AMBER))
 	for line: ExpenseLine in rations:
 		var row: Button = _expense_row(line, RATION_ROW_H)
 		_rows.append(row)
@@ -380,7 +389,7 @@ func _rations_group(rations: Array[ExpenseLine]) -> Control:
 			absent.modulate.a = 0.6
 			absent.add_child(UiIcon.make(HouseholdView.state_icon(member), DS.TEXT_MUTED, DS.ICON_S))
 			var text: Label = label(UiText.tf("ev_ration_absent", [HouseholdView.member_name(member.id), HouseholdView.state_text(member)],
-					"%s · %s — pas de ration ce soir"), &"CaptionLabel", DS.TEXT_SECONDARY)
+					"%s · %s — pas de ration ce soir"), &"CaptionLabel", Palette.TEXT_SECONDARY)
 			text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			absent.add_child(text)
 			box.add_child(absent)
@@ -401,7 +410,7 @@ func _expense_row(line: ExpenseLine, height: float = ROW_H) -> Button:
 	# Cochée = liseré cyan discret (la case porte l'état) ; survol / focus du thème.
 	var checked_box: StyleBoxFlat = ThemeBuilder.chamfer_box(DS.BG_ELEVATED.blend(DS.CYAN_08), DS.CYAN_40, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0)
 	row.add_theme_stylebox_override(&"pressed", checked_box)
-	row.add_theme_stylebox_override(&"disabled", ThemeBuilder.chamfer_box(DS.BG_PANEL, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0))
+	row.add_theme_stylebox_override(&"disabled", ThemeBuilder.chamfer_box(DS.BG_PANEL, Palette.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0))
 	var margin: MarginContainer = MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -439,7 +448,7 @@ func _expense_row(line: ExpenseLine, height: float = ROW_H) -> Button:
 	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	texts.add_child(note)
 	if line.mandatory:
-		var lock: PanelContainer = chip(UiText.t("ev_mandatory", "PRÉLEVÉE D'OFFICE"), UiIcon.Kind.LOCK, DS.TEXT_SECONDARY)
+		var lock: PanelContainer = chip(UiText.t("ev_mandatory", "PRÉLEVÉE D'OFFICE"), UiIcon.Kind.LOCK, Palette.TEXT_SECONDARY)
 		lock.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		content.add_child(lock)
 	var cost: Label = label(credits(line.cost), &"DataTitle")
@@ -491,20 +500,20 @@ func _refresh() -> void:
 		check.locked = line.mandatory
 		var cost: Label = row.find_child("Cost", true, false)
 		cost.text = credits(line.cost)
-		cost.add_theme_color_override(&"font_color", DS.TEXT_PRIMARY if line.paid else (DS.TEXT_SECONDARY if affordable else DS.TEXT_MUTED))
+		cost.add_theme_color_override(&"font_color", DS.TEXT_PRIMARY if line.paid else (Palette.TEXT_SECONDARY if affordable else DS.TEXT_MUTED))
 		var note: Label = row.find_child("Note", true, false)
 		if not line.paid and not affordable:
 			note.text = UiText.t("ev_insufficient", "Fonds insuffisants")
-			note.add_theme_color_override(&"font_color", DS.STATE_AMBER)
+			note.add_theme_color_override(&"font_color", Palette.STATE_AMBER)
 		else:
 			note.text = UiText.t(line.note_key, "")
 			note.remove_theme_color_override(&"font_color")
 	_spent_label.text = credits(-spent)
 	if _events_label != null:
 		_events_label.text = credits(delta, true)
-		_events_label.add_theme_color_override(&"font_color", DS.STATE_RED if delta < 0 else (DS.ACCENT_YELLOW if delta > 0 else DS.TEXT_SECONDARY))
+		_events_label.add_theme_color_override(&"font_color", Palette.STATE_RED if delta < 0 else (DS.ACCENT_YELLOW if delta > 0 else Palette.TEXT_SECONDARY))
 	_after_label.text = credits(after)
-	_after_label.add_theme_color_override(&"font_color", DS.STATE_RED if after < 0 else DS.ACCENT_YELLOW)
+	_after_label.add_theme_color_override(&"font_color", Palette.STATE_RED if after < 0 else DS.ACCENT_YELLOW)
 	_after_hint.text = UiText.t("ev_debt_hint", "Dette : trois soirs de suite et l'Autorité de Transit vous réaffecte.") if after < 0 else ""
 	_after_hint.visible = after < 0
 	_refresh_options()
@@ -513,7 +522,7 @@ func _refresh() -> void:
 
 func _family() -> Control:
 	var box: VBoxContainer = vbox(DS.SPACE_3)
-	box.add_child(section(UiText.t("ev_family", "LE FOYER"), UiIcon.Kind.INFO, DS.TEXT_SECONDARY))
+	box.add_child(section(UiText.t("ev_family", "LE FOYER"), UiIcon.Kind.INFO, Palette.TEXT_SECONDARY))
 	var compact: bool = not events.is_empty()
 	for member: Household.Member in household.members:
 		box.add_child(HouseholdView.member_card(member, "" if compact else HouseholdView.member_note(member), compact))
@@ -692,12 +701,12 @@ func _event_accent(event: EveningEvent) -> Color:
 	if is_act_card(event):
 		return act_card_accent(event)
 	if EVENT_ACCENTS.has(event.id):
-		return EVENT_ACCENTS[event.id]
+		return Palette.token(EVENT_ACCENTS[event.id])
 	match event.kind:
 		EveningEventDef.Kind.AUDIT:
 			return DS.ACCENT_YELLOW
 		EveningEventDef.Kind.LETTER:
-			return DS.TEXT_SECONDARY
+			return Palette.TEXT_SECONDARY
 	return DS.ACCENT_CYAN
 
 
@@ -782,7 +791,7 @@ func _show_step(index: int) -> void:
 	for key: String in event.extra_keys:
 		box.add_child(wrapped(UiText.t(key, ""), &"BodySmall"))
 	if is_skipped(event):
-		box.add_child(wrapped(UiText.t("ev_event_skipped", "Cette nuit-là, vous ne rentrez pas au Bloc Pétrel."), &"BodySmall", DS.STATE_RED))
+		box.add_child(wrapped(UiText.t("ev_event_skipped", "Cette nuit-là, vous ne rentrez pas au Bloc Pétrel."), &"BodySmall", Palette.STATE_RED))
 	elif event.kind == EveningEventDef.Kind.AUDIT:
 		box.add_child(_audit_result(event))
 	elif event.is_choice():
@@ -832,13 +841,13 @@ func _audit_result(event: EveningEvent) -> Control:
 		# Déposition (J29) : rien n'est jugé avant votre déposition.
 		var waiting: PanelContainer = panel()
 		waiting.name = "VerdictPending"
-		waiting.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE,
+		waiting.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL, Palette.LINE_SUBTLE, DS.BORDER_HAIRLINE,
 				DS.CHAMFER_S, DS.SPACE_3))
 		var wait_row: HBoxContainer = hbox(DS.SPACE_3)
 		waiting.add_child(wait_row)
-		wait_row.add_child(UiIcon.make(UiIcon.Kind.SCALES, DS.TEXT_SECONDARY, DS.ICON_M))
+		wait_row.add_child(UiIcon.make(UiIcon.Kind.SCALES, Palette.TEXT_SECONDARY, DS.ICON_M))
 		var wait_text: Label = wrapped(UiText.t("ev_deposition_pending", "Le greffe délibère. Votre déposition d'abord."), &"BodyLabel",
-				DS.TEXT_SECONDARY)
+				Palette.TEXT_SECONDARY)
 		wait_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		wait_row.add_child(wait_text)
 		return waiting
@@ -847,7 +856,7 @@ func _audit_result(event: EveningEvent) -> Control:
 	var outcome: Dictionary = event.audit
 	var ending: StringName = outcome.get("ending", &"")
 	var cost: int = SaveService.as_int(outcome.get("cost", 0))
-	var color: Color = DS.STATE_RED if ending != &"" else (DS.STATE_AMBER if cost > 0 else DS.ACCENT_CYAN)
+	var color: Color = Palette.STATE_RED if ending != &"" else (Palette.STATE_AMBER if cost > 0 else DS.ACCENT_CYAN)
 	var card: PanelContainer = panel()
 	card.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(Color(color, 0.12), color, DS.BORDER_HAIRLINE, DS.CHAMFER_S, DS.SPACE_3))
 	var row: HBoxContainer = hbox(DS.SPACE_3)
@@ -869,7 +878,7 @@ func _deposition_verdict(event: EveningEvent) -> Control:
 	var outcome: Dictionary = event.audit
 	var ending: StringName = outcome.get("ending", &"")
 	var cost: int = SaveService.as_int(outcome.get("cost", 0))
-	var color: Color = DS.STATE_RED if ending != &"" else (DS.STATE_AMBER if cost > 0 else DS.ACCENT_CYAN)
+	var color: Color = Palette.STATE_RED if ending != &"" else (Palette.STATE_AMBER if cost > 0 else DS.ACCENT_CYAN)
 	var card: PanelContainer = panel()
 	card.name = "Verdict"
 	card.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(Color(color, 0.12), color, DS.BORDER_STRONG, DS.CHAMFER_S, DS.SPACE_4))
@@ -897,7 +906,7 @@ func _deposition_verdict(event: EveningEvent) -> Control:
 		var said_id: StringName = choices.get(events[i].id, &"")
 		var said: EveningOptionDef = events[i].get_option(said_id)
 		if events[i].is_choice() and said != null:
-			var quote: Label = label("« %s »" % UiText.t(said.label_key, String(said.id)), &"CaptionLabel", DS.TEXT_SECONDARY)
+			var quote: Label = label("« %s »" % UiText.t(said.label_key, String(said.id)), &"CaptionLabel", Palette.TEXT_SECONDARY)
 			quote.name = "Said"
 			box.add_child(quote)
 			break
@@ -943,12 +952,12 @@ func _option_row(event: EveningEvent, option: EveningOptionDef, group: ButtonGro
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.custom_minimum_size.x = 120.0
 	texts.add_child(title)
-	var reason: Label = label("", &"CaptionLabel", DS.STATE_AMBER)
+	var reason: Label = label("", &"CaptionLabel", Palette.STATE_AMBER)
 	reason.name = "Reason"
 	reason.visible = false
 	texts.add_child(reason)
 	if option.ends_campaign != &"":
-		var final_chip: PanelContainer = chip(UiText.t("ev_option_final", "FIN DE LA CAMPAGNE"), UiIcon.Kind.WARNING, DS.STATE_AMBER)
+		var final_chip: PanelContainer = chip(UiText.t("ev_option_final", "FIN DE LA CAMPAGNE"), UiIcon.Kind.WARNING, Palette.STATE_AMBER)
 		final_chip.name = "FinalChip"
 		final_chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		content.add_child(final_chip)
@@ -1005,12 +1014,12 @@ func _open_final_confirm(event: EveningEvent, option: EveningOptionDef) -> void:
 	card.add_child(box)
 	var head: HBoxContainer = hbox(DS.SPACE_2)
 	box.add_child(head)
-	head.add_child(UiIcon.make(UiIcon.Kind.WARNING, DS.STATE_AMBER, DS.ICON_M))
-	head.add_child(eyebrow(UiText.t("ev_final_eyebrow", "DÉCISION DÉFINITIVE"), DS.STATE_AMBER))
+	head.add_child(UiIcon.make(UiIcon.Kind.WARNING, Palette.STATE_AMBER, DS.ICON_M))
+	head.add_child(eyebrow(UiText.t("ev_final_eyebrow", "DÉCISION DÉFINITIVE"), Palette.STATE_AMBER))
 	var title: Label = label(UiText.t("ev_final_title", "QUITTER HALCYON ?"), &"DisplayLabel", DS.TEXT_PRIMARY)
 	title.name = "FinalTitle"
 	box.add_child(title)
-	var choice: Label = wrapped("« %s »" % UiText.t(option.label_key, String(option.id)), &"BodyStrong", DS.STATE_AMBER)
+	var choice: Label = wrapped("« %s »" % UiText.t(option.label_key, String(option.id)), &"BodyStrong", Palette.STATE_AMBER)
 	choice.custom_minimum_size.x = 400.0
 	box.add_child(choice)
 	box.add_child(wrapped(UiText.t("ev_final_text", "La partie s'arrête ce soir : vous quittez Halcyon, et le Guichet 04 ne rouvrira pas pour vous."),
@@ -1253,18 +1262,18 @@ func _refresh_confirm() -> void:
 	if _confirm_hint != null:
 		_confirm_hint.text = UiText.plural("ev_events_pending", pending, "%d décision à prendre ce soir",
 				"%d décisions à prendre ce soir") if pending > 0 else UiText.t("ev_hint", "Ce qui n'est pas payé a des conséquences dès cette nuit.")
-		_confirm_hint.add_theme_color_override(&"font_color", DS.STATE_AMBER if pending > 0 else DS.TEXT_SECONDARY)
+		_confirm_hint.add_theme_color_override(&"font_color", Palette.STATE_AMBER if pending > 0 else Palette.TEXT_SECONDARY)
 
 
 func _luciole_note() -> PanelContainer:
 	var card: PanelContainer = panel()
-	card.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.MAGENTA_12, DS.ACCENT_MAGENTA))
+	card.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(Palette.MAGENTA_12, Palette.ACCENT_MAGENTA))
 	var box: VBoxContainer = vbox(DS.SPACE_2)
 	card.add_child(box)
 	var head: HBoxContainer = hbox(DS.SPACE_2)
 	box.add_child(head)
-	head.add_child(UiIcon.make(UiIcon.Kind.DISCORDANCE, DS.ACCENT_MAGENTA, DS.ICON_S))
-	head.add_child(eyebrow(UiText.t("ev_note_title", "LE MOT GLISSÉ AU GUICHET"), DS.ACCENT_MAGENTA))
+	head.add_child(UiIcon.make(UiIcon.Kind.DISCORDANCE, Palette.ACCENT_MAGENTA, DS.ICON_S))
+	head.add_child(eyebrow(UiText.t("ev_note_title", "LE MOT GLISSÉ AU GUICHET"), Palette.ACCENT_MAGENTA))
 	box.add_child(wrapped(UiText.t("ev_note_text", ""), &"BodyLabel"))
 	box.add_child(wrapped(UiText.t("ev_note_choice", ""), &"BodySmall"))
 	var buttons: HBoxContainer = hbox(DS.SPACE_3)
@@ -1289,7 +1298,7 @@ func _decide_luciole(report_it: bool) -> void:
 	if _note_card != null:
 		_note_card.queue_free()
 		_note_card = null
-		_right.add_child(wrapped(UiText.t("ev_note_reported" if report_it else "ev_note_burned", ""), &"BodySmall", DS.TEXT_SECONDARY))
+		_right.add_child(wrapped(UiText.t("ev_note_reported" if report_it else "ev_note_burned", ""), &"BodySmall", Palette.TEXT_SECONDARY))
 	if _spent_label != null:
 		_refresh()
 	confirm_button.grab_focus()
@@ -1351,7 +1360,7 @@ func show_report(report: EveningReport, ending: StringName) -> void:
 	card.add_child(box)
 	box.add_child(eyebrow(UiText.t("ev_night", "LA NUIT AU BLOC PÉTREL")))
 	box.add_child(label(UiText.tf("ev_night_balance", [credits(report.balance_after)], "Solde : %s"), &"DataTitle",
-			DS.STATE_RED if report.balance_after < 0 else DS.ACCENT_YELLOW))
+			Palette.STATE_RED if report.balance_after < 0 else DS.ACCENT_YELLOW))
 	for event: Dictionary in report.events:
 		box.add_child(_event_row(event))
 	var members: HBoxContainer = hbox(DS.SPACE_3)
@@ -1379,17 +1388,17 @@ func get_report_button() -> Button:
 
 func _event_row(event: Dictionary) -> Control:
 	var tone: EveningReport.Tone = event["tone"]
-	var color: Color = DS.TEXT_SECONDARY
+	var color: Color = Palette.TEXT_SECONDARY
 	var icon: UiIcon.Kind = UiIcon.Kind.INFO
 	match tone:
 		EveningReport.Tone.GOOD:
 			color = DS.ACCENT_CYAN
 			icon = UiIcon.Kind.CHECK
 		EveningReport.Tone.WARNING:
-			color = DS.STATE_AMBER
+			color = Palette.STATE_AMBER
 			icon = UiIcon.Kind.WARNING
 		EveningReport.Tone.BAD:
-			color = DS.STATE_RED
+			color = Palette.STATE_RED
 			icon = UiIcon.Kind.DENIED
 	var row: HBoxContainer = hbox(DS.SPACE_3)
 	row.add_child(UiIcon.make(icon, color, DS.ICON_S))
@@ -1426,9 +1435,9 @@ class CheckMark:
 		var c: float = DS.CHAMFER_S
 		var outline: PackedVector2Array = PackedVector2Array([Vector2(c, 0), Vector2(SIZE, 0), Vector2(SIZE, SIZE - c),
 				Vector2(SIZE - c, SIZE), Vector2(0, SIZE), Vector2(0, c), Vector2(c, 0)])
-		var color: Color = DS.ACCENT_CYAN if checked else DS.TEXT_SECONDARY
+		var color: Color = DS.ACCENT_CYAN if checked else Palette.TEXT_SECONDARY
 		if locked:
-			color = DS.TEXT_SECONDARY
+			color = Palette.TEXT_SECONDARY
 		if checked:
 			var fill: Color = color
 			fill.a = 0.24

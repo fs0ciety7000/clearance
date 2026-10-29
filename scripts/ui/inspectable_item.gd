@@ -136,16 +136,16 @@ func _draw() -> void:
 	var rect: Rect2 = Rect2(Vector2.ZERO, size)
 	var flagged: bool = is_flagged()
 	if flagged:
-		draw_rect(rect, DS.MAGENTA_12)
-		_draw_hatching(rect, DS.MAGENTA_24)
-		draw_rect(rect, DS.ACCENT_MAGENTA, false, DS.BORDER_STRONG)
+		draw_rect(rect, Palette.MAGENTA_12)
+		_draw_hatching(rect, Palette.MAGENTA_24)
+		draw_rect(rect, Palette.ACCENT_MAGENTA, false, DS.BORDER_STRONG)
 	elif selected:
 		draw_rect(rect, DS.CYAN_12)
 		draw_rect(rect, DS.ACCENT_CYAN, false, DS.BORDER_STRONG)
 	elif _hovered:
 		draw_rect(rect, DS.CYAN_08)
 	if pulse > 0.0:
-		var glow: Color = DS.MAGENTA_60 if flagged else DS.CYAN_60
+		var glow: Color = Palette.MAGENTA_60 if flagged else DS.CYAN_60
 		glow.a *= pulse
 		draw_rect(rect.grow(DS.SPACE_1 * pulse), glow, false, DS.BORDER_STRONG)
 	if has_focus():
@@ -156,10 +156,10 @@ func _draw() -> void:
 		UiIcon.draw_icon(self, UiIcon.Kind.CHECK, check, DS.ACCENT_CYAN)
 	if flagged:
 		var icon: Rect2 = Rect2(Vector2(rect.end.x - DS.ICON_M - DS.SPACE_1, rect.get_center().y - DS.ICON_M * 0.5), Vector2(DS.ICON_M, DS.ICON_M))
-		UiIcon.draw_icon(self, UiIcon.Kind.WARNING, icon, DS.ACCENT_MAGENTA)
+		UiIcon.draw_icon(self, UiIcon.Kind.DISCORDANCE, icon, Palette.ACCENT_MAGENTA)
 		var x: float = rect.end.x
 		for number: int in flag_numbers:
-			draw_number_badge(self, Vector2(x, 0.0), number, DS.ACCENT_MAGENTA)
+			draw_number_badge(self, Vector2(x, 0.0), number, Palette.ACCENT_MAGENTA)
 			x -= DS.SPACE_5
 	elif selected:
 		draw_letter_badge(self, Vector2(rect.end.x, 0.0), "A", DS.ACCENT_CYAN)
@@ -170,7 +170,7 @@ func _draw() -> void:
 func _draw_underline(rect: Rect2) -> void:
 	if is_flagged() or selected:
 		return
-	var color: Color = DS.LINE_SUBTLE
+	var color: Color = Palette.LINE_SUBTLE
 	if inspection_active:
 		if not comparable:
 			return

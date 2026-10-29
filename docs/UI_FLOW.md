@@ -201,6 +201,8 @@ stateDiagram-v2
 
 Le maintien de 0,4 s sur les tampons évite les verdicts accidentels (désactivable). En manette, le curseur est remplacé par un **focus magnétique** qui saute de champ en champ : on n'a jamais à viser un champ au pixel près.
 
+> **M11** : ce tableau d'intention est remplacé par le schéma **implémenté** du §9 (croix réservée au focus, DÉTENTION sur L3, documents au stick droit).
+
 ### 3.6 Implémentation M4 — précisions de comportement
 
 Capture de référence : [`docs/mockups/m4_comparison.png`](mockups/m4_comparison.png) (démo `scenes/ui/comparison_ui_demo.tscn`).
@@ -380,11 +382,11 @@ Un scanner acheté avec le salaire (ou offert par la résistance) signale automa
 
 | Domaine | Mesures |
 |---|---|
-| **Daltonisme** | Aucune info par la couleur seule : discordance = ⚠ + hachures + texte ; concordant = ✓ ; approuvé/refusé = icône + libellé + forme du tampon (cercle vs octogone). Préréglages Protanopie / Deutéranopie / Tritanopie qui remappent magenta→orange-blanc, vert→cyan clair, rouge→orange vif. Mode « Hachures renforcées ». |
+| **Daltonisme** | Aucune info par la couleur seule : discordance = losange ≠ + hachures + pastille numérotée + texte ; concordant = ✓ ; approuvé/refusé = icône + libellé + forme du tampon (cercle vs octogone). **M11 — réglage « Vision des couleurs »** (Aucune · Protan·Deutan · Tritan · Contraste élevé, `Settings.color_vision`) : palettes de DESIGN_SYSTEM §2.5 (approuvé → bleu, discordance → rose pâle, avertissement → paille en Protan·Deutan ; discordance → violet en Tritan). |
 | **Taille du texte** | Échelle UI 90 %–150 % (pas de 10). Documents : zoom de lecture permanent optionnel. Minimum absolu 12 px à 100 %. Valeurs de données jamais < 14 px. |
-| **Réduction des effets** | Interrupteur unique « Effets holo réduits » : coupe scanlines, flicker, aberration chromatique, fils animés, pluie à l'écran. Respecte « reduce motion » du système quand disponible. Flicker toujours < 3 Hz. |
+| **Réduction des effets** | Interrupteur unique « Effets holo réduits » : coupe scanlines, flicker, aberration chromatique, fils animés, pluie à l'écran. Respecte « reduce motion » du système quand disponible. Flicker toujours < 3 Hz. **M11** : « Scintillement holographique » (`holo_flicker`) coupe scintillement / défilement / glitch **sans** couper les lueurs (DS §5 règle 6). |
 | **Réduire les animations** | Interrupteur distinct (activé automatiquement avec « reduce motion » système) : marche du passager raccourcie à ≤ 1 s (ou apparition en fondu sur le repère), documents en fondu sans trajectoire, pas de travelling caméra sur le visage (coupe franche), micro-expressions ditherées remplacées par une expression fixe, aucun flicker. |
-| **Remapping** | Toutes les actions remappables clavier & manette, profils séparés. Option « Bascule vs maintien » pour l'inspection et les tampons. |
+| **Remapping** | Toutes les actions remappables clavier & manette, profils séparés. Option « Bascule vs maintien » pour l'inspection et les tampons. *(M11 : non livré ; schéma fixe du §9, glyphes Xbox / PlayStation au choix.)* |
 | **Temps** | Vitesse du shift (×0.5 à ×1.5), option « Inspection ralentit le temps », option « Pas de fin de shift chronométrée » (mode Récit). |
 | **Audio** | Tous les signaux sonores ont un équivalent visuel (LED hygiaphone pour la voix, fente cyan pour les documents) ; **sous-titres des barks activés par défaut** avec nom du locuteur, taille et fond réglables ; option « sous-titres descriptifs » (`[pas mouillés]`, `[souffle court]`). Les réactions du passager sont toujours doublées par une ligne de texte (§4.7). |
 | **Lecture** | Lecteur d'écran du champ focalisé (TTS optionnel) : « Permis d'entrée, Valide jusqu'au, 14 mars 2187 ». |
@@ -490,7 +492,59 @@ Captures (réelles, OpenGL 3, 1920×1080 et 1280×800) : [`m12_j20_act_card.png`
 - **Plan de travail** (D-085) : 2–3 documents de l'Acte III repassent côte à côte à 1080p (`test_workbench_goes_back_side_by_side_in_act_three`).
 - **Captures / debug** : `--screen=chapter3`, `--hold-card`, `--rulebook-tab=ledger|summons` (+ `--inspect` ; Main courante préremplie des passagers en règle qui précèdent `--start-case`) ; `tools/qa_capture.gd --qa-after-check=s` (capture juste après une comparaison).
 
-## 9. Questions ouvertes à valider
+## 9. Commandes clavier et manette (M11)
+
+Objectif : **une campagne complète à la manette seule** (Xbox, PlayStation, Steam Deck). Actions déclarées dans `project.godot` (section `[input]`), liste source `ControlsMap.GAME_ACTIONS` (`scripts/ui/controls_map.gd`) ; chaque action a une touche **et** un bouton (test `test_every_game_action_has_keyboard_and_gamepad_bindings`).
+
+### 9.1 Schéma
+
+| Action (`project.godot`) | Clavier / souris | Xbox | PlayStation | Steam Deck |
+|---|---|---|---|---|
+| Valider · choisir un champ (`ui_accept`) | Entrée · Espace · clic | A | ✕ | A |
+| Annuler · retour (`ui_cancel`, `cancel`) | Échap · clic droit | B | ○ | B |
+| Focus (`ui_up/down/left/right`) | Flèches · Tab | Croix · stick G | Croix · stick G | Croix · stick G |
+| Passager suivant (`next_case`) | N | A (guichet en attente) | ✕ | A |
+| Mode Inspection (`inspect_toggle`) | Espace | LT | L2 | L2 |
+| Interroger (`interrogate`) | Q | Y | △ | Y |
+| APPROUVÉ, maintenir 0,4 s (`stamp_approve`) | V | RT | R2 | R2 |
+| REFUSÉ, maintenir (`stamp_deny`) | X | X | □ | X |
+| DÉTENTION, maintenir (`stamp_detain`) | D | **LS (clic)** | L3 | L3 |
+| Visage — en inspection (`inspect_face`) | F · clic sur le passager | RS (clic) | R3 | R3 |
+| Loupe — hors inspection (`doc_zoom`) | Z · molette · double-clic | RS (clic) | R3 | R3 |
+| Document précédent / suivant (`doc_prev` / `doc_next`) | `,` / `.` · touches 1–n | stick D ← / → | stick D | stick D |
+| Faire défiler (`scroll_up` / `scroll_down`) | Pg↑ / Pg↓ · molette | stick D ↑ / ↓ | stick D | stick D |
+| Rulebook ouvrir / replier (`rulebook_toggle`) | Tab · R | Vue | Create | Vue |
+| Onglet du Rulebook (`rulebook_prev` / `rulebook_next`) | [ / ] | LB / RB | L1 / R1 | L1 / R1 |
+| Pause (`pause`, `cancel` sans rien à annuler) | Échap · F10 | Menu · B | Options · ○ | Menu · B |
+
+Changements par rapport au §3.5 : la **croix est réservée au focus** (DÉTENTION quitte croix ↓, qui empêchait de descendre de champ en champ les jours de détention) ; `ui_accept` / `ui_cancel` reçoivent A / B (Godot 4 ne les lie plus à la manette : sans cela aucun bouton ne se validait) ; « Visage » et « Loupe » partagent le clic du stick droit par contexte (inspection / lecture).
+
+### 9.2 Focus sur chaque écran
+
+- **Focus initial** sur tous les écrans : titre (« CONTINUER / NOUVELLE PARTIE »), briefing (« PRENDRE SON POSTE »), guichet (aucun focus imposé : la souris reste libre), bilan (« CONTINUER »), soirée (carte de fin d'acte → rapport → « VALIDER »), fins (« PASSER » puis « TITRE »), chapitre (« CONTINUER » après la révélation), pause (« REPRENDRE »), options (premier réglage). Test `test_every_day_screen_has_an_initial_focus`.
+- **Focus d'appoint** (`FocusGuard`, enfant de chaque `ScreenBase`, du guichet et de la pause) : une direction reçue alors qu'aucun contrôle de l'écran n'a le focus (après un clic ailleurs, un panneau fermé) le rend au contrôle par défaut (`default_focus()`), sinon au premier contrôle focalisable. Le stick droit / Pg↑ Pg↓ font défiler la zone qui contient le focus, sinon la zone par défaut (Rulebook au guichet), sinon la première zone défilable.
+- **Guichet** — contrôle par défaut selon la phase : question du menu ouvert → champ du document de devant (inspection) → « SUIVANT » (guichet en attente) → bouton de l'objet glissé à décider → « INSPECTION » → « INTERROGER ». Entrer en inspection **à la manette** pose le focus sur un champ (aucun curseur à viser) ; un champ qui prend le focus amène son document devant sa pile ; stick droit ← → change le document de devant et le focus suit. Comparaison A → B : Ⓐ sur le premier champ, croix jusqu'au second (document, règle du Rulebook, date du jour ; visage = R3), Ⓐ. Ⓑ annule A, puis ferme le menu, puis quitte l'inspection, puis ouvre la pause.
+- **Interrogatoire** : Y ouvre le menu, le focus va à la première question, Ⓐ la pose, Ⓑ ferme. **Tampons** : RT / X / LS maintenus, ou focus sur le tampon + Ⓐ maintenu.
+- **Pas de curseur virtuel** : aucun geste ne l'exige (le placement des documents est automatique, le glisser reste un confort souris ; la loupe, le visage et les objets glissés ont leur commande ou leur bouton). Donc pas de réglage de sensibilité.
+
+### 9.3 Glyphes d'invite
+
+`InputPrompts` (nœud ajouté à la racine au premier besoin, actif en pause) suit le **dernier périphérique** utilisé : touche / clic / souris déplacée de ≥ 6 px → clavier ; bouton ou axe ≥ 0,5 → manette (la dérive d'un stick ne compte pas). Famille de glyphes : réglage « Glyphes de manette » (`pad_glyphs` : Auto · Xbox / Deck · PlayStation ; Auto lit le nom de la manette, Steam Deck reconnu par `SteamDeck=1`, qui démarre d'emblée en glyphes manette). Les `PromptGlyph` (DS §7.11) se redessinent seuls ; les phrases (ligne d'état, aides du passager, « maintenir … » des tampons, en-tête du plan) sont réécrites au changement. Noms de touches selon la disposition réelle du clavier (AZERTY : la touche physique Q s'affiche « A »).
+
+Captures : [`m11_gamepad_booth.png`](mockups/m11_gamepad_booth.png) / [`_deck`](mockups/m11_gamepad_booth_deck.png) (inspection à la manette, focus sur un champ, glyphes Xbox) ; options : [`m11_a11y_options.png`](mockups/m11_a11y_options.png) / [`_deck`](mockups/m11_a11y_options_deck.png) ; vision des couleurs sur une DISCORDANCE : [`m11_colorblind_discord.png`](mockups/m11_colorblind_discord.png) / [`_deck`](mockups/m11_colorblind_discord_deck.png), tritan [`m11_colorblind_tritan_discord.png`](mockups/m11_colorblind_tritan_discord.png), référence sans filtre [`m11_discord_reference.png`](mockups/m11_discord_reference.png) ; carte d'identité à 5 documents : [`m11_id_card_5docs.png`](mockups/m11_id_card_5docs.png) / [`_deck`](mockups/m11_id_card_5docs_deck.png).
+
+Outils (`tools/qa_capture.gd`) : `--qa-set=color_vision:1` (réglage de session), `--qa-pad` (glyphes manette), `--qa-inspect`, `--qa-focus-booth`, `--qa-discord` (compare une vraie paire discordante), `--qa-measure` (taille physique des valeurs de chaque document).
+
+### 9.4 Règles pour les nouveaux écrans (lot C et suivants)
+
+1. Hériter de `ScreenBase` (ou attacher `FocusGuard.attach(self, …)`) et surcharger `default_focus()` ; donner le focus au contrôle principal à l'ouverture (`grab_focus.call_deferred()`), jamais à un bouton destructif.
+2. Tout contrôle actionnable : `focus_mode = FOCUS_ALL`, cible ≥ 40 px, état focus visible (ring cyan) ; listes dans un `ScrollContainer` avec `follow_focus = true`.
+3. Ⓑ / Échap (`ui_cancel`) = retour à l'écran précédent ; une confirmation destructive en deux temps (comme « QUITTER VERS LE TITRE ») ou boîte modale dont le focus part sur « Annuler ».
+4. Invites : `PromptGlyph.make(&"action")`, jamais une touche écrite en dur ; phrases via `InputPrompts.text_for()`.
+5. Couleurs d'état depuis `Palette`, jamais `DS` ; chaque état doublé d'une icône ou d'un libellé (DS §2.5).
+6. Tester : focus initial, retour Ⓑ, navigation complète à la croix (GUT), capture 1080p + Deck.
+
+## 10. Questions ouvertes à valider
 
 1. L'horloge continue-t-elle pendant le Mode Inspection (recommandé : oui, avec option d'accessibilité) ?
 2. Une discordance confirmée doit-elle être **obligatoire** pour pouvoir interroger, ou seulement débloquer des questions supplémentaires ?

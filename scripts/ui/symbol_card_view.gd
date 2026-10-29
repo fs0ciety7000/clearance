@@ -45,7 +45,7 @@ func setup(p_symbol_id: StringName) -> void:
 	_title.custom_minimum_size.x = 120.0
 	column.add_child(_title)
 	column.add_child(ScreenBase.wrapped(UiText.t(key + "_text", ""), &"BodySmall"))
-	column.add_child(ScreenBase.chip(UiText.t(key + "_action", "À SIGNALER"), UiIcon.Kind.WARNING, DS.STATE_AMBER))
+	column.add_child(ScreenBase.chip(UiText.t(key + "_action", "À SIGNALER"), UiIcon.Kind.WARNING, Palette.STATE_AMBER))
 	margin.minimum_size_changed.connect(_sync_min_size.bind(margin))
 	_sync_min_size(margin)
 
@@ -56,15 +56,15 @@ func _sync_min_size(margin: MarginContainer) -> void:
 
 func _draw_glyph(glyph: Control) -> void:
 	glyph.draw_rect(Rect2(Vector2.ZERO, glyph.size), DS.BG_PANEL)
-	glyph.draw_rect(Rect2(Vector2.ZERO, glyph.size), DS.MAGENTA_24, false, 1.0)
-	SlippedItemView.draw_luciole(glyph, glyph.size * 0.5 + Vector2(0, DS.SPACE_1), DS.SPACE_4, DS.ACCENT_MAGENTA)
+	glyph.draw_rect(Rect2(Vector2.ZERO, glyph.size), Palette.MAGENTA_24, false, 1.0)
+	SlippedItemView.draw_luciole(glyph, glyph.size * 0.5 + Vector2(0, DS.SPACE_1), DS.SPACE_4, Palette.ACCENT_MAGENTA)
 
 
 func _refresh_content() -> void:
 	if _title == null:
 		return
 	if is_flagged():
-		_title.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+		_title.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 	elif selected:
 		_title.add_theme_color_override(&"font_color", DS.ACCENT_CYAN)
 	else:
@@ -75,7 +75,7 @@ func _draw() -> void:
 	# Fond du bulletin : liseré magenta à gauche (comme les autres références).
 	if not is_flagged() and not selected:
 		draw_rect(Rect2(Vector2.ZERO, size), DS.BG_ELEVATED)
-		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), DS.ACCENT_MAGENTA)
+		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), Palette.ACCENT_MAGENTA)
 	super._draw()
 
 

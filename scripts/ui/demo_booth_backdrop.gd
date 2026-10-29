@@ -89,7 +89,7 @@ func _draw() -> void:
 	draw_rect(Rect2(GLASS.position.x + 48, GLASS.position.y + 24, 40, 220), DS.YELLOW_12)
 	draw_rect(Rect2(GLASS.position.x + 48, GLASS.position.y + 24, 40, 220), DS.YELLOW_24, false, 2.0)
 	# Pluie.
-	var rain: Color = Color(DS.TEXT_SECONDARY, 0.12)
+	var rain: Color = Color(Palette.TEXT_SECONDARY, 0.12)
 	for n: int in 70:
 		var rx: float = GLASS.position.x + fposmod(n * 97.0 + _rain_time * 30.0, GLASS.size.x)
 		var ry: float = GLASS.position.y + fposmod(n * 61.0 + _rain_time * 420.0, GLASS.size.y)
@@ -102,7 +102,7 @@ func _draw() -> void:
 func draw_frame(canvas: Control) -> void:
 	var metal: Color = DS.TEXT_MUTED
 	canvas.draw_rect(GLASS, metal, false, 6.0)
-	canvas.draw_rect(GLASS.grow(-6.0), DS.LINE_SUBTLE, false, 2.0)
+	canvas.draw_rect(GLASS.grow(-6.0), Palette.LINE_SUBTLE, false, 2.0)
 	# Reflet diagonal léger.
 	var reflection: PackedVector2Array = [GLASS.position + Vector2(GLASS.size.x * 0.55, 6), GLASS.position + Vector2(GLASS.size.x * 0.68, 6),
 			GLASS.position + Vector2(GLASS.size.x * 0.48, GLASS.size.y - 6), GLASS.position + Vector2(GLASS.size.x * 0.35, GLASS.size.y - 6)]
@@ -114,7 +114,7 @@ func draw_frame(canvas: Control) -> void:
 	for row: int in range(-3, 4):
 		for col: int in range(-3, 4):
 			if row * row + col * col <= 10:
-				canvas.draw_circle(hygia + Vector2(col, row) * 9.0, 2.0, DS.LINE_SUBTLE)
+				canvas.draw_circle(hygia + Vector2(col, row) * 9.0, 2.0, Palette.LINE_SUBTLE)
 	# Fente à documents.
 	var slot: Rect2 = Rect2(DESK_X - 120, GLASS.end.y - 8, 240, 14)
 	canvas.draw_rect(slot, DS.BG_VOID)

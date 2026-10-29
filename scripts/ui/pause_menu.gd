@@ -39,8 +39,9 @@ func _init() -> void:
 func _ready() -> void:
 	_apply_theme()
 	EventBus.settings_changed.connect(func(key: StringName, _v: Variant) -> void:
-		if key == Settings.KEY_TEXT_SCALE:
+		if key == Settings.KEY_TEXT_SCALE or key == Settings.KEY_COLOR_VISION:
 			_apply_theme())
+	InputPrompts.ensure(get_tree())
 	var blur: ColorRect = ColorRect.new()
 	blur.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	blur.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -69,8 +70,12 @@ func _ready() -> void:
 	_menu_box.add_child(head)
 	head.add_child(ScreenBase.label(UiText.t("pause_title", "PAUSE"), &"DisplayLabel"))
 	head.add_child(ScreenBase.spacer())
-	var keys: Label = ScreenBase.label(UiText.t("pause_keys", "ÉCHAP · F10 · MENU"), &"KeyCapLabel")
+	# Glyphes qui suivent le périphérique (Échap / F10 au clavier, B / Menu à la manette).
+	var keys: HBoxContainer = ScreenBase.hbox(DS.SPACE_1)
+	keys.name = "PauseKeys"
 	keys.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	keys.add_child(PromptGlyph.make(&"cancel"))
+	keys.add_child(PromptGlyph.make(&"pause"))
 	head.add_child(keys)
 	_menu_box.add_child(ScreenBase.wrapped(UiText.t("pause_hint", "Le shift est suspendu : l'horloge et la file sont arrêtées."), &"BodySmall"))
 	_menu_box.add_child(ScreenBase.rule_line())
@@ -87,6 +92,9 @@ func _ready() -> void:
 	options.visible = false
 	options.back_requested.connect(show_menu)
 	stack.add_child(options)
+	# Manette : une direction sans focus le rend à « REPRENDRE » (ou au premier
+	# réglage), le stick droit fait défiler les options (M11).
+	FocusGuard.attach(self, func() -> Control: return options.first_control() if options.visible else resume_button)
 
 
 func _apply_theme() -> void:
@@ -141,8 +149,9 @@ func _on_quit_pressed() -> void:
 	quit_to_title_requested.emit()
 
 
+## Échap / Ⓑ (`cancel`), F10 / Menu (`pause`, M11 : action de `project.godot`).
 static func is_pause_event(event: InputEvent) -> bool:
-	if event.is_action_pressed(&"cancel", false, true):
+	if event.is_action_pressed(&"cancel", false, true) or event.is_action_pressed(&"pause", false, true):
 		return true
 	var key: InputEventKey = event as InputEventKey
 	if key != null and key.pressed and not key.echo and key.keycode == KEY_F10:

@@ -51,14 +51,14 @@ static func eye_color(app: PassengerAppearance) -> Color:
 	if eyes.contains("blue"):
 		return DS.ACCENT_CYAN.darkened(0.25)
 	if eyes.contains("green"):
-		return DS.STATE_GREEN.darkened(0.45)
+		return Palette.STATE_GREEN.darkened(0.45)
 	if eyes.contains("grey"):
-		return DS.TEXT_SECONDARY
+		return Palette.TEXT_SECONDARY
 	if eyes.contains("hazel"):
-		return DS.STATE_AMBER.darkened(0.45)
+		return Palette.STATE_AMBER.darkened(0.45)
 	if eyes.contains("heterochromia"):
-		return DS.ACCENT_MAGENTA.darkened(0.2)
-	return DS.STATE_AMBER.darkened(0.65)
+		return Palette.ACCENT_MAGENTA.darkened(0.2)
+	return Palette.STATE_AMBER.darkened(0.65)
 
 
 func _draw() -> void:
@@ -72,7 +72,7 @@ func _draw() -> void:
 	elif appearance != null:
 		_draw_placeholder(rect, appearance)
 	else:
-		_draw_silhouette(rect, DS.TEXT_MUTED, DS.LINE_SUBTLE)
+		_draw_silhouette(rect, DS.TEXT_MUTED, Palette.LINE_SUBTLE)
 	if not framed:
 		return
 	# Lignes de trame discrètes (cadre holo, jamais sur une donnée).

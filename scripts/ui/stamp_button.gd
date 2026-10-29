@@ -57,6 +57,16 @@ func setup(p_kind: VerdictKind.Kind, p_hint: String, p_locked_hint: String) -> v
 	focus_exited.connect(queue_redraw)
 
 
+## Aide « maintenir … » réécrite quand le périphérique change (M11).
+func set_hint(p_hint: String) -> void:
+	if p_hint == hint:
+		return
+	hint = p_hint
+	tooltip_text = StampMark.label_of(kind) + " — " + hint
+	_update_width()
+	queue_redraw()
+
+
 ## Largeur ajustée au texte (échelle du texte, plancher Steam Deck). Tout
 ## maintien est annulé quand l'arbre passe en pause, que la fenêtre perd le
 ## focus ou que le tampon est masqué : le relâchement ne serait jamais reçu
@@ -160,7 +170,7 @@ func _draw() -> void:
 	var border: Color = color
 	if locked:
 		bg = DS.DISABLED_BG
-		border = DS.LINE_SUBTLE
+		border = Palette.LINE_SUBTLE
 	elif _hovered or _holding:
 		bg = DS.BG_PANEL.blend(Color(color, 0.12))
 	var box: StyleBoxFlat = ThemeBuilder.chamfer_box(bg, border, DS.BORDER_DEFAULT, DS.CHAMFER_M, 0)
@@ -178,7 +188,7 @@ func _draw() -> void:
 	var icon_rect: Rect2 = Rect2(Vector2(DS.SPACE_4, (size.y - DS.ICON_L) * 0.5), Vector2(DS.ICON_L, DS.ICON_L))
 	UiIcon.draw_icon(self, StampMark.icon_of(kind), icon_rect, fg, DS.BORDER_STRONG)
 	if locked:
-		UiIcon.draw_icon(self, UiIcon.Kind.LOCK, Rect2(icon_rect.end - Vector2(DS.ICON_S * 0.6, DS.ICON_S * 0.7), Vector2(DS.ICON_S, DS.ICON_S)), DS.TEXT_SECONDARY)
+		UiIcon.draw_icon(self, UiIcon.Kind.LOCK, Rect2(icon_rect.end - Vector2(DS.ICON_S * 0.6, DS.ICON_S * 0.7), Vector2(DS.ICON_S, DS.ICON_S)), Palette.TEXT_SECONDARY)
 	var font: Font = get_theme_font(&"font", &"StampLabel")
 	var font_size: int = get_theme_font_size(&"font_size", &"StampLabel")
 	var x: float = icon_rect.end.x + DS.SPACE_3
@@ -192,4 +202,4 @@ func _draw() -> void:
 	var small_size: int = get_theme_font_size(&"font_size", &"CaptionLabel")
 	var sub: String = locked_hint if locked else hint
 	draw_string(small, Vector2(x, size.y * 0.5 + small_size + DS.SPACE_2), sub, HORIZONTAL_ALIGNMENT_LEFT, width, small_size,
-			DS.TEXT_SECONDARY)
+			Palette.TEXT_SECONDARY)

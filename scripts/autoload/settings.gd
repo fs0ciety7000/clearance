@@ -5,7 +5,8 @@
 ## valide la valeur, l'applique, la sauvegarde et émet
 ## `EventBus.settings_changed(key, value)`.
 ## Les volumes et le mode mono sont appliqués ici aux bus audio
-## (`res://default_bus_layout.tres`, docs/AUDIO.md §2) ; les autres réglages
+## (`res://default_bus_layout.tres`, docs/AUDIO.md §2), la vision des couleurs
+## à la palette active (`Palette.apply`, DESIGN_SYSTEM §2.5) ; les autres réglages
 ## (taille du texte, effets, animations, sous-titres, horloge) sont appliqués
 ## par leurs consommateurs à l'écoute de `settings_changed`.
 ##
@@ -46,6 +47,20 @@ const KEY_AUDIO_MONO: StringName = &"audio_mono"
 ## `BoothQuality` (scripts/booth).
 const KEY_GRAPHICS_QUALITY: StringName = &"graphics_quality"
 const QUALITY_AUTO: float = -1.0
+## M11 — « Vision des couleurs » (DESIGN_SYSTEM §2.5) : 0 Aucune,
+## 1 Protanopie / Deutéranopie, 2 Tritanopie, 3 Contraste élevé. Remplace les
+## couleurs sémantiques (`Palette.apply`) ; formes et icônes restent le
+## premier porteur du sens.
+const KEY_COLOR_VISION: StringName = &"color_vision"
+const COLOR_VISION_MAX: float = 3.0
+## M11 — « Scintillement holographique » : scintillement du cadre, défilement
+## des scanlines et glitchs (DS §5), coupés **séparément** des lueurs et du
+## niveau d'effets (`fx_intensity`).
+const KEY_HOLO_FLICKER: StringName = &"holo_flicker"
+## M11 — style des glyphes manette : -1 Auto (nom de la manette, Steam Deck),
+## 0 Xbox / Steam Deck (A B X Y), 1 PlayStation (✕ ○ □ △).
+const KEY_PAD_GLYPHS: StringName = &"pad_glyphs"
+const PAD_GLYPHS_AUTO: float = -1.0
 
 const FX_LEVELS: PackedFloat32Array = [1.0, 0.5, 0.0]
 const TEXT_SCALE_MIN: float = 0.9
@@ -67,6 +82,9 @@ const DEFAULTS: Dictionary = {
 	&"clock_slow_accessibility": false,
 	&"audio_mono": false,
 	&"graphics_quality": -1.0,
+	&"color_vision": 0.0,
+	&"holo_flicker": true,
+	&"pad_glyphs": -1.0,
 }
 
 ## Réglage de volume → nom du bus audio (docs/AUDIO.md §2).
@@ -116,6 +134,19 @@ var clock_slow_accessibility: bool:
 		return get_bool(KEY_CLOCK_SLOW_ACCESSIBILITY)
 	set(value):
 		set_value(KEY_CLOCK_SLOW_ACCESSIBILITY, value)
+
+## Mode de vision des couleurs (`Palette.Mode`, 0–3).
+var color_vision: int:
+	get:
+		return int(get_float(KEY_COLOR_VISION))
+	set(value):
+		set_value(KEY_COLOR_VISION, float(value))
+
+var holo_flicker: bool:
+	get:
+		return get_bool(KEY_HOLO_FLICKER)
+	set(value):
+		set_value(KEY_HOLO_FLICKER, value)
 
 
 func _init() -> void:
@@ -278,7 +309,8 @@ func save_settings() -> Error:
 	return err
 
 
-## Applique tous les réglages qui relèvent de Settings (volumes, mono).
+## Applique tous les réglages qui relèvent de Settings (volumes, mono,
+## palette de vision des couleurs).
 func apply_all() -> void:
 	for key: StringName in DEFAULTS:
 		_apply(key)
@@ -293,6 +325,9 @@ func _reset_values() -> void:
 
 
 func _apply(key: StringName) -> void:
+	if key == KEY_COLOR_VISION:
+		Palette.apply(int(get_float(key)))
+		return
 	if key == KEY_AUDIO_MONO:
 		AudioBuses.set_effect_enabled(AudioBuses.MASTER, AudioBuses.FX_MONO, get_bool(key))
 		return
@@ -326,6 +361,10 @@ func _sanitize(key: StringName, value: Variant) -> Variant:
 		return clampf(snappedf(number, TEXT_SCALE_STEP), TEXT_SCALE_MIN, TEXT_SCALE_MAX)
 	if key == KEY_GRAPHICS_QUALITY:
 		return clampf(roundf(number), QUALITY_AUTO, 2.0)
+	if key == KEY_COLOR_VISION:
+		return clampf(roundf(number), 0.0, COLOR_VISION_MAX)
+	if key == KEY_PAD_GLYPHS:
+		return clampf(roundf(number), PAD_GLYPHS_AUTO, 1.0)
 	return clampf(number, 0.0, 1.0) # volumes
 
 

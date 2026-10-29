@@ -40,12 +40,12 @@ static func state_color(member: Household.Member) -> Color:
 	if member.detained:
 		return DS.ACCENT_YELLOW
 	if member.away != &"":
-		return DS.TEXT_SECONDARY
+		return Palette.TEXT_SECONDARY
 	match member.health:
 		Household.Health.GRAVELY_SICK, Household.Health.SICK:
-			return DS.STATE_RED
+			return Palette.STATE_RED
 	if member.breathless or member.hungry or member.cold:
-		return DS.STATE_AMBER
+		return Palette.STATE_AMBER
 	return DS.ACCENT_CYAN
 
 

@@ -35,6 +35,10 @@ const COMPACT_KINDS: Array[FieldDef.FieldKind] = [
 ]
 ## Champs texte longs, toujours seuls sur leur ligne.
 const WIDE_FIELD_IDS: Array[StringName] = [&"employer", &"origin_sector", &"mrz", &"sponsor", &"summons"]
+## Carte à photo (M11, D-085 rév.) : lignes de champs **à côté** de la photo ;
+## les suivantes passent **sous** la photo, sur toute la largeur — la carte
+## perd la colonne vide sous le portrait et ses libellés ne se replient plus.
+const PORTRAIT_SIDE_ROWS: int = 3
 const MRZ_FIELD_ID: StringName = &"mrz"
 const SERIAL_PATH: StringName = &"document.serial"
 ## Champ renommé « TITULAIRE » sur un document d'un tiers (QA-028).
@@ -43,7 +47,6 @@ const HOLDER_PATH: StringName = &"family_name"
 ## lisible à la loupe (`DS.DOC_ZOOM`), discret à l'échelle 1.
 const MARK_LUCIOLE: StringName = &"luciole"
 const MARK_SIZE_PX: float = 5.0
-const TOKENS: GDScript = preload("res://ui/theme/tokens.gd")
 
 var instance: DocumentInstance = null
 var fields: Array[DocFieldView] = []
@@ -82,11 +85,10 @@ static func create(p_instance: DocumentInstance, portrait_provider: Callable = C
 	return view
 
 
-## Couleur d'un token `DS` nommé (`holo_tint_token`), cyan par défaut.
+## Couleur d'un token `DS` nommé (`holo_tint_token`), cyan par défaut ;
+## valeur de la palette active pour un token d'état (`Palette.token`).
 static func token_color(token: StringName) -> Color:
-	var constants: Dictionary = TOKENS.get_script_constant_map()
-	var value: Variant = constants.get(String(token))
-	return value if value is Color else DS.ACCENT_CYAN
+	return Palette.token(token)
 
 
 func build(p_instance: DocumentInstance, portrait_provider: Callable = Callable()) -> void:
@@ -135,7 +137,15 @@ func build(p_instance: DocumentInstance, portrait_provider: Callable = Callable(
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rows.add_theme_constant_override("separation", DS.SPACE_1)
 	body.add_child(rows)
-	_fill_rows(rows, body_fields, portrait_provider)
+	var side_rows: int = PORTRAIT_SIDE_ROWS if portrait_def != null else -1
+	var placed: int = _fill_rows(rows, body_fields, portrait_provider, side_rows)
+	if placed < body_fields.size():
+		var below: VBoxContainer = VBoxContainer.new()
+		below.name = "BelowPortrait"
+		below.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		below.add_theme_constant_override("separation", DS.SPACE_1)
+		_content.add_child(below)
+		_fill_rows(below, body_fields.slice(placed), portrait_provider)
 	if mrz_def != null:
 		_content.add_child(_build_mrz(mrz_def, portrait_provider))
 	_footer = _build_footer()
@@ -236,7 +246,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
-	queue_redraw()
+	if Settings.holo_flicker:
+		queue_redraw()
 
 
 # ---------------------------------------------------------------------------
@@ -266,14 +277,14 @@ func _build_header(def: DocumentTypeDef, show_serial: bool) -> Control:
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	titles.add_child(title)
 	if instance.third_party:
-		var third: PanelContainer = ScreenBase.chip(UiText.t("doc_third_party", "DOCUMENT D'UN TIERS"), UiIcon.Kind.INFO, DS.TEXT_SECONDARY)
+		var third: PanelContainer = ScreenBase.chip(UiText.t("doc_third_party", "DOCUMENT D'UN TIERS"), UiIcon.Kind.INFO, Palette.TEXT_SECONDARY)
 		third.name = "ThirdParty"
 		third.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		titles.add_child(third)
 	if instance.retired:
 		# Acte III (M1, SC-58) : repris par les quais, plus contrôlé au guichet.
 		var retired: PanelContainer = ScreenBase.chip(UiText.t("doc_retired", "RETIRÉ · NON CONTRÔLÉ"), UiIcon.Kind.STRIKE,
-				DS.TEXT_SECONDARY)
+				Palette.TEXT_SECONDARY)
 		retired.name = "Retired"
 		retired.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		titles.add_child(retired)
@@ -322,22 +333,30 @@ static func pair_class(field: FieldDef) -> int:
 
 
 ## Lignes de champs : deux champs consécutifs de même classe partagent une
-## ligne (dans l'ordre `display_order`), les autres sont seuls.
-func _fill_rows(rows: VBoxContainer, body_fields: Array[FieldDef], portrait_provider: Callable) -> void:
+## ligne (dans l'ordre `display_order`), les autres sont seuls. `max_rows` ≥ 0 :
+## s'arrête avant d'ouvrir une ligne de plus. Renvoie le nombre de champs posés.
+func _fill_rows(rows: VBoxContainer, body_fields: Array[FieldDef], portrait_provider: Callable, max_rows: int = -1) -> int:
 	var current: HBoxContainer = null
 	var current_class: int = 0
+	var row_count: int = 0
+	var placed: int = 0
 	for field: FieldDef in body_fields:
-		var item: DocFieldView = _make_field(field, portrait_provider)
 		var klass: int = pair_class(field)
 		if current != null and klass != 0 and klass == current_class and current.get_child_count() == 1:
-			current.add_child(item)
+			current.add_child(_make_field(field, portrait_provider))
+			placed += 1
 			current = null
 			continue
+		if max_rows >= 0 and row_count >= max_rows:
+			break
 		current = _new_row(rows)
-		current.add_child(item)
+		row_count += 1
+		current.add_child(_make_field(field, portrait_provider))
+		placed += 1
 		current_class = klass
 		if klass == 0:
 			current = null
+	return placed
 
 
 func _new_row(rows: VBoxContainer) -> HBoxContainer:
@@ -350,6 +369,9 @@ func _new_row(rows: VBoxContainer) -> HBoxContainer:
 
 func _build_mrz(field: FieldDef, portrait_provider: Callable) -> Control:
 	var item: DocFieldView = _make_field(field, portrait_provider)
+	# Bande MRZ sans libellé (elle se reconnaît d'elle-même, M11) : une ligne
+	# de moins sur la carte ; le nom reste dans l'infobulle et les messages.
+	item.hide_label()
 	return item
 
 
@@ -449,16 +471,20 @@ func _draw() -> void:
 	# Scanlines (cadre holo) : alpha ≤ 0,03 sous les données (DS §5).
 	if fx_intensity > 0.0:
 		var alpha: float = 0.03 * fx_intensity
-		var offset: float = fmod(_time * DS.FX_SCANLINE_PERIOD_PX * 2.0, DS.FX_SCANLINE_PERIOD_PX * 2.0)
+		# « Scintillement holographique » coupé (M11) : scanlines figées, aucun
+		# scintillement du cadre ; les lueurs restent (DESIGN_SYSTEM §5).
+		var flickering: bool = Settings.holo_flicker
+		var offset: float = fmod(_time * DS.FX_SCANLINE_PERIOD_PX * 2.0, DS.FX_SCANLINE_PERIOD_PX * 2.0) if flickering else 0.0
 		var y: float = offset
 		var line: Color = Color(DS.ACCENT_CYAN, alpha)
 		while y < rect.size.y:
 			draw_line(Vector2(DS.SPACE_1, y), Vector2(rect.size.x - DS.SPACE_1, y), line, 1.0)
 			y += DS.FX_SCANLINE_PERIOD_PX * 2.0
 		# Flicker du cadre (≤ 2 Hz, amplitude ≤ 0,06) : bord seulement.
-		var flicker: float = 0.5 + 0.5 * sin(_time * TAU * DS.FX_FLICKER_HZ_MAX * 0.25)
-		var edge: Color = Color(DS.ACCENT_CYAN, DS.FX_FLICKER_AMPLITUDE_MAX * flicker * fx_intensity)
-		draw_line(Vector2(DS.CHAMFER_L, 1), Vector2(size.x - 1, 1), edge, 2.0)
+		if flickering:
+			var flicker: float = 0.5 + 0.5 * sin(_time * TAU * DS.FX_FLICKER_HZ_MAX * 0.25)
+			var edge: Color = Color(DS.ACCENT_CYAN, DS.FX_FLICKER_AMPLITUDE_MAX * flicker * fx_intensity)
+			draw_line(Vector2(DS.CHAMFER_L, 1), Vector2(size.x - 1, 1), edge, 2.0)
 	# Coins accentués (bas-gauche / haut-droit vifs).
 	var corner: float = DS.SPACE_3
 	draw_polyline([Vector2(0, rect.end.y - corner), Vector2(0, rect.end.y), Vector2(corner, rect.end.y)], _tint, DS.BORDER_STRONG)
@@ -467,7 +493,7 @@ func _draw() -> void:
 	# Badge « flagged » : losange magenta + compteur (DS §7.1).
 	if flag_count > 0:
 		var center: Vector2 = Vector2(rect.end.x - DS.SPACE_2, -DS.SPACE_2)
-		InspectableItem.draw_number_badge(self, center + Vector2(DS.SPACE_3 * 0.5, -DS.SPACE_3 * 0.5), flag_count, DS.ACCENT_MAGENTA)
+		InspectableItem.draw_number_badge(self, center + Vector2(DS.SPACE_3 * 0.5, -DS.SPACE_3 * 0.5), flag_count, Palette.ACCENT_MAGENTA)
 
 
 # ---------------------------------------------------------------------------

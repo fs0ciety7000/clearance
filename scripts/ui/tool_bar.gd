@@ -52,12 +52,12 @@ func _ready() -> void:
 	margin.add_child(row)
 	_row = row
 
-	inspect_button = _tool_button(UiIcon.Kind.DIAMOND, UiText.t("tb_inspection", "INSPECTION"), ["ESPACE", "LT"])
+	inspect_button = _tool_button(UiIcon.Kind.DIAMOND, UiText.t("tb_inspection", "INSPECTION"), [&"inspect_toggle"])
 	inspect_button.toggle_mode = true
 	inspect_button.toggled.connect(_on_inspect_toggled)
 	row.add_child(inspect_button)
 
-	interrogate_button = _tool_button(UiIcon.Kind.CHAT, UiText.t("tb_interrogate", "INTERROGER"), ["Q", "Y"])
+	interrogate_button = _tool_button(UiIcon.Kind.CHAT, UiText.t("tb_interrogate", "INTERROGER"), [&"interrogate"])
 	interrogate_button.pressed.connect(interrogate_pressed.emit)
 	row.add_child(interrogate_button)
 	_badge = PanelContainer.new()
@@ -74,7 +74,7 @@ func _ready() -> void:
 	inner.add_child(_badge)
 	inner.move_child(_badge, 2)
 
-	next_button = _tool_button(UiIcon.Kind.CHAT, "", ["N", "A"])
+	next_button = _tool_button(UiIcon.Kind.CHAT, "", [&"next_case"])
 	next_button.theme_type_variation = &"ButtonPrimary"
 	next_button.pressed.connect(next_pressed.emit)
 	var next_inner: HBoxContainer = next_button.get_child(0) as HBoxContainer
@@ -90,12 +90,12 @@ func _ready() -> void:
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_status.add_theme_color_override(&"default_color", DS.TEXT_SECONDARY)
+	_status.add_theme_color_override(&"default_color", Palette.TEXT_SECONDARY)
 	refresh_fonts()
 	row.add_child(_status)
 
 	var drawer: PanelContainer = PanelContainer.new()
-	drawer.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_M, DS.SPACE_2))
+	drawer.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL, Palette.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_M, DS.SPACE_2))
 	row.add_child(drawer)
 	var drawer_row: HBoxContainer = HBoxContainer.new()
 	drawer_row.add_theme_constant_override("separation", DS.SPACE_3)
@@ -115,12 +115,7 @@ func _ready() -> void:
 	caption_box.add_child(hold)
 	for kind: VerdictKind.Kind in [VerdictKind.Kind.APPROVE, VerdictKind.Kind.DENY, VerdictKind.Kind.DETAIN]:
 		var button: StampButton = StampButton.new()
-		var hints: Dictionary[VerdictKind.Kind, String] = {
-			VerdictKind.Kind.APPROVE: UiText.t("tb_hint_approve", "maintenir V · RT"),
-			VerdictKind.Kind.DENY: UiText.t("tb_hint_deny", "maintenir X · (X)"),
-			VerdictKind.Kind.DETAIN: UiText.t("tb_hint_detain", "maintenir D · ↓"),
-		}
-		button.setup(kind, hints[kind], UiText.t("tb_locked_hint", "aucun document"))
+		button.setup(kind, stamp_hint(kind), UiText.t("tb_locked_hint", "aucun document"))
 		button.stamped.connect(_on_stamped)
 		drawer_row.add_child(button)
 		stamps[kind] = button
@@ -129,6 +124,27 @@ func _ready() -> void:
 	set_detain_available(false)
 	set_stamps_locked(true)
 	set_unlocked_count(0)
+
+
+## Action de `project.godot` d'un tampon.
+const STAMP_ACTIONS: Dictionary[VerdictKind.Kind, StringName] = {
+	VerdictKind.Kind.APPROVE: &"stamp_approve",
+	VerdictKind.Kind.DENY: &"stamp_deny",
+	VerdictKind.Kind.DETAIN: &"stamp_detain",
+}
+
+
+## « maintenir V » / « maintenir RT »… selon le dernier périphérique (M11).
+static func stamp_hint(kind: VerdictKind.Kind) -> String:
+	return UiText.tf("tb_hint_hold", [InputPrompts.text_for(STAMP_ACTIONS[kind])], "maintenir %s")
+
+
+## Invites réécrites quand le joueur change de périphérique (les glyphes des
+## outils se mettent à jour d'eux-mêmes).
+func refresh_prompts() -> void:
+	for kind: VerdictKind.Kind in stamps:
+		stamps[kind].set_hint(stamp_hint(kind))
+	queue_compaction()
 
 
 func _notification(what: int) -> void:
@@ -210,8 +226,9 @@ func refresh_fonts() -> void:
 	queue_compaction()
 
 
-## Bouton d'outil : icône + libellé + touches, dans un `ButtonTool`.
-func _tool_button(icon: UiIcon.Kind, text: String, keys: Array[String]) -> Button:
+## Bouton d'outil : icône + libellé + glyphes des actions (clavier ou
+## manette selon le dernier périphérique, M11), dans un `ButtonTool`.
+func _tool_button(icon: UiIcon.Kind, text: String, actions: Array[StringName]) -> Button:
 	var button: Button = Button.new()
 	button.theme_type_variation = &"ButtonTool"
 	button.focus_mode = Control.FOCUS_ALL
@@ -235,8 +252,10 @@ func _tool_button(icon: UiIcon.Kind, text: String, keys: Array[String]) -> Butto
 	var key_row: HBoxContainer = HBoxContainer.new()
 	key_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	key_row.add_theme_constant_override("separation", DS.SPACE_1)
-	for key: String in keys:
-		key_row.add_child(RulebookPanel.make_keycap(key))
+	for action: StringName in actions:
+		var glyph: PromptGlyph = PromptGlyph.make(action)
+		glyph.minimum_size_changed.connect(queue_compaction)
+		key_row.add_child(glyph)
 	inner.add_child(key_row)
 	inner.minimum_size_changed.connect(_fit_button.bind(button, inner))
 	_fit_button.call_deferred(button, inner)
@@ -304,9 +323,9 @@ func set_next_mode(mode: StringName) -> void:
 			next_button.theme_type_variation = &"ButtonTool"
 			var key: String = "tb_next_approaching" if mode == &"approaching" else "tb_next_departing"
 			_next_label.text = UiText.t(key, "SUIVANT · EN APPROCHE" if mode == &"approaching" else "SUIVANT · DÉPART")
-			_next_label.add_theme_color_override(&"font_color", DS.STATE_AMBER)
+			_next_label.add_theme_color_override(&"font_color", Palette.STATE_AMBER)
 			_next_keys.visible = false
-			next_button.add_theme_stylebox_override(&"disabled", ThemeBuilder.chamfer_box(DS.BG_PANEL, DS.STATE_AMBER, DS.BORDER_DEFAULT, DS.CHAMFER_M, 0))
+			next_button.add_theme_stylebox_override(&"disabled", ThemeBuilder.chamfer_box(DS.BG_PANEL, Palette.STATE_AMBER, DS.BORDER_DEFAULT, DS.CHAMFER_M, 0))
 	queue_compaction()
 
 
@@ -322,7 +341,7 @@ func set_stamps_locked(locked: bool) -> void:
 	for kind: VerdictKind.Kind in stamps:
 		stamps[kind].locked = locked
 	_stamps_caption.text = UiText.t("tb_stamps_locked", "TAMPONS VERROUILLÉS") if locked else UiText.t("tb_stamps", "TAMPONS OFFICIELS")
-	_stamps_caption.add_theme_color_override(&"font_color", DS.TEXT_SECONDARY if locked else DS.ACCENT_YELLOW)
+	_stamps_caption.add_theme_color_override(&"font_color", Palette.TEXT_SECONDARY if locked else DS.ACCENT_YELLOW)
 	queue_compaction()
 
 

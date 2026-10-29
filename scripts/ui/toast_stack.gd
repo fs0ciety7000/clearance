@@ -20,13 +20,13 @@ func _ready() -> void:
 static func accent_of(kind: Kind) -> Color:
 	match kind:
 		Kind.SUCCESS:
-			return DS.STATE_GREEN
+			return Palette.STATE_GREEN
 		Kind.WARNING:
-			return DS.STATE_AMBER
+			return Palette.STATE_AMBER
 		Kind.ERROR:
-			return DS.STATE_RED
+			return Palette.STATE_RED
 		Kind.NARRATIVE:
-			return DS.ACCENT_MAGENTA
+			return Palette.ACCENT_MAGENTA
 	return DS.ACCENT_CYAN
 
 
@@ -128,7 +128,7 @@ func push_citation(reason: String, sanction: String, warning: bool) -> PanelCont
 	var sanction_row: HBoxContainer = HBoxContainer.new()
 	sanction_row.add_theme_constant_override("separation", DS.SPACE_2)
 	body_box.add_child(sanction_row)
-	var accent: Color = DS.STATE_AMBER if warning else DS.STATE_RED
+	var accent: Color = Palette.STATE_AMBER if warning else Palette.STATE_RED
 	sanction_row.add_child(UiIcon.make(UiIcon.Kind.WARNING if warning else UiIcon.Kind.DENIED, accent, DS.ICON_S))
 	var sanction_label: Label = Label.new()
 	sanction_label.theme_type_variation = &"DocFieldValue"

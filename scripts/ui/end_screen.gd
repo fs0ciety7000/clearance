@@ -101,15 +101,15 @@ static func date_text(p_history: Array[Dictionary]) -> String:
 static func accent_of(p_ending: StringName, variant: String = "") -> Color:
 	match p_ending:
 		EndingService.F1_ARRESTED:
-			return DS.STATE_RED
+			return Palette.STATE_RED
 		EndingService.F2_REASSIGNED:
-			return DS.STATE_AMBER
+			return Palette.STATE_AMBER
 		EndingService.F3_FAMILY_LOST:
-			return DS.TEXT_SECONDARY
+			return Palette.TEXT_SECONDARY
 		EndingService.F4_GLORY:
 			return DS.ACCENT_YELLOW
 		EndingService.F5_AIR:
-			return DS.STATE_RED if variant == "brulants" else DS.ACCENT_MAGENTA
+			return Palette.STATE_RED if variant == "brulants" else Palette.ACCENT_MAGENTA
 		EndingService.F6_DRIFT:
 			return DS.ACCENT_CYAN
 		EndingService.F7_REOPENS:
@@ -117,12 +117,12 @@ static func accent_of(p_ending: StringName, variant: String = "") -> Color:
 		EndingService.F8_REGISTRE:
 			return DS.ACCENT_CYAN
 		EndingService.F9_STRIKE:
-			return DS.TEXT_SECONDARY
+			return Palette.TEXT_SECONDARY
 		EndingService.F10_PONT:
-			return DS.STATE_GREEN
+			return Palette.STATE_GREEN
 		Campaign.ENDING_DEMO_COMPLETE:
 			return DS.ACCENT_YELLOW
-	return DS.STATE_RED
+	return Palette.STATE_RED
 
 
 static func icon_of(p_ending: StringName) -> UiIcon.Kind:
@@ -193,6 +193,11 @@ func epilogue_lines() -> PackedStringArray:
 	return lines
 
 
+## Manette / clavier (M11) : « PASSER » pendant le récit, puis « TITRE ».
+func default_focus() -> Control:
+	return skip_button if skip_button != null and skip_button.is_visible_in_tree() else title_button
+
+
 func _build() -> void:
 	var variant: String = str(epilogue.get("variant", ""))
 	var accent: Color = accent_of(ending, variant)
@@ -205,11 +210,11 @@ func _build() -> void:
 	top.add_child(eyebrow(UiText.t(eyebrow_key, "CLEARANCE · HALCYON GATE"), accent))
 	var act: Variant = epilogue.get("act", 1)
 	if act is int and act == 2:
-		var act_chip: PanelContainer = chip(UiText.t("end_act2_chip", "ACTE II"), UiIcon.Kind.REGISTER, DS.VOICE_COMMISSION)
+		var act_chip: PanelContainer = chip(UiText.t("end_act2_chip", "ACTE II"), UiIcon.Kind.REGISTER, Palette.VOICE_COMMISSION)
 		act_chip.name = "ActChip"
 		top.add_child(act_chip)
 	elif act is int and act == 3:
-		var act3_chip: PanelContainer = chip(UiText.t("end_act3_chip", "ACTE III"), UiIcon.Kind.SCALES, DS.STATE_AMBER)
+		var act3_chip: PanelContainer = chip(UiText.t("end_act3_chip", "ACTE III"), UiIcon.Kind.SCALES, Palette.STATE_AMBER)
 		act3_chip.name = "ActChip"
 		top.add_child(act3_chip)
 	if ending == EndingService.F5_AIR or (not variant.is_empty() and UiText.has("end_variant_%s" % variant)):
@@ -221,7 +226,7 @@ func _build() -> void:
 	var figure: String = final_figure(flags) if act is int and act == 3 else ""
 	if not figure.is_empty():
 		var figure_chip: PanelContainer = chip(UiText.t("end_figure_%s" % figure, figure.to_upper()), UiIcon.Kind.DIAMOND,
-				DS.ACCENT_MAGENTA if figure == "mira" else DS.TEXT_SECONDARY)
+				Palette.ACCENT_MAGENTA if figure == "mira" else Palette.TEXT_SECONDARY)
 		figure_chip.name = "FigureChip"
 		top.add_child(figure_chip)
 	top.add_child(spacer())
@@ -283,16 +288,16 @@ func _recap_column() -> Control:
 	right.modulate.a = 0.0
 	var traces: PackedStringArray = trace_keys(flags)
 	if not traces.is_empty():
-		right.add_child(section(UiText.t("end_traces", "CE QUE VOUS AVEZ CHOISI"), UiIcon.Kind.DISCORDANCE, DS.ACCENT_MAGENTA,
+		right.add_child(section(UiText.t("end_traces", "CE QUE VOUS AVEZ CHOISI"), UiIcon.Kind.DISCORDANCE, Palette.ACCENT_MAGENTA,
 				str(traces.size())))
 		for key: String in traces:
 			var row: HBoxContainer = hbox(DS.SPACE_2)
-			row.add_child(UiIcon.make(UiIcon.Kind.DIAMOND, DS.TEXT_SECONDARY, DS.ICON_S))
+			row.add_child(UiIcon.make(UiIcon.Kind.DIAMOND, Palette.TEXT_SECONDARY, DS.ICON_S))
 			var trace_label: Label = wrapped(trace_text(key, flags), &"BodySmall", DS.TEXT_PRIMARY)
 			trace_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			row.add_child(trace_label)
 			right.add_child(row)
-	right.add_child(section(UiText.t("end_recap", "RÉCAPITULATIF DES SHIFTS"), UiIcon.Kind.DIAMOND, DS.TEXT_SECONDARY))
+	right.add_child(section(UiText.t("end_recap", "RÉCAPITULATIF DES SHIFTS"), UiIcon.Kind.DIAMOND, Palette.TEXT_SECONDARY))
 	# Acte II : jusqu'à 20 lignes — le tableau défile, les tuiles restent visibles.
 	var table_scroll: ScrollContainer = ScrollContainer.new()
 	table_scroll.name = "RecapTable"
@@ -307,9 +312,9 @@ func _recap_column() -> Control:
 	tiles.add_child(stat_tile(UiText.t("end_compliance", "INDICE DE CONFORMITÉ"), "%d %%" % roundi(compliance * 100.0),
 			UiText.t("end_compliance_detail", "Cas corrects / cas traités"), DS.ACCENT_CYAN, UiIcon.Kind.CHECK))
 	tiles.add_child(stat_tile(UiText.t("end_balance", "SOLDE FINAL"), credits(final_credits),
-			UiText.t("end_balance_detail", "Banque Aurel"), DS.STATE_RED if final_credits < 0 else DS.ACCENT_YELLOW, UiIcon.Kind.LOGO))
+			UiText.t("end_balance_detail", "Banque Aurel"), Palette.STATE_RED if final_credits < 0 else DS.ACCENT_YELLOW, UiIcon.Kind.LOGO))
 	var family: HBoxContainer = hbox(DS.SPACE_2)
-	right.add_child(section(UiText.t("end_family", "LE FOYER"), UiIcon.Kind.INFO, DS.TEXT_SECONDARY))
+	right.add_child(section(UiText.t("end_family", "LE FOYER"), UiIcon.Kind.INFO, Palette.TEXT_SECONDARY))
 	right.add_child(family)
 	for member: Household.Member in household.members:
 		var card: PanelContainer = HouseholdView.member_card(member, "", true)
@@ -436,7 +441,7 @@ func _table() -> Control:
 		for i: int in cells.size():
 			var color: Color = DS.TEXT_PRIMARY
 			if i == cells.size() - 1 and balance < 0:
-				color = DS.STATE_RED
+				color = Palette.STATE_RED
 			grid.add_child(label(cells[i], &"DataSmall", color))
 	return card
 

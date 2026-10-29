@@ -39,7 +39,7 @@ func _build(day_number: int, rule_number: int, rule_title: String, free_citation
 	focus_mode = Control.FOCUS_ALL if archived else Control.FOCUS_NONE
 	var body_panel: PanelContainer = PanelContainer.new()
 	body_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	body_panel.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(_paper, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_M, 0))
+	body_panel.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(_paper, Palette.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_M, 0))
 	add_child(body_panel)
 	var column: VBoxContainer = ScreenBase.vbox(0)
 	body_panel.add_child(column)
@@ -80,10 +80,10 @@ func _build(day_number: int, rule_number: int, rule_title: String, free_citation
 		box.add_child(ScreenBase.wrapped(UiText.t(desc_key, ""), &"BodySmall"))
 
 	var warning: bool = result != null and result.is_warning()
-	var accent: Color = DS.STATE_AMBER if warning else DS.STATE_RED
+	var accent: Color = Palette.STATE_AMBER if warning else Palette.STATE_RED
 	var sanction_panel: PanelContainer = PanelContainer.new()
 	sanction_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sanction_panel.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.AMBER_12 if warning else DS.RED_12, accent, 0, 0, DS.SPACE_2))
+	sanction_panel.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(Palette.AMBER_12 if warning else Palette.RED_12, accent, 0, 0, DS.SPACE_2))
 	column.add_child(sanction_panel)
 	var sanction_row: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
 	sanction_panel.add_child(sanction_row)
