@@ -4,6 +4,9 @@
 ## barrée, atténuée, avec son motif (`note_key` : « REPRIS PAR LES QUAIS ») et
 ## jamais comparable ; note du jour sous une règle active (« SUSPENDU
 ## PENDANT L'ENQUÊTE » sous R23).
+## M12 (lot C) : puce d'une règle rétablie (`note_icon` CHECK, « RÉTABLIE ») ;
+## `highlight` surligne la carte (directive de Garde), surlignage cyan qui
+## s'éteint (immédiat et fixe si les animations sont réduites).
 class_name RuleCardView
 extends InspectableItem
 
@@ -14,6 +17,11 @@ var _text: Label = null
 var _number: Label = null
 ## Acte III : note affichée sous le texte (motif de retrait, quota suspendu).
 var note_text: String = ""
+## M12 : surlignage (directive de Garde), 1 → 0.
+var glow: float = 0.0:
+	set(value):
+		glow = value
+		queue_redraw()
 
 
 ## Texte d'une règle ; R23 (« %d entrées par jour ») reçoit le quota du jour.
@@ -24,8 +32,9 @@ static func rule_text(p_entry: RulebookEntry, quota: int = 0) -> String:
 	return text
 
 
-## `extra_note` : note du jour imposée par l'UI (quota suspendu par le climat).
-func setup(p_entry: RulebookEntry, p_number: int, quota: int = 0, extra_note: String = "") -> void:
+## `extra_note` : note du jour imposée par l'UI (quota suspendu par le climat) ;
+## `note_icon` (`UiIcon.Kind`, −1 = défaut) : icône de sa puce (M12 « RÉTABLIE »).
+func setup(p_entry: RulebookEntry, p_number: int, quota: int = 0, extra_note: String = "", note_icon: int = -1) -> void:
 	entry = p_entry
 	number = p_number
 	ref = p_entry.ref if p_entry.ref != null else FieldRef.rulebook_rule(p_entry.rule_id)
@@ -80,7 +89,10 @@ func setup(p_entry: RulebookEntry, p_number: int, quota: int = 0, extra_note: St
 		tooltip_text = "%s — %s" % [title, note_text] if not note_text.is_empty() else title
 	if not note_text.is_empty():
 		var chip_color: Color = Palette.TEXT_SECONDARY if p_entry.retired else Palette.STATE_AMBER
-		var note: PanelContainer = ScreenBase.chip(note_text, UiIcon.Kind.STRIKE if p_entry.retired else UiIcon.Kind.LOCK, chip_color)
+		var icon: UiIcon.Kind = UiIcon.Kind.STRIKE if p_entry.retired else UiIcon.Kind.LOCK
+		if note_icon >= 0 and not p_entry.retired:
+			icon = note_icon as UiIcon.Kind
+		var note: PanelContainer = ScreenBase.chip(note_text, icon, chip_color)
 		note.name = "Note"
 		note.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		column.add_child(note)
@@ -106,6 +118,16 @@ static func make_new_badge(text: String) -> PanelContainer:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(label)
 	return badge
+
+
+## M12 : surlignage de la carte (directive de Garde) qui s'éteint.
+func highlight(reduce_motion: bool = false) -> void:
+	glow = 1.0
+	if reduce_motion:
+		return
+	var tween: Tween = create_tween()
+	tween.tween_interval(DS.DIRECTIVE_HOLD)
+	tween.tween_property(self, "glow", 0.0, DS.DUR_DRAMATIC * 2.0).set_trans(Tween.TRANS_SINE)
 
 
 ## Vrai pour une règle retirée ce jour (ligne barrée, jamais évaluée).
@@ -153,6 +175,10 @@ func _draw() -> void:
 	elif entry != null and entry.is_new and not is_flagged() and not selected:
 		draw_rect(Rect2(Vector2.ZERO, size), Palette.AMBER_12)
 		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), Palette.STATE_AMBER)
+	if glow > 0.0:
+		# Surlignage de directive : cadre cyan (forme) en plus du fond.
+		draw_rect(Rect2(Vector2.ZERO, size), Color(DS.CYAN_12, DS.CYAN_12.a * glow * 2.0))
+		draw_rect(Rect2(Vector2.ZERO, size), Color(DS.ACCENT_CYAN, glow), false, DS.BORDER_STRONG)
 	super._draw()
 
 

@@ -12,6 +12,10 @@ var _status_icon: UiIcon = null
 var _status_label: Label = null
 
 
+## M12 : file sans fin (Garde de nuit) — « ∞ » au lieu du total.
+var endless: bool = false
+
+
 func _ready() -> void:
 	theme_type_variation = &"VeilPanel"
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -76,6 +80,10 @@ func set_queue(number: int, total: int) -> void:
 	_passenger_value.text = "%02d" % number if number > 0 else "—"
 	_passenger_total.text = "/ %02d" % total if total > 0 else ""
 	_waiting_value.text = "%02d" % maxi(total - number, 0) if total > 0 else "—"
+	if endless:
+		# M12 : Garde de nuit, file sans fin.
+		_passenger_total.text = UiText.t("qp_endless_total", "/ ∞")
+		_waiting_value.text = UiText.t("qp_endless", "∞")
 
 
 func set_status(status: Status, discrepancies: int) -> void:

@@ -18,6 +18,10 @@
 ## seconde vanne, Brûlants ; dérive, Tycho), figure finale du J30 (Dora ou
 ## Mira, D-088), traces des choix J20–J30 (valeurs `%d` : familles de Tycho),
 ## tableau des 30 shifts défilant.
+## M12 (lot C, I29 ; M12 §1.10, D-122) : fin de l'Acte III → **UN AN PLUS
+## TARD** (bouton principal, focus) `DS.EPILOGUE_OFFER_DELAY` après le récit,
+## à côté de RETOUR AU TITRE (`finished(&"epilogue")`) ; fins des actes I–II :
+## ligne `epi_locked_hint` (sans titre ni monde).
 class_name EndScreen
 extends ScreenBase
 
@@ -49,6 +53,10 @@ var epilogue: Dictionary = {}
 var epilogue_labels: Array[Label] = []
 ## Nombre de lignes déjà révélées.
 var revealed: int = 0
+## M12 : « UN AN PLUS TARD » (fin de l'Acte III), null sinon.
+var epilogue_button: Button = null
+## M12 : ligne « Certaines fins ont une suite… » (fins des actes I–II).
+var locked_hint: Label = null
 
 var _scroll: ScrollContainer = null
 var _recap: Control = null
@@ -175,7 +183,11 @@ func epilogue_lines() -> PackedStringArray:
 
 ## Manette / clavier (M11) : « PASSER » pendant le récit, puis « TITRE ».
 func default_focus() -> Control:
-	return skip_button if skip_button != null and skip_button.is_visible_in_tree() else title_button
+	if skip_button != null and skip_button.is_visible_in_tree():
+		return skip_button
+	if epilogue_button != null and epilogue_button.is_visible_in_tree():
+		return epilogue_button
+	return title_button
 
 
 func _build() -> void:
@@ -308,6 +320,12 @@ func _footer() -> Control:
 	var hint: Label = label(UiText.t("end_hint", "« Gloire au Consortium. » — Vesh ota lumi."), &"CaptionLabel")
 	hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	footer.add_child(hint)
+	if has_epilogue_lock_hint():
+		locked_hint = label(UiText.t("epi_locked_hint", "Certaines fins ont une suite. Elles commencent après le 1ᵉʳ avril."), &"CaptionLabel",
+				Palette.TEXT_SECONDARY)
+		locked_hint.name = "EpilogueLockedHint"
+		locked_hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		footer.add_child(locked_hint)
 	footer.add_child(spacer())
 	skip_button = button(UiText.t("end_skip", "TOUT AFFICHER"), &"ButtonGhost")
 	skip_button.pressed.connect(reveal_all)
@@ -316,7 +334,34 @@ func _footer() -> Control:
 	title_button.custom_minimum_size.x = 280.0
 	title_button.pressed.connect(close.bind(&"title"))
 	footer.add_child(title_button)
+	if has_epilogue():
+		epilogue_button = button(UiText.t("epi_button", "UN AN PLUS TARD"), &"ButtonPrimary")
+		epilogue_button.name = "Epilogue"
+		epilogue_button.custom_minimum_size.x = 320.0
+		epilogue_button.visible = false
+		epilogue_button.pressed.connect(close.bind(&"epilogue"))
+		footer.add_child(epilogue_button)
 	return footer
+
+
+## M12 (D-122) : la fin ouvre l'épilogue J31 (fin de l'Acte III).
+func has_epilogue() -> bool:
+	return EpilogueService.is_eligible(ending, flags)
+
+
+## M12 : fin des actes I–II (F1–F10 hors Acte III) : ligne sobre, sans titre ni monde.
+func has_epilogue_lock_hint() -> bool:
+	return EndingService.ALL_ENDINGS.has(ending) and EpilogueService.act_of(flags) < 3
+
+
+## « UN AN PLUS TARD » devient le bouton principal (focus) ; RETOUR AU TITRE secondaire.
+func offer_epilogue() -> void:
+	if epilogue_button == null or not is_instance_valid(epilogue_button):
+		return
+	epilogue_button.visible = true
+	title_button.theme_type_variation = &"ButtonTool"
+	if is_inside_tree():
+		epilogue_button.grab_focus.call_deferred()
 
 
 # ---------------------------------------------------------------------------
@@ -385,6 +430,8 @@ func _finish_reveal() -> void:
 			_recap.create_tween().tween_property(_recap, "modulate:a", 1.0, DS.DUR_DRAMATIC)
 	if title_button != null and is_inside_tree():
 		title_button.grab_focus.call_deferred()
+	if epilogue_button != null and is_inside_tree():
+		get_tree().create_timer(DS.EPILOGUE_OFFER_DELAY).timeout.connect(offer_epilogue)
 
 
 func _unhandled_input(event: InputEvent) -> void:

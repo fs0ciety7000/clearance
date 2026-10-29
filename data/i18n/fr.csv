@@ -3446,3 +3446,166 @@ dos_end_hint1_f9,"Une vitre éteinte ne fait rien. Douze, c'est autre chose."
 dos_end_hint2_f9,"Solidarité, et le vote du J29."
 dos_end_hint1_f10,"Le matin prépare l'après-midi, à la même vitre."
 dos_end_hint2_f10,"Cinq familles de Tycho admises en règle, le dernier jour."
+bar_garde_code,GRAINE · %s
+bar_garde_errors,ERREURS
+bar_garde_location,HALCYON GATE — GARDE DE NUIT
+bar_garde_night,NUIT
+bar_garde_score,SCORE
+bar_garde_tier,PALIER %d · %s
+bar_garde_tier_n,PALIER %d
+title_garde,GARDE DE NUIT
+title_dossier,DOSSIER DE L'AGENT
+garde_title,GARDE DE NUIT
+garde_eyebrow,HALCYON GATE · ROTATIONS DE NUIT
+garde_tagline,"Une directive toutes les cinq personnes. Trois erreurs, et la relève arrive."
+garde_daily,GRAINE DU JOUR
+garde_free,GRAINE LIBRE
+garde_daily_utc,UTC · la même pour tout le monde
+garde_daily_none,Pas encore jouée aujourd'hui.
+garde_daily_record,Record du jour : %d · premier essai : %d · %d essai(s)
+garde_play_daily,JOUER LA GRAINE DU JOUR
+garde_seed_input,Code de garde (6 caractères)
+garde_seed_placeholder,K2Q-9TX
+garde_seed_help,"6 caractères : A–Z et 2–9, sans O, I, 0 ni 1. Tiret et casse indifférents."
+garde_seed_invalid,"Les codes n'utilisent ni O, ni I, ni 0, ni 1."
+garde_seed_length,Il faut 6 caractères (le tiret ne compte pas).
+garde_seed_ok,Code reconnu : %s
+garde_play_code,JOUER CE CODE
+garde_random,TIRER AU HASARD
+garde_locked,Terminez votre premier jour au Guichet 04.
+garde_no_save,Pas de sauvegarde en cours de garde : le score est enregistré à la fin.
+garde_records,RECORDS
+garde_records_none,Aucune garde enregistrée. La première fixe le record.
+garde_best,MEILLEUR SCORE
+garde_best_detail,passagers jugés juste
+garde_stats,GARDES
+garde_stats_detail,%d verdicts justes · plus longue : %d passagers
+garde_stats_line,%d gardes · %d verdicts justes · plus longue : %d passagers
+garde_free_seeds,GRAINES LIBRES
+garde_col_rank,N°
+garde_col_score,SCORE
+garde_col_code,CODE
+garde_col_date,DATE
+garde_col_tier,PALIER
+garde_row_tier,P%d · %d dir.
+garde_old_version,ancienne garde
+garde_score,SCORE · %d
+garde_errors,ERREURS · %d / 3
+garde_next_dir,PROCHAINE DIRECTIVE · %d
+garde_dir_title,DIRECTIVE DE GARDE N° %d
+garde_dir_retire,REPRIS PAR LES QUAIS
+garde_dir_restore,RÉTABLIE
+garde_dir_adds,Ajoute : %s
+garde_dir_effect,Effet au prochain passager · Rulebook › Règles.
+garde_dir_ok,COMPRIS
+garde_dawn,06:00. L'aube. La relève ne vient pas.
+garde_tier_toast,PALIER %d
+garde_end_button,TERMINER LA GARDE
+garde_end_button_tip,Le score de la garde est enregistré.
+garde_end_confirm,CONFIRMER : LE SCORE SERA ENREGISTRÉ
+garde_end_confirm_title,Terminer la garde ?
+garde_end_confirm_body,Le score de %d est enregistré. Le passager au guichet est jugé d'abord.
+garde_end_title,FIN DE GARDE
+garde_end_reason,Trois erreurs. La relève arrive.
+garde_end_quit,Garde terminée à votre demande.
+garde_end_eyebrow,GARDE DE NUIT · %s
+garde_score_caption,SCORE · PASSAGERS JUGÉS JUSTE
+garde_record_new,NOUVEAU RECORD
+garde_record_daily,RECORD DU JOUR
+garde_first_try,PREMIER ESSAI DU JOUR · %d
+garde_end_directives,%d directives
+garde_end_directives_one,%d directive
+garde_end_tier,palier %d
+garde_end_errors,LES ERREURS
+garde_end_no_error,Aucune erreur.
+garde_end_passenger,PASSAGER %d
+garde_end_verdicts,%s → %s
+garde_end_rule,Règle en cause : %s
+garde_share,CODE À PARTAGER
+garde_share_hint,"Mêmes passagers, mêmes directives : comparez vos scores."
+garde_replay,REJOUER CETTE GARDE
+garde_new,NOUVELLE GRAINE
+garde_copy,COPIER LE CODE
+garde_copied,CODE COPIÉ
+garde_copy_none,CODE
+garde_back,RETOUR
+garde_end_back_hint,titre
+garde_start_failed,GARDE IMPOSSIBLE
+pause_quit_garde,QUITTER VERS LE TITRE (GARDE PERDUE)
+epi_button,UN AN PLUS TARD
+epi_card_date,Vendredi 11.04.2188
+epi_card_recall,"Il y a un an, la dernière Transit-7 de Tycho s'arrimait à 14:00."
+epi_card_continue,CONTINUER
+epi_card_note,Épilogue · la partie terminée n'est pas modifiée
+epi_locked_hint,Certaines fins ont une suite. Elles commencent après le 1ᵉʳ avril.
+epi_end_hint,Le Dossier de l'agent garde cette conclusion.
+epi_br_expected_detail,"Puis quelques lignes, et c'est fini."
+epi_br_clock,HORLOGE
+epi_br_clock_detail,Le shift finit quand la file est traitée.
+epi_br_economy,ÉCONOMIE
+epi_br_economy_value,AUCUNE
+epi_br_economy_detail,Ni salaire ni amende : les erreurs comptent dans la conclusion.
+epi_start_failed,ÉPILOGUE INDISPONIBLE
+epi_start_failed_body,La graine de cet épilogue est illisible.
+load_badge_epilogue,ÉPILOGUE
+load_badge_epilogue_done,%s · JOUÉ
+load_play_epilogue,JOUER « UN AN PLUS TARD »
+dos_title,DOSSIER DE L'AGENT · HG-1404-AGNT
+dos_eyebrow,CONSORTIUM · BUREAU DU PERSONNEL
+dos_empty,Aucun dossier.
+dos_tab_endings,FINS
+dos_tab_people,PERSONNES
+dos_tab_last,DERNIÈRE PARTIE
+dos_tab_garde,GARDE DE NUIT
+dos_tab_epilogues,ÉPILOGUES
+dos_first_seen,Première fois : %s · J%d
+dos_count,Vue %d fois
+dos_count_one,Vue %d fois
+dos_count_endings,%d fins vues
+dos_count_endings_one,%d fin vue
+dos_count_gardes,%d gardes
+dos_count_gardes_one,%d garde
+dos_total_endings,%d / %d FINS
+dos_total_people,%d / %d PERSONNES
+dos_world_unknown,Un autre 11 avril
+dos_not_seen,NON VUE
+dos_filter_all,TOUS
+dos_filter_act,ACTE %s
+dos_people_none,Personne encore. Les visages qui comptent finissent ici.
+dos_chr_first,J%02d
+dos_chr_encounters,%d rencontres
+dos_chr_encounters_one,%d rencontre
+dos_last_none,Aucune partie terminée pour l'instant.
+dos_last_day,Dernier jour : J%02d
+dos_last_world,Épilogue : %s
+dos_last_no_trace,Aucun choix marquant enregistré pour cette partie.
+dos_epi_never,Pas encore joué
+dos_epi_played,Première fois : %s · joué %d fois
+dos_epi_play,JOUER
+dos_epi_replay,REJOUER
+dos_scroll_hint,défiler
+dos_variant_audit,AUDIT
+dos_variant_review,REVUE
+dos_variant_deposition,DÉPOSITION
+dos_variant_double,DOUBLE JEU
+dos_variant_c,CHARTE
+dos_variant_s,SECONDE VANNE
+dos_variant_b,BRÛLANTS
+dos_variant_j10,J10
+dos_variant_j20,J20
+dos_variant_t,TYCHO
+dos_variant_d,DÉRIVE
+rb_restored,RÉTABLIE
+rb_stolen_intro,Bulletin du Bureau · cartes déclarées volées. Mode Inspection : comparez au N° ID de la carte. Porteur : refus.
+rb_council_intro,Conseil de l'air · N° ID inscrits. Réintégré·es par le Conseil (date en colonne) : admis·es.
+sev_ui_eyebrow,ÉVÉNEMENT
+sev_ui_remaining,%d PASSAGERS
+sev_ui_remaining_one,%d PASSAGER
+sev_ui_until,JUSQU'À %s
+sev_ui_rest_of_day,JUSQU'À LA FIN DU SHIFT
+sev_ui_now,EN COURS
+sev_ui_comparator_title,CONSTAT DE L'AGENT
+sev_ui_comparator_text,"Comparateur hors service : paire notée, sans verdict. À vous de juger."
+qp_endless_total,/ ∞
+qp_endless,∞
+rb_garde_day,GARDE DE NUIT

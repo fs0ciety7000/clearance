@@ -193,3 +193,19 @@ const SUBTITLE_PER_CHAR := 0.06 # + 60 ms par caractère
 const DOC_ZOOM := 1.5 # zoom de lecture d'un document
 const STAMP_TILT_MAX_DEG := 4.0 # rotation aléatoire de l'empreinte
 const FX_LINK_DASH_SPEED := 20.0 # px/s, défilement des pointillés (≤ 20 px/s, DS §5)
+# ---------------------------------------------------------------------------
+# M12 « Rejouabilité » (DESIGN_SYSTEM 0.6) — rythmes et repères du Dossier
+# ---------------------------------------------------------------------------
+const DIRECTIVE_HOLD := 4.0 # carte « DIRECTIVE DE GARDE N° n » : au plus 4 s (M12 §2.2), passable
+const EPILOGUE_OFFER_DELAY := 3.0 # écran de fin : « UN AN PLUS TARD » 3 s après le récit (M12 §1.10)
+const GARDE_CODE_LENGTH := 6 # code libre de Garde (alphabet des N° ID, D-127) : largeur de saisie
+# Couleurs d'origine du Dossier (initiales des personnages, M12 §5.1, Q16) :
+# repères décoratifs, toujours doublés du code d'origine en texte (jamais la
+# couleur seule) ; hors des familles d'état et de marque.
+const FACTION_HAL := Color("#C9B98A") # Halcyon : laiton
+const FACTION_TYC := Color("#C08A5E") # Tycho : rouille
+const FACTION_TER := Color("#7FA7D6") # Terre : bleu
+const FACTION_CER := Color("#8DBB9A") # Cérès : sauge
+const FACTION_THR := Color("#C795C0") # Tharsis : mauve
+const FACTION_DRV := Color("#8FB3B5") # Dérive : gris d'eau
+const FACTION_NONE := Color("#8A97A8") # origine inconnue (= text.secondary)

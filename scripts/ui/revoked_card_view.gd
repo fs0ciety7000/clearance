@@ -18,7 +18,8 @@ var _id_label: Label = null
 
 
 ## `today` (`GameDate`) : date du jour pour la colonne « RÉINTÉGRÉ·E LE » (0 : ignorée).
-func setup(p_entry: RevokedEntry, p_number: int, today: int = 0) -> void:
+## M12 : `council` — Liste du Conseil (R40, monde B) : réintégration « PAR LE CONSEIL ».
+func setup(p_entry: RevokedEntry, p_number: int, today: int = 0, council: bool = false) -> void:
 	entry = p_entry
 	number = p_number
 	reinstated = today > 0 and p_entry.is_reinstated(today)
@@ -60,7 +61,8 @@ func setup(p_entry: RevokedEntry, p_number: int, today: int = 0) -> void:
 	status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	if reinstated:
 		status.add_child(UiIcon.make(UiIcon.Kind.APPROVED, Palette.STATE_GREEN, DS.ICON_S))
-		status.add_child(ScreenBase.label(UiText.t("cmp_reinstated", "RÉINTÉGRÉ (R33)"), &"DocFieldLabel", Palette.STATE_GREEN))
+		status.add_child(ScreenBase.label(UiText.t("rb_col_council_reinstated", "RÉINTÉGRÉ·E PAR LE CONSEIL") if council
+				else UiText.t("cmp_reinstated", "RÉINTÉGRÉ (R33)"), &"DocFieldLabel", Palette.STATE_GREEN))
 	else:
 		status.add_child(UiIcon.make(UiIcon.Kind.DENIED, Palette.STATE_RED, DS.ICON_S))
 		status.add_child(ScreenBase.label(UiText.t("rb_revoked_action", "NON CITOYEN·NE"), &"DocFieldLabel", Palette.STATE_RED))

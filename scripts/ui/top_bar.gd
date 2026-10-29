@@ -11,6 +11,14 @@
 ## date, horloge sans alerte de fin (« SANS CHRONO » : le shift ne se termine
 ## pas à l'heure, jamais « FIN DE SHIFT IMMINENTE »), bouton « FERMER LE
 ## GUICHET » (quota atteint, `DayController.can_close_booth`).
+## M12 (lot C, I30 / I31) : **Garde de nuit** (`set_garde_mode`) — lieu « GARDE
+## DE NUIT », code de la graine à la place de la date, horloge cosmétique
+## modulo 24 h (`set_garde_clock`, jamais celle du shift), palier en fin de
+## ligne, SCORE à la place des crédits, ERREURS n / 3 (octogones pleins /
+## losanges creux + texte), PROCHAINE DIRECTIVE · n ; « TERMINER LA GARDE »
+## sur le bouton de fermeture. **Épilogue J31** (`set_untimed`,
+## `set_location`, `set_credits_visible`) : horloge sans alerte
+## (« SANS CHRONO »), lieu du monde (sas Castellanos…), crédits masqués.
 class_name TopBar
 extends PanelContainer
 
@@ -60,6 +68,17 @@ var story_badge: PanelContainer = null
 var close_button: Button = null
 var _last_remaining: float = 1.0
 var _last_duration: float = 1.0
+## M12 : horloge sans alerte de fin (J31, Garde).
+var untimed: bool = false
+## M12 : Garde de nuit (compteurs propres, horloge cosmétique).
+var garde_mode: bool = false
+var garde_code: String = ""
+var _credits_caption: Label = null
+var _errors_box: BoxContainer = null
+var _error_icons: Array[UiIcon] = []
+var _errors_value: Label = null
+var _next_dir: Label = null
+var _garde_line: ColorRect = null
 
 
 func _ready() -> void:
@@ -152,7 +171,9 @@ func _ready() -> void:
 	close_button.visibility_changed.connect(queue_compaction)
 	row.add_child(close_button)
 	row.add_child(_vline())
+	_build_garde(row)
 	_credits = _stat(row, UiText.t("bar_credits", "CRÉDITS"), DS.ACCENT_YELLOW)
+	_credits_caption = _captions[_captions.size() - 1]
 	quota_view.visibility_changed.connect(queue_compaction)
 	set_clock(1.0, 1.0)
 	set_processed(0)
@@ -225,7 +246,7 @@ func _set_secondary(level: int) -> void:
 	_end_label.visible = level < 2
 	_progress_bar.custom_minimum_size.x = PROGRESS_WIDTH if level < 3 else PROGRESS_WIDTH * 0.5
 	_location.visible = level < 4
-	_progress_bar.visible = level < 5
+	_progress_bar.visible = level < 5 and not garde_mode
 	_shift_caption.visible = level < 5
 	_brand.visible = level < 6
 	_refresh_date(level >= 7)
@@ -280,6 +301,9 @@ func set_day(day_number: int, date_days: int) -> void:
 
 
 func _refresh_date(short: bool) -> void:
+	if garde_mode:
+		_date.text = garde_code if short else UiText.tf("bar_garde_code", [garde_code], "GRAINE · %s")
+		return
 	var day_text: String = UiText.tf("bar_day", [_day_number], "JOUR %02d")
 	_date.text = day_text if short else "%s · %s" % [day_text, UiText.date_with_weekday(_date_days)]
 
@@ -288,12 +312,14 @@ func _refresh_date(short: bool) -> void:
 func set_clock(remaining_sec: float, duration_sec: float) -> void:
 	_last_remaining = remaining_sec
 	_last_duration = duration_sec
+	if garde_mode:
+		return # horloge cosmétique de la Garde (`set_garde_clock`)
 	var minutes: int = UiText.shift_minutes(remaining_sec, duration_sec)
 	_clock.text = UiText.clock(minutes)
 	progress = float(minutes - UiText.SHIFT_START_MIN) / float(UiText.SHIFT_END_MIN - UiText.SHIFT_START_MIN)
 	var state: ClockState = ClockState.NORMAL
-	if story_mode:
-		# Récit : l'horloge ne termine pas le shift, aucune alerte de fin (D-102).
+	if story_mode or untimed:
+		# Récit, J31 : l'horloge ne termine pas le shift, aucune alerte de fin (D-102, D-123).
 		state = ClockState.NORMAL
 	elif remaining_sec <= DS.TIMER_CRITICAL_SECONDS and duration_sec > 0.0:
 		state = ClockState.CRITICAL
@@ -336,9 +362,10 @@ func set_story_mode(value: bool) -> void:
 	queue_compaction()
 
 
-## « FERMER LE GUICHET » visible (Récit, quota atteint).
+## « FERMER LE GUICHET » visible (Récit, quota atteint) ; Garde : « TERMINER
+## LA GARDE » (M12 §2.2).
 func set_close_available(value: bool) -> void:
-	close_button.visible = value and story_mode
+	close_button.visible = value and (story_mode or garde_mode)
 
 
 func get_end_text() -> String:
@@ -366,6 +393,8 @@ func set_quota_suspended(value: bool) -> void:
 
 
 func set_credits(credits: int) -> void:
+	if garde_mode:
+		return # SCORE à la place des crédits (`set_garde`)
 	var text: String = "₵ %d" % credits
 	if text.length() != _credits.text.length():
 		queue_compaction()
@@ -387,3 +416,129 @@ func _draw_progress() -> void:
 	for i: int in range(1, hours):
 		var x: float = rect.size.x * i / hours
 		_progress_bar.draw_line(Vector2(x, 0), Vector2(x, rect.size.y), DS.BG_PANEL, 2.0)
+
+
+# ---------------------------------------------------------------------------
+# M12 : Garde de nuit, épilogue
+# ---------------------------------------------------------------------------
+
+## Compteurs de la Garde (masqués hors Garde) : ERREURS n / 3 et PROCHAINE
+## DIRECTIVE · n, avant le SCORE.
+func _build_garde(row: HBoxContainer) -> void:
+	_errors_box = BoxContainer.new()
+	_errors_box.name = "GardeErrors"
+	_errors_box.vertical = true
+	_errors_box.add_theme_constant_override("separation", 0)
+	_errors_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_errors_box.visible = false
+	row.add_child(_errors_box)
+	var caption: Label = Label.new()
+	caption.theme_type_variation = &"DocFieldLabel"
+	caption.text = UiText.t("bar_garde_errors", "ERREURS")
+	_errors_box.add_child(caption)
+	_captions.append(caption)
+	var pips: HBoxContainer = HBoxContainer.new()
+	pips.add_theme_constant_override("separation", DS.SPACE_1)
+	_errors_box.add_child(pips)
+	for i: int in 3:
+		var icon: UiIcon = UiIcon.make(UiIcon.Kind.DIAMOND, Palette.TEXT_SECONDARY, DS.ICON_S)
+		pips.add_child(icon)
+		_error_icons.append(icon)
+	_errors_value = Label.new()
+	_errors_value.theme_type_variation = &"DocFieldValue"
+	pips.add_child(_errors_value)
+	_next_dir = Label.new()
+	_next_dir.name = "GardeNextDirective"
+	_next_dir.theme_type_variation = &"DataSmall"
+	_next_dir.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_next_dir.visible = false
+	row.add_child(_next_dir)
+	_garde_line = _vline()
+	_garde_line.visible = false
+	row.add_child(_garde_line)
+
+
+## Garde de nuit : lieu, code de la graine, compteurs propres ; « TERMINER LA
+## GARDE » sur le bouton de fermeture (affiché par `set_close_available`).
+func set_garde_mode(value: bool, code: String = "") -> void:
+	garde_mode = value
+	garde_code = code
+	untimed = untimed or value
+	_errors_box.visible = value
+	_next_dir.visible = value
+	_garde_line.visible = value
+	_credits_caption.text = UiText.t("bar_garde_score", "SCORE") if value else UiText.t("bar_credits", "CRÉDITS")
+	_shift_caption.text = UiText.t("bar_garde_night", "NUIT") if value else UiText.t("bar_shift", "SHIFT")
+	close_button.text = UiText.t("garde_end_button", "TERMINER LA GARDE") if value else UiText.t("bar_close_booth", "FERMER LE GUICHET")
+	close_button.tooltip_text = UiText.t("garde_end_button_tip", "Le score de la garde est enregistré.") if value \
+			else UiText.t("bar_close_booth_tip", "Quota atteint : le bilan suit le passager en cours.")
+	if value:
+		set_location(UiText.t("bar_garde_location", "HALCYON GATE — GARDE DE NUIT"))
+		_progress_bar.visible = false
+	_refresh_date(compact_level >= 7)
+	queue_compaction()
+
+
+## Compteurs de la Garde : score, erreurs (sur `max_errors`), passagers avant
+## la prochaine directive, palier (`tier_key` : `garde_tier_n`).
+func set_garde(score: int, errors: int, max_errors: int, next_in: int, tier_index: int, tier_key: String = "") -> void:
+	if not garde_mode:
+		return
+	_credits.text = "%d" % score
+	for i: int in _error_icons.size():
+		var icon: UiIcon = _error_icons[i]
+		icon.visible = i < max_errors
+		var hit: bool = i < errors
+		# Octogone plein (erreur) ≠ losange creux (reste) : jamais la couleur seule.
+		icon.kind = UiIcon.Kind.DENIED if hit else UiIcon.Kind.DIAMOND
+		icon.color = Palette.STATE_RED if hit else Palette.TEXT_SECONDARY
+	_errors_value.text = "%d/%d" % [errors, max_errors]
+	_errors_value.add_theme_color_override(&"font_color", Palette.STATE_RED if errors > 0 else DS.TEXT_PRIMARY)
+	_next_dir.text = UiText.tf("garde_next_dir", [next_in], "PROCHAINE DIRECTIVE · %d")
+	var tier_name: String = UiText.t(tier_key, "") if not tier_key.is_empty() else ""
+	_end_label.text = UiText.tf("bar_garde_tier", [tier_index, tier_name], "PALIER %d · %s").to_upper() if not tier_name.is_empty() \
+			else UiText.tf("bar_garde_tier_n", [tier_index], "PALIER %d")
+	_end_label.add_theme_color_override(&"font_color", Palette.TEXT_SECONDARY)
+	queue_compaction()
+
+
+## Horloge cosmétique de la Garde (minutes depuis minuit, affichée modulo 24 h).
+func set_garde_clock(minute: int) -> void:
+	_clock.text = UiText.clock(posmod(minute, 24 * 60))
+	_clock.add_theme_color_override(&"font_color", DS.TEXT_PRIMARY)
+	_clock_icon.visible = false
+
+
+func get_errors_text() -> String:
+	return _errors_value.text
+
+
+func get_score_text() -> String:
+	return _credits.text
+
+
+func get_next_directive_text() -> String:
+	return _next_dir.text
+
+
+## J31 (D-123) : horloge sans alerte de fin, « SANS CHRONO ».
+func set_untimed(value: bool) -> void:
+	untimed = value
+	set_clock(_last_remaining, _last_duration)
+	queue_compaction()
+
+
+## Lieu affiché (« TYCHO · SAS CASTELLANOS » au J31 du monde D).
+func set_location(text: String) -> void:
+	_location.text = text
+	queue_compaction()
+
+
+func get_location_text() -> String:
+	return _location.text
+
+
+## Crédits masqués (J31 : aucune économie).
+func set_credits_visible(value: bool) -> void:
+	(_credits.get_parent() as Control).visible = value
+	queue_compaction()

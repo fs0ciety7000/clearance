@@ -9,6 +9,9 @@
 ## booléenne `damaged`, lue de façon défensive) → puce « SAUVEGARDE
 ## ENDOMMAGÉE » (icône + texte) ; l'écran désactive REPRENDRE, garde SUPPRIMER,
 ## et « Continuer » l'ignore (`continue_slot`).
+## M12 (lot C, I29) : partie terminée dont la fin ouvre l'épilogue (méta
+## `epilogue_available`) → puce « ÉPILOGUE » (icône + texte), « · JOUÉ » si
+## `epilogue_done` ; l'écran Charger ajoute l'action « JOUER « UN AN PLUS TARD » ».
 class_name SaveSlotCard
 extends PanelContainer
 
@@ -40,6 +43,20 @@ func is_ended() -> bool:
 
 func is_damaged() -> bool:
 	return is_meta_damaged(meta)
+
+
+## M12 : partie terminée avec épilogue J31 disponible (méta `epilogue_available`).
+func has_epilogue() -> bool:
+	return is_ended() and _meta_true(meta.get(SaveService.KEY_EPILOGUE_AVAILABLE, false))
+
+
+## M12 : épilogue déjà joué depuis cet emplacement (méta `epilogue_done`).
+func epilogue_done() -> bool:
+	return _meta_true(meta.get(SaveService.KEY_EPILOGUE_DONE, false))
+
+
+static func _meta_true(value: Variant) -> bool:
+	return (value is bool and value) or ((value is int or value is float) and SaveService.as_int(value) != 0)
 
 
 ## Méta d'emplacement marquée endommagée (`damaged` vrai ; lecture défensive :
@@ -104,7 +121,16 @@ func _build_summary(box: VBoxContainer) -> void:
 	var day: int = SaveService.as_int(meta.get("current_day", 0))
 	var act: int = clampi(SaveService.as_int(meta.get("act", 1), 1), 1, 3)
 	if is_ended():
-		box.add_child(ScreenBase.chip(UiText.t("slot_ended", "PARTIE TERMINÉE"), UiIcon.Kind.STRIKE, Palette.TEXT_SECONDARY))
+		var chips: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
+		box.add_child(chips)
+		chips.add_child(ScreenBase.chip(UiText.t("slot_ended", "PARTIE TERMINÉE"), UiIcon.Kind.STRIKE, Palette.TEXT_SECONDARY))
+		if has_epilogue():
+			var text: String = UiText.t("load_badge_epilogue", "ÉPILOGUE")
+			if epilogue_done():
+				text = UiText.tf("load_badge_epilogue_done", [text], "%s · JOUÉ")
+			var epi_chip: PanelContainer = ScreenBase.chip(text, UiIcon.Kind.AWAY, DS.ACCENT_CYAN)
+			epi_chip.name = "EpilogueChip"
+			chips.add_child(epi_chip)
 		var ending: Label = ScreenBase.wrapped(UiText.tf("slot_ending", [ending_name(str(meta.get("ending_id", "")), act)], "Fin : %s"),
 				&"BodyStrong", DS.TEXT_PRIMARY)
 		ending.name = "Ending"

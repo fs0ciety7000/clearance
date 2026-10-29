@@ -11,6 +11,15 @@
 ## sauvegardes), `--title=new|difficulty|overwrite|load|days`, `--damage-slot=N`
 ## (avec `--demo-saves` : emplacement de démonstration N rendu illisible et
 ## marqué endommagé, capture QA-043).
+## M12 (lot C, I28 / I29) : entrées **GARDE DE NUIT** (`GardeScreen` ; active
+## si `GardeService.is_unlocked(profil)`, sinon grisée avec « Terminez votre
+## premier jour au Guichet 04. ») et **DOSSIER DE L'AGENT** (`DossierScreen` ;
+## active dès qu'une fin est vue ou un personnage croisé, sinon « Aucun
+## dossier. ») ; épilogue J31 lancé depuis Charger (`epilogue_requested`) ou
+## le Dossier (graine du profil) ; Garde lancée par `Campaign.start_garde`
+## puis `DayScene.pending_garde_run`. Captures : `--demo-profile` (profil de
+## démonstration dans `user://qa_demo_saves`, avec `--demo-saves`),
+## `--title=garde|dossier|dossier-people|dossier-garde|dossier-epilogues|dossier-last`.
 extends Control
 
 const DAY_SCENE_PATH: String = "res://scenes/main/day.tscn"
@@ -28,6 +37,11 @@ signal shift_start_requested()
 var continue_button: Button = null
 var new_game_button: Button = null
 var load_button: Button = null
+## M12 : Garde de nuit et Dossier de l'agent, et leurs mentions « verrouillé ».
+var garde_button: Button = null
+var dossier_button: Button = null
+var garde_locked_label: Label = null
+var dossier_locked_label: Label = null
 var options_button: Button = null
 var quit_button: Button = null
 var options: OptionsPanel = null
@@ -57,10 +71,13 @@ func _ready() -> void:
 	if version != null:
 		version.text = version_text()
 	var args: Dictionary = DebugArgs.parse(OS.get_cmdline_user_args()) if DebugArgs.enabled() else {}
-	if args.has("demo-saves"):
-		write_demo_saves(DEMO_SAVES_DIR)
+	if args.has("demo-saves") or args.has("demo-profile"):
+		if args.has("demo-saves"):
+			write_demo_saves(DEMO_SAVES_DIR)
 		if args.has("damage-slot"):
 			damage_demo_slot(DEMO_SAVES_DIR, str(args["damage-slot"]).to_int())
+		if args.has("demo-profile"):
+			write_demo_profile(DEMO_SAVES_DIR, str(args.get("demo-profile", "full")))
 		SaveService.use_root(DEMO_SAVES_DIR)
 	# Le bouton de la scène devient « CONTINUER » (CTA principal).
 	continue_button = _start_button
@@ -69,6 +86,10 @@ func _ready() -> void:
 	_menu.append(continue_button)
 	new_game_button = _add_button(UiText.t("title_new_game", "NOUVELLE PARTIE"), open_new_game)
 	load_button = _add_button(UiText.t("title_load", "CHARGER"), open_load)
+	garde_button = _add_button(UiText.t("title_garde", "GARDE DE NUIT"), open_garde)
+	garde_locked_label = _add_locked_label(UiText.t("garde_locked", "Terminez votre premier jour au Guichet 04."))
+	dossier_button = _add_button(UiText.t("title_dossier", "DOSSIER DE L'AGENT"), open_dossier)
+	dossier_locked_label = _add_locked_label(UiText.t("dos_empty", "Aucun dossier."))
 	options_button = _add_button(UiText.t("title_options", "OPTIONS"), _show_options)
 	quit_button = _add_button(UiText.t("title_quit", "QUITTER"), func() -> void: get_tree().quit())
 	if version != null:
@@ -79,8 +100,13 @@ func _ready() -> void:
 	options.back_requested.connect(_show_menu)
 	_content.add_child(options)
 	EventBus.save_slots_changed.connect(refresh_menu)
+	EventBus.profile_changed.connect(refresh_menu)
 	refresh_menu()
 	default_focus().grab_focus.call_deferred()
+	if GardeScreen.open_on_title:
+		# « NOUVELLE GRAINE » depuis la fin de garde : retour à l'accueil de la Garde.
+		GardeScreen.open_on_title = false
+		open_garde.call_deferred()
 	_debug_title(str(args.get("title", "")))
 
 
@@ -109,6 +135,16 @@ func _min_text_px() -> int:
 func _on_viewport_resized() -> void:
 	if _min_text_px() != _applied_min_px:
 		_apply_theme()
+
+
+## Mention sous une entrée verrouillée (grisée), masquée sinon.
+func _add_locked_label(text: String) -> Label:
+	var l: Label = ScreenBase.label(text, &"CaptionLabel", Palette.TEXT_SECONDARY)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.visible = false
+	_content.add_child(l)
+	_menu.append(l)
+	return l
 
 
 func _add_button(text: String, callback: Callable) -> Button:
@@ -141,9 +177,26 @@ func refresh_menu() -> void:
 	for slot_meta: Dictionary in SaveService.list_slots():
 		used = used or not slot_meta.is_empty()
 	_set_enabled(load_button, used)
+	# M12 : Garde (D-128) et Dossier (D-131) selon le profil.
+	var profile: Dictionary = ProfileService.load_profile()
+	var garde_open: bool = GardeService.is_unlocked(profile)
+	_set_enabled(garde_button, garde_open)
+	garde_locked_label.set_meta(&"locked", not garde_open)
+	var dossier_open: bool = DossierData.has_dossier(profile)
+	_set_enabled(dossier_button, dossier_open)
+	dossier_locked_label.set_meta(&"locked", not dossier_open)
+	_sync_locked_labels()
 	# CTA jaune : « CONTINUER » s'il est possible, sinon « NOUVELLE PARTIE ».
 	continue_button.theme_type_variation = &"ButtonPrimary" if not continue_button.disabled else &"ButtonTool"
 	new_game_button.theme_type_variation = &"ButtonTool" if not continue_button.disabled else &"ButtonPrimary"
+
+
+## Mentions « verrouillé » visibles avec le menu, seulement si l'entrée l'est.
+func _sync_locked_labels() -> void:
+	for l: Label in [garde_locked_label, dossier_locked_label]:
+		if l != null:
+			l.visible = options == null or not options.visible
+			l.visible = l.visible and l.get_meta(&"locked", false)
 
 
 ## Bouton désactivé : jamais focalisable (la croix le saute).
@@ -168,6 +221,7 @@ func _show_menu() -> void:
 	options.visible = false
 	for item: Control in _menu:
 		item.visible = true
+	_sync_locked_labels()
 	options_button.grab_focus.call_deferred()
 
 
@@ -212,8 +266,28 @@ func open_load() -> LoadScreen:
 	load_screen.name = "LoadScreen"
 	load_screen.resume_requested.connect(resume_slot)
 	load_screen.resume_day_requested.connect(resume_day)
+	load_screen.epilogue_requested.connect(play_epilogue_from_slot)
 	_open_screen(load_screen, load_button)
 	return load_screen
+
+
+## M12 : accueil de la Garde de nuit.
+func open_garde() -> GardeScreen:
+	var garde: GardeScreen = GardeScreen.new()
+	garde.name = "GardeScreen"
+	garde.start_requested.connect(start_garde)
+	_open_screen(garde, garde_button)
+	return garde
+
+
+## M12 : Dossier de l'agent.
+func open_dossier() -> DossierScreen:
+	var dossier: DossierScreen = DossierScreen.new()
+	dossier.name = "DossierScreen"
+	dossier.epilogue_requested.connect(play_epilogue_from_profile)
+	dossier.garde_requested.connect(start_garde)
+	_open_screen(dossier, dossier_button)
+	return dossier
 
 
 # ---------------------------------------------------------------------------
@@ -269,6 +343,12 @@ func _load_failed(slot: int, day: int = 0) -> void:
 
 ## Toast d'erreur sur le titre (CONTINUER qui échoue malgré tout).
 func _toast_load_failed(slot: int) -> void:
+	_ensure_title_toasts()
+	title_toasts.push(ToastStack.Kind.ERROR, UiText.t("load_failed_title", "CHARGEMENT IMPOSSIBLE"),
+			UiText.tf("load_failed_slot", [slot], "La sauvegarde de l'emplacement %d est illisible."))
+
+
+func _ensure_title_toasts() -> void:
 	if title_toasts == null:
 		title_toasts = ToastStack.new()
 		title_toasts.name = "Toasts"
@@ -279,8 +359,6 @@ func _toast_load_failed(slot: int) -> void:
 		title_toasts.offset_top = DS.SPACE_8
 		title_toasts.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 		add_child(title_toasts)
-	title_toasts.push(ToastStack.Kind.ERROR, UiText.t("load_failed_title", "CHARGEMENT IMPOSSIBLE"),
-			UiText.tf("load_failed_slot", [slot], "La sauvegarde de l'emplacement %d est illisible."))
 
 
 func _start_day() -> void:
@@ -288,6 +366,57 @@ func _start_day() -> void:
 	shift_start_requested.emit()
 	if change_scene:
 		get_tree().change_scene_to_file(DAY_SCENE_PATH)
+
+
+# ---------------------------------------------------------------------------
+# M12 : Garde de nuit, épilogue J31
+# ---------------------------------------------------------------------------
+
+## Garde de nuit sur un code (graine du jour ou libre) : session Garde, puis
+## la scène de jour la joue (`DayScene.pending_garde_run`).
+func start_garde(code: String) -> bool:
+	var run: GardeRun = Campaign.start_garde(code)
+	if run == null:
+		_toast_error(UiText.t("garde_start_failed", "GARDE IMPOSSIBLE"), UiText.t("garde_seed_invalid", "Code de garde invalide."))
+		return false
+	DayScene.pending_garde_run = run
+	TutorialOverlay.pending = false
+	shift_start_requested.emit()
+	if change_scene:
+		get_tree().change_scene_to_file(DAY_SCENE_PATH)
+	return true
+
+
+## Épilogue depuis un emplacement terminé (Charger, `day_31.json`).
+func play_epilogue_from_slot(slot: int) -> bool:
+	return _play_epilogue(Campaign.epilogue_seed_for_slot(slot), slot)
+
+
+## Épilogue depuis la graine du profil (Dossier › Épilogues), même si
+## l'emplacement a été supprimé (D-125).
+func play_epilogue_from_profile(key: String) -> bool:
+	return _play_epilogue(Campaign.epilogue_seed_from_profile(key), SaveService.NO_SLOT)
+
+
+func _play_epilogue(epi: Dictionary, slot: int) -> bool:
+	if Campaign.start_epilogue(epi, slot) == null:
+		_toast_error(UiText.t("epi_start_failed", "ÉPILOGUE INDISPONIBLE"),
+				UiText.t("epi_start_failed_body", "La graine de cet épilogue est illisible."))
+		return false
+	TutorialOverlay.pending = false
+	shift_start_requested.emit()
+	if change_scene:
+		get_tree().change_scene_to_file(DAY_SCENE_PATH)
+	return true
+
+
+func _toast_error(title: String, body: String) -> void:
+	var load_screen: LoadScreen = screen as LoadScreen
+	if load_screen != null and is_instance_valid(load_screen) and load_screen.toasts != null:
+		load_screen.toasts.push(ToastStack.Kind.ERROR, title, body)
+		return
+	_ensure_title_toasts()
+	title_toasts.push(ToastStack.Kind.ERROR, title, body)
 
 
 # ---------------------------------------------------------------------------
@@ -308,6 +437,14 @@ func _debug_title(which: String) -> void:
 		"days":
 			var load_screen: LoadScreen = open_load()
 			load_screen.open_day_picker.call_deferred(1)
+		"garde":
+			if not garde_button.disabled:
+				open_garde()
+		"dossier", "dossier-people", "dossier-last", "dossier-garde", "dossier-epilogues":
+			if not dossier_button.disabled:
+				var dossier: DossierScreen = open_dossier()
+				if which != "dossier":
+					dossier.show_tab.call_deferred(StringName(which.trim_prefix("dossier-")))
 
 
 ## Capture QA-043 : `current.json` de l'emplacement de démonstration illisible,
@@ -351,3 +488,64 @@ static func write_demo_saves(dir: String) -> void:
 			SaveService.save_slot(data, slot, dir, "2026-10-%02dT%02d:%02d:00" % [20 + slot, 8 + day % 12, (day * 7) % 60])
 		if spec.has("ending"):
 			SaveService.mark_ended(slot, spec["ending"], dir)
+
+
+## Profil de démonstration (captures M12, jamais dans `user://saves`) :
+## `full` — fins vues (dont l'Acte III : épilogues débloqués), personnages
+## croisés, records de Garde ; `early` — partie au J5, aucune fin (anti-spoiler).
+static func write_demo_profile(dir: String, kind: String = "full") -> void:
+	if dir != DEMO_SAVES_DIR:
+		return
+	var profile: Dictionary = ProfileService.empty_profile()
+	if kind == "early":
+		profile["max_day_reached"] = 5
+		profile["characters_met"] = ["tuto_concordant", "sc_01", "sc_02", "sc_03", "sc_04", "sc_05", "sc_20"]
+		ProfileService.save_profile(profile, dir)
+		return
+	profile["max_day_reached"] = 30
+	profile["endings_seen"] = [
+		{"id": "f3_family_lost", "variant": "", "act": 1, "day": 6, "date": "2026-10-21T21:04:00", "count": 1,
+			"last_date": "2026-10-21T21:04:00", "first_line_key": "end_f3_l1"},
+		{"id": "f5_air", "variant": "c", "act": 3, "day": 30, "date": "2026-10-26T22:41:00", "count": 2,
+			"last_date": "2026-10-28T23:10:00", "first_line_key": ""},
+		{"id": "f10_pont", "variant": "", "act": 3, "day": 30, "date": "2026-10-28T20:12:00", "count": 1,
+			"last_date": "2026-10-28T20:12:00", "first_line_key": ""},
+	]
+	var met: Array = []
+	for id: String in ["tuto_concordant", "sc_01", "sc_02", "sc_03", "sc_04", "sc_05", "sc_08", "sc_10", "sc_14", "sc_20", "sc_23",
+			"sc_25", "sc_35a", "sc_38", "sc_42", "sc_50a", "sc_56", "sc_82a", "sc_97", "sc_98", "sc_99", "sc_100a"]:
+		met.append(id)
+	profile["characters_met"] = met
+	profile["known_names"] = ["chr_arkady"]
+	var flags: Dictionary[StringName, Variant] = {&"act2_started": true, &"act3_started": true, &"climate_vanne": true}
+	for ending: StringName in [EndingService.F5_AIR, EndingService.F10_PONT]:
+		var epi: Dictionary = EpilogueService.make_seed(ending, flags, Household.new(), {}, 4242, 30)
+		if epi.is_empty():
+			continue
+		var key: String = EpilogueService.profile_key(epi)
+		var epilogues: Dictionary = profile["epilogues"]
+		epilogues[key] = {"world": epi["world"], "key": epi["ending_key"], "seed": epi, "first_date": "", "count": 0,
+				"last_date": "", "last_lines": []}
+		profile["epilogue_unlocked"] = true
+	var epis: Dictionary = profile["epilogues"]
+	if epis.has("f10_pont:"):
+		var played: Dictionary = epis["f10_pont:"]
+		played["first_date"] = "2026-10-28T21:00:00"
+		played["count"] = 1
+		played["last_lines"] = ["epi_f10_open", "epi_c_fig_passed", "epi_f10_close"]
+	profile["last_campaign"] = {"ending": "f10_pont", "variant": "", "ending_key": "f10", "act": 3, "day": 30,
+		"date": "2026-10-28T20:12:00", "campaign_seed": 4242, "climate": "vanne",
+		"traces": ["end_trace_sc02_mercy", "end_trace_met_mira", "end_trace_lucioles_note_burned"], "world": "c"}
+	profile["best_runs"] = [
+		{"score": 31, "seed_code": GardeService.today_code(), "kind": "daily", "date": "2026-10-29", "garde_version": GardeScreen.current_version(),
+			"duration_sec": 1710, "directives": 6, "palier": 2},
+		{"score": 18, "seed_code": "K2Q-9TX", "kind": "free", "date": "2026-10-27", "garde_version": GardeScreen.current_version(),
+			"duration_sec": 940, "directives": 3, "palier": 1},
+		{"score": 12, "seed_code": "H7W-PL3", "kind": "free", "date": "2026-10-20", "garde_version": 0,
+			"duration_sec": 700, "directives": 2, "palier": 0},
+	]
+	profile["garde_daily"] = {GardeService.daily_date(GardeService.today_code()): {"best": 31, "first_try": 24, "attempts": 3,
+			"garde_version": GardeScreen.current_version()}}
+	profile["garde_seeds"] = [{"seed_code": "K2Q-9TX", "best": 18, "garde_version": GardeScreen.current_version()}]
+	profile["garde_stats"] = {"runs": 7, "total_correct": 112, "longest_run": 34}
+	ProfileService.save_profile(profile, dir)

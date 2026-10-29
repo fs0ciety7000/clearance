@@ -16,6 +16,10 @@
 ## Acte III (ARCHITECTURE §7.3) : Main courante (J24, R34 : `LedgerCardView`,
 ## répondants admis aujourd'hui, liste qui s'allonge) et Convocations (J26,
 ## R36 : `SummonsCardView`), construites par le `RulebookPanel`.
+## M12 (lot C) : onglet « Cartes volées » (`TAB_STOLEN`, liste nommée `stolen`
+## d'EV-07, `rule_list_published`) ; l'onglet Révocations prend l'intitulé de
+## la liste lue par la règle en vigueur (`RevokedIdRule.list_title_key` :
+## « Liste du Conseil » au J31 du monde B).
 class_name RulebookReference
 extends RefCounted
 
@@ -29,10 +33,12 @@ const TAB_VESSELS: StringName = &"vessels"
 const TAB_REVOKED: StringName = &"revoked"
 const TAB_LEDGER: StringName = &"ledger"
 const TAB_SUMMONS: StringName = &"summons"
+## M12 : liste nommée « Cartes volées » (EV-07), ouverte tant qu'elle n'est pas vide.
+const TAB_STOLEN: StringName = &"stolen"
 const ORDER: Array[StringName] = [TAB_ORIGINS, TAB_IMPLANTS, TAB_SYMBOLS, TAB_SEALS, TAB_WANTED, TAB_EMPLOYERS, TAB_VESSELS,
-		TAB_REVOKED, TAB_LEDGER, TAB_SUMMONS]
+		TAB_REVOKED, TAB_LEDGER, TAB_SUMMONS, TAB_STOLEN]
 ## Onglets construits par le `RulebookPanel` (cartes sélectionnables).
-const DYNAMIC_TABS: Array[StringName] = [TAB_WANTED, TAB_REVOKED, TAB_LEDGER, TAB_SUMMONS]
+const DYNAMIC_TABS: Array[StringName] = [TAB_WANTED, TAB_REVOKED, TAB_LEDGER, TAB_SUMMONS, TAB_STOLEN]
 ## Règles qui portent les registres de l'Acte II (`data/rules/`).
 const RULE_CONTRACT: StringName = &"r_contract_consistent"
 const RULE_DRIFT: StringName = &"r_drift_pass"
@@ -76,7 +82,20 @@ static func tab_title(tab: StringName) -> String:
 			return UiText.t("rb_tab_ledger", "Main courante")
 		TAB_SUMMONS:
 			return UiText.t("rb_tab_summons", "Convocations")
+		TAB_STOLEN:
+			return UiText.t("rb_tab_stolen", "Cartes volées")
 	return String(tab)
+
+
+## Intitulé de l'onglet Révocations selon les règles en vigueur : celui de la
+## liste lue par une `RevokedIdRule` sur l'onglet Révocations (`list_title_key`,
+## « Liste du Conseil »), sinon « Révocations ». Vide si aucune.
+static func revoked_title_key(rule_ids: Array[StringName]) -> String:
+	for rule_id: StringName in rule_ids:
+		var listed: RevokedIdRule = catalog_rule(rule_id) as RevokedIdRule
+		if listed != null and (listed.list_label == &"" or listed.list_label == &"revoked") and not listed.list_title_key.is_empty():
+			return listed.list_title_key
+	return ""
 
 
 static func is_new(tab: StringName, day_number: int) -> bool:

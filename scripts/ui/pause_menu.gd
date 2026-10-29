@@ -9,10 +9,15 @@
 ## reprendre.
 ## M11 lot C : Options > Partie « PASSER EN MODE DUR » (partie en Récit) →
 ## `ConfirmDialog` (focus ANNULER, irréversible) → `GameState.set_difficulty`.
+## M12 (lot C) : en Garde de nuit (`garde_mode`), « TERMINER LA GARDE » en deux
+## temps (le score est enregistré) → `end_garde_requested` ; quitter vers le
+## titre perd la garde (rien n'est enregistré).
 class_name PauseMenu
 extends Control
 
 signal quit_to_title_requested()
+## M12 : « Terminer la garde » confirmé (second appui).
+signal end_garde_requested()
 
 const BLUR_SHADER: Shader = preload("res://assets/shaders/ui_backdrop_blur.gdshader")
 const PANEL_WIDTH: float = 560.0
@@ -25,6 +30,14 @@ var resume_button: Button = null
 var options: OptionsPanel = null
 ## Confirmation « Passer en mode Dur » ouverte (null sinon).
 var hard_dialog: ConfirmDialog = null
+## M12 : session Garde de nuit (bouton « TERMINER LA GARDE »).
+var garde_mode: bool = false:
+	set(value):
+		garde_mode = value
+		if end_garde_button != null:
+			end_garde_button.visible = value
+var end_garde_button: Button = null
+var _end_garde_armed: bool = false
 
 var _menu_box: VBoxContainer = null
 var _panel: PanelContainer = null
@@ -89,6 +102,12 @@ func _ready() -> void:
 	var options_button: Button = ScreenBase.button(UiText.t("pause_options", "OPTIONS"))
 	options_button.pressed.connect(show_options)
 	_menu_box.add_child(options_button)
+	end_garde_button = ScreenBase.button(UiText.t("garde_end_button", "TERMINER LA GARDE"))
+	end_garde_button.name = "EndGarde"
+	end_garde_button.visible = garde_mode
+	end_garde_button.pressed.connect(_on_end_garde_pressed)
+	end_garde_button.focus_exited.connect(_disarm_end_garde)
+	_menu_box.add_child(end_garde_button)
 	_quit_button = ScreenBase.button(UiText.t("pause_quit", "QUITTER VERS LE TITRE"))
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_menu_box.add_child(_quit_button)
@@ -142,8 +161,10 @@ func show_menu() -> void:
 	_menu_box.visible = true
 	_panel.custom_minimum_size.x = PANEL_WIDTH
 	_quit_armed = false
-	_quit_button.text = UiText.t("pause_quit", "QUITTER VERS LE TITRE")
+	_quit_button.text = UiText.t("pause_quit_garde", "QUITTER VERS LE TITRE (GARDE PERDUE)") if garde_mode \
+			else UiText.t("pause_quit", "QUITTER VERS LE TITRE")
 	_quit_button.theme_type_variation = &"ButtonTool"
+	_disarm_end_garde()
 	resume_button.grab_focus.call_deferred()
 
 
@@ -166,6 +187,26 @@ func request_hard_mode() -> void:
 		if options.hard_mode_button != null and options.hard_mode_button.is_visible_in_tree():
 			options.hard_mode_button.grab_focus.call_deferred())
 	add_child(hard_dialog)
+
+
+## M12 : premier appui — « CONFIRMER : LE SCORE SERA ENREGISTRÉ » ; second :
+## la garde se termine (`end_garde_requested`), pause fermée.
+func _on_end_garde_pressed() -> void:
+	if not _end_garde_armed:
+		_end_garde_armed = true
+		end_garde_button.text = UiText.t("garde_end_confirm", "CONFIRMER : LE SCORE SERA ENREGISTRÉ")
+		end_garde_button.theme_type_variation = &"ButtonPrimary"
+		return
+	_disarm_end_garde()
+	close()
+	end_garde_requested.emit()
+
+
+func _disarm_end_garde() -> void:
+	_end_garde_armed = false
+	if end_garde_button != null:
+		end_garde_button.text = UiText.t("garde_end_button", "TERMINER LA GARDE")
+		end_garde_button.theme_type_variation = &"ButtonTool"
 
 
 ## Premier appui : demande confirmation ; second : retour au titre.
