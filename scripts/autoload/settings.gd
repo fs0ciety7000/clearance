@@ -61,6 +61,10 @@ const KEY_HOLO_FLICKER: StringName = &"holo_flicker"
 ## 0 Xbox / Steam Deck (A B X Y), 1 PlayStation (✕ ○ □ △).
 const KEY_PAD_GLYPHS: StringName = &"pad_glyphs"
 const PAD_GLYPHS_AUTO: float = -1.0
+## M11 (lot C) — « Tutoriel du jour 1 » : surimpression guidée au premier J1
+## d'une partie (`TutorialOverlay`) ; repasse à faux une fois le tutoriel
+## terminé ou passé (réactivable dans Options pour le revoir).
+const KEY_TUTORIAL: StringName = &"tutorial_j1"
 
 const FX_LEVELS: PackedFloat32Array = [1.0, 0.5, 0.0]
 const TEXT_SCALE_MIN: float = 0.9
@@ -85,6 +89,7 @@ const DEFAULTS: Dictionary = {
 	&"color_vision": 0.0,
 	&"holo_flicker": true,
 	&"pad_glyphs": -1.0,
+	&"tutorial_j1": true,
 }
 
 ## Réglage de volume → nom du bus audio (docs/AUDIO.md §2).

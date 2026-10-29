@@ -35,12 +35,13 @@ func test_default_values() -> void:
 
 func test_expected_key_set() -> void:
 	var keys: Array[StringName] = _settings.call(&"get_keys")
-	assert_eq(keys.size(), 16)
+	assert_eq(keys.size(), 17)
 	assert_has(keys, &"audio_mono", "mode mono (docs/AUDIO.md §9, M6)")
 	assert_has(keys, &"graphics_quality", "qualité graphique du guichet (M9)")
 	assert_has(keys, &"color_vision", "vision des couleurs (M11)")
 	assert_has(keys, &"holo_flicker", "scintillement holographique (M11)")
 	assert_has(keys, &"pad_glyphs", "glyphes de manette (M11)")
+	assert_has(keys, &"tutorial_j1", "tutoriel interactif du J1 (M11 lot C)")
 
 
 func test_typed_properties_read_defaults() -> void:

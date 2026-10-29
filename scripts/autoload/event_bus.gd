@@ -115,3 +115,6 @@ signal save_slots_changed()
 signal profile_changed()
 ## M11 (D-102) GameState → DayController, HUD : passage Récit → Dur.
 signal difficulty_changed(difficulty: StringName)
+## M11 lot C — RulebookPanel → tutoriel du J1 (`TutorialOverlay`) : le joueur
+## a consulté le Rulebook (onglet changé, panneau déplié, carte sélectionnée).
+signal rulebook_consulted()

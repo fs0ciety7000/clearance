@@ -6,6 +6,9 @@
 ## hôte, cartes de normales et ruissellement animé du décor, nombre de nappes
 ## de pluie. Le visage n'est jamais dégradé (pas de baisse de résolution 3D :
 ## la comparaison visage ↔ photo prime). Réappliqué sur `settings_changed`.
+## M11 (D-109) : `Settings.holo_flicker` → paramètre `flicker` du matériau
+## des hologrammes (`booth_holo.gdshader`) : scintillement, scanlines et
+## défilement coupés, lueurs gardées.
 ## Références posées par `tools/build_booth.gd`.
 class_name BoothQuality
 extends Node
@@ -31,7 +34,7 @@ func _ready() -> void:
 
 
 func _on_settings_changed(key: StringName, _value: Variant) -> void:
-	if key == Settings.KEY_GRAPHICS_QUALITY or key == Settings.KEY_FX_INTENSITY:
+	if key == Settings.KEY_GRAPHICS_QUALITY or key == Settings.KEY_FX_INTENSITY or key == Settings.KEY_HOLO_FLICKER:
 		apply()
 
 
@@ -51,6 +54,8 @@ func apply() -> void:
 	for mat: ShaderMaterial in [emissive_material, holo_material]:
 		if mat != null:
 			mat.set_shader_parameter(&"fx_intensity", fx)
+	if holo_material != null:
+		holo_material.set_shader_parameter(&"flicker", 1.0 if Settings.holo_flicker else 0.0)
 	var sub: SubViewport = get_viewport() as SubViewport
 	if sub != null:
 		sub.msaa_3d = MSAA[level]

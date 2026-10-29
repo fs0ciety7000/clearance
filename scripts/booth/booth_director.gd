@@ -296,7 +296,8 @@ func _on_case_resolved(case_id: StringName, result: CaseResult) -> void:
 		return
 	var approved: bool = result != null and result.verdict_kind == VerdictKind.Kind.APPROVE
 	var detained: bool = result != null and result.verdict_kind == VerdictKind.Kind.DETAIN
-	_pulse_light(gate_light, DS.STATE_GREEN if approved else (DS.ACCENT_YELLOW if detained else DS.STATE_RED),
+	# Couleurs d'état de la palette active (vision des couleurs, D-107).
+	_pulse_light(gate_light, Palette.STATE_GREEN if approved else (DS.ACCENT_YELLOW if detained else Palette.STATE_RED),
 			0.8 if detained else 1.4, 1.2 if detained else 0.6)
 	_pulse_light(slot_glow, DS.ACCENT_CYAN, 0.8, 0.4)
 	if actor.state == PassengerActor.State.ARRIVING:

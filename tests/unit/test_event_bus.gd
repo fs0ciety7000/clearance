@@ -51,6 +51,8 @@ const EXPECTED_SIGNALS: Dictionary = {
 	&"save_slots_changed": 0,
 	&"profile_changed": 0,
 	&"difficulty_changed": 1,
+	# M11 lot C : tutoriel interactif du J1 (Rulebook consulté).
+	&"rulebook_consulted": 0,
 }
 
 

@@ -41,6 +41,9 @@ signal departure_line_shown(line_key: String, text: String)
 ## M7 : réplique scénarisée hors interrogatoire sous-titrée (pot-de-vin, phrase
 ## de passe, réaction à l'enveloppe) — même chemin audio que le départ.
 signal passenger_line_shown(line_key: String, text: String)
+## M11 lot C — « FERMER LE GUICHET » (mode Récit, quota atteint) : la scène de
+## jour appelle `DayController.close_booth()`.
+signal close_booth_requested()
 
 # --- Zones (UI_FLOW §2.2, px @1080p) -------------------------------------------
 const BAND_TOP: float = 56.0
@@ -356,6 +359,7 @@ func _build() -> void:
 	top_bar.offset_bottom = BAND_TOP
 	add_child(top_bar)
 	top_bar.quota_view.picked.connect(_on_item_picked)
+	top_bar.close_booth_pressed.connect(close_booth_requested.emit)
 
 	passenger_panel = PassengerPanel.new()
 	passenger_panel.name = "PassengerPanel"
@@ -494,6 +498,7 @@ func _connect_bus() -> void:
 	EventBus.scanner_suggested.connect(_on_scanner_suggested)
 	EventBus.ledger_changed.connect(_on_ledger_changed)
 	EventBus.summons_published.connect(_on_summons_published)
+	EventBus.difficulty_changed.connect(func(_d: StringName) -> void: set_story_mode(GameState.is_story_mode()))
 
 
 # ---------------------------------------------------------------------------
@@ -524,8 +529,25 @@ func _on_day_started(p_day: DayDef, p_rulebook: Array[RulebookEntry]) -> void:
 	top_bar.set_clock(remaining_sec, p_day.duration_sec)
 	top_bar.set_processed(processed)
 	top_bar.set_credits(GameState.credits)
+	top_bar.set_story_mode(GameState.is_story_mode())
 	tool_bar.set_detain_available(detain_available)
 	_refresh_all()
+
+
+## M11 lot C — mode Récit (D-102) : puce « RÉCIT », horloge sans alerte de fin.
+func set_story_mode(value: bool) -> void:
+	top_bar.set_story_mode(value)
+	if not value:
+		set_close_booth_available(false)
+
+
+## « FERMER LE GUICHET » proposé (Récit, quota atteint) : bouton de la barre du
+## haut, joignable à la manette depuis « SUIVANT » (croix haut).
+func set_close_booth_available(value: bool) -> void:
+	top_bar.set_close_available(value)
+	var shown: bool = top_bar.close_button.visible
+	tool_bar.next_button.focus_neighbor_top = tool_bar.next_button.get_path_to(top_bar.close_button) if shown else NodePath()
+	top_bar.close_button.focus_neighbor_bottom = top_bar.close_button.get_path_to(tool_bar.next_button) if shown else NodePath()
 
 
 func _on_day_phase_changed(p_phase: DayPhase.Kind, case_id: StringName) -> void:
@@ -1172,7 +1194,8 @@ func show_citation(result: CaseResult, reason_key: String = "") -> CitationTicke
 			number = i + 1
 			title = UiText.t(rulebook_entries[i].title_key, String(result.citation_rule_id))
 	var free: int = day.free_citations_per_day if day != null else 2
-	var ticket: CitationTicket = CitationTicket.make(result, day.day_number if day != null else 0, number, title, free)
+	var ticket: CitationTicket = CitationTicket.make(result, day.day_number if day != null else 0, number, title, free, false,
+			top_bar.story_mode)
 	toasts.push_node(ticket, 120)
 	ticket.play_print.call_deferred()
 	return ticket

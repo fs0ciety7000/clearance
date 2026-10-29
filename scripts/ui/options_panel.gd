@@ -14,10 +14,16 @@
 ## séparément des lueurs), section **Commandes** (glyphes manette `pad_glyphs`,
 ## rappel du schéma). Les réglages défilent (stick droit, Pg↑ / Pg↓, focus
 ## suivi) : le panneau tient au Steam Deck et en texte 150 %.
+## M11 lot C : section **Partie** — « Tutoriel du jour 1 » (`tutorial_j1`) et,
+## dans le menu pause seulement (`in_game`) et en mode Récit, « Passer en mode
+## Dur » (`hard_mode_requested` : le menu pause demande confirmation,
+## irréversible, D-102).
 class_name OptionsPanel
 extends VBoxContainer
 
 signal back_requested()
+## « PASSER EN MODE DUR » (menu pause, partie en Récit).
+signal hard_mode_requested()
 
 const SLIDER_WIDTH: float = 360.0
 const VOLUME_KEYS: Array[StringName] = [Settings.KEY_VOLUME_MASTER, Settings.KEY_VOLUME_MUSIC, Settings.KEY_VOLUME_AMBIENCE,
@@ -37,6 +43,10 @@ var back_button: Button = null
 var controls: Dictionary[StringName, Control] = {}
 ## Zone défilante des réglages (focus suivi).
 var scroll: ScrollContainer = null
+## Menu pause (partie en cours) : ligne « Passer en mode Dur » possible.
+var in_game: bool = false
+var hard_mode_row: Control = null
+var hard_mode_button: Button = null
 var _rows: VBoxContainer = null
 
 
@@ -84,6 +94,7 @@ func _ready() -> void:
 			UiText.t("opt_pad_glyphs_hint", "Les invites suivent le dernier appareil utilisé, clavier ou manette."),
 			PAD_GLYPH_KEYS, [-1.0, 0.0, 1.0])
 	_rows.add_child(_controls_summary())
+	_add_game_section()
 	var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_3)
 	add_child(row)
 	row.add_child(ScreenBase.label(UiText.t("opt_saved", "Réglages enregistrés automatiquement."), &"CaptionLabel"))
@@ -91,6 +102,29 @@ func _ready() -> void:
 	back_button = ScreenBase.button(UiText.t("opt_back", "RETOUR"))
 	back_button.pressed.connect(func() -> void: back_requested.emit())
 	row.add_child(back_button)
+
+
+## Section « PARTIE » : tutoriel du J1 ; « Passer en mode Dur » (pause, Récit).
+func _add_game_section() -> void:
+	_rows.add_child(ScreenBase.section(UiText.t("opt_game", "PARTIE"), UiIcon.Kind.LOGO, Palette.TEXT_SECONDARY))
+	_add_toggle(Settings.KEY_TUTORIAL, UiText.t("opt_tutorial", "Tutoriel du jour 1"),
+			UiText.t("opt_tutorial_hint", "Gestes guidés au premier jour d'une partie ; se désactive une fois terminé ou passé."))
+	var row: HBoxContainer = _row(UiText.t("opt_hard_mode", "Mode Récit en cours"),
+			UiText.t("opt_hard_mode_hint", "Passer en Dur rétablit le chrono et les amendes. Irréversible pour cette partie."))
+	row.name = "HardModeRow"
+	hard_mode_button = ScreenBase.button(UiText.t("opt_hard_mode_button", "PASSER EN MODE DUR"), &"ButtonTool")
+	hard_mode_button.name = "HardMode"
+	hard_mode_button.custom_minimum_size.y = DS.HIT_TARGET_MIN
+	hard_mode_button.pressed.connect(func() -> void: hard_mode_requested.emit())
+	row.add_child(hard_mode_button)
+	hard_mode_row = row
+	refresh_game_section()
+
+
+## Ligne « Passer en mode Dur » visible seulement en jeu et en mode Récit.
+func refresh_game_section() -> void:
+	if hard_mode_row != null:
+		hard_mode_row.visible = in_game and GameState.is_story_mode()
 
 
 func focus_first() -> void:

@@ -7,6 +7,8 @@
 ## QUITTER VERS LE TITRE (second appui de confirmation : la progression du jour
 ## en cours est perdue, la sauvegarde du matin reste). Échap / Ⓑ : retour /
 ## reprendre.
+## M11 lot C : Options > Partie « PASSER EN MODE DUR » (partie en Récit) →
+## `ConfirmDialog` (focus ANNULER, irréversible) → `GameState.set_difficulty`.
 class_name PauseMenu
 extends Control
 
@@ -21,6 +23,8 @@ var is_open: bool = false
 var enabled: bool = true
 var resume_button: Button = null
 var options: OptionsPanel = null
+## Confirmation « Passer en mode Dur » ouverte (null sinon).
+var hard_dialog: ConfirmDialog = null
 
 var _menu_box: VBoxContainer = null
 var _panel: PanelContainer = null
@@ -89,8 +93,10 @@ func _ready() -> void:
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_menu_box.add_child(_quit_button)
 	options = OptionsPanel.new()
+	options.in_game = true
 	options.visible = false
 	options.back_requested.connect(show_menu)
+	options.hard_mode_requested.connect(request_hard_mode)
 	stack.add_child(options)
 	# Manette : une direction sans focus le rend à « REPRENDRE » (ou au premier
 	# réglage), le stick droit fait défiler les options (M11).
@@ -115,6 +121,8 @@ func open() -> void:
 func close() -> void:
 	if not is_open:
 		return
+	if hard_dialog != null:
+		hard_dialog.cancel()
 	is_open = false
 	visible = false
 	Settings.save_settings()
@@ -123,6 +131,7 @@ func close() -> void:
 
 func show_options() -> void:
 	_menu_box.visible = false
+	options.refresh_game_section()
 	options.visible = true
 	_panel.custom_minimum_size.x = OPTIONS_WIDTH
 	options.focus_first.call_deferred()
@@ -136,6 +145,27 @@ func show_menu() -> void:
 	_quit_button.text = UiText.t("pause_quit", "QUITTER VERS LE TITRE")
 	_quit_button.theme_type_variation = &"ButtonTool"
 	resume_button.grab_focus.call_deferred()
+
+
+## Récit → Dur (D-102) : confirmation, puis `GameState.set_difficulty(&"hard")`.
+func request_hard_mode() -> void:
+	if hard_dialog != null or not GameState.is_story_mode():
+		return
+	hard_dialog = ConfirmDialog.make(UiText.t("hard_eyebrow", "MODE DE JEU"),
+			UiText.t("hard_title", "Passer en mode Dur ?"),
+			UiText.t("hard_body", "Le chrono et les amendes s'appliquent dès maintenant, jusqu'à la fin de cette partie. Impossible de revenir en mode Récit."),
+			UiText.t("hard_accept", "PASSER EN DUR"))
+	hard_dialog.name = "HardModeDialog"
+	hard_dialog.confirmed.connect(func() -> void:
+		hard_dialog = null
+		GameState.set_difficulty(GameState.DIFFICULTY_HARD)
+		options.refresh_game_section()
+		options.focus_first.call_deferred())
+	hard_dialog.cancelled.connect(func() -> void:
+		hard_dialog = null
+		if options.hard_mode_button != null and options.hard_mode_button.is_visible_in_tree():
+			options.hard_mode_button.grab_focus.call_deferred())
+	add_child(hard_dialog)
 
 
 ## Premier appui : demande confirmation ; second : retour au titre.
@@ -169,7 +199,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if not is_open:
+	if not is_open or hard_dialog != null:
 		return
 	if is_pause_event(event):
 		if options.visible:

@@ -92,7 +92,8 @@ func _tiles() -> Control:
 	row.add_child(stat_tile(UiText.t("sum_wage", "SALAIRE"), credits(summary.get_wage_total(), true),
 			UiText.tf("sum_wage_detail", [day.credit_per_correct if day != null else 5], "%d ₵ par dossier conforme"), DS.TEXT_PRIMARY))
 	row.add_child(stat_tile(UiText.t("sum_fines", "AMENDES"), credits(-summary.get_fine_total()),
-			UiText.t("sum_fines_detail", "Retenues sur salaire"), Palette.STATE_RED if summary.get_fine_total() > 0 else Palette.TEXT_SECONDARY,
+			UiText.t("sum_fines_detail_story", "Mode Récit : aucune amende") if GameState.is_story_mode()
+				else UiText.t("sum_fines_detail", "Retenues sur salaire"), Palette.STATE_RED if summary.get_fine_total() > 0 else Palette.TEXT_SECONDARY,
 			UiIcon.Kind.DENIED))
 	var net: int = summary.get_net()
 	var bribes: int = summary.get_bribe_total()
@@ -269,7 +270,7 @@ func _tickets() -> Control:
 					number = i + 1
 					title = UiText.t(day.rule_set.rules[i].title_key, "")
 		list.add_child(CitationTicket.make(result, summary.day_number, number, title,
-				day.free_citations_per_day if day != null else 2, true))
+				day.free_citations_per_day if day != null else 2, true, GameState.is_story_mode()))
 	return box
 
 

@@ -407,13 +407,33 @@ Pas de pop-up tutoriel : le superviseur **Okonkwo** parle à l'intercom et le Ru
 
 Les jours 2–5 introduisent chacun **un** outil (Interroger approfondi, onglet Implants, tiroir à tampons, empreintes) via la règle « NOUVEAU » ambre + une ligne de briefing. Un « Carnet d'aide » dans le Rulebook rejoue chaque explication.
 
+### 7.1 Tutoriel interactif du J1 (M11 lot C)
+
+En complément d'Okonkwo (qui continue de parler), une **surimpression guidée** non diégétique (`TutorialOverlay`, `scripts/ui/tutorial_overlay.gd`, panneau plat `SystemPanel`) posée **sur la file d'attente** (colonne droite de la bande B), jamais sur le visage, les documents ou les outils.
+
+- **Quand** : au J1 d'une partie lancée depuis le titre (nouvelle partie, Continuer / Charger au J1), si le réglage **Options › Partie › « Tutoriel du jour 1 »** (`tutorial_j1`, actif par défaut) est actif. Terminé ou passé, le réglage repasse à « désactivé » (le joueur peut le réactiver pour le revoir). Fin du shift avant la fin : la carte disparaît, le réglage reste (reproposé au prochain J1). Jamais dans les scènes de debug / tests (sauf `--tutorial`).
+- **Accueil** (après le briefing) : « PREMIER SHIFT », COMMENCER (**focus**) / PASSER LE TUTORIEL. Appeler un passager sans répondre lance le tutoriel.
+- **Six étapes**, chacune attend l'**action réelle** (signal `EventBus`, lecture seule, la logique du jour n'est pas touchée) et montre l'invite du dernier périphérique (`PromptGlyph`) :
+
+| # | Étape | Invite | Signal attendu |
+|---|---|---|---|
+| 1 | Regardez le passager (appeler, observer le visage) | `next_case` | `documents_presented` |
+| 2 | Ouvrez l'inspection | `inspect_toggle` | `inspection_mode_changed(true)` |
+| 3 | Consultez le Rulebook | `rulebook_prev` / `rulebook_next` | **`rulebook_consulted`** (nouveau, M11 lot C : onglet, panneau déplié, carte choisie) |
+| 4 | Reliez deux champs (A → B) | `ui_accept` | `discrepancy_check_requested` |
+| 5 | Interrogez | `interrogate` | `interrogation_requested` |
+| 6 | Tamponnez | `stamp_approve` / `stamp_deny` | `verdict_stamped` |
+
+- Pastilles d'avancement : coche (faite), losange cyan (en cours), losange contour (à venir) — forme, pas la couleur seule. Chaque étape : PASSER L'ÉTAPE / QUITTER. Une action déjà faite (papiers déjà posés, inspection déjà ouverte) fait avancer d'elle-même. Fin : « TUTORIEL TERMINÉ » quelques secondes.
+- Captures : [`m11_tutorial_step.png`](mockups/m11_tutorial_step.png) / [`_deck`](mockups/m11_tutorial_step_deck.png) (étape 2, clavier), [`m11_tutorial_step_pad.png`](mockups/m11_tutorial_step_pad.png) / [`_deck`](mockups/m11_tutorial_step_pad_deck.png) (étape 3, glyphes Xbox). Debug : `--tutorial`, `--tutorial-step=N`.
+
 ---
 
 ## 8. Écrans secondaires
 
 | Écran | Contenu clé | Notes UX |
 |---|---|---|
-| **Menu titre** | Logo CLEARANCE (Chakra Petch, jaune), Continuer (CTA jaune), Nouvelle partie, Options, Crédits, Quitter ; fond : file d'attente sous la pluie | Continuer en focus par défaut. |
+| **Menu titre** | Logo CLEARANCE (Chakra Petch, jaune), Continuer (CTA jaune), Nouvelle partie, **Charger** (M11), Options, Crédits, Quitter ; fond : file d'attente sous la pluie | Continuer en focus par défaut (désactivé sans partie active). Nouvelle partie / Charger : §8.5. |
 | **Briefing du jour** | Bulletin Consortium (date, contexte politique), nouvelles règles en ambre, message personnel (famille, résistance), bouton « Prendre son poste » | Lecture au rythme du joueur, pas de temps. Les nouvelles règles ici sont **les mêmes** que dans le Rulebook (un seul vocabulaire). |
 | **Bilan de shift** | Passagers traités, erreurs (avec motif + règle citée), salaire, pénalités, pots-de-vin ; puis écran **Foyer** : dépenses cochables (loyer, nourriture, chauffage, médicaments), état de chaque proche (icône + texte) | Les erreurs sont **pédagogiques** : montrer les deux champs fautifs avec leur lien magenta. |
 | **Pause / Options** | Reprendre, Options (Affichage, Audio, Commandes, **Accessibilité** en premier niveau), Rulebook (consultation), Quitter vers le menu | La pause gèle l'horloge et floute le plan de travail (anti-triche légère, désactivable). |
@@ -492,6 +512,28 @@ Captures (réelles, OpenGL 3, 1920×1080 et 1280×800) : [`m12_j20_act_card.png`
 - **Plan de travail** (D-085) : 2–3 documents de l'Acte III repassent côte à côte à 1080p (`test_workbench_goes_back_side_by_side_in_act_three`).
 - **Captures / debug** : `--screen=chapter3`, `--hold-card`, `--rulebook-tab=ledger|summons` (+ `--inspect` ; Main courante préremplie des passagers en règle qui précèdent `--start-case`) ; `tools/qa_capture.gd --qa-after-check=s` (capture juste après une comparaison).
 
+### 8.5 Implémentation M11 (lot C) — écrans de partie et mode Récit (D-101, D-102)
+
+Captures (réelles, OpenGL 3, 1920×1080 et 1280×800 `*_deck.png`) : titre [`m11_title.png`](mockups/m11_title.png), nouvelle partie — écrasement [`m11_new_game_overwrite.png`](mockups/m11_new_game_overwrite.png) et difficulté [`m11_new_game_difficulty.png`](mockups/m11_new_game_difficulty.png), charger (3 emplacements dont un terminé) [`m11_load.png`](mockups/m11_load.png), reprise d'un jour [`m11_load_days.png`](mockups/m11_load_days.png), mode Récit + Fermer le guichet [`m11_story_close_booth.png`](mockups/m11_story_close_booth.png).
+
+```
+TITRE ── CONTINUER ───────────────────────────────▶ jour (partie active la plus récente)
+     ├── NOUVELLE PARTIE ─▶ 1 EMPLACEMENT ─(occupé : « Écraser ? », focus ANNULER)─▶ 2 DIFFICULTÉ ─▶ J1 (+ tutoriel)
+     ├── CHARGER ─▶ cartes ─┬─ REPRENDRE ─────────────────────────────────────────▶ jour
+     │                      ├─ REPRENDRE UN JOUR PASSÉ… ─▶ matins ─(antérieur : confirmation)─▶ jour
+     │                      └─ SUPPRIMER (deux temps)
+     ├── OPTIONS (dont Partie › Tutoriel du jour 1)
+     └── QUITTER                               Ⓑ / Échap : étape précédente, puis titre
+```
+
+- **Titre** (`scenes/main/main.gd`) : CONTINUER — JOUR n (· RÉCIT) = `SaveService.latest_slot()`, CTA jaune et **focus** ; désactivé (et jamais focalisable) sans partie active — NOUVELLE PARTIE devient alors le CTA et prend le focus. CHARGER désactivé sans aucune partie. Le panneau du titre est masqué sous les écrans (focus jamais derrière).
+- **Nouvelle partie** (`NewGameScreen`) — **1. Emplacement** : trois `SaveSlotCard` ; libre → « CHOISIR CET EMPLACEMENT » ; occupé → « ÉCRASER CETTE PARTIE… » → `ConfirmDialog` (« Écraser la partie de l'emplacement n ? », jour, « les fins déjà vues restent au profil », focus **ANNULER**, Ⓑ annule). Focus initial : premier emplacement libre, sinon le premier. **2. Difficulté** : deux cartes — **DUR** (« Recommandé · l'expérience prévue », focus) et **RÉCIT** (« Pas de chrono », « Pas d'amendes », « Toutes les fins restent accessibles ») + « Vous pourrez passer de Récit à Dur plus tard (Pause › Options), pas l'inverse. » Lancement : `SaveService.delete_slot` → `Campaign.new_game(…, slot, difficulty)` → `GameState.save_to_slot()` (emplacement occupé tout de suite, matin du J1).
+- **Charger** (`LoadScreen`) : carte = EMPLACEMENT n · puce difficulté (DUR ⚠ / RÉCIT 💬 : icône + texte), JOUR nn · ACTE x (partie terminée : puce « PARTIE TERMINÉE » + « Fin : <titre de l'épilogue> » + dernier jour), crédits, foyer (« 3 vivants · 1 malade · 1 absent·e »), date locale de sauvegarde, temps de jeu. Actions : REPRENDRE (parties actives ; focus sur celle de « Continuer »), REPRENDRE UN JOUR PASSÉ… (grille des matins `list_snapshots`, focus sur le dernier, bandeau ambre ⚠ « Les jours suivants de cet emplacement seront remplacés à la prochaine soirée » ; un jour antérieur au dernier demande confirmation, focus ANNULER ; une partie terminée se rouvre ainsi), SUPPRIMER en deux temps (« CONFIRMER LA SUPPRESSION » rouge ; quitter le bouton désarme). Ⓑ ferme la grille des jours, puis revient au titre.
+- **Mode Récit au guichet** : puce « 💬 RÉCIT » après la date dans la barre d'état ; horloge sans état d'alerte — jamais « FIN DE SHIFT PROCHE / IMMINENTE », libellé de fin « SANS CHRONO » ; **« FERMER LE GUICHET »** dans la barre d'état (à côté de QUOTA ATTEINT) quand `DayController.can_close_booth()` (réévalué à chaque `quota_changed` / `day_phase_changed` / `difficulty_changed`) ; joignable à la manette par croix ↑ depuis SUIVANT ; toast « GUICHET FERMÉ — le bilan suit le passager en cours ». Tickets de citation : « AVERTISSEMENT · MODE RÉCIT », « sans amende en mode Récit » (jamais « AVERTISSEMENT 5/2 ») ; bilan : tuile AMENDES « Mode Récit : aucune amende ».
+- **Pause › Options › Partie** : « PASSER EN MODE DUR » visible seulement en jeu et en Récit → `ConfirmDialog` (« Le chrono et les amendes s'appliquent dès maintenant… Impossible de revenir en mode Récit », focus ANNULER) → `GameState.set_difficulty(&"hard")` ; la ligne disparaît, la puce RÉCIT et le bouton Fermer le guichet aussi (`difficulty_changed`).
+- **Composants** : `ConfirmDialog` (`scripts/ui/confirm_dialog.gd` : voile, focus ANNULER, focus piégé entre les deux boutons, Ⓑ = annuler, actif en pause), `SaveSlotCard` (`scripts/ui/save_slot_card.gd`).
+- **Debug / captures** : titre `--demo-saves` (trois emplacements de démonstration dans `user://qa_demo_saves`, jamais `user://saves`), `--title=new|difficulty|overwrite|load|days` ; jour `--story`, `--close-booth` (bouton forcé). Tests : `tests/integration/test_m11_game_screens.gd`.
+
 ## 9. Commandes clavier et manette (M11)
 
 Objectif : **une campagne complète à la manette seule** (Xbox, PlayStation, Steam Deck). Actions déclarées dans `project.godot` (section `[input]`), liste source `ControlsMap.GAME_ACTIONS` (`scripts/ui/controls_map.gd`) ; chaque action a une touche **et** un bouton (test `test_every_game_action_has_keyboard_and_gamepad_bindings`).
@@ -521,7 +563,7 @@ Changements par rapport au §3.5 : la **croix est réservée au focus** (DÉTENT
 
 ### 9.2 Focus sur chaque écran
 
-- **Focus initial** sur tous les écrans : titre (« CONTINUER / NOUVELLE PARTIE »), briefing (« PRENDRE SON POSTE »), guichet (aucun focus imposé : la souris reste libre), bilan (« CONTINUER »), soirée (carte de fin d'acte → rapport → « VALIDER »), fins (« PASSER » puis « TITRE »), chapitre (« CONTINUER » après la révélation), pause (« REPRENDRE »), options (premier réglage). Test `test_every_day_screen_has_an_initial_focus`.
+- **Focus initial** sur tous les écrans : titre (« CONTINUER », sinon « NOUVELLE PARTIE »), nouvelle partie (premier emplacement libre ; difficulté : « JOUER EN DUR »), charger (« REPRENDRE » de la partie de Continuer ; grille : dernier jour), boîtes de confirmation (« ANNULER »), tutoriel (« COMMENCER »), briefing (« PRENDRE SON POSTE »), guichet (aucun focus imposé : la souris reste libre), bilan (« CONTINUER »), soirée (carte de fin d'acte → rapport → « VALIDER »), fins (« PASSER » puis « TITRE »), chapitre (« CONTINUER » après la révélation), pause (« REPRENDRE »), options (premier réglage). Test `test_every_day_screen_has_an_initial_focus`.
 - **Focus d'appoint** (`FocusGuard`, enfant de chaque `ScreenBase`, du guichet et de la pause) : une direction reçue alors qu'aucun contrôle de l'écran n'a le focus (après un clic ailleurs, un panneau fermé) le rend au contrôle par défaut (`default_focus()`), sinon au premier contrôle focalisable. Le stick droit / Pg↑ Pg↓ font défiler la zone qui contient le focus, sinon la zone par défaut (Rulebook au guichet), sinon la première zone défilable.
 - **Guichet** — contrôle par défaut selon la phase : question du menu ouvert → champ du document de devant (inspection) → « SUIVANT » (guichet en attente) → bouton de l'objet glissé à décider → « INSPECTION » → « INTERROGER ». Entrer en inspection **à la manette** pose le focus sur un champ (aucun curseur à viser) ; un champ qui prend le focus amène son document devant sa pile ; stick droit ← → change le document de devant et le focus suit. Comparaison A → B : Ⓐ sur le premier champ, croix jusqu'au second (document, règle du Rulebook, date du jour ; visage = R3), Ⓐ. Ⓑ annule A, puis ferme le menu, puis quitte l'inspection, puis ouvre la pause.
 - **Interrogatoire** : Y ouvre le menu, le focus va à la première question, Ⓐ la pose, Ⓑ ferme. **Tampons** : RT / X / LS maintenus, ou focus sur le tampon + Ⓐ maintenu.

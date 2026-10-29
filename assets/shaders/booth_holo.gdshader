@@ -6,12 +6,15 @@
 //   0 dégradé vertical · 1 hologramme (scanlines, scintillement léger)
 //   · 2 champ magnétique (ondes horizontales) · 3 reflet (bandes diagonales,
 //   réservé) · 4 halo (dégradé doux vers le haut).
-// `fx_intensity` : 0 = figé, sans scanlines. Sans brouillard : un additif
+// `fx_intensity` : 0 = figé, sans scanlines. `flicker` (M11, réglage
+// « Scintillement holographique », D-109) : 0 = ni scintillement, ni
+// scanlines, ni défilement des ondes — les lueurs restent (`fx_intensity`). Sans brouillard : un additif
 // brouillé ajouterait la couleur du brouillard sur toute sa surface.
 shader_type spatial;
 render_mode blend_add, unshaded, cull_disabled, depth_draw_never, shadows_disabled, fog_disabled;
 
 uniform float fx_intensity : hint_range(0.0, 1.0) = 1.0;
+uniform float flicker : hint_range(0.0, 1.0) = 1.0;
 
 float hash11(float n) {
 	return fract(sin(n * 12.9898) * 43758.5453);
@@ -24,13 +27,14 @@ void fragment() {
 	if (mode == 0.0) {
 		a *= smoothstep(1.0, 0.2, uv.y);
 	} else if (mode == 1.0) {
-		float scan = mix(1.0, 0.55 + 0.45 * step(0.5, fract(FRAGCOORD.y / 3.0)), fx_intensity);
-		float flick = 1.0 - 0.15 * fx_intensity * step(0.9, hash11(floor(TIME * 1.5)));
-		float pulse = 0.85 + 0.15 * sin(TIME * 1.1) * fx_intensity;
+		float motion = fx_intensity * flicker;
+		float scan = mix(1.0, 0.55 + 0.45 * step(0.5, fract(FRAGCOORD.y / 3.0)), motion);
+		float flick = 1.0 - 0.15 * motion * step(0.9, hash11(floor(TIME * 1.5)));
+		float pulse = 0.85 + 0.15 * sin(TIME * 1.1) * motion;
 		a *= scan * flick * pulse;
 	} else if (mode == 2.0) {
 		float core = smoothstep(0.5, 0.0, abs(uv.y - 0.5));
-		float wave = 0.65 + 0.35 * sin(uv.x * 40.0 - TIME * 3.0 * fx_intensity);
+		float wave = 0.65 + 0.35 * sin(uv.x * 40.0 - TIME * 3.0 * fx_intensity * flicker);
 		a *= core * core * wave;
 	} else if (mode == 3.0) {
 		float d = uv.x * 0.8 - uv.y * 0.6;

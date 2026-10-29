@@ -428,6 +428,7 @@ func _add_tab_button(id: int, text: String, color: Color, group: ButtonGroup) ->
 		button.add_theme_color_override(&"font_color", color)
 		button.set_meta(&"tab_color", color)
 	button.pressed.connect(_show_tab.bind(id))
+	button.pressed.connect(EventBus.rulebook_consulted.emit)
 	_tabs_row.add_child(button)
 	_tab_buttons.append(button)
 	_tab_ids.append(id)
@@ -808,6 +809,7 @@ func cycle_tab(step: int) -> void:
 		return
 	var index: int = posmod(_tab_ids.find(current_tab) + step, _tab_ids.size())
 	_show_tab(_tab_ids[index])
+	EventBus.rulebook_consulted.emit()
 
 
 func get_items() -> Array[InspectableItem]:
@@ -908,10 +910,13 @@ func set_collapsed(value: bool) -> void:
 	_content.visible = not value
 	_collapsed_tab.visible = value
 	collapse_changed.emit(value)
+	if not value:
+		EventBus.rulebook_consulted.emit()
 
 
 func _on_item_picked(item: InspectableItem) -> void:
 	item_picked.emit(item)
+	EventBus.rulebook_consulted.emit()
 
 
 func _draw() -> void:
