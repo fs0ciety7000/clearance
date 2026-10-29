@@ -6,7 +6,7 @@ import inter from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff
 import mono from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url';
 import type { Lang } from '../lib/i18n';
 import { t } from '../lib/i18n';
-import { VERSION } from '../config';
+import { VERSION, DOWNLOAD_URL } from '../config';
 
 interface Props {
   lang: Lang;
@@ -37,9 +37,9 @@ const ld = {
   softwareVersion: VERSION,
   playMode: 'SinglePlayer',
   screenshot: og,
-  author: { '@type': 'Organization', name: 'Studio CLEARANCE' },
-  publisher: { '@type': 'Organization', name: 'Studio CLEARANCE' },
-  // `offers` volontairement absent tant qu'aucune version n'est publiée au lien de téléchargement.
+  author: { '@type': 'Person', name: 'Nicolas Dessenius', url: 'https://dessenius.be' },
+  publisher: { '@type': 'Organization', name: 'CM Interactive', url: 'https://interactive.cardormedia.com/', logo: new URL('/brand/cm-interactive.svg', site).href },
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', url: DOWNLOAD_URL, availability: 'https://schema.org/InStock' },
 };
 ---
 <!doctype html>
@@ -50,6 +50,7 @@ const ld = {
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#07080C" />
+    <meta name="author" content="Nicolas Dessenius — CM Interactive" />
     <meta name="color-scheme" content="dark" />
     {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
     {alternates && (
