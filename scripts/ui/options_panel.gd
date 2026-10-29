@@ -76,7 +76,7 @@ func _ready() -> void:
 			UiText.t("opt_color_vision_hint", "Couleurs d'état distinguables ; icônes et motifs restent affichés."),
 			COLOR_VISION_KEYS, [0.0, 1.0, 2.0, 3.0])
 	_add_toggle(Settings.KEY_HOLO_FLICKER, UiText.t("opt_holo_flicker", "Scintillement holographique"),
-			UiText.t("opt_holo_flicker_hint", "Scintillement et défilement des hologrammes, indépendants des lueurs."))
+			UiText.t("opt_holo_flicker_hint", "Désactivé : plus aucun clignotement ni défilement (cadres des documents, hologrammes, néons instables et écrans du guichet). Les lueurs restent."))
 	_add_quality_row()
 	_add_toggle(Settings.KEY_REDUCE_MOTION, UiText.t("opt_reduce_motion", "Réduire les animations"),
 			UiText.t("opt_reduce_motion_hint", "Marche du passager raccourcie (≤ 1 s), pas de travelling."))
@@ -211,7 +211,7 @@ func _add_slider(key: StringName, caption: String, min_value: float, max_value: 
 
 
 func _add_fx_row() -> void:
-	var row: HBoxContainer = _row(UiText.t("opt_fx", "Effets visuels"), UiText.t("opt_fx_hint", "Scanlines, scintillement, lueurs des hologrammes."))
+	var row: HBoxContainer = _row(UiText.t("opt_fx", "Effets visuels"), UiText.t("opt_fx_hint", "Intensité des lueurs et halos, des scanlines et des animations d'effet (liens, tampons, néons, pluie). Désactivés : tout est fixe, sans halo."))
 	var group: ButtonGroup = ButtonGroup.new()
 	var buttons: HBoxContainer = ScreenBase.hbox(0)
 	row.add_child(buttons)

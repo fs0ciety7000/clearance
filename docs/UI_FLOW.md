@@ -412,7 +412,7 @@ Les jours 2–5 introduisent chacun **un** outil (Interroger approfondi, onglet 
 En complément d'Okonkwo (qui continue de parler), une **surimpression guidée** non diégétique (`TutorialOverlay`, `scripts/ui/tutorial_overlay.gd`, panneau plat `SystemPanel`) posée **sur la file d'attente** (colonne droite de la bande B), jamais sur le visage, les documents ou les outils.
 
 - **Quand** : au J1 d'une partie lancée depuis le titre (nouvelle partie, Continuer / Charger au J1), si le réglage **Options › Partie › « Tutoriel du jour 1 »** (`tutorial_j1`, actif par défaut) est actif. Terminé ou passé, le réglage repasse à « désactivé » (le joueur peut le réactiver pour le revoir). Fin du shift avant la fin : la carte disparaît, le réglage reste (reproposé au prochain J1). Jamais dans les scènes de debug / tests (sauf `--tutorial`).
-- **Accueil** (après le briefing) : « PREMIER SHIFT », COMMENCER (**focus**) / PASSER LE TUTORIEL. Appeler un passager sans répondre lance le tutoriel.
+- **Accueil** (après le briefing) : « PREMIER SHIFT », COMMENCER (**focus**) / PASSER LE TUTORIEL ; à la croix, le focus reste piégé entre ces deux boutons (QA-042). COMMENCER ne fait que commencer (QA-041) : le focus revient à SUIVANT, l'étape 1 demande d'appeler le passager. Appeler un passager sans répondre (N, ou Ⓐ / clic sur SUIVANT) lance le tutoriel.
 - **Six étapes**, chacune attend l'**action réelle** (signal `EventBus`, lecture seule, la logique du jour n'est pas touchée) et montre l'invite du dernier périphérique (`PromptGlyph`) :
 
 | # | Étape | Invite | Signal attendu |
@@ -424,7 +424,7 @@ En complément d'Okonkwo (qui continue de parler), une **surimpression guidée**
 | 5 | Interrogez | `interrogate` | `interrogation_requested` |
 | 6 | Tamponnez | `stamp_approve` / `stamp_deny` | `verdict_stamped` |
 
-- Pastilles d'avancement : coche (faite), losange cyan (en cours), losange contour (à venir) — forme, pas la couleur seule. Chaque étape : PASSER L'ÉTAPE / QUITTER. Une action déjà faite (papiers déjà posés, inspection déjà ouverte) fait avancer d'elle-même. Fin : « TUTORIEL TERMINÉ » quelques secondes.
+- Pastilles d'avancement : coche (faite), losange cyan (en cours), losange contour (à venir) — forme, pas la couleur seule. Chaque étape : PASSER L'ÉTAPE / QUITTER, joignables à la manette (croix ↑ depuis SUIVANT ou depuis le haut du Rulebook, ou **VUE maintenue 1 s** = passer l'étape ; schéma §9.5). Une action déjà faite (papiers déjà posés, inspection déjà ouverte) fait avancer d'elle-même. Fin : « TUTORIEL TERMINÉ » quelques secondes.
 - Captures : [`m11_tutorial_step.png`](mockups/m11_tutorial_step.png) / [`_deck`](mockups/m11_tutorial_step_deck.png) (étape 2, clavier), [`m11_tutorial_step_pad.png`](mockups/m11_tutorial_step_pad.png) / [`_deck`](mockups/m11_tutorial_step_pad_deck.png) (étape 3, glyphes Xbox). Debug : `--tutorial`, `--tutorial-step=N`.
 
 ---
@@ -529,6 +529,7 @@ TITRE ── CONTINUER ───────────────────
 - **Titre** (`scenes/main/main.gd`) : CONTINUER — JOUR n (· RÉCIT) = `SaveService.latest_slot()`, CTA jaune et **focus** ; désactivé (et jamais focalisable) sans partie active — NOUVELLE PARTIE devient alors le CTA et prend le focus. CHARGER désactivé sans aucune partie. Le panneau du titre est masqué sous les écrans (focus jamais derrière).
 - **Nouvelle partie** (`NewGameScreen`) — **1. Emplacement** : trois `SaveSlotCard` ; libre → « CHOISIR CET EMPLACEMENT » ; occupé → « ÉCRASER CETTE PARTIE… » → `ConfirmDialog` (« Écraser la partie de l'emplacement n ? », jour, « les fins déjà vues restent au profil », focus **ANNULER**, Ⓑ annule). Focus initial : premier emplacement libre, sinon le premier. **2. Difficulté** : deux cartes — **DUR** (« Recommandé · l'expérience prévue », focus) et **RÉCIT** (« Pas de chrono », « Pas d'amendes », « Toutes les fins restent accessibles ») + « Vous pourrez passer de Récit à Dur plus tard (Pause › Options), pas l'inverse. » Lancement : `SaveService.delete_slot` → `Campaign.new_game(…, slot, difficulty)` → `GameState.save_to_slot()` (emplacement occupé tout de suite, matin du J1).
 - **Charger** (`LoadScreen`) : carte = EMPLACEMENT n · puce difficulté (DUR ⚠ / RÉCIT 💬 : icône + texte), JOUR nn · ACTE x (partie terminée : puce « PARTIE TERMINÉE » + « Fin : <titre de l'épilogue> » + dernier jour), crédits, foyer (« 3 vivants · 1 malade · 1 absent·e »), date locale de sauvegarde, temps de jeu. Actions : REPRENDRE (parties actives ; focus sur celle de « Continuer »), REPRENDRE UN JOUR PASSÉ… (grille des matins `list_snapshots`, focus sur le dernier, bandeau ambre ⚠ « Les jours suivants de cet emplacement seront remplacés à la prochaine soirée » ; un jour antérieur au dernier demande confirmation, focus ANNULER ; une partie terminée se rouvre ainsi), SUPPRIMER en deux temps (« CONFIRMER LA SUPPRESSION » rouge ; quitter le bouton désarme). Ⓑ ferme la grille des jours, puis revient au titre.
+- **Correctifs QA M11** : la grille ne propose que des matins **lisibles** (`LoadScreen.loadable_days` : instantané listé et relu ; un `.tmp` orphelin ou un fichier tronqué n'apparaît jamais, QA-045) ; si un chargement échoue malgré tout (fichier abîmé entre-temps), toast d'erreur « CHARGEMENT IMPOSSIBLE » (icône + texte) et grille relue, jamais un bouton qui ne fait rien (même chose pour REPRENDRE et, sur le titre, CONTINUER). **Emplacement endommagé** (méta `damaged` de `SaveService.list_slots()`, QA-043) : puce rouge ⚠ « SAUVEGARDE ENDOMMAGÉE » + « Le fichier de cette partie est illisible… » + dernier jour connu ; REPRENDRE visible mais désactivé (sauté par la croix), REPRENDRE UN JOUR PASSÉ… s'il reste un matin lisible, SUPPRIMER disponible ; CONTINUER du titre l'ignore (`SaveSlotCard.continue_slot` : partie active non endommagée la plus récente). Capture : [`m11_fix_damaged_slot.png`](mockups/m11_fix_damaged_slot.png) / [`_deck`](mockups/m11_fix_damaged_slot_deck.png).
 - **Mode Récit au guichet** : puce « 💬 RÉCIT » après la date dans la barre d'état ; horloge sans état d'alerte — jamais « FIN DE SHIFT PROCHE / IMMINENTE », libellé de fin « SANS CHRONO » ; **« FERMER LE GUICHET »** dans la barre d'état (à côté de QUOTA ATTEINT) quand `DayController.can_close_booth()` (réévalué à chaque `quota_changed` / `day_phase_changed` / `difficulty_changed`) ; joignable à la manette par croix ↑ depuis SUIVANT ; toast « GUICHET FERMÉ — le bilan suit le passager en cours ». Tickets de citation : « AVERTISSEMENT · MODE RÉCIT », « sans amende en mode Récit » (jamais « AVERTISSEMENT 5/2 ») ; bilan : tuile AMENDES « Mode Récit : aucune amende ».
 - **Pause › Options › Partie** : « PASSER EN MODE DUR » visible seulement en jeu et en Récit → `ConfirmDialog` (« Le chrono et les amendes s'appliquent dès maintenant… Impossible de revenir en mode Récit », focus ANNULER) → `GameState.set_difficulty(&"hard")` ; la ligne disparaît, la puce RÉCIT et le bouton Fermer le guichet aussi (`difficulty_changed`).
 - **Composants** : `ConfirmDialog` (`scripts/ui/confirm_dialog.gd` : voile, focus ANNULER, focus piégé entre les deux boutons, Ⓑ = annuler, actif en pause), `SaveSlotCard` (`scripts/ui/save_slot_card.gd`).
@@ -545,7 +546,7 @@ Objectif : **une campagne complète à la manette seule** (Xbox, PlayStation, St
 | Valider · choisir un champ (`ui_accept`) | Entrée · Espace · clic | A | ✕ | A |
 | Annuler · retour (`ui_cancel`, `cancel`) | Échap · clic droit | B | ○ | B |
 | Focus (`ui_up/down/left/right`) | Flèches · Tab | Croix · stick G | Croix · stick G | Croix · stick G |
-| Passager suivant (`next_case`) | N | A (guichet en attente) | ✕ | A |
+| Passager suivant (`next_case`) | N (toujours) | A (guichet en attente, focus sur SUIVANT ou sur aucun contrôle actionnable) | ✕ | A |
 | Mode Inspection (`inspect_toggle`) | Espace | LT | L2 | L2 |
 | Interroger (`interrogate`) | Q | Y | △ | Y |
 | APPROUVÉ, maintenir 0,4 s (`stamp_approve`) | V | RT | R2 | R2 |
@@ -569,6 +570,8 @@ Changements par rapport au §3.5 : la **croix est réservée au focus** (DÉTENT
 - **Interrogatoire** : Y ouvre le menu, le focus va à la première question, Ⓐ la pose, Ⓑ ferme. **Tampons** : RT / X / LS maintenus, ou focus sur le tampon + Ⓐ maintenu.
 - **Pas de curseur virtuel** : aucun geste ne l'exige (le placement des documents est automatique, le glisser reste un confort souris ; la loupe, le visage et les objets glissés ont leur commande ou leur bouton). Donc pas de réglage de sensibilité.
 
+- **Ⓐ appartient au focus** (QA-041) : entre deux passagers, Ⓐ (qui vaut `ui_accept` et `next_case`) n'appelle le passager que si SUIVANT a le focus ou si aucun contrôle actionnable ne l'a (`ComparisonUI.focus_takes_accept` : bouton actif, tampon déverrouillé, champ comparable en inspection) ; sinon il presse le contrôle focalisé — FERMER LE GUICHET, boutons du tutoriel, onglet du Rulebook… Clavier : Entrée / Espace suivent le focus comme Ⓐ ; **N** appelle toujours le passager. À la manette, quand Ⓐ presserait un autre contrôle, le glyphe Ⓐ de SUIVANT est **atténué** (`DS.PROMPT_INACTIVE_ALPHA`, mise en page inchangée, `ToolBar.set_next_prompt_dimmed`) ; il redevient plein dès que SUIVANT a le focus ou que plus rien d'actionnable ne l'a. L'invite clavier N n'est jamais atténuée. Captures : [`m11_fix_close_booth_focus.png`](mockups/m11_fix_close_booth_focus.png) / [`_deck`](mockups/m11_fix_close_booth_focus_deck.png).
+
 ### 9.3 Glyphes d'invite
 
 `InputPrompts` (nœud ajouté à la racine au premier besoin, actif en pause) suit le **dernier périphérique** utilisé : touche / clic / souris déplacée de ≥ 6 px → clavier ; bouton ou axe ≥ 0,5 → manette (la dérive d'un stick ne compte pas). Famille de glyphes : réglage « Glyphes de manette » (`pad_glyphs` : Auto · Xbox / Deck · PlayStation ; Auto lit le nom de la manette, Steam Deck reconnu par `SteamDeck=1`, qui démarre d'emblée en glyphes manette). Les `PromptGlyph` (DS §7.11) se redessinent seuls ; les phrases (ligne d'état, aides du passager, « maintenir … » des tampons, en-tête du plan) sont réécrites au changement. Noms de touches selon la disposition réelle du clavier (AZERTY : la touche physique Q s'affiche « A »).
@@ -585,6 +588,19 @@ Outils (`tools/qa_capture.gd`) : `--qa-set=color_vision:1` (réglage de session)
 4. Invites : `PromptGlyph.make(&"action")`, jamais une touche écrite en dur ; phrases via `InputPrompts.text_for()`.
 5. Couleurs d'état depuis `Palette`, jamais `DS` ; chaque état doublé d'une icône ou d'un libellé (DS §2.5).
 6. Tester : focus initial, retour Ⓑ, navigation complète à la croix (GUT), capture 1080p + Deck.
+
+### 9.5 Tutoriel du J1 à la manette (QA-042)
+
+La carte du tutoriel est posée à côté du guichet (pas dans sa racine) ; elle gère donc sa navigation avant le `FocusGuard` du guichet.
+
+| Où | Commande | Effet |
+|---|---|---|
+| Accueil (COMMENCER / PASSER LE TUTORIEL) | croix ← → ↑ ↓, Tab | focus **piégé** entre les deux boutons ; Ⓐ presse celui qui a le focus |
+| Guichet → carte (pendant une étape) | croix ↑ depuis SUIVANT (si FERMER LE GUICHET n'est pas au-dessus) ou depuis le haut du Rulebook | focus sur **PASSER L'ÉTAPE** (à l'accueil : COMMENCER) |
+| Carte (étape) | ← QUITTER · → PASSER L'ÉTAPE · ↓ retour au guichet (contrôle par défaut) · ↑ reste | Ⓐ sur PASSER L'ÉTAPE : étape suivante, focus gardé sur PASSER L'ÉTAPE |
+| N'importe où (étape en cours) | **VUE maintenue `DS.SKIP_HOLD` (1 s)** | passe l'étape ; l'appui court garde son rôle (Rulebook replié / déplié), rétabli si le maintien aboutit |
+
+L'invite « maintenir [VUE] : passer l'étape » (`PromptGlyph` de `rulebook_toggle`) s'affiche sous les boutons de l'étape **à la manette seulement** (au clavier, la souris et Tab suffisent). Tests : `tests/integration/test_m11_ui_fixes.gd`, `test_qa_m11.gd` (`test_pad_dpad_reaches_the_tutorial_buttons`). Captures : [`m11_fix_tutorial_pad.png`](mockups/m11_fix_tutorial_pad.png) / [`_deck`](mockups/m11_fix_tutorial_pad_deck.png) (focus manette sur PASSER L'ÉTAPE).
 
 ## 10. Questions ouvertes à valider
 

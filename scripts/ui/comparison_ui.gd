@@ -1930,6 +1930,8 @@ func describe(result: Discrepancy) -> String:
 
 func _process(delta: float) -> void:
 	_next_cooldown = maxf(_next_cooldown - delta, 0.0)
+	# Ⓐ de SUIVANT atténué quand Ⓐ presserait un autre contrôle (après QA-041).
+	tool_bar.set_next_prompt_dimmed(phase == DayPhase.Kind.WAITING_CASE and focus_takes_accept())
 	_place_suggestion_buttons()
 	if documents_shown and not verdict_sent:
 		elapsed_sec += delta
@@ -1948,7 +1950,11 @@ func _input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"interrogate", false, true):
 		toggle_question_menu()
 		_handled()
-	elif event.is_action_pressed(&"next_case", false, true) and phase == DayPhase.Kind.WAITING_CASE:
+	elif event.is_action_pressed(&"next_case", false, true) and phase == DayPhase.Kind.WAITING_CASE \
+			and not (event.is_action_pressed(&"ui_accept", false, true) and focus_takes_accept()):
+		# QA-041 : Ⓐ est aussi `ui_accept` ; il n'appelle le passager que si
+		# SUIVANT a le focus ou si aucun autre contrôle actionnable ne l'a
+		# (sinon l'événement continue jusqu'au bouton focalisé). N appelle toujours.
 		request_next_case()
 		_handled()
 	elif event.is_action_pressed(&"rulebook_toggle", false, true) and not inspection_active:
@@ -1979,6 +1985,29 @@ func _input(event: InputEvent) -> void:
 		_handle_stamp_input(event)
 		_handle_question_keys(event)
 		_handle_document_keys(event)
+
+
+## QA-041 — vrai si le contrôle qui a le focus sait quoi faire de `ui_accept`
+## (Ⓐ / Entrée) : bouton actif autre que SUIVANT (FERMER LE GUICHET, boutons du
+## tutoriel, onglets du Rulebook…), tampon déverrouillé, champ comparable en
+## Mode Inspection. Le focus peut être hors du guichet (carte du tutoriel).
+func focus_takes_accept() -> bool:
+	if not is_inside_tree():
+		return false
+	var owner_control: Control = get_viewport().gui_get_focus_owner()
+	if owner_control == null or owner_control == tool_bar.next_button or not owner_control.is_visible_in_tree() \
+			or owner_control.focus_mode == Control.FOCUS_NONE:
+		return false
+	var button: BaseButton = owner_control as BaseButton
+	if button != null:
+		return not button.disabled
+	var stamp: StampButton = owner_control as StampButton
+	if stamp != null:
+		return not stamp.locked
+	var item: InspectableItem = owner_control as InspectableItem
+	if item != null:
+		return item.inspection_active and item.comparable
+	return false
 
 
 func _handle_stamp_input(event: InputEvent) -> void:

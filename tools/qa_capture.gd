@@ -15,6 +15,10 @@
 ## `--qa-discord` cherche une paire de champs réellement discordante du cas
 ## courant (`DiscrepancyChecker`) et la compare en Mode Inspection (capture
 ## d'un bandeau DISCORDANCE, avec `--qa-after-check`).
+## Correctifs M11 : `--qa-focus=tutorial-skip|tutorial-start|close-booth` pose le
+## focus (comme la croix) sur PASSER L'ÉTAPE / COMMENCER du tutoriel ou sur
+## FERMER LE GUICHET, 1,5 s avant la capture ; `--qa-close-briefing` ferme le
+## briefing sans appeler de passager (guichet en attente, SUIVANT visible).
 ## Lancé par `tools/qa_boot.gd` (autoloads requis), sous xvfb :
 ##   xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
 ##       --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1280x800 \
@@ -36,6 +40,8 @@ var _pad: bool = false
 var _focus_booth: bool = false
 var _discord: bool = false
 var _inspect: bool = false
+var _focus_target: String = ""
+var _close_briefing: bool = false
 var _t: float = 0.0
 var _done: bool = false
 
@@ -74,6 +80,10 @@ func _ready() -> void:
 			_discord = true
 		elif arg == "--qa-inspect":
 			_inspect = true
+		elif arg == "--qa-close-briefing":
+			_close_briefing = true
+		elif arg.begins_with("--qa-focus="):
+			_focus_target = arg.trim_prefix("--qa-focus=")
 	if _after_check >= 0.0:
 		EventBus.discrepancy_checked.connect(_on_checked, CONNECT_ONE_SHOT)
 	get_window().size = _size
@@ -93,6 +103,11 @@ func _process(delta: float) -> void:
 	if _pad and _t > 1.0:
 		_pad = false
 		InputPrompts.simulate_device(InputPrompts.Device.XBOX)
+	if _close_briefing and _t > 1.5:
+		_close_briefing = false
+		var day: DayScene = _find(get_tree().root, func(n: Node) -> bool: return n is DayScene) as DayScene
+		if day != null and day.briefing != null and is_instance_valid(day.briefing):
+			day.briefing.close()
 	if _inspect and _t > 8.0:
 		_inspect = false
 		var booth: ComparisonUI = _find(get_tree().root, func(n: Node) -> bool: return n is ComparisonUI) as ComparisonUI
@@ -106,6 +121,9 @@ func _process(delta: float) -> void:
 		var ui: Node = _find(get_tree().root, func(n: Node) -> bool: return n is ComparisonUI)
 		if ui != null:
 			(ui as ComparisonUI).focus_default()
+	if not _focus_target.is_empty() and _t > _wait - 1.5:
+		_apply_focus_target()
+		_focus_target = ""
 	if _t < _wait:
 		return
 	_done = true
@@ -121,6 +139,23 @@ func _process(delta: float) -> void:
 	print("QA_CAPTURE %s %dx%d" % [_out, image.get_width(), image.get_height()])
 	# Sons arrêtés et retirés par l'AudioServer avant de quitter (QA-025).
 	get_tree().root.get_node("AudioMixBarrier").call(&"quit_after_silence", 0)
+
+
+func _apply_focus_target() -> void:
+	var target: Control = null
+	match _focus_target:
+		"tutorial-skip", "tutorial-start":
+			var tut: TutorialOverlay = _find(get_tree().root, func(n: Node) -> bool: return n is TutorialOverlay) as TutorialOverlay
+			if tut != null:
+				target = tut.skip_step_button if _focus_target == "tutorial-skip" else tut.start_button
+		"close-booth":
+			var ui: ComparisonUI = _find(get_tree().root, func(n: Node) -> bool: return n is ComparisonUI) as ComparisonUI
+			if ui != null:
+				target = ui.top_bar.close_button
+	if target != null and target.is_visible_in_tree():
+		target.grab_focus()
+	else:
+		print("QA_FOCUS %s introuvable" % _focus_target)
 
 
 func _find(node: Node, pred: Callable) -> Node:

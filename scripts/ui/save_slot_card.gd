@@ -5,6 +5,10 @@
 ## crédits, foyer (vivants / malades / absents), date de sauvegarde, temps de
 ## jeu. Emplacement libre : « EMPLACEMENT LIBRE ». Les boutons d'action sont
 ## ajoutés par l'écran dans `actions`.
+## QA-043 (UI) : emplacement marqué endommagé par `list_slots()` (clé
+## booléenne `damaged`, lue de façon défensive) → puce « SAUVEGARDE
+## ENDOMMAGÉE » (icône + texte) ; l'écran désactive REPRENDRE, garde SUPPRIMER,
+## et « Continuer » l'ignore (`continue_slot`).
 class_name SaveSlotCard
 extends PanelContainer
 
@@ -31,7 +35,42 @@ func is_free() -> bool:
 
 
 func is_ended() -> bool:
-	return not is_free() and str(meta.get("status", SaveService.STATUS_ACTIVE)) == SaveService.STATUS_ENDED
+	return not is_free() and not is_damaged() and str(meta.get("status", SaveService.STATUS_ACTIVE)) == SaveService.STATUS_ENDED
+
+
+func is_damaged() -> bool:
+	return is_meta_damaged(meta)
+
+
+## Méta d'emplacement marquée endommagée (`damaged` vrai ; lecture défensive :
+## booléen, ou entier non nul d'un JSON).
+static func is_meta_damaged(p_meta: Dictionary) -> bool:
+	var value: Variant = p_meta.get("damaged", false)
+	return (value is bool and value) or ((value is int or value is float) and SaveService.as_int(value) != 0)
+
+
+## Emplacement de « Continuer » côté interface : `SaveService.latest_slot`,
+## mais jamais un emplacement endommagé (partie active suivante la plus
+## récente, même ordre que `latest_slot` : `saved_at`, `saved_unix_ms`,
+## `save_serial`), sinon `NO_SLOT`.
+static func continue_slot(dir: String = SaveService.DEFAULT_DIR) -> int:
+	var latest: int = SaveService.latest_slot(dir)
+	if latest == SaveService.NO_SLOT:
+		return latest
+	var metas: Array[Dictionary] = SaveService.list_slots(dir)
+	if latest - 1 < metas.size() and not is_meta_damaged(metas[latest - 1]):
+		return latest
+	var best: int = SaveService.NO_SLOT
+	var best_key: String = ""
+	for m: Dictionary in metas:
+		if m.is_empty() or is_meta_damaged(m) or str(m.get("status", SaveService.STATUS_ACTIVE)) != SaveService.STATUS_ACTIVE:
+			continue
+		var key: String = "%s|%015d|%09d" % [str(m.get("saved_at", "")), SaveService.as_int(m.get("saved_unix_ms", 0)),
+				SaveService.as_int(m.get("save_serial", 0))]
+		if best == SaveService.NO_SLOT or key > best_key:
+			best = SaveService.as_int(m.get("slot", SaveService.NO_SLOT))
+			best_key = key
+	return best
 
 
 func _build() -> void:
@@ -48,6 +87,10 @@ func _build() -> void:
 	if is_free():
 		box.add_child(ScreenBase.label(UiText.t("slot_free", "EMPLACEMENT LIBRE"), &"TitleLabel", Palette.TEXT_SECONDARY))
 		box.add_child(ScreenBase.wrapped(UiText.t("slot_free_hint", "Aucune partie enregistrée ici."), &"BodySmall"))
+	elif is_damaged():
+		if meta.has("difficulty"):
+			head.add_child(difficulty_chip(str(meta.get("difficulty", SaveService.DIFFICULTY_HARD))))
+		_build_damaged(box)
 	else:
 		head.add_child(difficulty_chip(str(meta.get("difficulty", SaveService.DIFFICULTY_HARD))))
 		_build_summary(box)
@@ -87,6 +130,27 @@ func _build_summary(box: VBoxContainer) -> void:
 	_pair(grid, UiText.t("slot_household", "FOYER"), household_text(meta.get("household_summary", {})))
 	_pair(grid, UiText.t("slot_saved_at", "ENREGISTRÉ"), format_saved_at(str(meta.get("saved_at", ""))))
 	_pair(grid, UiText.t("slot_play_time", "TEMPS DE JEU"), format_play_time(SaveService.as_int(meta.get("play_time_sec", 0))))
+
+
+## Emplacement endommagé : puce rouge (icône + texte, jamais la couleur seule),
+## explication, dernier jour connu si la méta le donne.
+func _build_damaged(box: VBoxContainer) -> void:
+	var chip: PanelContainer = ScreenBase.chip(UiText.t("slot_damaged", "SAUVEGARDE ENDOMMAGÉE"), UiIcon.Kind.WARNING, Palette.STATE_RED)
+	chip.name = "Damaged"
+	box.add_child(chip)
+	var day: int = SaveService.as_int(meta.get("current_day", 0))
+	if day > 0:
+		box.add_child(ScreenBase.label(UiText.tf("slot_damaged_day", [day], "Dernier jour connu : %02d"), &"DataSmall", Palette.TEXT_SECONDARY))
+	box.add_child(ScreenBase.wrapped(UiText.t("slot_damaged_hint",
+			"Le fichier de cette partie est illisible. Reprenez un jour passé s'il en reste, ou supprimez l'emplacement."), &"BodySmall"))
+	if meta.has("saved_at"):
+		box.add_child(ScreenBase.rule_line())
+		var grid: GridContainer = GridContainer.new()
+		grid.columns = 2
+		grid.add_theme_constant_override("h_separation", DS.SPACE_3)
+		grid.add_theme_constant_override("v_separation", DS.SPACE_1)
+		box.add_child(grid)
+		_pair(grid, UiText.t("slot_saved_at", "ENREGISTRÉ"), format_saved_at(str(meta.get("saved_at", ""))))
 
 
 func _pair(grid: GridContainer, caption: String, value: String) -> void:

@@ -30,6 +30,9 @@ var _badge: PanelContainer = null
 var _badge_label: Label = null
 var _next_label: Label = null
 var _next_keys: Control = null
+## Ⓐ de SUIVANT atténué : le focus est sur un autre contrôle actionnable
+## (Ⓐ le presserait), voir `ComparisonUI.focus_takes_accept`.
+var next_prompt_dimmed: bool = false
 var _row: HBoxContainer = null
 var _caption_box: VBoxContainer = null
 var _key_rows: Array[Control] = []
@@ -144,7 +147,30 @@ static func stamp_hint(kind: VerdictKind.Kind) -> String:
 func refresh_prompts() -> void:
 	for kind: VerdictKind.Kind in stamps:
 		stamps[kind].set_hint(stamp_hint(kind))
+	_apply_next_prompt_dim()
 	queue_compaction()
+
+
+## Après QA-041 : à la manette, Ⓐ ne vaut SUIVANT que si SUIVANT a le focus ou
+## si aucun autre contrôle actionnable ne l'a. Sinon le glyphe Ⓐ de SUIVANT est
+## atténué (`DS.PROMPT_INACTIVE_ALPHA`, mise en page inchangée). L'invite
+## clavier N reste pleine, puisque N appelle toujours le passager.
+func set_next_prompt_dimmed(value: bool) -> void:
+	if value == next_prompt_dimmed:
+		return
+	next_prompt_dimmed = value
+	_apply_next_prompt_dim()
+
+
+## Alpha réellement appliqué au glyphe de SUIVANT (tests, captures).
+func next_prompt_alpha() -> float:
+	return _next_keys.modulate.a if _next_keys != null else 1.0
+
+
+func _apply_next_prompt_dim() -> void:
+	if _next_keys == null:
+		return
+	_next_keys.modulate.a = DS.PROMPT_INACTIVE_ALPHA if next_prompt_dimmed and InputPrompts.is_gamepad() else 1.0
 
 
 func _notification(what: int) -> void:

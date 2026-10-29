@@ -8,6 +8,10 @@
 ##   `resume_day_requested(slot, day)` ;
 ## - **SUPPRIMER** en deux temps (premier appui : « CONFIRMER LA SUPPRESSION »,
 ##   rouge ; quitter le bouton désarme).
+## M11 correctifs : la grille ne propose que des matins **lisibles**
+## (`loadable_days`, QA-045) ; un chargement qui échoue malgré tout affiche un
+## toast (`show_load_failed`) au lieu de ne rien faire ; un emplacement
+## endommagé (QA-043) garde REPRENDRE visible mais désactivé.
 ## Focus initial : REPRENDRE de la partie active la plus récente, sinon la
 ## première action. Ⓑ / Échap : ferme la liste des jours, sinon retour au
 ## titre (`finished(&"back")`).
@@ -33,6 +37,8 @@ var picker_slot: int = SaveService.NO_SLOT
 ## Boutons de jour de la liste ouverte (jour → bouton).
 var picker_buttons: Dictionary[int, Button] = {}
 var dialog: ConfirmDialog = null
+## Toasts de l'écran (chargement impossible).
+var toasts: ToastStack = null
 
 var _armed_delete: int = SaveService.NO_SLOT
 var _cards_row: HBoxContainer = null
@@ -76,6 +82,15 @@ func _build() -> void:
 	back_button.name = "Back"
 	back_button.pressed.connect(go_back)
 	foot.add_child(back_button)
+	toasts = ToastStack.new()
+	toasts.name = "Toasts"
+	toasts.anchor_left = 1.0
+	toasts.anchor_right = 1.0
+	toasts.offset_left = -(SaveSlotCard.MIN_WIDTH + DS.SPACE_8)
+	toasts.offset_right = -DS.SPACE_8
+	toasts.offset_top = DS.SPACE_8
+	toasts.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	add_child(toasts)
 	refresh()
 
 
@@ -103,14 +118,21 @@ func refresh() -> void:
 		if card.is_free():
 			continue
 		used += 1
-		if not card.is_ended():
+		if card.is_damaged():
+			# QA-043 : visible mais désactivé (et sauté par la croix).
+			var dead: Button = card.add_action(UiText.t("load_resume", "REPRENDRE"), &"ButtonTool")
+			dead.name = "Resume%d" % number
+			dead.disabled = true
+			dead.focus_mode = Control.FOCUS_NONE
+		elif not card.is_ended():
 			var resume: Button = card.add_action(UiText.t("load_resume", "REPRENDRE"), &"ButtonPrimary")
 			resume.name = "Resume%d" % number
 			resume.pressed.connect(func() -> void: resume_requested.emit(number))
 			resume_buttons[number] = resume
 		var days: Button = card.add_action(UiText.t("load_past_day", "REPRENDRE UN JOUR PASSÉ…"))
 		days.name = "Days%d" % number
-		days.disabled = SaveService.list_snapshots(number, save_dir).is_empty()
+		days.disabled = loadable_days(number).is_empty()
+		days.focus_mode = Control.FOCUS_NONE if days.disabled else Control.FOCUS_ALL
 		days.pressed.connect(open_day_picker.bind(number))
 		day_buttons[number] = days
 		var delete: Button = card.add_action(UiText.t("load_delete", "SUPPRIMER"), &"ButtonGhost")
@@ -124,11 +146,12 @@ func refresh() -> void:
 
 func default_focus() -> Control:
 	if picker_slot != SaveService.NO_SLOT:
-		var days: PackedInt32Array = SaveService.list_snapshots(picker_slot, save_dir)
-		if not days.is_empty() and picker_buttons.has(days[days.size() - 1]):
+		var days: PackedInt32Array = PackedInt32Array(picker_buttons.keys())
+		days.sort()
+		if not days.is_empty():
 			return picker_buttons[days[days.size() - 1]]
 		return back_button
-	var latest: int = SaveService.latest_slot(save_dir)
+	var latest: int = SaveSlotCard.continue_slot(save_dir)
 	if resume_buttons.has(latest):
 		return resume_buttons[latest]
 	for card: SaveSlotCard in cards:
@@ -183,9 +206,37 @@ func _disarm_delete(slot: int) -> void:
 # Reprendre un jour passé
 # ---------------------------------------------------------------------------
 
+## Matins de l'emplacement réellement chargeables (QA-045) : instantanés
+## listés **et** lisibles (un `.tmp` orphelin ou un fichier tronqué n'est
+## jamais proposé, même si `list_snapshots` le compte).
+func loadable_days(slot: int) -> PackedInt32Array:
+	var result: PackedInt32Array = []
+	for day: int in SaveService.list_snapshots(slot, save_dir):
+		if not SaveService.load_snapshot(slot, day, save_dir).is_empty():
+			result.append(day)
+	return result
+
+
+## Chargement impossible malgré tout (fichier abîmé entre-temps) : toast
+## d'erreur (icône + texte) et écran relu, au lieu de ne rien faire.
+func show_load_failed(slot: int, day: int = 0) -> void:
+	var message: String = UiText.tf("load_failed_day", [day], "Le matin du jour %02d est illisible. Choisissez un autre jour.") if day > 0 \
+			else UiText.tf("load_failed_slot", [slot], "La sauvegarde de l'emplacement %d est illisible.")
+	toasts.push(ToastStack.Kind.ERROR, UiText.t("load_failed_title", "CHARGEMENT IMPOSSIBLE"), message)
+	if picker_slot != SaveService.NO_SLOT and picker_slot == slot:
+		var remaining: PackedInt32Array = loadable_days(slot)
+		refresh()
+		if remaining.is_empty():
+			close_day_picker()
+		else:
+			open_day_picker(slot)
+	else:
+		refresh()
+
+
 ## Ouvre la liste des matins disponibles de l'emplacement.
 func open_day_picker(slot: int) -> void:
-	var days: PackedInt32Array = SaveService.list_snapshots(slot, save_dir)
+	var days: PackedInt32Array = loadable_days(slot)
 	if days.is_empty():
 		return
 	picker_slot = slot
@@ -260,7 +311,7 @@ func choose_day(day: int) -> void:
 	var slot: int = picker_slot
 	if slot == SaveService.NO_SLOT:
 		return
-	var days: PackedInt32Array = SaveService.list_snapshots(slot, save_dir)
+	var days: PackedInt32Array = loadable_days(slot)
 	var last: int = days[days.size() - 1] if not days.is_empty() else day
 	if day >= last:
 		resume_day_requested.emit(slot, day)

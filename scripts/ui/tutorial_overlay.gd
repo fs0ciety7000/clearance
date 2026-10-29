@@ -16,6 +16,13 @@
 ## Chaque étape peut être passée ; le tutoriel entier aussi. Terminé ou passé,
 ## `Settings.tutorial_j1` repasse à faux (réactivable dans Options). Ne touche
 ## jamais à la logique du jour (lecture seule des signaux).
+## Manette (QA-042, UI_FLOW §9.5) : la carte gère elle-même sa navigation
+## (elle n'est pas dans la racine du guichet, dont le `FocusGuard` reprendrait
+## toute direction) — accueil : focus piégé entre COMMENCER et PASSER LE
+## TUTORIEL ; étapes : ← → entre QUITTER et PASSER L'ÉTAPE, ↓ rend le focus au
+## guichet ; croix ↑ depuis SUIVANT (sans FERMER LE GUICHET au-dessus) ou depuis
+## le haut du Rulebook entre dans la carte ; **VUE maintenue** `SKIP_HOLD_SEC`
+## passe l'étape (appui court : Rulebook, inchangé).
 ## `pending` : posé par l'écran titre quand une partie démarre au J1 et que le
 ## réglage est actif ; consommé par `DayScene` (scènes de debug et tests : non).
 class_name TutorialOverlay
@@ -47,6 +54,9 @@ const CARD_WIDTH: float = 440.0
 ## Fin : la carte « Tutoriel terminé » reste ce temps avant de disparaître.
 const DONE_HOLD_SEC: float = DS.TOAST_HOLD
 
+## Maintien de VUE (manette, `rulebook_toggle`) qui passe l'étape (QA-042).
+const SKIP_HOLD_SEC: float = DS.SKIP_HOLD
+
 ## Demande d'affichage au prochain J1 (titre → `DayScene`).
 static var pending: bool = false
 
@@ -62,6 +72,12 @@ var skip_step_button: Button = null
 var _card: PanelContainer = null
 var _box: VBoxContainer = null
 var _ended: bool = false
+## Maintien de VUE en cours : étape visée (-1 : aucun), durée, Rulebook replié
+## avant l'appui (rétabli si l'appui devient « passer l'étape »).
+var _hold_step: int = -1
+var _hold_time: float = 0.0
+var _hold_rulebook_collapsed: bool = false
+var _skip_hint: HBoxContainer = null
 
 
 func _init() -> void:
@@ -101,6 +117,7 @@ func _ready() -> void:
 	EventBus.interrogation_requested.connect(func(_t: StringName) -> void: _on_signal(Step.INTERROGATE))
 	EventBus.verdict_stamped.connect(func(_v: Verdict) -> void: _on_signal(Step.STAMP))
 	EventBus.day_ended.connect(func(_s: DaySummary) -> void: _end_quietly())
+	InputPrompts.ensure(get_tree()).device_changed.connect(func(_d: InputPrompts.Device) -> void: _refresh_skip_hint())
 	_show_intro()
 
 
@@ -118,7 +135,16 @@ func current_step() -> int:
 	return int(STEPS[step_index]["step"])
 
 
+## Vrai si le focus est sur un contrôle de la carte.
+func has_focus_inside() -> bool:
+	if _card == null or not is_inside_tree():
+		return false
+	var owner_control: Control = get_viewport().gui_get_focus_owner()
+	return owner_control != null and _card.is_ancestor_of(owner_control)
+
+
 func _clear() -> void:
+	_skip_hint = null
 	for child: Node in _box.get_children():
 		# Masqué puis libéré (jamais orphelin, même pendant le signal du bouton).
 		var item: CanvasItem = child as CanvasItem
@@ -163,8 +189,13 @@ func _show_intro() -> void:
 
 ## Première étape.
 func begin() -> void:
+	var from_card: bool = has_focus_inside()
 	active = true
 	_go_to(0)
+	# COMMENCER ne fait que commencer (QA-041) : le focus va au guichet (SUIVANT),
+	# l'étape 1 demande d'appeler le passager.
+	if from_card and is_inside_tree():
+		_focus_booth.call_deferred()
 
 
 func _go_to(index: int) -> void:
@@ -218,6 +249,20 @@ func _render_step() -> void:
 	skip_step_button.name = "SkipStep"
 	skip_step_button.pressed.connect(skip_step)
 	row.add_child(skip_step_button)
+	# Raccourci manette (QA-042) : invite visible seulement à la manette.
+	_skip_hint = ScreenBase.hbox(DS.SPACE_2)
+	_skip_hint.name = "SkipHold"
+	_skip_hint.add_child(ScreenBase.spacer())
+	_skip_hint.add_child(ScreenBase.label(UiText.t("tut_skip_hold", "maintenir"), &"CaptionLabel"))
+	_skip_hint.add_child(PromptGlyph.make(&"rulebook_toggle"))
+	_skip_hint.add_child(ScreenBase.label(UiText.t("tut_skip_hold_tail", ": passer l'étape"), &"CaptionLabel"))
+	_box.add_child(_skip_hint)
+	_refresh_skip_hint()
+
+
+func _refresh_skip_hint() -> void:
+	if _skip_hint != null and is_instance_valid(_skip_hint):
+		_skip_hint.visible = InputPrompts.is_gamepad()
 
 
 ## Pastilles d'avancement : pleine = faite, contour = à venir (forme, pas la couleur seule).
@@ -250,17 +295,35 @@ func _on_signal(step: Step) -> void:
 func skip_step() -> void:
 	if not active or _ended:
 		return
+	var from_card: bool = has_focus_inside()
 	_go_to(step_index + 1)
+	if not from_card or not is_inside_tree():
+		return
+	# Focus gardé sur PASSER L'ÉTAPE (passer plusieurs étapes d'affilée), sinon au guichet.
+	if skip_step_button != null:
+		skip_step_button.grab_focus.call_deferred()
+	else:
+		_focus_booth.call_deferred()
 
 
 ## Passe tout le tutoriel (réglage désactivé : il ne sera plus proposé).
 func skip_all() -> void:
 	if _ended:
 		return
+	if has_focus_inside():
+		_focus_booth()
 	_finish(false)
 
 
+## Rend le focus au contrôle par défaut du guichet (SUIVANT en attente).
+func _focus_booth() -> void:
+	if ui != null and is_instance_valid(ui) and ui.is_inside_tree():
+		ui.focus_default()
+
+
 func _complete() -> void:
+	if has_focus_inside():
+		_focus_booth()
 	_clear()
 	_header(UiText.t("tut_eyebrow", "TUTORIEL · JOUR 1"))
 	var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
@@ -290,3 +353,107 @@ func _end_quietly() -> void:
 	_ended = true
 	active = false
 	queue_free()
+
+
+# ---------------------------------------------------------------------------
+# Manette et clavier (QA-042)
+# ---------------------------------------------------------------------------
+
+## La carte est sœur du guichet et passe avant lui (`_input` en ordre inverse
+## de l'arbre) : elle traite sa navigation et le maintien de VUE avant le
+## `FocusGuard` du guichet.
+func _input(event: InputEvent) -> void:
+	if _ended or _card == null or not is_visible_in_tree() or event is InputEventMouseMotion:
+		return
+	_track_skip_hold(event)
+	if not event.is_pressed():
+		return
+	var dir: StringName = _direction_of(event)
+	if dir == &"":
+		return
+	if has_focus_inside():
+		_navigate_inside(dir)
+		get_viewport().set_input_as_handled()
+	elif dir == &"ui_up" and _enters_card_from_booth():
+		var target: Control = start_button if step_index < 0 else skip_step_button
+		if target != null and target.is_visible_in_tree():
+			target.grab_focus()
+			get_viewport().set_input_as_handled()
+
+
+func _direction_of(event: InputEvent) -> StringName:
+	for action: StringName in FocusGuard.DIRECTIONS:
+		if event.is_action_pressed(action, true, true):
+			return action
+	return &""
+
+
+## Accueil : focus piégé entre COMMENCER et PASSER LE TUTORIEL. Étapes :
+## ← → / Tab entre QUITTER et PASSER L'ÉTAPE, ↑ reste, ↓ revient au guichet.
+func _navigate_inside(dir: StringName) -> void:
+	var owner_control: Control = get_viewport().gui_get_focus_owner()
+	var first: Control = start_button if step_index < 0 else skip_all_button
+	var second: Control = skip_all_button if step_index < 0 else skip_step_button
+	if first == null or second == null:
+		return
+	if step_index >= 0 and dir == &"ui_down":
+		_focus_booth()
+		return
+	if step_index >= 0 and dir == &"ui_up":
+		return
+	if step_index >= 0:
+		# Gauche : QUITTER ; droite : PASSER L'ÉTAPE (ordre visuel de la rangée).
+		if dir == &"ui_left":
+			first.grab_focus()
+			return
+		if dir == &"ui_right":
+			second.grab_focus()
+			return
+	(second if owner_control == first else first).grab_focus()
+
+
+## Croix ↑ qui sort du haut du guichet vers la carte : depuis SUIVANT quand rien
+## n'est configuré au-dessus (FERMER LE GUICHET a priorité), ou depuis un
+## contrôle du Rulebook sans voisin au-dessus dans le Rulebook.
+func _enters_card_from_booth() -> bool:
+	if ui == null or not is_instance_valid(ui) or not ui.is_visible_in_tree():
+		return false
+	var owner_control: Control = get_viewport().gui_get_focus_owner()
+	if owner_control == null or not owner_control.is_visible_in_tree():
+		return false
+	if owner_control == ui.tool_bar.next_button:
+		return owner_control.focus_neighbor_top.is_empty()
+	if ui.rulebook != null and ui.rulebook.is_ancestor_of(owner_control):
+		var above: Control = owner_control.find_valid_focus_neighbor(SIDE_TOP)
+		return above == null or above == owner_control or not ui.rulebook.is_ancestor_of(above)
+	return false
+
+
+## VUE (bouton de manette de `rulebook_toggle`) maintenue `SKIP_HOLD_SEC` :
+## passe l'étape. L'appui court garde son rôle (Rulebook replié / déplié) ; un
+## maintien qui aboutit rétablit l'état du Rulebook d'avant l'appui.
+func _track_skip_hold(event: InputEvent) -> void:
+	if not (event is InputEventJoypadButton) or not event.is_action(&"rulebook_toggle", true):
+		return
+	if event.is_pressed() and not event.is_echo():
+		if active and step_index >= 0 and step_index < STEPS.size():
+			_hold_step = step_index
+			_hold_time = 0.0
+			_hold_rulebook_collapsed = ui.rulebook.collapsed if ui != null and is_instance_valid(ui) and ui.rulebook != null else false
+	elif not event.is_pressed():
+		_hold_step = -1
+
+
+func _process(delta: float) -> void:
+	if _hold_step < 0:
+		return
+	_hold_time += delta
+	if _hold_time < SKIP_HOLD_SEC:
+		return
+	var target: int = _hold_step
+	_hold_step = -1
+	if ui != null and is_instance_valid(ui) and ui.rulebook != null:
+		ui.rulebook.set_collapsed(_hold_rulebook_collapsed)
+	# L'appui court a pu valider l'étape Rulebook : on ne saute qu'une étape.
+	if active and not _ended and step_index == target:
+		skip_step()

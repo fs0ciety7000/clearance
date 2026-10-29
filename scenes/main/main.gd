@@ -8,7 +8,9 @@
 ## (`TutorialOverlay.pending`) si le réglage `tutorial_j1` est actif.
 ## Arguments de capture (debug, `DebugArgs.enabled`) : `--demo-saves` (trois
 ## emplacements de démonstration dans `user://qa_demo_saves`, jamais les vraies
-## sauvegardes), `--title=new|difficulty|overwrite|load|days`.
+## sauvegardes), `--title=new|difficulty|overwrite|load|days`, `--damage-slot=N`
+## (avec `--demo-saves` : emplacement de démonstration N rendu illisible et
+## marqué endommagé, capture QA-043).
 extends Control
 
 const DAY_SCENE_PATH: String = "res://scenes/main/day.tscn"
@@ -33,6 +35,8 @@ var options: OptionsPanel = null
 var screen: ScreenBase = null
 ## Faux : `_start_day` n'ouvre pas la scène de jour (tests).
 var change_scene: bool = true
+## Toasts du titre (chargement impossible), créés au premier besoin.
+var title_toasts: ToastStack = null
 var _menu: Array[Control] = []
 var _applied_min_px: int = -1
 
@@ -55,6 +59,8 @@ func _ready() -> void:
 	var args: Dictionary = DebugArgs.parse(OS.get_cmdline_user_args()) if DebugArgs.enabled() else {}
 	if args.has("demo-saves"):
 		write_demo_saves(DEMO_SAVES_DIR)
+		if args.has("damage-slot"):
+			damage_demo_slot(DEMO_SAVES_DIR, str(args["damage-slot"]).to_int())
 		SaveService.use_root(DEMO_SAVES_DIR)
 	# Le bouton de la scène devient « CONTINUER » (CTA principal).
 	continue_button = _start_button
@@ -118,7 +124,8 @@ func _add_button(text: String, callback: Callable) -> Button:
 ## État du menu d'après les emplacements : « CONTINUER — JOUR n » (désactivé
 ## sans partie active), « CHARGER » (désactivé sans aucune partie).
 func refresh_menu() -> void:
-	var latest: int = SaveService.latest_slot()
+	# Jamais un emplacement endommagé (QA-043, `SaveSlotCard.continue_slot`).
+	var latest: int = SaveSlotCard.continue_slot()
 	var meta: Dictionary = SaveService.load_meta(latest) if latest != SaveService.NO_SLOT else {}
 	var day: int = SaveService.as_int(meta.get("current_day", 0))
 	if latest != SaveService.NO_SLOT and day > 0:
@@ -215,8 +222,11 @@ func open_load() -> LoadScreen:
 
 ## « CONTINUER » : la partie active la plus récente.
 func continue_game() -> bool:
-	if not GameState.load_from_slot():
+	var slot: int = SaveSlotCard.continue_slot()
+	if slot == SaveService.NO_SLOT or not GameState.load_from_slot(slot):
 		refresh_menu()
+		if slot != SaveService.NO_SLOT:
+			_toast_load_failed(slot)
 		return false
 	_start_day()
 	return true
@@ -233,6 +243,7 @@ func start_new_game(slot: int, difficulty: StringName) -> void:
 
 func resume_slot(slot: int) -> bool:
 	if not GameState.load_from_slot(slot):
+		_load_failed(slot)
 		return false
 	_start_day()
 	return true
@@ -240,9 +251,36 @@ func resume_slot(slot: int) -> bool:
 
 func resume_day(slot: int, day: int) -> bool:
 	if not GameState.load_day_snapshot(slot, day):
+		_load_failed(slot, day)
 		return false
 	_start_day()
 	return true
+
+
+## Chargement impossible depuis « Charger » : toast de l'écran (QA-043 / QA-045,
+## jamais un bouton qui ne fait rien).
+func _load_failed(slot: int, day: int = 0) -> void:
+	var load_screen: LoadScreen = screen as LoadScreen
+	if load_screen != null and is_instance_valid(load_screen):
+		load_screen.show_load_failed(slot, day)
+	else:
+		_toast_load_failed(slot)
+
+
+## Toast d'erreur sur le titre (CONTINUER qui échoue malgré tout).
+func _toast_load_failed(slot: int) -> void:
+	if title_toasts == null:
+		title_toasts = ToastStack.new()
+		title_toasts.name = "Toasts"
+		title_toasts.anchor_left = 1.0
+		title_toasts.anchor_right = 1.0
+		title_toasts.offset_left = -(SaveSlotCard.MIN_WIDTH + DS.SPACE_8)
+		title_toasts.offset_right = -DS.SPACE_8
+		title_toasts.offset_top = DS.SPACE_8
+		title_toasts.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		add_child(title_toasts)
+	title_toasts.push(ToastStack.Kind.ERROR, UiText.t("load_failed_title", "CHARGEMENT IMPOSSIBLE"),
+			UiText.tf("load_failed_slot", [slot], "La sauvegarde de l'emplacement %d est illisible."))
 
 
 func _start_day() -> void:
@@ -270,6 +308,25 @@ func _debug_title(which: String) -> void:
 		"days":
 			var load_screen: LoadScreen = open_load()
 			load_screen.open_day_picker.call_deferred(1)
+
+
+## Capture QA-043 : `current.json` de l'emplacement de démonstration illisible,
+## instantanés retirés, méta marquée `damaged` (dossier de démonstration seul).
+static func damage_demo_slot(dir: String, slot: int) -> void:
+	if dir != DEMO_SAVES_DIR or slot < 1 or slot > SaveService.SLOT_COUNT:
+		return
+	var file: FileAccess = FileAccess.open(SaveService.slot_path(slot, dir), FileAccess.WRITE)
+	if file != null:
+		file.store_string("{\"version\": 6, \"current_d")
+		file.close()
+	for day: int in SaveService.list_snapshots(slot, dir):
+		DirAccess.remove_absolute(SaveService.snapshot_path(slot, day, dir))
+	var meta: Dictionary = SaveService.load_meta(slot, dir)
+	meta["damaged"] = true
+	file = FileAccess.open(SaveService.meta_path(slot, dir), FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(meta))
+		file.close()
 
 
 ## Trois emplacements de démonstration (captures) : partie en Dur au J12,

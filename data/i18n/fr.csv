@@ -552,7 +552,7 @@ pause_quit_confirm,CONFIRMER : LE SHIFT EN COURS SERA PERDU
 opt_accessibility,ACCESSIBILITÉ
 opt_text_scale,Taille du texte
 opt_fx,Effets visuels
-opt_fx_hint,"Scanlines, scintillement, lueurs des hologrammes."
+opt_fx_hint,"Intensité des lueurs et halos, des scanlines et des animations d'effet (liens, tampons, néons, pluie). Désactivés : tout est fixe, sans halo."
 opt_fx_full,COMPLETS
 opt_fx_reduced,RÉDUITS
 opt_fx_off,DÉSACTIVÉS
@@ -2773,7 +2773,7 @@ opt_cv_protan,PROTAN · DEUTAN
 opt_cv_tritan,TRITAN
 opt_cv_contrast,CONTRASTE ÉLEVÉ
 opt_holo_flicker,Scintillement holographique
-opt_holo_flicker_hint,"Scintillement et défilement des hologrammes, indépendants des lueurs."
+opt_holo_flicker_hint,"Désactivé : plus aucun clignotement ni défilement (cadres des documents, hologrammes, néons instables et écrans du guichet). Les lueurs restent."
 opt_controls,COMMANDES
 opt_pad_glyphs,Glyphes de manette
 opt_pad_glyphs_hint,"Les invites suivent le dernier appareil utilisé, clavier ou manette."
@@ -2918,3 +2918,11 @@ title_continue_story,%s · RÉCIT
 cit_warning_story,AVERTISSEMENT · MODE RÉCIT
 sum_fines_detail_story,Mode Récit : aucune amende
 cit_no_fine_story,sans amende en mode Récit
+tut_skip_hold,maintenir
+tut_skip_hold_tail,: passer l'étape
+slot_damaged,SAUVEGARDE ENDOMMAGÉE
+slot_damaged_day,Dernier jour connu : %02d
+slot_damaged_hint,"Le fichier de cette partie est illisible. Reprenez un jour passé s'il en reste, ou supprimez l'emplacement."
+load_failed_title,CHARGEMENT IMPOSSIBLE
+load_failed_day,Le matin du jour %02d est illisible. Choisissez un autre jour.
+load_failed_slot,La sauvegarde de l'emplacement %d est illisible.
