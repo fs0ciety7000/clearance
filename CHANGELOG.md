@@ -1,5 +1,19 @@
 # Changelog — CLEARANCE
 
+## 0.11.0 — 2026-10-29
+
+### M11 « Confort »
+- **Sauvegardes** : 3 emplacements, sauvegarde automatique chaque soir avec **reprise de n'importe quel jour passé**, les fins n'effacent plus la partie (archivée « terminée »), progression globale (fins vues, personnages croisés). Conversion automatique des sauvegardes 0.10.0 (D-101, D-117).
+- **Mode Récit** : pas de chrono, pas d'amendes, toutes les fins accessibles, foyer et arrestations adoucis ; passage en Dur possible à tout moment, jamais l'inverse (D-102, D-118).
+- **Écrans de partie** : Continuer, Nouvelle partie (emplacement + difficulté), Charger (cartes d'emplacement, reprise d'un jour, suppression en deux temps).
+- **Tutoriel interactif du J1** en 6 étapes, passable, réactivable dans les options.
+- **Manette complète** (Xbox, PlayStation, Steam Deck) : focus sur tous les écrans, invites qui suivent le périphérique utilisé.
+- **Vision des couleurs** : 4 modes, et aucune information portée par la seule couleur ; réglage séparé du scintillement holographique (guichet 3D compris).
+- **Carte d'identité redessinée** : valeurs à 13 px en 1080p et 12 px sur Steam Deck.
+
+### Corrections
+- Passe QA M11 (QA-041 à QA-049) : Ⓐ suit le focus entre deux passagers, tutoriel joignable à la manette, sauvegardes endommagées signalées et récupérées, passage en Dur persisté immédiatement, néons du guichet sans scintillement quand l'option est coupée.
+
 ## 0.10.0 — 2026-10-29
 
 ### Acte III « Témoins » — jours 21 à 30
