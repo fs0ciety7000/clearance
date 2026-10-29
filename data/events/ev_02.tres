@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="StationEventDef" format=3 uid="uid://us781waupt4c"]
+
+[ext_resource type="Script" path="res://scripts/core/rule_change_def.gd" id="1_gr7sf"]
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="2_70q3m"]
+
+[sub_resource type="Resource" id="ev_02_resource_1"]
+script = ExtResource("1_gr7sf")
+op = 5
+modifier = &"comparator_down"
+amount = 1
+
+[sub_resource type="Resource" id="ev_02_resource_2"]
+script = ExtResource("1_gr7sf")
+op = 5
+modifier = &"max_anomalies"
+amount = 1
+
+[sub_resource type="Resource" id="ev_02_resource_3"]
+script = ExtResource("1_gr7sf")
+op = 5
+modifier = &"no_subtle"
+amount = 1
+
+[resource]
+script = ExtResource("2_70q3m")
+id = &"ev_02"
+key = &"comparator"
+event_class = 2
+window_passengers = 3
+changes = Array[ExtResource("1_gr7sf")]([SubResource("ev_02_resource_1"), SubResource("ev_02_resource_2"), SubResource("ev_02_resource_3")])
+announce_key = "sev_comparator_announce"
+title_key = "sev_comparator_title"
+rulebook_key = "sev_comparator_rb"
+end_key = "sev_comparator_end"
+garde_window_passengers = 3

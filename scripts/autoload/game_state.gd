@@ -12,6 +12,12 @@
 ## global alimenté à chaque sauvegarde (personnages croisés, mode Récit),
 ## difficulté (`difficulty` : `&"hard"` / `&"story"`, Récit → Dur seulement),
 ## temps de jeu (`play_time_sec`, compté entre deux sauvegardes).
+## M12 (ARCHITECTURE §11) : **session** (`session_mode`) — `campaign`
+## (défaut), `epilogue` (J31 rejoué depuis une graine : `begin_epilogue`,
+## rien n'est jamais écrit dans l'emplacement) ou `garde` (Garde de nuit :
+## aucun état de campagne) ; profil v2 à la fin (`end_campaign` : variante,
+## nombre de passages, graine d'épilogue + `day_31.json`, noms appris,
+## dernière partie) et à chaque sauvegarde (`max_day_reached`).
 ## Pas de `class_name` (autoload).
 extends Node
 
@@ -46,6 +52,20 @@ var portrait_seed: int = 0
 ## Début du temps de jeu non encore compté (`Time.get_ticks_msec`).
 var _play_mark_msec: int = 0
 
+const SESSION_CAMPAIGN: StringName = &"campaign"
+const SESSION_EPILOGUE: StringName = &"epilogue"
+const SESSION_GARDE: StringName = &"garde"
+## M12 : nature de la session en cours. Hors `campaign`, `save_to_slot` et
+## `end_campaign` n'écrivent rien (la partie terminée n'est jamais modifiée, D-125).
+var session_mode: StringName = SESSION_CAMPAIGN
+## M12 : graine de l'épilogue en cours (`begin_epilogue`), vide sinon.
+var epilogue_seed: Dictionary = {}
+## M12 : emplacement d'origine de l'épilogue (`NO_SLOT` : depuis le profil).
+var epilogue_slot: int = SaveService.NO_SLOT
+## M12 : fin déjà inscrite au profil pour cette partie (idempotence de
+## `end_campaign`, appelé par `Campaign` puis par `DayScene.show_end`).
+var _recorded_ending: String = ""
+
 
 ## Démarre une nouvelle campagne. `p_seed = 0` tire une graine non
 ## déterministe (seul tirage hors SeededRng, à « Nouvelle partie »).
@@ -70,6 +90,7 @@ func new_campaign(p_seed: int = 0, slot: int = SaveService.DEFAULT_SLOT,
 	case_memory = {}
 	active_slot = slot
 	difficulty = DIFFICULTY_STORY if p_difficulty == DIFFICULTY_STORY else DIFFICULTY_HARD
+	_reset_session()
 	play_time_sec = 0
 	# 31 bits : exact à travers JSON (nombres flottants).
 	portrait_seed = SeededRng.mix_string(campaign_seed, "portrait") & 0x7FFFFFFF
@@ -229,6 +250,7 @@ func apply_save_dict(data: Dictionary) -> void:
 	play_time_sec = maxi(SaveService.as_int(data.get("play_time_sec", 0)), 0)
 	portrait_seed = SaveService.as_int(data.get("portrait_seed", 0))
 	_play_mark_msec = Time.get_ticks_msec()
+	_reset_session()
 	EventBus.credits_changed.emit(credits, 0)
 
 
@@ -237,6 +259,9 @@ func apply_save_dict(data: Dictionary) -> void:
 ## profil global (personnages croisés, mode Récit). Émet `game_saved`,
 ## `save_slots_changed` (et `profile_changed` si le profil change).
 func save_to_slot(slot: int = SaveService.NO_SLOT, dir: String = SaveService.DEFAULT_DIR) -> Error:
+	if not is_campaign_session():
+		push_warning("GameState.save_to_slot: session %s, rien n'est écrit" % session_mode)
+		return ERR_UNAVAILABLE
 	var target: int = active_slot if slot == SaveService.NO_SLOT else slot
 	_bank_play_time()
 	var err: Error = SaveService.save_slot(to_save_dict(), target, dir)
@@ -287,24 +312,140 @@ func load_day_snapshot(slot: int, day: int, dir: String = SaveService.DEFAULT_DI
 ## avec les personnages croisés ; emplacement archivé (`status = ended`,
 ## `ending_id`) s'il contient bien cette campagne (même graine). Idempotent
 ## (`Campaign` puis `DayScene.show_end`). `slot` = `NO_SLOT` : `active_slot`.
+## M12 (D-132) : variante et passage comptés une fois par partie
+## (`ProfileService.record_ending`, `last_campaign`), noms appris (B63) ; fin de
+## l'Acte III (D-122, D-125) : graine d'épilogue au profil
+## (`ProfileService.unlock_epilogue`) et en `day_31.json` de l'emplacement
+## archivé (`SaveService.write_epilogue`). Sans effet hors session de campagne.
 func end_campaign(ending: StringName, slot: int = SaveService.NO_SLOT, dir: String = SaveService.DEFAULT_DIR) -> void:
+	if not is_campaign_session():
+		return
 	var target: int = active_slot if slot == SaveService.NO_SLOT else slot
 	var ending_id: String = String(ending)
 	var known: bool = EndingService.ALL_ENDINGS.has(ending)
 	var day: int = current_day
 	if not day_history.is_empty():
 		day = SaveService.as_int(day_history[day_history.size() - 1].get("day", current_day), current_day)
-	if ProfileService.record(dir, ending_id if known else "", day, case_memory.keys(), is_story_mode()):
+	var changed: bool = ProfileService.record(dir, "", day, case_memory.keys(), is_story_mode(), day)
+	var epi: Dictionary = {}
+	if known:
+		epi = EpilogueService.make_seed(ending, narrative_flags, household, case_memory, campaign_seed, day)
+		var run_key: String = "%d:%s:%d" % [campaign_seed, ending_id, day]
+		if _recorded_ending != run_key:
+			_recorded_ending = run_key
+			var variant: StringName = EpilogueService.variant_of(ending, narrative_flags)
+			changed = ProfileService.record_ending(dir, {
+				"id": ending_id, "variant": String(variant), "act": EpilogueService.act_of(narrative_flags), "day": day,
+				"ending_key": String(EpilogueService.ending_key(ending, variant)), "campaign_seed": campaign_seed,
+				"climate": String(EndingService.climate_of(narrative_flags)), "traces": _trace_keys(),
+				"world": str(epi.get("world", "")), "first_line_key": _first_epilogue_line(ending),
+			}) or changed
+			if not epi.is_empty():
+				changed = ProfileService.unlock_epilogue(dir, epi) or changed
+			var table: CharacterTableDef = CharacterTableDef.load_default()
+			if table != null:
+				changed = ProfileService.record_known_names(dir, table.known_names(narrative_flags, true)) or changed
+	if changed:
 		EventBus.profile_changed.emit()
 	if ending_id.is_empty() or not SaveService.has_save(target, dir):
 		return
 	var meta: Dictionary = SaveService.load_meta(target, dir)
 	if not same_seed(SaveService.as_int(meta.get("campaign_seed", 0)), campaign_seed):
 		return
-	if str(meta.get("status", "")) == SaveService.STATUS_ENDED and str(meta.get("ending_id", "")) == ending_id:
-		return
-	if SaveService.mark_ended(target, ending_id, dir) == OK:
+	var archived: bool = str(meta.get("status", "")) == SaveService.STATUS_ENDED and str(meta.get("ending_id", "")) == ending_id
+	if not archived and SaveService.mark_ended(target, ending_id, dir) == OK:
+		archived = true
 		EventBus.save_slots_changed.emit()
+	if archived and not epi.is_empty() and SaveService.load_epilogue(target, dir).is_empty():
+		if SaveService.write_epilogue(target, epi, dir) == OK:
+			EventBus.save_slots_changed.emit()
+
+
+# --- M12 : sessions épilogue et Garde (ARCHITECTURE §11) ------------------------------
+
+func is_campaign_session() -> bool:
+	return session_mode == SESSION_CAMPAIGN
+
+
+## Charge le matin du J31 depuis une graine d'épilogue (D-125) : graine de
+## campagne, jour 31, drapeaux de la graine (`act3_started`), foyer, mémoire
+## des cas ; aucun crédit. Rien ne sera écrit dans l'emplacement `slot`.
+func begin_epilogue(epi: Dictionary, slot: int = SaveService.NO_SLOT) -> void:
+	campaign_seed = SaveService.as_int(epi.get("campaign_seed", 0))
+	current_day = EpilogueService.EPILOGUE_DAY
+	credits = 0
+	score_total = 0
+	citations = 0
+	narrative_flags = EpilogueService.morning_flags(epi)
+	day_history.clear()
+	household = EpilogueService.household_of(epi)
+	case_memory = EpilogueService.memory_of(epi)
+	difficulty = DIFFICULTY_HARD
+	_reset_session()
+	session_mode = SESSION_EPILOGUE
+	epilogue_seed = epi.duplicate(true)
+	epilogue_slot = slot
+	_play_mark_msec = Time.get_ticks_msec()
+	EventBus.credits_changed.emit(credits, 0)
+
+
+## Garde de nuit : session sans état de campagne (rien n'est écrit dans un
+## emplacement ; les records passent par `GardeService.record_run`).
+func begin_garde() -> void:
+	campaign_seed = 0
+	current_day = 0
+	credits = 0
+	narrative_flags.clear()
+	day_history.clear()
+	household = Household.new()
+	case_memory = {}
+	_reset_session()
+	session_mode = SESSION_GARDE
+
+
+## Fin d'une session épilogue ou Garde : plus aucune campagne chargée
+## (« Continuer » relira l'emplacement).
+func end_session() -> void:
+	if is_campaign_session():
+		return
+	_reset_session()
+	current_day = 0
+
+
+func _reset_session() -> void:
+	session_mode = SESSION_CAMPAIGN
+	epilogue_seed = {}
+	epilogue_slot = SaveService.NO_SLOT
+	_recorded_ending = ""
+
+
+## Traces des choix de la partie (`EndingService.traces(flags)` quand le lot B
+## l'aura déplacé de l'écran de fin ; vide sinon).
+func _trace_keys() -> PackedStringArray:
+	var script: Script = EndingService
+	if script.has_method(&"traces"):
+		var value: Variant = script.call(&"traces", narrative_flags)
+		if value is PackedStringArray:
+			return value
+		if value is Array:
+			return PackedStringArray(value)
+	return PackedStringArray()
+
+
+## Première ligne de l'épilogue de la fin (Dossier, onglet Fins).
+func _first_epilogue_line(ending: StringName) -> String:
+	var act: int = EpilogueService.act_of(narrative_flags)
+	var info: Dictionary
+	if act == 3:
+		info = EndingService.epilogue_act3(ending, narrative_flags, household)
+	elif act == 2:
+		info = EndingService.epilogue_act2(ending, narrative_flags, household)
+	else:
+		info = EndingService.epilogue(ending, narrative_flags, household)
+	var lines: Variant = info.get("lines", PackedStringArray())
+	if lines is PackedStringArray and not (lines as PackedStringArray).is_empty():
+		return (lines as PackedStringArray)[0]
+	return ""
 
 
 ## Graines égales à la précision de JSON près (une graine 64 bits d'avant
@@ -315,7 +456,7 @@ static func same_seed(a: int, b: int) -> bool:
 
 ## Profil global après une sauvegarde : personnages croisés, mode Récit.
 func _record_profile(dir: String) -> void:
-	if ProfileService.record(dir, "", current_day, case_memory.keys(), is_story_mode()):
+	if ProfileService.record(dir, "", current_day, case_memory.keys(), is_story_mode(), current_day):
 		EventBus.profile_changed.emit()
 
 

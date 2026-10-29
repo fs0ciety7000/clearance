@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GardeUnitDef" format=3 uid="uid://p5vi8ssu30uf"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_7vydv"]
+[ext_resource type="Resource" path="res://data/rules/rule_seals_valid.tres" id="2_ok2wy"]
+[ext_resource type="Script" path="res://scripts/core/garde_unit_def.gd" id="3_v4v0m"]
+
+[resource]
+script = ExtResource("3_v4v0m")
+id = &"u14"
+title_key = "garde_unit_u14"
+rules = Array[ExtResource("1_7vydv")]([ExtResource("2_ok2wy")])
+tier = 3
+rulebook_tabs = PackedStringArray("seals")
+renews_lists = PackedStringArray()

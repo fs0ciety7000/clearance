@@ -24,6 +24,11 @@
 ## solde, rappel des salaires, climat prévisualisé) ; fin du J30 par
 ## `EndingService.evaluate_final_act3` (foyer du dernier jour, figure
 ## finale), épilogues `end3_*`.
+## M12 (ARCHITECTURE §11) : **épilogue J31** (`epilogue_seed_for_slot`,
+## `epilogue_seed_from_profile`, `start_epilogue`, `close_epilogue` : pas
+## d'économie, pas de soirée, conclusion composée, profil, méta
+## `epilogue_done` ; la partie terminée n'est jamais modifiée) et **Garde de
+## nuit** (`start_garde`, `finish_garde` : records au profil).
 class_name Campaign
 extends RefCounted
 
@@ -258,3 +263,75 @@ static func compliance() -> float:
 		processed += SaveService.as_int(entry.get("processed", row_correct + SaveService.as_int(entry.get("errors", 0))))
 		correct += row_correct
 	return float(correct) / float(processed) if processed > 0 else 0.0
+
+
+# --- M12 : épilogue J31 (D-122 → D-125) ------------------------------------------------
+
+## Graine d'épilogue d'un emplacement terminé (`day_31.json`), vide sinon.
+static func epilogue_seed_for_slot(slot: int, dir: String = SaveService.DEFAULT_DIR) -> Dictionary:
+	return SaveService.load_epilogue(slot, dir)
+
+
+## Graine d'épilogue du profil (`<fin>:<variante>`, Dossier › Épilogues).
+static func epilogue_seed_from_profile(key: String, dir: String = SaveService.DEFAULT_DIR) -> Dictionary:
+	return ProfileService.epilogue_seed(ProfileService.load_profile(dir), key)
+
+
+## Prépare le J31 depuis une graine : session épilogue du `GameState` (matin
+## du J31, rien n'est écrit) ; renvoie le `DayDef` du monde (à passer à
+## `DayController.start_epilogue`), null si la graine ou les données manquent.
+static func start_epilogue(epi: Dictionary, slot: int = SaveService.NO_SLOT, def: EpilogueDef = null) -> DayDef:
+	var clean: Dictionary = EpilogueService.sanitize_seed(epi)
+	if clean.is_empty():
+		return null
+	var day: DayDef = EpilogueService.day_for(clean, def)
+	if day == null:
+		push_warning("Campaign.start_epilogue: monde « %s » sans DayDef" % clean.get("world", ""))
+		return null
+	GameState.begin_epilogue(clean, slot)
+	return day
+
+
+## Fin du J31 : conclusion composée (`EpilogueService.conclusion`), épilogue
+## vu au profil (nombre de fois, dernières lignes), personnages croisés, méta
+## `epilogue_done` de l'emplacement d'origine. La session reste « épilogue »
+## jusqu'à `GameState.end_session()` (retour au titre). Émet `epilogue_concluded`.
+static func close_epilogue(summary: DaySummary, dir: String = SaveService.DEFAULT_DIR, def: EpilogueDef = null) -> Dictionary:
+	if GameState.session_mode != GameState.SESSION_EPILOGUE:
+		return {}
+	var epi: Dictionary = GameState.epilogue_seed
+	var warnings: int = summary.get_citation_count() if summary != null else 0
+	var card: Dictionary = EpilogueService.conclusion(epi, GameState.narrative_flags, warnings, def)
+	var lines: PackedStringArray = card.get("lines", PackedStringArray())
+	var changed: bool = ProfileService.record_epilogue_played(dir, EpilogueService.profile_key(epi), lines, epi)
+	if ProfileService.record(dir, "", 0, GameState.case_memory.keys()):
+		changed = true
+	if changed:
+		EventBus.profile_changed.emit()
+	if GameState.epilogue_slot != SaveService.NO_SLOT \
+			and SaveService.mark_epilogue_done(GameState.epilogue_slot, dir) == OK:
+		EventBus.save_slots_changed.emit()
+	EventBus.epilogue_concluded.emit(card)
+	return card
+
+
+# --- M12 : Garde de nuit (D-126 → D-128) ------------------------------------------------
+
+## Nouvelle garde sur un code (graine du jour `NUIT-AAAA-MM-JJ` ou code libre) :
+## session Garde du `GameState` ; null si le code ou les données sont
+## invalides. Le `DayController` la joue (`start_garde`).
+static func start_garde(code: String, def: GardeDef = null, events: StationEventsDef = null) -> GardeRun:
+	var run: GardeRun = GardeService.new_run(code, def, events)
+	if run != null:
+		GameState.begin_garde()
+	return run
+
+
+## Garde terminée (3 erreurs ou « Terminer la garde ») : records au profil,
+## pastilles `{new_record, daily_record, first_try, rank}`.
+static func finish_garde(run: GardeRun, dir: String = SaveService.DEFAULT_DIR) -> Dictionary:
+	if run == null or not run.ended:
+		return {}
+	var badges: Dictionary = GardeService.record_run(run, dir)
+	EventBus.profile_changed.emit()
+	return badges

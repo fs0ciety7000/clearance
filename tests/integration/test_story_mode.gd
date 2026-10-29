@@ -52,6 +52,9 @@ func _start(day_number: int, difficulty: StringName, flags: Dictionary = {}) -> 
 	h = DayHarness.new()
 	h.setup(self, NullBooth.new(), day_number, 0, GameState.get_day_seed(), GameState.get_true_flags(),
 			Campaign.memory_for_day(data))
+	# Indépendant du calendrier des événements de station (D-136 : EV-05 gèle
+	# l'horloge ; couvert par test_m12_station_events).
+	h.controller.station_events.clear()
 	h.controller.close_intro()
 	return h.controller
 

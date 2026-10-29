@@ -27,6 +27,14 @@
 ## au comparateur (puce sur le document prorogé) ; sujets `about_sponsor`,
 ## `about_summons`, `about_lockout` ; accessoires de l'Acte III et figure finale
 ## du J30 (SC-82 : Dora, voix de la famille, ou Mira).
+## M12 (lot C, ARCHITECTURE §11.2) : règles mutables au Rulebook
+## (`rules_changed` → `RulebookPanel.apply_rules` ; tampon DÉTENTION ouvert
+## par une directive de Garde), bandeau ÉVÉNEMENT (`StationEventBanner`,
+## `station_event_started` / `_ended`) et ligne ambre en tête du Rulebook,
+## liste nommée « Cartes volées » (`rule_list_published`), comparateur en
+## panne (EV-02, `RuleContext.modifier(MOD_COMPARATOR_DOWN)` lu par
+## `rule_context_provider`) : ni CONCORDANCE ni DISCORDANCE, « CONSTAT DE
+## L'AGENT ».
 class_name ComparisonUI
 extends Control
 
@@ -92,6 +100,9 @@ const SCANNER_LUCIOLE: StringName = &"luciole"
 var portrait_provider: Callable = Callable()
 ## Visage du passager : `func() -> Rect2` (coordonnées globales).
 var face_rect_provider: Callable = Callable()
+## M12 : contexte de règles du shift (`func() -> RuleContext`), lu pour les
+## modificateurs d'affichage (comparateur en panne).
+var rule_context_provider: Callable = Callable()
 
 # --- État -------------------------------------------------------------------------
 var day: DayDef = null
@@ -130,6 +141,9 @@ var quota_suspended: bool = false
 ## (non encore confirmés) et leur source (`acv`, `luciole`).
 var suggestions: Array[Discrepancy] = []
 var scanner_source: StringName = &""
+## M12 : événements de station en cours, listes nommées publiées (`stolen`).
+var station_events: Array[StationEventPlan] = []
+var named_lists: Dictionary[StringName, Array] = {}
 var fx_intensity: float = 1.0
 var reduce_motion: bool = false
 
@@ -149,6 +163,8 @@ var toasts: ToastStack = null
 var links: LinkLayer = null
 ## M7 : bandeau discret du haut-parleur du Hall (haut de la bande B).
 var pa_strip: PanelContainer = null
+## M12 : bandeau ÉVÉNEMENT (haut de la bande B, au-dessus du haut-parleur).
+var event_banner: StationEventBanner = null
 var _pa_label: Label = null
 var _pa_serial: int = 0
 ## Acte II : pastilles « CONFIRMER » posées au milieu des liens suggérés.
@@ -401,6 +417,14 @@ func _build() -> void:
 	subtitles.enabled = Settings.subtitles
 	add_child(subtitles)
 	_build_pa_strip()
+	event_banner = StationEventBanner.new()
+	event_banner.anchor_left = 0.5
+	event_banner.anchor_right = 0.5
+	event_banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	event_banner.offset_top = BAND_TOP + DS.SPACE_2
+	event_banner.visibility_changed.connect(_place_pa_strip)
+	event_banner.resized.connect(_place_pa_strip)
+	add_child(event_banner)
 
 	tool_bar = ToolBar.new()
 	tool_bar.name = "ToolBar"
@@ -498,6 +522,10 @@ func _connect_bus() -> void:
 	EventBus.scanner_suggested.connect(_on_scanner_suggested)
 	EventBus.ledger_changed.connect(_on_ledger_changed)
 	EventBus.summons_published.connect(_on_summons_published)
+	EventBus.rules_changed.connect(_on_rules_changed)
+	EventBus.station_event_started.connect(_on_station_event_started)
+	EventBus.station_event_ended.connect(_on_station_event_ended)
+	EventBus.rule_list_published.connect(_on_rule_list_published)
 	EventBus.difficulty_changed.connect(func(_d: StringName) -> void: set_story_mode(GameState.is_story_mode()))
 
 
@@ -516,6 +544,8 @@ func _on_day_started(p_day: DayDef, p_rulebook: Array[RulebookEntry]) -> void:
 	revocations.clear()
 	ledger.clear()
 	summons.clear()
+	station_events.clear()
+	named_lists.clear()
 	rulebook.quota_max = p_day.air_quota
 	# Acte III : R23 en vigueur sans maximum (Enquête J21–J26), ou levée par le
 	# climat (`quota_suspended_if`, réévalué par `quota_changed`).
@@ -531,6 +561,7 @@ func _on_day_started(p_day: DayDef, p_rulebook: Array[RulebookEntry]) -> void:
 	top_bar.set_credits(GameState.credits)
 	top_bar.set_story_mode(GameState.is_story_mode())
 	tool_bar.set_detain_available(detain_available)
+	_refresh_station_events()
 	_refresh_all()
 
 
@@ -812,12 +843,98 @@ func find_summons(entry_id: StringName) -> SummonsEntry:
 	return null
 
 
-## Révocation par identifiant (null si inconnue).
+## Révocation par identifiant (null si inconnue) ; M12 : aussi dans les
+## listes nommées (« Cartes volées »).
 func find_revocation(entry_id: StringName) -> RevokedEntry:
 	for entry: RevokedEntry in revocations:
 		if entry.id == entry_id:
 			return entry
+	for label: StringName in named_lists:
+		for item: Variant in named_lists[label]:
+			var entry: RevokedEntry = item as RevokedEntry
+			if entry != null and entry.id == entry_id:
+				return entry
 	return null
+
+
+# ---------------------------------------------------------------------------
+# M12 : règles mutables, événements de station, listes nommées
+# ---------------------------------------------------------------------------
+
+## Règles changées en cours de shift (directive de Garde, rotation,
+## événement) : Rulebook complet, lignes barrées, règles rétablies ; tampon
+## DÉTENTION et onglets ouverts par une directive (jour de shift).
+func _on_rules_changed(diff: RuleDiff) -> void:
+	if diff == null:
+		return
+	var structural: bool = not (diff.added.is_empty() and diff.retired.is_empty() and diff.forgotten.is_empty()
+			and diff.restored.is_empty())
+	if structural or not diff.rulebook.is_empty():
+		rulebook_entries = diff.rulebook.duplicate()
+		rulebook.apply_rules(diff.rulebook, diff.retired_entries, diff.restored,
+				day.rulebook_tabs if day != null else PackedStringArray())
+	if day != null and day.detain_enabled != detain_available:
+		detain_available = day.detain_enabled
+		tool_bar.set_detain_available(detain_available)
+	_refresh_all()
+
+
+func _on_station_event_started(plan: StationEventPlan) -> void:
+	if plan != null and not station_events.has(plan):
+		station_events.append(plan)
+	_refresh_station_events()
+
+
+func _on_station_event_ended(plan: StationEventPlan) -> void:
+	station_events.erase(plan)
+	_refresh_station_events()
+
+
+## Bandeau ÉVÉNEMENT et lignes ambre du Rulebook (passagers restants).
+func _refresh_station_events() -> void:
+	var active: Array[StationEventPlan] = []
+	for plan: StationEventPlan in station_events:
+		if plan != null and plan.state == StationEventPlan.State.ACTIVE:
+			active.append(plan)
+	if event_banner != null:
+		event_banner.set_events(active, processed)
+	var lines: PackedStringArray = []
+	for plan: StationEventPlan in active:
+		var line: String = StationEventBanner.rulebook_line(plan, processed)
+		if not line.is_empty():
+			lines.append(line)
+	if rulebook != null:
+		rulebook.set_event_notes(lines)
+
+
+## Haut-parleur sous le bandeau ÉVÉNEMENT quand celui-ci est affiché.
+func _place_pa_strip() -> void:
+	if pa_strip == null or event_banner == null:
+		return
+	var top: float = BAND_TOP + DS.SPACE_3
+	if event_banner.visible:
+		top = event_banner.offset_top + event_banner.get_combined_minimum_size().y + DS.SPACE_2
+	pa_strip.offset_top = top
+	pa_strip.offset_bottom = top
+
+
+## Liste nommée publiée (EV-07 `stolen`) ; vide = retirée.
+func _on_rule_list_published(label: StringName, entries: Array[RevokedEntry]) -> void:
+	if entries.is_empty():
+		named_lists.erase(label)
+	else:
+		named_lists[label] = entries.duplicate()
+	rulebook.set_named_list(label, entries)
+	_refresh_all()
+
+
+## EV-02 : comparateur en panne pour le passager en cours (modificateur du
+## shift ; jamais sur un cas scénarisé, `overlay_suspended`).
+func comparator_down() -> bool:
+	if not rule_context_provider.is_valid():
+		return false
+	var ctx: RuleContext = rule_context_provider.call() as RuleContext
+	return ctx != null and ctx.modifier(RuleChangeDef.MOD_COMPARATOR_DOWN) > 0
 
 
 ## Couleur d'une source du scanner (ACV-2 ambre, boîtier des Lucioles magenta).
@@ -1043,6 +1160,18 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 		return
 	var item_a: InspectableItem = _find_item(result.a)
 	var item_b: InspectableItem = _find_item(result.b)
+	if comparator_down():
+		# EV-02 : le comparateur ne conclut pas ; la paire est notée (constat
+		# de l'agent·e), le refus reste motivé d'office (M12 §3.2).
+		links.resolve(result, 0)
+		for item: InspectableItem in [item_a, item_b]:
+			if item != null:
+				_pulse_item(item)
+		workbench.show_banner(Workbench.BannerKind.INFO, UiText.t("sev_ui_comparator_title", "CONSTAT DE L'AGENT"),
+				UiText.t("sev_ui_comparator_text", "Comparateur hors service : paire notée, sans verdict. À vous de juger."),
+				DS.TOAST_HOLD)
+		_refresh_all()
+		return
 	match result.result:
 		Discrepancy.Result.DISCORDANT:
 			discrepancies.append(result)
@@ -1137,6 +1266,7 @@ func _on_case_resolved(case_id: StringName, result: CaseResult) -> void:
 	processed += 1
 	_last_result = result
 	top_bar.set_processed(processed)
+	_refresh_station_events()
 	_show_result(result)
 	_return_documents()
 	_refresh_all()
@@ -1563,6 +1693,7 @@ func _refresh_speaker() -> void:
 
 func _refresh_queue() -> void:
 	var total: int = day.passenger_count if day != null else 0
+	queue_panel.endless = day != null and day.mode == DayDef.MODE_GARDE
 	queue_panel.set_queue(current_case.index + 1 if current_case != null else 0, total)
 	if current_case == null:
 		queue_panel.set_status(QueuePanel.Status.IDLE, 0)
@@ -1939,6 +2070,16 @@ func _process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion or not is_visible_in_tree():
+		return
+	if FocusGuard.modal_over(self):
+		# QA-057 : boîte modale ouverte (« Terminer la garde ») : ni Ⓐ
+		# (SUIVANT), ni tampons, ni raccourcis du guichet ; la boîte décide.
+		# Si le focus est resté derrière le voile, il y retourne et l'appui
+		# (Ⓐ, croix…) est consommé.
+		var owner_control: Control = get_viewport().gui_get_focus_owner()
+		if event.is_pressed() and not event is InputEventMouse and owner_control != null and is_ancestor_of(owner_control):
+			if FocusGuard.focus_modal(get_tree()):
+				_handled()
 		return
 	if event.is_action_pressed(&"inspect_toggle", false, true):
 		toggle_inspection()

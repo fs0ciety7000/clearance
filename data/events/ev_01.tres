@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="StationEventDef" format=3 uid="uid://s6xeyxd4p0vl"]
+
+[ext_resource type="Script" path="res://scripts/core/rule_change_def.gd" id="1_y8rda"]
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="2_5io8o"]
+
+[sub_resource type="Resource" id="ev_01_resource_1"]
+script = ExtResource("1_y8rda")
+op = 1
+rule_id = &"r_mrz_valid"
+note_key = "sev_mrz_reader_rb"
+
+[resource]
+script = ExtResource("2_5io8o")
+id = &"ev_01"
+key = &"mrz_reader"
+required_rule_id = &"r_mrz_valid"
+day_min = 9
+changes = Array[ExtResource("1_y8rda")]([SubResource("ev_01_resource_1")])
+announce_key = "sev_mrz_reader_announce"
+title_key = "sev_mrz_reader_title"
+rulebook_key = "sev_mrz_reader_rb"
+end_key = "sev_mrz_reader_end"
+garde_window_passengers = 4
+garde_required_unit = &"u05"

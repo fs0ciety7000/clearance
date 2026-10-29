@@ -171,7 +171,7 @@ static func _check_symbol(case: Case, symbol_ref: FieldRef, other: FieldRef, ctx
 
 static func _is_resolvable(case: Case, ref: FieldRef, ctx: RuleContext) -> bool:
 	if ref.is_revoked():
-		return ctx != null and ctx.find_revoked(ref.field_id) != null
+		return RevokedIdRule.find_any_entry(ctx, ref.field_id) != null
 	if ref.is_quota_counter():
 		return ctx != null
 	if ref.is_ledger():
@@ -217,13 +217,14 @@ static func _check_wanted(case: Case, wanted_ref: FieldRef, other: FieldRef, ctx
 ## Acte II : entrée de l'onglet Révocations ↔ N° ID d'un document.
 static func _check_revoked(case: Case, revoked_ref: FieldRef, other: FieldRef, ctx: RuleContext,
 		result: Discrepancy) -> Discrepancy:
-	var entry: RevokedEntry = ctx.find_revoked(revoked_ref.field_id)
+	# M12 : onglet Révocations ou liste nommée active (cartes volées, EV-07).
+	var entry: RevokedEntry = RevokedIdRule.find_any_entry(ctx, revoked_ref.field_id)
 	var field: FieldDef = case.get_field_def(other)
 	if entry == null or field == null or field.truth_path != &"citizen_id":
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 	if FieldValue.equals(case.get_value(other), entry.citizen_id):
-		if ctx.honors_reinstatements() and entry.is_reinstated(ctx.today):
-			# Acte III (R33) : révoqué·e puis réintégré·e, valide.
+		if RevokedIdRule.reinstatements_honored(ctx) and entry.is_reinstated(ctx.today):
+			# Acte III (R33) : révoqué·e puis réintégré·e, valide (M12 : R40 aussi).
 			return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_REINSTATED)
 		return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_REVOKED_MATCH)
 	return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_REVOKED_NO_MATCH)
@@ -269,7 +270,7 @@ static func _check_firmware(case: Case, dated: FieldRef, ctx: RuleContext, resul
 		var age_rule: DocumentNotExpiredRule = rule as DocumentNotExpiredRule
 		if age_rule == null or age_rule.field_path != FIRMWARE_PATH or age_rule.document_id != dated.document_id:
 			continue
-		if age_rule.is_expired(case.get_document(dated.document_id), ctx.today, ctx):
+		if age_rule.is_expired(case.get_document(dated.document_id), ctx.today, ctx, case):
 			return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_EXPIRED)
 		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
 	return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_RULE_INACTIVE)

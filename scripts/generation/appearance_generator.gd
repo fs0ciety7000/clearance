@@ -121,6 +121,25 @@ func build_day_roster(p_day_seed: int, count: int, scripted: Array[ScriptedCaseD
 	return roster
 
 
+## M12 (EV-06, Garde) : roster allongé jusqu'à `count` entrées, mêmes tirages
+## par index (`mix3(day_seed, index, essai)`) ; les entrées existantes ne
+## changent pas. Les nouvelles entrées n'ont pas de cas scénarisé.
+func extend_day_roster(roster: AppearanceRoster, count: int, faction_weights: Dictionary[StringName, float],
+		today: int) -> void:
+	var old_size: int = roster.entries.size()
+	if count <= old_size:
+		return
+	var signatures: Array[PackedInt32Array] = []
+	signatures.resize(count)
+	for i: int in old_size:
+		var entry: AppearanceRoster.Entry = roster.entries[i]
+		if entry != null and entry.appearance != null:
+			signatures[i] = signature_of(entry.appearance)
+	roster.entries.resize(count)
+	for i: int in range(old_size, count):
+		roster.entries[i] = _draw_entry(roster, signatures, i, null, faction_weights, today)
+
+
 ## Signature entière d'une apparence (index d'option par slot, −1 si inconnue) :
 ## la distance entre signatures est celle de `PassengerAppearance.distance()`
 ## sur tous les slots du catalogue, en beaucoup plus rapide.

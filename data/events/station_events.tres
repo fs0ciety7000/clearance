@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="StationEventsDef" format=3 uid="uid://n0ok8m8dpxdf"]
+
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="1_q248s"]
+[ext_resource type="Resource" path="res://data/events/ev_01.tres" id="2_2vxcq"]
+[ext_resource type="Resource" path="res://data/events/ev_02.tres" id="3_gpnsv"]
+[ext_resource type="Resource" path="res://data/events/ev_03.tres" id="4_yyep6"]
+[ext_resource type="Resource" path="res://data/events/ev_04.tres" id="5_yva45"]
+[ext_resource type="Resource" path="res://data/events/ev_05.tres" id="6_faqrk"]
+[ext_resource type="Resource" path="res://data/events/ev_06.tres" id="7_yc0qv"]
+[ext_resource type="Resource" path="res://data/events/ev_07.tres" id="8_j6fmc"]
+[ext_resource type="Resource" path="res://data/events/ev_08.tres" id="9_uqw7l"]
+[ext_resource type="Script" path="res://scripts/core/station_events_def.gd" id="10_p6tsn"]
+
+[resource]
+script = ExtResource("10_p6tsn")
+events = Array[ExtResource("1_q248s")]([ExtResource("2_2vxcq"), ExtResource("3_gpnsv"), ExtResource("4_yyep6"), ExtResource("5_yva45"), ExtResource("6_faqrk"), ExtResource("7_yc0qv"), ExtResource("8_j6fmc"), ExtResource("9_uqw7l")])
+eligible_days = Dictionary[int, int]({
+4: 1,
+5: 1,
+6: 3,
+7: 1,
+8: 3,
+12: 1,
+13: 1,
+14: 3,
+15: 1,
+16: 1,
+18: 3,
+19: 3,
+22: 3,
+23: 3,
+25: 3,
+26: 1,
+27: 3,
+28: 3
+})

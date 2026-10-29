@@ -15,11 +15,16 @@
 ## Focus initial : REPRENDRE de la partie active la plus récente, sinon la
 ## première action. Ⓑ / Échap : ferme la liste des jours, sinon retour au
 ## titre (`finished(&"back")`).
+## M12 (lot C, I29) : partie terminée par une fin de l'Acte III (puce
+## ÉPILOGUE de la carte, `SaveService.has_epilogue`) → action « JOUER « UN AN
+## PLUS TARD » » en premier (sans confirmation : rien n'est écrasé) →
+## `epilogue_requested(slot)`.
 class_name LoadScreen
 extends ScreenBase
 
 signal resume_requested(slot: int)
 signal resume_day_requested(slot: int, day: int)
+signal epilogue_requested(slot: int)
 
 ## Colonnes de la grille des jours.
 const DAY_COLUMNS: int = 6
@@ -31,6 +36,8 @@ var cards: Array[SaveSlotCard] = []
 var resume_buttons: Dictionary[int, Button] = {}
 var day_buttons: Dictionary[int, Button] = {}
 var delete_buttons: Dictionary[int, Button] = {}
+## M12 : « JOUER « UN AN PLUS TARD » » par emplacement terminé de l'Acte III.
+var epilogue_buttons: Dictionary[int, Button] = {}
 var back_button: Button = null
 ## Emplacement dont la liste des jours est ouverte (`NO_SLOT` sinon).
 var picker_slot: int = SaveService.NO_SLOT
@@ -106,6 +113,7 @@ func refresh() -> void:
 	resume_buttons.clear()
 	day_buttons.clear()
 	delete_buttons.clear()
+	epilogue_buttons.clear()
 	_armed_delete = SaveService.NO_SLOT
 	var used: int = 0
 	var metas: Array[Dictionary] = SaveService.list_slots(save_dir)
@@ -124,6 +132,11 @@ func refresh() -> void:
 			dead.name = "Resume%d" % number
 			dead.disabled = true
 			dead.focus_mode = Control.FOCUS_NONE
+		elif card.is_ended() and SaveService.has_epilogue(number, save_dir):
+			var epi: Button = card.add_action(UiText.t("load_play_epilogue", "JOUER « UN AN PLUS TARD »"), &"ButtonPrimary")
+			epi.name = "Epilogue%d" % number
+			epi.pressed.connect(func() -> void: epilogue_requested.emit(number))
+			epilogue_buttons[number] = epi
 		elif not card.is_ended():
 			var resume: Button = card.add_action(UiText.t("load_resume", "REPRENDRE"), &"ButtonPrimary")
 			resume.name = "Resume%d" % number

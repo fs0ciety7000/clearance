@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="GardeUnitDef" format=3 uid="uid://b5mycf7fl585r"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_2o4iq"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fraud_detain.tres" id="2_v2nrh"]
+[ext_resource type="Script" path="res://scripts/core/garde_unit_def.gd" id="3_ycaoi"]
+
+[resource]
+script = ExtResource("3_ycaoi")
+id = &"u11"
+title_key = "garde_unit_u11"
+rules = Array[ExtResource("1_2o4iq")]([ExtResource("2_v2nrh")])
+tier = 2
+rulebook_tabs = PackedStringArray()
+enables_detain = true
+renews_lists = PackedStringArray()

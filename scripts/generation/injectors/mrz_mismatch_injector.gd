@@ -59,6 +59,14 @@ static func alter(state: InjectionState, component: StringName, value: String) -
 			codes.sort()
 			return codes[state.rng.randi_range(0, codes.size() - 1)] if not codes.is_empty() else value
 		Mrz.COMPONENT_ID:
+			# M12 (Garde, subtil) : sosie visuel d'un caractère du bloc `XXXX`.
+			if state.param_bool(CaseBuilder.SUBTLE_PARAM, false):
+				var last: Array[int] = []
+				for k: int in range(maxi(value.length() - 4, 0), value.length()):
+					last.append(k)
+				var confused: String = IdMismatchInjector.confuse_one(state.rng, value, last)
+				if not confused.is_empty():
+					return confused
 			# Un caractère du bloc `XXXX` (le préfixe et le chiffre d'origine restent).
 			var index: int = value.length() - 1 - state.rng.randi_range(0, 3)
 			var pool: String = PassengerGenerator.ID_SAFE_CHARS.replace(value[index], "")

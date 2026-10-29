@@ -1,38 +1,39 @@
 [gd_resource type="Resource" script_class="DayDef" format=3 uid="uid://cx44vidcoouvv"]
 
-[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_8od56"]
-[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_633uq"]
-[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="3_2c0he"]
-[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="4_vwexb"]
-[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="5_08o3x"]
-[ext_resource type="Script" path="res://scripts/core/evening_option_def.gd" id="6_b5lwn"]
-[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="7_v7edi"]
-[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="8_xc8gu"]
-[ext_resource type="Resource" path="res://data/days/ruleset_day_25.tres" id="9_21f8e"]
-[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="10_sj0yk"]
-[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="11_05o0a"]
-[ext_resource type="Script" path="res://scripts/core/slipped_item_def.gd" id="12_5pt5c"]
-[ext_resource type="Script" path="res://scripts/core/summons_def.gd" id="13_vn4ca"]
-[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="14_n3kc3"]
+[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_633uq"]
+[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_2c0he"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="3_vwexb"]
+[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="4_08o3x"]
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="5_b5lwn"]
+[ext_resource type="Script" path="res://scripts/core/evening_option_def.gd" id="6_v7edi"]
+[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="7_xc8gu"]
+[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="8_21f8e"]
+[ext_resource type="Resource" path="res://data/days/ruleset_day_25.tres" id="9_sj0yk"]
+[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="10_05o0a"]
+[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="11_5pt5c"]
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="12_vn4ca"]
+[ext_resource type="Script" path="res://scripts/core/slipped_item_def.gd" id="13_n3kc3"]
+[ext_resource type="Script" path="res://scripts/core/summons_def.gd" id="14_tjjc0"]
+[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="15_86rv8"]
 
 [sub_resource type="Resource" id="d25_resource_42"]
-script = ExtResource("1_8od56")
+script = ExtResource("1_633uq")
 text_key = "hall_j25_tycho"
 after_case = 6
 
 [sub_resource type="Resource" id="d25_resource_8"]
-script = ExtResource("2_633uq")
+script = ExtResource("2_2c0he")
 speaker_key = "spk_arbitre"
 text_key = "msg_arb_day25"
 voice = 5
 priority = 1
 
 [sub_resource type="Resource" id="d25_resource_10"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"dora_departed"])
 
 [sub_resource type="Resource" id="d25_resource_9"]
-script = ExtResource("2_633uq")
+script = ExtResource("2_2c0he")
 speaker_key = "spk_tycho"
 text_key = "msg_tycho_day25_dora"
 voice = 3
@@ -41,7 +42,7 @@ group = &"tycho"
 priority = 1
 
 [sub_resource type="Resource" id="d25_resource_11"]
-script = ExtResource("2_633uq")
+script = ExtResource("2_2c0he")
 speaker_key = "spk_tycho"
 text_key = "msg_tycho_day25"
 voice = 3
@@ -49,11 +50,11 @@ group = &"tycho"
 priority = 1
 
 [sub_resource type="Resource" id="d25_resource_13"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"sc61_amara_passed"])
 
 [sub_resource type="Resource" id="d25_resource_12"]
-script = ExtResource("2_633uq")
+script = ExtResource("2_2c0he")
 speaker_key = "spk_hall"
 text_key = "msg_echo_sc61_plants"
 condition = SubResource("d25_resource_13")
@@ -61,11 +62,11 @@ group = &"sc61"
 priority = 3
 
 [sub_resource type="Resource" id="d25_resource_15"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"sc61_amara_turned_away"])
 
 [sub_resource type="Resource" id="d25_resource_14"]
-script = ExtResource("2_633uq")
+script = ExtResource("2_2c0he")
 speaker_key = "spk_hall"
 text_key = "msg_echo_sc61_chain"
 condition = SubResource("d25_resource_15")
@@ -73,11 +74,11 @@ group = &"sc61"
 priority = 3
 
 [sub_resource type="Resource" id="d25_resource_17"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"sc62_tariq_refused"])
 
 [sub_resource type="Resource" id="d25_resource_16"]
-script = ExtResource("2_633uq")
+script = ExtResource("2_2c0he")
 speaker_key = "spk_hall"
 text_key = "msg_echo_sc62_ring"
 condition = SubResource("d25_resource_17")
@@ -85,11 +86,11 @@ group = &"sc62"
 priority = 2
 
 [sub_resource type="Resource" id="d25_resource_19"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"sc62_tariq_passed"])
 
 [sub_resource type="Resource" id="d25_resource_18"]
-script = ExtResource("2_633uq")
+script = ExtResource("2_2c0he")
 speaker_key = "spk_hall"
 text_key = "msg_echo_sc62_flood"
 condition = SubResource("d25_resource_19")
@@ -97,11 +98,11 @@ group = &"sc62"
 priority = 2
 
 [sub_resource type="Resource" id="d25_resource_21"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"noa_testified"])
 
 [sub_resource type="Resource" id="d25_resource_20"]
-script = ExtResource("2_633uq")
+script = ExtResource("2_2c0he")
 speaker_key = "spk_ilan"
 text_key = "msg_ilan_day25_truth"
 voice = 2
@@ -110,11 +111,11 @@ group = &"ilan"
 family_slot = true
 
 [sub_resource type="Resource" id="d25_resource_23"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"noa_coached"])
 
 [sub_resource type="Resource" id="d25_resource_22"]
-script = ExtResource("2_633uq")
+script = ExtResource("2_2c0he")
 speaker_key = "spk_ilan"
 text_key = "msg_ilan_day25_coached"
 voice = 2
@@ -123,11 +124,11 @@ group = &"ilan"
 family_slot = true
 
 [sub_resource type="Resource" id="d25_resource_25"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"noa_kept_home"])
 
 [sub_resource type="Resource" id="d25_resource_24"]
-script = ExtResource("2_633uq")
+script = ExtResource("2_2c0he")
 speaker_key = "spk_ilan"
 text_key = "msg_ilan_day25_home"
 voice = 2
@@ -136,11 +137,11 @@ group = &"ilan"
 family_slot = true
 
 [sub_resource type="Resource" id="d25_resource_27"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"hh_dora_present"])
 
 [sub_resource type="Resource" id="d25_resource_28"]
-script = ExtResource("6_b5lwn")
+script = ExtResource("6_v7edi")
 id = &"write"
 label_key = "evt_d25_dora_opt_write"
 result_key = "evt_d25_dora_res_write"
@@ -152,7 +153,7 @@ flags = Dictionary[StringName, int]({
 default_rank = 1
 
 [sub_resource type="Resource" id="d25_resource_29"]
-script = ExtResource("6_b5lwn")
+script = ExtResource("6_v7edi")
 id = &"go"
 label_key = "evt_d25_dora_opt_go"
 result_key = "evt_d25_dora_res_go"
@@ -167,26 +168,26 @@ household = &"dora_sick"
 default_rank = 2
 
 [sub_resource type="Resource" id="d25_resource_30"]
-script = ExtResource("6_b5lwn")
+script = ExtResource("6_v7edi")
 id = &"rest"
 label_key = "evt_d25_dora_opt_rest"
 result_key = "evt_d25_dora_res_rest"
 
 [sub_resource type="Resource" id="d25_resource_26"]
-script = ExtResource("4_vwexb")
+script = ExtResource("4_08o3x")
 id = &"d25_dora"
 condition = SubResource("d25_resource_27")
 title_key = "evt_d25_dora_title"
 text_key = "evt_d25_dora_text"
-options = Array[ExtResource("6_b5lwn")]([SubResource("d25_resource_28"), SubResource("d25_resource_29"), SubResource("d25_resource_30")])
+options = Array[ExtResource("6_v7edi")]([SubResource("d25_resource_28"), SubResource("d25_resource_29"), SubResource("d25_resource_30")])
 text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d25_resource_32"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"dora_departed", &"hh_dora_away"])
 
 [sub_resource type="Resource" id="d25_resource_31"]
-script = ExtResource("4_vwexb")
+script = ExtResource("4_08o3x")
 id = &"d25_dora_letter"
 kind = 0
 condition = SubResource("d25_resource_32")
@@ -194,11 +195,11 @@ text_key = "evt_d25_dora_letter"
 text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d25_resource_34"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"ilan_soute3", &"hh_ilan_away"])
 
 [sub_resource type="Resource" id="d25_resource_33"]
-script = ExtResource("4_vwexb")
+script = ExtResource("4_08o3x")
 id = &"d25_ilan_back"
 kind = 0
 condition = SubResource("d25_resource_34")
@@ -207,7 +208,7 @@ household = &"ilan_home"
 text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d25_resource_36"]
-script = ExtResource("6_b5lwn")
+script = ExtResource("6_v7edi")
 id = &"give"
 label_key = "evt_d25_tycho_fund_opt_give"
 result_key = "evt_d25_tycho_fund_res_give"
@@ -219,13 +220,13 @@ flags = Dictionary[StringName, int]({
 default_rank = 1
 
 [sub_resource type="Resource" id="d25_resource_37"]
-script = ExtResource("6_b5lwn")
+script = ExtResource("6_v7edi")
 id = &"pass"
 label_key = "evt_d25_tycho_fund_opt_pass"
 result_key = "evt_d25_tycho_fund_res_pass"
 
 [sub_resource type="Resource" id="d25_resource_38"]
-script = ExtResource("6_b5lwn")
+script = ExtResource("6_v7edi")
 id = &"report"
 label_key = "evt_d25_tycho_fund_opt_report"
 result_key = "evt_d25_tycho_fund_res_report"
@@ -238,16 +239,16 @@ flags = Dictionary[StringName, int]({
 default_rank = -1
 
 [sub_resource type="Resource" id="d25_resource_35"]
-script = ExtResource("4_vwexb")
+script = ExtResource("4_08o3x")
 id = &"d25_tycho_fund"
 order = 1
 title_key = "evt_d25_tycho_fund_title"
 text_key = "evt_d25_tycho_fund_text"
-options = Array[ExtResource("6_b5lwn")]([SubResource("d25_resource_36"), SubResource("d25_resource_37"), SubResource("d25_resource_38")])
+options = Array[ExtResource("6_v7edi")]([SubResource("d25_resource_36"), SubResource("d25_resource_37"), SubResource("d25_resource_38")])
 text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d25_resource_39"]
-script = ExtResource("4_vwexb")
+script = ExtResource("4_08o3x")
 id = &"d25_levy"
 kind = 0
 order = 2
@@ -256,18 +257,18 @@ text_key = "evt_d25_levy_text"
 text_gauges = PackedStringArray("levy_amount")
 
 [sub_resource type="Resource" id="d25_resource_40"]
-script = ExtResource("8_xc8gu")
+script = ExtResource("8_21f8e")
 id = &"revoked_generated"
 at_index = 15
 
 [sub_resource type="Resource" id="d25_resource_41"]
-script = ExtResource("8_xc8gu")
+script = ExtResource("8_21f8e")
 id = &"revoked_reinstated"
 at_index = 6
 reinstated_on = 31868
 
 [sub_resource type="Resource" id="scripted_sc_63"]
-script = ExtResource("11_05o0a")
+script = ExtResource("11_5pt5c")
 id = &"sc_63"
 at_index = 3
 passenger_overrides = {
@@ -293,17 +294,17 @@ identity_from_case = &"sc_08"
 luciole_codes = PackedInt32Array()
 
 [sub_resource type="Resource" id="d25_resource_3"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"lindgren_signed"])
 
 [sub_resource type="Resource" id="d25_resource_2"]
-script = ExtResource("5_08o3x")
+script = ExtResource("5_b5lwn")
 key = "sc64_lindgren_arrival_signed"
 condition = SubResource("d25_resource_3")
 replaces = "arrival"
 
 [sub_resource type="Resource" id="d25_resource_1"]
-script = ExtResource("12_5pt5c")
+script = ExtResource("13_n3kc3")
 kind = 3
 label_key = "wb_form_label"
 text_key = "sc64_lindgren_note"
@@ -314,7 +315,7 @@ effects = Dictionary[StringName, Dictionary]({
 })
 
 [sub_resource type="Resource" id="scripted_sc_64"]
-script = ExtResource("11_05o0a")
+script = ExtResource("11_5pt5c")
 id = &"sc_64"
 at_index = 8
 passenger_overrides = {
@@ -334,10 +335,10 @@ appearance_from_case = &"sc_23"
 identity_from_case = &"sc_23"
 slipped_item = SubResource("d25_resource_1")
 luciole_codes = PackedInt32Array()
-line_variants = Array[ExtResource("5_08o3x")]([SubResource("d25_resource_2")])
+line_variants = Array[ExtResource("5_b5lwn")]([SubResource("d25_resource_2")])
 
 [sub_resource type="Resource" id="d25_resource_4"]
-script = ExtResource("12_5pt5c")
+script = ExtResource("13_n3kc3")
 kind = 1
 label_key = "wb_note_label"
 text_key = "sc65_yara_note"
@@ -357,7 +358,7 @@ effects = Dictionary[StringName, Dictionary]({
 })
 
 [sub_resource type="Resource" id="scripted_sc_65"]
-script = ExtResource("11_05o0a")
+script = ExtResource("11_5pt5c")
 id = &"sc_65"
 at_index = 13
 passenger_overrides = {
@@ -383,27 +384,27 @@ luciole_codes = PackedInt32Array(3)
 sponsor_case_id = &"sc_64"
 
 [sub_resource type="Resource" id="d25_resource_5"]
-script = ExtResource("14_n3kc3")
+script = ExtResource("15_86rv8")
 id = &"wanted_generated"
 at_index = 11
 reason_key = "wanted_generated_reason"
 
 [sub_resource type="Resource" id="d25_resource_7"]
-script = ExtResource("3_2c0he")
+script = ExtResource("3_vwexb")
 all_of = Array[StringName]([&"vanne2_brulants"])
 
 [sub_resource type="Resource" id="d25_resource_6"]
-script = ExtResource("14_n3kc3")
+script = ExtResource("15_86rv8")
 id = &"wanted_generated_brulants"
 at_index = 5
 reason_key = "wanted_generated_reason"
 condition = SubResource("d25_resource_7")
 
 [resource]
-script = ExtResource("10_sj0yk")
+script = ExtResource("10_05o0a")
 day_number = 25
 game_date = 31871
-rule_set = ExtResource("9_21f8e")
+rule_set = ExtResource("9_sj0yk")
 duration_sec = 750.0
 passenger_count = 17
 anomaly_count_weights = PackedFloat32Array(0.3323263, 0.36253777, 0.24169184, 0.06344411)
@@ -430,7 +431,7 @@ anomaly_weights = Dictionary[int, float]({
 21: 1.5,
 23: 0.6
 })
-scripted_cases = Array[ExtResource("11_05o0a")]([SubResource("scripted_sc_63"), SubResource("scripted_sc_64"), SubResource("scripted_sc_65")])
+scripted_cases = Array[ExtResource("11_5pt5c")]([SubResource("scripted_sc_63"), SubResource("scripted_sc_64"), SubResource("scripted_sc_65")])
 intro_text_key = "day25_intro"
 faction_weights = Dictionary[StringName, float]({
 &"cer": 0.13,
@@ -447,14 +448,14 @@ luciole_rate = 0.08
 free_citations_per_day = 3
 detain_enabled = true
 bribe_amounts = Vector2i(20, 30)
-wanted_notices = Array[ExtResource("14_n3kc3")]([SubResource("d25_resource_5"), SubResource("d25_resource_6")])
-briefing_messages = Array[ExtResource("2_633uq")]([SubResource("d25_resource_8"), SubResource("d25_resource_9"), SubResource("d25_resource_11"), SubResource("d25_resource_12"), SubResource("d25_resource_14"), SubResource("d25_resource_16"), SubResource("d25_resource_18"), SubResource("d25_resource_20"), SubResource("d25_resource_22"), SubResource("d25_resource_24")])
-evening_events = Array[ExtResource("4_vwexb")]([SubResource("d25_resource_26"), SubResource("d25_resource_31"), SubResource("d25_resource_33"), SubResource("d25_resource_35"), SubResource("d25_resource_39")])
+wanted_notices = Array[ExtResource("15_86rv8")]([SubResource("d25_resource_5"), SubResource("d25_resource_6")])
+briefing_messages = Array[ExtResource("2_2c0he")]([SubResource("d25_resource_8"), SubResource("d25_resource_9"), SubResource("d25_resource_11"), SubResource("d25_resource_12"), SubResource("d25_resource_14"), SubResource("d25_resource_16"), SubResource("d25_resource_18"), SubResource("d25_resource_20"), SubResource("d25_resource_22"), SubResource("d25_resource_24")])
+evening_events = Array[ExtResource("4_08o3x")]([SubResource("d25_resource_26"), SubResource("d25_resource_31"), SubResource("d25_resource_33"), SubResource("d25_resource_35"), SubResource("d25_resource_39")])
 rulebook_tabs = PackedStringArray("origins", "implants", "symbols", "seals", "wanted", "employers", "vessels", "revoked", "ledger")
 luciole_trust_on_breach = false
-revocations = Array[ExtResource("8_xc8gu")]([SubResource("d25_resource_40"), SubResource("d25_resource_41")])
+revocations = Array[ExtResource("8_21f8e")]([SubResource("d25_resource_40"), SubResource("d25_resource_41")])
 revoked_decoys = 4
-announcements = Array[ExtResource("1_8od56")]([SubResource("d25_resource_42")])
+announcements = Array[ExtResource("1_633uq")]([SubResource("d25_resource_42")])
 focus_documents = Array[StringName]([&"asylum"])
 retired_documents = Array[StringName]([&"queue_ticket", &"bioscan"])
 prorogation_noise_rate = 0.12

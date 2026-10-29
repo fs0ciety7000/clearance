@@ -19,7 +19,10 @@ const FEATURE: String = "debug_args"
 ## Arguments appliqués une seule fois par processus.
 const ONE_SHOT: PackedStringArray = ["seed", "day", "household", "flags", "credits", "start-case", "screen",
 		"ending", "step", "item", "rulebook-tab", "inspect", "ask", "zoom-doc", "lights-out", "confirm-scan", "choose", "hold-card",
-		"story", "tutorial", "tutorial-step", "close-booth"]
+		"story", "tutorial", "tutorial-step", "close-booth",
+		# M12 (captures) : session Garde ou J31, passagers jugés d'un coup, appel
+		# du suivant, bandeau d'événement de station.
+		"garde", "epilogue", "skip-cases", "wrong-cases", "call-next", "station-event"]
 ## Marqueur (métadonnée d'`Engine`, durée du processus) : arguments consommés.
 const CONSUMED_META: StringName = &"clearance_debug_args_consumed"
 

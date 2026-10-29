@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="StationEventDef" format=3 uid="uid://x1643dud6lkc"]
+
+[ext_resource type="Script" path="res://scripts/core/rule_change_def.gd" id="1_ryxit"]
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="2_ktjgp"]
+
+[sub_resource type="Resource" id="ev_06_resource_1"]
+script = ExtResource("1_ryxit")
+op = 5
+modifier = &"extra_passengers"
+amount = 3
+
+[sub_resource type="Resource" id="ev_06_resource_2"]
+script = ExtResource("1_ryxit")
+op = 5
+modifier = &"extra_seconds"
+amount = 120
+
+[resource]
+script = ExtResource("2_ktjgp")
+id = &"ev_06"
+key = &"crowd"
+window_kind = 1
+changes = Array[ExtResource("1_ryxit")]([SubResource("ev_06_resource_1"), SubResource("ev_06_resource_2")])
+announce_key = "sev_crowd_announce"
+title_key = "sev_crowd_title"
+garde_allowed = false

@@ -46,6 +46,7 @@ static func build(text_scale: float = 1.0, min_px: int = 0, doc_min_px: int = 0)
 	_build_buttons(theme, fonts)
 	_build_variations(theme, fonts)
 	_build_m4_variations(theme, fonts)
+	_build_line_edit(theme, fonts)
 	_scale = 1.0
 	_min_px = 0
 	_doc_min_px = 0
@@ -503,3 +504,34 @@ static func _rule_card_box(bg: Color, bar: Color) -> StyleBoxFlat:
 	box.content_margin_top = DS.SPACE_2
 	box.content_margin_bottom = DS.SPACE_2
 	return box
+
+
+# ---------------------------------------------------------------------------
+# M12 : champ de saisie (code de Garde)
+# ---------------------------------------------------------------------------
+
+## `LineEdit` (code libre de la Garde de nuit, M12 §2.6) : mono, fond
+## `bg.elevated`, filet `line.subtle`, focus cyan 2 px (ring visible),
+## hauteur ≥ `HIT_TARGET_MIN`.
+static func _build_line_edit(theme: Theme, fonts: Dictionary[StringName, Font]) -> void:
+	var t: StringName = &"LineEdit"
+	var pad_v: int = maxi(roundi((DS.HIT_TARGET_MIN - fs(DS.FS_DATA) * DS.LINE_HEIGHT_UI) * 0.5), DS.SPACE_2)
+	var normal: StyleBoxFlat = chamfer_box(DS.BG_ELEVATED, Palette.LINE_SUBTLE, DS.BORDER_DEFAULT, DS.CHAMFER_S, DS.SPACE_3)
+	normal.content_margin_top = pad_v
+	normal.content_margin_bottom = pad_v
+	var focus: StyleBoxFlat = chamfer_box(DS.BG_ELEVATED, DS.ACCENT_CYAN, DS.FOCUS_RING_WIDTH, DS.CHAMFER_S, DS.SPACE_3)
+	focus.content_margin_top = pad_v
+	focus.content_margin_bottom = pad_v
+	var read_only: StyleBoxFlat = chamfer_box(DS.DISABLED_BG, Palette.LINE_SUBTLE, DS.BORDER_DEFAULT, DS.CHAMFER_S, DS.SPACE_3)
+	theme.set_stylebox(&"normal", t, normal)
+	theme.set_stylebox(&"focus", t, focus)
+	theme.set_stylebox(&"read_only", t, read_only)
+	_set_font_if(theme, t, fonts, &"mono")
+	theme.set_font_size(&"font_size", t, fs(DS.FS_DATA))
+	theme.set_color(&"font_color", t, DS.TEXT_PRIMARY)
+	theme.set_color(&"font_placeholder_color", t, DS.TEXT_MUTED)
+	theme.set_color(&"font_uneditable_color", t, DS.DISABLED_FG)
+	theme.set_color(&"caret_color", t, DS.ACCENT_CYAN)
+	theme.set_color(&"selection_color", t, DS.CYAN_24)
+	theme.set_color(&"clear_button_color", t, Palette.TEXT_SECONDARY)
+	theme.set_constant(&"minimum_character_width", t, DS.GARDE_CODE_LENGTH + 2)

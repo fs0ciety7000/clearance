@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="StationEventDef" format=3 uid="uid://bqoq4gi8uhils"]
+
+[ext_resource type="Script" path="res://scripts/core/rule_change_def.gd" id="1_opghg"]
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="2_3x3e3"]
+
+[sub_resource type="Resource" id="ev_04_resource_1"]
+script = ExtResource("1_opghg")
+op = 5
+modifier = &"no_free_citations"
+amount = 1
+
+[sub_resource type="Resource" id="ev_04_resource_2"]
+script = ExtResource("1_opghg")
+op = 5
+modifier = &"correct_bonus"
+amount = 2
+
+[sub_resource type="Resource" id="ev_04_resource_3"]
+script = ExtResource("1_opghg")
+op = 5
+modifier = &"score_per_correct"
+amount = 1
+
+[resource]
+script = ExtResource("2_3x3e3")
+id = &"ev_04"
+key = &"inspection"
+window_passengers = 5
+changes = Array[ExtResource("1_opghg")]([SubResource("ev_04_resource_1"), SubResource("ev_04_resource_2")])
+announce_key = "sev_inspection_announce"
+title_key = "sev_inspection_title"
+end_key = "sev_inspection_end"
+garde_changes = Array[ExtResource("1_opghg")]([SubResource("ev_04_resource_3")])
+garde_announce_key = "sev_inspection_announce_garde"

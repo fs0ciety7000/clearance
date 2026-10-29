@@ -7,6 +7,7 @@ script = ExtResource("1_edymo")
 banned_faction_ids = Array[StringName]([&"tyc"])
 exempt_purposes = Array[StringName]([])
 exempt_if_sponsored = true
+exempt_contract_codes = PackedStringArray()
 id = &"r_tycho_closed"
 title_key = "r_tycho_closed_title"
 rulebook_text_key = "r_tycho_closed_text"

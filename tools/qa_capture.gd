@@ -19,6 +19,9 @@
 ## focus (comme la croix) sur PASSER L'ÉTAPE / COMMENCER du tutoriel ou sur
 ## FERMER LE GUICHET, 1,5 s avant la capture ; `--qa-close-briefing` ferme le
 ## briefing sans appeler de passager (guichet en attente, SUIVANT visible).
+## Correctifs M12 : `--qa-focus=end-garde` ouvre la boîte « Terminer la garde »
+## (barre) et pousse la croix → (focus TERMINER LA GARDE, piégé dans la boîte,
+## QA-057).
 ## Lancé par `tools/qa_boot.gd` (autoloads requis), sous xvfb :
 ##   xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
 ##       --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1280x800 \
@@ -148,6 +151,16 @@ func _apply_focus_target() -> void:
 			var tut: TutorialOverlay = _find(get_tree().root, func(n: Node) -> bool: return n is TutorialOverlay) as TutorialOverlay
 			if tut != null:
 				target = tut.skip_step_button if _focus_target == "tutorial-skip" else tut.start_button
+		"end-garde":
+			var day: DayScene = _find(get_tree().root, func(n: Node) -> bool: return n is DayScene) as DayScene
+			if day != null and day.request_end_garde() != null:
+				await get_tree().process_frame
+				await get_tree().process_frame
+				var right: InputEventAction = InputEventAction.new()
+				right.action = &"ui_right"
+				right.pressed = true
+				Input.parse_input_event(right)
+				return
 		"close-booth":
 			var ui: ComparisonUI = _find(get_tree().root, func(n: Node) -> bool: return n is ComparisonUI) as ComparisonUI
 			if ui != null:

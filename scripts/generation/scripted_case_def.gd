@@ -92,3 +92,20 @@ extends Resource
 ## M1 : documents présentés quand même mais retirés du guichet (SC-58 :
 ## bio-scan) — `DocumentInstance.retired`, jamais lus par les règles.
 @export var retired_documents: Array[StringName] = []
+
+@export_group("M12")
+## Répondant **généré** (R39, SC-95) : le passager généré de cet index devient
+## un répondant né-Halcyon C-1–C-3 propre, et ce cas porte son N° ID
+## (`sponsor_id`) ; −1 = aucun.
+@export var sponsor_index: int = -1
+## Émetteurs imposés des documents du cas propre : `{document_id: issuer_id}`
+## (SC-101, SC-103 : bio-scan du Dispensaire de Tycho, R41).
+@export var document_issuers: Dictionary = {}
+## Règles remplacées pour **tout le jour** quand ce cas est actif (même
+## identifiant, ressource propre au cas) : SC-89a, Long-Ruban retiré du
+## registre (R26) seulement si le mot de Sefa a été remis. Appliqué par le
+## `CaseBuilder` sur le RuleSet de shift (`RuleChangeDef` RETIRE + ADD).
+@export var rule_replacements: Array[Rule] = []
+## Visage = photo présentée par ce cas antérieur (`CaseMemory`, B59 : SC-84b,
+## le vrai titulaire de la carte du J2) ; repli : visage du roster.
+@export var appearance_from_photo: StringName = &""

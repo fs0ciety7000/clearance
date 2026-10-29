@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GardeUnitDef" format=3 uid="uid://81iddy5nwyxl"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_b4fss"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_issuer.tres" id="2_umehw"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_fit.tres" id="3_pomuo"]
+[ext_resource type="Script" path="res://scripts/core/garde_unit_def.gd" id="4_qoprs"]
+
+[resource]
+script = ExtResource("4_qoprs")
+id = &"u08"
+title_key = "garde_unit_u08"
+rules = Array[ExtResource("1_b4fss")]([ExtResource("2_umehw"), ExtResource("3_pomuo")])
+tier = 2
+prerequisites = Array[StringName]([&"u07"])
+rulebook_tabs = PackedStringArray()
+renews_lists = PackedStringArray()

@@ -24,6 +24,15 @@ func inject(state: InjectionState) -> Anomaly:
 	var faction_id: StringName = state.case.passenger_presented.faction_id
 	var slots: Array[StringName] = state.appearance_gen.catalog.get_identity_slots()
 	var wanted: int = clampi(state.param_int(&"trait_count", state.rng.randi_range(MIN_TRAITS, slots.size())), MIN_TRAITS, slots.size())
+	# M12 (Garde, subtil) : sosie à 2 traits sous R03 seul (sans R17 : refus) —
+	# la photo du porteur, deux traits d'identité changés.
+	if state.param_bool(CaseBuilder.SUBTLE_PARAM, false) and not _impostor_rule_active(state) and slots.size() >= 2:
+		var lookalike: PassengerAppearance = DocumentFactory.official_photo_of(holder)
+		var picked: Array = state.rng.shuffled(slots)
+		for i: int in 2:
+			var slot: StringName = picked[i]
+			lookalike.traits[slot] = state.appearance_gen.reroll_slot(state.rng, lookalike, slot, faction_id)
+		return replace_photo(self, state, ref, lookalike)
 	var other: PassengerAppearance = DocumentFactory.official_photo_of(state.appearance_gen.generate(state.rng, faction_id))
 	var forced: Array = state.rng.shuffled(slots)
 	for i: int in wanted:
@@ -67,3 +76,12 @@ static func replace_photo(injector: AnomalyInjector, state: InjectionState, ref:
 	state.mark(ref.document_id, ref.field_id)
 	state.face_anomaly = true
 	return AnomalyInjector.make_anomaly(injector.get_kind(), ref.document_id, ref.field_id, old.appearance, photo)
+
+
+## Vrai si une règle de sosie (R17 : `PortraitMatchRule` qui détecte
+## `IMPOSTOR_LOOKALIKE`) est active : un portrait à 2 traits y serait un sosie.
+func _impostor_rule_active(state: InjectionState) -> bool:
+	for rule: Rule in active_rules(state, PortraitMatchRule):
+		if (rule as PortraitMatchRule).detected_anomalies.has(AnomalyType.Kind.IMPOSTOR_LOOKALIKE):
+			return true
+	return false

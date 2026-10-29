@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="GardeUnitDef" format=3 uid="uid://co6j660g4hpl3"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_6nhlx"]
+[ext_resource type="Resource" path="res://data/rules/rule_tharsis_banned.tres" id="2_dxak8"]
+[ext_resource type="Script" path="res://scripts/core/garde_unit_def.gd" id="3_xu8dl"]
+
+[resource]
+script = ExtResource("3_xu8dl")
+id = &"u13"
+title_key = "garde_unit_u13"
+rules = Array[ExtResource("1_6nhlx")]([ExtResource("2_dxak8")])
+tier = 3
+prerequisites = Array[StringName]([&"u01"])
+rulebook_tabs = PackedStringArray()
+renews_lists = PackedStringArray()

@@ -20,6 +20,12 @@ func inject(state: InjectionState) -> Anomaly:
 		var banned: FactionBannedRule = rule
 		if not banned.is_banned_origin(Rule.visible_origin(state.case)):
 			continue
+		if not banned.exempt_contract_codes.is_empty():
+			# M12 (R38) : ressortissant de Tycho sans contrat Kessler-Ashe valide.
+			var unexempted: Anomaly = _inject_contract(state, banned)
+			if unexempted != null:
+				return unexempted
+			continue
 		if not banned.exempt_posts.is_empty():
 			var anomaly: Anomaly = _inject_post(state, banned)
 			if anomaly != null:
@@ -100,3 +106,59 @@ func _inject_post(state: InjectionState, banned: FactionBannedRule) -> Anomaly:
 	state.case.passenger_presented.post = post
 	state.mark(banned.contract_id, field_id)
 	return make_anomaly(get_kind(), banned.contract_id, field_id, original, post)
+
+
+## M12 (R38 « Tycho rééquilibrée ») : le contrat du porteur passe chez un autre
+## employeur (code non exempté), cohérent sur le permis et le contrat (R25) ;
+## sans contrat exempté (SC-93a), l'origine seule prouve le refus.
+func _inject_contract(state: InjectionState, banned: FactionBannedRule) -> Anomaly:
+	var c: Case = state.case
+	var origin_field: StringName = field_for(c, banned.card_id, &"faction_id")
+	if not banned.has_exempt_contract(c, state.ctx):
+		if origin_field == &"":
+			return null
+		state.mark(banned.card_id, origin_field)
+		return make_anomaly(get_kind(), banned.card_id, origin_field, null, Rule.visible_origin(c))
+	var contract: DocumentInstance = c.get_own_document(banned.contract_id)
+	var code_field: StringName = field_for(c, banned.contract_id, ContractSuspendedRule.CODE_PATH)
+	var employer_field: StringName = field_for(c, banned.contract_id, &"employer")
+	var permit_field: StringName = field_for(c, banned.permit_id, &"employer")
+	if code_field == &"" or not state.is_free(banned.contract_id, code_field) \
+			or (employer_field != &"" and not state.is_free(banned.contract_id, employer_field)) \
+			or (permit_field != &"" and not state.is_free(banned.permit_id, permit_field)):
+		return null
+	var registry: Dictionary[String, String] = {}
+	for rule: Rule in state.get_rule_set().rules:
+		if rule is ContractConsistentRule:
+			registry = (rule as ContractConsistentRule).employer_codes
+	var faction: FactionDef = state.get_faction(Rule.visible_origin(c))
+	var options: PackedStringArray = []
+	if faction != null:
+		for employer: String in faction.employers:
+			var code: String = registry.get(employer, "")
+			if not code.is_empty() and not banned.exempt_contract_codes.has(code):
+				options.append(employer)
+	if options.is_empty():
+		return null
+	var employer: String = options[state.rng.randi_range(0, options.size() - 1)]
+	var new_code: String = registry[employer]
+	var original: Variant = contract.get_value(code_field)
+	contract.set_value(code_field, new_code)
+	contract.serial = contract.serial.replace("-%s-" % str(original), "-%s-" % new_code)
+	if employer_field != &"":
+		contract.set_value(employer_field, employer)
+		state.mark(banned.contract_id, employer_field)
+	var permit: DocumentInstance = c.get_own_document(banned.permit_id)
+	if permit != null and permit_field != &"":
+		permit.set_value(permit_field, employer)
+		state.mark(banned.permit_id, permit_field)
+	for p: Passenger in [state.truth, c.passenger_presented]:
+		p.employer = employer
+		p.employer_code = new_code
+	state.mark(banned.contract_id, code_field)
+	var serial_field: StringName = field_for(c, banned.contract_id, &"document.serial")
+	if serial_field != &"":
+		state.mark(banned.contract_id, serial_field)
+	if origin_field != &"":
+		state.mark(banned.card_id, origin_field)
+	return make_anomaly(get_kind(), banned.contract_id, code_field, original, new_code)

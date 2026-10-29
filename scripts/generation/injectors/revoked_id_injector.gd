@@ -12,10 +12,12 @@ func get_kind() -> AnomalyType.Kind:
 
 
 func inject(state: InjectionState) -> Anomaly:
-	if active_rules(state, RevokedIdRule).is_empty():
-		return null
-	for entry: RevokedEntry in state.ctx.revoked:
-		if entry.case_index == state.case.index:
-			var field_id: StringName = field_for(state.case, &"id_card", &"citizen_id")
-			return make_anomaly(get_kind(), &"id_card", field_id, entry.citizen_id, String(entry.id))
+	# M12 : liste de chaque règle active (onglet Révocations, Liste du Conseil,
+	# cartes volées — `RevokedIdRule.entries`).
+	for rule: Rule in active_rules(state, RevokedIdRule):
+		var listed: RevokedIdRule = rule
+		for entry: RevokedEntry in listed.entries(state.ctx):
+			if entry.case_index == state.case.index and not (listed.honor_reinstatements and entry.is_reinstated(state.ctx.today)):
+				var field_id: StringName = field_for(state.case, listed.document_id, &"citizen_id")
+				return make_anomaly(get_kind(), listed.document_id, field_id, entry.citizen_id, String(entry.id))
 	return null

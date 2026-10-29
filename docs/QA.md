@@ -5,6 +5,7 @@
 > **Passe Acte II du 28.10.2026** (`0.8.1` + M8 A/B, sauvegarde v4, 515 tests) : voir [§12](#12-passe-qa-acte-ii-j10j20) — bugs QA-019 à QA-031.
 > **Passe Acte III du 29.10.2026** (M9 A/B `26eb154`, sauvegarde v5, 573 tests) : voir [§13](#13-passe-qa-acte-iii-j20j30) — bugs QA-032 à QA-040.
 > **Passe M11 « Confort » du 29.10.2026** (`4bbda95`, sauvegarde v6, 638 tests) : voir [§14](#14-passe-qa-m11-confort) — bugs QA-041 à QA-049, 655 tests (8 `pending`).
+> **Passe M12 « Rejouabilité » du 29.10.2026** (`c729f93`, profil v2, 770 tests) : voir [§15](#15-passe-qa-m12-rejouabilité) — bugs QA-050 à QA-062, 783 tests (10 `pending`).
 > Ce document liste les bugs trouvés ; **QA ne corrige pas le code de jeu** : chaque bug nomme le fichier suspecté et l'agent propriétaire (AGENTS.md).
 
 ## Sommaire
@@ -23,6 +24,7 @@
 12. [Passe QA Acte II (J10–J20)](#12-passe-qa-acte-ii-j10j20)
 13. [Passe QA Acte III (J20–J30)](#13-passe-qa-acte-iii-j20j30)
 14. [Passe QA M11 « Confort »](#14-passe-qa-m11-confort)
+15. [Passe QA M12 « Rejouabilité »](#15-passe-qa-m12-rejouabilité)
 
 ---
 
@@ -903,6 +905,245 @@ XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path 
 XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
     --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-scene=res://scenes/main/main.tscn \
     --qa-size=1280x800 --qa-wait=5 --qa-set=text_scale:1.5 --qa-out=/tmp/load.png --demo-saves --title=load
+# Données, exports
+godot --headless --script res://tools/build_data.gd && md5sum data/*/*.tres
+bash tools/export_all.sh linux && bash tools/smoke_export.sh
+```
+
+---
+
+## 15. Passe QA M12 « Rejouabilité »
+
+> Passe du 29.10.2026 sur `claude/laughing-bell-8ayudz` après `c729f93` (M12 lots A, B, C, A2 : épilogue J31, Garde de nuit, événements EV-01 → EV-08, échos SC-83 → SC-90, Dossier, profil v2, règles mutables). Godot 4.7.2, GUT 9.7.1. **QA ne corrige pas le code de jeu** : bugs QA-050 à QA-062 ci-dessous, chacun avec son propriétaire suggéré.
+
+### 15.1 Méthode et couverture
+
+| Volet | Outil | Résultat |
+|---|---|---|
+| Suite existante | GUT complet | **770 / 770** à l'arrivée (504 s) ; après la passe **783 tests : 773 verts + 10 `pending`**, 0 échec, 0 `SCRIPT ERROR` (§15.8) |
+| Campagnes réelles (`day.tscn`, booth 3D, bot `--autoplay`, ×10, `--qa-reload`) | `tools/qa_campaign.gd` sous-classé par `tests/qa_drivers/qa_m12_campaign.gd` (journal des événements, puis épilogue joué par les **trois portes**) | 3 campagnes **J1 → J30** (2 en Dur, 1 en Récit) + 3 reprises de vraies sauvegardes du J25 (§15.2) : **0 `QA_ISSUE`** hors « solde aberrant » attendu (+3 000 ₵), 0 `SCRIPT ERROR`, 0 fuite |
+| Épilogue J31 | même pilote ; `--epilogue=f10_pont` / `f8_registre` (monde C) | mondes **A, B, D depuis de vraies fins**, C depuis une graine synthétique (§15.2) |
+| Garde de nuit (vraie scène) | `tests/qa_drivers/qa_m12_garde.gd` : titre → accueil → guichet → fin de garde, bot « oracle » à erreurs programmées | 2 sessions (4 + 1 gardes), dont une de **130 passagers** jusqu'au palier 4 (§15.3) |
+| Événements (vraie scène) | `tests/qa_drivers/qa_m12_events.gd` : un jour réel par événement (`--seed --day --autoplay`) | **EV-01 → EV-08** observés (§15.4) ; 10 événements de plus dans les campagnes |
+| Simulation | `balance_sim --garde` (300 codes, 80/90 %, dégressif, 60 graines du jour) ; `--events=compare` (150 graines, 80 %) ; reproduction du bug d'invariant | D-136 et D-060 tenus ; QA-050 expliqué (§15.4) |
+| Échos | scripts de simulation (`CaseBuilder` J2 → J4 / J18, vraies données) | SC-84a/b selon le verdict du J2 ; SC-90 vu dans les 15 J31 joués (§15.5) |
+| Profil v2 | **3 vrais profils produits par la 0.11.0** (export `git archive ba17e14`, parties jouées par son `qa_campaign`), ouverts par M12 : `tests/qa_drivers/qa_m12_migrate.gd` | §15.6 ; profils versés en fixtures `tests/fixtures/qa_profile_v1_m11_*` |
+| Manette, accessibilité | GUT (vrais `InputEventJoypadButton`), ≈ 30 captures réelles OpenGL 3 sous xvfb (14 versées en `docs/mockups/m12_qa_*.png`) (1080p, Deck 1280×800, texte 1,5, `--qa-pad`, 4 modes de vision) | §15.7 |
+| Régression | `build_data` (md5), `export_all.sh linux`, `smoke_export.sh` | §15.8 |
+
+**Vrai `user://saves` jamais touché** : vide avant et après la passe, pas de `profile.json` réel créé, `settings.cfg` du joueur inchangé (md5 `9d0188…`) ; tous les outils sous `XDG_DATA_HOME` temporaire (scratchpad, supprimé) ; aucun `override.cfg` dans le projet.
+
+### 15.2 Épilogue J31
+
+#### 15.2.1 Campagnes réelles et fins
+
+| Graine | Profil | Mode | Départ | Fin (variante) | Monde | Solde | Conformité | Événements vus | Problèmes |
+|---|---|---|---|---|---|---|---|---|---|
+| 3 | loyal | Dur | J1 (+3 000 ₵) | **F7** | A | 451 ₵ | 61 % | EV-08 J5, EV-05 J16, EV-04 J28 | aucun |
+| 5 | passeur | Dur | J1 (+3 000 ₵) | **F7** (le bot n'atteint pas F10) | A | 335 ₵ | 60 % | EV-05 J4, EV-01 J13, EV-02 J19, EV-04 J26 | aucun |
+| 7 | drift | **Récit** | J1 (+3 000 ₵) | **F6 · d** | **D** | 967 ₵ | 63 % | EV-03 J8, EV-02 J14, EV-02 J28 | aucun |
+| 11 | solidaire | Dur | sauvegarde réelle `qa_save_v5_j25_solidaire` | **F9** | **B** | 201 ₵ | 86 % | — | aucun |
+| 11 | temoin | Dur | idem | F7 (le bot n'atteint pas F8) | A | 226 ₵ | 86 % | — | aucun |
+| 5 | passeur | Dur | `qa_save_v5_j25_luciole` | **F5 · b** | A | 390 ₵ | 86 % | — | aucun |
+
+- **Monde C** : le bot de démonstration ne fait pas les choix du soir qui mènent à F8 / F10 (il ne voit que l'écran). C est joué en vraie scène depuis une graine synthétique (`--epilogue=f10_pont`, `--epilogue=f8_registre` : J31 complet, 7 passagers jugés par `--skip-cases=7`, puis conclusion) et par le test existant `test_every_world_plays_from_a_seed_to_its_conclusion` ; conclusion F10 avec `%d` de `pont31` résolu (« 2 personnes de Tycho »), F8 avec réplique Tessar « ‹Shen tavi.› » ([`m12_qa_epilogue_conclusion_f8.png`](mockups/m12_qa_epilogue_conclusion_f8.png)).
+- **Fins des actes I–II** : F3 (J15, Acte II) d'un vrai profil M11 et `test_end_screen_offers_the_epilogue_only_after_act_three` : pas d'épilogue, ligne `epi_locked_hint`.
+
+#### 15.2.2 Les trois portes (6 parties × 3 = 18 J31 réels)
+
+| Contrôle | Résultat |
+|---|---|
+| Écran de fin → **UN AN PLUS TARD** (3 s après le récit, focus sur le bouton) | ✅ 6 / 6 |
+| Titre → **Charger** → JOUER « UN AN PLUS TARD » (sans confirmation) | ✅ 6 / 6 |
+| Emplacement **supprimé** → Titre → **Dossier › Épilogues** → REJOUER (graine du profil, `slot = -1`) | ✅ 6 / 6 |
+| Partie terminée non modifiée : md5 de `current.json` et des `day_NN.json` identiques avant / après, aucun fichier créé ; seule la méta reçoit `epilogue_done` ; `status = ended`, `ending_id` intact | ✅ 18 / 18 |
+| Aucune économie : solde 0, net 0 ₵ malgré 2–3 citations « AVERTISSEMENT » ; fin à la file vide (7 / 7) dans les deux modes | ✅ |
+| Drapeaux du matin : exactement un `epi_ending_<clé>` vrai (`epi_ending_f7`, `f9`, `f6d`, `f5b`), `hh_*` = foyer de la graine (ex. F9 : `hh_ilan_away`, `hh_ilan_present = false`, `hh_present = 2`) | ✅ 18 / 18 |
+| Profil : `epilogues["<fin>:<variante>"].count` = 1, 2, 3 au fil des portes ; `epilogue_unlocked` | ✅ |
+| Conclusions : ≤ 8 lignes, ouverture → SC-90 → monde → foyer → clôture, aucune clé brute ni `%d` / `%s` | ✅ (7 lignes chacune) |
+| Retrouvailles cohérentes avec la partie | ⚠️ en jeu réel : oui (Ilan parti à Tycho ⇒ aucune ligne d'Ilan au monde B). **Synthèse 13 variantes × 3 proches × 3 états** : 33 lignes nomment un proche absent, dont **Noa morte** dans les ouvertures / clôtures F5c, F6t, F6d → **QA-056** |
+
+### 15.3 Garde de nuit
+
+| Contrôle | Résultat | Preuve |
+|---|---|---|
+| Profil vierge : GARDE DE NUIT grisée, non focalisable, « Terminez votre premier jour au Guichet 04. » ; après `max_day_reached = 2` : active | ✅ | pilote, `test_title_locks_garde_and_dossier_on_a_blank_profile` |
+| Accueil : focus JOUER LA GRAINE DU JOUR ; graine du jour `NUIT-2026-10-29` = `GardeService.today_code()` (UTC) | ✅ | [`m12_qa_garde_home_deck_text150_pad.png`](mockups/m12_qa_garde_home_deck_text150_pad.png) |
+| Codes libres : `k2q9tx`, ` k2q-9tx `, `K2Q-9TX` → `K2Q-9TX` ; O, I, 0, 1 refusés (« Les codes n'utilisent ni O, ni I, ni 0, ni 1. ») ; 5 ou 7 caractères refusés ; JOUER CE CODE inactif tant que le code est invalide ; TIRER AU HASARD remplit et donne le focus à JOUER CE CODE | ✅ | pilote |
+| `NUIT-2026-13-40`, `é2Q-9TX` : refusés mais annoncés « Il faut 6 caractères » | ❌ **QA-055** | test |
+| Directive tous les 5 passagers, carte DIRECTIVE N° n (focus COMPRIS, Ⓐ la ferme sans appeler de passager), règle au Rulebook au passager suivant (`[NEW]`, un seul badge à la fois) ; palier 1 / 2 / 3 / 4 aux passagers 20 / 40 / 60 / 100 ; **rotation** au palier 4 : directive 21 `u03 retire` (ligne barrée) → `forget` au passager suivant → directive 22 `restore` (RÉTABLIE) ; idem `u05` | ✅ | pilote (130 passagers) |
+| Rulebook long (≥ 9 directives) : la règle NOUVEAU n'est **pas** amenée à l'écran (`ensure_control_visible` : « Must be an ancestor ») | ❌ **QA-061** | [`m12_qa_garde_directive10_ev08.png`](mockups/m12_qa_garde_directive10_ev08.png) |
+| 3ᵉ erreur → FIN DE GARDE (« Trois erreurs. La relève arrive. »), erreurs listées (passager, verdict rendu → attendu, citation, règle) | ✅ ; ❌ erreur de procédure affichée « APPROUVÉ → APPROUVÉ » (**QA-054**) | [`m12_qa_garde_end_deck_text150.png`](mockups/m12_qa_garde_end_deck_text150.png) |
+| TERMINER LA GARDE (barre) : boîte focus ANNULER, score enregistré ; à la manette, la croix sort de la boîte (**QA-057**) | ⚠️ | test |
+| Records : top 10 trié, `new_record` à la 1ʳᵉ garde, `rank` 0-indexé, **premier essai du jour** conservé (`first_try` = 0 puis `attempts` = 2, `best` = 4), graines libres (`best` 75), `garde_stats` (`runs` 4, `longest_run` 70) ; REJOUER = même code ; NOUVELLE GRAINE rouvre l'accueil ; RETOUR → titre | ✅ | pilote |
+| **Déterminisme** en vraie scène : même code, verdicts différents (garde 1 juste, garde 2 fausse aux passagers 3, 8, 12) → **13 / 13** passagers identiques (nom, N° ID) | ✅ | pilote ; `test_garde_is_deterministic_whatever_the_verdicts` (1 000 graines) |
+| Garde longue : **130 passagers**, 26 directives, palier 4, score 145 (EV-04 double), aucun plantage ni `SCRIPT ERROR` ; nœuds stables (≈ 850) mais **mémoire +0,4 Mo et +17 objets par passager**, portraits en cache = passagers vus | ⚠️ **QA-053** | pilote (`QA_G_MEM`) |
+| Événements en Garde : EV-04 (points doubles), EV-07, EV-08, EV-01 (R `mrz` retirée puis rétablie), jamais dans les 2 passagers qui suivent une directive | ✅ ; ❌ EV-08 annoncé « 13:00–14:00 » à 03:00 (**QA-062**) | idem |
+| Journal : `CallbackTweener … _reset_pivot : Cannot convert argument 1 from Object to Object` (61 à 137 par session de Garde du bot) quand le verdict tombe avant la fin de l'arrivée des documents | ⚠️ **QA-061** (journal) | pilote |
+
+**`balance_sim --garde` (D-136)** — 300 codes libres, graine 1 ; 60 graines du jour à partir du 29.10.2026 :
+
+| Bot | Médiane | Moyenne | p10 | p90 | Directives ≥ 1 / ≥ 4 | Cible | |
+|---|---|---|---|---|---|---|---|
+| 80 % | **11** | 13,0 | 4 | 24 | 96,3 % / 24,3 % | 11 ± 1, p10 ≥ 3, p90 ≤ 26 | ✅ |
+| 90 % | **25** | 28,4 | 10 | 52 | 99,0 % / 72,7 % | 25 ± 2 | ✅ |
+| dégressif | **37** | 37,5 | 19 | 57 | 100 % / 92,7 % | 30 à 40 (D-136) | ✅ |
+| 80 %, graines du jour | 10 | 11,7 | 4 | 22 | 98,3 % / 20,0 % | pas de « graine maudite » | ✅ |
+
+Cas sans preuve citable : **0** sur 26 393 passagers ; directives exercées : 3 934 / 3 934.
+
+### 15.4 Événements de station
+
+#### 15.4.1 Chaque événement en vraie scène (`qa_m12_events.gd`)
+
+| Événement | Graine · jour | Annonce (avant effet) | Bandeau | Effet observé | Fin | Classe B : +1 avert. | Cas scénarisés |
+|---|---|---|---|---|---|---|---|
+| EV-01 lecteur MRZ | 1 · J25 | après 9 passagers, 11:47 | « LECTEUR DE BANDE HS · 4 PASSAGERS » | `r_mrz_valid` retirée [9, 13) | rétablie au 13 (annonce de fin) | — (A) | 13 scénarisé : fenêtre close avant ✅ |
+| EV-02 comparateur | 2 · J8 | après 9 | « COMPARATEUR HS · 3 PASSAGERS » | `comparator_down`, `max_anomalies`, `no_subtle` | au 12, « Comparateur rétabli. » | ✅ (3 au lieu de 2) | — |
+| EV-03 quarantaine | 7 · J8 | après 12 | « ALERTE MERIDIAN · JUSQU'À LA FIN DU SHIFT » | surcharge `r_bioscan_valid` (TYC) | fin du jour | ✅ | — |
+| EV-04 inspection | 1 · J18 | après 3, voix INSPECTION | « INSPECTION EN COURS · 5 PASSAGERS » | 1ʳᵉ citation **amendée** (5 ₵, aucun avertissement), +2 ₵ par verdict juste (7 ₵) | au 8 | — (A) | — |
+| EV-05 coupure | 1 · J15 | après 13 | « COUPURE · ÉCLAIRAGE DE SECOURS · EN COURS » | horloge gelée à 12:37 pendant 60 s, `r_seals_valid` retirée | rétablie au passager suivant la fin | — (A) | après le dernier scénarisé ✅ |
+| EV-06 file dense | 1 · J7 | après 11 | « FILE DENSE · JUSQU'À LA FIN DU SHIFT » | **20 / 20** passagers (17 + 3) | fin du jour | — (A) | — |
+| EV-07 cartes volées | 13 · J18 | après 15 | « CARTES VOLÉES · JUSQU'À LA FIN DU SHIFT » | liste `stolen` de 3 N° (onglet), porteur au passager 16 | liste vidée en fin de jour | ✅ | — |
+| EV-08 exemption | 1 · J5 | 12:35 (≥ 12:30) | « EXEMPTION 13:00–14:00 · JUSQU'À 14:00 » | surcharge `r_bioscan_required` TRANSIT 13:00–14:00 | fin du jour à 12:54 | — (A) | — |
+
+- **Jamais pendant un cas scénarisé** : aucun cas scénarisé présenté sous un événement structurel (journal `QA_EV_CASE` des 8 jours + 10 événements de campagne). **EV-02** : le comparateur ne donne ni CONCORDANT ni DISCORDANCE à l'écran (`test_comparator_down_shows_an_agent_finding_instead_of_a_result`) ; le bot, qui lit le signal logique, trouve encore les discordances (attendu).
+- Remarque (Game Designer) : **EV-08 un jour court** (J5, 12 passagers) — à l'allure du bot, la file est vidée à 12:54 : l'événement est annoncé, affiché, puis se termine sans s'être appliqué. Pas un bug (annonce juste), mais un événement « fantôme » ; à surveiller au playtest humain (30–50 s par passager).
+- **`balance_sim --events=compare`** (150 graines, 80 %) : fins F1 22,7 → 24,0, F7 76,0 → 74,7, **écart maximal 1,3 point** (D-060 : ≤ 3) ✅ ; **4,51 événements par campagne, 100 % entre 3 et 6** ✅ ; tous les types tirés ; revenu un jour d'événement : +2,92 ₵ en moyenne (≤ 5 ₵) ✅.
+
+#### 15.4.2 Bug d'invariant « N° ID révoqué non détecté » (n = 156, 80 %, J19, EV-08) — QA-050
+
+**Reproduction** : `balance_sim --seeds=400 --seed=1 --profiles=0.8 --events=on` → `CaseBuilder: invariants violés (jour 19, cas 6, seed 3477444520065303047) : Anomaly(REVOKED_ID, id_card.citizen_id) non détectée`. Graine de campagne `SeededRng.mix(1, 156)` = `2500715359172382266` ; calendrier : EV-05 J5, EV-08 J12, **EV-08 J19** (fenêtre 13:00 → 14:00), EV-07 J23. Reproduit hors simulateur avec un seul `CaseBuilder` (J19, EV-08 appliqué, `presentation_minute = 782`) : 1 occurrence sur ≈ 750 campagnes simulées avec événements (400 graines à 60 %, ≈ 200 à 80 %, 150 en `compare`).
+
+**Cause (générateur)** : `CaseBuilder._clean_ctx` (contexte du contrôle « cas propre », `trust_documents`) est une copie de `ctx` faite **une fois** dans `_init` : son `now_minute` reste à −1. À la production des documents, `_required_document_ids` lit l'heure de présentation (`ctx.now_minute`, 13:02) et **retire** le bio-scan d'un passager TRANSIT (surcharge `exempt` d'EV-08) ; puis `_clean_violation_ids` valide le cas avec `_clean_ctx` (heure −1, hors 13:00–14:00) : R11 « bio-scan obligatoire » est violée, le cas n'est pas « propre », **l'essai est rejeté et le passager re-tiré** (2ᵉ essai : un autre passager, TRADE). Or la liste des révocations du jour a été calculée au matin (`_build_revocations` → `build_clean(6)` à l'heure −1 : « Ashe Mainsoleil », HG-9455-9W62, TRANSIT). Le passager 6 présenté à 13:02 est « Halo Tessaride » (HG-9884-DFVN) : `RevokedIdInjector` trouve l'entrée par **index**, pose l'anomalie, mais aucune violation ne la prouve.
+- Pas un défaut du simulateur (`DaySimulator.play_day` reproduit fidèlement le `DayController`, qui pose aussi `ctx.now_minute` et jamais `_clean_ctx.now_minute`) ni de la règle R30 : **le même défaut existe en jeu réel**.
+- Portée : tout passager TRANSIT présenté pendant la fenêtre d'EV-08 est re-tiré (2 sur 17 au J19 de cette graine) ; conséquence visible seulement pour un passager **pré-calculé** (révocation R30, avis de recherche, porteur de liste nommée, répondant, exercice de Garde) : la liste affiche quelqu'un qui ne viendra pas, le passager attendu est remplacé par un passager en règle (verdict attendu APPROUVÉ, cohérent), `push_error` au journal. En Garde, la surcharge d'EV-08 n'a pas de plage horaire : même mécanisme si `now_minute` du contrôle diffère.
+- **Correctif proposé (Gameplay Systems, `scripts/generation/case_builder.gd`)** : synchroniser l'heure du contrôle avant chaque validation — dans `_clean_violation_ids` (ou au début de `_build`) : `_clean_ctx.now_minute = ctx.now_minute if ctx.now_minute >= 0 else presentation_minute` (et, par sûreté, `_clean_ctx.rule_set = day.rule_set`). Option défensive : pour un index lié à une liste (révocation, avis, liste nommée), imposer l'identité de l'entrée (`citizen_id`, nom) en surcharge plutôt que de compter sur la stabilité du tirage. Tests : `test_qa050_*` (2, `pending`).
+
+### 15.5 Échos
+
+| Écho | Vérification | Résultat |
+|---|---|---|
+| SC-84a (J4 @10) | SC-03 **refusé** au J2 (graines 7, 23, 99) → présent, visage = **vrai visage du mineur** du J2, ses propres papiers, attendu APPROUVÉ | ✅ |
+| SC-84b (J18 @11, D-135) | SC-03 **approuvé** (`sc03_passed`) → présent, identité de la carte du J2, **visage = photo du J2** (traits d'identité ; tranche d'âge recalculée), N° à l'onglet Révocations, attendu REFUSÉ | ✅ (graines 1–10, 23) ; ❌ graine 7 : attendu DÉTENTION (avis homonyme, **QA-051**) ; ❌ mémoire 0.11 sans `photo_appearance` : visage du roster et « aucun cas propre » (**QA-060**) |
+| SC-90 (J31 @0) | 18 J31 réels + 2 synthétiques | ✅ présent, APPROUVÉ, ligne « La troisième personne du 13 mars… » |
+| Autres échos (SC-83 → SC-89) | `test_echoes_appear_on_their_trigger_with_expected_verdicts`, `test_echo_indices_are_free` (existants) | ✅ |
+
+### 15.6 Dossier et profil v2
+
+| Contrôle | Résultat | Preuve |
+|---|---|---|
+| Profil « early » (avant `epilogue_unlocked`) : « 0 fin vue · 0 garde », **aucun total**, pas d'onglet ÉPILOGUES, fins en silhouette + indice de niveau 1 seulement, personnes croisées seules, **« Bastien Duval » entre guillemets** | ✅ | [`m12_qa_dossier_early_endings.png`](mockups/m12_qa_dossier_early_endings.png), [`m12_qa_dossier_early_people.png`](mockups/m12_qa_dossier_early_people.png) |
+| Après une fin de l'Acte III : « 3 / 10 fins », « 18 / 44 personnes », onglet ÉPILOGUES, vrai nom appris | ✅ | [`m12_qa_dossier_people_deck_text150.png`](mockups/m12_qa_dossier_people_deck_text150.png) |
+| **Vrai profil 0.11.0 + sa partie terminée** (F9, J30) : `profile.v1.bak`, v2, `max_day_reached = 30`, `epilogue_unlocked`, graine `f9_strike:` au profil, `day_31.json` + méta `epilogue_available` écrits, `last_campaign` (monde B) ; Charger → J31 joué ; partie inchangée (`game_version` 0.11.0 conservée) | ✅ | `test_real_m11_profile_with_its_finished_game_migrates_and_offers_the_epilogue` |
+| Vrais profils 0.11.0 **sans emplacement** (F5 au J30 ; F3 au J15) : `max_day_reached = 0` → **Garde verrouillée** ; F5 de l'Acte III sans `epilogue_unlocked` ; `known_names` jamais reconstruits | ❌ **QA-052** | `test_qa052_*` |
+
+### 15.7 Manette seule et accessibilité
+
+| Écran | Manette | Texte 1,5 · Deck 1280×800 | Vision des couleurs |
+|---|---|---|---|
+| Accueil de la Garde | ✅ focus JOUER LA GRAINE DU JOUR, Ⓑ retour (glyphe) | ✅ | — |
+| Carte de directive | ✅ focus COMPRIS, Ⓐ ferme la carte **sans** appeler de passager (QA-041 tient) | ✅ | ✅ 4 modes : badge NOUVEAU ⚠ + texte, bord ambre → crème en Protan·Deutan / Tritan, jamais la couleur seule ([`m12_qa_directive_colorvision.png`](mockups/m12_qa_directive_colorvision.png)) |
+| Barre de Garde (ERREURS ◇◇◇ 0/3, ⊗ pleins) | ✅ TERMINER LA GARDE joignable à la croix ↑ ; ❌ boîte : la croix sort vers SUIVANT (**QA-057**) | ✅ | ✅ octogones / losanges + « 1/3 » |
+| Fin de garde | ✅ focus REJOUER, Ⓐ = rejouer, Ⓑ = titre | ✅ | — |
+| Carte « UN AN PLUS TARD » | ✅ focus CONTINUER, Ⓑ = titre | ✅ | ✅ (Tritan, monde D) |
+| Conclusion | ✅ Ⓑ révèle tout puis titre, focus RETOUR AU TITRE | ❌ colonne tronquée (**QA-058**) | — |
+| Dossier | ✅ RB / LB entre les onglets, Ⓑ retour | ✅ | — |
+| Bandeau ÉVÉNEMENT + ligne du Rulebook | — (non focalisable) | ✅ | ✅ 4 modes : icône « = » + texte ambre lisible ([`m12_qa_banner_colorvision.png`](mockups/m12_qa_banner_colorvision.png)) |
+
+Remarques (cosmétique, non numérotées) : au Deck en texte 1,5 l'onglet « Documents » du Rulebook passe sous la puce RB (déjà vu en campagne) ; avec `--qa-pad`, la consigne du bas reste « intercom (N) » quand l'encart du haut dit « (A) ».
+
+### 15.8 Régression
+
+| Contrôle | Résultat |
+|---|---|
+| GUT complet | ✅ **770 / 770** à l'arrivée ; après la passe **783 tests, 773 verts + 10 `pending`** (QA-050 ×2, QA-051 → QA-057, QA-060), 0 échec, 0 `SCRIPT ERROR` (≈ 500 s) |
+| `build_data` | ✅ « build_data : OK », 172 fichiers réécrits, **167 fichiers de `data/` identiques** (md5 avant / après), M12 compris |
+| `bash tools/export_all.sh linux` | ✅ `build/dist/CLEARANCE-0.11.0-linux.tar.gz` (38,6 Mo, 44 s) — nom de version : **QA-059** |
+| `bash tools/smoke_export.sh` | ✅ release_title + debug J1, J4, J7, J10, J15, J20, J25, J30 : OK (le smoke ne couvre ni la Garde ni le J31) |
+| Campagnes J1 → J30 | ✅ 2 en Dur (F7 ×2), 1 en Récit (F6 · d), 0 `QA_ISSUE`, sauvegarde relue = état chaque soir, « Quitter → Continuer » réel à chaque nouveau jour |
+
+### 15.9 Liste des bugs (M12)
+
+Statut : 🔴 ouvert.
+
+| ID | Sév. | Titre | Reproduction | Propriétaire suggéré | Preuve |
+|---|---|---|---|---|---|
+| QA-050 | Mineur | ✅ Corrigé (0.12.0) — **Contrôle « cas propre » sans l'heure de présentation (EV-08)** : `CaseBuilder._clean_ctx.now_minute` reste à −1 ; dans la fenêtre 13:00–14:00, un TRANSIT dispensé de bio-scan est re-tiré ; un porteur pré-calculé (révocation, avis, liste) est remplacé — invariant « N° ID révoqué non détecté », liste fausse, `push_error` | `balance_sim --seeds=400 --seed=1 --profiles=0.8 --events=on` (n = 156, J19, cas 6) ; §15.4.2 | Gameplay Systems (`case_builder.gd` : synchroniser `_clean_ctx.now_minute`) | `test_qa050_*` (2) |
+| QA-051 | Mineur | ✅ Corrigé (0.12.0) — **SC-84b attendu DÉTENTION** quand le passager généré visé par l'avis du jour porte exactement son nom (graine 7, 1 graine sur 150) : l'avis vise aussi le vrai titulaire | `CaseBuilder` J2 (SC-03 approuvé) puis J18, graine 7 | Gameplay Systems (exclure des avis et des passagers générés les identités des cas scénarisés du jour, `identity_from_case` compris) | `test_qa051_*` |
+| QA-052 | Mineur | ✅ Corrigé (0.12.0) — **Migration v1 → v2 sans emplacement** : `max_day_reached` ne lit que les emplacements (0 pour un joueur 0.11 qui a fini la campagne puis supprimé sa partie → **Garde verrouillée**), fin de l'Acte III sans `epilogue_unlocked`, `known_names` jamais reconstruits | vrais profils `qa_profile_v1_m11_f5_j30_noslot.json`, `…_f3_j15_noslot.json` | Godot Architect (`ProfileService.migrate_v1` : `max_day_reached` ≥ jour des `endings_seen`, `epilogue_unlocked` si une fin d'acte 3 est vue, noms connus depuis les parties terminées) ; M12 §7.5 à amender | `test_qa052_*` |
+| QA-053 | Mineur (perf) | ✅ Corrigé (0.12.0) — **Garde : cache des portraits sans plafond** — la scène n'est jamais rechargée ; un portrait par passager (+0,4 Mo, +17 objets par passager : +89 Mo à 130 passagers) | `qa_m12_garde.gd --qa-garde-long=130` (`QA_G_MEM`) | 3D Designer / Asset Lead (`portrait_service.gd` : LRU) ou Godot Architect (`DayScene` : vider le cache au départ du passager en Garde) | `test_qa053_*` |
+| QA-054 | Cosmétique | ✅ Corrigé (0.12.0) — **Fin de garde : erreur de procédure « APPROUVÉ → APPROUVÉ »** (visière non retirée) : la ligne verdict rendu → attendu ne dit rien de la faute | 3 erreurs dont une de visage non contrôlé | UI/UX Expert (`garde_end_screen.gd` `error_row` : libellé de procédure quand verdict = attendu) | `test_qa054_*`, [`m12_qa_garde_end_deck_text150.png`](mockups/m12_qa_garde_end_deck_text150.png) |
+| QA-055 | Cosmétique | ✅ Corrigé (0.12.0) — **Code de garde : date impossible annoncée « Il faut 6 caractères »** (`NUIT-2026-13-40`, et caractère accentué) | accueil › graine libre | Godot Architect (`GardeService.normalize_code` : clé d'erreur propre) + UI/UX (texte) | `test_qa055_*` |
+| QA-056 | Mineur (narratif) | ✅ Corrigé (0.12.0) — **Conclusions : Noa nommée alors qu'elle est morte** — `epi_f5c_close`, `epi_f6t_open`, `epi_f6d_close` sans condition ; `epi_home_noa` conditionnée à `hh_noa_alive` seulement (Noa partie ou retenue : 24 cas) | `EpilogueService.conclusion` sur 13 variantes × proche mort / parti / retenu | Scénariste (variantes sans Noa) + Gameplay Systems (`build_data_m12.gd` : conditions `hh_noa_alive` / `hh_noa_present`) | `test_conclusions_never_name_a_lost_away_or_held_relative` (QA-056) |
+| QA-057 | **Majeur** | ✅ Corrigé (0.12.0) — **Manette : la boîte « Terminer la garde » (barre) laisse fuir le focus** — toute direction de la croix depuis ANNULER part sur SUIVANT, derrière la boîte ; Ⓐ y appelle un passager, la garde ne se termine pas (contournement : Pause › TERMINER LA GARDE) | Garde, croix ↑ depuis SUIVANT, Ⓐ, croix → | UI/UX Expert (`DayScene.request_end_garde` / `ConfirmDialog` : piéger le focus, `FocusGuard` de la boîte, comme la pause) | `test_pad_only_garde_directive_card_and_end_from_the_bar` |
+| QA-058 | Mineur (a11y) | ✅ Corrigé (0.12.0) — **Conclusion au Deck en texte 1,5 : colonne tronquée** à 3,5 lignes (ligne coupée), 150 px vides au-dessus du pied, aucun indice de défilement | `--epilogue=f10_pont --skip-cases=7 --qa-set=text_scale:1.5`, 1280×800 | UI/UX Expert (`epilogue_screen.gd` : défilement sur la hauteur disponible + repère « suite ») | [`m12_qa_epilogue_conclusion_c_deck_text150.png`](mockups/m12_qa_epilogue_conclusion_c_deck_text150.png) |
+| QA-059 | Cosmétique | ✅ Corrigé (0.12.0) — **Version non montée** : `config/version = "0.11.0"` (export `CLEARANCE-0.11.0-linux.tar.gz`, `game_version` des sauvegardes) alors que M12 = 0.12.0 | `export_all.sh linux` | Orchestrateur (à la livraison) | `build/dist` |
+| QA-060 | Mineur | ✅ Corrigé (0.12.0) — **Sauvegarde 0.11 : SC-84b sans le visage de la photo du J2** — l'entrée `sc_03` d'une mémoire 0.11 n'a pas `photo_appearance` (ajouté en M12) : visage du roster, et « aucun cas propre après 8 essais (r_apparent_age) » au matin du J18 | mémoire SC-03 approuvée sans `photo_appearance`, `CaseMemory.resolve`, J18 | Godot Architect (`CaseMemory.resolve` : recalcul déterministe de `photo_appearance` manquante, D-057) | `test_qa060_*` |
+| QA-061 | Mineur | ✅ Corrigé (0.12.0) — **Garde : le Rulebook ne montre pas la règle NOUVEAU quand la liste est longue** (`ensure_control_visible` différé sur une carte reconstruite : « Must be an ancestor of the control », 5–14 par garde) ; au journal aussi `CallbackTweener … _reset_pivot` (61–137 par session du bot, `DocumentView` libéré avant la fin de son arrivée) | garde ≥ 45 passagers ; verdict < 0,6 s après les documents | UI/UX Expert (`rulebook_panel.gd` `focus_rule` : défiler après reconstruction ; `workbench.gd` : `_reset_pivot(view: Object)` ou tuer `_arrivals`) | [`m12_qa_garde_directive10_ev08.png`](mockups/m12_qa_garde_directive10_ev08.png) |
+| QA-062 | **Majeur** | ✅ Corrigé (0.12.0) — **EV-08 en Garde : textes de campagne** — annonce « de 13:00 à 14:00, motif TRANSIT dispensé de bio-scan », bandeau « EXEMPTION 13:00–14:00 · JUSQU'À LA FIN DU SHIFT », Rulebook « JUSQU'À 14:00 » à 02:42 / 03:00, alors que l'exemption s'applique **aux 5 passagers suivants** (`garde_changes` sans plage). Le joueur qui refuse un TRANSIT sans bio-scan est cité : une erreur sur 3 | garde K2Q-9TX, passager 47 | Gameplay Systems (`build_data_m12.gd` : `garde_announce_key`, titres de Garde) + Scénariste (textes) + UI/UX (reste « n PASSAGERS » en Garde) | [`m12_qa_garde_directive10_ev08.png`](mockups/m12_qa_garde_directive10_ev08.png) |
+
+Total M12 : **0 bloquant, 2 majeurs, 8 mineurs (dont 1 perf, 1 narratif, 1 accessibilité), 3 cosmétiques** (QA-050 à QA-062, 13 bugs). Aucun bug des passes précédentes réapparu (QA-041 tient sur la carte de directive ; QA-047 non revu).
+
+### 15.10 Tests ajoutés (`tests/integration/test_qa_m12.gd`, 13 tests) et outils
+
+| Test | État |
+|---|---|
+| `test_qa050_ev08_revoked_carrier_keeps_its_listed_identity` | ⏸ `pending` QA-050 |
+| `test_qa050_clean_build_does_not_depend_on_the_exemption_window` | ⏸ `pending` QA-050 |
+| `test_qa051_sc84b_is_denied_even_when_a_generated_wanted_passenger_shares_his_name` | ⏸ `pending` QA-051 |
+| `test_sc84_echoes_wear_the_right_face_of_day_two` | ✅ passe |
+| `test_qa060_sc84b_keeps_the_photo_face_with_a_0_11_memory_entry` | ⏸ `pending` QA-060 (marque comme traitée l'erreur « aucun cas propre » attendue tant que le défaut existe) |
+| `test_qa052_real_m11_profiles_without_slot_keep_their_progress` | ⏸ `pending` QA-052 |
+| `test_real_m11_profile_with_its_finished_game_migrates_and_offers_the_epilogue` | ✅ passe |
+| `test_qa053_garde_portrait_cache_does_not_grow_with_the_run` | ⏸ `pending` QA-053 |
+| `test_qa054_procedure_error_does_not_read_the_same_verdict_twice` | ⏸ `pending` QA-054 |
+| `test_qa055_invalid_daily_code_is_not_reported_as_a_length_error` | ⏸ `pending` QA-055 |
+| `test_conclusions_never_name_a_lost_away_or_held_relative` | ⏸ `pending` QA-056 |
+| `test_pad_only_m12_screens` | ✅ passe (fin de garde, carte du J31, conclusion, Dossier : vrais boutons de manette) |
+| `test_pad_only_garde_directive_card_and_end_from_the_bar` | ⏸ `pending` QA-057 (COMPRIS au Ⓐ vérifié) |
+
+Durée du fichier : ≈ 6 s. Fixtures : `tests/fixtures/qa_profile_v1_m11_f9_j30.json` (+ `_slot_current.json`, `_slot_meta.json`), `qa_profile_v1_m11_f5_j30_noslot.json`, `qa_profile_v1_m11_f3_j15_noslot.json` — **profils réels écrits par la 0.11.0** (`git archive ba17e14`, parties jouées par son `qa_campaign`). Pilotes de vraie scène (hors GUT) : `tests/qa_drivers/qa_m12_campaign.gd`, `qa_m12_garde.gd`, `qa_m12_events.gd`, `qa_m12_migrate.gd`.
+
+### 15.11 Recommandations priorisées
+
+1. **QA-062** et **QA-057** avant tout playtest de la Garde (une erreur coûte un tiers de la partie ; la manette est la cible Deck).
+2. **QA-050** (une ligne dans `case_builder.gd`) puis **QA-051** : intégrité des listes du jour.
+3. **QA-056**, **QA-060** : cohérence narrative des retrouvailles et des échos sur les sauvegardes 0.11 (les joueurs 0.11 arriveront en M12 avec ces mémoires).
+4. **QA-052** (et M12 §7.5) : ne pas reverrouiller la Garde ni cacher les totaux à un joueur qui a fini la campagne en 0.11.
+5. **QA-053**, **QA-061** (Garde longue), **QA-058** (texte 1,5).
+6. QA-054, QA-055, QA-059 à la livraison 0.12.0.
+7. QA (suite) : étendre `smoke_export.sh` à `--garde` et `--epilogue` ; playtest humain de la Garde (cibles M12 §6.1 : médiane 20–30, 30–50 s par passager) et de l'EV-08 un jour court ; une vraie fin F8 / F10 jouée à la main pour le monde C.
+
+### 15.12 Rejouer la passe M12
+
+```bash
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json -gexit        # 783 tests, 10 pending
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig= -gtest=res://tests/integration/test_qa_m12.gd \
+    -gpre_run_script=res://tests/helpers/gut_pre_run.gd -gexit                       # ≈ 6 s
+# Campagne réelle + épilogue par les trois portes (tronçons de 9 min ; reprise : --qa-load=<copie de slot_1/current.json>)
+X=$(mktemp -d); XDG_DATA_HOME=$X timeout 540 godot --headless --script res://tools/qa_boot.gd -- \
+    --qa-node=res://tests/qa_drivers/qa_m12_campaign.gd --autoplay --qa-seed=3 --qa-profile=loyal --qa-speed=10 \
+    --qa-reload --qa-credits=3000
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- \
+    --qa-node=res://tests/qa_drivers/qa_m12_campaign.gd --autoplay --qa-load=$PWD/tests/fixtures/qa_save_v5_j25_solidaire.json \
+    --qa-profile=solidaire --qa-speed=10 --qa-reload                                  # F9, monde B
+# Garde réelle (codes, directives, records, déterminisme) ; garde longue
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tests/qa_drivers/qa_m12_garde.gd --qa-garde-long=70
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tests/qa_drivers/qa_m12_garde.gd --qa-garde-long=130 --qa-only-long
+# Un jour réel par événement : ev_01 1/25, ev_02 2/8, ev_03 7/8, ev_04 1/18, ev_05 1/15, ev_06 1/7, ev_07 13/18, ev_08 1/5
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tests/qa_drivers/qa_m12_events.gd --seed=1 --day=18 --autoplay
+# Simulation
+godot --headless --script res://tools/balance_sim.gd -- --garde --seeds=300 --seed=1 --profiles=0.8,0.9
+godot --headless --script res://tools/balance_sim.gd -- --garde --decay --seeds=300 --seed=1
+godot --headless --script res://tools/balance_sim.gd -- --events=compare --seeds=150 --seed=1 --profiles=0.8
+godot --headless --script res://tools/balance_sim.gd -- --seeds=400 --seed=1 --profiles=0.8 --events=on 2>&1 | grep "invariants violés"   # QA-050
+# Captures (xvfb, OpenGL 3) : directive en 4 modes, bandeau, J31, Dossier
+XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
+    --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1920x1080 --qa-wait=30 \
+    --qa-out=/tmp/dir.png --garde=K2Q-9TX --skip-cases=5 --hold-card --qa-set=color_vision:N --reduce-motion
+#   bandeau : --seed=2 --day=8 --skip-cases=1 --station-event=ev_02 ; J31 : --epilogue=f10_pont [--skip-cases=7]
+#   Dossier : --qa-scene=res://scenes/main/main.tscn --demo-profile[=early] --title=dossier|dossier-people
 # Données, exports
 godot --headless --script res://tools/build_data.gd && md5sum data/*/*.tres
 bash tools/export_all.sh linux && bash tools/smoke_export.sh

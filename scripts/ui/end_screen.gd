@@ -18,30 +18,18 @@
 ## seconde vanne, Brûlants ; dérive, Tycho), figure finale du J30 (Dora ou
 ## Mira, D-088), traces des choix J20–J30 (valeurs `%d` : familles de Tycho),
 ## tableau des 30 shifts défilant.
+## M12 (lot C, I29 ; M12 §1.10, D-122) : fin de l'Acte III → **UN AN PLUS
+## TARD** (bouton principal, focus) `DS.EPILOGUE_OFFER_DELAY` après le récit,
+## à côté de RETOUR AU TITRE (`finished(&"epilogue")`) ; fins des actes I–II :
+## ligne `epi_locked_hint` (sans titre ni monde).
 class_name EndScreen
 extends ScreenBase
 
 const COLUMNS: Array[String] = ["end_col_day", "end_col_processed", "end_col_correct", "end_col_citations",
 		"end_col_wage", "end_col_fines", "end_col_spent", "end_col_balance"]
 ## Drapeaux dont la trace est rappelée, dans l'ordre de la campagne (J1 → J10).
-const NARRATIVE_FLAGS: Array[StringName] = [&"sc02_mercy", &"sc02_turned_away", &"sc03_passed", &"met_mira",
-		&"sc05_helped", &"lucioles_reported", &"lucioles_note_burned",
-		&"sc06_reunited", &"sc07_bribe_kept", &"sc07_bribe_returned", &"noa_birthday_gift", &"lucioles_heating_accepted",
-		&"inspector_bribe_taken", &"inspector_test_passed", &"inspector_test_failed", &"sc11_veteran_passed",
-		&"sc13_detained", &"sc13_passed", &"sc14_bribe_kept", &"sc16_hana_passed", &"sc16_family_split",
-		&"sc17_detained", &"sc17_passed", &"neighbor_denounced", &"neighbor_helped", &"brulants_package",
-		&"sc18_note_reported", &"sc18_note_kept", &"audit_retention", &"audit_clean",
-		&"ilan_supported", &"ilan_forbidden", &"ilan_denounced", &"okonkwo_denounced", &"okonkwo_warned",
-		&"drift_passes_bought", &"sc20_detained", &"sc20_passed", &"sc21_bribe_kept",
-		&"final_detained", &"final_passed", &"final_denied", &"final_unprocessed",
-		# Acte II (J10 → J20).
-		&"vannes_opened", &"drift_stayed", &"sc25_elena_turned_away", &"quota_overrun", &"sc28_tariq_refused",
-		&"sc35_okonkwo_detained", &"sc35_okonkwo_helped", &"colleagues_listed", &"sc41_sato_spared", &"sc43_mateus_detained",
-		&"beaumont_defied", &"sc45_ravel_spared", &"ilan_joined_soute", &"dora_departed", &"registre_sent", &"strike_joined",
-		# Acte III (J20 → J30).
-		&"amnesty_signed", &"sc53_anouk_detained", &"sc59_beaumont_spared", &"noa_coached", &"ilan_scab", &"ilan_tycho",
-		&"dora_testimony", &"sc70_montclair_refused", &"sc73_celeste_refused", &"tycho_list_saved", &"tycho_list_reported",
-		&"names_given", &"deposition_truth", &"deposition_loyal", &"strike2_joined", &"pont"]
+## Drapeaux tracés à l'écran de fin : liste tenue par `EndingService` (M12, B63).
+const NARRATIVE_FLAGS: Array[StringName] = EndingService.TRACE_FLAGS
 ## Au plus autant de traces affichées (les plus récentes l'emportent).
 const MAX_TRACES: int = 9
 ## Rythme de lecture de l'épilogue (une ligne toutes les ~1,9 s).
@@ -65,6 +53,10 @@ var epilogue: Dictionary = {}
 var epilogue_labels: Array[Label] = []
 ## Nombre de lignes déjà révélées.
 var revealed: int = 0
+## M12 : « UN AN PLUS TARD » (fin de l'Acte III), null sinon.
+var epilogue_button: Button = null
+## M12 : ligne « Certaines fins ont une suite… » (fins des actes I–II).
+var locked_hint: Label = null
 
 var _scroll: ScrollContainer = null
 var _recap: Control = null
@@ -149,11 +141,7 @@ static func icon_of(p_ending: StringName) -> UiIcon.Kind:
 ## Clés des traces des choix (drapeaux vrais ou jauges non nulles), au plus
 ## `MAX_TRACES`, dans l'ordre de la campagne.
 static func trace_keys(p_flags: Dictionary[StringName, Variant]) -> PackedStringArray:
-	var keys: PackedStringArray = []
-	for flag: StringName in NARRATIVE_FLAGS:
-		var value: Variant = p_flags.get(flag, false)
-		if (value is bool and value) or ((value is int or value is float) and value != 0):
-			keys.append("end_trace_%s" % flag)
+	var keys: PackedStringArray = EndingService.traces(p_flags)
 	return keys.slice(maxi(keys.size() - MAX_TRACES, 0))
 
 
@@ -195,7 +183,11 @@ func epilogue_lines() -> PackedStringArray:
 
 ## Manette / clavier (M11) : « PASSER » pendant le récit, puis « TITRE ».
 func default_focus() -> Control:
-	return skip_button if skip_button != null and skip_button.is_visible_in_tree() else title_button
+	if skip_button != null and skip_button.is_visible_in_tree():
+		return skip_button
+	if epilogue_button != null and epilogue_button.is_visible_in_tree():
+		return epilogue_button
+	return title_button
 
 
 func _build() -> void:
@@ -328,6 +320,12 @@ func _footer() -> Control:
 	var hint: Label = label(UiText.t("end_hint", "« Gloire au Consortium. » — Vesh ota lumi."), &"CaptionLabel")
 	hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	footer.add_child(hint)
+	if has_epilogue_lock_hint():
+		locked_hint = label(UiText.t("epi_locked_hint", "Certaines fins ont une suite. Elles commencent après le 1ᵉʳ avril."), &"CaptionLabel",
+				Palette.TEXT_SECONDARY)
+		locked_hint.name = "EpilogueLockedHint"
+		locked_hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		footer.add_child(locked_hint)
 	footer.add_child(spacer())
 	skip_button = button(UiText.t("end_skip", "TOUT AFFICHER"), &"ButtonGhost")
 	skip_button.pressed.connect(reveal_all)
@@ -336,7 +334,34 @@ func _footer() -> Control:
 	title_button.custom_minimum_size.x = 280.0
 	title_button.pressed.connect(close.bind(&"title"))
 	footer.add_child(title_button)
+	if has_epilogue():
+		epilogue_button = button(UiText.t("epi_button", "UN AN PLUS TARD"), &"ButtonPrimary")
+		epilogue_button.name = "Epilogue"
+		epilogue_button.custom_minimum_size.x = 320.0
+		epilogue_button.visible = false
+		epilogue_button.pressed.connect(close.bind(&"epilogue"))
+		footer.add_child(epilogue_button)
 	return footer
+
+
+## M12 (D-122) : la fin ouvre l'épilogue J31 (fin de l'Acte III).
+func has_epilogue() -> bool:
+	return EpilogueService.is_eligible(ending, flags)
+
+
+## M12 : fin des actes I–II (F1–F10 hors Acte III) : ligne sobre, sans titre ni monde.
+func has_epilogue_lock_hint() -> bool:
+	return EndingService.ALL_ENDINGS.has(ending) and EpilogueService.act_of(flags) < 3
+
+
+## « UN AN PLUS TARD » devient le bouton principal (focus) ; RETOUR AU TITRE secondaire.
+func offer_epilogue() -> void:
+	if epilogue_button == null or not is_instance_valid(epilogue_button):
+		return
+	epilogue_button.visible = true
+	title_button.theme_type_variation = &"ButtonTool"
+	if is_inside_tree():
+		epilogue_button.grab_focus.call_deferred()
 
 
 # ---------------------------------------------------------------------------
@@ -405,6 +430,8 @@ func _finish_reveal() -> void:
 			_recap.create_tween().tween_property(_recap, "modulate:a", 1.0, DS.DUR_DRAMATIC)
 	if title_button != null and is_inside_tree():
 		title_button.grab_focus.call_deferred()
+	if epilogue_button != null and is_inside_tree():
+		get_tree().create_timer(DS.EPILOGUE_OFFER_DELAY).timeout.connect(offer_epilogue)
 
 
 func _unhandled_input(event: InputEvent) -> void:

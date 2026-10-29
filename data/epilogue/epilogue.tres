@@ -1,0 +1,785 @@
+[gd_resource type="Resource" script_class="EpilogueDef" format=3 uid="uid://jbkk1l3l8l2a"]
+
+[ext_resource type="Script" path="res://scripts/core/epilogue_ending_def.gd" id="1_48232"]
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="2_6xmbx"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="3_refc7"]
+[ext_resource type="Script" path="res://scripts/core/epilogue_def.gd" id="4_7bxux"]
+[ext_resource type="Script" path="res://scripts/core/epilogue_world_def.gd" id="5_nwyuv"]
+[ext_resource type="Resource" path="res://data/epilogue/day_31_a.tres" id="6_hm2t5"]
+[ext_resource type="Script" path="res://scripts/core/epilogue_line_group_def.gd" id="7_neixe"]
+[ext_resource type="Resource" path="res://data/epilogue/day_31_b.tres" id="8_f2qis"]
+[ext_resource type="Resource" path="res://data/epilogue/day_31_c.tres" id="9_qxxs7"]
+[ext_resource type="Resource" path="res://data/epilogue/day_31_d.tres" id="10_xqcy3"]
+
+[sub_resource type="Resource" id="epi_resource_109"]
+script = ExtResource("1_48232")
+key = &"f1"
+world = &"a"
+open_key = "epi_f1_open"
+close_key = "epi_f1_close"
+intro_key = "day31_a_intro_f1"
+
+[sub_resource type="Resource" id="epi_resource_110"]
+script = ExtResource("1_48232")
+key = &"f3"
+world = &"a"
+open_key = "epi_f3_open"
+close_key = "epi_f3_close"
+no_home_line = true
+intro_key = "day31_a_intro_f3"
+
+[sub_resource type="Resource" id="epi_resource_111"]
+script = ExtResource("1_48232")
+key = &"f4"
+world = &"a"
+open_key = "epi_f4_open"
+close_key = "epi_f4_close"
+intro_key = "day31_a_intro_f4"
+
+[sub_resource type="Resource" id="epi_resource_112"]
+script = ExtResource("1_48232")
+key = &"f5b"
+world = &"a"
+open_key = "epi_f5b_open"
+close_key = "epi_f5b_close"
+intro_key = "day31_a_intro_f5b"
+
+[sub_resource type="Resource" id="epi_resource_113"]
+script = ExtResource("1_48232")
+key = &"f7"
+world = &"a"
+open_key = "epi_f7_open"
+close_key = "epi_f7_close"
+intro_key = "day31_a_intro_f7"
+
+[sub_resource type="Resource" id="epi_resource_116"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_115"]
+script = ExtResource("2_6xmbx")
+key = "epi_f5c_close_noa"
+condition = SubResource("epi_resource_116")
+
+[sub_resource type="Resource" id="epi_resource_114"]
+script = ExtResource("1_48232")
+key = &"f5c"
+world = &"b"
+open_key = "epi_f5c_open"
+close_key = "epi_f5c_close"
+close_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_115")])
+intro_key = "day31_b_intro_f5c"
+
+[sub_resource type="Resource" id="epi_resource_117"]
+script = ExtResource("1_48232")
+key = &"f5s"
+world = &"b"
+open_key = "epi_f5s_open"
+close_key = "epi_f5s_close"
+intro_key = "day31_b_intro_f5s"
+
+[sub_resource type="Resource" id="epi_resource_118"]
+script = ExtResource("1_48232")
+key = &"f9"
+world = &"b"
+open_key = "epi_f9_open"
+close_key = "epi_f9_close"
+intro_key = "day31_b_intro_f9"
+
+[sub_resource type="Resource" id="epi_resource_119"]
+script = ExtResource("1_48232")
+key = &"f8"
+world = &"c"
+open_key = "epi_f8_open"
+close_key = "epi_f8_close"
+intro_key = "day31_c_intro_f8"
+
+[sub_resource type="Resource" id="epi_resource_120"]
+script = ExtResource("1_48232")
+key = &"f10"
+world = &"c"
+open_key = "epi_f10_open"
+close_key = "epi_f10_close"
+open_gauge = &"pont31"
+intro_key = "day31_c_intro_f10"
+
+[sub_resource type="Resource" id="epi_resource_123"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_tycho", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_122"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_tycho"
+condition = SubResource("epi_resource_123")
+
+[sub_resource type="Resource" id="epi_resource_125"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_124"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_reconciled"
+condition = SubResource("epi_resource_125")
+
+[sub_resource type="Resource" id="epi_resource_127"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_126"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_noa"
+condition = SubResource("epi_resource_127")
+
+[sub_resource type="Resource" id="epi_resource_121"]
+script = ExtResource("1_48232")
+key = &"f2"
+world = &"d"
+open_key = "epi_f2_open"
+close_key = "epi_f2_close"
+home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_122"), SubResource("epi_resource_124"), SubResource("epi_resource_126")])
+intro_key = "day31_d_intro_f2"
+
+[sub_resource type="Resource" id="epi_resource_132"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_tycho", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_131"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_tycho"
+condition = SubResource("epi_resource_132")
+
+[sub_resource type="Resource" id="epi_resource_134"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_133"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_reconciled"
+condition = SubResource("epi_resource_134")
+
+[sub_resource type="Resource" id="epi_resource_136"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_135"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_noa"
+condition = SubResource("epi_resource_136")
+
+[sub_resource type="Resource" id="epi_resource_130"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_129"]
+script = ExtResource("2_6xmbx")
+key = "epi_f6t_open_noa"
+condition = SubResource("epi_resource_130")
+
+[sub_resource type="Resource" id="epi_resource_128"]
+script = ExtResource("1_48232")
+key = &"f6t"
+world = &"d"
+open_key = "epi_f6t_open"
+close_key = "epi_f6t_close"
+open_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_129")])
+home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_131"), SubResource("epi_resource_133"), SubResource("epi_resource_135")])
+intro_key = "day31_d_intro_f6t"
+
+[sub_resource type="Resource" id="epi_resource_139"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_138"]
+script = ExtResource("2_6xmbx")
+key = "epi_f6d_close_noa"
+condition = SubResource("epi_resource_139")
+
+[sub_resource type="Resource" id="epi_resource_141"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_tycho", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_140"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_tycho"
+condition = SubResource("epi_resource_141")
+
+[sub_resource type="Resource" id="epi_resource_143"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_142"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_reconciled"
+condition = SubResource("epi_resource_143")
+
+[sub_resource type="Resource" id="epi_resource_145"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_144"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_noa"
+condition = SubResource("epi_resource_145")
+
+[sub_resource type="Resource" id="epi_resource_137"]
+script = ExtResource("1_48232")
+key = &"f6d"
+world = &"d"
+open_key = "epi_f6d_open"
+close_key = "epi_f6d_close"
+close_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_138")])
+home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_140"), SubResource("epi_resource_142"), SubResource("epi_resource_144")])
+intro_key = "day31_d_intro_f6d"
+
+[sub_resource type="Resource" id="epi_resource_147"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc90_first_passed"])
+
+[sub_resource type="Resource" id="epi_resource_146"]
+script = ExtResource("2_6xmbx")
+key = "epi_first_passed"
+condition = SubResource("epi_resource_147")
+
+[sub_resource type="Resource" id="epi_resource_149"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc90_first_refused"])
+
+[sub_resource type="Resource" id="epi_resource_148"]
+script = ExtResource("2_6xmbx")
+key = "epi_first_refused"
+condition = SubResource("epi_resource_149")
+
+[sub_resource type="Resource" id="epi_resource_151"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_150"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_reconciled"
+condition = SubResource("epi_resource_151")
+
+[sub_resource type="Resource" id="epi_resource_153"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_152"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_noa"
+condition = SubResource("epi_resource_153")
+
+[sub_resource type="Resource" id="epi_resource_46"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_dora_passed"])
+
+[sub_resource type="Resource" id="epi_resource_45"]
+script = ExtResource("2_6xmbx")
+key = "epi_farewell_dora"
+condition = SubResource("epi_resource_46")
+
+[sub_resource type="Resource" id="epi_resource_48"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_mira_passed"])
+
+[sub_resource type="Resource" id="epi_resource_47"]
+script = ExtResource("2_6xmbx")
+key = "epi_farewell_mira"
+condition = SubResource("epi_resource_48")
+
+[sub_resource type="Resource" id="epi_resource_5"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc91_sato_passed"])
+
+[sub_resource type="Resource" id="epi_resource_6"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc91_sato_refused"])
+
+[sub_resource type="Resource" id="epi_resource_4"]
+script = ExtResource("3_refc7")
+none_of = Array[StringName]([&"sc54_sato_reinstated", &"sc41_sato_spared"])
+any_of = Array[Resource]([SubResource("epi_resource_5"), SubResource("epi_resource_6")])
+
+[sub_resource type="Resource" id="epi_resource_3"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_sato_fallen"
+condition = SubResource("epi_resource_4")
+
+[sub_resource type="Resource" id="epi_resource_10"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc54_sato_reinstated"])
+
+[sub_resource type="Resource" id="epi_resource_11"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc41_sato_spared"])
+
+[sub_resource type="Resource" id="epi_resource_9"]
+script = ExtResource("3_refc7")
+any_of = Array[Resource]([SubResource("epi_resource_10"), SubResource("epi_resource_11")])
+
+[sub_resource type="Resource" id="epi_resource_8"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc91_sato_refused"])
+any_of = Array[Resource]([SubResource("epi_resource_9")])
+
+[sub_resource type="Resource" id="epi_resource_7"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_sato_refused"
+condition = SubResource("epi_resource_8")
+
+[sub_resource type="Resource" id="epi_resource_15"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc54_sato_reinstated"])
+
+[sub_resource type="Resource" id="epi_resource_16"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc41_sato_spared"])
+
+[sub_resource type="Resource" id="epi_resource_14"]
+script = ExtResource("3_refc7")
+any_of = Array[Resource]([SubResource("epi_resource_15"), SubResource("epi_resource_16")])
+
+[sub_resource type="Resource" id="epi_resource_13"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc91_sato_passed"])
+any_of = Array[Resource]([SubResource("epi_resource_14")])
+
+[sub_resource type="Resource" id="epi_resource_12"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_sato_passed"
+condition = SubResource("epi_resource_13")
+
+[sub_resource type="Resource" id="epi_resource_2"]
+script = ExtResource("7_neixe")
+id = &"sato"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_3"), SubResource("epi_resource_7"), SubResource("epi_resource_12")])
+
+[sub_resource type="Resource" id="epi_resource_19"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"okonkwo_denounced", &"sc92_okonkwo_refused"])
+
+[sub_resource type="Resource" id="epi_resource_18"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_okonkwo_refused_denounced"
+condition = SubResource("epi_resource_19")
+
+[sub_resource type="Resource" id="epi_resource_21"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"okonkwo_denounced", &"sc92_okonkwo_passed"])
+
+[sub_resource type="Resource" id="epi_resource_20"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_okonkwo_passed_denounced"
+condition = SubResource("epi_resource_21")
+
+[sub_resource type="Resource" id="epi_resource_23"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc92_okonkwo_passed"])
+
+[sub_resource type="Resource" id="epi_resource_22"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_okonkwo_passed"
+condition = SubResource("epi_resource_23")
+
+[sub_resource type="Resource" id="epi_resource_25"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc92_okonkwo_refused"])
+
+[sub_resource type="Resource" id="epi_resource_24"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_okonkwo_refused"
+condition = SubResource("epi_resource_25")
+
+[sub_resource type="Resource" id="epi_resource_17"]
+script = ExtResource("7_neixe")
+id = &"okonkwo"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_18"), SubResource("epi_resource_20"), SubResource("epi_resource_22"), SubResource("epi_resource_24")])
+
+[sub_resource type="Resource" id="epi_resource_28"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_dora_refused"])
+
+[sub_resource type="Resource" id="epi_resource_27"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_dora_refused"
+condition = SubResource("epi_resource_28")
+
+[sub_resource type="Resource" id="epi_resource_30"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_dora_passed"])
+
+[sub_resource type="Resource" id="epi_resource_29"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_dora_passed"
+condition = SubResource("epi_resource_30")
+
+[sub_resource type="Resource" id="epi_resource_32"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_mira_detained"])
+
+[sub_resource type="Resource" id="epi_resource_31"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_mira_detained"
+condition = SubResource("epi_resource_32")
+
+[sub_resource type="Resource" id="epi_resource_34"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_mira_passed"])
+
+[sub_resource type="Resource" id="epi_resource_33"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_mira_passed"
+condition = SubResource("epi_resource_34")
+
+[sub_resource type="Resource" id="epi_resource_36"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_mira_refused"])
+
+[sub_resource type="Resource" id="epi_resource_35"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_mira_refused"
+condition = SubResource("epi_resource_36")
+
+[sub_resource type="Resource" id="epi_resource_38"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_ilan_passed"])
+
+[sub_resource type="Resource" id="epi_resource_37"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_ilan_passed"
+condition = SubResource("epi_resource_38")
+
+[sub_resource type="Resource" id="epi_resource_40"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_ilan_refused"])
+
+[sub_resource type="Resource" id="epi_resource_39"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_ilan_refused"
+condition = SubResource("epi_resource_40")
+
+[sub_resource type="Resource" id="epi_resource_42"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_note_kept"])
+
+[sub_resource type="Resource" id="epi_resource_41"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_note_kept"
+condition = SubResource("epi_resource_42")
+
+[sub_resource type="Resource" id="epi_resource_44"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc93_note_reported"])
+
+[sub_resource type="Resource" id="epi_resource_43"]
+script = ExtResource("2_6xmbx")
+key = "epi_a_note_reported"
+condition = SubResource("epi_resource_44")
+
+[sub_resource type="Resource" id="epi_resource_26"]
+script = ExtResource("7_neixe")
+id = &"figure"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_27"), SubResource("epi_resource_29"), SubResource("epi_resource_31"), SubResource("epi_resource_33"), SubResource("epi_resource_35"), SubResource("epi_resource_37"), SubResource("epi_resource_39"), SubResource("epi_resource_41"), SubResource("epi_resource_43")])
+
+[sub_resource type="Resource" id="epi_resource_1"]
+script = ExtResource("5_nwyuv")
+id = &"a"
+day_def = ExtResource("6_hm2t5")
+eyebrow_key = "epi_eyebrow_a"
+name_key = "dos_world_a"
+line_groups = Array[ExtResource("7_neixe")]([SubResource("epi_resource_2"), SubResource("epi_resource_17"), SubResource("epi_resource_26")])
+farewell_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_45"), SubResource("epi_resource_47")])
+
+[sub_resource type="Resource" id="epi_resource_66"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc96_figure_passed", &"final3_dora"])
+
+[sub_resource type="Resource" id="epi_resource_65"]
+script = ExtResource("2_6xmbx")
+key = "epi_farewell_dora"
+condition = SubResource("epi_resource_66")
+
+[sub_resource type="Resource" id="epi_resource_68"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc96_figure_passed"])
+
+[sub_resource type="Resource" id="epi_resource_67"]
+script = ExtResource("2_6xmbx")
+key = "epi_farewell_mira"
+condition = SubResource("epi_resource_68")
+
+[sub_resource type="Resource" id="epi_resource_70"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc95_yara_passed"])
+
+[sub_resource type="Resource" id="epi_resource_69"]
+script = ExtResource("2_6xmbx")
+key = "epi_farewell_mira"
+condition = SubResource("epi_resource_70")
+
+[sub_resource type="Resource" id="epi_resource_52"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc94_beaumont_refused"])
+
+[sub_resource type="Resource" id="epi_resource_51"]
+script = ExtResource("2_6xmbx")
+key = "epi_b_beaumont_refused"
+condition = SubResource("epi_resource_52")
+
+[sub_resource type="Resource" id="epi_resource_54"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc94_beaumont_passed"])
+
+[sub_resource type="Resource" id="epi_resource_53"]
+script = ExtResource("2_6xmbx")
+key = "epi_b_beaumont_passed"
+condition = SubResource("epi_resource_54")
+
+[sub_resource type="Resource" id="epi_resource_50"]
+script = ExtResource("7_neixe")
+id = &"beaumont"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_51"), SubResource("epi_resource_53")])
+
+[sub_resource type="Resource" id="epi_resource_57"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc95_yara_passed"])
+
+[sub_resource type="Resource" id="epi_resource_56"]
+script = ExtResource("2_6xmbx")
+key = "epi_b_yara_passed"
+condition = SubResource("epi_resource_57")
+
+[sub_resource type="Resource" id="epi_resource_59"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc95_yara_refused"])
+
+[sub_resource type="Resource" id="epi_resource_58"]
+script = ExtResource("2_6xmbx")
+key = "epi_b_yara_refused"
+condition = SubResource("epi_resource_59")
+
+[sub_resource type="Resource" id="epi_resource_55"]
+script = ExtResource("7_neixe")
+id = &"yara"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_56"), SubResource("epi_resource_58")])
+
+[sub_resource type="Resource" id="epi_resource_62"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc96_figure_passed"])
+
+[sub_resource type="Resource" id="epi_resource_61"]
+script = ExtResource("2_6xmbx")
+key = "epi_b_fig_passed"
+condition = SubResource("epi_resource_62")
+
+[sub_resource type="Resource" id="epi_resource_64"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc96_figure_refused"])
+
+[sub_resource type="Resource" id="epi_resource_63"]
+script = ExtResource("2_6xmbx")
+key = "epi_b_fig_refused"
+condition = SubResource("epi_resource_64")
+
+[sub_resource type="Resource" id="epi_resource_60"]
+script = ExtResource("7_neixe")
+id = &"figure"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_61"), SubResource("epi_resource_63")])
+
+[sub_resource type="Resource" id="epi_resource_49"]
+script = ExtResource("5_nwyuv")
+id = &"b"
+day_def = ExtResource("8_f2qis")
+eyebrow_key = "epi_eyebrow_b"
+name_key = "dos_world_b"
+line_groups = Array[ExtResource("7_neixe")]([SubResource("epi_resource_50"), SubResource("epi_resource_55"), SubResource("epi_resource_60")])
+farewell_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_65"), SubResource("epi_resource_67"), SubResource("epi_resource_69")])
+
+[sub_resource type="Resource" id="epi_resource_88"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc100_figure_passed", &"final3_dora"])
+
+[sub_resource type="Resource" id="epi_resource_87"]
+script = ExtResource("2_6xmbx")
+key = "epi_farewell_dora"
+condition = SubResource("epi_resource_88")
+
+[sub_resource type="Resource" id="epi_resource_90"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc100_figure_passed"])
+
+[sub_resource type="Resource" id="epi_resource_89"]
+script = ExtResource("2_6xmbx")
+key = "epi_farewell_mira"
+condition = SubResource("epi_resource_90")
+
+[sub_resource type="Resource" id="epi_resource_74"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc97_form_signed"])
+
+[sub_resource type="Resource" id="epi_resource_73"]
+script = ExtResource("2_6xmbx")
+key = "epi_c_lindgren_signed"
+condition = SubResource("epi_resource_74")
+
+[sub_resource type="Resource" id="epi_resource_76"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc97_lindgren_passed"])
+
+[sub_resource type="Resource" id="epi_resource_75"]
+script = ExtResource("2_6xmbx")
+key = "epi_c_lindgren_passed"
+condition = SubResource("epi_resource_76")
+
+[sub_resource type="Resource" id="epi_resource_72"]
+script = ExtResource("7_neixe")
+id = &"lindgren"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_73"), SubResource("epi_resource_75")])
+
+[sub_resource type="Resource" id="epi_resource_79"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc98_okafor_passed", &"sc99_elena_passed"])
+
+[sub_resource type="Resource" id="epi_resource_78"]
+script = ExtResource("2_6xmbx")
+key = "epi_c_okafor_chain"
+condition = SubResource("epi_resource_79")
+
+[sub_resource type="Resource" id="epi_resource_81"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc98_okafor_refused"])
+
+[sub_resource type="Resource" id="epi_resource_80"]
+script = ExtResource("2_6xmbx")
+key = "epi_c_okafor_broken"
+condition = SubResource("epi_resource_81")
+
+[sub_resource type="Resource" id="epi_resource_77"]
+script = ExtResource("7_neixe")
+id = &"okafor"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_78"), SubResource("epi_resource_80")])
+
+[sub_resource type="Resource" id="epi_resource_84"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc100_figure_passed"])
+
+[sub_resource type="Resource" id="epi_resource_83"]
+script = ExtResource("2_6xmbx")
+key = "epi_c_fig_passed"
+condition = SubResource("epi_resource_84")
+
+[sub_resource type="Resource" id="epi_resource_86"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc100_figure_refused"])
+
+[sub_resource type="Resource" id="epi_resource_85"]
+script = ExtResource("2_6xmbx")
+key = "epi_c_fig_refused"
+condition = SubResource("epi_resource_86")
+
+[sub_resource type="Resource" id="epi_resource_82"]
+script = ExtResource("7_neixe")
+id = &"figure"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_83"), SubResource("epi_resource_85")])
+
+[sub_resource type="Resource" id="epi_resource_71"]
+script = ExtResource("5_nwyuv")
+id = &"c"
+day_def = ExtResource("9_qxxs7")
+eyebrow_key = "epi_eyebrow_c"
+name_key = "dos_world_c"
+line_groups = Array[ExtResource("7_neixe")]([SubResource("epi_resource_72"), SubResource("epi_resource_77"), SubResource("epi_resource_82")])
+farewell_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_87"), SubResource("epi_resource_89")])
+
+[sub_resource type="Resource" id="epi_resource_106"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc103_mira_passed"])
+
+[sub_resource type="Resource" id="epi_resource_105"]
+script = ExtResource("2_6xmbx")
+key = "epi_farewell_mira"
+condition = SubResource("epi_resource_106")
+
+[sub_resource type="Resource" id="epi_resource_108"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc102_wren_passed"])
+
+[sub_resource type="Resource" id="epi_resource_107"]
+script = ExtResource("2_6xmbx")
+key = "epi_farewell_wren"
+condition = SubResource("epi_resource_108")
+
+[sub_resource type="Resource" id="epi_resource_94"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc101_dmitri_passed"])
+
+[sub_resource type="Resource" id="epi_resource_93"]
+script = ExtResource("2_6xmbx")
+key = "epi_d_dmitri_passed"
+condition = SubResource("epi_resource_94")
+
+[sub_resource type="Resource" id="epi_resource_92"]
+script = ExtResource("7_neixe")
+id = &"dmitri"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_93")])
+
+[sub_resource type="Resource" id="epi_resource_97"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc102_wren_refused"])
+
+[sub_resource type="Resource" id="epi_resource_96"]
+script = ExtResource("2_6xmbx")
+key = "epi_d_wren_refused"
+condition = SubResource("epi_resource_97")
+
+[sub_resource type="Resource" id="epi_resource_99"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc102_wren_passed"])
+
+[sub_resource type="Resource" id="epi_resource_98"]
+script = ExtResource("2_6xmbx")
+key = "epi_d_wren_passed"
+condition = SubResource("epi_resource_99")
+
+[sub_resource type="Resource" id="epi_resource_95"]
+script = ExtResource("7_neixe")
+id = &"wren"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_96"), SubResource("epi_resource_98")])
+
+[sub_resource type="Resource" id="epi_resource_102"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc103_mira_passed"])
+
+[sub_resource type="Resource" id="epi_resource_101"]
+script = ExtResource("2_6xmbx")
+key = "epi_d_mira_passed"
+condition = SubResource("epi_resource_102")
+
+[sub_resource type="Resource" id="epi_resource_104"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc103_mira_refused"])
+
+[sub_resource type="Resource" id="epi_resource_103"]
+script = ExtResource("2_6xmbx")
+key = "epi_d_mira_refused"
+condition = SubResource("epi_resource_104")
+
+[sub_resource type="Resource" id="epi_resource_100"]
+script = ExtResource("7_neixe")
+id = &"figure"
+lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_101"), SubResource("epi_resource_103")])
+
+[sub_resource type="Resource" id="epi_resource_91"]
+script = ExtResource("5_nwyuv")
+id = &"d"
+day_def = ExtResource("10_xqcy3")
+eyebrow_key = "epi_eyebrow_d"
+name_key = "dos_world_d"
+line_groups = Array[ExtResource("7_neixe")]([SubResource("epi_resource_92"), SubResource("epi_resource_95"), SubResource("epi_resource_100")])
+farewell_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_105"), SubResource("epi_resource_107")])
+
+[resource]
+script = ExtResource("4_7bxux")
+read_flags = Array[StringName]([&"dora_detained_final", &"exit3_drift", &"final3_denied", &"final3_detained", &"final3_dora", &"final3_passed", &"final3_unprocessed", &"ilan_estranged", &"ilan_reconciled", &"ilan_tycho", &"noa_coached", &"okonkwo_denounced", &"okonkwo_shielded", &"okonkwo_warned", &"sc24_dmitri_hired", &"sc41_sato_spared", &"sc54_sato_reinstated", &"sc56_okafor_refused", &"sc59_beaumont_spared", &"sc63_dmitri_locked_out", &"sc65_yara_passed", &"sc74_elena_passed", &"sc75_okonkwo_passed", &"sc81_okafor_refused", &"sc81b_beaumont_passed"])
+worlds = Array[ExtResource("5_nwyuv")]([SubResource("epi_resource_1"), SubResource("epi_resource_49"), SubResource("epi_resource_71"), SubResource("epi_resource_91")])
+endings = Array[ExtResource("1_48232")]([SubResource("epi_resource_109"), SubResource("epi_resource_110"), SubResource("epi_resource_111"), SubResource("epi_resource_112"), SubResource("epi_resource_113"), SubResource("epi_resource_114"), SubResource("epi_resource_117"), SubResource("epi_resource_118"), SubResource("epi_resource_119"), SubResource("epi_resource_120"), SubResource("epi_resource_121"), SubResource("epi_resource_128"), SubResource("epi_resource_137")])
+first_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_146"), SubResource("epi_resource_148")])
+home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_150"), SubResource("epi_resource_152")])

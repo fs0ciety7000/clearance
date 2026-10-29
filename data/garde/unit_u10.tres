@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GardeUnitDef" format=3 uid="uid://ctolm77ypxion"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_qaqy3"]
+[ext_resource type="Resource" path="res://data/rules/rule_banned_implants.tres" id="2_8lety"]
+[ext_resource type="Script" path="res://scripts/core/garde_unit_def.gd" id="3_35f2w"]
+
+[resource]
+script = ExtResource("3_35f2w")
+id = &"u10"
+title_key = "garde_unit_u10"
+rules = Array[ExtResource("1_qaqy3")]([ExtResource("2_8lety")])
+tier = 2
+prerequisites = Array[StringName]([&"u09"])
+document_ids = Array[StringName]([&"mil_waiver"])
+rulebook_tabs = PackedStringArray()
+renews_lists = PackedStringArray()

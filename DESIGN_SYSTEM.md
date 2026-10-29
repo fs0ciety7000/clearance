@@ -1,6 +1,6 @@
 # CLEARANCE — Design System
 
-> Version 0.5 · Propriétaire : Design System / Senior Designer · Statut : **brouillon à valider**
+> Version 0.6 · Propriétaire : Design System / Senior Designer · Statut : **brouillon à valider**
 > Sources de vérité : ce document (intentions, règles) · `res://ui/theme/tokens.gd` (valeurs code, `class_name DS`) · `res://ui/theme/clearance_theme.tres` (thème Godot).
 > Les valeurs de base (couleurs, familles de police) sont fixées par le contrat de l'Orchestrateur. Ce document y ajoute uniquement des **nuances dérivées** (alpha, états).
 
@@ -170,6 +170,20 @@ Texte foncé `#07080C` sur ces accents pleins (boutons, badges) : ≥ 5,38:1 par
 | Tampons | cercle-coche / octogone-croix / carré à barres + libellé |
 | Horloge du shift | avertissement : triangle « FIN DE SHIFT PROCHE » ; critique : **octogone « FIN DE SHIFT IMMINENTE »** (avant : même texte) |
 | Compteur QUOTA, foyer, marques des documents | texte d'état (« QUOTA ATTEINT », « malade »…), pastilles numérotées |
+
+### 2.6 Origines du Dossier de l'agent (M12, 0.6)
+
+Le Dossier (M12 §5, D-131 ; portraits reportés à M14) identifie un personnage par ses **initiales** posées sur un carré chanfreiné (`chamfer.m`, bordure 2 px de la couleur, fond à 24 %), **toujours** suivies du code d'origine en texte (« TYC · J03 ») : la couleur n'est qu'un repère. Teintes désaturées, hors des familles d'état (vert, rouge, ambre, magenta) et de marque (jaune, cyan), identiques dans les quatre modes de vision (elles ne portent aucun état) ; texte des initiales en `text.primary` sur le fond teinté (≥ 7:1 sur `bg.elevated` dans tous les cas, le fond étant à 24 %).
+
+| Token | Valeur | Origine |
+|---|---|---|
+| `FACTION_HAL` | `#C9B98A` | Halcyon (laiton) |
+| `FACTION_TYC` | `#C08A5E` | Tycho (rouille) |
+| `FACTION_TER` | `#7FA7D6` | Terre (bleu) |
+| `FACTION_CER` | `#8DBB9A` | Cérès (sauge) |
+| `FACTION_THR` | `#C795C0` | Tharsis (mauve) |
+| `FACTION_DRV` | `#8FB3B5` | Dérive (gris d'eau) |
+| `FACTION_NONE` | `#8A97A8` | inconnue (= `text.secondary`) |
 
 ## 3. Typographie
 
@@ -473,6 +487,19 @@ Diégétique : ticket imprimé par le Consortium qui sort d'une fente du poste.
 
 Usages : barre d'outils (Inspection, Interroger, Suivant), onglets et repli du Rulebook, carte « question débloquée », menu pause, rappel des commandes (Options, briefing du J1 : clavier **et** manette côte à côte). Les phrases (ligne d'état, aides du passager, tampons « maintenir … ») prennent le nom court (`InputPrompts.text_for`) : « ESPACE », « LT », « CROIX ».
 
+### 7.12 Composants M12 (0.6)
+
+| Composant | Fichier | Anatomie | États / règles |
+|---|---|---|---|
+| **StationEventBanner** (bandeau ÉVÉNEMENT) | `scripts/ui/station_event_banner.gd` | `PANEL_VEIL`, liseré ambre 3 px à gauche + filet ambre, `chamfer.s` ; icône propre à l'événement (`ICON_M`) + « ÉVÉNEMENT » (`DocFieldLabel` ambre) + titre (`BodyStrong`) + reste (`DataSmall` ambre) | Visible tant que l'événement dure ; jamais la couleur seule (icône + texte) ; ligne jumelle en tête du Rulebook : puce ambre `AMBER_12` + triangle + texte `sev_<id>_rb` |
+| **GardeDirectiveCard** | `scripts/ui/garde_directive_card.gd` | `bg.panel` opaque, bordure 2 px de la couleur d'action, `chamfer.l`, glow `GLOW_2` ; logo + « DIRECTIVE DE GARDE N° n », puce d'action, titre (`TitleLabel`), règles (liseré 2 px + titre + texte `BodySmall`), « Ajoute : … », pied (aide, glyphe Ⓐ, COMPRIS) | Action : NOUVEAU (ambre, triangle) · REPRIS PAR LES QUAIS (gris, trait barré ; texte des règles en `text.muted`) · RÉTABLIE (cyan, coche) ; `DIRECTIVE_HOLD` puis fondu `dur.fast` (immédiat en animations réduites) |
+| **RuleCardView** (M12) | `scripts/ui/rule_card_view.gd` | surlignage `highlight()` : fond `CYAN_12` + cadre cyan 2 px qui s'éteignent après `DIRECTIVE_HOLD` ; puce « RÉTABLIE » (coche, ambre) | Forme (cadre) + texte (NOUVEAU / RÉTABLIE / motif barré) |
+| **TopBar — Garde** | `scripts/ui/top_bar.gd` | ERREURS : 3 icônes `ICON_S` — **octogone plein rouge** par erreur, **losange creux** gris pour le reste — + « n/3 » mono ; SCORE (jaune) à la place des crédits ; PROCHAINE DIRECTIVE · n (`DataSmall`) ; horloge cosmétique sans jauge | Compaction QA-031 inchangée (les légendes tombent au palier 8) |
+| **InitialsBadge** (Dossier) | `scripts/ui/dossier_screen.gd` | carré 48 px `chamfer.m`, bordure 2 px `FACTION_*`, fond 24 %, initiales `DataTitle` | Toujours accompagné du code d'origine écrit |
+| **Silhouette de fin / de monde** | `dossier_screen.gd` | trois barres pleines `line.subtle` (55 %, 30 %, 42 % de 520 px) à la place du titre ; puce « NON VUE » + cadenas | Aucun texte du titre, même partiel (anti-spoiler) |
+| **Carte de conclusion / d'ouverture du J31** | `scripts/ui/epilogue_screen.gd` | colonne 980 px ; icône + surtitre du monde (A jaune, B vert, C cyan, D ambre), `DisplayLabel`, lignes `TitleLabel` à liseré gauche 2 px, réplique Tessar `BodyStrong` magenta | Révélation lente (`dur.dramatic` × 3 par ligne), passable ; immédiate en animations réduites |
+| **LineEdit** (code de Garde) | `ui/theme/theme_builder.gd` (`_build_line_edit`) | mono `FS_DATA`, fond `bg.elevated`, filet `line.subtle`, focus cyan 2 px, hauteur ≥ `HIT_TARGET_MIN` ; largeur minimale `GARDE_CODE_LENGTH` + 2 caractères | Placeholder `text.muted`, curseur cyan, sélection `CYAN_24` |
+
 ## 8. Motion
 
 ### 8.1 Durées
@@ -485,6 +512,8 @@ Usages : barre d'outils (Inspection, Interroger, Suivant), onglets et repli du R
 | `dur.slow` | 400 | Apparition d'un hologramme, tracé de DiscrepancyLink, tampon complet |
 | `dur.dramatic` | 640 | Verdict, transition de jour, intrusion narrative — **rare** |
 | `stagger` | 30 | Décalage entre DocFields à l'apparition |
+| `DIRECTIVE_HOLD` (M12) | 4 000 | Carte « DIRECTIVE DE GARDE N° n » : affichage maximal avant fondu ; surlignage de la règle au Rulebook |
+| `EPILOGUE_OFFER_DELAY` (M12) | 3 000 | Écran de fin de l'Acte III : délai avant « UN AN PLUS TARD » |
 
 ### 8.2 Easings (Godot `Tween`)
 
@@ -674,4 +703,5 @@ Tenir un registre `CREDITS` (source, auteur, licence, URL, date) pour chaque ass
 - 0.3 — M8 (interfaces de l'Acte II) : voix `VOICE_COMMISSION` `#8E9CFF` et `VOICE_BRULANTS` `#D9663F` (+ variantes 12 %), §2.4 ; icônes dessinées `BREATH`, `AWAY`, `FLAME`, `SCANNER`, `REGISTER` ; composants `QuotaCounterView` (compteur sélectionnable de la barre d'état), `RevokedCardView`, liens suggérés du scanner (pointillé de la source, losanges creux, pastille ✓), boîte de confirmation « décision définitive » (`ButtonDanger`), `ChapterScreen` (chiffre romain dessiné).
 - 0.5 — M11 « Confort » (lot B) : §2.5 palettes de vision des couleurs (`Palette`, réglage `color_vision`, contrastes et simulations mesurés), audit « jamais la couleur seule » (losange ≠ pour la discordance au bandeau et aux champs, glyphe de source des liens du scanner, « ≠ » du cadre VISAGE, horloge critique libellée) ; §5 règle 6 « Scintillement holographique » (`holo_flicker`) ; token `FS_DATA_DOC` 18 et `DOC_VALUE_MIN_PHYSICAL` 13, variation `DocValue` (D-085 rév.) ; composant §7.11 `PromptGlyph`. Carte d'identité redessinée (champs sous la photo, bande MRZ sans libellé).
 - 0.5.1 — Correctifs QA M11 : §5 règle 6 étendue au guichet 3D (`booth_emissive` lit `flicker`, QA-047) et textes d'aide des deux réglages ; token `SKIP_HOLD` 1,0 s (VUE maintenue = passer une étape du tutoriel, QA-042) ; token `PROMPT_INACTIVE_ALPHA` 0,3 (glyphe d'invite qui ne vaut pas en ce moment : Ⓐ de SUIVANT quand le focus est sur un autre contrôle actionnable) ; puce « SAUVEGARDE ENDOMMAGÉE » (`Palette.STATE_RED` + icône WARNING + texte, `SaveSlotCard`).
+- 0.6 — M12 « Rejouabilité » (lot C) : tokens `DIRECTIVE_HOLD` 4 s, `EPILOGUE_OFFER_DELAY` 3 s, `GARDE_CODE_LENGTH` 6, origines `FACTION_*` (§2.6) ; composants §7.12 (bandeau ÉVÉNEMENT, carte de directive, surlignage de règle, compteurs de Garde de la barre d'état, initiales du Dossier, silhouettes, cartes du J31) ; style `LineEdit` du thème. Aucun token de base modifié.
 - 0.4 — M9 (interfaces de l'Acte III) : icônes dessinées `SCALES` (balance : Arbitrage, Enquête, convocations) et `STRIKE` (règle / document retiré·e) ; composants `LedgerCardView` (liseré vert, surlignage de la dernière entrée), `SummonsCardView` (ambre de l'Enquête), règle retirée barrée (texte `text.muted`), compteur QUOTA « SUSPENDU » gris, carte plein cadre « FIN DE L'ACTE II » (couleur de la fin rappelée), chiffre romain paramétrable (Ⅲ, ambre) ; F10 « LE PONT » en `state.green`. Aucun token nouveau.

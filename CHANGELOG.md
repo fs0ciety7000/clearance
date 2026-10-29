@@ -1,5 +1,18 @@
 # Changelog — CLEARANCE
 
+## 0.12.0 — 2026-10-29
+
+### M12 « Rejouabilité »
+- **Épilogue « Un an plus tard » (J31)** : jour jouable après toute fin de l'Acte III ; 4 mondes, 13 variantes de fin, retrouvailles selon votre partie, conclusion propre à chaque fin ; rejouable depuis le Dossier (D-120, D-122 à D-125).
+- **Garde de nuit** : mode endurance — une directive nouvelle tous les 5 passagers parmi 20, paliers d'anomalies plus subtiles, fin à 3 erreurs ; graine du jour `NUIT-AAAA-MM-JJ` ou code libre à partager, records (D-121, D-126 à D-128).
+- **Événements de station** : 8 événements (panne de scanner, quarantaine, cartes volées, inspection surprise…), 3 à 6 par campagne, toujours annoncés (D-129, D-136).
+- **Échos** : 8 personnages de l'Acte I reviennent selon vos verdicts (D-130).
+- **Dossier de l'agent** : fins, personnages, choix, records, épilogues — sans rien gâcher avant la fin de l'histoire (D-131).
+- Profil v2 (conversion automatique) ; règles modifiables en cours de shift.
+
+### Corrections
+- Passe QA M12 (QA-050 à QA-062) : manette dans les boîtes de confirmation, exemption EV-08 exprimée en passagers en Garde (D-138), conclusions cohérentes avec le foyer, échos pour les sauvegardes 0.11, mémoire des portraits bornée, générateur plus sûr pendant les événements.
+
 ## 0.11.0 — 2026-10-29
 
 ### M11 « Confort »

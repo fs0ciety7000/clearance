@@ -3,6 +3,15 @@
 ## Passé explicitement plutôt que lu dans un autoload : règles pures et
 ## testables. `rule_set` sert au `DiscrepancyChecker` (comparaison champ ↔
 ## règle : seules les règles actives du jour sont comparables).
+##
+## M12 (B54, ARCHITECTURE §11.3) — règles mutables en cours de shift : les
+## changements (`RuleChangeDef`) s'appliquent à la **copie de shift** du
+## RuleSet (`ensure_shift_rules`), tout de suite (`apply_changes`) ou au
+## passager suivant (`queue_changes` puis `apply_pending`, appelé par le
+## `DayController` juste avant de construire le cas : verdict attendu calculé
+## à la présentation, D-077). Les familles de règles lisent leurs paramètres
+## surchargés par `param()` et les listes nommées par `get_list()` ;
+## `now_minute` = heure de présentation du passager en cours.
 class_name RuleContext
 extends RefCounted
 
@@ -34,6 +43,12 @@ var summons: Array[SummonsEntry] = []
 ## Convocation présents sur le permis sont tenus pour valides (le lien est
 ## vérifié au moment de la présentation, avec la vraie liste).
 var trust_documents: bool = false
+## M12 : heure de présentation du passager en cours (minutes depuis minuit),
+## −1 si inconnue (surcharges horaires, EV-08).
+var now_minute: int = -1
+## M12 : changements en attente du passager suivant (`queue_changes`) :
+## `{source, changes: Array[RuleChangeDef]}` ou `{source, revert: true}`.
+var _pending: Array[Dictionary] = []
 
 
 func _init(p_today: int = 0, p_rule_set: RuleSet = null) -> void:
@@ -106,7 +121,126 @@ func duplicate_context() -> RuleContext:
 	ctx.ledger = ledger.duplicate()
 	ctx.summons = summons.duplicate()
 	ctx.trust_documents = trust_documents
+	ctx.now_minute = now_minute
 	return ctx
+
+
+# ---------------------------------------------------------------------------
+# M12 (B54) : règles mutables en cours de shift
+# ---------------------------------------------------------------------------
+
+## Garantit que `rule_set` est une copie de shift (mutable) ; renvoie la copie.
+## Le `DayController` la crée au début du shift (copie de `DayDef` comprise,
+## pour que le générateur lise la même) ; ici, repli pour les tests.
+func ensure_shift_rules() -> RuleSet:
+	if rule_set == null:
+		rule_set = RuleSet.new()
+		rule_set.is_shift_copy = true
+	elif not rule_set.is_shift_copy:
+		rule_set = rule_set.make_shift_copy()
+	return rule_set
+
+
+## Applique tout de suite des changements ; renvoie la différence.
+func apply_changes(changes: Array[RuleChangeDef], source: StringName = &"") -> RuleDiff:
+	return ensure_shift_rules().apply_changes(changes, source)
+
+
+## Défait tout de suite les changements d'une source.
+func revert_source(source: StringName) -> RuleDiff:
+	return ensure_shift_rules().revert_source(source)
+
+
+## Met des changements en attente : ils prennent effet au passager suivant
+## (`apply_pending`), jamais sur le passager déjà à la vitre (D-129, règle 1).
+func queue_changes(changes: Array[RuleChangeDef], source: StringName = &"") -> void:
+	_pending.append({"source": source, "changes": changes.duplicate()})
+
+
+## Met en attente l'annulation d'une source (fin d'événement, au passager suivant).
+func queue_revert(source: StringName) -> void:
+	_pending.append({"source": source, "revert": true})
+
+
+func has_pending_changes() -> bool:
+	return not _pending.is_empty()
+
+
+## Applique les changements en attente, dans l'ordre ; différence fusionnée
+## (vide s'il n'y avait rien).
+func apply_pending() -> RuleDiff:
+	var total: RuleDiff = RuleDiff.new()
+	var queue: Array[Dictionary] = _pending.duplicate()
+	_pending.clear()
+	for row: Dictionary in queue:
+		var source: StringName = row.get("source", &"")
+		var diff: RuleDiff
+		if row.get("revert", false):
+			diff = revert_source(source)
+		else:
+			var changes: Array[RuleChangeDef] = []
+			for change: Variant in row.get("changes", []):
+				if change is RuleChangeDef:
+					changes.append(change)
+			diff = apply_changes(changes, source)
+		total.merge(diff)
+	return total
+
+
+## Paramètre `param` de la règle `rule_id` pour ce cas (surcharge en cours,
+## sinon `default`). Portée : origine et motif du passager présenté, heure de
+## présentation (`now_minute`). Les familles de règles (lot B) l'appellent pour
+## tout paramètre surchargeable : `ctx.param(id, &"max_age_days", max_age_days, case)`.
+func param(rule_id: StringName, key: StringName, default: Variant, case: Case = null) -> Variant:
+	if rule_set == null or not rule_set.is_shift_copy:
+		return default
+	var faction_id: StringName = &""
+	var purpose: StringName = &""
+	if case != null and case.passenger_presented != null:
+		faction_id = case.passenger_presented.faction_id
+		purpose = case.passenger_presented.purpose
+	return rule_set.get_param(rule_id, key, default, faction_id, purpose, now_minute)
+
+
+## Modificateur entier du shift (`RuleChangeDef.MOD_*`), 0 si aucun.
+func modifier(name: StringName) -> int:
+	if rule_set == null or not rule_set.is_shift_copy:
+		return 0
+	return rule_set.get_modifier(name)
+
+
+## Liste nommée du shift (`stolen` : cartes volées, EV-07). `&""` ou
+## `&"revoked"` : l'onglet Révocations (`revoked`).
+func get_list(label: StringName) -> Array[RevokedEntry]:
+	if label == &"" or label == &"revoked":
+		return revoked
+	var result: Array[RevokedEntry] = []
+	if rule_set == null or not rule_set.lists.has(label) or rule_set.overlay_suspended:
+		return result
+	for entry: Variant in rule_set.lists[label]:
+		if entry is RevokedEntry:
+			result.append(entry)
+	return result
+
+
+## Publie une liste nommée (générateur ou `DayController`) ; vide = retirée.
+func set_list(label: StringName, entries: Array[RevokedEntry]) -> void:
+	if label == &"" or label == &"revoked":
+		revoked = entries.duplicate()
+		return
+	var shift: RuleSet = ensure_shift_rules()
+	if entries.is_empty():
+		shift.lists.erase(label)
+	else:
+		shift.lists[label] = entries.duplicate()
+
+
+## Vrai si le N° ID figure dans la liste nommée.
+func is_listed(label: StringName, citizen_id: Variant) -> bool:
+	for entry: RevokedEntry in get_list(label):
+		if FieldValue.equals(entry.citizen_id, citizen_id):
+			return true
+	return false
 
 
 # ---------------------------------------------------------------------------

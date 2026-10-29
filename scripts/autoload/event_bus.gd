@@ -118,3 +118,34 @@ signal difficulty_changed(difficulty: StringName)
 ## M11 lot C — RulebookPanel → tutoriel du J1 (`TutorialOverlay`) : le joueur
 ## a consulté le Rulebook (onglet changé, panneau déplié, carte sélectionnée).
 signal rulebook_consulted()
+
+# --- M12 « Rejouabilité » (ARCHITECTURE §11.2) ----------------------------------
+
+## M12 (B54) — DayController (au passager suivant, quand des changements en
+## attente ont été appliqués : directive de Garde, rotation, événement de
+## station) → Rulebook (lignes actives, NOUVEAU, lignes barrées :
+## `diff.rulebook`, `diff.retired_entries`), générateur (`CaseBuilder`).
+signal rules_changed(diff: RuleDiff)
+## M12 (B58) — DayController (annonce, après le passager en cours ; l'effet
+## commence au suivant) → bandeau ÉVÉNEMENT, ligne Rulebook, booth, audio.
+signal station_event_started(event: StationEventPlan)
+## M12 (B58) — DayController (fin de fenêtre, ou avant un cas scénarisé) → UI.
+signal station_event_ended(event: StationEventPlan)
+## M12 (B58) — DayController → Rulebook : liste nommée publiée (`stolen` :
+## onglet « Cartes volées », EV-07) ; vide = retirée.
+signal rule_list_published(label: StringName, entries: Array[RevokedEntry])
+## M12 (B57) — DayController (mode garde, après le passager qui déclenche la
+## directive) → carte « DIRECTIVE DE GARDE N° n » avant le passager suivant.
+## `action` : `add`, `retire` (rotation), `restore`.
+signal garde_directive(number: int, unit_id: StringName, action: StringName)
+## M12 (B57) — DayController (mode garde, après chaque verdict) → HUD de Garde.
+signal garde_scored(score: int, points: int)
+## M12 (B57) — DayController (mode garde, verdict cité) → HUD (voyants), fin.
+signal garde_error(case_id: StringName, citation_key: String, errors: int)
+## M12 (B57) — DayController (mode garde) → HUD : palier atteint (0 → 4).
+signal garde_tier_changed(tier: int)
+## M12 (B57) — DayController (3ᵉ erreur ou « Terminer la garde ») → écran de
+## fin de garde (`GardeRun.to_record()` ; records : `Campaign.finish_garde`).
+signal garde_ended(record: Dictionary)
+## M12 (B52) — Campaign.close_epilogue → carte de conclusion du J31.
+signal epilogue_concluded(card: Dictionary)

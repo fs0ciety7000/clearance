@@ -18,6 +18,13 @@
 ## puis « BULLETINS »), flèches `[` `]`, menu « n / N ▾ » de tous les onglets
 ## regroupés par section, et DATE DU JOUR en pied : la liste garde ≥ 60 % de
 ## la hauteur du panneau même à 16 onglets et au texte 1,5.
+## M12 (lot C, ARCHITECTURE §11.2) : **règles mutables en cours de shift**
+## (`apply_rules`, `rules_changed`) — règle ajoutée (badge NOUVEAU), retirée
+## (barrée, motif), rétablie (puce « RÉTABLIE ») ; `focus_rule` ouvre l'onglet
+## Règles sur la règle et la surligne (directive de Garde) ; lignes ambre
+## d'**événement de station** en tête (`set_event_notes`, icône + texte) ;
+## **listes nommées** (`set_named_list` : onglet « Cartes volées ») ; onglet
+## Révocations intitulé selon la liste en vigueur (« Liste du Conseil »).
 class_name RulebookPanel
 extends PanelContainer
 
@@ -65,6 +72,19 @@ var quota_suspended: bool = false
 var reduce_motion: bool = false
 ## Identifiant de la dernière entrée de la Main courante (surlignée une fois).
 var _last_ledger_id: StringName = &""
+## M12 : listes nommées du shift (`stolen` → entrées), règles rétablies au
+## dernier changement (puce « RÉTABLIE »), lignes d'événement en tête.
+var named_lists: Dictionary[StringName, Array] = {}
+var restored_ids: Array[StringName] = []
+var event_notes: PackedStringArray = []
+var _event_box: VBoxContainer = null
+## Règle à surligner à sa prochaine apparition (`focus_rule` différé).
+var _pending_focus: StringName = &""
+## QA-061 : règle à amener à l'écran après la mise en page (dernière demande).
+var _scroll_rule: StringName = &""
+## Dernière règle surlignée par `focus_rule` et nombre de surlignages (tests, QA).
+var last_focused_rule: StringName = &""
+var focus_count: int = 0
 var portrait_provider: Callable = Callable()
 ## Marques des cartes masquées par l'onglet courant (clé `FieldRef.key()`).
 var _kept_marks: Dictionary[String, Array] = {}
@@ -97,6 +117,7 @@ func _ready() -> void:
 	_content.add_theme_constant_override("separation", DS.SPACE_2)
 	add_child(_content)
 	_build_header()
+	_build_events()
 	_build_nav()
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -131,6 +152,15 @@ func _build_header() -> void:
 	_new_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_new_label = _new_badge.find_children("", "Label", true, false)[0] as Label
 	header.add_child(_new_badge)
+
+
+## M12 : lignes ambre des événements de station en cours (icône + texte).
+func _build_events() -> void:
+	_event_box = VBoxContainer.new()
+	_event_box.name = "StationEvents"
+	_event_box.add_theme_constant_override("separation", DS.SPACE_1)
+	_event_box.visible = false
+	_content.add_child(_event_box)
 
 
 ## Rangée de navigation (QA-032) : `[` · onglets défilants · `]` · menu · Tab.
@@ -245,13 +275,24 @@ func set_rulebook(p_entries: Array[RulebookEntry], p_today: int, p_day_number: i
 	ledger_entries.clear()
 	summons_entries.clear()
 	retired_entries.clear()
+	named_lists.clear()
+	restored_ids.clear()
+	_pending_focus = &""
 	_last_ledger_id = &""
 	today = p_today
 	day_number = p_day_number
-	_day_label.text = UiText.tf("rb_day", [p_day_number], "JOUR %02d")
+	_day_label.text = UiText.tf("rb_day", [p_day_number], "JOUR %02d") if p_day_number > 0 \
+			else UiText.t("rb_garde_day", "GARDE DE NUIT")
 	today_item.clear_marks()
 	_kept_marks.clear()
 	today_item.set_value_text(UiText.date(p_today))
+	_refresh_new_count()
+	_build_tabs()
+	_show_tab(TAB_ALL)
+
+
+## Badge « n NOUVEAU(X) » de l'en-tête et languette repliée.
+func _refresh_new_count() -> void:
 	var new_count: int = 0
 	for entry: RulebookEntry in entries:
 		if entry.is_new:
@@ -259,8 +300,129 @@ func set_rulebook(p_entries: Array[RulebookEntry], p_today: int, p_day_number: i
 	_new_badge.visible = new_count > 0
 	_new_label.text = UiText.plural("rb_new_count", new_count, "%d NOUVEAU", "%d NOUVEAUX")
 	_collapsed_count.text = "%d\nNEW" % new_count if new_count > 0 else ""
+
+
+## M12 (B54) : Rulebook après un changement en cours de shift (`rules_changed` :
+## `diff.rulebook`, `diff.retired_entries`) ; les listes du jour (avis,
+## révocations, Main courante…) sont conservées. `p_restored` : règles
+## rétablies (puce « RÉTABLIE ») ; `tabs` : onglets de référence du jour de
+## shift (une directive de Garde en ouvre).
+func apply_rules(p_entries: Array[RulebookEntry], p_retired: Array[RulebookEntry], p_restored: Array[StringName] = [],
+		tabs: PackedStringArray = PackedStringArray()) -> void:
+	entries = p_entries.duplicate()
+	retired_entries = p_retired.duplicate()
+	restored_ids = p_restored.duplicate()
+	if not tabs.is_empty():
+		reference_tabs = tabs.duplicate()
+	_refresh_new_count()
+	var tab: int = current_tab
 	_build_tabs()
-	_show_tab(TAB_ALL)
+	_show_tab(tab if _tab_ids.has(tab) else TAB_ALL)
+	if _pending_focus != &"":
+		var rule_id: StringName = _pending_focus
+		_pending_focus = &""
+		focus_rule(rule_id)
+
+
+## Ouvre l'onglet « Règles » sur `rule_id` et la surligne (directive de Garde,
+## règle rétablie). `after_change` : le changement est encore en attente du
+## passager suivant — la règle sera surlignée à l'arrivée de `rules_changed`
+## (de même si elle n'est pas encore au Rulebook).
+func focus_rule(rule_id: StringName, after_change: bool = false) -> bool:
+	if collapsed:
+		set_collapsed(false)
+	if current_tab != TAB_ALL:
+		_show_tab(TAB_ALL)
+	var card: RuleCardView = get_rule_card(rule_id)
+	if card == null or after_change:
+		_pending_focus = rule_id
+		return false
+	scroll_to_rule(rule_id)
+	card.highlight(reduce_motion)
+	last_focused_rule = rule_id
+	focus_count += 1
+	return true
+
+
+## QA-061 : amène la carte de `rule_id` à l'écran **après** la mise en page
+## (frame suivante) et en la recherchant à ce moment-là : la liste a pu être
+## reconstruite entre-temps (`apply_rules`, `_show_tab`) et la carte d'origine
+## libérée — `ensure_control_visible` différé sur elle échouait (« Must be an
+## ancestor of the control ») et la règle NOUVEAU restait hors de l'écran.
+func scroll_to_rule(rule_id: StringName) -> void:
+	_scroll_rule = rule_id
+	if not is_inside_tree():
+		return
+	var tree: SceneTree = get_tree()
+	if not tree.process_frame.is_connected(_scroll_to_pending_rule):
+		tree.process_frame.connect(_scroll_to_pending_rule, CONNECT_ONE_SHOT)
+
+
+func _scroll_to_pending_rule() -> void:
+	var rule_id: StringName = _scroll_rule
+	_scroll_rule = &""
+	if rule_id == &"" or not is_inside_tree():
+		return
+	var card: RuleCardView = get_rule_card(rule_id)
+	if card == null or not is_instance_valid(card) or card.is_queued_for_deletion() or not _scroll.is_ancestor_of(card):
+		return
+	_scroll.ensure_control_visible(card)
+
+
+## M12 (B58) : lignes ambre des événements en cours, en tête du Rulebook
+## (`sev_<id>_rb`, déjà formatées) ; vide = masquées.
+func set_event_notes(lines: PackedStringArray) -> void:
+	event_notes = lines.duplicate()
+	for child: Node in _event_box.get_children():
+		child.queue_free()
+	for text: String in event_notes:
+		var row: PanelContainer = PanelContainer.new()
+		row.name = "EventNote"
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(Palette.AMBER_12, Palette.STATE_AMBER, DS.BORDER_HAIRLINE,
+				DS.CHAMFER_S, DS.SPACE_2))
+		var line: HBoxContainer = HBoxContainer.new()
+		line.add_theme_constant_override("separation", DS.SPACE_2)
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(line)
+		line.add_child(UiIcon.make(UiIcon.Kind.WARNING, Palette.STATE_AMBER, DS.ICON_S))
+		var label: Label = ScreenBase.wrapped(text, &"DocFieldLabel", Palette.STATE_AMBER)
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		line.add_child(label)
+		_event_box.add_child(row)
+	_event_box.visible = not event_notes.is_empty()
+
+
+## M12 (B58) : liste nommée publiée (`rule_list_published` : `stolen`) ; vide =
+## retirée (l'onglet se ferme).
+func set_named_list(label: StringName, p_entries: Array[RevokedEntry]) -> void:
+	if p_entries.is_empty():
+		named_lists.erase(label)
+	else:
+		named_lists[label] = p_entries.duplicate()
+	var tab: int = current_tab
+	_build_tabs()
+	_show_tab(tab if _tab_ids.has(tab) else TAB_ALL)
+
+
+## Entrées d'une liste nommée (vide si absente).
+func named_entries(label: StringName) -> Array[RevokedEntry]:
+	var result: Array[RevokedEntry] = []
+	for entry: Variant in named_lists.get(label, []):
+		if entry is RevokedEntry:
+			result.append(entry)
+	return result
+
+
+## Intitulé de l'onglet Révocations (« Liste du Conseil » si la règle en
+## vigueur lit une liste titrée, M12 R40).
+func revoked_tab_title() -> String:
+	var ids: Array[StringName] = []
+	for entry: RulebookEntry in entries:
+		ids.append(entry.rule_id)
+	var key: String = RulebookReference.revoked_title_key(ids)
+	return UiText.t(key, RulebookReference.tab_title(RulebookReference.TAB_REVOKED)) if not key.is_empty() \
+			else RulebookReference.tab_title(RulebookReference.TAB_REVOKED)
 
 
 ## M7 : avis de recherche du jour (`wanted_notices_published`).
@@ -334,6 +496,11 @@ static func reference_of(id: int) -> StringName:
 func visible_reference_tabs() -> Array[StringName]:
 	var tabs: Array[StringName] = []
 	for tab: StringName in RulebookReference.ORDER:
+		if tab == RulebookReference.TAB_STOLEN:
+			# M12 : ouvert par la publication de la liste (EV-07), pas par le jour.
+			if not named_entries(&"stolen").is_empty():
+				tabs.append(tab)
+			continue
 		if not reference_tabs.has(String(tab)):
 			continue
 		if tab == RulebookReference.TAB_WANTED and wanted_notices.is_empty():
@@ -402,8 +569,11 @@ func _build_tabs() -> void:
 			text += " ·%d" % wanted_notices.size()
 			color = Palette.STATE_RED
 		elif tab == RulebookReference.TAB_REVOKED:
-			text += " ·%d" % revoked_entries.size()
+			text = revoked_tab_title() + " ·%d" % revoked_entries.size()
 			color = Palette.VOICE_COMMISSION
+		elif tab == RulebookReference.TAB_STOLEN:
+			text += " ·%d" % named_entries(&"stolen").size()
+			color = Palette.STATE_RED
 		elif tab == RulebookReference.TAB_LEDGER:
 			text += " ·%d" % ledger_entries.size()
 			color = Palette.STATE_GREEN if not ledger_entries.is_empty() else Palette.TEXT_SECONDARY
@@ -589,9 +759,14 @@ func _show_tab(id: int) -> void:
 			continue
 		var card: RuleCardView = RuleCardView.new()
 		var note: String = ""
+		var note_icon: int = -1
 		if quota_suspended and entry.rule_id == RULE_QUOTA:
 			note = UiText.t("rb_suspended_quota", "SUSPENDU PENDANT L'ENQUÊTE")
-		card.setup(entry, i + 1, quota_max, note)
+		elif restored_ids.has(entry.rule_id):
+			# M12 : règle rétablie (rotation de la Garde, fin d'événement).
+			note = UiText.t("rb_restored", "RÉTABLIE")
+			note_icon = UiIcon.Kind.CHECK
+		card.setup(entry, i + 1, quota_max, note, note_icon)
 		card.picked.connect(_on_item_picked)
 		_list.add_child(card)
 		card.set_inspection_active(inspection_active)
@@ -637,6 +812,10 @@ func _list_items() -> Array[InspectableItem]:
 func _show_reference(tab: StringName, marks: Dictionary[String, Array]) -> void:
 	if tab == RulebookReference.TAB_REVOKED:
 		_show_revoked(marks)
+		return
+	if tab == RulebookReference.TAB_STOLEN:
+		_show_revoked(marks, named_entries(&"stolen"), UiText.t("rb_stolen_intro",
+				"Bulletin du Bureau · cartes déclarées volées. Mode Inspection : comparez au N° ID de la carte. Porteur : refus."))
 		return
 	if tab == RulebookReference.TAB_LEDGER:
 		_show_ledger(marks)
@@ -690,17 +869,26 @@ func faces_only() -> bool:
 	return true
 
 
-## Onglet Révocations : une carte sélectionnable par N° ID révoqué.
-func _show_revoked(marks: Dictionary[String, Array]) -> void:
-	var intro: Label = ScreenBase.wrapped(UiText.t("rb_revoked_intro",
-			"Commission de Rééquilibrage · N° ID révoqués. Mode Inspection : comparez au N° ID de la carte."), &"BodySmall")
+## Onglet Révocations : une carte sélectionnable par N° ID révoqué. M12 :
+## même présentation pour une liste nommée (`list`, « Cartes volées »).
+func _show_revoked(marks: Dictionary[String, Array], list: Array[RevokedEntry] = [], intro_text: String = "") -> void:
+	var shown: Array[RevokedEntry] = revoked_entries if intro_text.is_empty() else list
+	var council: bool = false
+	if intro_text.is_empty():
+		intro_text = UiText.t("rb_revoked_intro",
+				"Commission de Rééquilibrage · N° ID révoqués. Mode Inspection : comparez au N° ID de la carte.")
+		if revoked_tab_title() != RulebookReference.tab_title(RulebookReference.TAB_REVOKED):
+			council = true
+			intro_text = UiText.t("rb_council_intro",
+					"Conseil de l'air · N° ID inscrits. Réintégré·es par le Conseil (date en colonne) : admis·es.")
+	var intro: Label = ScreenBase.wrapped(intro_text, &"BodySmall")
 	intro.name = "RevokedIntro"
 	_reference_view = intro
 	_list.add_child(intro)
-	for i: int in revoked_entries.size():
+	for i: int in shown.size():
 		var card: RevokedCardView = RevokedCardView.new()
-		card.name = "Revoked_%s" % revoked_entries[i].id
-		card.setup(revoked_entries[i], i + 1, today)
+		card.name = "Revoked_%s" % shown[i].id
+		card.setup(shown[i], i + 1, today, council)
 		card.picked.connect(_on_item_picked)
 		_list.add_child(card)
 		card.set_inspection_active(inspection_active)
@@ -834,6 +1022,9 @@ func find_item(ref: FieldRef, reveal: bool = false) -> InspectableItem:
 		return null
 	if reveal and ref.is_revoked():
 		var revoked_id: int = reference_tab_id(RulebookReference.TAB_REVOKED)
+		for entry: RevokedEntry in named_entries(&"stolen"):
+			if entry.id == ref.field_id:
+				revoked_id = reference_tab_id(RulebookReference.TAB_STOLEN)
 		if _tab_ids.has(revoked_id) and current_tab != revoked_id:
 			_show_tab(revoked_id)
 			return find_item(ref, false)

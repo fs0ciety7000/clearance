@@ -7,6 +7,10 @@ extends RefCounted
 
 ## Question posée par le joueur simulé (R08) — `InspectionSession.TOPIC_PURPOSE`.
 const TOPIC_PURPOSE: StringName = &"purpose"
+## M12 : flux de l'heure de présentation les jours d'événement sans couvre-feu.
+const EVENT_MINUTE_SALT: String = "event_minute"
+## M12 : passagers couverts par une fenêtre en secondes (EV-05, 60 s ≈ 2 passagers).
+const SECONDS_WINDOW_PASSENGERS: int = 2
 
 
 ## `policy(case: Case, key: CaseKey, index: int) -> VerdictKind.Kind`. Les refus
@@ -17,6 +21,7 @@ static func simulate(data: DataCatalog, day_number: int, day_seed: int, policy: 
 		undocumented_indices: Array[int] = []) -> DaySummary:
 	var day: DayDef = data.get_day(day_number)
 	var builder: CaseBuilder = CaseBuilder.new(data, day, day_seed, [])
+	day = builder.day
 	var summary: DaySummary = DaySummary.new()
 	summary.day_number = day_number
 	summary.planned_cases = day.passenger_count
@@ -55,14 +60,27 @@ static func simulate(data: DataCatalog, day_number: int, day_seed: int, policy: 
 ## Acte III : Main courante (`CaseBuilder.record_verdict` après chaque
 ## verdict), quota suspendu selon le climat, jauges d'admissions (`pont`).
 ## M11 : `profile.story_mode` (Récit, D-102) — amendes à 0 ₵.
+## M12 (B58) : `plan` — événement de station du jour (`StationEventService`),
+## joué comme par le `DayController` : annonce après `announce_after`
+## passagers, changements au passager suivant (`on_rules_changed`), fin de
+## fenêtre, clôture avant un cas scénarisé, compensation des classes B,
+## modificateurs EV-02 / EV-04 / EV-06 ; heure de présentation tirée sur un flux
+## à part (les tirages du joueur ne changent pas).
 static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile: SimProfile,
-		flags: Dictionary[StringName, Variant], memory: Dictionary, rng: SeededRng) -> DaySummary:
+		flags: Dictionary[StringName, Variant], memory: Dictionary, rng: SeededRng,
+		plan: StationEventPlan = null) -> DaySummary:
 	var day: DayDef = data.get_day(day_number)
+	if plan != null:
+		day = day.make_shift_copy()
+		day.free_citations_per_day += plan.free_citations_bonus
+	var minute_rng: SeededRng = SeededRng.new(SeededRng.mix_string(day_seed, EVENT_MINUTE_SALT))
 	var true_flags: Array[StringName] = []
 	for flag: StringName in flags:
 		if FlagCondition.is_flag_true(flags, flag):
 			true_flags.append(flag)
 	var builder: CaseBuilder = CaseBuilder.new(data, day, day_seed, true_flags, memory, flags)
+	# SC-89a (`rule_replacements`) : notation sur le jour (et le RuleSet) du générateur.
+	day = builder.day
 	var summary: DaySummary = DaySummary.new()
 	summary.day_number = day_number
 	summary.planned_cases = day.passenger_count
@@ -70,9 +88,14 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 	var quota: QuotaTracker = QuotaTracker.for_day(day, flags)
 	quota.sync(builder.ctx)
 	var timed: bool = _has_curfew(day)
-	for i: int in day.passenger_count:
+	var i: int = 0
+	while i < day.passenger_count:
 		if timed:
 			builder.presentation_minute = present_minute(day, i, profile, rng)
+		elif plan != null:
+			builder.presentation_minute = present_minute(day, i, profile, minute_rng)
+		if plan != null:
+			_event_before_case(plan, builder, i)
 		var generated: GeneratedCase = builder.build(i)
 		var case: Case = generated.case
 		var correct: bool = rng.chance(profile.accuracy)
@@ -91,6 +114,8 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		verdict.questions_asked = [TOPIC_PURPOSE]
 		var result: CaseResult = ScoringService.score(verdict, generated.key, case.case_id, case, day,
 				data.get_economy().detain_bonus, quota_full)
+		if plan != null:
+			_waive_if_comparator_down(result, builder.ctx, day, data.get_economy().detain_bonus)
 		result.quota_counted = quota.counts(case)
 		result.quota_overrun = quota.after_verdict(case, kind)
 		quota.sync(builder.ctx)
@@ -100,8 +125,16 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		if result.has_citation():
 			citations += 1
 			ScoringService.apply_citation(result, citations, day)
+			if builder.ctx.modifier(RuleChangeDef.MOD_NO_FREE_CITATIONS) > 0 and result.fine == 0:
+				# M12 (EV-04) : inspection, aucun avertissement gratuit.
+				result.fine = maxi(day.penalty_per_error, 0)
+				result.credits_delta = result.wage - result.fine
 			if profile.story_mode:
 				result.waive_fine()
+		if result.correct and builder.ctx.modifier(RuleChangeDef.MOD_CORRECT_BONUS) > 0:
+			# M12 (EV-04) : prime d'assiduité par verdict juste.
+			result.wage += builder.ctx.modifier(RuleChangeDef.MOD_CORRECT_BONUS)
+			result.credits_delta += builder.ctx.modifier(RuleChangeDef.MOD_CORRECT_BONUS)
 		for item: SlippedItem in case.slipped_items:
 			item.decision = profile.decision_for(case, item, rng.randf())
 			result.item_decisions[item.id] = item.decision
@@ -121,6 +154,10 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		if scripted != null:
 			memory[String(scripted.id)] = CaseMemory.snapshot(day_number, case, result.verdict_kind)
 		summary.add_result(result)
+		i += 1
+		if plan != null:
+			_event_after_case(plan, builder, day, i)
+			summary.planned_cases = day.passenger_count
 		if _ends_shift(day, summary.results.size(), flags):
 			break
 	# Cas scénarisés restés dans la file (grève : `flags_if_unprocessed`).
@@ -170,3 +207,78 @@ static func evidence_for(case: Case, key: CaseKey, ctx: RuleContext) -> Array[Di
 		if result.confirmed:
 			found.append(result)
 	return found
+
+
+
+# ---------------------------------------------------------------------------
+# M12 (B58) : événement de station joué comme par le `DayController`
+# ---------------------------------------------------------------------------
+
+## Avant le passager `index` : un cas scénarisé clôt les événements qui
+## touchent aux règles actives et suspend surcharges et modificateurs (D-129,
+## règle 3) ; les changements en attente s'appliquent.
+static func _event_before_case(plan: StationEventPlan, builder: CaseBuilder, index: int) -> void:
+	var ctx: RuleContext = builder.ctx
+	var scripted: bool = builder.get_scripted_case(index) != null
+	if scripted and plan.state == StationEventPlan.State.ACTIVE and plan.is_structural():
+		_end_event(plan, builder)
+	ctx.rule_set.overlay_suspended = scripted
+	ctx.now_minute = builder.presentation_minute
+	if ctx.has_pending_changes():
+		var diff: RuleDiff = ctx.apply_pending()
+		if not diff.is_empty():
+			builder.on_rules_changed(diff)
+
+
+## Après `processed` passagers : annonce (effet au suivant), allongement de la
+## file (EV-06), fin de fenêtre.
+static func _event_after_case(plan: StationEventPlan, builder: CaseBuilder, day: DayDef, processed: int) -> void:
+	var minute: int = builder.presentation_minute
+	match plan.state:
+		StationEventPlan.State.PENDING:
+			var due: bool = plan.announce_after == processed if plan.announce_after >= 0 \
+					else (plan.announce_minute >= 0 and minute >= plan.announce_minute)
+			if due and processed < day.passenger_count:
+				plan.state = StationEventPlan.State.ACTIVE
+				builder.ctx.queue_changes(plan.changes(), plan.source())
+				var extra: int = plan.modifier(RuleChangeDef.MOD_EXTRA_PASSENGERS)
+				if extra > 0:
+					day.passenger_count += extra
+				if plan.event.window_kind == StationEventDef.WindowKind.SECONDS:
+					plan.end_index = processed + SECONDS_WINDOW_PASSENGERS
+		StationEventPlan.State.ACTIVE:
+			if plan.event.window_kind == StationEventDef.WindowKind.CLOCK:
+				if plan.clock_to >= 0 and minute >= plan.clock_to:
+					_end_event(plan, builder)
+			elif plan.end_index >= 0 and processed >= plan.end_index:
+				_end_event(plan, builder)
+
+
+static func _end_event(plan: StationEventPlan, builder: CaseBuilder) -> void:
+	if plan.state != StationEventPlan.State.ACTIVE:
+		return
+	plan.state = StationEventPlan.State.ENDED
+	builder.ctx.queue_revert(plan.source())
+	if plan.list_label != &"":
+		var empty: Array[RevokedEntry] = []
+		builder.ctx.set_list(plan.list_label, empty)
+
+
+## EV-02 (comparateur en panne) : un REFUS / une DÉTENTION justes mais non
+## motivés ne sont pas cités (même règle que le `DayController`).
+static func _waive_if_comparator_down(result: CaseResult, ctx: RuleContext, day: DayDef, detain_bonus: int) -> void:
+	if ctx.modifier(RuleChangeDef.MOD_COMPARATOR_DOWN) <= 0:
+		return
+	if result.citation_reason_key != ScoringService.CIT_UNDOCUMENTED_DENIAL \
+			and result.citation_reason_key != ScoringService.CIT_UNDOCUMENTED_DETENTION:
+		return
+	result.citation_reason_key = ""
+	result.citation_rule_id = &""
+	result.missed_violations.clear()
+	result.documented = true
+	result.correct = result.verdict_correct
+	if result.correct:
+		result.wage = day.credit_per_correct
+		if result.verdict_kind == VerdictKind.Kind.DETAIN and result.expected_verdict == VerdictKind.Kind.DETAIN:
+			result.wage += detain_bonus
+	result.credits_delta = result.wage

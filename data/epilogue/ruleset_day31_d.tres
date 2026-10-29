@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="RuleSet" format=3 uid="uid://ddgfagma3gkm8"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_8v4kn"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_required.tres" id="2_ffls7"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_valid.tres" id="3_rsbs5"]
+[ext_resource type="Resource" path="res://data/rules/rule_portrait_match.tres" id="4_6rp4i"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fields_match.tres" id="5_a2tmm"]
+[ext_resource type="Resource" path="res://data/rules/rule_origin_block.tres" id="6_m3qrh"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_required.tres" id="7_4syjj"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_valid.tres" id="8_68p11"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_fit.tres" id="9_pyg1t"]
+[ext_resource type="Resource" path="res://data/rules/rule_implants_declared.tres" id="10_m4xuq"]
+[ext_resource type="Resource" path="res://data/rules/rule_banned_implants.tres" id="11_g0syp"]
+[ext_resource type="Resource" path="res://data/rules/rule_wanted_detain.tres" id="12_w6kjk"]
+[ext_resource type="Resource" path="res://data/rules/rule_ep_issuer_tycho.tres" id="13_e7bap"]
+[ext_resource type="Resource" path="res://data/rules/rule_ep_ka_cadres.tres" id="14_uhb6k"]
+[ext_resource type="Script" path="res://scripts/rules/rule_set.gd" id="15_kq0ms"]
+
+[resource]
+script = ExtResource("15_kq0ms")
+id = &"rs_day31_d"
+rules = Array[ExtResource("1_8v4kn")]([ExtResource("2_ffls7"), ExtResource("3_rsbs5"), ExtResource("4_6rp4i"), ExtResource("5_a2tmm"), ExtResource("6_m3qrh"), ExtResource("7_4syjj"), ExtResource("8_68p11"), ExtResource("9_pyg1t"), ExtResource("10_m4xuq"), ExtResource("11_g0syp"), ExtResource("12_w6kjk"), ExtResource("13_e7bap"), ExtResource("14_uhb6k")])
+new_rule_ids = Array[StringName]([&"r_ep_issuer_tycho", &"r_ep_ka_cadres"])
+required_document_ids = Array[StringName]([&"id_card", &"bioscan"])

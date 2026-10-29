@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="GardeUnitDef" format=3 uid="uid://q7g56gnnb303"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_br22e"]
+[ext_resource type="Resource" path="res://data/rules/rule_drift_pass.tres" id="2_3dbsk"]
+[ext_resource type="Script" path="res://scripts/core/garde_unit_def.gd" id="3_7gcjo"]
+
+[resource]
+script = ExtResource("3_7gcjo")
+id = &"u17"
+title_key = "garde_unit_u17"
+rules = Array[ExtResource("1_br22e")]([ExtResource("2_3dbsk")])
+tier = 3
+document_ids = Array[StringName]([&"drift_pass"])
+rulebook_tabs = PackedStringArray("vessels")
+renews_lists = PackedStringArray()

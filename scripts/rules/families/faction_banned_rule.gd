@@ -16,6 +16,10 @@ extends Rule
 ## Acte III (R37, « Fermeture de Tycho ») : exemption par un **Répondant
 ## valide** (R34 : motif VISITE FAMILIALE, répondant admis aujourd'hui).
 @export var exempt_if_sponsored: bool = false
+## M12 (R38, « Tycho rééquilibrée », B55) : exemption par un **contrat de
+## travail valide** (non expiré) dont le code employeur figure dans la liste
+## (`KA` : Kessler-Ashe), lu sur le contrat du porteur.
+@export var exempt_contract_codes: PackedStringArray = []
 
 
 func is_banned_origin(faction_id: StringName) -> bool:
@@ -28,6 +32,8 @@ func is_violated(case: Case, ctx: RuleContext = null) -> bool:
 	if has_exempt_post(case):
 		return false
 	if exempt_if_sponsored and SponsorRule.has_valid_sponsor(case, ctx):
+		return false
+	if has_exempt_contract(case, ctx):
 		return false
 	var purpose: Variant = PurposeConsistentRule._value(case, permit_id, &"purpose")
 	if purpose == null:
@@ -51,6 +57,22 @@ func has_exempt_post(case: Case) -> bool:
 	return false
 
 
+## M12 (R38) : contrat du porteur au code exempté, non expiré (prorogation
+## comprise si `ctx`).
+func has_exempt_contract(case: Case, ctx: RuleContext = null) -> bool:
+	if exempt_contract_codes.is_empty():
+		return false
+	var contract: DocumentInstance = case.get_own_document(contract_id)
+	if contract == null:
+		return false
+	var code: Variant = PurposeConsistentRule._value(case, contract_id, ContractSuspendedRule.CODE_PATH)
+	if code == null or not exempt_contract_codes.has(str(code)):
+		return false
+	if ctx == null:
+		return true
+	return not ctx.is_document_expired(contract.expiry_date)
+
+
 func evaluate(case: Case, ctx: RuleContext) -> Array[Violation]:
 	var violations: Array[Violation] = []
 	if not is_violated(case, ctx):
@@ -63,6 +85,9 @@ func evaluate(case: Case, ctx: RuleContext) -> Array[Violation]:
 		PurposeConsistentRule._append(refs, Rule.find_ref(case, contract_id, &"post"))
 	if exempt_if_sponsored:
 		PurposeConsistentRule._append(refs, Rule.find_ref(case, permit_id, SponsorRule.SPONSOR_PATH))
+	if not exempt_contract_codes.is_empty() and case.get_own_document(contract_id) != null:
+		PurposeConsistentRule._append(refs, Rule.find_ref(case, contract_id, ContractSuspendedRule.CODE_PATH))
+		PurposeConsistentRule._append(refs, Rule.find_ref(case, contract_id, &"document.expiry_date"))
 	violations.append(make_violation(refs, "viol_faction_banned"))
 	return violations
 
@@ -79,7 +104,9 @@ func check_against(case: Case, ref: FieldRef, ctx: RuleContext) -> Discrepancy.R
 	var on_purpose: bool = ref.document_id == permit_id and field.truth_path == &"purpose"
 	var on_post: bool = not exempt_posts.is_empty() and ref.document_id == contract_id and field.truth_path == &"post"
 	var on_sponsor: bool = exempt_if_sponsored and ref.document_id == permit_id and field.truth_path == SponsorRule.SPONSOR_PATH
-	if not on_origin and not on_purpose and not on_post and not on_sponsor:
+	var on_contract: bool = not exempt_contract_codes.is_empty() and ref.document_id == contract_id \
+			and (field.truth_path == ContractSuspendedRule.CODE_PATH or field.truth_path == &"document.expiry_date")
+	if not on_origin and not on_purpose and not on_post and not on_sponsor and not on_contract:
 		return Discrepancy.Result.INCOMPARABLE
 	return Discrepancy.Result.DISCORDANT if is_violated(case, ctx) else Discrepancy.Result.CONCORDANT
 

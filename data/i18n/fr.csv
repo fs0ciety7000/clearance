@@ -2926,3 +2926,697 @@ slot_damaged_hint,"Le fichier de cette partie est illisible. Reprenez un jour pa
 load_failed_title,CHARGEMENT IMPOSSIBLE
 load_failed_day,Le matin du jour %02d est illisible. Choisissez un autre jour.
 load_failed_slot,La sauvegarde de l'emplacement %d est illisible.
+day31_a_directive_title,JOURNÉE DE LA CONTINUITÉ — UN AN SANS INCIDENT
+day31_a_intro,Vendredi 11.04.2188. Les bornes ACV-3 traitent les dossiers simples ; le Guichet 04 reçoit les rejets de borne. Quota respiratoire : 3. Tycho : entrée réservée aux contrats Kessler-Ashe.
+day31_a_intro_f1,Réhabilitation par le travail : une borne enregistre chacun de vos tampons. Elle a votre voix. Elle l'envoie à l'Arbitrage chaque soir.
+day31_a_intro_f3,Personne n'a laissé de mot au Bloc Pétrel. Le Guichet 04 ouvre à 10:00. Vous y êtes à 09:40.
+day31_a_intro_f4,Journée de la vitre : chaque cadre de l'Arbitrage tient un guichet une journée par an. Les caméras du bulletin arrivent à 10:00.
+day31_a_intro_f5b,"Commission de Sûreté : depuis le quai 2, un garde se tient derrière chaque vitre. Tycho est rouverte, sous scellés."
+day31_a_intro_f7,"Rien n'a changé, dit le bulletin chaque matin, pour qu'on finisse par le croire."
+day31_a_slogan,Un an d'ordre. Chaque souffle se mérite.
+msg_foyer_day31_noa_coached,Noa récite le règlement de l'école par cœur. Elle dit que c'est toi qui lui as appris.
+msg_foyer_day31_noa,"Noa a dix ans. Elle a dessiné ta vitre, avec une luciole dans le coin. « C'est la signature. »"
+msg_foyer_day31_ilan_estranged,Ilan est parti·e tôt. La tasse est lavée. Pas de mot.
+msg_foyer_day31_ilan,Un mot sur le réchaud : « Ne compte pas les gens aujourd'hui. Compte les années. » — I.
+msg_foyer_day31_dora,Dora a gardé le journal du 11 avril. Elle relit la page des navettes sans ses lunettes.
+msg_foyer_day31_away,Le dortoir sans hublot a un parloir le vendredi. Noa y sera à 19:00.
+r_ep_tycho_ka_title,Tycho rééquilibrée
+r_ep_tycho_ka_text,Ressortissants de Tycho (TYC) : entrée réservée aux titulaires d'un contrat Kessler-Ashe (CT-KA) valide. Sinon : refus.
+sc91_sato_arrival,"Collègue ! Inspection des bornes. Officieusement, je viens vous voir."
+sc91_sato_present,‹Tal ka nesu.› Ma carte. Regardez bien la bande. Ou pas. C'est le test.
+sc91_sato_purpose,"Rentrer. Et vérifier que les vitres font mieux que les bornes. Officiellement, non."
+sc91_sato_about_mrz,Un zéro à la place du O. La borne l'a laissé passer trois fois ce matin.
+sc91_sato_exit_deny,Refusé ! Je note : « humain supérieur à la machine ». Ils vont adorer.
+sc91_sato_exit_approve,"Approuvé, comme la borne. Je note : « vitre conforme ». C'est un compliment ?"
+sc91_sato_fallen_arrival,"Bonjour. Je répare les bornes, maintenant. Elles ne disent jamais merci."
+sc91_sato_fallen_present,‹Tal ka nesu.› C-4. Ils ont gardé mon nom. Pas mon carnet.
+sc91_sato_fallen_exit_approve,"Merci. Vous, au moins, vous regardez les gens. Je le note. Dans ma tête."
+sc91_sato_fallen_exit_deny,"Refusé, en règle ? Même la borne m'aurait laissé passer. Ça, je le note."
+sc92_okonkwo_arrival,"Bonjour, collègue. On m'a remplacé par une borne. Elle dit « suivant » mieux que moi."
+sc92_okonkwo_present,"‹Tal ka nesu.› Retraité, C-3. Ils ont gardé la classe. Pas le poste… comme on dit."
+sc92_okonkwo_purpose,Voir comment vous tenez. Vous tenez. C'est déjà ça.
+sc92_okonkwo_advice,"La règle, juste assez. Les bornes n'ont pas de « juste assez ». Vous, si."
+sc92_okonkwo_exit_approve,Merci. Je vais m'asseoir dans le Hall. Regarder une vitre qui pense encore.
+sc92_okonkwo_exit_deny,"Un retraité en règle, refusé ? La borne aurait fait pareil. Ça m'inquiète."
+sc92_okonkwo_arrival_denounced,"Bonjour. Vous me reconnaissez ? On ne se parlait plus, à la fin."
+sc92_okonkwo_present_denounced,‹Tal ka nesu.› Le permis a expiré. Je le sais. Je l'ai fait exprès.
+sc92_okonkwo_purpose_denounced,Reprendre ma tasse au Guichet 03. Il y a une borne à ma place. Elle n'en a pas besoin.
+sc92_okonkwo_confront_denounced,"Refusez-moi, collègue. Ce sera la dernière chose qu'on fera bien ensemble."
+sc92_okonkwo_exit_deny_denounced,Voilà. Bien tamponné. Je vous pardonne le reste… comme on dit.
+sc92_okonkwo_exit_approve_denounced,Vous me laissez passer ? Après tout ça ? Alors c'est vous qui avez changé.
+sc92_okonkwo_arrival_soute,"Bonjour. La Soute m'a gardé un an. Elle garde bien, la Soute."
+sc92_okonkwo_exit_approve_soute,Merci. Je remonte voir la lumière jaune. Elle n'a pas changé de couleur.
+sc92_okonkwo_exit_deny_soute,"Refusé. Je redescends. Vous m'aviez prévenu, une fois. On est quittes."
+sc93_dora_arrival,"Bonjour, toi. Un an. L'Anneau B m'a rendue. Ils disent que je respire mal."
+sc93_dora_present,‹Tal ka nesu.› Visite familiale. Le Bloc Pétrel. Je sais ce que dit ta règle.
+sc93_dora_purpose,Voir Noa. Elle a dix ans. Je ne l'ai pas vue en avoir neuf.
+sc93_dora_origin,"Tycho. Ils l'ont rééquilibrée. Il reste des machines, et moi."
+sc93_dora_confront,Fais ton métier. Tu l'as fait l'an dernier. Je ne te demande pas de changer.
+sc93_dora_exit_deny,D'accord. Dis à Noa que le badge est à elle. Je le laisse sur le comptoir.
+sc93_dora_exit_approve,"‹Tu vanu.› Tu as changé, alors. Ou c'est moi qui ai vieilli."
+sc93_mira_arrival,"Bonjour. Quatrième fois. Celle-ci, je ne l'avais pas prévue."
+sc93_mira_present,‹Tal ka nesu.› Un contrat Kessler-Ashe. Signé pour moi. Je n'ai rien signé.
+sc93_mira_purpose,Réhabilitation par le travail. Puits 14. On m'attend au quai 2.
+sc93_mira_origin,Tycho. Comme toujours. On recommence toujours au même endroit.
+sc93_mira_exit_approve,"Merci. Tout est en règle. C'est bien ça, le pire."
+sc93_mira_exit_deny,"Refusée, avec un contrat valide ? Vous résistez enfin. Le mauvais jour."
+sc93_mira_exit_detain,[aux gardes] Encore ? Je connais le chemin. Je l'ai pris trois fois.
+sc93_ilan_arrival,"Bonjour. Oui, c'est moi. Il fallait bien que je passe un jour par ta vitre."
+sc93_ilan_arrival_estranged,"Bonjour, agent·e. On fait comme si on ne se connaissait pas. C'est plus simple."
+sc93_ilan_present,‹Tal ka nesu.› Contrat Kessler-Ashe. Puits 14. Ils réparent mieux qu'ils ne licencient.
+sc93_ilan_purpose,"Rentrer dormir. Je repars lundi. Les compteurs, cette fois, je les répare."
+sc93_ilan_exit_approve,"Merci. Ce soir, je fais le dîner. Ne compte pas les parts."
+sc93_ilan_exit_deny,Refusé·e. En règle. Je dormirai au foyer des contractuels. Tu viendras ?
+sc93_note_arrival,Bonjour. On m'a donné ça pour le Guichet 04. Je ne l'ai pas lu. Presque pas.
+sc93_note,"« Je n'ai pas trouvé d'autre vitre. Celle-ci, je la reconnais encore. — M. »"
+day31_b_directive_title,CONSEIL DE L'AIR — ACCUEIL DU 11 AVRIL
+day31_b_intro,"Vendredi 11.04.2188, un an après la dernière navette. Quota aboli. Plus d'interdiction d'origine. Restent : identité, implants interdits, avis du Conseil, Liste du Conseil."
+day31_b_intro_f5c,La Charte de l'air est affichée au-dessus de chaque vitre. Le Conseil vous demande de reprendre la vôtre pour une journée.
+day31_b_intro_f5s,Tycho a respiré sur les réserves d'Halcyon tout l'hiver. La Charte a été écrite en septembre. Le Conseil vous rend une vitre pour la journée.
+day31_b_intro_f9,"Les vitres se sont rallumées au quatrième jour de grève, avec un comité derrière chacune. Le vôtre signe les règles du jour."
+day31_b_slogan,L'air est à qui le respire.
+r_ep_welcome_title,Accueil
+r_ep_welcome_text,"Ressortissants : permis d'entrée valide, ou répondant Né·e-Halcyon (C-1 à C-3) admis·e aujourd'hui à cette vitre (Main courante ; carte de répondant). Sinon : refus."
+r_ep_council_list_title,Liste du Conseil
+r_ep_council_list_text,"N° ID inscrit à la Liste du Conseil (responsables de la Commission et de la Garde, nuits de 2187) : refus. Réintégré·es par le Conseil (date en colonne) : admis·es."
+rb_tab_council,Liste du Conseil
+rb_col_council_reinstated,RÉINTÉGRÉ·E PAR LE CONSEIL
+doc_sponsor_card_title,Carte de répondant
+issuer_conseil_air,Conseil de l'air · Halcyon Gate
+val_seal_council_air,SOUFFLE DU CONSEIL
+val_seal_council_air_old,SOUFFLE DU CONSEIL · ANCIEN MODÈLE
+wanted_council_reason,"Avis du Conseil : responsable des nuits de 2187, recherché·e."
+revoked_reason_council,Liste du Conseil
+sc94_beaumont_arrival,"Bonjour, Guichet 04. Je suis sur une liste. Je connais les listes. J'en ai écrit."
+sc94_beaumont_present,‹Tal ka nesu.› Isadora Beaumont. Ancienne Commissaire. Le mot « ancienne » est récent.
+sc94_beaumont_purpose,"Rentrer, Anneau E. Il paraît que l'air y est gratuit. Je voudrais vérifier."
+sc94_beaumont_about_revoked,La Liste du Conseil. C'est juste. Nous avions la nôtre. Elle était plus longue.
+sc94_beaumont_about_revoked_reinstated,"Réintégrée, pour une famille de gréviste. On l'a annoncé en public. Exprès."
+sc94_beaumont_exit_deny,Refusée. Correctement. Je n'ai pas tout raté : vous lisez encore les listes.
+sc94_beaumont_exit_approve,"Merci. Ne le répétez pas. Si : répétez-le. C'est la règle, maintenant."
+sc94_beaumont_exit_approve_irregular,Approuvée ? Vous ne lisez plus les listes ? Dommage. C'était votre qualité.
+sc95_yara_arrival,"‹Oru ka.› Yara, Conseil de l'air. Je ne viens pas contrôler. Je viens passer."
+sc95_yara_arrival_known,"‹Oru ka.› Vous m'aviez laissée passer, l'an dernier. Le comité s'en souvient."
+sc95_yara_present,"‹Tal ka nesu.› Pas de permis. Un répondant, juste devant. C'est la règle qu'on a écrite."
+sc95_yara_purpose,Relever les compteurs du recycleur central. Ils ne comptent plus les gens. Juste l'air.
+sc95_yara_origin,Tycho. On y respire encore à tour de rôle. Le tour est plus court.
+sc95_yara_about_sponsor,"Il était devant moi. Si vous l'avez refusé, je repars. C'est juste aussi."
+sc95_yara_exit_approve,"‹Shen tavi.› Une règle qu'on a écrite, appliquée par vous. Ça me suffit."
+sc95_yara_exit_deny,Refusée. Vous avez lu la règle mieux que moi. Je reviens avec le permis.
+sc96_dora_arrival,"Bonjour, toi. J'arrive de Tycho. Trois heures de navette. La Transit-7 sent la peur."
+sc96_dora_present,"‹Tal ka nesu.› Un permis, cette fois. Je n'ai pas mis ton numéro. Tu vois, j'apprends."
+sc96_dora_purpose,Noa a un spectacle à l'école. Elle joue une vanne. Elle dit que c'est un grand rôle.
+sc96_dora_origin,"Tycho. Ils ont rouvert le Puits 9. Pour y mettre des noms, pas des mineurs."
+sc96_dora_exit_approve,"‹Tu vanu.› Respire. Moi, je respire. C'est nouveau, à mon âge."
+sc96_dora_exit_deny,"Refusée, avec un permis ? Tu as gardé de mauvaises habitudes. Je repasse."
+sc96_mira_arrival,"Bonjour. Cinquième fois, je crois. La première où je n'ai rien à cacher."
+sc96_mira_visor,"La visière ? L'habitude. Voilà. Vous connaissez ce visage, maintenant."
+sc96_mira_present,‹Tal ka nesu.› Mes vrais papiers. Ce sont les seuls que j'aie jamais eus.
+sc96_mira_purpose,Le Conseil siège au recycleur central. Je suis en retard. Il paraît que c'est nouveau.
+sc96_mira_origin,"Tycho. Puits 9, Puits 14. Et ici. On ne recommence plus au même endroit."
+sc96_mira_password,"Il pleut, même ici. ‹Lumika.›"
+sc96_mira_luciole_reply,"Il pleut encore, oui. Mais cette pluie-là, maintenant, on la boit."
+sc96_mira_exit_approve,"Merci. Rendez votre tampon ce soir, si vous voulez. Ou gardez-le. À vous de voir."
+sc96_mira_exit_deny,"Refusée, en règle ? Alors il reste du travail. Je reviendrai demain."
+sc96_freed_arrival,Bonjour. La grève m'a sortie de l'Anneau B au quatrième jour. Vous étiez éteint·e.
+sc96_freed_exit_approve,"Merci. Un an après, enfin du bon côté de la vitre. Tous les deux."
+sc96_freed_exit_deny,"Refusée, en règle ? Alors on n'a pas fini la grève. Je reviens demain."
+day31_c_directive_title,11 AVRIL — JOURNÉE DES TÉMOINS
+day31_c_intro,"Vendredi 11.04.2188. À 12:20, le Hall écoute les dépositions de l'an dernier. Tycho : entrée sur répondant ou convocation. La Main courante est permanente."
+day31_c_intro_f8,Les archives vous prêtent au Guichet 04 pour la journée. Lindgren garde votre chaise au sous-sol 3. Le rapport Albédo a toujours deux couvertures.
+day31_c_intro_f10,On dit « le Pont » en montrant votre vitre. Le Bureau dit « Guichet 04 ». Les deux sont exacts.
+msg_okafor_day31,L'école enseigne la Main courante en classe de Noa. Les enfants appellent ça « la loi des bancs ». Je n'ai rien corrigé. — A. O.
+day31_c_slogan,Un document exact est un citoyen en sécurité.
+summons_reason_witness,Bureau des Témoins · Journée des Témoins
+sc97_lindgren_arrival,"Bonjour. Formulaire 27-B, sixième. Il n'existait pas. Je l'ai écrit."
+sc97_lindgren_present,"‹Tal ka nesu.› Ma carte. Et le formulaire, si vous avez le temps. Personne n'a le temps."
+sc97_lindgren_purpose,Classer les dépositions de l'an dernier. La vôtre est dans le premier carton.
+sc97_lindgren_origin,"Sous-sol 3. On y voit les conduites. Elles pleurent un peu, comme le Hall."
+sc97_lindgren_stay,Le rapport Albédo ? Deux versions. Je les ai reliées ensemble. C'est plus honnête.
+sc97_form,« Formulaire 27-B/6 : déclaration de mémoire. Cochez ce dont vous vous souvenez. » Une seule case.
+sc97_lindgren_exit_approve,"Merci. Je vous classe à la lettre P. « Passé », ou « pont ». On verra."
+sc97_lindgren_exit_deny,"Refusé. Je le note sur le formulaire. Il a une case pour ça, maintenant."
+sc98_okafor_arrival,Bonjour. Je me porte répondante. Encore. L'école a gardé les bancs.
+sc98_okafor_arrival_refused,Bonjour. Vous m'avez déjà refusée. Je compte : c'est mon métier.
+sc98_okafor_present,‹Tal ka nesu.› Ma carte. Noa vous fait dire que la Main courante est au programme.
+sc98_okafor_purpose,"Rentrer, et répondre pour la famille juste derrière. Une élève de plus."
+sc98_okafor_exit_approve,"Merci. La suivante est à moi. Enfin, à l'école."
+sc98_okafor_exit_deny,Refusée. Alors la suivante non plus. Vous connaissez la règle. Vous l'avez faite.
+sc99_elena_arrival,"Bonjour. Vous m'aviez refusée, le 9 avril. Joaquín a deux ans. Il marche."
+sc99_elena_arrival_passed,Bonjour. Vous m'aviez fait entrer. Je suis allée chercher ma mère. Elle a dit non.
+sc99_elena_present,"‹Tal ka nesu.› Visite familiale. La maîtresse, devant, répond pour nous."
+sc99_elena_purpose,"Joaquín tousse moins à l'Anneau C. On dit que c'est l'air. Moi, je dis l'école."
+sc99_elena_origin,"Tycho. Castellanos, du côté de ma grand-mère. Il y a un Joaquín dans les 212."
+sc99_elena_about_sponsor,"Elle était juste devant, avec des craies plein les poches. Vous l'avez vue ?"
+sc99_elena_exit_approve,"‹Shen tavi.› Le prénom, je le lui expliquerai un jour. Pas encore."
+sc99_elena_exit_deny,"Refusée. Joaquín, on rentre. On a l'habitude des vitres."
+sc100_dora_arrival,"Bonjour, toi. Ils lisent les dépositions à 12:20. La mienne dure quarante minutes."
+sc100_dora_arrival_detained,"Bonjour, toi. L'Enquête m'a sortie de l'Anneau B pour me faire parler. Pratique."
+sc100_dora_present,‹Tal ka nesu.› Une convocation. Témoin. La première fois qu'on me convoque pour parler.
+sc100_dora_purpose,"Écouter les noms. Les vivants, cette fois. Ceux du registre de Tycho."
+sc100_dora_exit_approve,"‹Tu vanu.› Viens écouter, après ton service. Noa garde une place."
+sc100_dora_exit_deny,"Refusée, avec une convocation ? J'écouterai à la radio. Fais pareil."
+sc100_mira_arrival,"Bonjour. Je suis convoquée pour témoigner. Sur vous, entre autres. En bien."
+sc100_mira_arrival_detained,Bonjour. L'Anneau B m'a prêtée à l'Enquête pour la journée. Retour ce soir.
+sc100_mira_present,"‹Tal ka nesu.› Mes vrais papiers. Et une convocation, vraie aussi. Vérifiez."
+sc100_mira_purpose,Lire le registre de Tycho à voix haute. Mille deux cent quatorze noms. On a la journée.
+sc100_mira_password,"Il pleut, même ici. ‹Lumika.›"
+sc100_mira_luciole_reply,"Alors on se comprend encore. Venez écouter. Vous êtes dans le registre, en marge."
+sc100_mira_exit_approve,"Merci. 12:20. Les noms n'ont plus besoin de moi, mais j'ai besoin d'eux."
+sc100_mira_exit_deny,"Refusée, avec une convocation ? On lira sans moi. Les noms n'attendent pas."
+day31_d_directive_title,SAS CASTELLANOS — COMITÉ DE TYCHO
+day31_d_intro,Vendredi 11.04.2188. Un an que le Directoire a fermé Tycho. Le comité ouvre le sas. Bio-scan : Meridian ou Dispensaire de Tycho. Cadres Kessler-Ashe : refusés.
+day31_d_intro_f2,"L'Autorité de Transit vous a « réaffecté·e » en avril, avant la fermeture. Le comité vous a trouvé une vitre. C'est ce que vous savez faire."
+day31_d_intro_f6t,"Arrivé·es le jeudi 12.04 sur une Transit-7 presque vide. Le comité vous a donné une couchette, un tour d'air, et cette vitre."
+day31_d_intro_f6d,Le Basse-Marée vous a déposé·es à Tycho en janvier. Wren ravitaille la grève. Le comité cherchait quelqu'un qui sache lire un tampon.
+day31_d_slogan,On respire à tour de rôle. Le tour est plus court.
+msg_foyer_day31_d_ilan,"Je suis aux recycleurs du dôme 2. Ici, les compteurs, on les répare. Rentre avant la coupure de 22:00. — I."
+msg_foyer_day31_d_dora,"Dora a emmené Noa au Puits 9. Il y a des plaques, maintenant. Noa a lu tous les noms."
+r_ep_issuer_tycho_title,Émetteurs agréés (Tycho)
+r_ep_issuer_tycho_text,Bio-scan : émetteurs agréés Clinique Orbitale Meridian ou Dispensaire de Tycho uniquement.
+r_ep_ka_cadres_title,Cadres de Kessler-Ashe
+r_ep_ka_cadres_text,Contrat Kessler-Ashe (CT-KA) d'un·e titulaire de classe C-1 ou C-2 : entrée refusée. Mineur·es et technicien·nes (C-3 à C-5) : admis·es.
+issuer_dispensaire_tycho,Dispensaire de Tycho
+val_issuer_dt,DISPENSAIRE DE TYCHO
+wanted_committee_reason,"Avis du comité : cadre de Kessler-Ashe, recherché·e au sas."
+sc101_dmitri_arrival,"Bonjour. Vous, à Tycho ? La poussière fait de drôles de mélanges."
+sc101_dmitri_arrival_locked,"Bonjour. Vous m'aviez renvoyé ici, au lock-out. Bienvenue chez moi."
+sc101_dmitri_arrival_hired,"Bonjour. Vous m'aviez fait entrer, l'an dernier. Halcyon m'a rendu. Les machines aussi."
+sc101_dmitri_present,"‹Tal ka nesu.› Bio-scan du dispensaire. Le docteur tousse plus que nous, mais il signe."
+sc101_dmitri_purpose,Je rentre du Puits 14. Les machines ont arrêté de creuser. On les a un peu aidées.
+sc101_dmitri_origin,‹Ka vira Tiko.› Kessler-Ashe dit qu'on est en surnombre. On est juste nombreux.
+sc101_dmitri_exit_approve,"Merci. Ce soir, réfectoire. Vous êtes invité·e. Enfin, vous êtes là."
+sc101_dmitri_exit_deny,"Refusé, à Tycho, par vous ? Le comité va rire. Moi aussi, plus tard."
+sc102_wren_arrival,‹Oru ka.› Je n'ai pas besoin d'entrer. Je suis venue vous voir. Encore.
+sc102_wren_arrival_drift,"‹Oru ka.› Vous voyez ? Les vitres, ça se quitte. Et ça se retrouve."
+sc102_wren_present,"‹Tal ka nesu.› Le bio-scan est vieux. Moi aussi. On ne croise pas Meridian, en dérive."
+sc102_wren_purpose,"Livrer des bonbonnes au comité. Et vendre des places. Pas en même temps, toujours."
+sc102_wren_about_expired,"Quarante jours ? En dérive, on compte en escales. Ça fait deux. C'est jeune."
+sc102_note,"« Basse-Marée, quai Castellanos, lundi 05:00. Quatre places. Gratuites, cette fois. »"
+sc102_wren_exit_deny,Je m'en doutais. La seule vitre qui me refuse partout où elle va.
+sc102_wren_exit_approve,"Merci. La carte vaut toujours. Quatre places, si vous insistez."
+sc103_mira_arrival,"Bonjour. C'est vous, derrière la vitre ? À Tycho ? Alors le monde a tourné."
+sc103_mira_arrival_passed,"Bonjour. Je suis restée à Halcyon un an, grâce à vous. Je rentre. Chez moi, cette fois."
+sc103_mira_arrival_denied,"Bonjour. Le 11 avril, j'ai trouvé une autre vitre. Celle-ci, c'est la mienne."
+sc103_mira_visor,La visière. Pardon. Je la baisse encore devant les vitres. Même ici.
+sc103_mira_present,‹Tal ka nesu.› Mes vrais papiers. Bio-scan du dispensaire : je suis passée avant.
+sc103_mira_purpose,Le comité pose des plaques au Puits 9. Avec les noms. On m'attend pour lire.
+sc103_mira_origin,"Halcyon, cette fois. C'est la première fois que je réponds ça."
+sc103_mira_password,"Il pleut, même ici. ‹Lumika.›"
+sc103_mira_luciole_reply,"Ici, il ne pleut jamais. On a gardé la phrase quand même."
+sc103_mira_exit_approve,‹Shen tavi.› Tamponnez fort. C'est le premier tampon de Tycho qui me laisse rentrer.
+sc103_mira_exit_deny,"Refusée chez moi, par vous. Vous avez gardé le métier. Je reviendrai."
+epi_title,UN AN PLUS TARD
+epi_eyebrow_a,HALL DES GUICHETS · GUICHET 04
+epi_eyebrow_b,CONSEIL DE L'AIR · GUICHET 04
+epi_eyebrow_c,BUREAU DES TÉMOINS · GUICHET 04
+epi_eyebrow_d,TYCHO · SAS CASTELLANOS
+epi_tally,7 passagers · %d avertissement(s)
+epi_first_passed,La troisième personne du 13 mars est passée. Vous avez dit « suivant ». Elle a souri.
+epi_first_refused,"La troisième personne du 13 mars est repartie. Elle était en règle, les deux fois."
+epi_f1_open,18:00. La borne derrière vous envoie votre journée à l'Arbitrage. Elle ne garde que les refus.
+epi_f1_close,"On vous rend votre badge pour un an de plus. Il pleut, même ici."
+epi_f3_open,18:00. Vous rangez le tampon. Personne ne vous attend au Bloc Pétrel. Vous restez un peu.
+epi_f3_close,"Côté Hall, sur la vitre embuée, quelqu'un a dessiné une luciole. Vous ne l'effacez pas."
+epi_f4_open,"Le bulletin du soir montre l'adjoint·e de l'Arbitrage à la vitre, souriant·e. Les refus ont été coupés."
+epi_f4_close,"Vous remontez à votre bureau. La porte ferme à clé. Gloire au Consortium, en bas des conclusions."
+epi_f5b_open,"18:00. La Commission de Sûreté plombe votre vitre pour la nuit, comme toutes les autres."
+epi_f5b_close,"Kasimir avoue encore, chaque mois, à une heure différente. Vous respirez mieux. Vous dormez moins bien."
+epi_f7_open,18:00. Le Guichet 04 ferme. La borne voisine reste allumée toute la nuit.
+epi_f7_close,"Lundi, le guichet rouvre. La file serpente entre les barrières. « Suivant. »"
+epi_f5c_open,"18:00. Au-dessus de votre vitre, la Charte de l'air. Quelqu'un a corrigé une faute au crayon."
+epi_f5c_close,"Vous rendez votre tampon, encore. Vous le rangez avec l'autre, au fond du tiroir. Il y en a deux, maintenant."
+epi_f5s_open,"18:00. La Transit-7 repart vers Tycho, pleine de bonbonnes. Personne ne compte les places."
+epi_f5s_close,Le bulletin parle d'une « initiative du Consortium ». Le Directoire a signé un mois après tout le monde.
+epi_f9_open,"18:00. Le Guichet 04 s'éteint, puis le 05, puis tous : un an jour pour jour. Cette fois, c'est une fête."
+epi_f9_close,"Vous rentrez à pied au milieu des autres. Il pleut, même ici. Personne n'a froid."
+epi_f8_open,"12:20. Le haut-parleur lit les dépositions. La vôtre en premier, comme l'an dernier. On l'écoute mieux."
+epi_f8_close,"Lundi, vous redescendez au sous-sol 3. Lindgren a classé votre journée à la lettre T."
+epi_f10_open,18:00. %d personnes de Tycho sont entrées aujourd'hui par votre vitre. En règle. Comme il y a un an.
+epi_f10_close,Le Bureau dit « afflux régulier ». Les enfants de l'Anneau C disent « le Pont ». Vous ne corrigez personne.
+epi_f2_open,18:00. Le sas se ferme. Le comité vous donne votre tour d'air : le quatrième. Vous le prenez.
+epi_f2_close,"L'Autorité de Transit disait « réaffecté·e ». Tycho dit « accueilli·e ». Le même tampon, à l'envers."
+epi_f6t_open,"18:00. Le comité éteint la lampe du sas. Au réfectoire, quelqu'un vous a gardé une place."
+epi_f6t_close,"Le premier soir, on vous avait demandé de quel côté de la vitre vous étiez. Ce soir, personne ne demande."
+epi_f6d_open,"18:00. Le Basse-Marée se détache du quai Castellanos. Wren fait un signe : pas un adieu, une escale."
+epi_f6d_close,"Ici, il y a peu de hublots. Vous dites ‹vanu› aux lampes, comme on vous l'a appris."
+epi_a_sato_refused,Sato a écrit « humain supérieur à la machine ». La note a été classée sans suite.
+epi_a_sato_passed,Sato a écrit « vitre conforme à la borne ». On vous l'a lu comme un compliment.
+epi_a_sato_fallen,Sato répare la borne voisine jusqu'à 19:00. Il lui parle doucement.
+epi_a_okonkwo_passed,"Okonkwo est resté assis dans le Hall jusqu'à 18:00. Il regardait les vitres, pas les bornes."
+epi_a_okonkwo_refused,Okonkwo est reparti par la file. Il a salué la borne. Elle n'a pas répondu.
+epi_a_okonkwo_refused_denounced,Okonkwo est reparti sans sa tasse. Le Guichet 03 la garde. La borne ne boit pas.
+epi_a_okonkwo_passed_denounced,Okonkwo a repris sa tasse au Guichet 03. Il a dit : « juste assez ». Puis : « merci ».
+epi_a_dora_refused,Dora a laissé son badge sur le comptoir. Noa l'a trouvé à 18:05. Elle l'a mis.
+epi_a_dora_passed,"Dora dort au Bloc Pétrel. Le registre de l'Anneau B la cherche, sans conviction."
+epi_a_mira_passed,Mira est partie au Puits 14 avec un contrat qu'elle n'a pas signé. En règle.
+epi_a_mira_refused,"Mira est restée dans le Hall, avec un contrat valide et nulle part où aller."
+epi_a_mira_detained,Mira est retournée à l'Anneau B. Elle connaissait le chemin.
+epi_a_ilan_passed,"Ilan rentre avec la poussière du Puits 14 sur les mains. Noa la compte, comme le faisait Dora."
+epi_a_ilan_refused,"Ilan a dormi au foyer des contractuels, côté Hall. Un contrat valide ne suffit pas toujours."
+epi_a_note_kept,Le mot de Mira est dans votre poche.
+epi_a_note_reported,Le mot de Mira est au dossier. Vous en avez gardé une copie.
+epi_b_beaumont_refused,Beaumont attend sa réintégration dans le Hall. Elle remplit les formulaires sans erreur.
+epi_b_beaumont_passed,Beaumont est rentrée à l'Anneau E. Elle a vérifié : l'air y est gratuit. Elle a eu l'air déçue.
+epi_b_yara_passed,Yara a relevé les compteurs. Le recycleur central respire au même rythme que le Hall.
+epi_b_yara_refused,"Yara est revenue à 16:00 avec un permis. Elle l'a posé sur la vitre, sans un mot."
+epi_b_fig_passed,"Au recycleur central, le Conseil siège avec une chaise de plus. Celle de la dernière navette."
+epi_b_fig_refused,La dernière passagère de l'an dernier a pris une autre vitre. Il en reste douze. Toutes ouvertes.
+epi_c_lindgren_signed,Lindgren a classé votre formulaire 27-B/6. Une case cochée : « tout ».
+epi_c_lindgren_passed,"Lindgren a relié les deux rapports Albédo. La reliure tient. Les versions, non."
+epi_c_okafor_chain,"À l'école de l'Anneau C, Joaquín a un banc. Il dessine des vitres avec des portes."
+epi_c_okafor_broken,"Okafor a fait cours dans le Hall, devant la file. Elena et Joaquín écoutaient, de l'autre côté."
+epi_c_fig_passed,"À 12:20, le registre de Tycho a été lu jusqu'au bout. Mille deux cent quatorze noms. On a eu le temps."
+epi_c_fig_refused,Le registre a été lu sans elle. Les noms n'ont pas attendu. Vous les avez écoutés à la vitre.
+epi_d_dmitri_passed,"Au réfectoire, Dmitri raconte le Puits 14. Les machines y deviennent de plus en plus grandes."
+epi_d_wren_refused,"Les bonbonnes de Wren sont passées par le comité. Wren, non. Elle a ri."
+epi_d_wren_passed,Wren a livré les bonbonnes elle-même. Le comité lui a donné un tour d'air. Elle l'a revendu.
+epi_d_mira_passed,"Au Puits 9, Mira lit les plaques. Noa lit avec elle. Elles ne se trompent d'aucun nom."
+epi_d_mira_refused,"Mira est entrée par le sas de nuit, avec la permission du comité. Elle vous a laissé un mot."
+epi_home_noa,Noa a mis son réveil à 05:00 pour demain. Elle veut voir ouvrir une vitre.
+epi_home_ilan_reconciled,Ilan vous attend avec deux tasses. On ne parle pas de l'an dernier. On en parle quand même.
+epi_home_ilan_tycho,"Aux recycleurs du dôme 2, Ilan règle un compteur à zéro. Personne ne le remonte."
+epi_farewell_dora,‹Tu vanu.›
+epi_farewell_mira,‹Shen tavi.›
+epi_farewell_wren,‹Oru ka.›
+dos_world_a,La Continuité
+dos_world_b,L'Air commun
+dos_world_c,La Mémoire
+dos_world_d,L'Autre côté
+sev_mrz_reader_title,LECTEUR DE BANDE HS
+sev_mrz_reader_announce,Avis technique : les lecteurs de bande du Hall sont hors service. Contrôle MRZ suspendu jusqu'à nouvel ordre. Les autres contrôles restent dus.
+sev_mrz_reader_rb,R21 SUSPENDUE · LECTEUR HS (passagers restants : %d)
+sev_mrz_reader_end,Lecteurs de bande rétablis. Contrôle MRZ dû.
+sev_comparator_title,COMPARATEUR HS
+sev_comparator_announce,Avis technique : le comparateur du Guichet 04 redémarre. Citez les discordances sur votre propre constat. Les refus restent motivés d'office.
+sev_comparator_rb,COMPARATEUR HS · CONSTAT DE L'AGENT (passagers restants : %d)
+sev_comparator_end,Comparateur rétabli.
+sev_quarantine_title,ALERTE MERIDIAN
+sev_quarantine_announce,Clinique Orbitale Meridian : cas de Fièvre grise à bord de la Transit-7. Ressortissants de Tycho : bio-scan de moins de 7 jours exigé jusqu'à la fermeture.
+sev_quarantine_rb,TYC · BIO-SCAN < 7 JOURS (ALERTE MERIDIAN)
+sev_inspection_title,INSPECTION EN COURS
+sev_inspection_announce,[voix INSPECTION] Inspection surprise du Guichet 04 pour les cinq prochains passagers. Aucun avertissement. Prime d'assiduité : 2 ₵ par décision juste.
+sev_inspection_announce_garde,[voix INSPECTION] Inspection de nuit pour les cinq prochains passagers. Chaque décision juste comptera double.
+sev_inspection_end,Fin de l'inspection. L'Inspecteur emporte son carnet.
+sev_blackout_title,COUPURE · ÉCLAIRAGE DE SECOURS
+sev_blackout_announce,[Hall] Délestage de l'Anneau A. Éclairage de secours. Horloge des guichets suspendue. Sceaux holographiques non vérifiables : R20 suspendue.
+sev_blackout_end,Courant rétabli. Horloge relancée.
+sev_crowd_title,FILE DENSE
+sev_crowd_announce,[Hall] La Transit-7 de 11:00 arrive avec quarante minutes de retard. Trois passagers de plus au Guichet 04. Prolongation du service : deux minutes.
+sev_stolen_ids_title,CARTES VOLÉES
+sev_stolen_ids_announce,Bulletin du Bureau : trois cartes d'identité déclarées volées sont en circulation. N° à l'onglet « Cartes volées ». Porteur : refus.
+sev_stolen_ids_rb,CARTES VOLÉES · 3 N° ID (onglet)
+sev_exemption_title,EXEMPTION 13:00–14:00
+sev_exemption_announce,"Clinique Meridian saturée : de 13:00 à 14:00, motif TRANSIT dispensé de bio-scan. Les autres motifs restent soumis à R11."
+sev_exemption_rb,TRANSIT SANS BIO-SCAN · JUSQU'À 14:00
+rb_tab_stolen,Cartes volées
+r_ev_stolen_ids_title,Cartes volées
+r_ev_stolen_ids_text,"N° ID au bulletin « Cartes volées » : carte déclarée volée, refus. Le bulletin vaut jusqu'à la fin du jour."
+revoked_reason_stolen,Carte déclarée volée
+garde_intro,"Une nuit de 2187. Le Hall ne ferme pas. Une directive toutes les cinq personnes ; trois erreurs, et la relève arrive."
+garde_unit_u01,"Permis d'entrée (ressortissants), non expiré"
+garde_unit_u02,Motif et durée conformes
+garde_unit_u03,Bloc ID ↔ origine
+garde_unit_u04,Visage découvert
+garde_unit_u05,MRZ fidèle
+garde_unit_u06,Interrogatoire des ressortissants de Tycho
+garde_unit_u07,"Bio-scan obligatoire, < 30 jours"
+garde_unit_u08,"Bio-scan : Meridian seule, SAIN seul"
+garde_unit_u09,Implants déclarés
+garde_unit_u10,Implants interdits
+garde_unit_u11,Usurpation → DÉTENTION
+garde_unit_u12,Âge apparent ; papiers d'autrui → DÉTENTION
+garde_unit_u13,Tharsiens interdits sauf DIPLOMATIQUE
+garde_unit_u14,Sceaux conformes
+garde_unit_u15,Avis de recherche → DÉTENTION
+garde_unit_u16,"Contrat (motif TRAVAIL), code employeur"
+garde_unit_u17,"Laissez-passer de dérive, Registre des cargos"
+garde_unit_u18,Firmware NX < 90 jours
+garde_unit_u19,Attestation d'asile (TER C-5)
+garde_unit_u20,Révocations
+garde_tier_0,Prise de garde
+garde_tier_1,Minuit
+garde_tier_2,Trois heures
+garde_tier_3,Avant l'aube
+garde_tier_4,Rotation
+sc83_tech_arrival,"Encore vous ? Je plaisante, c'est encore moi. La première personne de votre premier jour."
+sc83_tech_purpose,"Retour de mission. Recycleur 3. On y travaillait à deux, avec Ilan, avant 86."
+sc83_tech_stay,"Les compteurs de la Commission ont pris la place d'Ilan. Ils ne parlent pas, eux."
+sc83_tech_exit_approve,Merci. Dites à Ilan que la vanne 3 grince toujours. Ça lui fera plaisir.
+sc83_tech_exit_deny,"Encore un refus ? Vous commencez à me connaître, pourtant."
+sc83_tech_arrival_demoted,"Vous vous souvenez ? Vous m'aviez refusé l'entrée, le premier jour. J'étais en règle."
+sc83_tech_present_demoted,"‹Tal ka nesu.› Regardez la classe. C-4. Six jours de mission en plus, et voilà."
+sc83_tech_purpose_demoted,"Rentrer. Contractuel, maintenant. On m'a dit que c'était « temporaire »."
+sc83_tech_exit_approve_demoted,"Merci. Cette fois, vous avez lu la carte. Elle dit moins qu'avant."
+msg_ilan_day16_tech,Ilan sourit en entendant parler de la vanne 3.
+end_trace_sc83_tech_demoted,"Une personne en règle, refusée le premier jour, est revenue C-4."
+sc84_miner_arrival,"[toux] Bonjour. C'est moi, cette fois. Ma tête, ma carte."
+sc84_miner_present,"‹Tal ka nesu.› La photo est d'hier. La poussière, je l'ai gardée."
+sc84_miner_purpose,"Le contrat des sas. Ils m'ont attendu. Deux jours, c'est rien, pour eux."
+sc84_miner_origin,‹Ka vira Tiko.› L'autre carte était à mon cousin. Il est resté là-haut.
+sc84_miner_exit_approve,"‹Shen tavi.› Vous aviez raison, mardi. Ça ne m'empêche pas de vous en vouloir un peu."
+sc84_miner_exit_deny,Refusé avec mes propres papiers ? Alors il fallait garder ceux du cousin.
+sc84_owner_arrival,"Bonjour. On m'a volé ma carte en février. Quelqu'un est entré avec, le 14 mars."
+sc84_owner_present,‹Tal ka nesu.› Une carte neuve. Même numéro. C'est le numéro qu'ils ont rayé.
+sc84_owner_purpose,"Rentrer travailler. Je n'ai rien fait. C'est moi qui n'existe plus, depuis."
+sc84_owner_about_revoked,"Révoqué pour fraude. La fraude, c'était lui. Le tampon, c'était qui ?"
+sc84_owner_exit_deny,"Je m'en doutais. Ce n'est pas vous, je sais. Enfin. Je ne sais pas."
+sc84_owner_exit_approve,"Merci. Vous réparez quelque chose, je crois. Je ne sais pas quoi."
+end_trace_sc84_owner_refused,Vous avez refusé le vrai titulaire de la carte du 14 mars.
+revoked_reason_fraud_1403,Fraude documentaire 14.03
+sc85_first_denied_arrival,"Bonjour. Le 13 mars, je n'avais rien. Vous m'avez dit d'aller chercher une carte."
+sc85_first_denied_present,‹Tal ka nesu.› Dix jours pour exister. Le Bureau ne travaille pas le dimanche.
+sc85_first_denied_about_quota,"Le quota ? Il n'existait pas, quand je n'avais pas de carte. J'arrive toujours trop tard."
+sc85_first_denied_exit_approve,"Merci. La première fois, vous aviez raison. Celle-ci aussi."
+sc85_first_denied_exit_deny,"Plus de place. D'accord. Je connais la file, maintenant. Elle me connaît aussi."
+sc85_first_denied_arrival_passed,"Bonjour. Le 13 mars, vous m'avez laissé passer sans rien. Le Bureau a régularisé."
+sc85_first_denied_present_passed,‹Tal ka nesu.› Une vraie carte. Le Bureau a dit que j'avais eu de la chance. Pas vous.
+sc86_kaito_arrival,"‹Oru ka !› La belle vitre. Cette fois, j'ai un vrai thermorégulateur. Déclaré."
+sc86_kaito_arrival_detained,"‹Oru ka.› Trois jours d'Anneau B pour une cache. Elle était vide, à la sortie."
+sc86_kaito_purpose,Commerce. Quai 6. L'insuline est passée par un autre guichet. Deux jours trop tard.
+sc86_kaito_exit_approve,"Merci. Le dispensaire a un nouveau fournisseur. Moi, je vends des thermorégulateurs."
+sc86_kaito_exit_deny,"En règle et refusé ? Vous avez de la mémoire, Guichet. Pas la bonne."
+sc86_kaito_arrival_again,"‹Oru ka !› Même vitre, même pilote. Même thermorégulateur. Vous voyez le genre."
+sc86_kaito_present_again,"‹Tal ka nesu.› Et le pourboire. Les habitudes, Guichet. Les habitudes."
+sc86_kaito_about_rule_violated_again,De l'insuline. Encore. Les gamins ne guérissent pas d'une semaine sur l'autre.
+sc86_kaito_exit_deny_again,"Ah. On change de pilote. Le dispensaire trouvera. Il trouve toujours, en retard."
+sc86_kaito_exit_approve_again,"Deux fois. On va finir par vous donner un nom, à la Soute."
+sc87_idris_arrival,"Bonjour. Vous avez refusé un diplomate, le 20 mars. Mon gouvernement a pris note."
+sc87_idris_arrival_split,"Bonjour. Le 20 mars, ma femme est restée de l'autre côté. Moi aussi, à cause de vous."
+sc87_idris_present,"‹Tal ka nesu.› Le même cachet. Je l'ai fait vérifier trois fois. Par habitude, maintenant."
+sc87_idris_purpose,Les quotas d'eau. Ils sont devenus des quotas d'air. La négociation aussi.
+sc87_idris_exit_approve,"Merci. Mon gouvernement prendra note de ceci aussi. Moi, je n'en suis pas sûr."
+sc87_idris_exit_deny,"Deux fois. On appelle ça une politique, chez nous."
+sc67_hana_arrival_idris,"Idris est entré en mars, à la seconde tentative. Moi, je suis la seconde."
+sc88_fatou_arrival,"Bonjour. Vous m'avez mise en attente, le 20 mars. J'ai attendu. Kwame aussi."
+sc88_fatou_present,‹Tal ka nesu.› Mes papiers. Les miens. L'Enquête a versé les dossiers samedi.
+sc88_fatou_purpose,Les serres de Ceres-Verte. Hydroponie. Ils manquent de mains. J'en ai deux.
+sc88_fatou_exit_approve,"‹Shen tavi.› Viens, Kwame. Cette fois, on passe ensemble."
+sc88_fatou_exit_deny,"Refusée, avec mes papiers ? Kwame, on attend encore. On sait faire."
+sc88_fatou_arrival_ngozi,"Bonjour. Ngozi Mensah. Vous m'avez laissée passer, en mars. Je suis restée Ngozi."
+sc88_fatou_present_ngozi,"‹Tal ka nesu.› Renouvelée. Ma tête, son nom. C'est lourd, un nom de morte."
+sc88_fatou_about_age_ngozi,"Trente-huit ans, dit la carte. J'en ai vingt-neuf. Ngozi les aurait eus."
+sc88_fatou_exit_detain_ngozi,Kwame est à l'école ! Dites-leur ! Ils ne savent pas qu'il a une mère !
+sc88_fatou_exit_deny_ngozi,"Refusée. Ngozi, c'est fini, alors. Il faudra redevenir Fatou. Ça prend du temps."
+sc88_fatou_exit_approve_ngozi,‹Shen tavi.› Ngozi vous remercie. Encore. Elle commence à être fatiguée.
+end_trace_sc88_fatou_detained,"Vous avez mis en attente Fatou, sous le nom de sa sœur, la seconde fois."
+sc89_sefa_arrival,"‹Oru ka.› Guichet 04, troisième vitre en partant de la gauche. Je n'ai pas oublié."
+sc89_sefa_present,"‹Tal ka nesu.› Le laissez-passer. Le bateau, c'est une autre histoire."
+sc89_sefa_about_vessel,"Plus au registre. Saisi le 22 mars. Le papier, vous l'aviez rendu, je crois."
+sc89_sefa_exit_deny_reported,"Je m'en doutais. Ma mère est née sur ce bateau. Il est au quai 6, sous scellés."
+sc89_sefa_purpose_kept,Transit. Le papier est arrivé à destination. On m'a dit de vous dire merci.
+sc89_sefa_exit_approve_kept,"‹Shen tavi.› Il pleut, même ici."
+sc89_sefa_luciole_reply_kept,Alors c'est bien vous. On ne se reverra pas. Ce n'est pas triste.
+sc89_sefa_exit_deny_kept,"Refusée, en règle ? Le Long-Ruban attendra. Il sait attendre."
+end_trace_sc89_sefa_refused,Le Long-Ruban a été saisi après le mot que vous avez remis.
+sc90_first_arrival,"Bonjour. Vous ne vous souvenez pas. Le 13 mars, l'an dernier. J'étais la troisième."
+sc90_first_present,"‹Tal ka nesu.› Toujours en règle. Je fais attention, depuis. On ne sait jamais."
+sc90_first_purpose_a,Rentrer. La borne m'envoie vers vous. Elle ne m'aime pas.
+sc90_first_purpose_b,Rentrer. Il paraît qu'on ne compte plus l'air. Je voulais voir ça de près.
+sc90_first_purpose_c,"Rentrer, et écouter les dépositions à 12:20. Il paraît que la vôtre est la première."
+sc90_first_purpose_d,"Livrer pour le comité. Vous aussi, vous avez changé de côté."
+sc90_first_exit_approve,"Merci. Vous aviez dit « suivant », la dernière fois. Dites-le encore."
+sc90_first_exit_deny,"Un refus, en règle ? Vous étiez plus sûr·e de vous, il y a un an."
+dos_name_premiers,Les premiers du 13 mars
+dos_name_technicien,L'habitué·e de l'Anneau C
+dos_name_amara,Amara Diallo
+dos_name_mineur,Le mineur à la vieille photo
+dos_name_mira,Mira Vasquez-Orlov
+dos_name_lev,Lev Petrenko
+dos_name_valcourt,Auguste Valcourt
+dos_name_dmitri,Dmitri Kowalczyk
+dos_name_noor,Dr Noor Achebe-Sörensen
+dos_name_yara,Yara Moreno-Lind
+dos_name_mazur,Dariusz et Katya Mazur
+dos_name_ravel,Corentin Ravel
+dos_name_kaito,Kaito Morrow
+dos_name_idris,Idris Hadid
+dos_name_hana,Hana Hadid
+dos_name_fatou,Fatou Mensah
+dos_name_sefa,Sefa Long-Ruban
+dos_name_wren,Wren Basse-Marée
+dos_name_arkady,« Bastien Duval »
+dos_name_arkady_true,Arkady Novak
+dos_name_montclair,Philippa Montclair
+dos_name_lindgren,Kenji Lindgren
+dos_name_elena,Elena et Joaquín Navarro
+dos_name_margaux,Margaux Ferreira (et Mistigri)
+dos_name_tariq,Tariq Benali
+dos_name_kerr_ceres,Les trois Ren Kerr de Cérès
+dos_name_kerr_hal,"Ren Kerr, Né-Halcyon"
+dos_name_corvo,Corvo Sillage
+dos_name_hiro,Hiro (« 3 %… 41 %… 99 % »)
+dos_name_okonkwo,Emeka Okonkwo
+dos_name_sato,Aurelio Sato
+dos_name_leila,Leila (« 15 h 59 »)
+dos_name_valentin,Valentin Choi
+dos_name_beaumont,Isadora Beaumont
+dos_name_mateus,Mateus (« Le suivant »)
+dos_name_kasimir,Kasimir Oyelaran-Holm
+dos_name_paz,Paz Vela
+dos_name_ilan,Ilan Lindqvist-Rey
+dos_name_anouk,Anouk Halvorsen
+dos_name_okafor,Adaeze Okafor
+dos_name_ophelie,Ophélie Delacroix-Tan
+dos_name_celeste,Céleste Sorel
+dos_name_adeyemi,Lin Adeyemi
+dos_name_dora,Dora Lindqvist-Rey
+dos_name_titulaire,Le titulaire de la carte
+dos_chr_premiers,"Les tout premiers passagers de votre premier jour. Vous ne vous en souvenez pas. Eux, si."
+dos_chr_technicien,"Anneau C, retour de mission. « Encore vous ? » La première personne de votre premier jour."
+dos_chr_amara,"Terre, carte expirée de trois jours. Ses enfants l'attendaient de l'autre côté."
+dos_chr_mineur,"Tycho, contrat Kessler-Ashe. Une toux, et une photo qui lui ressemblait presque."
+dos_chr_mira,"Tycho, Kessler-Ashe. Arrivée visière baissée, le 15 mars. Papiers en règle."
+dos_chr_lev,"Tycho. Il parlait de la pluie sur les quais, un soir de mars."
+dos_chr_valcourt,"Né-Halcyon pressé. Il cherchait la file prioritaire, et de quoi vous offrir un café."
+dos_chr_dmitri,"Tycho, mineur. « On m'a dit que vous écoutiez. » Son permis datait d'avant."
+dos_chr_noor,"Médecin de Tycho. Elle faisait court : vous aussi, vous aviez une file."
+dos_chr_yara,Tycho. Son frère travaillait au recycleur de votre bloc. « Regardez le dernier chiffre. »
+dos_chr_mazur,"Tharsis, ancien soldat. On lui regardait toujours l'œil d'abord."
+dos_chr_ravel,Né-Halcyon aimable. Il connaissait l'âge de Noa.
+dos_chr_kaito,"Cérès. Belle vitre, a-t-il dit. Un pourboire, aussi."
+dos_chr_idris,"Tharsis, mission diplomatique. Sa femme était juste derrière lui."
+dos_chr_hana,Tharsis. Elle cherchait son mari derrière la vitre.
+dos_chr_fatou,"Terre, avec un petit garçon, Kwame. « Reste là. Je reviens. »"
+dos_chr_sefa,"Dérive, du Long-Ruban. Troisième vitre en partant de la gauche, on lui avait dit."
+dos_chr_wren,"Dérive, du Basse-Marée. Elle n'avait pas besoin d'entrer : elle venait vous voir."
+dos_chr_arkady,"« Bastien Duval », Tycho. Belle journée pour respirer, disait-il."
+dos_chr_montclair,"Née-Halcyon, pressée. Cinquante crédits sur le comptoir. « Ouvrez. Maintenant. »"
+dos_chr_lindgren,"Archiviste, sous-sol 3. Cherche le formulaire 27-B."
+dos_chr_elena,"Tycho, avec un enfant qui toussait depuis dimanche. « Pas la grise. »"
+dos_chr_margaux,"Née-Halcyon, de retour avec Mistigri. Et le contrat de Mistigri."
+dos_chr_tariq,"Terre. Un contrat tout neuf, deux cents crédits. Le monsieur du quai 5 l'avait juré."
+dos_chr_kerr_ceres,"Cérès. Trois passagers, un seul nom. « Ce n'est pas ma faute. »"
+dos_chr_kerr_hal,Né-Halcyon. Le nom est banal. Le numéro ne l'est pas.
+dos_chr_corvo,Dérive. Le Sillage avait été démantelé un mardi. Pas lui.
+dos_chr_hiro,"Une mise à jour en cours, à la vitre même. 3 %… 17 %…"
+dos_chr_okonkwo,"Guichet 03. Vous a appris le métier, le premier jour. « Comme on dit. »"
+dos_chr_sato,"Greffier du Bureau, onze minutes de pause. Une erreur glissée pour tester votre vigilance."
+dos_chr_leila,"Terre, ticket de 15 h 40. Son père attendait à l'hospice Meridian."
+dos_chr_valentin,"Né-Halcyon, sans poste depuis la veille. Sa carte était valide hier."
+dos_chr_beaumont,Commissaire. Elle regardait comment vous travailliez.
+dos_chr_mateus,"Terre, recycleur. Métier en pénurie : pour une fois, il était rare."
+dos_chr_kasimir,"Tycho, Puits 9. On parlait beaucoup de lui, cette semaine-là."
+dos_chr_paz,"Cérès. Née un 1ᵉʳ avril, carte expirant un 1ᵉʳ avril. Pas une blague."
+dos_chr_ilan,"Bloc Pétrel, votre foyer. Un jour, il a fallu passer par votre vitre."
+dos_chr_anouk,"Tycho, technicienne. Une clé, un dimanche, qui n'avait rien ouvert."
+dos_chr_okafor,"La maîtresse de Noa. « Non, rien de grave. Pas cette fois. »"
+dos_chr_ophelie,"Née-Halcyon. Un bio-scan apporté par habitude, très beau, expiré."
+dos_chr_celeste,"Infirmière à l'hospice Meridian. Et répondante, juste après elle."
+dos_chr_adeyemi,"Garde de Continuité, de retour de service. Des papiers qui n'étaient pas à lui."
+dos_chr_dora,"Bloc Pétrel. La mère d'Ilan, née à Tycho. Elle relit le journal sans ses lunettes."
+dos_chr_titulaire,"Une carte neuve, un numéro rayé. Il n'avait rien fait."
+dos_end_hint1_f1,Les Inspecteurs aussi savent compter.
+dos_end_hint2_f1,"Enveloppes gardées, double jeu, ou silence devant l'Enquête."
+dos_end_hint1_f2,Le loyer se paie le soir.
+dos_end_hint2_f2,Trois loyers impayés d'affilée.
+dos_end_hint1_f3,"Un foyer se chauffe, se nourrit, se soigne."
+dos_end_hint2_f3,"Personne au Bloc Pétrel, un soir."
+dos_end_hint1_f4,Le Consortium récompense ceux qui ne regardent qu'une fois.
+dos_end_hint2_f4,"Loyauté, conformité, et la dernière passagère mise en attente."
+dos_end_hint1_f5,"Certaines portes s'ouvrent de l'intérieur, à heure fixe."
+dos_end_hint2_f5,"La confiance des Lucioles, et la dernière navette laissée passer."
+dos_end_hint1_f6,Une carte de quai vaut toujours. Elle coûte cher.
+dos_end_hint2_f6,"Des places achetées, un foyer présent, et de quoi payer."
+dos_end_hint1_f7,Il arrive aussi que rien n'arrive.
+dos_end_hint2_f7,Aucune des autres.
+dos_end_hint1_f8,Ce qui est écrit au crayon finit parfois lu à voix haute.
+dos_end_hint2_f8,"Tout dire à l'Enquête, garder les registres."
+dos_end_hint1_f9,"Une vitre éteinte ne fait rien. Douze, c'est autre chose."
+dos_end_hint2_f9,"Solidarité, et le vote du J29."
+dos_end_hint1_f10,"Le matin prépare l'après-midi, à la même vitre."
+dos_end_hint2_f10,"Cinq familles de Tycho admises en règle, le dernier jour."
+bar_garde_code,GRAINE · %s
+bar_garde_errors,ERREURS
+bar_garde_location,HALCYON GATE — GARDE DE NUIT
+bar_garde_night,NUIT
+bar_garde_score,SCORE
+bar_garde_tier,PALIER %d · %s
+bar_garde_tier_n,PALIER %d
+title_garde,GARDE DE NUIT
+title_dossier,DOSSIER DE L'AGENT
+garde_title,GARDE DE NUIT
+garde_eyebrow,HALCYON GATE · ROTATIONS DE NUIT
+garde_tagline,"Une directive toutes les cinq personnes. Trois erreurs, et la relève arrive."
+garde_daily,GRAINE DU JOUR
+garde_free,GRAINE LIBRE
+garde_daily_utc,UTC · la même pour tout le monde
+garde_daily_none,Pas encore jouée aujourd'hui.
+garde_daily_record,Record du jour : %d · premier essai : %d · %d essai(s)
+garde_play_daily,JOUER LA GRAINE DU JOUR
+garde_seed_input,Code de garde (6 caractères)
+garde_seed_placeholder,K2Q-9TX
+garde_seed_help,"6 caractères : A–Z et 2–9, sans O, I, 0 ni 1. Tiret et casse indifférents."
+garde_seed_invalid,"Les codes n'utilisent ni O, ni I, ni 0, ni 1."
+garde_seed_length,Il faut 6 caractères (le tiret ne compte pas).
+garde_seed_ok,Code reconnu : %s
+garde_play_code,JOUER CE CODE
+garde_random,TIRER AU HASARD
+garde_locked,Terminez votre premier jour au Guichet 04.
+garde_no_save,Pas de sauvegarde en cours de garde : le score est enregistré à la fin.
+garde_records,RECORDS
+garde_records_none,Aucune garde enregistrée. La première fixe le record.
+garde_best,MEILLEUR SCORE
+garde_best_detail,passagers jugés juste
+garde_stats,GARDES
+garde_stats_detail,%d verdicts justes · plus longue garde (passagers) : %d
+garde_stats_line,%d gardes · %d verdicts justes · plus longue garde (passagers) : %d
+garde_free_seeds,GRAINES LIBRES
+garde_col_rank,N°
+garde_col_score,SCORE
+garde_col_code,CODE
+garde_col_date,DATE
+garde_col_tier,PALIER
+garde_row_tier,P%d · %d dir.
+garde_old_version,ancienne garde
+garde_score,SCORE · %d
+garde_errors,ERREURS · %d / 3
+garde_next_dir,PROCHAINE DIRECTIVE · %d
+garde_dir_title,DIRECTIVE DE GARDE N° %d
+garde_dir_retire,REPRIS PAR LES QUAIS
+garde_dir_restore,RÉTABLIE
+garde_dir_adds,Ajoute : %s
+garde_dir_effect,Effet au prochain passager · Rulebook › Règles.
+garde_dir_ok,COMPRIS
+garde_dawn,06:00. L'aube. La relève ne vient pas.
+garde_tier_toast,PALIER %d
+garde_end_button,TERMINER LA GARDE
+garde_end_button_tip,Le score de la garde est enregistré.
+garde_end_confirm,CONFIRMER : LE SCORE SERA ENREGISTRÉ
+garde_end_confirm_title,Terminer la garde ?
+garde_end_confirm_body,Le score de %d est enregistré. Le passager au guichet est jugé d'abord.
+garde_end_title,FIN DE GARDE
+garde_end_reason,Trois erreurs. La relève arrive.
+garde_end_quit,Garde terminée à votre demande.
+garde_end_eyebrow,GARDE DE NUIT · %s
+garde_score_caption,SCORE · PASSAGERS JUGÉS JUSTE
+garde_record_new,NOUVEAU RECORD
+garde_record_daily,RECORD DU JOUR
+garde_first_try,PREMIER ESSAI DU JOUR · %d
+garde_end_directives,%d directives
+garde_end_directives_one,%d directive
+garde_end_tier,palier %d
+garde_end_errors,LES ERREURS
+garde_end_no_error,Aucune erreur.
+garde_end_passenger,PASSAGER %d
+garde_end_verdicts,%s → %s
+garde_end_rule,Règle en cause : %s
+garde_share,CODE À PARTAGER
+garde_share_hint,"Mêmes passagers, mêmes directives : comparez vos scores."
+garde_replay,REJOUER CETTE GARDE
+garde_new,NOUVELLE GRAINE
+garde_copy,COPIER LE CODE
+garde_copied,CODE COPIÉ
+garde_copy_none,CODE
+garde_back,RETOUR
+garde_end_back_hint,titre
+garde_start_failed,GARDE IMPOSSIBLE
+pause_quit_garde,QUITTER VERS LE TITRE (GARDE PERDUE)
+epi_button,UN AN PLUS TARD
+epi_card_date,Vendredi 11.04.2188
+epi_card_recall,"Il y a un an, la dernière Transit-7 de Tycho s'arrimait à 14:00."
+epi_card_continue,CONTINUER
+epi_card_note,Épilogue · la partie terminée n'est pas modifiée
+epi_locked_hint,Certaines fins ont une suite. Elles commencent après le 1ᵉʳ avril.
+epi_end_hint,Le Dossier de l'agent garde cette conclusion.
+epi_br_expected_detail,"Puis quelques lignes, et c'est fini."
+epi_br_clock,HORLOGE
+epi_br_clock_detail,Le shift finit quand la file est traitée.
+epi_br_economy,ÉCONOMIE
+epi_br_economy_value,AUCUNE
+epi_br_economy_detail,Ni salaire ni amende : les erreurs comptent dans la conclusion.
+epi_start_failed,ÉPILOGUE INDISPONIBLE
+epi_start_failed_body,La graine de cet épilogue est illisible.
+load_badge_epilogue,ÉPILOGUE
+load_badge_epilogue_done,%s · JOUÉ
+load_play_epilogue,JOUER « UN AN PLUS TARD »
+dos_title,DOSSIER DE L'AGENT · HG-1404-AGNT
+dos_eyebrow,CONSORTIUM · BUREAU DU PERSONNEL
+dos_empty,Aucun dossier.
+dos_tab_endings,FINS
+dos_tab_people,PERSONNES
+dos_tab_last,DERNIÈRE PARTIE
+dos_tab_garde,GARDE DE NUIT
+dos_tab_epilogues,ÉPILOGUES
+dos_first_seen,Première fois : %s · J%d
+dos_count,Vue %d fois
+dos_count_one,Vue %d fois
+dos_count_endings,%d fins vues
+dos_count_endings_one,%d fin vue
+dos_count_gardes,%d gardes
+dos_count_gardes_one,%d garde
+dos_total_endings,%d / %d FINS
+dos_total_people,%d / %d PERSONNES
+dos_world_unknown,Un autre 11 avril
+dos_not_seen,NON VUE
+dos_filter_all,TOUS
+dos_filter_act,ACTE %s
+dos_people_none,Personne encore. Les visages qui comptent finissent ici.
+dos_chr_first,J%02d
+dos_chr_encounters,%d rencontres
+dos_chr_encounters_one,%d rencontre
+dos_last_none,Aucune partie terminée pour l'instant.
+dos_last_day,Dernier jour : J%02d
+dos_last_world,Épilogue : %s
+dos_last_no_trace,Aucun choix marquant enregistré pour cette partie.
+dos_epi_never,Pas encore joué
+dos_epi_played,Première fois : %s · joué %d fois
+dos_epi_play,JOUER
+dos_epi_replay,REJOUER
+dos_scroll_hint,défiler
+dos_variant_audit,AUDIT
+dos_variant_review,REVUE
+dos_variant_deposition,DÉPOSITION
+dos_variant_double,DOUBLE JEU
+dos_variant_c,CHARTE
+dos_variant_s,SECONDE VANNE
+dos_variant_b,BRÛLANTS
+dos_variant_j10,J10
+dos_variant_j20,J20
+dos_variant_t,TYCHO
+dos_variant_d,DÉRIVE
+rb_restored,RÉTABLIE
+rb_stolen_intro,Bulletin du Bureau · cartes déclarées volées. Mode Inspection : comparez au N° ID de la carte. Porteur : refus.
+rb_council_intro,Conseil de l'air · N° ID inscrits. Réintégré·es par le Conseil (date en colonne) : admis·es.
+sev_ui_eyebrow,ÉVÉNEMENT
+sev_ui_remaining,%d PASSAGERS
+sev_ui_remaining_one,%d PASSAGER
+sev_ui_until,JUSQU'À %s
+sev_ui_rest_of_day,JUSQU'À LA FIN DU SHIFT
+sev_ui_now,EN COURS
+sev_ui_comparator_title,CONSTAT DE L'AGENT
+sev_ui_comparator_text,"Comparateur hors service : paire notée, sans verdict. À vous de juger."
+qp_endless_total,/ ∞
+qp_endless,∞
+rb_garde_day,GARDE DE NUIT
+garde_end_procedure,%s · ERREUR DE PROCÉDURE
+garde_end_cause,En cause : %s
+garde_seed_bad_date,"Date invalide : NUIT-AAAA-MM-JJ, une vraie date du calendrier."
+garde_seed_bad_char,Caractère non admis : lettres A–Z et chiffres 2–9 seulement.
+epi_scroll_more,SUITE · défiler
+epi_f5c_close_noa,"Vous rendez votre tampon, encore. Noa le range avec l'autre. Elle en a deux, maintenant."
+epi_f6t_open_noa,18:00. Le comité éteint la lampe du sas. Noa vous attend au réfectoire avec une place gardée.
+epi_f6d_close_noa,"Noa dit ‹vanu› à chaque hublot. Ici, il y en a peu. Elle le dit aux lampes."
+sev_exemption_title_garde,EXEMPTION TRANSIT
+sev_exemption_announce_garde,"Clinique Meridian saturée : pour les cinq prochains passagers, motif TRANSIT dispensé de bio-scan. Les autres motifs restent soumis à R11."
+sev_exemption_rb_garde,TRANSIT SANS BIO-SCAN (passagers restants : %d)

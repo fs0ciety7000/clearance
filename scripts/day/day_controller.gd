@@ -38,6 +38,20 @@
 ## file prévue est traitée, ou par `close_booth()` une fois le quota atteint ;
 ## amendes à 0 ₵ (`CaseResult.waive_fine`), citations comptées. Passage Récit →
 ## Dur en cours de shift : `EventBus.difficulty_changed`.
+## M12 (ARCHITECTURE §11) : le shift travaille sur une **copie** du `DayDef`
+## et de son RuleSet (`DayDef.make_shift_copy`) — règles mutables en cours de
+## shift (B54) : changements en attente appliqués juste avant de construire
+## le passager suivant (`RuleContext.apply_pending`, `rules_changed`), jamais
+## sur le passager à la vitre. Pseudo-drapeaux `cm_*` au matin (B59).
+## **Événements de station** (B58, D-129) : plan du jour
+## (`StationEventService`, campagne) ou de la garde ; annonce après un
+## passager, effet au suivant, fin de fenêtre, clôture avant un cas
+## scénarisé (surcharges suspendues pendant un cas scénarisé), effets du
+## contrôleur (prime, avertissements, comparateur, horloge gelée, file
+## allongée). **Modes** (`mode`) : `campaign`, `epilogue` (J31 :
+## `start_epilogue`, sans économie ni chrono, B52) et `garde` (Garde de nuit :
+## `start_garde`, `GardeRun`, file sans fin, directives tous les 5 passagers,
+## fin à 3 erreurs ou `request_end_garde`, B57).
 class_name DayController
 extends Node
 
@@ -88,6 +102,17 @@ var story_mode: bool = false
 var booth_closed: bool = false
 var _fired_announcements: Array[int] = []
 
+## M12 : mode du shift (`DayDef.MODE_CAMPAIGN`, `MODE_EPILOGUE`, `MODE_GARDE`).
+var mode: StringName = DayDef.MODE_CAMPAIGN
+## M12 (B58) : événements de station du shift (campagne : au plus un par jour).
+var station_events: Array[StationEventPlan] = []
+## M12 (B58) : événements de station en campagne (faux : aucun, tests, outils).
+@export var station_events_enabled: bool = true
+## M12 (B57) : garde en cours (mode garde).
+var garde_run: GardeRun = null
+## M12 : garde terminée (3 erreurs ou « Terminer la garde ») : fin après le passager.
+var garde_over: bool = false
+
 var _documents_presented: bool = false
 ## Temps passé dans la phase courante (timeouts).
 var _phase_time: float = 0.0
@@ -107,14 +132,78 @@ func _ready() -> void:
 
 ## Prépare le jour `day_number` (phase INTRO) et émet `day_started`.
 ## `memory` : mémoire des passagers scénarisés (`CaseMemory.resolve`).
+## M12 : événement de station du jour (campagne, `GameState` appliqué,
+## `station_events_enabled`), copie de shift du jour.
 func start_day(p_data: DataCatalog, day_number: int, day_seed: int, flags: Array[StringName] = [],
 		memory: Dictionary = {}) -> bool:
 	data = p_data
-	day = data.get_day(day_number) if data != null else null
-	if day == null:
+	var source: DayDef = data.get_day(day_number) if data != null else null
+	if source == null:
 		push_error("DayController: jour %d introuvable" % day_number)
 		return false
-	builder = CaseBuilder.new(data, day, day_seed, flags, memory, flag_values())
+	mode = DayDef.MODE_CAMPAIGN
+	garde_run = null
+	var plans: Array[StationEventPlan] = []
+	if apply_to_game_state and station_events_enabled and GameState.is_campaign_session():
+		var events_def: StationEventsDef = StationEventService.load_def()
+		if events_def != null:
+			var plan: StationEventPlan = StationEventService.plan_for_day(GameState.campaign_seed, events_def, data.days, day_number)
+			if plan != null:
+				plans.append(plan)
+	return _begin(source, day_seed, flags, memory, plans)
+
+
+## M12 (B52) : J31 « Un an plus tard » sur le `DayDef` du monde
+## (`Campaign.start_epilogue`) : sans économie ni chrono (D-123), fin à la
+## file vide, aucun événement de station. `day_seed` :
+## `EpilogueService.day_seed(graine)`.
+func start_epilogue(p_data: DataCatalog, world_day: DayDef, day_seed: int, flags: Array[StringName] = [],
+		memory: Dictionary = {}) -> bool:
+	data = p_data
+	if world_day == null:
+		push_error("DayController: monde d'épilogue sans DayDef")
+		return false
+	mode = DayDef.MODE_EPILOGUE
+	garde_run = null
+	var plans: Array[StationEventPlan] = []
+	return _begin(world_day, day_seed, flags, memory, plans)
+
+
+## M12 (B57) : Garde de nuit (`Campaign.start_garde`) : jour de shift tiré du
+## gabarit (`GardeService.make_day`), file sans fin, socle de règles, puis
+## directives, paliers et événements du `GardeRun`.
+func start_garde(p_data: DataCatalog, run: GardeRun) -> bool:
+	data = p_data
+	if run == null or run.def == null:
+		push_error("DayController: garde sans données")
+		return false
+	mode = DayDef.MODE_GARDE
+	garde_run = run
+	var plans: Array[StationEventPlan] = []
+	var flags: Array[StringName] = []
+	return _begin(GardeService.make_day(run.def, run), run.queue_seed, flags, {}, plans)
+
+
+func _begin(source: DayDef, day_seed: int, flags: Array[StringName], memory: Dictionary,
+		plans: Array[StationEventPlan]) -> bool:
+	# Copie de shift (B54) : RuleSet mutable, champs réglables pour ce shift.
+	day = source if source.rule_set != null and source.rule_set.is_shift_copy else source.make_shift_copy()
+	if mode != DayDef.MODE_CAMPAIGN:
+		day.economy_disabled = day.economy_disabled or mode == DayDef.MODE_GARDE
+	station_events = plans
+	for plan: StationEventPlan in station_events:
+		day.free_citations_per_day += plan.free_citations_bonus
+	# Pseudo-drapeaux de verdict `cm_*` (B59), lus au matin par le générateur.
+	var remembered: Dictionary = GameState.case_memory if apply_to_game_state and mode != DayDef.MODE_GARDE else memory
+	var morning: Dictionary[StringName, Variant] = CaseMemory.with_pseudo_flags(flag_values(), remembered)
+	var true_flags: Array[StringName] = flags.duplicate()
+	for flag: StringName in CaseMemory.pseudo_flag_names(remembered):
+		if not true_flags.has(flag):
+			true_flags.append(flag)
+	builder = CaseBuilder.new(data, day, day_seed, true_flags, memory, morning)
+	# Mutation portée par un cas scénarisé (SC-89a : `rule_replacements`) : le
+	# shift suit le jour du générateur (même copie, même RuleSet que `ctx`).
+	day = builder.day
 	summary = DaySummary.new()
 	summary.day_number = day.day_number
 	summary.planned_cases = day.passenger_count
@@ -128,15 +217,16 @@ func start_day(p_data: DataCatalog, day_number: int, day_seed: int, flags: Array
 	detain_bonus = data.get_economy().detain_bonus
 	quota = QuotaTracker.for_day(day, builder.get_flag_values())
 	quota.sync(builder.ctx)
-	scanner_source = PartialScanner.source_for(builder.get_flag_values())
+	scanner_source = PartialScanner.source_for(builder.get_flag_values()) if mode == DayDef.MODE_CAMPAIGN else &""
 	shift_ended_early = false
 	booth_closed = false
-	story_mode = apply_to_game_state and GameState.is_story_mode()
+	garde_over = false
+	story_mode = apply_to_game_state and mode == DayDef.MODE_CAMPAIGN and GameState.is_story_mode()
 	_fired_announcements.clear()
 	_started = true
 	if clock != null:
 		clock.setup(day.duration_sec)
-		clock.untimed = story_mode
+		clock.untimed = story_mode or day.untimed or mode != DayDef.MODE_CAMPAIGN
 	_set_phase(DayPhase.Kind.INTRO, &"")
 	EventBus.day_started.emit(day, day.rule_set.build_rulebook())
 	EventBus.wanted_notices_published.emit(builder.get_wanted_notices())
@@ -147,8 +237,16 @@ func start_day(p_data: DataCatalog, day_number: int, day_seed: int, flags: Array
 	return true
 
 
-## Heure du shift (minutes depuis minuit), 10:00 sans horloge.
+## Vrai si le shift n'a aucune économie (J31, Garde, D-123).
+func is_economy_disabled() -> bool:
+	return day != null and (day.economy_disabled or mode != DayDef.MODE_CAMPAIGN)
+
+
+## Heure du shift (minutes depuis minuit), 10:00 sans horloge ; Garde :
+## horloge cosmétique (22:00 + 6 min par passager).
 func current_minute() -> int:
+	if mode == DayDef.MODE_GARDE and garde_run != null:
+		return garde_run.clock_minute()
 	return clock.current_minute() if clock != null else DayDef.SHIFT_START_MIN
 
 
@@ -166,6 +264,8 @@ func get_rule_context() -> RuleContext:
 
 
 func has_remaining_cases() -> bool:
+	if mode == DayDef.MODE_GARDE:
+		return day != null and not garde_over and next_index < day.passenger_count
 	return day != null and next_index < day.passenger_count
 
 
@@ -183,6 +283,7 @@ func advance(delta: float) -> void:
 		return
 	_phase_time += delta
 	_check_timed_announcements()
+	_advance_station_events(delta)
 	match phase:
 		DayPhase.Kind.ARRIVING:
 			if _phase_time >= arrive_timeout_sec:
@@ -207,6 +308,9 @@ func _on_next_case_requested() -> void:
 		return
 	# Acte II (R29) : heure de présentation imprimée sur le ticket de file.
 	builder.presentation_minute = current_minute()
+	# M12 (B54, D-129) : changements en attente appliqués avant ce passager ;
+	# un cas scénarisé est jugé sur les règles de sa conception.
+	_prepare_rules_for(next_index)
 	var generated: GeneratedCase = builder.build(next_index)
 	next_index += 1
 	if generated == null or generated.case == null:
@@ -275,6 +379,7 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 	var quota_full: bool = quota.before_verdict(current_case)
 	var result: CaseResult = ScoringService.score(verdict, current_key, current_case_id(), current_case, day, detain_bonus,
 			quota_full)
+	_apply_shift_modifiers_before_citation(result)
 	result.quota_counted = quota.counts(current_case)
 	var was_full: bool = quota.is_full()
 	result.quota_overrun = quota.after_verdict(current_case, verdict.kind)
@@ -285,17 +390,29 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 	if result.has_citation():
 		citations_today += 1
 		ScoringService.apply_citation(result, citations_today, day)
-		if story_mode:
+		if builder.ctx.modifier(RuleChangeDef.MOD_NO_FREE_CITATIONS) > 0 and result.fine == 0:
+			# EV-04 : inspection, aucun avertissement gratuit.
+			result.fine = maxi(day.penalty_per_error, 0)
+			result.credits_delta = result.wage - result.fine
+		if story_mode or is_economy_disabled():
 			result.waive_fine()
+	if result.correct and builder.ctx.modifier(RuleChangeDef.MOD_CORRECT_BONUS) > 0 and not is_economy_disabled():
+		# EV-04 : prime d'assiduité par verdict juste.
+		result.wage += builder.ctx.modifier(RuleChangeDef.MOD_CORRECT_BONUS)
+		result.credits_delta += builder.ctx.modifier(RuleChangeDef.MOD_CORRECT_BONUS)
+	if is_economy_disabled():
+		result.wage = 0
+		result.credits_delta = 0
 	_resolve_items(result)
 	result.password_answered = inspection != null and inspection.luciole_replied
 	_apply_narrative(result)
 	summary.add_result(result)
-	if apply_to_game_state:
-		GameState.add_credits(result.credits_delta + result.bribe_credits + result.report_credits)
-		GameState.score_total += result.wage
-		if result.has_citation():
-			GameState.add_citation()
+	if apply_to_game_state and mode != DayDef.MODE_GARDE:
+		if not is_economy_disabled():
+			GameState.add_credits(result.credits_delta + result.bribe_credits + result.report_credits)
+			GameState.score_total += result.wage
+			if result.has_citation():
+				GameState.add_citation()
 		for flag: StringName in result.narrative_changes:
 			GameState.set_flag(flag, result.narrative_changes[flag])
 		if current_scripted != null:
@@ -313,6 +430,9 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 	if not announcement.is_empty():
 		EventBus.hall_announced.emit(announcement)
 	_check_case_announcements(summary.results.size())
+	if mode == DayDef.MODE_GARDE:
+		_after_garde_case(result)
+	_update_station_events(summary.results.size())
 	_set_phase(DayPhase.Kind.DEPARTING, current_case_id())
 
 
@@ -333,7 +453,7 @@ func _resolve_items(result: CaseResult) -> void:
 
 ## Drapeaux narratifs courants (vides hors `GameState`).
 func flag_values() -> Dictionary[StringName, Variant]:
-	if apply_to_game_state:
+	if apply_to_game_state and mode != DayDef.MODE_GARDE:
 		return GameState.narrative_flags
 	var empty: Dictionary[StringName, Variant] = {}
 	return empty
@@ -404,7 +524,7 @@ func _finish_departure() -> void:
 
 ## Après un cas : cas suivant, ou bilan si le temps est écoulé / la file vide.
 func _after_case() -> void:
-	if time_expired or shift_ended_early or booth_closed or not has_remaining_cases():
+	if time_expired or shift_ended_early or booth_closed or garde_over or not has_remaining_cases():
 		_end_day()
 	else:
 		_set_phase(DayPhase.Kind.WAITING_CASE, &"")
@@ -453,6 +573,9 @@ func _end_day() -> void:
 		return
 	if clock != null:
 		clock.stop()
+	for plan: StationEventPlan in station_events:
+		if plan.state == StationEventPlan.State.ACTIVE:
+			_end_station_event(plan, false)
 	summary.time_expired = time_expired
 	# Cas scénarisés restés dans la file (SC-22 : `final_unprocessed`).
 	for scripted: ScriptedCaseDef in builder.get_active_scripted_cases():
@@ -462,6 +585,10 @@ func _end_day() -> void:
 		for flag: StringName in summary.unprocessed_changes:
 			GameState.set_flag(flag, summary.unprocessed_changes[flag])
 	_set_phase(DayPhase.Kind.SUMMARY, &"")
+	if mode == DayDef.MODE_GARDE and garde_run != null:
+		if not garde_run.ended:
+			garde_run.quit()
+		EventBus.garde_ended.emit(garde_run.to_record())
 	EventBus.day_ended.emit(summary)
 
 
@@ -469,3 +596,254 @@ func _set_phase(p_phase: DayPhase.Kind, case_id: StringName) -> void:
 	phase = p_phase
 	_phase_time = 0.0
 	EventBus.day_phase_changed.emit(p_phase, case_id)
+
+
+# ---------------------------------------------------------------------------
+# M12 (B54) : règles mutables en cours de shift
+# ---------------------------------------------------------------------------
+
+## Avant de construire le passager `index` : un cas scénarisé clôt les
+## événements qui touchent aux règles actives et suspend surcharges et
+## modificateurs (D-129, règle 3) ; puis les changements en attente
+## s'appliquent (`rules_changed`), et l'heure de présentation est posée.
+func _prepare_rules_for(index: int) -> void:
+	var ctx: RuleContext = builder.ctx
+	var scripted: bool = builder.get_scripted_case(index) != null
+	if scripted:
+		for plan: StationEventPlan in station_events:
+			if plan.state == StationEventPlan.State.ACTIVE and plan.is_structural():
+				_end_station_event(plan, true)
+	ctx.rule_set.overlay_suspended = scripted
+	ctx.now_minute = builder.presentation_minute
+	if ctx.has_pending_changes():
+		var diff: RuleDiff = ctx.apply_pending()
+		if not diff.is_empty():
+			_on_rules_applied(diff)
+
+
+## Après application d'une différence : tampon DÉTENTION et onglets ouverts
+## par une directive (Garde), générateur prévenu (`CaseBuilder.on_rules_changed`,
+## lot B), puis `rules_changed` et republication des listes renouvelées.
+func _on_rules_applied(diff: RuleDiff) -> void:
+	if mode == DayDef.MODE_GARDE and garde_run != null:
+		for unit_id: StringName in garde_run.active_units:
+			var unit: GardeUnitDef = garde_run.def.get_unit(unit_id)
+			if unit == null:
+				continue
+			if unit.enables_detain:
+				day.detain_enabled = true
+			for tab: String in unit.rulebook_tabs:
+				if not day.rulebook_tabs.has(tab):
+					day.rulebook_tabs.append(tab)
+	var lists: PackedStringArray = []
+	if builder.has_method(&"on_rules_changed"):
+		builder.call(&"on_rules_changed", diff)
+		lists = builder.changed_lists.duplicate()
+		builder.changed_lists = PackedStringArray()
+	EventBus.rules_changed.emit(diff)
+	_publish_changed_lists(lists)
+
+
+## Republie les listes renouvelées par `CaseBuilder.on_rules_changed`
+## (`changed_lists`) : avis (`wanted_notices_published`), révocations
+## (`revocations_published`), listes nommées (`rule_list_published`, EV-07
+## `stolen`). Après `rules_changed` : l'onglet existe avant sa liste.
+func _publish_changed_lists(lists: PackedStringArray) -> void:
+	var done: PackedStringArray = []
+	for label: String in lists:
+		if done.has(label):
+			continue
+		done.append(label)
+		match label:
+			"wanted":
+				EventBus.wanted_notices_published.emit(builder.get_wanted_notices())
+			"revoked", "":
+				EventBus.revocations_published.emit(builder.get_revocations())
+			_:
+				EventBus.rule_list_published.emit(StringName(label), builder.ctx.get_list(StringName(label)))
+
+
+## Effets du contrôleur avant la citation : EV-02 (comparateur en panne), un
+## REFUS ou une DÉTENTION justes mais non motivés ne sont pas cités.
+func _apply_shift_modifiers_before_citation(result: CaseResult) -> void:
+	if builder.ctx.modifier(RuleChangeDef.MOD_COMPARATOR_DOWN) <= 0:
+		return
+	if result.citation_reason_key != ScoringService.CIT_UNDOCUMENTED_DENIAL \
+			and result.citation_reason_key != ScoringService.CIT_UNDOCUMENTED_DETENTION:
+		return
+	result.citation_reason_key = ""
+	result.citation_rule_id = &""
+	result.missed_violations.clear()
+	result.documented = true
+	result.correct = result.verdict_correct
+	if result.correct:
+		result.wage = day.credit_per_correct
+		if result.verdict_kind == VerdictKind.Kind.DETAIN and result.expected_verdict == VerdictKind.Kind.DETAIN:
+			result.wage += detain_bonus
+	result.credits_delta = result.wage
+
+
+# ---------------------------------------------------------------------------
+# M12 (B58) : événements de station
+# ---------------------------------------------------------------------------
+
+## Événements en cours (bandeau ÉVÉNEMENT).
+func active_station_events() -> Array[StationEventPlan]:
+	var result: Array[StationEventPlan] = []
+	for plan: StationEventPlan in station_events:
+		if plan.state == StationEventPlan.State.ACTIVE:
+			result.append(plan)
+	return result
+
+
+## Après le `processed`-ième passager : annonces (effet au suivant) et fins
+## de fenêtre (campagne ; en Garde, le `GardeRun` les gère).
+func _update_station_events(processed: int) -> void:
+	if mode == DayDef.MODE_GARDE:
+		return
+	var minute: int = current_minute()
+	for plan: StationEventPlan in station_events:
+		match plan.state:
+			StationEventPlan.State.PENDING:
+				var due: bool = plan.announce_after == processed if plan.announce_after >= 0 \
+						else (plan.announce_minute >= 0 and minute >= plan.announce_minute)
+				if due and has_remaining_cases():
+					_start_station_event(plan)
+			StationEventPlan.State.ACTIVE:
+				if plan.event.window_kind == StationEventDef.WindowKind.CLOCK:
+					if plan.clock_to >= 0 and minute >= plan.clock_to:
+						_end_station_event(plan, true)
+				elif plan.event.window_kind != StationEventDef.WindowKind.SECONDS and plan.end_index >= 0 \
+						and processed >= plan.end_index:
+					_end_station_event(plan, true)
+
+
+## Annonce : changements en attente du passager suivant, effets du contrôleur.
+func _start_station_event(plan: StationEventPlan, queue_changes: bool = true) -> void:
+	plan.state = StationEventPlan.State.ACTIVE
+	if queue_changes:
+		builder.ctx.queue_changes(plan.changes(), plan.source())
+	var extra: int = plan.modifier(RuleChangeDef.MOD_EXTRA_PASSENGERS)
+	if extra > 0 and mode == DayDef.MODE_CAMPAIGN:
+		# EV-06 : file allongée seulement si le générateur sait l'étendre
+		# (`CaseBuilder.extend_queue(count)`, lot B : roster du jour).
+		if builder.has_method(&"extend_queue"):
+			builder.call(&"extend_queue", day.passenger_count + extra)
+			day.passenger_count += extra
+			summary.planned_cases = day.passenger_count
+		else:
+			push_warning("DayController: file non extensible (CaseBuilder.extend_queue absent), EV-06 sans passagers en plus")
+	var seconds: int = plan.modifier(RuleChangeDef.MOD_EXTRA_SECONDS)
+	if seconds > 0 and clock != null and mode == DayDef.MODE_CAMPAIGN:
+		clock.duration_sec += seconds
+		clock.remaining_sec += seconds
+	if plan.event.window_kind == StationEventDef.WindowKind.SECONDS:
+		plan.seconds_left = plan.seconds
+	if plan.modifier(RuleChangeDef.MOD_CLOCK_FROZEN) > 0 and clock != null:
+		clock.stop()
+	var announce: String = plan.announce_key()
+	if not announce.is_empty():
+		EventBus.hall_announced.emit(announce)
+	EventBus.station_event_started.emit(plan)
+
+
+## Fin de fenêtre : annulation au passager suivant (avant un cas scénarisé :
+## appliquée avant de le construire), horloge relancée, liste retirée.
+func _end_station_event(plan: StationEventPlan, announce: bool) -> void:
+	if plan.state != StationEventPlan.State.ACTIVE:
+		return
+	plan.state = StationEventPlan.State.ENDED
+	# Toujours en attente : appliqué après d'éventuels changements encore en
+	# attente de la même source (annonce suivie d'une clôture immédiate).
+	builder.ctx.queue_revert(plan.source())
+	if plan.modifier(RuleChangeDef.MOD_CLOCK_FROZEN) > 0 and clock != null and phase != DayPhase.Kind.SUMMARY \
+			and phase != DayPhase.Kind.INTRO:
+		clock.start()
+	if plan.list_label != &"":
+		var empty: Array[RevokedEntry] = []
+		builder.ctx.set_list(plan.list_label, empty)
+		EventBus.rule_list_published.emit(plan.list_label, empty)
+	if announce and plan.event != null and not plan.event.end_key.is_empty():
+		EventBus.hall_announced.emit(plan.event.end_key)
+	EventBus.station_event_ended.emit(plan)
+
+
+## Fenêtres en secondes réelles (EV-05) : fin après `seconds`.
+func _advance_station_events(delta: float) -> void:
+	for plan: StationEventPlan in station_events:
+		if plan.state == StationEventPlan.State.ACTIVE and plan.event != null and not plan.garde \
+				and plan.event.window_kind == StationEventDef.WindowKind.SECONDS:
+			plan.seconds_left -= delta
+			if plan.seconds_left <= 0.0:
+				_end_station_event(plan, true)
+
+
+## Liste nommée d'un événement publiée (EV-07 : générée par le lot B dans
+## `CaseBuilder.on_rules_changed`, puis publiée ici par `publish_list`).
+func publish_list(label: StringName, entries: Array[RevokedEntry]) -> void:
+	builder.ctx.set_list(label, entries)
+	EventBus.rule_list_published.emit(label, entries)
+
+
+# ---------------------------------------------------------------------------
+# M12 (B57) : Garde de nuit
+# ---------------------------------------------------------------------------
+
+## Score, erreurs, fin ; puis directive, palier et événements (changements
+## mis en attente : effet au passager suivant).
+func _after_garde_case(result: CaseResult) -> void:
+	if garde_run == null:
+		return
+	var step: Dictionary = garde_run.after_case(result, builder.ctx)
+	if step["error"]:
+		EventBus.garde_error.emit(result.case_id, result.citation_reason_key, garde_run.errors.size())
+	else:
+		EventBus.garde_scored.emit(garde_run.score, int(step["points"]))
+	if step["over"]:
+		garde_over = true
+		return
+	for row: Dictionary in step["queued"]:
+		var source: StringName = row.get("source", &"")
+		if row.get("revert", false):
+			builder.ctx.queue_revert(source)
+		else:
+			var changes: Array[RuleChangeDef] = []
+			for change: Variant in row.get("changes", []):
+				if change is RuleChangeDef:
+					changes.append(change)
+			builder.ctx.queue_changes(changes, source)
+	for plan: StationEventPlan in step["events_ended"]:
+		if plan.modifier(RuleChangeDef.MOD_CLOCK_FROZEN) > 0 and clock != null:
+			clock.start()
+		if plan.list_label != &"":
+			var empty: Array[RevokedEntry] = []
+			builder.ctx.set_list(plan.list_label, empty)
+			EventBus.rule_list_published.emit(plan.list_label, empty)
+		if not plan.event.end_key.is_empty():
+			EventBus.hall_announced.emit(plan.event.end_key)
+		EventBus.station_event_ended.emit(plan)
+	if step["tier_changed"]:
+		GardeService.apply_tier(day, garde_run.current_tier())
+		EventBus.garde_tier_changed.emit(garde_run.tier_index)
+	var directive: Dictionary = step["directive"]
+	if not directive.is_empty():
+		EventBus.garde_directive.emit(int(directive["number"]), StringName(directive["unit_id"]),
+				StringName(directive["action"]))
+	for plan: StationEventPlan in step["events_started"]:
+		station_events.append(plan)
+		var announce: String = plan.announce_key()
+		if not announce.is_empty():
+			EventBus.hall_announced.emit(announce)
+		EventBus.station_event_started.emit(plan)
+
+
+## « Terminer la garde » (pause, confirmée) : le score compte ; bilan tout de
+## suite entre deux passagers, sinon après le passager en cours.
+func request_end_garde() -> bool:
+	if mode != DayDef.MODE_GARDE or garde_run == null or not _started or phase == DayPhase.Kind.SUMMARY:
+		return false
+	garde_run.quit()
+	garde_over = true
+	if phase == DayPhase.Kind.WAITING_CASE or phase == DayPhase.Kind.INTRO:
+		_end_day()
+	return true

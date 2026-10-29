@@ -1,23 +1,42 @@
 ## Crochet GUT exécuté avant la suite (`.gutconfig.json` → `pre_run_script`).
 ##
-## Isole les préférences (QA-006) : la suite lit et écrit
-## `user://test_settings/settings.cfg`, repart des valeurs par défaut à chaque
-## exécution et ne touche **jamais** le `user://settings.cfg` du joueur.
+## Isole les préférences (QA-006) : la suite lit et écrit un
+## `settings.cfg` de test, repart des valeurs par défaut à chaque exécution et
+## ne touche **jamais** le `user://settings.cfg` du joueur.
 ## M11 : idem pour les sauvegardes et le profil (`SaveService.use_root`) :
-## `SaveService.DEFAULT_DIR` est redirigé vers `user://test_default_saves`, vidé à
-## chaque exécution — la vraie scène de jour n'écrit plus dans `user://saves`.
+## `SaveService.DEFAULT_DIR` est redirigé vers un dossier de test vidé à chaque
+## exécution — la vraie scène de jour n'écrit plus dans `user://saves`.
+## M12 (lot A2) : dossier **propre au processus** (`user://test_runs/<PID>/`)
+## — deux exécutions GUT simultanées ne se vident plus mutuellement leurs
+## sauvegardes ; les dossiers des processus terminés sont supprimés au départ.
 extends GutHookScript
 
-const TEST_SETTINGS_PATH: String = "user://test_settings/settings.cfg"
-const TEST_SAVES_DIR: String = "user://test_default_saves"
+const TEST_RUNS_ROOT: String = "user://test_runs"
+
+
+## Dossier de test de ce processus.
+static func run_dir() -> String:
+	return TEST_RUNS_ROOT.path_join(str(OS.get_process_id()))
 
 
 func run() -> void:
-	if FileAccess.file_exists(TEST_SETTINGS_PATH):
-		DirAccess.remove_absolute(TEST_SETTINGS_PATH)
-	Settings.use_storage(TEST_SETTINGS_PATH)
-	_clear_dir(TEST_SAVES_DIR)
-	SaveService.use_root(TEST_SAVES_DIR)
+	_clear_stale_runs()
+	var root: String = run_dir()
+	_clear_dir(root)
+	DirAccess.make_dir_recursive_absolute(root)
+	Settings.use_storage(root.path_join("settings.cfg"))
+	SaveService.use_root(root.path_join("saves"))
+
+
+## Supprime les dossiers d'exécutions dont le processus n'existe plus.
+static func _clear_stale_runs() -> void:
+	var dir: DirAccess = DirAccess.open(TEST_RUNS_ROOT)
+	if dir == null:
+		return
+	for sub: String in dir.get_directories():
+		if sub.is_valid_int() and int(sub) != OS.get_process_id() and OS.is_process_running(int(sub)):
+			continue
+		_clear_dir(TEST_RUNS_ROOT.path_join(sub))
 
 
 static func _clear_dir(path: String) -> void:

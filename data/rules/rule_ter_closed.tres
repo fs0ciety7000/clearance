@@ -8,6 +8,7 @@ banned_faction_ids = Array[StringName]([&"ter"])
 exempt_purposes = Array[StringName]([])
 exempt_posts = Array[StringName]([&"post_recycleur", &"post_soins", &"post_hydroponie"])
 exempt_if_sponsored = true
+exempt_contract_codes = PackedStringArray()
 id = &"r_ter_closed"
 title_key = "r_ter_closed_title"
 rulebook_text_key = "r_ter_closed_text"

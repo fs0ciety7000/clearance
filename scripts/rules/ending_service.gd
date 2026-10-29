@@ -81,6 +81,43 @@ const AUDIT_RETENTION: StringName = &"retention"
 const AUDIT_CLEAN: StringName = &"clean"
 
 
+
+## M12 (B63, ARCHITECTURE §11.7) : drapeaux dont la trace (`end_trace_<drapeau>`)
+## s'affiche à l'écran de fin et entre dans `last_campaign.traces` du profil,
+## dans l'ordre de la campagne (liste déplacée de `EndScreen`).
+const TRACE_FLAGS: Array[StringName] = [&"sc02_mercy", &"sc02_turned_away", &"sc03_passed", &"met_mira",
+		&"sc05_helped", &"lucioles_reported", &"lucioles_note_burned",
+		&"sc06_reunited", &"sc07_bribe_kept", &"sc07_bribe_returned", &"noa_birthday_gift", &"lucioles_heating_accepted",
+		&"inspector_bribe_taken", &"inspector_test_passed", &"inspector_test_failed", &"sc11_veteran_passed",
+		&"sc13_detained", &"sc13_passed", &"sc14_bribe_kept", &"sc16_hana_passed", &"sc16_family_split",
+		&"sc17_detained", &"sc17_passed", &"neighbor_denounced", &"neighbor_helped", &"brulants_package",
+		&"sc18_note_reported", &"sc18_note_kept", &"audit_retention", &"audit_clean",
+		&"ilan_supported", &"ilan_forbidden", &"ilan_denounced", &"okonkwo_denounced", &"okonkwo_warned",
+		&"drift_passes_bought", &"sc20_detained", &"sc20_passed", &"sc21_bribe_kept",
+		&"final_detained", &"final_passed", &"final_denied", &"final_unprocessed",
+		# Acte II (J10 → J20).
+		&"vannes_opened", &"drift_stayed", &"sc25_elena_turned_away", &"quota_overrun", &"sc28_tariq_refused",
+		&"sc35_okonkwo_detained", &"sc35_okonkwo_helped", &"colleagues_listed", &"sc41_sato_spared", &"sc43_mateus_detained",
+		&"beaumont_defied", &"sc45_ravel_spared", &"ilan_joined_soute", &"dora_departed", &"registre_sent", &"strike_joined",
+		# Acte III (J20 → J30).
+		&"amnesty_signed", &"sc53_anouk_detained", &"sc59_beaumont_spared", &"noa_coached", &"ilan_scab", &"ilan_tycho",
+		&"dora_testimony", &"sc70_montclair_refused", &"sc73_celeste_refused", &"tycho_list_saved", &"tycho_list_reported",
+		&"names_given", &"deposition_truth", &"deposition_loyal", &"strike2_joined", &"pont",
+		# M12 (échos SC-83 → SC-89, docs/M12.md §4).
+		&"sc83_tech_demoted", &"sc84_owner_refused", &"sc88_fatou_detained", &"sc89_sefa_refused"]
+
+
+## Clés des traces des choix d'une partie (drapeaux vrais ou jauges non
+## nulles de `TRACE_FLAGS`), dans l'ordre de la campagne, toutes.
+static func traces(flags: Dictionary[StringName, Variant]) -> PackedStringArray:
+	var keys: PackedStringArray = []
+	for flag: StringName in TRACE_FLAGS:
+		var value: Variant = flags.get(flag, false)
+		if (value is bool and value) or ((value is int or value is float) and value != 0):
+			keys.append("end_trace_%s" % flag)
+	return keys
+
+
 static func audit_score(flags: Dictionary[StringName, Variant]) -> int:
 	var score: int = FlagCondition.gauge_value(flags, &"suspicion")
 	if FlagCondition.is_flag_true(flags, &"inspector_test_passed"):

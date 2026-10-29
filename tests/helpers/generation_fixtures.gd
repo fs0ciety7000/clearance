@@ -15,6 +15,11 @@ const ALL_FACTIONS: Dictionary[StringName, float] = {&"tyc": 0.30, &"hal": 0.17,
 ## « toutes règles » (un cas isolé n'a pas de Main courante) ; testées par
 ## `tests/unit/test_act3_rules.gd`.
 const LEDGER_RULES: Array[StringName] = [&"r_sponsor", &"r_tycho_closed"]
+## M12 : règles propres à un monde de l'épilogue J31 (R38 → R42, docs/M12.md
+## §1.5–§1.8), contraires aux règles de campagne qu'elles remplacent (R38 ↔ R35,
+## R39 ↔ R04, R41 ↔ R13, R42 ↔ R35) : hors du jour « toutes règles », testées
+## dans leurs jours (`tests/unit/test_m12_rules.gd`, `test_m12_data.gd`).
+const EPILOGUE_RULE_PREFIX: String = "r_ep_"
 
 static var _data: DataCatalog = null
 
@@ -34,7 +39,7 @@ static func full_day(count_weights: Array[float] = [0.0, 1.0, 0.0, 0.0], passeng
 	ids.assign(data().rules.keys())
 	ids.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 	for rule_id: StringName in ids:
-		if not LEDGER_RULES.has(rule_id):
+		if not LEDGER_RULES.has(rule_id) and not String(rule_id).begins_with(EPILOGUE_RULE_PREFIX):
 			rs.rules.append(data().rules[rule_id])
 	rs.required_document_ids = rs.compute_required_document_ids()
 	var day: DayDef = DayDef.new()

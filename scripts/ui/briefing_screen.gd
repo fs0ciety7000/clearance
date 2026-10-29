@@ -6,6 +6,10 @@
 ## diégétique court ; Ilan ; brèves du hall qui font écho aux choix de la
 ## veille) ; état du foyer et solde. Lecture au rythme du joueur (l'horloge ne
 ## tourne pas) ; « PRENDRE SON POSTE » (Entrée / Ⓐ) émet `closed` puis `finished`.
+## M12 (lot C, I30) : briefing du **J31** (`epilogue_world` renseigné) —
+## en-tête « UN AN PLUS TARD » et surtitre du monde, directive du monde suivie
+## du paragraphe propre à la fin (`directive_extra_key`,
+## `EpilogueService.intro_key`), tuiles sans chrono ni économie, foyer sans solde.
 class_name BriefingScreen
 extends ScreenBase
 
@@ -27,6 +31,10 @@ var household: Household = null
 var credits_balance: int = 0
 var day: DayDef = null
 var start_button: Button = null
+## M12 : monde du J31 (`a`…`d`), vide hors épilogue.
+var epilogue_world: String = ""
+## M12 : paragraphe de la directive propre à la variante de fin (J31).
+var directive_extra_key: String = ""
 ## Contenu défilant (directive, règles, messages, foyer) entre l'en-tête et la
 ## barre d'action fixe (QA-001 : 22 règles au J10, plancher de texte au Deck).
 var scroll: ScrollContainer = null
@@ -82,7 +90,7 @@ func _build() -> void:
 	columns.add_child(left)
 	left.add_child(_directive())
 	if day != null:
-		left.add_child(_shift_tiles())
+		left.add_child(_shift_tiles() if epilogue_world.is_empty() else _epilogue_tiles())
 	left.add_child(_rules())
 	if content.day_number == 1:
 		left.add_child(_controls())
@@ -142,7 +150,8 @@ func _header() -> Control:
 	top.add_child(UiIcon.make(UiIcon.Kind.LOGO, DS.ACCENT_YELLOW, DS.ICON_M))
 	var org: VBoxContainer = vbox(0)
 	top.add_child(org)
-	org.add_child(eyebrow(UiText.t("br_org", "CONSORTIUM · BUREAU DE CONTINUITÉ"), DS.ACCENT_YELLOW))
+	org.add_child(eyebrow(UiText.t("epi_eyebrow_%s" % epilogue_world, "") if not epilogue_world.is_empty()
+			else UiText.t("br_org", "CONSORTIUM · BUREAU DE CONTINUITÉ"), DS.ACCENT_YELLOW))
 	org.add_child(label(UiText.t("br_bulletin", "Bulletin quotidien · Halcyon Gate — Guichet 04"), &"CaptionLabel"))
 	top.add_child(spacer())
 	var when: VBoxContainer = vbox(0)
@@ -156,7 +165,12 @@ func _header() -> Control:
 	box.add_child(rule_line(DS.YELLOW_24))
 	var title_row: HBoxContainer = hbox(DS.SPACE_6)
 	box.add_child(title_row)
-	title_row.add_child(label(UiText.tf("br_day", [content.day_number], "JOUR %02d"), &"DisplayLabel", DS.ACCENT_YELLOW))
+	var day_title: String = UiText.tf("br_day", [content.day_number], "JOUR %02d")
+	if not epilogue_world.is_empty():
+		day_title = UiText.t("epi_title", "UN AN PLUS TARD")
+	var day_label: Label = label(day_title, &"DisplayLabel", DS.ACCENT_YELLOW)
+	day_label.name = "DayTitle"
+	title_row.add_child(day_label)
 	var directive_title: Label = label(UiText.t(content.directive_title_key, ""), &"TitleLabel", DS.TEXT_PRIMARY)
 	directive_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	title_row.add_child(directive_title)
@@ -170,6 +184,10 @@ func _directive() -> Control:
 	card.add_child(box)
 	box.add_child(eyebrow(UiText.t("br_directive", "DIRECTIVE DU JOUR · AUTORITÉ DE TRANSIT"), DS.ACCENT_YELLOW))
 	box.add_child(wrapped(UiText.t(content.directive_key, ""), &"BodyLabel"))
+	if not directive_extra_key.is_empty():
+		var extra: Label = wrapped(UiText.t(directive_extra_key, ""), &"BodyStrong", DS.TEXT_PRIMARY)
+		extra.name = "DirectiveExtra"
+		box.add_child(extra)
 	return card
 
 
@@ -201,6 +219,20 @@ func _shift_tiles() -> Control:
 			UiText.tf("br_duration_detail", [minutes], "≈ %d min réelles · l'horloge tourne pendant la marche"), DS.TEXT_PRIMARY, UiIcon.Kind.INFO))
 	row.add_child(stat_tile(UiText.t("br_pay", "RÉMUNÉRATION"), credits(day.credit_per_correct),
 			UiText.tf("br_pay_detail", [day.free_citations_per_day], "par dossier conforme · %d avertissements tolérés"), DS.ACCENT_YELLOW, UiIcon.Kind.LOGO))
+	return row
+
+
+## J31 (D-123) : 7 passagers, sans chrono, sans économie.
+func _epilogue_tiles() -> Control:
+	var row: HBoxContainer = hbox(DS.SPACE_3)
+	row.name = "EpilogueTiles"
+	row.add_child(stat_tile(UiText.t("br_expected", "PASSAGERS ATTENDUS"), str(day.passenger_count),
+			UiText.t("epi_br_expected_detail", "Puis quelques lignes, et c'est fini."), DS.TEXT_PRIMARY, UiIcon.Kind.DIAMOND))
+	row.add_child(stat_tile(UiText.t("epi_br_clock", "HORLOGE"), UiText.t("bar_story_untimed", "SANS CHRONO"),
+			UiText.t("epi_br_clock_detail", "Le shift finit quand la file est traitée."), DS.TEXT_PRIMARY, UiIcon.Kind.INFO))
+	row.add_child(stat_tile(UiText.t("epi_br_economy", "ÉCONOMIE"), UiText.t("epi_br_economy_value", "AUCUNE"),
+			UiText.t("epi_br_economy_detail", "Ni salaire ni amende : les erreurs comptent dans la conclusion."), Palette.TEXT_SECONDARY,
+			UiIcon.Kind.STRIKE))
 	return row
 
 
@@ -361,6 +393,8 @@ func _household() -> Control:
 	var balance_text: String = UiText.tf("br_balance", [ScreenBase.credits(credits_balance)], "SOLDE %s")
 	if content.advance_credits > 0:
 		balance_text = UiText.tf("br_balance_advance", [ScreenBase.credits(credits_balance)], "SOLDE %s · AVANCE INCLUSE")
+	if not epilogue_world.is_empty():
+		balance_text = "" # J31 : aucune économie
 	box.add_child(section(UiText.t("br_household", "FOYER · BLOC PÉTREL"), UiIcon.Kind.INFO, Palette.TEXT_SECONDARY, balance_text))
 	var home: Household = household if household != null else Household.new()
 	for member: Household.Member in home.members:

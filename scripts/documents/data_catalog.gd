@@ -21,6 +21,19 @@ var name_pools: Dictionary[StringName, NamePool] = {}
 var appearance_catalog: AppearanceCatalog = null
 ## Barème de la soirée (unique, `data/economy/`, M5).
 var economy: EconomyDef = null
+## M12 (docs/M12.md, ARCHITECTURE §11) : jours J31 des mondes de l'épilogue
+## (`DayDef.mode = epilogue`, par monde `a`…`d` ; jamais dans `days`).
+var epilogue_days: Dictionary[StringName, DayDef] = {}
+## M12 : gabarits de la Garde de nuit (`DayDef.mode = garde`, hors `days`).
+var garde_days: Array[DayDef] = []
+## M12 : données uniques de l'épilogue, de la Garde, des événements, du Dossier.
+var epilogue: EpilogueDef = null
+var garde: GardeDef = null
+var station_events: StationEventsDef = null
+var characters: CharacterTableDef = null
+## M12 : unités de Garde (U01 → U20) et événements (EV-01 → EV-08) par id.
+var garde_units: Dictionary[StringName, GardeUnitDef] = {}
+var events: Dictionary[StringName, StationEventDef] = {}
 ## Chemins `.tres` chargés.
 var paths: PackedStringArray = []
 ## Problèmes de chargement (ressource illisible, type inconnu, doublon).
@@ -122,14 +135,46 @@ func _register(path: String) -> void:
 			errors.append("%s : barème économique en double" % path)
 		else:
 			economy = res
+	elif res is DayDef and (res as DayDef).mode == DayDef.MODE_EPILOGUE:
+		var epilogue_day: DayDef = res
+		_add(epilogue_days, epilogue_day.epilogue_world, epilogue_day, path)
+	elif res is DayDef and (res as DayDef).mode == DayDef.MODE_GARDE:
+		garde_days.append(res as DayDef)
 	elif res is DayDef:
 		var day: DayDef = res
 		if days.has(day.day_number):
 			errors.append("%s : jour %d en double" % [path, day.day_number])
 		else:
 			days[day.day_number] = day
+	elif res is EpilogueDef:
+		epilogue = _unique(epilogue, res, path) as EpilogueDef
+	elif res is GardeDef:
+		garde = _unique(garde, res, path) as GardeDef
+	elif res is StationEventsDef:
+		station_events = _unique(station_events, res, path) as StationEventsDef
+	elif res is CharacterTableDef:
+		characters = _unique(characters, res, path) as CharacterTableDef
+	elif res is GardeUnitDef:
+		var unit: GardeUnitDef = res
+		_add(garde_units, unit.id, unit, path)
+	elif res is StationEventDef:
+		var event: StationEventDef = res
+		_add(events, event.id, event, path)
 	else:
 		errors.append("%s : type de ressource inattendu" % path)
+
+
+## M12 : ressource unique (la première gagne, doublon consigné).
+func _unique(current: Resource, candidate: Resource, path: String) -> Resource:
+	if current != null:
+		errors.append("%s : ressource unique en double" % path)
+		return current
+	return candidate
+
+
+## M12 : jour J31 d'un monde de l'épilogue (`a`…`d`), ou null.
+func get_epilogue_day(world: StringName) -> DayDef:
+	return epilogue_days.get(world, null)
 
 
 func _add(table: Dictionary, key: StringName, value: Resource, path: String) -> void:

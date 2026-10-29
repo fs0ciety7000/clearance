@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="StationEventDef" format=3 uid="uid://gxmc7jbfjjof"]
+
+[ext_resource type="Script" path="res://scripts/core/rule_change_def.gd" id="1_p6g24"]
+[ext_resource type="Script" path="res://scripts/rules/families/revoked_id_rule.gd" id="2_yp0oc"]
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="3_y3e8u"]
+
+[sub_resource type="Resource" id="ev_07_resource_2"]
+script = ExtResource("2_yp0oc")
+list_label = &"stolen"
+list_title_key = "rb_tab_stolen"
+id = &"r_ev_stolen_ids"
+title_key = "r_ev_stolen_ids_title"
+rulebook_text_key = "r_ev_stolen_ids_text"
+category = 1
+
+[sub_resource type="Resource" id="ev_07_resource_1"]
+script = ExtResource("1_p6g24")
+rule = SubResource("ev_07_resource_2")
+rule_id = &"r_ev_stolen_ids"
+
+[sub_resource type="Resource" id="ev_07_resource_3"]
+script = ExtResource("1_p6g24")
+op = 5
+modifier = &"max_anomalies"
+amount = 1
+
+[sub_resource type="Resource" id="ev_07_resource_4"]
+script = ExtResource("1_p6g24")
+op = 5
+modifier = &"no_subtle"
+amount = 1
+
+[resource]
+script = ExtResource("3_y3e8u")
+id = &"ev_07"
+key = &"stolen_ids"
+event_class = 2
+day_min = 3
+window_kind = 1
+start_delay = 1
+changes = Array[ExtResource("1_p6g24")]([SubResource("ev_07_resource_1"), SubResource("ev_07_resource_3"), SubResource("ev_07_resource_4")])
+announce_key = "sev_stolen_ids_announce"
+title_key = "sev_stolen_ids_title"
+rulebook_key = "sev_stolen_ids_rb"
+list_label = &"stolen"
+list_size = 3
+garde_window_passengers = 10
