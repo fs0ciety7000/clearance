@@ -134,6 +134,30 @@ extends Resource
 @export var admission_gauges: Dictionary[StringName, StringName] = {}
 
 
+@export_group("M12")
+## Mode du jour (ARCHITECTURE §11) : `campaign` (J1–J30, indexé par
+## `DataCatalog.days`), `epilogue` (J31, un `DayDef` par monde, référencé par
+## `EpilogueWorldDef.day_def`), `garde` (gabarit de la Garde de nuit,
+## `GardeDef.day_template`). Seuls les jours `campaign` entrent dans
+## `DataCatalog.days`.
+@export var mode: StringName = &"campaign"
+## Monde de l'épilogue (`a`, `b`, `c`, `d`) ; vide hors épilogue.
+@export var epilogue_world: StringName = &""
+## Aucune économie (J31, Garde) : ni salaire ni amende crédités, citations
+## affichées « AVERTISSEMENT », pas de soirée (D-123).
+@export var economy_disabled: bool = false
+## Horloge non terminale dans les deux modes : le shift finit quand la file
+## est traitée (comportement Récit, D-102 ; J31, Garde).
+@export var untimed: bool = false
+## Part des anomalies injectées en version **subtile** (Garde, §2.5 de M12 ;
+## lue par le générateur, lot B).
+@export_range(0.0, 1.0) var subtle_rate: float = 0.0
+
+const MODE_CAMPAIGN: StringName = &"campaign"
+const MODE_EPILOGUE: StringName = &"epilogue"
+const MODE_GARDE: StringName = &"garde"
+
+
 ## Heure du shift (UI_FLOW §1) : 10:00 → 18:00, en minutes depuis minuit.
 const SHIFT_START_MIN: int = 10 * 60
 const SHIFT_LENGTH_MIN: int = 8 * 60
@@ -145,6 +169,32 @@ static func minute_at(p_duration_sec: float, p_remaining_sec: float) -> int:
 		return SHIFT_START_MIN
 	var elapsed: float = clampf(1.0 - p_remaining_sec / p_duration_sec, 0.0, 1.0)
 	return SHIFT_START_MIN + floori(elapsed * SHIFT_LENGTH_MIN)
+
+
+## Copie propre à un shift (M12, B54) : mêmes définitions (partagées, jamais
+## mutées), mais un RuleSet de shift mutable (`RuleSet.make_shift_copy`) ; les
+## champs simples de la copie (nombre de passagers, poids d'anomalies,
+## avertissements gratuits, date) peuvent être réglés pour ce shift seulement
+## (paliers de la Garde, événements). Le `CaseBuilder` reçoit cette copie.
+func make_shift_copy() -> DayDef:
+	var copy: DayDef = duplicate(false) as DayDef
+	copy.rule_set = rule_set.make_shift_copy() if rule_set != null else RuleSet.new().make_shift_copy()
+	return copy
+
+
+## Index de tous les cas scénarisés prévus (toutes conditions confondues),
+## croissants : un événement de station n'en couvre jamais un (D-129).
+func scripted_indices() -> PackedInt32Array:
+	var indices: PackedInt32Array = []
+	for scripted: ScriptedCaseDef in scripted_cases:
+		if scripted != null and not indices.has(scripted.at_index):
+			indices.append(scripted.at_index)
+	for group: StringName in slot_groups:
+		for index: int in slot_groups[group]:
+			if not indices.has(index):
+				indices.append(index)
+	indices.sort()
+	return indices
 
 
 ## Cas scénarisé prévu à cet index, ou null.

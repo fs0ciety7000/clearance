@@ -177,7 +177,7 @@ AudioMixBarrier="*res://scripts/autoload/audio_mix_barrier.gd"
 
 | Autoload | Rôle (état réel) | Ne fait PAS |
 |---|---|---|
-| `EventBus` | 39 signaux typés (catalogue §7 ; M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed`, §10). Aucun état, aucune méthode. | Logique, stockage |
+| `EventBus` | 50 signaux typés (catalogue §7 ; M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed`, §10 ; M12 : 10 signaux, §11.2). Aucun état, aucune méthode. | Logique, stockage |
 | `Settings` | Préférences dans `user://settings.cfg` (`ConfigFile`) : `volume_{master,music,ambience,sfx,voice,ui}` (appliqués aux bus `Master/Music/Ambience/SFX/Voice/UI`), `fx_intensity` (1 / 0,5 / 0), `reduce_motion`, `text_scale` (0,9–1,5, D-026), `subtitles`, `clock_slow_accessibility` (horloge ×0,5), `audio_mono`, `graphics_quality` (M9 : −1 Auto / 0 Bas / 1 Moyen / 2 Élevé ; `graphics_quality_level()` résout Auto = Moyen sur Steam Deck — variable `SteamDeck=1` —, Élevé ailleurs ; appliqué par `BoothQuality`). `set_value()` valide (`_sanitize`), applique et émet `settings_changed` (choix du joueur, persisté ; `persist = false` diffère seulement l'écriture). **Valeurs de session** (QA-006) : `set_session_value()` / `clear_session_value()` (argument `--reduce-motion`, outils, tests) appliquent sans jamais écrire — `save_settings()` écrit pour ces clés la dernière valeur persistée. `use_storage(path)` change de fichier : la suite GUT utilise `user://test_settings/settings.cfg` (crochet `tests/helpers/gut_pre_run.gd`, `.gutconfig.json`). 🎯 Langue, daltonisme, sensibilité manette : non implémentés. | État de partie |
 | `GameState` | État de **campagne** : `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags: Dictionary[StringName, Variant]` (drapeaux et jauges `loyalty` / `lucioles_trust` / `suspicion`), `day_history: Array[Dictionary]`, `household: Household`, `case_memory` (§9.4). `to_save_dict()` / `apply_save_dict()` / `save_to_slot()` / `load_from_slot()` (§10) ; M11 : `active_slot`, `difficulty` (`is_story_mode()`, `set_difficulty()`), `load_day_snapshot()`, `end_campaign()` (archive + profil, `ProfileService`), `play_time_sec`, `portrait_seed` (§10). `get_day_seed()`, `add_to_flag()`, `get_true_flags()`, `remember_case()`. Émet `credits_changed`, `narrative_flag_changed`, `game_saved`, `game_loaded`, `save_slots_changed`, `profile_changed`, `difficulty_changed`. | État du jour en cours (porté par `DayController`) |
 
@@ -235,7 +235,7 @@ classDiagram
 | `FactionDef` | `core/faction_def.gd` | `id`, `name_key`, `code`, `id_prefix`, `origin_sectors`, `name_pool`, `citizen_class_weights`, `purpose_weights`, `employers`, `implant_rate`, `implant_weights`, `year_only_birth_rate` (DRV 0,5 : naissances `00.00.AAAA`, §9.2) | 6 origines : TYC, HAL, TER, CER, THR, DRV. ⚠️ `seal_texture` non rempli, non lu. |
 | `NamePool` | `generation/name_pool.gd` | `given_names_f/m/x`, `family_names`, `reserved_names` (jamais tirés : Okonkwo, noms de famille distinctifs, **nom de famille de chaque personnage scénarisé des deux actes et des avis nommés** — QA-022 —, prénoms du foyer), `reserved_full_names` (« Prénom Nom » des personnages scénarisés et des avis : prénom remplacé sans tirage, `avoid_reserved_full_name`) | Une par origine. Listes réservées **calculées** par `build_data.gd` depuis les `DayDef` (QA-002). |
 | `Rule` (abstraite) | `rules/rule.gd` | `id`, `title_key`, `rulebook_text_key`, `category` (`DOCUMENTS, IDENTITY, FACTION, PURPOSE, SPECIAL`), `severity` 1–3 | §6. |
-| `RuleSet` | `rules/rule_set.gd` | `id`, `rules`, `new_rule_ids` (badge « NOUVEAU »), `required_document_ids` | Liste **explicite et cumulative** par jour (pas d'héritage). Règles partagées entre RuleSets, **jamais mutées**. |
+| `RuleSet` | `rules/rule_set.gd` | `id`, `rules`, `new_rule_ids` (badge « NOUVEAU »), `required_document_ids` | Liste **explicite et cumulative** par jour (pas d'héritage). Règles partagées entre RuleSets, **jamais mutées**. M12 : seule une **copie de shift** (`make_shift_copy`) accepte des changements en cours de shift (§11.3). |
 | `DayDef` | `core/day_def.gd` | `day_number`, `game_date`, `rule_set`, `duration_sec`, `passenger_count`, `anomaly_count_weights`, `anomaly_weights: Dictionary[AnomalyType.Kind, float]`, `scripted_cases`, `intro_text_key`, `credit_per_correct`, `penalty_per_error` ; GDD : `faction_weights`, `visor_down_rate`, `legit_noise_rate`, `bribe_rate`, `luciole_rate`, `free_citations_per_day`, `penalty_escalated` ; M7 : `detain_enabled`, `has_evening`, `bribe_amounts`, `wanted_notices`, `briefing_messages`, `evening_events`, `hall_announcements: Dictionary[int, String]`, `rulebook_tabs` ; **Acte II** : `air_quota` (0 = pas de quota), `luciole_trust_on_breach` (faux à l'Acte II), `revocations: Array[RevocationDef]`, `revoked_decoys`, `announcements: Array[HallAnnouncementDef]`, `asylum_class_rate` (part des TER C-4 tirés en C-5 avec attestation, R28 ; J15 : 1,0), `focus_documents` (documents de la règle du jour visés en priorité par `MISSING_DOCUMENT` / `EXPIRED_DOCUMENT`, QA-026) ; constantes `SHIFT_START_MIN` (10:00), `SHIFT_LENGTH_MIN` (8 h), `minute_at()` | J1–J10 : 8→16 passagers, 540→720 s ; DÉTENTION dès J7. J11–J20 : 16→18 passagers, 720→780 s, quota 5 (J11–J14) → 4 (J15–J18) → 3 (J19–J20) ; soirée **tous les jours sauf le J20** (J10 = soirée pivot, D-076). Onglets cumulés : `employers` (J12), `vessels` (J13), `revoked` (J17). |
 | `ScriptedCaseDef` | `generation/scripted_case_def.gd` | `id`, `at_index`, `passenger_overrides`, `appearance_overrides`, `forced_anomalies` (liste exacte), `injection_params`, `dialogue_id`, `sets_flag`, `requires_flag`, `flags_on_approve/deny` ; M7 : `flags_on_detain`, `flags_if_unprocessed`, `extra_effects: Array[CaseEffectDef]`, `forbids_flags`, `appearance_from_case`, `identity_from_case`, `truth_overrides`, `extra_documents`, `slipped_item: SlippedItemDef`, `luciole_codes`, `extra_tags` ; **Acte II** : `condition` (la **première** définition active d'un index l'emporte : SC-35 a/b/c, SC-49, SC-50 a/b), `fixed_appearance_seed`, `line_variants: Array[ConditionalKey]`, `third_party_documents`, `password_grants_trust`, `flags_on_password`, `document_dates` | SC-01 → SC-50 + tutoriels J1, saisis dans les `DayDef` (`build_data.gd` / `build_data_act2.gd`). |
 | `HallAnnouncementDef` (Acte II) | `core/hall_announcement_def.gd` | `text_key`, `after_case` (−1), `at_minute` (−1 ; 960 = 16:00), `condition: FlagCondition`, `ends_shift` | Complète `hall_announcements` (inconditionnelles). `ends_shift` : grève du J20, shift clos après le passager en cours (`DayController.shift_ended_early`). |
@@ -372,7 +372,7 @@ Données des règles Acte II (`tools/build_data.gd` + `build_data_act2.gd`) : R2
 
 ## 7. Catalogue des signaux `EventBus`
 
-Source : `scripts/autoload/event_bus.gd` — **40 signaux**, tous typés (liste exhaustive ci-dessous, vérifiée le 2026-10-29 ; 3 ajoutés en M8 : `quota_changed`, `revocations_published`, `scanner_suggested` ; 2 en M9 : `ledger_changed`, `summons_published` ; 4 en M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed` (lot A) et `rulebook_consulted` (lot C)). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
+Source : `scripts/autoload/event_bus.gd` — **50 signaux**, tous typés (liste exhaustive ci-dessous, vérifiée le 2026-10-29 ; 3 ajoutés en M8 : `quota_changed`, `revocations_published`, `scanner_suggested` ; 2 en M9 : `ledger_changed`, `summons_published` ; 4 en M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed` (lot A) et `rulebook_consulted` (lot C) ; **10 en M12** (lot A, détail en §11.2) : `rules_changed`, `station_event_started`, `station_event_ended`, `rule_list_published`, `garde_directive`, `garde_scored`, `garde_error`, `garde_tier_changed`, `garde_ended`, `epilogue_concluded`). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
 
 | Signal | Paramètres | Émetteurs → Écouteurs (état réel) |
 |---|---|---|
@@ -420,6 +420,15 @@ Source : `scripts/autoload/event_bus.gd` — **40 signaux**, tous typés (liste 
 | `profile_changed` | — | GameState (`ProfileService.record` a changé `profile.json` : fin vue, personnage croisé, mode Récit utilisé) → ⚠️ **aucun écouteur** (prévu M12 : galerie des fins) |
 | `difficulty_changed` | `difficulty: StringName` | GameState (`set_difficulty`, Récit → Dur seulement) → DayController (`set_story_mode(false)`, horloge), ComparisonUI (barre Récit), DayScene (FERMER LE GUICHET) |
 | `rulebook_consulted` | — | RulebookPanel (onglet changé, panneau déplié, carte sélectionnée) → TutorialOverlay (étape « Rulebook », D-111) |
+| **M12** (§11.2) | | |
+| `rules_changed` | `diff: RuleDiff` | DayController (changements appliqués avant le passager suivant : directive de Garde, rotation, événement) → 🎯 Rulebook (lot C) ; générateur appelé directement (`CaseBuilder.on_rules_changed`) |
+| `station_event_started` / `station_event_ended` | `event: StationEventPlan` | DayController → 🎯 bandeau ÉVÉNEMENT, Rulebook, booth, audio (lots C, D) |
+| `rule_list_published` | `label: StringName, entries: Array[RevokedEntry]` | DayController → 🎯 onglet « Cartes volées » |
+| `garde_directive` | `number: int, unit_id: StringName, action: StringName` | DayController (mode garde) → 🎯 carte de directive |
+| `garde_scored` / `garde_error` | `score, points` / `case_id, citation_key, errors` | DayController (mode garde) → 🎯 HUD de Garde |
+| `garde_tier_changed` | `tier: int` | DayController (mode garde) → 🎯 HUD |
+| `garde_ended` | `record: Dictionary` | DayController (mode garde, avant `day_ended`) → 🎯 écran de fin de garde |
+| `epilogue_concluded` | `card: Dictionary` | Campaign.close_epilogue → 🎯 carte de conclusion du J31 |
 
 **Robustesse** : tous les signaux du booth portent `case_id` ; `DayController` ignore un signal d'un autre cas ou hors de l'état attendu ; `BoothDirector._emit_once()` n'émet chaque fait qu'une fois par cas, dans l'ordre `passenger_arrived → documents_presented → passenger_departed`. Seule exception à « un émetteur par fait » : le timeout `documents_presented` du `DayController`. `document_handed` a été supprimé au profit de `documents_presented(case_id)` (D-014).
 
@@ -796,6 +805,8 @@ Signaux (`EventBus`, §7) : `game_saved(slot)`, `game_loaded(slot)`, **`save_slo
 
 ### 10.3 Profil global (`ProfileService`, D-101)
 
+> **M12** : profil **v2** (D-132) — champs, migration et API en §11.7 ; le paragraphe ci-dessous décrit la v1 (M11).
+
 Service statique (pas d'autoload) : `<dossier des sauvegardes>/profile.json` (`user://saves/profile.json`), écriture atomique et lecture de secours de `SaveService`. Champs : `version` (1), `endings_seen: [{id, day, date}]` (première fois seulement), `characters_met: [String]` (identifiants `ScriptedCaseDef.id` des cas scénarisés traités — clés de `case_memory`), `story_mode_used: bool`, réservés M12 `best_runs: []`, `epilogue_unlocked: false` ; champs inconnus conservés. Alimenté par `GameState.save_to_slot` (personnages, mode Récit) et `GameState.end_campaign` (fin F1–F10) — n'écrit que si quelque chose change, puis `profile_changed`. Jamais effacé par une fin ni par `delete_slot`. API : `load_profile(dir)`, `save_profile(profile, dir)`, `record(dir, ending_id, day, characters, story_mode) -> bool`, `ending_ids(profile)`, `has_seen_ending(profile, id)`, `sanitize(raw)`.
 
 ### 10.4 Outils
@@ -806,7 +817,222 @@ Service statique (pas d'autoload) : `<dossier des sauvegardes>/profile.json` (`u
 
 ---
 
-## 11. Conventions de code
+## 11. M12 « Rejouabilité » — contrat d'interfaces (lot A)
+
+Source : `docs/M12.md` (conception, §7.1 B51 → B59), décisions D-122 → D-133 (questions ouvertes de M12 §8 tranchées selon les recommandations). Ce paragraphe est le **contrat** entre le lot A (Godot Architect : services, sauvegarde, profil, `DayController`, `Campaign`) et les lots B (Gameplay Systems : règles, générateur, données, simulation) et C (UI). Tout écart passe par l'Orchestrateur.
+
+### 11.1 Fichiers et formats de données (`scripts/core/*_def.gd`)
+
+| Ressource (`class_name`) | Fichier de données (lot B) | Champs | Lu par |
+|---|---|---|---|
+| `RuleChangeDef` | dans `StationEventDef.changes` / `garde_changes` ; construit à la volée par `GardeService` | `op` (`ADD`, `RETIRE`, `FORGET`, `RESTORE`, `OVERRIDE`, `MODIFIER`), `rule`, `rule_id`, `note_key`, `mark_new`, `params: Dictionary[StringName, Variant]`, portée `faction_ids` / `purposes` / `from_minute` → `to_minute`, `modifier`, `amount` ; fabriques `add()`, `retire()`, `forget()`, `restore()`, `override()`, `modify()` ; constantes `MOD_*` (§11.3) | `RuleSet.apply_changes` |
+| `EpilogueDef` | `data/epilogue/epilogue.tres` (`EpilogueService.DEF_PATH`) | `version`, `read_flags` (liste blanche de la graine, ≈ 45 ; vide = tous), `memory_case_ids` (`tuto_concordant`, `sc_04`, `sc_82a`, `sc_82b`), `worlds`, `endings`, `title_key` (`epi_title`), `tally_key` (`epi_tally`), `first_lines` (SC-90), `home_lines`, `max_lines` (8) | `EpilogueService` |
+| `EpilogueWorldDef` | sous-ressource ou `data/epilogue/world_*.tres` | `id` (`a`…`d`), `day_def` (**`DayDef` du J31 du monde**), `eyebrow_key`, `name_key`, `line_groups: Array[EpilogueLineGroupDef]` (un groupe par cas, ordre §1.9), `farewell_lines` (réplique Tessar) | idem |
+| `EpilogueLineGroupDef` | sous-ressource | `id`, `lines: Array[ConditionalKey]` (première vraie), `fallback_key` | idem |
+| `EpilogueEndingDef` | sous-ressource | `key` (13 clés : `f1 f3 f4 f5b f7 f5c f5s f9 f8 f10 f2 f6t f6d`), `world`, `open_key`, `close_key`, `open_gauge` (F10 : `pont31`), `home_lines` (sinon celles de l'`EpilogueDef`), `no_home_line` (F3), `intro_key` (`day31_d_intro_f6t`) | idem, `BriefingContent` (lot C) |
+| `GardeDef` | `data/garde/garde.tres` (`GardeService.DEF_PATH`) | `version` (= `garde_version`), `day_template` (**`DayDef` mode `garde`** : socle R01/R02/R03/R07 dans son RuleSet, `passenger_count` = file maximale, `faction_weights`, `detain_enabled` faux), `units`, `tiers`, `directive_every` (5), `max_errors` (3), `tier_unlock_directive` ([1, 4, 9]), `date_min` / `date_max` (`GameDate` 01.05 → 30.11.2187), horloge cosmétique (`clock_start_minute` 22:00, `minutes_per_passenger` 6, `dawn_passenger` 80), `first_event_range` (16–20), `event_gap` (12–18), `event_quiet_after_directive` (2), `rotation_note_key` (`rb_retired_quais`) | `GardeService`, `GardeRun` |
+| `GardeUnitDef` | `data/garde/unit_u01.tres`… | `id` (`u01`…), `title_key`, `rules: Array[Rule]` (ressources de `data/rules/`), `tier` (1–3), `prerequisites`, `document_ids`, `rulebook_tabs`, `enables_detain` (U11), `renews_lists` (`wanted`, `revoked` : U15, U20) | idem |
+| `GardeTierDef` | sous-ressource | `index` (0–4), `name_key`, `from_passenger`, `anomaly_count_weights`, `subtle_rate`, `legit_noise_rate`, `visor_down_rate`, `rotation` | `GardeService.apply_tier` (recopie dans le `DayDef` de shift) |
+| `StationEventsDef` | `data/events/station_events.tres` (`StationEventService.DEF_PATH`) | `version`, `events`, `eligible_days: Dictionary[int, int]` (jour → masque `CLASS_A` 1 / `CLASS_B` 2, §3.3), `probability` (0,30), `max_per_type` (2), `no_consecutive_days`, `class_b_free_citations` (1) | `StationEventService` |
+| `StationEventDef` | `data/events/ev_01.tres`… | `id`, `key` (`mrz_reader`…), `event_class` (`A` / `B`), `required_rule_id`, `day_min` / `day_max`, `window_kind` (`PASSENGERS`, `REST_OF_DAY`, `CLOCK`, `SECONDS`), `window_passengers`, `start_delay` (EV-07 : 1), `clock_from` / `clock_to` (EV-08 : 780 / 840), `window_seconds` (EV-05 : 60), `changes`, `announce_key`, `title_key`, `rulebook_key`, `end_key`, `list_label` / `list_size` (EV-07 : `stolen`, 3), `garde_allowed`, `garde_window_passengers`, `garde_required_unit` (`u05`, `u07`), `garde_changes` (EV-04 : `score_per_correct` +1), `garde_announce_key` | idem, `GardeRun` |
+| `CharacterDef` / `CharacterTableDef` | `data/dossier/characters.tres` (`CharacterTableDef.PATH`) | `id` (`chr_*`), `case_ids`, `display_name`, `true_name` (vide = pas de faux nom), `known_name_if: FlagCondition`, `known_on_ending` (Arkady), `faction`, `blurb_key` ; `is_name_known()`, `character_of()`, `known_names()` | `GameState.end_campaign` (→ `known_names` du profil), Dossier (lot C) |
+| `DayDef` (champs M12) | jours J31 et gabarit de Garde | `mode` (`campaign` / `epilogue` / `garde` : **seuls les jours `campaign` entrent dans `DataCatalog.days`**), `epilogue_world`, `economy_disabled`, `untimed`, `subtle_rate` (générateur) ; `make_shift_copy()`, `scripted_indices()` | `DayController`, services |
+
+**Chargement** : les services chargent leurs données **par chemin** (`load_def()`, mis en cache) ou les reçoivent en paramètre (tests, simulateurs) ; ils ne dépendent pas de `DataCatalog`. Les J31 (`day_31_a.tres` … `day_31_d.tres`) sont référencés par `EpilogueWorldDef.day_def` ; s'ils sont rangés sous `data/days/`, `DataCatalog._register` (lot B) doit ignorer les `DayDef` de `mode` ≠ `campaign` (sinon « jour 31 en double ») et accepter les nouveaux types de ressources (sinon « type de ressource inattendu »). Le nom `day_31_a` n'est pas lu par `SaveService.last_day()` (suffixe non entier) : le dernier jour de campagne reste 30.
+
+### 11.2 Signaux EventBus (ajoutés en fin de fichier : 50 signaux)
+
+| Signal | Paramètres | Émetteur → écouteurs prévus |
+|---|---|---|
+| `rules_changed` | `diff: RuleDiff` | DayController (juste avant de construire le passager qui subit le changement) → Rulebook (`diff.rulebook`, `diff.retired_entries`), générateur (`CaseBuilder.on_rules_changed`, appelé directement) |
+| `station_event_started` / `station_event_ended` | `event: StationEventPlan` | DayController (annonce après un passager ; fin de fenêtre, fin du jour, ou clôture avant un cas scénarisé) → bandeau ÉVÉNEMENT, ligne ambre du Rulebook, booth (EV-05), audio. L'annonce passe aussi par `hall_announced(announce_key)` |
+| `rule_list_published` | `label: StringName, entries: Array[RevokedEntry]` | DayController (`publish_list`, fin d'événement : liste vide) → onglet « Cartes volées » (`rb_tab_stolen`) |
+| `garde_directive` | `number: int, unit_id: StringName, action: StringName` | DayController (mode garde, après le passager qui la déclenche) → carte « DIRECTIVE DE GARDE N° n » avant le suivant ; `action` : `add`, `retire`, `restore` |
+| `garde_scored` | `score: int, points: int` | DayController (verdict sans citation) → HUD |
+| `garde_error` | `case_id: StringName, citation_key: String, errors: int` | DayController (verdict cité) → voyants d'erreur |
+| `garde_tier_changed` | `tier: int` | DayController → HUD |
+| `garde_ended` | `record: Dictionary` (`GardeRun.to_record()`) | DayController (avant `day_ended`) → écran de fin de garde, qui appelle `Campaign.finish_garde(run)` (records) |
+| `epilogue_concluded` | `card: Dictionary` | `Campaign.close_epilogue` → carte de conclusion |
+
+### 11.3 Règles mutables en cours de shift (B54)
+
+Principe : un `.tres` partagé n'est **jamais** muté. Au début de tout shift, le `DayController` travaille sur une **copie** du `DayDef` (`DayDef.make_shift_copy()`, champs simples réglables pour ce shift) dont le RuleSet est une **copie de shift** (`RuleSet.make_shift_copy()`, `is_shift_copy`). Le `CaseBuilder` reçoit cette copie : `day.rule_set` (générateur, scoring des procédures) et `ctx.rule_set` (moteur, comparateur) sont **le même objet**.
+
+```gdscript
+# RuleSet (copie de shift seulement)
+func make_shift_copy() -> RuleSet
+func apply_changes(changes: Array[RuleChangeDef], source: StringName = &"") -> RuleDiff   # journalisé par source
+func revert_source(source: StringName) -> RuleDiff        # ajout → retiré ; retrait → rétabli à sa place ; surcharge/modificateur → supprimé
+func active_sources() -> Array[StringName]
+func get_param(rule_id, param, default, faction_id := &"", purpose := &"", minute := -1) -> Variant
+func get_modifier(name: StringName) -> int                # somme des MODIFIER en vigueur
+var overrides: Array[RuleChangeDef]; var modifier_changes: Array[RuleChangeDef]
+var lists: Dictionary[StringName, Array]                  # listes nommées (`stolen`)
+var overlay_suspended: bool                               # cas scénarisé : surcharges et modificateurs ignorés
+# RuleContext
+var now_minute: int                                       # heure de présentation du passager en cours
+func ensure_shift_rules() -> RuleSet
+func apply_changes(changes, source) -> RuleDiff           # tout de suite
+func revert_source(source) -> RuleDiff
+func queue_changes(changes, source) -> void               # au passager suivant
+func queue_revert(source) -> void
+func has_pending_changes() -> bool
+func apply_pending() -> RuleDiff                          # appelé par le DayController avant `builder.build(index)`
+func param(rule_id: StringName, key: StringName, default: Variant, case: Case = null) -> Variant
+func modifier(name: StringName) -> int
+func get_list(label: StringName) -> Array[RevokedEntry]   # &"" / &"revoked" → `revoked`
+func set_list(label: StringName, entries: Array[RevokedEntry]) -> void
+func is_listed(label: StringName, citizen_id: Variant) -> bool
+```
+
+- **Verdict attendu à la présentation (D-077)** : les changements sont mis en attente (annonce, directive) et appliqués par `apply_pending()` juste avant de construire le passager suivant ; la clé du cas est donc calculée avec les règles en vigueur à sa présentation, et un changement ne touche jamais le passager déjà à la vitre (D-129, règle 1).
+- **Opérations** : `ADD` (badge NOUVEAU : un `ADD` marqué remplace les badges précédents), `RETIRE` (ligne barrée, motif `note_key`), `FORGET` (la ligne barrée disparaît : rotation de la Garde, un passager après le retrait), `RESTORE` (à sa place d'origine), `OVERRIDE` (paramètre surchargé, portée origine / motif / plage horaire), `MODIFIER` (entier additif).
+- **Surcharges lues par les familles (lot B)** : toute règle dont un paramètre peut être surchargé le lit par `ctx.param(id, &"param", valeur_exportée, case)` — EV-03 : `r_bioscan_valid`/`max_age_days` = 7 pour `TYC` ; EV-08 : `r_bioscan_required`/`exempt_purposes` += `transit` de 13:00 à 14:00 (`from_minute` 780, `to_minute` 840). Listes nommées : `RevokedIdRule.list_label` lit `ctx.get_list(list_label)` (EV-07 `stolen`, B55). Sans copie de shift, `param()` renvoie la valeur par défaut : aucun changement de comportement en dehors des shifts mutés.
+- **Modificateurs** (`RuleChangeDef.MOD_*`) : `free_citations` (compensation des classes B : le `DayController` ajoute plutôt `StationEventPlan.free_citations_bonus` aux avertissements du jour dès le début du shift), `no_free_citations` (EV-04, DayController), `correct_bonus` (EV-04, +2 ₵, DayController), `score_per_correct` (EV-04 en Garde, DayController/`GardeRun`), `comparator_down` (EV-02 : REFUS / DÉTENTION justes mais non motivés non cités, DayController ; le comparateur de l'UI lit le même modificateur pour masquer CONCORDANCE / DISCORDANCE), `max_anomalies` et `no_subtle` (**générateur, lot B**), `clock_frozen` (EV-05, DayController), `extra_passengers` / `extra_seconds` (EV-06, DayController, une fois).
+- **Générateur (lot B)** : `CaseBuilder` doit lire les règles par `ctx.rule_set` **ou** `day.rule_set` (même objet) à chaque construction (pas de cache figé au début du jour pour les types détectables, documents exigés, plan d'Acte III) ; crochet facultatif `func on_rules_changed(diff: RuleDiff) -> void` appelé par le `DayController` après chaque différence appliquée (exercice garanti d'une directive : `diff.context` / `diff.added`, listes renouvelées des unités `renews_lists`, liste `stolen` d'EV-07 puis `DayController.publish_list(label, entries)`), et support d'un `passenger_count` qui augmente en cours de shift (EV-06 : `func extend_queue(count: int) -> void`, appelé par le `DayController` avant d'allonger la file ; sans cette méthode, EV-06 n'ajoute aucun passager) ou très grand (Garde).
+- **Cas scénarisés** (D-129, règle 3) : avant de construire un cas scénarisé, le `DayController` clôt les événements qui ajoutent ou retirent des règles (`StationEventPlan.is_structural`) et pose `overlay_suspended` (surcharges, modificateurs et listes nommées ignorés) le temps de ce cas.
+- **Tests** : `tests/unit/test_m12_rule_mutation.gd`.
+
+### 11.4 Épilogue J31 (B52, B53 ; D-122 → D-125)
+
+```gdscript
+# EpilogueService (statique)
+const EPILOGUE_DAY := 31; WORLD_A..WORLD_D; VARIANT_*; WORLD_OF_KEY
+static func load_def() -> EpilogueDef
+static func act_of(flags) -> int
+static func variant_of(ending: StringName, flags) -> StringName      # audit/review/deposition/double ; b/c/s ; j10/j20/t/d ; &""
+static func ending_key(ending, variant) -> StringName                # 13 clés, &"" sans épilogue
+static func is_eligible(ending, flags) -> bool                       # fin F1–F10 et `act3_started`
+static func world_of(ending, flags, def = null) -> StringName        # données d'abord, sinon WORLD_OF_KEY
+static func make_seed(ending, flags, household, memory, campaign_seed, day, def = null) -> Dictionary
+static func sanitize_seed(raw) -> Dictionary
+static func profile_key(epi) -> String                               # "<fin>:<variante>"
+static func morning_flags(epi) -> Dictionary[StringName, Variant]    # + act3_started
+static func household_of(epi) -> Household ; memory_of(epi) -> Dictionary
+static func day_for(epi, def = null) -> DayDef ; day_seed(epi) -> int ; intro_key(epi, def = null) -> String
+static func conclusion(epi, flags, warnings: int, def = null) -> Dictionary
+```
+
+- **Graine** : `{epilogue_version, ending, variant, ending_key, world, day, campaign_seed, flags (liste blanche), household (Household.to_dict), memory (entrées CaseMemory de memory_case_ids)}` (≈ 3 Ko).
+- **Fin de partie** (`GameState.end_campaign`, idempotent) : profil (`record_ending` : variante, `count`, `last_campaign` ; `unlock_epilogue` si éligible ; `record_known_names`) puis, si l'emplacement est archivé, `SaveService.write_epilogue(slot, graine)` → `slot_N/day_31.json` (`{version, kind: "epilogue_seed", current_day: 31, seed}`) et méta `epilogue_available`.
+- **Jouer** : graine = `Campaign.epilogue_seed_for_slot(slot)` (Charger) ou `Campaign.epilogue_seed_from_profile(key)` (Dossier) ; `var day := Campaign.start_epilogue(graine, slot)` (session `epilogue` du `GameState` : matin du J31, aucun crédit, **aucune écriture** possible — `save_to_slot` refuse, `end_campaign` ne fait rien) ; `DayController.start_epilogue(data, day, EpilogueService.day_seed(graine), GameState.get_true_flags(), CaseMemory.resolve(data, day, GameState.campaign_seed, GameState.case_memory))` ; briefing (lot C) : `EpilogueService.intro_key(graine)` puis `BriefingContent` habituel ; à `day_ended` : **pas de soirée**, `var card := Campaign.close_epilogue(summary)` (conclusion, profil `epilogues[clé].count/last_lines`, `characters_met`, méta `epilogue_done`, signal `epilogue_concluded`) ; retour au titre : `GameState.end_session()`.
+- **Mode epilogue du `DayController`** : copie de shift, horloge non terminale (`untimed`), aucune économie (`is_economy_disabled()` : salaire, amende, prime à 0, citations comptées « AVERTISSEMENT »), drapeaux et mémoire appliqués **en mémoire seulement**, fin à la file vide, aucun événement de station, pas de scanner.
+- **Conclusion** (`conclusion`) : `{title_key, eyebrow_key, name_key, tally_key, tally_args [avertissements], lines, args {clé: [%d]}, farewell_key, world, ending, variant, ending_key, profile_key}` ; ordre : ouverture → SC-90 → lignes de monde (un groupe par cas) → foyer → clôture, au plus `max_lines` (les dernières lignes de monde sautent d'abord). `%d` de F10 : jauge `open_gauge` (`pont31`, posée par `DayDef.admission_gauges` du monde C).
+- **Sauvegarde** (B53) : `day_31.json` jamais listé (`list_snapshots`), jamais chargé comme état (`load_snapshot(31)` vide, `load_current` l'ignore), supprimé avec les instantanés postérieurs quand on reprend un jour passé ; la partie garde `status = ended` et son `ending_id`.
+
+```gdscript
+# SaveService (ajouts)
+const EPILOGUE_DAY := 31, KEY_EPILOGUE_AVAILABLE := "epilogue_available", KEY_EPILOGUE_DONE := "epilogue_done"
+static func write_epilogue(slot, epi, dir) -> Error ; load_epilogue(slot, dir) -> Dictionary
+static func has_epilogue(slot, dir) -> bool ; mark_epilogue_done(slot, dir) -> Error
+# Campaign (ajouts)
+static func epilogue_seed_for_slot(slot, dir) -> Dictionary ; epilogue_seed_from_profile(key, dir) -> Dictionary
+static func start_epilogue(epi, slot := NO_SLOT, def = null) -> DayDef ; close_epilogue(summary, dir, def = null) -> Dictionary
+# GameState (ajouts)
+const SESSION_CAMPAIGN, SESSION_EPILOGUE, SESSION_GARDE ; var session_mode, epilogue_seed, epilogue_slot
+func is_campaign_session() -> bool ; begin_epilogue(epi, slot) ; begin_garde() ; end_session()
+```
+
+### 11.5 Garde de nuit (B57 ; D-126 → D-128)
+
+```gdscript
+# GardeService (statique)
+const ID_ALPHABET := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", DAILY_PREFIX := "NUIT-", KIND_DAILY, KIND_FREE
+static func load_def() -> GardeDef
+static func seed53(text) -> int                  # FNV-1a 64 (SeededRng.hash_string) & 53 bits
+static func daily_code(unix_time) -> String ; today_code() -> String   # NUIT-AAAA-MM-JJ (UTC)
+static func normalize_code(text) -> Dictionary   # {ok, code, kind, error_key} ; refuse O, I, 0, 1 (garde_seed_invalid)
+static func code_from_bits(bits) -> String ; bits_of(code) -> int ; random_code(entropy := 0) -> String   # « K2Q-9TX »
+static func seed_of(code) -> int ; stream_seed(seed, &"order"|&"queue"|&"events"|&"notices"|&"date") -> int
+static func is_unlocked(profile) -> bool         # max_day_reached ≥ 2
+static func directive_plan(def, seed, count) -> Array[Dictionary]   # {number, unit_id, action: add|retire|restore}
+static func directive_changes(def, entry) -> Array[RuleChangeDef]
+static func game_date_for(def, seed) -> int ; make_day(def, run) -> DayDef ; apply_tier(day, tier)
+static func new_run(code, def = null, events = null) -> GardeRun ; record_run(run, dir) -> Dictionary
+# GardeRun (RefCounted, pur)
+var code, kind, run_seed, version, game_date, queue_seed, notices_seed, score, passengers, errors, directives,
+	active_units, tier_index, ended, end_reason, duration_sec, events: Array[StationEventPlan]
+func after_case(result: CaseResult, ctx: RuleContext = null) -> Dictionary
+	# {points, error, over, directive {number, unit_id, action, unit, source}, tier_changed, events_started, events_ended,
+	#  queued: [{source, changes} | {source, revert: true}]}
+func plan_entry(n) -> Dictionary ; current_tier() -> GardeTierDef ; clock_minute() -> int ; is_dawn() -> bool
+func quit() -> void ; to_record() -> Dictionary
+```
+
+- **Flux** : `Campaign.start_garde(code)` (session `garde`, code canonique ; null si invalide) → `DayController.start_garde(data, run)` (jour `GardeService.make_day` : gabarit copié, date de la graine, palier 0 ; `CaseBuilder` sur `run.queue_seed`) → `close_intro()`. Après chaque verdict : `GardeRun.after_case` (erreur = toute citation, M12 §8 q. 4 ; +1 par verdict juste, +`score_per_correct` en inspection), puis signaux `garde_error` / `garde_scored`, mise en attente des changements (directive : `ADD` des règles de l'unité ; rotation : `RETIRE` puis `FORGET` un passager plus tard, `RESTORE` à la directive suivante), palier (`GardeService.apply_tier` sur le jour de shift, `garde_tier_changed`), événements (`station_event_started`), `garde_directive`. 3ᵉ erreur → `garde_over` : bilan après le passager, `garde_ended(record)` puis `day_ended`. « Terminer la garde » : `DayController.request_end_garde()`. Records : `Campaign.finish_garde(run)` → `ProfileService.record_garde` (pastilles `{new_record, daily_record, first_try, rank}`).
+- **Déterminisme** : le plan des directives, les paliers, les événements (`events` : premier entre 16 et 20, puis tous les 12 à 18, jamais deux à la fois ni dans les 2 passagers qui suivent une directive), la date et la file ne dépendent que de la graine ; les verdicts ne font que tronquer la garde.
+- **Tampon DÉTENTION et onglets** : ouverts quand une unité active les déclare (`enables_detain`, `rulebook_tabs`), au passager suivant.
+- **Lot B** : file sans fin (`passenger_count` du gabarit), `subtle_rate`, exercice garanti (au moins 1, au plus 3 violations de la règle nouvelle dans les 5 passagers : `on_rules_changed`), avis et révocations renouvelés (`renews_lists`, flux `notices_seed`), `balance_sim --garde` (pilote `GardeRun` sans `DayController` : `after_case` puis `ctx.queue_changes` / `apply_pending`).
+- **Tests** : `tests/unit/test_m12_garde.gd`.
+
+### 11.6 Événements de station (B58 ; D-129)
+
+```gdscript
+# StationEventService (statique, pur)
+static func load_def() -> StationEventsDef
+static func schedule(campaign_seed, def, days: Dictionary[int, DayDef]) -> Dictionary[int, StationEventPlan]
+static func plan_for_day(campaign_seed, def, days, day_number) -> StationEventPlan
+static func is_allowed_on(event, day, classes) -> bool ; place(event, day, rng) -> StationEventPlan
+static func garde_plan(event, processed) -> StationEventPlan
+# StationEventPlan (RefCounted)
+var event, day_number, garde, announce_after, start_index, end_index (−1 : fin du jour), announce_minute,
+	clock_from, clock_to, seconds, free_citations_bonus, list_label, list_size, state (PENDING/ACTIVE/ENDED)
+func source() -> StringName ; changes() -> Array[RuleChangeDef] ; announce_key() -> String
+func covers(index) -> bool ; remaining(processed) -> int ; is_structural() -> bool ; modifier(name) -> int
+```
+
+- **Calendrier** : fonction pure de la graine de campagne et des données (jamais sauvegardé) ; tirage par jour éligible dans l'ordre (graine `day_seed` salée `station_event_v<version>`) : probabilité, pas le lendemain d'un événement, `max_per_type`, classe permise, bornes, règle prérequise active ce jour, fenêtre plaçable. Placement : fenêtre en passagers sans index scénarisé (`DayDef.scripted_indices()`, emplacements `slot_groups` compris) ; « reste du jour » après le dernier cas scénarisé ; plage horaire annoncée 30 min avant (`announce_minute`) ; fenêtre en secondes sur ≈ 3 passagers non scénarisés.
+- **Campagne** (`DayController.start_day`, si `apply_to_game_state`, `station_events_enabled` et session de campagne) : classe B → `free_citations_per_day += free_citations_bonus` sur le jour de shift ; annonce après le passager `announce_after` (`hall_announced` + `station_event_started`), changements en attente du passager suivant ; fin de fenêtre → annulation en attente (`queue_revert`), `end_key`, `station_event_ended`. EV-05 : horloge arrêtée `seconds` s réelles (`advance`). EV-06 : `passenger_count` et durée allongés. `active_station_events()` pour le bandeau.
+- **Mode Récit** : même calendrier (D-129, M12 §8 q. 10) ; amendes déjà à 0 ₵.
+- **Tests** : `tests/unit/test_m12_station_events.gd`.
+
+### 11.7 Profil v2 (B51 ; D-132)
+
+`ProfileService.VERSION = 2`. Champs : `endings_seen [{id, variant, act, day, date, count, last_date, first_line_key}]` (unicité `(id, variant)`), `characters_met`, `known_names`, `max_day_reached`, `story_mode_used`, `epilogue_unlocked`, `epilogues {"<fin>:<variante>": {world, key, seed, first_date, count, last_date, last_lines}}`, `best_runs` (10 meilleures : `score, seed_code, kind, date, garde_version, duration_sec, directives, palier`), `garde_daily {"AAAA-MM-JJ": {best, first_try, attempts, garde_version}}` (60 jours), `garde_seeds [{seed_code, best, garde_version}]` (20), `garde_stats {runs, total_correct, longest_run}`, `last_campaign {ending, variant, ending_key, act, day, date, campaign_seed, climate, traces, world}`.
+
+```gdscript
+static func load_profile(dir) -> Dictionary          # migre un profil v1 au premier chargement
+static func migrate_v1(raw, dir) -> Dictionary       # profile.v1.bak ; reconstruction depuis les emplacements terminés
+static func record(dir, ending_id, day, characters, story_mode, max_day := 0) -> bool   # inchangé (+ max_day)
+static func record_ending(dir, info) -> bool         # {id, variant, act, day, ending_key, campaign_seed, climate, traces, world, first_line_key}
+static func record_known_names(dir, chr_ids) -> bool
+static func unlock_epilogue(dir, epi) -> bool ; record_epilogue_played(dir, key, lines, epi := {}) -> bool
+static func epilogue_seed(profile, key) -> Dictionary
+static func record_garde(dir, run_record) -> Dictionary   # {new_record, daily_record, first_try, rank}
+static func ending_count(profile, id, variant := "*") -> int ; is_garde_unlocked(profile) -> bool ; act_of_day(day) -> int
+```
+
+- **Migration v1 → v2** : `count = 1`, `act` déduit du jour (≤ J10 : 1, ≤ J20 : 2, sinon 3), variante vide ; puis, pour chaque emplacement : `max_day_reached` (plus grand `current_day`) ; pour chaque partie terminée : variante recalculée depuis `current.json` (matin du dernier jour joué : les drapeaux du dernier jour peuvent manquer, repli assumé), graine d'épilogue (Acte III : profil, `day_31.json`, méta `epilogue_available`), `last_campaign` (la plus récente, traces vides). L'ancien fichier est copié en `profile.v1.bak` (jamais écrasé). Champs inconnus conservés.
+- **Traces** (`last_campaign.traces`) : `GameState` appelle `EndingService.traces(flags) -> PackedStringArray` **si elle existe** (B63 : liste `NARRATIVE_FLAGS` à déplacer de `EndScreen`, qui la réutilisera) ; vide sinon.
+- **Tests** : `tests/unit/test_m12_profile.gd`.
+
+### 11.8 Dossier (données, B63)
+
+`CharacterTableDef.load_default()` ; `known_names` alimenté à chaque fin par `GameState.end_campaign` (`CharacterDef.is_name_known(flags, ending_seen = true)`). Le Dossier (lot C) lit le profil seul (anti-spoiler, M12 §5.4) et la table des personnages.
+
+### 11.9 Échos (B59 ; D-130)
+
+```gdscript
+# CaseMemory (ajouts)
+const PSEUDO_PREFIX := "cm_"
+static func pseudo_flag(scripted_id: String, verdict: String) -> StringName     # cm_sc_03_deny
+static func pseudo_flags(memory) -> Dictionary[StringName, Variant]
+static func with_pseudo_flags(flags, memory) -> Dictionary[StringName, Variant]
+static func pseudo_flag_names(memory) -> Array[StringName]
+static func photo_appearance_of(entry) -> PassengerAppearance                    # null si la photo = le porteur
+```
+
+- Pseudo-drapeaux **calculés au matin** par le `DayController` (`_begin` : mémoire du `GameState`, ou `memory` sans `GameState`) et passés au `CaseBuilder` (`true_flags` et valeurs) : lisibles par `ScriptedCaseDef.condition`, `requires_flag`, `line_variants`, avis, révocations. Jamais sauvegardés ; un vrai drapeau de même nom l'emporte ; une entrée recalculée (`recalled`, verdict inconnu) n'en donne aucun. Pour les briefings et soirées (lot B/C) : `CaseMemory.with_pseudo_flags(GameState.narrative_flags, GameState.case_memory)`.
+- `CaseMemory.snapshot` mémorise `photo_appearance` quand la photo de la carte d'identité n'est pas le visage du porteur (SC-03 : photo du titulaire). Le générateur (lot B, SC-84b) la lit par `photo_appearance_of(entry)` (champ `ScriptedCaseDef` à ajouter, par ex. `appearance_from_photo_of`).
+- **Tests** : `tests/unit/test_m12_echoes.gd`.
+
+### 11.10 Tests du lot A
+
+`tests/unit/test_m12_rule_mutation.gd` (7), `test_m12_station_events.gd` (6), `test_m12_garde.gd` (10), `test_m12_epilogue.gd` (6), `test_m12_profile.gd` (5), `test_m12_echoes.gd` (3) ; `tests/integration/test_m12_flows.gd` (3, **sur les vraies données du lot B**, `pending` si elles manquent : J31 de 4 mondes jusqu'à la conclusion, Garde réelle déterministe, calendrier réel). `test_event_bus` : 50 signaux.
+
+---
+
+## 11 bis. Conventions de code
 
 | Sujet | Règle |
 |---|---|

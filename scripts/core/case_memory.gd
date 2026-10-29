@@ -10,6 +10,12 @@
 ## J1→J4, Lev J3→J7, Mira J3→J10). Si l'entrée manque (cas non traité, ancienne
 ## sauvegarde), `recall()` la recalcule de façon déterministe depuis la graine
 ## de campagne.
+## M12 (D-130, B59 ; ARCHITECTURE §11.9) : **pseudo-drapeaux de verdict**
+## `cm_<cas>_<verdict>` (`cm_sc_03_deny`, `cm_tuto_missing_document_approve`),
+## dérivés au matin de la mémoire (`pseudo_flags`, `with_pseudo_flags`),
+## jamais sauvegardés ; une entrée recalculée (verdict inconnu) n'en donne
+## aucun. `photo_appearance` : visage de la **photo** de la carte quand il
+## diffère du visage réel (SC-03 → SC-84b), `photo_appearance_of`.
 class_name CaseMemory
 extends RefCounted
 
@@ -36,7 +42,75 @@ static func snapshot(day_number: int, case: Case, verdict: VerdictKind.Kind) -> 
 			entry[String(path)] = value
 	# Visage réel, visière relevée (la coiffe couvrante n'est pas l'identité).
 	entry["appearance"] = p.appearance.without_visor().serialize() if p.appearance != null else {}
+	# M12 (B59) : visage de la photo de la carte s'il n'est pas celui du porteur.
+	var photo: PassengerAppearance = _id_photo(case)
+	if photo != null and p.appearance != null and not photo.equals(p.appearance.without_visor()) \
+			and not photo.equals(p.appearance):
+		entry["photo_appearance"] = photo.serialize()
 	return entry
+
+
+## Préfixe des pseudo-drapeaux de verdict.
+const PSEUDO_PREFIX: String = "cm_"
+
+
+## Pseudo-drapeau d'un verdict (`cm_sc_03_deny`).
+static func pseudo_flag(scripted_id: String, verdict: String) -> StringName:
+	return StringName("%s%s_%s" % [PSEUDO_PREFIX, scripted_id, verdict])
+
+
+## Pseudo-drapeaux `cm_<cas>_<verdict>` (vrais) de toutes les entrées dont le
+## verdict est connu (`approve`, `deny`, `detain`).
+static func pseudo_flags(memory: Dictionary) -> Dictionary[StringName, Variant]:
+	var flags: Dictionary[StringName, Variant] = {}
+	for key: Variant in memory:
+		var entry: Variant = memory[key]
+		if not entry is Dictionary:
+			continue
+		var verdict: String = str((entry as Dictionary).get("verdict", ""))
+		if verdict in SlippedItem.VERDICT_NAMES:
+			flags[pseudo_flag(str(key), verdict)] = true
+	return flags
+
+
+## Drapeaux du matin augmentés des pseudo-drapeaux (copie ; un vrai drapeau
+## de même nom l'emporte).
+static func with_pseudo_flags(flags: Dictionary[StringName, Variant], memory: Dictionary) -> Dictionary[StringName, Variant]:
+	var result: Dictionary[StringName, Variant] = flags.duplicate()
+	var pseudo: Dictionary[StringName, Variant] = pseudo_flags(memory)
+	for flag: StringName in pseudo:
+		if not result.has(flag):
+			result[flag] = pseudo[flag]
+	return result
+
+
+## Noms des pseudo-drapeaux vrais (à ajouter aux `true_flags` du générateur).
+static func pseudo_flag_names(memory: Dictionary) -> Array[StringName]:
+	var names: Array[StringName] = []
+	for flag: StringName in pseudo_flags(memory):
+		names.append(flag)
+	return names
+
+
+## Visage de la photo mémorisé (null si la photo était le visage du porteur).
+static func photo_appearance_of(entry: Dictionary) -> PassengerAppearance:
+	var raw: Variant = entry.get("photo_appearance", null)
+	if not raw is Dictionary or (raw as Dictionary).is_empty():
+		return null
+	return PassengerAppearance.deserialize(raw)
+
+
+## Visage de la photo de la carte d'identité présentée (null sans carte).
+static func _id_photo(case: Case) -> PassengerAppearance:
+	if case == null:
+		return null
+	for ref: FieldRef in case.find_refs_by_kind(FieldDef.FieldKind.PORTRAIT):
+		if ref.document_id != &"id_card":
+			continue
+		var value: Variant = case.get_value(ref)
+		if value is PortraitValue and (value as PortraitValue).appearance != null:
+			return (value as PortraitValue).appearance
+	return null
 
 
 ## Apparence mémorisée (null si absente).

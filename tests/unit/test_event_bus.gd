@@ -53,6 +53,17 @@ const EXPECTED_SIGNALS: Dictionary = {
 	&"difficulty_changed": 1,
 	# M11 lot C : tutoriel interactif du J1 (Rulebook consulté).
 	&"rulebook_consulted": 0,
+	# M12 lot A (ARCHITECTURE §11.2) : règles mutables, événements, Garde, épilogue.
+	&"rules_changed": 1,
+	&"station_event_started": 1,
+	&"station_event_ended": 1,
+	&"rule_list_published": 2,
+	&"garde_directive": 3,
+	&"garde_scored": 2,
+	&"garde_error": 3,
+	&"garde_tier_changed": 1,
+	&"garde_ended": 1,
+	&"epilogue_concluded": 1,
 }
 
 

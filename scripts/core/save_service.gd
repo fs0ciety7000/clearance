@@ -31,6 +31,12 @@
 ##   `list_slots` / `latest_slot`) : `slot_0.json` devient l'emplacement 1 (ou
 ##   le premier libre) ; l'ancien fichier est renommé `slot_0.v5.bak`, jamais
 ##   supprimé.
+## - M12 (D-125, B53 ; ARCHITECTURE §11.4) : `day_31.json` = graine
+##   d'épilogue (« matin du J31 ») écrite à la fin d'une partie de l'Acte III
+##   (`write_epilogue`) ; jamais listée parmi les jours (`list_snapshots`),
+##   jamais chargée comme état ; supprimée comme tout instantané postérieur à
+##   la reprise d'un jour passé (une seule ligne de temps). Méta :
+##   `epilogue_available`, `epilogue_done` (absentes = faux).
 ## Pure (aucun autoload) : le dossier est paramétrable pour les tests.
 class_name SaveService
 extends RefCounted
@@ -79,6 +85,11 @@ const KEY_ENDING_ID: String = "ending_id"
 ## ni instantané, QA-043) — ni « Continuer », ni reprise ; l'UI désactive ses
 ## actions (sauf supprimer / écraser). Absente sinon.
 const META_DAMAGED: String = "damaged"
+## M12 : jour de l'épilogue (`day_31.json`) et clés de méta.
+const EPILOGUE_DAY: int = 31
+const KEY_EPILOGUE_AVAILABLE: String = "epilogue_available"
+const KEY_EPILOGUE_DONE: String = "epilogue_done"
+const EPILOGUE_KIND: String = "epilogue_seed"
 const DIFFICULTY_HARD: String = "hard"
 const DIFFICULTY_STORY: String = "story"
 ## Clés obligatoires après migration, avec leur type JSON attendu.
@@ -276,6 +287,10 @@ static func save_slot(data: Dictionary, slot: int = DEFAULT_SLOT, dir: String = 
 	payload["saved_at"] = saved_at if not saved_at.is_empty() else Time.get_datetime_string_from_system(true)
 	var text: String = JSON.stringify(payload, "\t", true)
 	var day: int = as_int(payload.get("current_day", 0))
+	if day >= EPILOGUE_DAY:
+		# M12 : `day_31.json` est la graine d'épilogue, jamais un état de campagne.
+		push_warning("SaveService: jour %d non sauvegardable (épilogue)" % day)
+		return ERR_INVALID_PARAMETER
 	var err: Error = OK
 	if day >= 1:
 		err = write_atomic(snapshot_path(slot, day, dir), text)
@@ -306,6 +321,8 @@ static func load_current(slot: int = DEFAULT_SLOT, dir: String = DEFAULT_DIR) ->
 		return data
 	var days: PackedInt32Array = _snapshot_days(slot, dir)
 	for i: int in range(days.size() - 1, -1, -1):
+		if days[i] >= EPILOGUE_DAY:
+			continue
 		data = load_snapshot(slot, days[i], dir)
 		if not data.is_empty():
 			if file_exists_any(slot_path(slot, dir)):
@@ -319,6 +336,8 @@ static func load_current(slot: int = DEFAULT_SLOT, dir: String = DEFAULT_DIR) ->
 static func list_snapshots(slot: int, dir: String = DEFAULT_DIR) -> PackedInt32Array:
 	var days: PackedInt32Array = []
 	for day: int in _snapshot_days(slot, dir):
+		if day >= EPILOGUE_DAY:
+			continue
 		if not load_snapshot(slot, day, dir).is_empty():
 			days.append(day)
 	return days
@@ -344,7 +363,7 @@ static func _snapshot_days(slot: int, dir: String = DEFAULT_DIR) -> PackedInt32A
 
 ## Instantané « matin du jour `day` » (migré, validé) ; vide si absent.
 static func load_snapshot(slot: int, day: int, dir: String = DEFAULT_DIR) -> Dictionary:
-	if slot < 0 or day < 1:
+	if slot < 0 or day < 1 or day >= EPILOGUE_DAY:
 		return {}
 	return read_json(snapshot_path(slot, day, dir), parse)
 
@@ -362,8 +381,12 @@ static func load_meta(slot: int, dir: String = DEFAULT_DIR) -> Dictionary:
 			return {}
 		if not meta_ok:
 			var days: PackedInt32Array = _snapshot_days(slot, dir)
+			var playable: Array[int] = []
+			for day: int in days:
+				if day < EPILOGUE_DAY:
+					playable.append(day)
 			meta = {"version": VERSION, "status": STATUS_ACTIVE, "ending_id": "",
-				"current_day": days[days.size() - 1] if not days.is_empty() else 0}
+				"current_day": playable[playable.size() - 1] if not playable.is_empty() else 0}
 		meta[META_DAMAGED] = true
 		return meta
 	meta.erase(META_DAMAGED)
@@ -463,6 +486,51 @@ static func persist_difficulty(slot: int, difficulty: String, campaign_seed: int
 	if meta.is_empty() or not meta.has("status"):
 		return OK
 	meta["difficulty"] = value
+	return write_atomic(meta_path(slot, dir), JSON.stringify(meta, "\t", true))
+
+
+# --- M12 : épilogue (D-125, B53) ---------------------------------------------------
+
+## Écrit la graine d'épilogue d'une partie terminée (`slot_N/day_31.json`) et
+## pose `epilogue_available` dans la méta. La partie n'est pas modifiée.
+static func write_epilogue(slot: int, epi: Dictionary, dir: String = DEFAULT_DIR) -> Error:
+	if slot < 0 or epi.is_empty():
+		return ERR_INVALID_PARAMETER
+	var payload: Dictionary = {"version": VERSION, "kind": EPILOGUE_KIND, "game_version": game_version(),
+			"saved_at": Time.get_datetime_string_from_system(true), "current_day": EPILOGUE_DAY, "seed": epi.duplicate(true)}
+	var err: Error = write_atomic(snapshot_path(slot, EPILOGUE_DAY, dir), JSON.stringify(payload, "\t", true))
+	if err != OK:
+		return err
+	return _set_meta_flag(slot, KEY_EPILOGUE_AVAILABLE, true, dir)
+
+
+## Graine d'épilogue d'un emplacement (`day_31.json`), vide si absente ou illisible.
+static func load_epilogue(slot: int, dir: String = DEFAULT_DIR) -> Dictionary:
+	if slot < 0:
+		return {}
+	var payload: Dictionary = read_json(snapshot_path(slot, EPILOGUE_DAY, dir))
+	if payload.is_empty() or str(payload.get("kind", "")) != EPILOGUE_KIND or not payload.get("seed") is Dictionary:
+		return {}
+	return EpilogueService.sanitize_seed(payload["seed"])
+
+
+## Vrai si l'emplacement propose « Un an plus tard » (graine présente).
+static func has_epilogue(slot: int, dir: String = DEFAULT_DIR) -> bool:
+	return not load_epilogue(slot, dir).is_empty()
+
+
+## Le J31 de cet emplacement a été joué (méta `epilogue_done`) ; la partie
+## reste terminée (`status`, `ending_id` inchangés, D-125).
+static func mark_epilogue_done(slot: int, dir: String = DEFAULT_DIR) -> Error:
+	return _set_meta_flag(slot, KEY_EPILOGUE_DONE, true, dir)
+
+
+static func _set_meta_flag(slot: int, key: String, value: bool, dir: String) -> Error:
+	var meta: Dictionary = load_meta(slot, dir)
+	if meta.is_empty() or is_damaged(meta):
+		return ERR_DOES_NOT_EXIST
+	meta.erase("slot")
+	meta[key] = value
 	return write_atomic(meta_path(slot, dir), JSON.stringify(meta, "\t", true))
 
 
