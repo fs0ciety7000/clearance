@@ -30,8 +30,17 @@ const ACTION_RETIRE: StringName = &"retire"
 const ACTION_RESTORE: StringName = &"restore"
 ## Accès (D-128) : premier jour terminé dans n'importe quelle partie.
 const UNLOCK_MAX_DAY: int = 2
-const ERROR_INVALID_CHARS: String = "garde_seed_invalid"
-const ERROR_BAD_LENGTH: String = "garde_seed_input"
+## Raisons d'un code refusé (`normalize_code` : `error_key` = clé i18n du
+## message, `reason` = identifiant stable ; QA-055).
+const ERROR_INVALID_CHARS: String = "garde_seed_invalid"       # O, I, 0 ou 1
+const ERROR_BAD_LENGTH: String = "garde_seed_input"            # code libre ≠ 6 symboles
+const ERROR_BAD_DATE: String = "garde_seed_bad_date"           # NUIT-… : pas une vraie date
+const ERROR_BAD_CHAR: String = "garde_seed_bad_char"           # caractère hors alphabet (accent, ponctuation)
+const REASON_NONE: StringName = &""
+const REASON_INVALID_CHARS: StringName = &"invalid_chars"
+const REASON_LENGTH: StringName = &"length"
+const REASON_DATE: StringName = &"date"
+const REASON_CHAR: StringName = &"char"
 
 static var _def_cache: GardeDef = null
 
@@ -64,9 +73,12 @@ static func daily_date(code: String) -> String:
 	return code.trim_prefix(DAILY_PREFIX) if code.begins_with(DAILY_PREFIX) else ""
 
 
-## Code canonique d'une saisie : `{ok, code, kind, error_key}`. Accepte un code
-## du jour (`NUIT-AAAA-MM-JJ`) ou un code libre (casse et tiret indifférents) ;
-## refuse O, I, 0, 1 (`garde_seed_invalid`) et toute autre longueur.
+## Code canonique d'une saisie : `{ok, code, kind, error_key, reason}`.
+## Accepte un code du jour (`NUIT-AAAA-MM-JJ`, vraie date du calendrier) ou un
+## code libre (casse, espaces et tiret indifférents). Refus (QA-055) :
+## `ERROR_BAD_DATE` (`reason` `date` : préfixe `NUIT-` sans date réelle),
+## `ERROR_INVALID_CHARS` (`invalid_chars` : O, I, 0, 1), `ERROR_BAD_CHAR`
+## (`char` : autre caractère hors alphabet), `ERROR_BAD_LENGTH` (`length`).
 static func normalize_code(text: String) -> Dictionary:
 	var raw: String = text.strip_edges().to_upper()
 	if raw.begins_with(DAILY_PREFIX):
@@ -75,19 +87,34 @@ static func normalize_code(text: String) -> Dictionary:
 			var year: int = parts[0].to_int()
 			var month: int = parts[1].to_int()
 			var day: int = parts[2].to_int()
-			if month >= 1 and month <= 12 and day >= 1 and day <= 31 and year >= 2000:
-				return {"ok": true, "code": "%s%04d-%02d-%02d" % [DAILY_PREFIX, year, month, day], "kind": KIND_DAILY,
-						"error_key": ""}
-		return {"ok": false, "code": "", "kind": KIND_DAILY, "error_key": ERROR_BAD_LENGTH}
+			if year >= 2000 and month >= 1 and month <= 12 and day >= 1 and day <= days_in_month(year, month):
+				return _code_result(true, "%s%04d-%02d-%02d" % [DAILY_PREFIX, year, month, day], KIND_DAILY, "", REASON_NONE)
+		return _code_result(false, "", KIND_DAILY, ERROR_BAD_DATE, REASON_DATE)
 	var compact: String = raw.replace("-", "").replace(" ", "")
 	for character: String in compact:
 		if character in ["O", "I", "0", "1"]:
-			return {"ok": false, "code": "", "kind": KIND_FREE, "error_key": ERROR_INVALID_CHARS}
+			return _code_result(false, "", KIND_FREE, ERROR_INVALID_CHARS, REASON_INVALID_CHARS)
+	for character: String in compact:
 		if not ID_ALPHABET.contains(character):
-			return {"ok": false, "code": "", "kind": KIND_FREE, "error_key": ERROR_BAD_LENGTH}
+			return _code_result(false, "", KIND_FREE, ERROR_BAD_CHAR, REASON_CHAR)
 	if compact.length() != CODE_LENGTH:
-		return {"ok": false, "code": "", "kind": KIND_FREE, "error_key": ERROR_BAD_LENGTH}
-	return {"ok": true, "code": "%s-%s" % [compact.substr(0, 3), compact.substr(3)], "kind": KIND_FREE, "error_key": ""}
+		return _code_result(false, "", KIND_FREE, ERROR_BAD_LENGTH, REASON_LENGTH)
+	return _code_result(true, "%s-%s" % [compact.substr(0, 3), compact.substr(3)], KIND_FREE, "", REASON_NONE)
+
+
+static func _code_result(ok: bool, code: String, kind: StringName, error_key: String, reason: StringName) -> Dictionary:
+	return {"ok": ok, "code": code, "kind": kind, "error_key": error_key, "reason": reason}
+
+
+## Nombre de jours d'un mois du calendrier grégorien.
+static func days_in_month(year: int, month: int) -> int:
+	match month:
+		2:
+			var leap: bool = (year % 4 == 0 and year % 100 != 0) or year % 400 == 0
+			return 29 if leap else 28
+		4, 6, 9, 11:
+			return 30
+	return 31
 
 
 ## Code libre de 30 bits (`bits` & 0x3FFFFFFF), 6 symboles, tiret décoratif.

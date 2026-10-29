@@ -159,6 +159,9 @@ var _probing: bool = false
 ## M12 : règles retirées par un événement de station (motif `sev_*`) : leur
 ## rétablissement n'est pas une directive (pas d'exercice ni de listes).
 var _event_retired: Array[StringName] = []
+## QA-051 : identités reprises d'un jour antérieur (cache de `_day_identity_names`).
+var _day_identities: PackedStringArray = []
+var _day_identities_ready: bool = false
 
 
 ## `p_flag_values` (Acte II) : valeurs des drapeaux et jauges (conditions des
@@ -729,6 +732,11 @@ func _apply_continuity() -> void:
 		elif scripted.appearance_from_photo != &"":
 			# M12 (SC-84b, B59) : visage de la photo présentée par un cas antérieur.
 			remembered = _photo_appearance(scripted.appearance_from_photo)
+			if remembered == null and roster.get_entry(scripted.at_index) != null:
+				# QA-060 : photo introuvable (mémoire 0.11 non recalculable) —
+				# visage générique du roster, tranche d'âge recalculée ci-dessous
+				# depuis l'identité reprise (cas propre possible).
+				remembered = roster.get_entry(scripted.at_index).appearance
 		elif source == &"":
 			continue
 		else:
@@ -746,6 +754,39 @@ func _apply_continuity() -> void:
 		var faction: Variant = _overrides_for(scripted, false).get(&"faction_id", null)
 		if faction != null:
 			roster_entry.faction_id = StringName(str(faction))
+
+
+## QA-051 : « Prénom|Nom » des identités reprises d'un jour antérieur par les
+## cas scénarisés actifs (`identity_from_case`) — jamais portées par un
+## passager généré du jour.
+func _day_identity_names() -> PackedStringArray:
+	if _day_identities_ready:
+		return _day_identities
+	_day_identities_ready = true
+	for scripted: ScriptedCaseDef in get_active_scripted_cases():
+		if scripted.identity_from_case == &"":
+			continue
+		var identity: Dictionary = _overrides_for(scripted, false)
+		var given: String = str(identity.get(&"given_name", ""))
+		var family: String = str(identity.get(&"family_name", ""))
+		if not given.is_empty() and not family.is_empty():
+			_day_identities.append("%s|%s" % [given, family])
+	return _day_identities
+
+
+## Prénom qui ne reproduit aucune identité reprise du jour (ordre de la réserve,
+## circulaire, comme `NamePool.avoid_reserved_full_name`) — déterministe, sans tirage.
+func _avoid_day_identity(pool: NamePool, given: String, family: String, sex: StringName) -> String:
+	var taken: PackedStringArray = _day_identity_names()
+	if taken.is_empty() or not taken.has("%s|%s" % [given, family]):
+		return given
+	var names: PackedStringArray = pool.given_names_for(sex)
+	var start: int = maxi(names.find(given), 0)
+	for step: int in range(1, names.size() + 1):
+		var candidate: String = names[(start + step) % names.size()]
+		if not taken.has("%s|%s" % [candidate, family]) and not pool.is_reserved_full_name(candidate, family):
+			return candidate
+	return given
 
 
 ## M12 (B59) : apparence de la photo présentée par un cas antérieur
@@ -815,6 +856,11 @@ func _build_wanted_notices() -> void:
 ## Acte III : plan du jour (convocation, répondant, motif), lock-out (R35).
 func _post_generate(truth: Passenger, faction: FactionDef, overrides: Dictionary, rng: SeededRng, index: int,
 		scripted_case: bool = false) -> void:
+	# QA-051 : homonyme fortuit d'une identité reprise d'un jour antérieur
+	# (`identity_from_case`, SC-84b) : autre prénom, sans tirage (un avis de
+	# recherche visant ce passager viserait aussi le cas scénarisé).
+	if not scripted_case and not overrides.has(&"given_name") and faction.name_pool != null:
+		truth.given_name = _avoid_day_identity(faction.name_pool, truth.given_name, truth.family_name, truth.sex)
 	# Homonyme fortuit d'une personne recherchée : autre prénom.
 	if not overrides.has(&"given_name") and faction.name_pool != null:
 		for notice: WantedNotice in ctx.wanted:
@@ -1243,8 +1289,17 @@ func _clean_violations(c: Case, scripted: ScriptedCaseDef, forced: Array[Anomaly
 	return _clean_violation_ids(c, scripted, forced).size()
 
 
+## QA-050 : le contrôle « cas propre » valide à l'heure de présentation, avec
+## le RuleSet du shift — la même heure que celle qui a choisi les documents
+## (`required_documents_for_passenger` : surcharge horaire d'EV-08).
+func _sync_clean_ctx() -> void:
+	_clean_ctx.now_minute = ctx.now_minute if ctx.now_minute >= 0 else presentation_minute
+	_clean_ctx.rule_set = day.rule_set
+
+
 ## Règles violées par le cas propre et non expliquées par une anomalie imposée.
 func _clean_violation_ids(c: Case, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kind]) -> Array[StringName]:
+	_sync_clean_ctx()
 	var violations: Array[Violation] = RuleEngine.validate(c, day.rule_set, _clean_ctx)
 	var ids: Array[StringName] = []
 	for violation: Violation in violations:

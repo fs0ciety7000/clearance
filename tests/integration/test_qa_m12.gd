@@ -163,12 +163,9 @@ func test_qa050_ev08_revoked_carrier_keeps_its_listed_identity() -> void:
 	builder.ctx.now_minute = QA050_MINUTE
 	var generated: GeneratedCase = builder.build(6)
 	var same: bool = FieldValue.equals(generated.case.passenger_presented.citizen_id, entry.citizen_id)
-	if not same or not generated.invariant_errors.is_empty():
-		pending("QA-050 : passager 6 du J19 (13:02, EV-08) re-tiré → N° %s ≠ liste %s ; invariants %s" % [
-				generated.case.passenger_presented.citizen_id, entry.citizen_id, generated.invariant_errors])
-		return
-	assert_true(same, "le porteur de la révocation est celui de la liste")
-	assert_eq(generated.invariant_errors.size(), 0, "aucun invariant violé")
+	assert_true(same, "QA-050 : le porteur de la révocation est celui de la liste (N° %s, liste %s)" % [
+			generated.case.passenger_presented.citizen_id, entry.citizen_id])
+	assert_eq(generated.invariant_errors.size(), 0, "aucun invariant violé : %s" % [generated.invariant_errors])
 
 
 ## Variante générale : dans la fenêtre d'EV-08, un cas propre est le même
@@ -177,8 +174,8 @@ func test_qa050_clean_build_does_not_depend_on_the_exemption_window() -> void:
 	var data: DataCatalog = DataCatalog.load_from()
 	var campaign_seed: int = SeededRng.mix(QA050_SEED_BASE, QA050_SEED_INDEX)
 	var plan: StationEventPlan = BalanceSimulator.event_schedule(data, campaign_seed).get(19, null)
+	assert_not_null(plan, "graine 156 : un événement au J19")
 	if plan == null:
-		pending("QA-050 : calendrier d'événements modifié (graine 156 sans J19)")
 		return
 	var flags: Dictionary[StringName, Variant] = {&"act2_started": true}
 	var differences: PackedStringArray = []
@@ -200,10 +197,7 @@ func test_qa050_clean_build_does_not_depend_on_the_exemption_window() -> void:
 				ids[key] = generated.case.passenger_presented.citizen_id
 			elif str(ids.get(key, "")) != str(generated.case.passenger_presented.citizen_id):
 				differences.append("%s (%s)" % [key, generated.case.passenger_presented.purpose])
-	if not differences.is_empty():
-		pending("QA-050 : passagers re-tirés dans la fenêtre d'EV-08 : %s" % ", ".join(differences))
-		return
-	assert_eq(differences.size(), 0)
+	assert_eq(differences.size(), 0, "QA-050 : passagers re-tirés dans la fenêtre d'EV-08 : %s" % ", ".join(differences))
 
 
 # ---------------------------------------------------------------------------
@@ -234,11 +228,9 @@ func test_qa051_sc84b_is_denied_even_when_a_generated_wanted_passenger_shares_hi
 		if notice.given_name == generated.case.passenger_presented.given_name \
 				and notice.family_name == generated.case.passenger_presented.family_name:
 			homonyms += 1
-	if generated.key.expected_verdict != VerdictKind.Kind.DENY or homonyms > 0:
-		pending("QA-051 : SC-84b attendu %s (avis homonymes : %d)" % [
-				VerdictKind.Kind.keys()[generated.key.expected_verdict], homonyms])
-		return
-	assert_eq(generated.key.expected_verdict, VerdictKind.Kind.DENY)
+	assert_eq(homonyms, 0, "QA-051 : aucun avis du jour ne porte le nom de SC-84b")
+	assert_eq(generated.key.expected_verdict, VerdictKind.Kind.DENY, "QA-051 : SC-84b attendu %s" % [
+			VerdictKind.Kind.keys()[generated.key.expected_verdict]])
 
 
 ## SC-84b porte le visage de la **photo** présentée au J2 (traits d'identité),
@@ -302,18 +294,15 @@ func test_qa060_sc84b_keeps_the_photo_face_with_a_0_11_memory_entry() -> void:
 		return
 	var generated: GeneratedCase = builder.build(index)
 	var differing: Array[StringName] = FaceComparator.compare(generated.case.passenger_presented.appearance, photo, slots)
-	# Défaut présent : la liste des révocations (construite au matin) a déjà
-	# signalé « aucun cas propre » — erreur attendue tant que QA-060 est ouvert.
+	# La liste des révocations est construite au matin (hors `_probing`) : un
+	# « aucun cas propre » y serait un push_error.
 	var init_errors: int = 0
 	for err: Variant in get_errors():
 		if not err.handled and err.contains_text("aucun cas propre"):
-			err.handled = true
 			init_errors += 1
-	if not differing.is_empty() or generated.clean_violation_count > 0 or init_errors > 0:
-		pending("QA-060 : mémoire 0.11 sans photo_appearance → SC-84b ne ressemble pas à la photo du J2 (%s) ; cas propre impossible : %d violation(s)" % [
-				differing, generated.clean_violation_count])
-		return
-	assert_eq(differing.size(), 0)
+	assert_eq(differing.size(), 0, "QA-060 : SC-84b ressemble à la photo du J2 (%s)" % [differing])
+	assert_eq(generated.clean_violation_count, 0, "QA-060 : cas propre possible")
+	assert_eq(init_errors, 0, "QA-060 : aucun « aucun cas propre » au matin du J18")
 
 
 # ---------------------------------------------------------------------------
@@ -340,10 +329,7 @@ func test_qa052_real_m11_profiles_without_slot_keep_their_progress() -> void:
 			problems.append("%s : Garde verrouillée" % row[0])
 		if row[2] and not profile.get("epilogue_unlocked", false):
 			problems.append("%s : fin de l'Acte III sans epilogue_unlocked" % row[0])
-	if not problems.is_empty():
-		pending("QA-052 : " + " ; ".join(problems))
-		return
-	assert_eq(problems.size(), 0)
+	assert_eq(problems.size(), 0, "QA-052 : " + " ; ".join(problems))
 
 
 ## Vrai profil M11 **et** sa partie terminée (F9, J30, 0.11.0) : graine
@@ -420,10 +406,7 @@ func test_qa053_garde_portrait_cache_does_not_grow_with_the_run() -> void:
 			sizes.append(scene.portrait_service.cache_size())
 	assert_eq(sizes.size(), 2)
 	gut.p("QA-053 : portraits en cache après 10 / 30 passagers : %s" % [sizes])
-	if sizes.size() == 2 and sizes[1] > sizes[0] + 2:
-		pending("QA-053 : portraits en cache %d après 10 passagers, %d après 30" % [sizes[0], sizes[1]])
-		return
-	assert_true(sizes.size() == 2 and sizes[1] <= sizes[0] + 2, "cache borné")
+	assert_true(sizes.size() == 2 and sizes[1] <= sizes[0] + 2, "QA-053 : cache borné (%s)" % [sizes])
 
 
 # ---------------------------------------------------------------------------
@@ -440,10 +423,28 @@ func test_qa054_procedure_error_does_not_read_the_same_verdict_twice() -> void:
 	var found: bool = false
 	for node: Node in row.find_children("*", "Label", true, false):
 		found = found or (node as Label).text == same
-	if found:
-		pending("QA-054 : erreur de procédure affichée « %s »" % same)
-		return
-	assert_false(found)
+	assert_false(found, "QA-054 : erreur de procédure jamais « %s »" % same)
+	var verdicts: Label = row.find_child("Verdicts", true, false) as Label
+	assert_not_null(verdicts, "colonne verdict")
+	if verdicts != null:
+		assert_eq(verdicts.text, UiText.tf("garde_end_procedure", [GardeEndScreen.verdict_text("approve")], "%s · ERREUR DE PROCÉDURE"),
+				"verdict rendu + nature « procédure »")
+	# Vraie citation : la nature de la faute est dite (« Visage non contrôlé »
+	# + sa description), à partir de la citation du record.
+	var real: Control = GardeEndScreen.error_row({"passenger": 7, "label": "B. ORTEGA", "verdict": "approve", "expected": "approve",
+			"citation": ScoringService.CIT_FACE_UNCHECKED, "rule_id": "", "violations": []})
+	add_child_autofree(real)
+	await wait_process_frames(1)
+	var nature: Label = real.find_child("Nature", true, false) as Label
+	var detail: Label = real.find_child("Detail", true, false) as Label
+	assert_eq(nature.text if nature != null else "", UiText.t(ScoringService.CIT_FACE_UNCHECKED, "?"), "nature de la faute")
+	assert_eq(detail.text if detail != null else "", UiText.t(ScoringService.CIT_FACE_UNCHECKED + "_desc", "?"), "description de la faute")
+	# Erreur de verdict : « rendu → attendu » inchangé, motifs des violations manquées.
+	var wrong: Dictionary = {"passenger": 8, "verdict": "approve", "expected": "deny", "citation": ScoringService.CIT_IRREGULAR_ENTRY,
+		"violations": [{"rule_id": "r_x", "reason_key": "cit_irregular_entry_desc", "refs": []}]}
+	assert_eq(GardeEndScreen.verdict_line(wrong), UiText.tf("garde_end_verdicts",
+			[GardeEndScreen.verdict_text("approve"), GardeEndScreen.verdict_text("deny")], "%s → %s"))
+	assert_string_contains(GardeEndScreen.error_detail(wrong), UiText.t("cit_irregular_entry_desc", "?"), false)
 
 
 # ---------------------------------------------------------------------------
@@ -453,10 +454,15 @@ func test_qa054_procedure_error_does_not_read_the_same_verdict_twice() -> void:
 func test_qa055_invalid_daily_code_is_not_reported_as_a_length_error() -> void:
 	var result: Dictionary = GardeService.normalize_code("NUIT-2026-13-40")
 	assert_false(result.get("ok", true), "date impossible refusée")
-	if str(result.get("error_key", "")) == "garde_seed_input":
-		pending("QA-055 : « NUIT-2026-13-40 » → « Il faut 6 caractères (le tiret ne compte pas). »")
-		return
-	assert_ne(str(result.get("error_key", "")), "garde_seed_input")
+	assert_ne(str(result.get("error_key", "")), GardeService.ERROR_BAD_LENGTH, "QA-055 : pas une erreur de longueur")
+	assert_eq(str(result.get("error_key", "")), GardeService.ERROR_BAD_DATE, "date invalide")
+	assert_eq(result.get("reason", &""), GardeService.REASON_DATE)
+	# 31 février, caractère accentué : raisons propres ; code juste : accepté.
+	assert_eq(str(GardeService.normalize_code("NUIT-2026-02-30").get("error_key", "")), GardeService.ERROR_BAD_DATE)
+	assert_true(GardeService.normalize_code("NUIT-2028-02-29").get("ok", false), "29 février d'une année bissextile")
+	assert_eq(str(GardeService.normalize_code("é2Q-9TX").get("error_key", "")), GardeService.ERROR_BAD_CHAR)
+	assert_eq(str(GardeService.normalize_code("K2Q-9T").get("error_key", "")), GardeService.ERROR_BAD_LENGTH)
+	assert_eq(str(GardeService.normalize_code("K2Q-9TO").get("error_key", "")), GardeService.ERROR_INVALID_CHARS)
 
 
 # ---------------------------------------------------------------------------
@@ -507,10 +513,8 @@ func test_conclusions_never_name_a_lost_away_or_held_relative() -> void:
 		if not line.contains(" lost "):
 			lost_first.append(line)
 	problems = lost_first
-	if not problems.is_empty():
-		pending("QA-056 : " + " | ".join(problems.slice(0, 6)) + (" (+%d)" % (problems.size() - 6) if problems.size() > 6 else ""))
-		return
-	assert_eq(problems.size(), 0)
+	assert_eq(problems.size(), 0, "QA-056 : " + " | ".join(problems.slice(0, 6))
+			+ (" (+%d)" % (problems.size() - 6) if problems.size() > 6 else ""))
 
 
 ## Manette seule : fin de garde (Ⓐ = REJOUER, Ⓑ = titre), carte d'ouverture
@@ -628,11 +632,270 @@ func test_pad_only_garde_directive_card_and_end_from_the_bar() -> void:
 	# QA-057 : la croix doit rester dans la boîte (ANNULER ↔ TERMINER LA GARDE).
 	await _pad(JOY_BUTTON_DPAD_RIGHT)
 	var escaped: Control = _focus()
-	if escaped == null or not dialog.is_ancestor_of(escaped):
-		pending("QA-057 : croix → depuis ANNULER : focus hors de la boîte (%s) ; Ⓐ y appellerait un passager" % [
-				escaped.get_path() if escaped != null else "aucun"])
-		return
+	assert_true(escaped != null and dialog.is_ancestor_of(escaped), "QA-057 : croix → reste dans la boîte (%s)" % [
+			escaped.get_path() if escaped != null else "aucun"])
 	assert_eq(_focus(), dialog.accept_button, "croix → : TERMINER LA GARDE")
+	# Toutes les directions restent dans la boîte.
+	for button: JoyButton in [JOY_BUTTON_DPAD_UP, JOY_BUTTON_DPAD_DOWN, JOY_BUTTON_DPAD_LEFT, JOY_BUTTON_DPAD_RIGHT]:
+		await _pad(button)
+		var inside: Control = _focus()
+		assert_true(inside != null and dialog.is_ancestor_of(inside), "croix %d : focus dans la boîte" % button)
+	# Focus forcé derrière le voile (souris, autre chemin) : Ⓐ n'appelle
+	# personne et le focus revient dans la boîte.
+	ui.tool_bar.next_button.grab_focus()
+	await wait_process_frames(1)
+	await _pad(JOY_BUTTON_A)
+	assert_eq(scene.day_controller.phase, DayPhase.Kind.WAITING_CASE, "Ⓐ derrière la boîte : aucun passager appelé")
+	assert_false(dialog.is_done(), "la boîte reste ouverte")
+	assert_true(_focus() != null and dialog.is_ancestor_of(_focus()), "focus rendu à la boîte")
+	dialog.accept_button.grab_focus()
+	await wait_process_frames(1)
 	await _pad(JOY_BUTTON_A)
 	await wait_process_frames(3)
 	assert_true(scene.day_controller.garde_over, "garde terminée (score de %d enregistré)" % processed)
+
+
+# ---------------------------------------------------------------------------
+# QA-058 — conclusion du J31 au Deck en texte 1,5 : colonne tronquée
+# ---------------------------------------------------------------------------
+
+## 1280 × 800, texte 1,5 : les lignes occupent toute la hauteur libre (plus de
+## colonne réduite à 360 px au milieu de l'écran), un repère « SUITE » dit
+## qu'il reste du texte, le stick droit et la croix ↓ font défiler jusqu'en
+## bas, où le repère s'efface.
+func test_qa058_conclusion_scrolls_with_a_visible_hint_at_text_150() -> void:
+	var flags: Dictionary[StringName, Variant] = {&"act2_started": true, &"act3_started": true}
+	var epi: Dictionary = EpilogueService.make_seed(EndingService.F10_PONT, flags, Household.new(), {}, 1234, 30)
+	if epi.is_empty():
+		pending("données d'épilogue absentes")
+		return
+	InputPrompts.simulate_device(InputPrompts.Device.XBOX)
+	Settings.set_session_value(Settings.KEY_TEXT_SCALE, 1.5)
+	var holder: Control = Control.new()
+	holder.size = Vector2(1280.0, 800.0)
+	add_child_autofree(holder)
+	# Conclusion d'un J31 joué jusqu'au bout (`--skip-cases=7`) : une ligne par
+	# groupe du monde (vraies clés des données), comme la capture de QA-058.
+	var card: Dictionary = EpilogueService.conclusion(epi, EpilogueService.morning_flags(epi), 2)
+	var lines: PackedStringArray = card.get("lines", PackedStringArray())
+	var world: EpilogueWorldDef = EpilogueService.load_def().get_world(StringName(str(epi.get("world", ""))))
+	if world != null:
+		for group: EpilogueLineGroupDef in world.line_groups:
+			if group != null and not group.lines.is_empty() and not lines.has(group.lines[0].key):
+				lines.insert(maxi(lines.size() - 1, 0), group.lines[0].key)
+	card["lines"] = lines
+	var conclusion: EpilogueScreen = EpilogueScreen.new()
+	conclusion.setup_conclusion(card)
+	holder.add_child(conclusion)
+	await wait_process_frames(4)
+	var scroll: ScrollContainer = conclusion.lines_scroll()
+	var column: Control = conclusion.find_child("Column", true, false) as Control
+	assert_not_null(scroll, "zone des lignes")
+	assert_not_null(column, "colonne")
+	if scroll == null or column == null:
+		Settings.clear_session_value(Settings.KEY_TEXT_SCALE)
+		return
+	# La colonne descend jusqu'au pied (plus de vide au-dessus du pied).
+	var page: Control = column.get_parent() as Control
+	var below: float = page.get_global_rect().end.y - column.get_global_rect().end.y
+	var foot_space: float = 0.0
+	for child: Node in page.get_children():
+		if child != column and child is Control:
+			foot_space += (child as Control).size.y + page.get_theme_constant("separation")
+	assert_almost_eq(below, foot_space, 2.0, "colonne sur toute la hauteur libre")
+	assert_true(scroll.get_global_rect().end.y <= conclusion.continue_button.get_global_rect().position.y, "lignes au-dessus du pied")
+	var bar: VScrollBar = scroll.get_v_scroll_bar()
+	gut.p("QA-058 : écran %s, colonne %s, zone %s, contenu %.0f / page %.0f, %d lignes" % [conclusion.size, column.size, scroll.size,
+			bar.max_value, bar.page, conclusion.line_labels.size()])
+	assert_true(bar.max_value > bar.page + 1.0, "texte 1,5 : plus long que la zone (cas de QA-058)")
+	assert_true(conclusion.has_more_below(), "texte sous la zone")
+	assert_eq(conclusion.more_hint.modulate.a, 1.0, "repère SUITE visible")
+	assert_true(conclusion.more_hint.is_visible_in_tree(), "repère dans l'arbre visible")
+	# Croix ↓ depuis le bouton du pied : défile.
+	assert_true(conclusion.is_reveal_done(), "révélation immédiate (mouvement réduit)")
+	conclusion.continue_button.grab_focus()
+	await wait_process_frames(1)
+	var before: int = scroll.scroll_vertical
+	await _pad(JOY_BUTTON_DPAD_DOWN)
+	assert_gt(scroll.scroll_vertical, before, "croix ↓ : les lignes défilent")
+	assert_eq(_focus(), conclusion.continue_button, "le focus reste sur RETOUR AU TITRE")
+	# Stick droit (`scroll_down`) jusqu'en bas : le repère s'efface.
+	var tries: int = 0
+	while conclusion.has_more_below() and tries < 20:
+		await _pad(JOY_BUTTON_DPAD_DOWN)
+		tries += 1
+	await wait_process_frames(1)
+	assert_false(conclusion.has_more_below(), "bas du texte atteint")
+	assert_eq(conclusion.more_hint.modulate.a, 0.0, "repère effacé en bas")
+	await _pad(JOY_BUTTON_DPAD_UP)
+	assert_true(conclusion.has_more_below(), "croix ↑ : remonte")
+	Settings.clear_session_value(Settings.KEY_TEXT_SCALE)
+
+
+# ---------------------------------------------------------------------------
+# QA-061 — Garde longue : règle NOUVEAU à l'écran ; pas d'erreur `_reset_pivot`
+# ---------------------------------------------------------------------------
+
+## Garde de 60 passagers en mouvement normal (arrivées animées), verdict dès
+## les documents posés : aucune erreur moteur (`_reset_pivot` sur un document
+## libéré, `ensure_control_visible` « Must be an ancestor ») ; après chaque
+## directive appliquée, la règle surlignée est dans la zone visible du Rulebook.
+func test_qa061_long_garde_scrolls_to_the_new_rule_without_engine_errors() -> void:
+	Settings.clear_session_value(Settings.KEY_REDUCE_MOTION)
+	DayScene.pending_garde_run = Campaign.start_garde(GARDE_CODE)
+	var scene: DayScene = DAY_SCENE.instantiate()
+	add_child_autofree(scene)
+	await wait_process_frames(3)
+	if scene.garde_run == null:
+		pending("données de Garde absentes")
+		return
+	var ui: ComparisonUI = scene.ui as ComparisonUI
+	var rulebook: RulebookPanel = ui.rulebook
+	var checked: int = 0
+	var long_lists: int = 0
+	var missing: PackedStringArray = []
+	var seen_focus: int = 0
+	for i: int in 60:
+		if scene.day_controller.garde_over:
+			break
+		EventBus.next_case_requested.emit()
+		var c: Case = scene.day_controller.current_case
+		if c == null:
+			break
+		EventBus.passenger_arrived.emit(c.case_id)
+		await wait_process_frames(3) # documents posés, arrivée en cours
+		if rulebook.focus_count != seen_focus:
+			seen_focus = rulebook.focus_count
+			var focus_id: StringName = rulebook.last_focused_rule
+			var card: RuleCardView = rulebook.get_rule_card(focus_id)
+			if card != null and is_instance_valid(card):
+				checked += 1
+				var scroll: ScrollContainer = rulebook._scroll
+				if scroll.get_v_scroll_bar().max_value > scroll.size.y + 1.0:
+					long_lists += 1
+				var view: Rect2 = scroll.get_global_rect().grow(1.0)
+				var rect: Rect2 = card.get_global_rect()
+				if not (view.has_point(rect.position) and rect.position.y + minf(rect.size.y, view.size.y) <= view.end.y):
+					missing.append("%s (passager %d)" % [focus_id, i + 1])
+		var kind: VerdictKind.Kind = scene.day_controller.current_key.expected_verdict
+		var verdict: Verdict = Verdict.new(c.case_id, kind)
+		c.remove_visor()
+		for violation: Violation in scene.day_controller.current_key.expected_violations:
+			if not violation.refs.is_empty():
+				var d: Discrepancy = Discrepancy.new(violation.refs[0], violation.refs[violation.refs.size() - 1])
+				d.confirmed = true
+				verdict.flagged.append(d)
+		verdict.questions_asked = [&"purpose"]
+		EventBus.verdict_stamped.emit(verdict)
+		EventBus.passenger_departed.emit(c.case_id)
+		await wait_process_frames(1)
+		if scene.garde_hud != null and scene.garde_hud.card != null and is_instance_valid(scene.garde_hud.card):
+			scene.garde_hud.card.dismiss()
+	# Laisser finir les arrivées et sorties en cours (callbacks des tweens).
+	await wait_seconds(DS.DUR_SLOW * 3.0)
+	gut.p("QA-061 : %d règles surlignées vérifiées, dont %d avec liste défilante" % [checked, long_lists])
+	assert_gt(checked, 0, "au moins une directive vérifiée")
+	assert_eq(missing.size(), 0, "règle surlignée à l'écran : " + ", ".join(missing))
+
+
+## `Workbench.clear()` pendant l'arrivée des documents : les arrivées sont
+## arrêtées (tween porté par le document), aucun rappel sur un objet libéré.
+func test_qa061_workbench_clear_during_arrival_kills_the_arrivals() -> void:
+	Settings.clear_session_value(Settings.KEY_REDUCE_MOTION)
+	DayScene.pending_garde_run = Campaign.start_garde(GARDE_CODE)
+	var scene: DayScene = DAY_SCENE.instantiate()
+	add_child_autofree(scene)
+	await wait_process_frames(3)
+	if scene.garde_run == null:
+		pending("données de Garde absentes")
+		return
+	var ui: ComparisonUI = scene.ui as ComparisonUI
+	EventBus.next_case_requested.emit()
+	var c: Case = scene.day_controller.current_case
+	EventBus.passenger_arrived.emit(c.case_id)
+	await wait_process_frames(3)
+	var workbench: Workbench = ui.workbench
+	assert_gt(workbench._arrivals.size(), 0, "arrivées en cours")
+	var arrivals: Array[Tween] = workbench._arrivals.duplicate()
+	workbench.clear(false)
+	assert_eq(workbench._arrivals.size(), 0, "arrivées oubliées")
+	for tween: Tween in arrivals:
+		assert_false(tween.is_valid() and tween.is_running(), "arrivée arrêtée")
+	await wait_seconds(DS.DUR_SLOW * 3.0)
+
+
+# ---------------------------------------------------------------------------
+# QA-062 / D-138 — EV-08 en Garde : passagers, jamais « 13:00–14:00 »
+# ---------------------------------------------------------------------------
+
+static func _has_clock(text: String) -> bool:
+	return RegEx.create_from_string("\\d{1,2}:\\d{2}").search(text) != null
+
+
+## EV-08 annoncé en Garde (vraie scène) : annonce, bandeau et ligne ambre du
+## Rulebook parlent en passagers (« pour les 5 prochains passagers »,
+## « 5 PASSAGERS ») ; aucune heure de campagne.
+func test_qa062_ev08_in_garde_speaks_in_passengers() -> void:
+	DayScene.pending_garde_run = Campaign.start_garde(GARDE_CODE)
+	var scene: DayScene = DAY_SCENE.instantiate()
+	add_child_autofree(scene)
+	await wait_process_frames(3)
+	var events: StationEventsDef = StationEventService.load_def()
+	if scene.garde_run == null or events == null:
+		pending("données de Garde ou d'événements absentes")
+		return
+	var exemption: StationEventDef = null
+	for event: StationEventDef in events.events:
+		if event != null and event.key == &"exemption":
+			exemption = event
+	assert_not_null(exemption, "EV-08 au catalogue")
+	if exemption == null:
+		return
+	var ui: ComparisonUI = scene.ui as ComparisonUI
+	scene._show_station_event(&"exemption")
+	await wait_process_frames(2)
+	var window: int = maxi(exemption.garde_window_passengers, 1)
+	var banner: String = ui.event_banner.get_text()
+	assert_true(ui.event_banner.visible, "bandeau affiché")
+	assert_false(_has_clock(banner), "bandeau sans heure : « %s »" % banner)
+	assert_string_contains(banner, UiText.plural("sev_ui_remaining", window, "%d PASSAGER", "%d PASSAGERS"), false)
+	assert_false(_has_clock(ui.announcement_text), "annonce sans heure : « %s »" % ui.announcement_text)
+	assert_string_contains(ui.announcement_text, "passager", false)
+	var notes: PackedStringArray = ui.rulebook.event_notes
+	assert_eq(notes.size(), 1, "ligne ambre au Rulebook")
+	for line: String in notes:
+		assert_false(_has_clock(line), "Rulebook sans heure : « %s »" % line)
+		assert_string_contains(line, str(window), false)
+	# Un passager plus tard : un de moins.
+	var plan: StationEventPlan = ui.station_events[0] if not ui.station_events.is_empty() else null
+	assert_not_null(plan)
+	if plan != null:
+		assert_eq(StationEventBanner.passengers_left(plan, plan.start_index + 1), window - 1, "décompte en passagers")
+		assert_string_contains(StationEventBanner.remaining_text(plan, plan.start_index + 1),
+				str(window - 1), false)
+	# La campagne garde sa plage horaire (D-138).
+	var campaign_plan: StationEventPlan = StationEventPlan.new()
+	campaign_plan.event = exemption
+	campaign_plan.clock_from = exemption.clock_from
+	campaign_plan.clock_to = exemption.clock_to
+	assert_true(_has_clock(StationEventBanner.remaining_text(campaign_plan, 0)), "campagne : JUSQU'À 14:00")
+
+
+## QA-055 (écran) : date impossible et caractère accentué ont leur propre
+## message ; « Il faut 6 caractères » reste réservé à la longueur.
+func test_qa055_garde_screen_names_the_real_reason() -> void:
+	var screen: GardeScreen = GardeScreen.new()
+	screen.daily_code = "NUIT-2026-10-29"
+	add_child_autofree(screen)
+	await wait_process_frames(2)
+	var length: String = UiText.t("garde_seed_length", "?")
+	screen.set_code_text("NUIT-2026-13-40")
+	assert_eq(screen.status_text(), UiText.t("garde_seed_bad_date", "?"), "date invalide")
+	assert_ne(screen.status_text(), length)
+	assert_true(screen.play_code_button.disabled)
+	screen.set_code_text("é2Q-9TX")
+	assert_eq(screen.status_text(), UiText.t("garde_seed_bad_char", "?"), "caractère non admis")
+	screen.set_code_text("K2Q-9T")
+	assert_eq(screen.status_text(), length, "longueur")
+	screen.set_code_text("NUIT-2026-10-29")
+	assert_eq(screen.free_code, "NUIT-2026-10-29", "code du jour valide")

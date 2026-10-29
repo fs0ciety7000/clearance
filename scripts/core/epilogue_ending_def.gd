@@ -11,6 +11,11 @@ extends Resource
 ## Ouverture et clôture de la conclusion (`epi_f6t_open`, `epi_f6t_close`).
 @export var open_key: String = ""
 @export var close_key: String = ""
+## QA-056 : variantes conditionnelles de l'ouverture et de la clôture (foyer
+## `hh_*` du matin du J31…) — la première vraie l'emporte ; sinon
+## `open_key` / `close_key`, qui ne nomment aucun proche.
+@export var open_lines: Array[ConditionalKey] = []
+@export var close_lines: Array[ConditionalKey] = []
 ## Jauge dont la valeur remplit le `%d` de l'ouverture (F10 : `pont31`), vide sinon.
 @export var open_gauge: StringName = &""
 ## Lignes du foyer propres à la variante (première vraie) ; vide = celles de

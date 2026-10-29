@@ -805,6 +805,12 @@ static func _day31_d(rs: RuleSet) -> DayDef:
 
 # --- Conclusions (M12 §1.9) ----------------------------------------------------
 
+## QA-056 : variantes dont l'ouverture / la clôture nomment Noa (texte `_noa`,
+## si `hh_noa_present`) ; la clé de base ne nomme personne.
+const NOA_OPEN_LINES: Array[StringName] = [&"f6t"]
+const NOA_CLOSE_LINES: Array[StringName] = [&"f5c", &"f6d"]
+
+
 ## Données de l'épilogue : mondes (jours), variantes de fin, lignes communes,
 ## liste blanche des drapeaux lus par le J31 (calculée depuis les conditions).
 static func build_epilogue(days: Dictionary[StringName, DayDef]) -> EpilogueDef:
@@ -817,7 +823,7 @@ static func build_epilogue(days: Dictionary[StringName, DayDef]) -> EpilogueDef:
 	]
 	def.home_lines = [
 		ConditionalKey.make("epi_home_ilan_reconciled", Act3._all([&"ilan_reconciled", &"hh_ilan_alive"])),
-		ConditionalKey.make("epi_home_noa", Act3._all([&"hh_noa_alive"])),
+		ConditionalKey.make("epi_home_noa", Act3._all([&"hh_noa_present"])),
 	]
 	def.max_lines = 8
 	for world: StringName in WORLDS:
@@ -846,8 +852,13 @@ static func build_epilogue(days: Dictionary[StringName, DayDef]) -> EpilogueDef:
 			e.home_lines = [
 				ConditionalKey.make("epi_home_ilan_tycho", Act3._all([&"ilan_tycho", &"hh_ilan_alive"])),
 				ConditionalKey.make("epi_home_ilan_reconciled", Act3._all([&"ilan_reconciled", &"hh_ilan_alive"])),
-				ConditionalKey.make("epi_home_noa", Act3._all([&"hh_noa_alive"])),
+				ConditionalKey.make("epi_home_noa", Act3._all([&"hh_noa_present"])),
 			]
+		# QA-056 : Noa nommée seulement si elle est là (ni perdue, ni partie, ni retenue).
+		if NOA_OPEN_LINES.has(key):
+			e.open_lines = [ConditionalKey.make("epi_%s_open_noa" % key, Act3._all([&"hh_noa_present"]))]
+		if NOA_CLOSE_LINES.has(key):
+			e.close_lines = [ConditionalKey.make("epi_%s_close_noa" % key, Act3._all([&"hh_noa_present"]))]
 		def.endings.append(e)
 	def.read_flags = read_flags(def)
 	return def
@@ -981,8 +992,9 @@ static func read_flags(def: EpilogueDef) -> Array[StringName]:
 		for line: ConditionalKey in list:
 			_collect(line.condition, found)
 	for ending: EpilogueEndingDef in def.endings:
-		for line: ConditionalKey in ending.home_lines:
-			_collect(line.condition, found)
+		for list: Array[ConditionalKey] in [ending.home_lines, ending.open_lines, ending.close_lines]:
+			for line: ConditionalKey in list:
+				_collect(line.condition, found)
 	var result: Array[StringName] = []
 	for flag: StringName in found:
 		var text: String = String(flag)
@@ -1266,6 +1278,10 @@ static func build_events() -> Array[StationEventDef]:
 			[Passenger.PURPOSE_TRANSIT])]
 	exemption.garde_required_unit = &"u07"
 	exemption.garde_window_passengers = 5
+	# D-138 (QA-062) : en Garde, la fenêtre se dit en passagers, jamais en heure.
+	exemption.garde_announce_key = "sev_exemption_announce_garde"
+	exemption.garde_title_key = "sev_exemption_title_garde"
+	exemption.garde_rulebook_key = "sev_exemption_rb_garde"
 	return [mrz, comparator, quarantine, inspection, blackout, crowd, stolen, exemption]
 
 

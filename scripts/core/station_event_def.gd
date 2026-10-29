@@ -47,6 +47,12 @@ enum WindowKind {
 ## Changements propres à la Garde (EV-04 : points doubles) ; vide = `changes`.
 @export var garde_changes: Array[RuleChangeDef] = []
 @export var garde_announce_key: String = ""
+## D-138 (QA-062) : titre du bandeau et ligne du Rulebook propres à la Garde
+## (fenêtre exprimée en passagers : EV-08 « pour les 5 prochains passagers ») ;
+## vide = `title_key` / `rulebook_key`. Lus par `StationEventPlan.title_key()`
+## / `rulebook_key()`.
+@export var garde_title_key: String = ""
+@export var garde_rulebook_key: String = ""
 
 
 func is_class_b() -> bool:

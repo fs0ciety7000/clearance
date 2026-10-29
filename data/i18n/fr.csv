@@ -3145,7 +3145,7 @@ epi_f5b_close,"Kasimir avoue encore, chaque mois, à une heure différente. Vous
 epi_f7_open,18:00. Le Guichet 04 ferme. La borne voisine reste allumée toute la nuit.
 epi_f7_close,"Lundi, le guichet rouvre. La file serpente entre les barrières. « Suivant. »"
 epi_f5c_open,"18:00. Au-dessus de votre vitre, la Charte de l'air. Quelqu'un a corrigé une faute au crayon."
-epi_f5c_close,"Vous rendez votre tampon, encore. Noa le range avec l'autre. Elle en a deux, maintenant."
+epi_f5c_close,"Vous rendez votre tampon, encore. Vous le rangez avec l'autre, au fond du tiroir. Il y en a deux, maintenant."
 epi_f5s_open,"18:00. La Transit-7 repart vers Tycho, pleine de bonbonnes. Personne ne compte les places."
 epi_f5s_close,Le bulletin parle d'une « initiative du Consortium ». Le Directoire a signé un mois après tout le monde.
 epi_f9_open,"18:00. Le Guichet 04 s'éteint, puis le 05, puis tous : un an jour pour jour. Cette fois, c'est une fête."
@@ -3156,10 +3156,10 @@ epi_f10_open,18:00. %d personnes de Tycho sont entrées aujourd'hui par votre vi
 epi_f10_close,Le Bureau dit « afflux régulier ». Les enfants de l'Anneau C disent « le Pont ». Vous ne corrigez personne.
 epi_f2_open,18:00. Le sas se ferme. Le comité vous donne votre tour d'air : le quatrième. Vous le prenez.
 epi_f2_close,"L'Autorité de Transit disait « réaffecté·e ». Tycho dit « accueilli·e ». Le même tampon, à l'envers."
-epi_f6t_open,18:00. Le comité éteint la lampe du sas. Noa vous attend au réfectoire avec une place gardée.
+epi_f6t_open,"18:00. Le comité éteint la lampe du sas. Au réfectoire, quelqu'un vous a gardé une place."
 epi_f6t_close,"Le premier soir, on vous avait demandé de quel côté de la vitre vous étiez. Ce soir, personne ne demande."
 epi_f6d_open,"18:00. Le Basse-Marée se détache du quai Castellanos. Wren fait un signe : pas un adieu, une escale."
-epi_f6d_close,"Noa dit ‹vanu› à chaque hublot. Ici, il y en a peu. Elle le dit aux lampes."
+epi_f6d_close,"Ici, il y a peu de hublots. Vous dites ‹vanu› aux lampes, comme on vous l'a appris."
 epi_a_sato_refused,Sato a écrit « humain supérieur à la machine ». La note a été classée sans suite.
 epi_a_sato_passed,Sato a écrit « vitre conforme à la borne ». On vous l'a lu comme un compliment.
 epi_a_sato_fallen,Sato répare la borne voisine jusqu'à 19:00. Il lui parle doucement.
@@ -3205,11 +3205,11 @@ dos_world_c,La Mémoire
 dos_world_d,L'Autre côté
 sev_mrz_reader_title,LECTEUR DE BANDE HS
 sev_mrz_reader_announce,Avis technique : les lecteurs de bande du Hall sont hors service. Contrôle MRZ suspendu jusqu'à nouvel ordre. Les autres contrôles restent dus.
-sev_mrz_reader_rb,R21 SUSPENDUE · LECTEUR HS (%d passagers)
+sev_mrz_reader_rb,R21 SUSPENDUE · LECTEUR HS (passagers restants : %d)
 sev_mrz_reader_end,Lecteurs de bande rétablis. Contrôle MRZ dû.
 sev_comparator_title,COMPARATEUR HS
 sev_comparator_announce,Avis technique : le comparateur du Guichet 04 redémarre. Citez les discordances sur votre propre constat. Les refus restent motivés d'office.
-sev_comparator_rb,COMPARATEUR HS · CONSTAT DE L'AGENT (%d passagers)
+sev_comparator_rb,COMPARATEUR HS · CONSTAT DE L'AGENT (passagers restants : %d)
 sev_comparator_end,Comparateur rétabli.
 sev_quarantine_title,ALERTE MERIDIAN
 sev_quarantine_announce,Clinique Orbitale Meridian : cas de Fièvre grise à bord de la Transit-7. Ressortissants de Tycho : bio-scan de moins de 7 jours exigé jusqu'à la fermeture.
@@ -3479,8 +3479,8 @@ garde_records_none,Aucune garde enregistrée. La première fixe le record.
 garde_best,MEILLEUR SCORE
 garde_best_detail,passagers jugés juste
 garde_stats,GARDES
-garde_stats_detail,%d verdicts justes · plus longue : %d passagers
-garde_stats_line,%d gardes · %d verdicts justes · plus longue : %d passagers
+garde_stats_detail,%d verdicts justes · plus longue garde (passagers) : %d
+garde_stats_line,%d gardes · %d verdicts justes · plus longue garde (passagers) : %d
 garde_free_seeds,GRAINES LIBRES
 garde_col_rank,N°
 garde_col_score,SCORE
@@ -3609,3 +3609,14 @@ sev_ui_comparator_text,"Comparateur hors service : paire notée, sans verdict. �
 qp_endless_total,/ ∞
 qp_endless,∞
 rb_garde_day,GARDE DE NUIT
+garde_end_procedure,%s · ERREUR DE PROCÉDURE
+garde_end_cause,En cause : %s
+garde_seed_bad_date,"Date invalide : NUIT-AAAA-MM-JJ, une vraie date du calendrier."
+garde_seed_bad_char,Caractère non admis : lettres A–Z et chiffres 2–9 seulement.
+epi_scroll_more,SUITE · défiler
+epi_f5c_close_noa,"Vous rendez votre tampon, encore. Noa le range avec l'autre. Elle en a deux, maintenant."
+epi_f6t_open_noa,18:00. Le comité éteint la lampe du sas. Noa vous attend au réfectoire avec une place gardée.
+epi_f6d_close_noa,"Noa dit ‹vanu› à chaque hublot. Ici, il y en a peu. Elle le dit aux lampes."
+sev_exemption_title_garde,EXEMPTION TRANSIT
+sev_exemption_announce_garde,"Clinique Meridian saturée : pour les cinq prochains passagers, motif TRANSIT dispensé de bio-scan. Les autres motifs restent soumis à R11."
+sev_exemption_rb_garde,TRANSIT SANS BIO-SCAN (passagers restants : %d)

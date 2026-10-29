@@ -30,6 +30,20 @@ const DISTANCE: float = 1.75
 ## Ligne des yeux à 42 % de la hauteur depuis le haut.
 const EYE_LINE: float = 0.42
 
+## QA-053 : plafond du cache (LRU). La Garde ne recharge jamais la scène : sans
+## plafond, un portrait par passager s'accumule (+0,4 Mo chacun). Une texture
+## évincée reste valide pour qui l'affiche encore ; redemandée, elle est
+## re-rendue. Campagne : le cache est déjà vidé à chaque jour, le plafond
+## (≥ la file d'un jour) n'évince presque jamais. Garde (session sans fin) :
+## plafond serré — le passager à la vitre, les quelques précédents et les avis
+## du Rulebook.
+const DEFAULT_MAX_ENTRIES: int = 24
+const GARDE_MAX_ENTRIES: int = 12
+
+## Taille maximale du cache ; 0 = automatique (`GARDE_MAX_ENTRIES` en session
+## de Garde, sinon `DEFAULT_MAX_ENTRIES`). Ordre d'insertion du dictionnaire =
+## ordre d'utilisation (le plus ancien en tête).
+var max_entries: int = 0
 var _cache: Dictionary[String, ImageTexture] = {}
 var _queue: Array[Array] = []
 var _busy: bool = false
@@ -53,9 +67,14 @@ func get_portrait(appearance: PassengerAppearance) -> Texture2D:
 		return null
 	var key: String = signature(appearance)
 	if _cache.has(key):
-		return _cache[key]
+		# LRU : la signature redevient la plus récente.
+		var cached: ImageTexture = _cache[key]
+		_cache.erase(key)
+		_cache[key] = cached
+		return cached
 	var texture: ImageTexture = ImageTexture.create_from_image(sketch(appearance))
 	_cache[key] = texture
+	_evict()
 	if not _headless and is_inside_tree():
 		_queue.append([appearance.copy(), texture])
 		_pump.call_deferred()
@@ -68,6 +87,20 @@ func clear_cache() -> void:
 
 func cache_size() -> int:
 	return _cache.size()
+
+
+## Plafond en vigueur (voir `max_entries`).
+func cache_limit() -> int:
+	if max_entries > 0:
+		return max_entries
+	return GARDE_MAX_ENTRIES if GameState.session_mode == GameState.SESSION_GARDE else DEFAULT_MAX_ENTRIES
+
+
+## Retire les signatures les moins récemment utilisées au-delà de `cache_limit()`.
+func _evict() -> void:
+	var limit: int = cache_limit()
+	while _cache.size() > limit:
+		_cache.erase(_cache.keys()[0])
 
 
 static func signature(appearance: PassengerAppearance) -> String:

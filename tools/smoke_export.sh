@@ -10,11 +10,33 @@
 #    (Acte III : répondants, lock-out, dernier jour).
 #    Détecte ce que la suite GUT ne voit pas : ressources mal converties à
 #    l'export, fichiers non embarqués, traduction absente…
+# 3. M12 : une Garde de nuit courte (`--garde=CODE`, 8 passagers jugés dont
+#    3 faux : directive n° 1, puis FIN DE GARDE) et un J31 par clé d'épilogue
+#    (`--epilogue=<fin>`, 7 passagers jugés puis conclusion).
 # Échec si une ligne ERROR / SCRIPT ERROR apparaît (hors fuites signalées à la
 # sortie forcée par --quit-after). Données utilisateur isolées dans build/smoke/.
 #
-# Usage : bash tools/smoke_export.sh     (GODOT=… pour un autre binaire)
+# Usage : bash tools/smoke_export.sh [--garde=CODE] [--epilogue=<fin>]…
+#   --garde=CODE      code de la Garde (défaut K2Q-9TX ; --garde seul = défaut)
+#   --epilogue=<fin>  fin d'où part le J31 (répétable ; défaut f10_pont et
+#                     f6_drift : mondes C et D) — ex. --epilogue=f9_strike
+#   --no-m12          campagne seule (comportement d'avant M12)
+#   GODOT=… pour un autre binaire.
 set -euo pipefail
+
+GARDE_CODE="K2Q-9TX"
+EPILOGUES=()
+WITH_M12=1
+for arg in "$@"; do
+	case "$arg" in
+		--garde) ;;
+		--garde=*) GARDE_CODE="${arg#--garde=}" ;;
+		--epilogue=*) EPILOGUES+=("${arg#--epilogue=}") ;;
+		--no-m12) WITH_M12=0 ;;
+		*) echo "smoke_export: argument inconnu : $arg" >&2; exit 2 ;;
+	esac
+done
+[[ ${#EPILOGUES[@]} -gt 0 ]] || EPILOGUES=(f10_pont f6_drift)
 
 GODOT="${GODOT:-godot}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -50,5 +72,11 @@ printf '[application]\n\nrun/main_scene="res://scenes/main/day.tscn"\n' > "$SMOK
 for day in 1 4 7 10 15 20 25 30; do
 	run "debug_day$day" "$SMOKE/debug" --quit-after 2000 -- --day="$day" --seed=3 --autoplay
 done
+if [[ $WITH_M12 -eq 1 ]]; then
+	run "debug_garde" "$SMOKE/debug" --quit-after 900 -- --garde="$GARDE_CODE" --skip-cases=8 --wrong-cases=3
+	for ending in "${EPILOGUES[@]}"; do
+		run "debug_epilogue_$ending" "$SMOKE/debug" --quit-after 900 -- --epilogue="$ending" --skip-cases=7
+	done
+fi
 rm -rf "$SMOKE/debug" "$SMOKE/xdg"
 echo "== smoke test OK (journaux dans build/smoke/)"

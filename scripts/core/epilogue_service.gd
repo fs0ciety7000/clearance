@@ -307,7 +307,9 @@ static func conclusion(epi: Dictionary, flags: Dictionary[StringName, Variant], 
 	var world: EpilogueWorldDef = source.get_world(world_id)
 	var ending_def: EpilogueEndingDef = source.get_ending(key)
 	var args: Dictionary = {}
-	var opening: String = ending_def.open_key if ending_def != null else ""
+	var opening: String = ""
+	if ending_def != null:
+		opening = ConditionalKey.first_match(ending_def.open_lines, flags, ending_def.open_key)
 	if ending_def != null and ending_def.open_gauge != &"" and not opening.is_empty():
 		args[opening] = [FlagCondition.gauge_value(flags, ending_def.open_gauge)]
 	var middle: PackedStringArray = []
@@ -333,7 +335,9 @@ static func conclusion(epi: Dictionary, flags: Dictionary[StringName, Variant], 
 		if ending_def != null and not ending_def.home_lines.is_empty():
 			home_lines = ending_def.home_lines
 		home = ConditionalKey.first_match(home_lines, flags, "")
-	var closing: String = ending_def.close_key if ending_def != null else ""
+	var closing: String = ""
+	if ending_def != null:
+		closing = ConditionalKey.first_match(ending_def.close_lines, flags, ending_def.close_key)
 	var fixed: int = middle.size() + (1 if not opening.is_empty() else 0) + (1 if not home.is_empty() else 0) \
 			+ (1 if not closing.is_empty() else 0)
 	while world_lines.size() > 0 and fixed + world_lines.size() > source.max_lines:

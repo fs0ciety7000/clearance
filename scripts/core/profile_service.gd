@@ -391,6 +391,7 @@ static func migrate_v1(raw: Dictionary, dir: String = SaveService.DEFAULT_DIR) -
 		SaveService.write_atomic(backup, JSON.stringify(raw, "\t", true))
 	var profile: Dictionary = sanitize(raw)
 	var latest_key: String = ""
+	var known_flags: Array = []
 	for meta: Dictionary in SaveService.list_slots(dir):
 		if meta.is_empty() or SaveService.is_damaged(meta):
 			continue
@@ -404,6 +405,7 @@ static func migrate_v1(raw: Dictionary, dir: String = SaveService.DEFAULT_DIR) -
 		if current.is_empty() or not EndingService.ALL_ENDINGS.has(ending):
 			continue
 		var flags: Dictionary[StringName, Variant] = _flags_of(current)
+		known_flags.append(flags)
 		var variant: StringName = EpilogueService.variant_of(ending, flags)
 		var day: int = maxi(SaveService.as_int(current.get("current_day", 1)), 1)
 		var endings: Array = profile["endings_seen"]
@@ -431,9 +433,42 @@ static func migrate_v1(raw: Dictionary, dir: String = SaveService.DEFAULT_DIR) -
 					"ending_key": String(EpilogueService.ending_key(ending, variant)), "act": EpilogueService.act_of(flags),
 					"day": day, "date": key, "campaign_seed": SaveService.as_int(current.get("campaign_seed", 0)),
 					"climate": String(EndingService.climate_of(flags)), "traces": [], "world": str(epi.get("world", ""))}
+	_infer_from_endings(profile, known_flags)
 	profile["version"] = VERSION
 	save_profile(profile, dir)
 	return sanitize(profile)
+
+
+## QA-052 : progrès déduit des fins vues du profil v1 lui-même (un joueur 0.11
+## qui a supprimé sa partie n'a plus d'emplacement) : `max_day_reached` ≥ jour
+## de chaque fin, `epilogue_unlocked` si une fin de l'Acte III (F1–F10) est
+## vue, `known_names` appris à toute fin (`known_on_ending`) ou par les
+## drapeaux des parties terminées encore présentes (`known_flags`).
+static func _infer_from_endings(profile: Dictionary, known_flags: Array) -> void:
+	var endings: Array = profile["endings_seen"]
+	for entry: Variant in endings:
+		if not entry is Dictionary:
+			continue
+		var row: Dictionary = entry
+		var day: int = SaveService.as_int(row.get("day", 0))
+		profile["max_day_reached"] = maxi(SaveService.as_int(profile["max_day_reached"]), day)
+		var act: int = SaveService.as_int(row.get("act", act_of_day(day)))
+		if act == 3 and EndingService.ALL_ENDINGS.has(StringName(str(row.get("id", "")))):
+			profile["epilogue_unlocked"] = true
+	if endings.is_empty():
+		return
+	var table: CharacterTableDef = CharacterTableDef.load_default()
+	if table == null:
+		return
+	var known: Array = profile["known_names"]
+	var none: Dictionary[StringName, Variant] = {}
+	var sources: Array = known_flags.duplicate()
+	sources.append(none)
+	for item: Variant in sources:
+		var flags: Dictionary[StringName, Variant] = item
+		for chr_id: String in table.known_names(flags, true):
+			if not known.has(chr_id):
+				known.append(chr_id)
 
 
 # --- Outils ---------------------------------------------------------------------------

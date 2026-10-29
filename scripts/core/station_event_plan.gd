@@ -62,17 +62,51 @@ func announce_key() -> String:
 	return event.announce_key
 
 
+## Titre du bandeau (Garde : `garde_title_key` s'il y en a ; D-138).
+func title_key() -> String:
+	if event == null:
+		return ""
+	if garde and not event.garde_title_key.is_empty():
+		return event.garde_title_key
+	return event.title_key if not event.title_key.is_empty() else "sev_%s_title" % event.key
+
+
+## Ligne ambre du Rulebook (Garde : `garde_rulebook_key` s'il y en a ; D-138),
+## vide si l'événement n'en a pas. `%d` = `remaining(processed)`.
+func rulebook_key() -> String:
+	if event == null:
+		return ""
+	if garde and not event.garde_rulebook_key.is_empty():
+		return event.garde_rulebook_key
+	return event.rulebook_key
+
+
+## Fenêtre effective : en Garde, toute fenêtre se compte en passagers
+## (`garde_window_passengers`, D-138) — jamais en heure ni en secondes.
+func window_kind() -> StationEventDef.WindowKind:
+	if garde or event == null:
+		return StationEventDef.WindowKind.PASSENGERS
+	return event.window_kind
+
+
+## Vrai si la fenêtre se compte en passagers (bandeau « n PASSAGERS »).
+func counts_passengers() -> bool:
+	return window_kind() == StationEventDef.WindowKind.PASSENGERS or (window_kind() == StationEventDef.WindowKind.REST_OF_DAY
+			and end_index >= 0)
+
+
 ## Vrai si l'index de passager est dans la fenêtre (fenêtres en passagers).
 func covers(index: int) -> bool:
-	if event != null and (event.window_kind == StationEventDef.WindowKind.CLOCK or event.window_kind == StationEventDef.WindowKind.SECONDS):
+	if window_kind() == StationEventDef.WindowKind.CLOCK or window_kind() == StationEventDef.WindowKind.SECONDS:
 		return state == State.ACTIVE
 	return index >= start_index and (end_index < 0 or index < end_index)
 
 
 ## Passagers restants dans la fenêtre après `processed` passagers traités
-## (−1 : jusqu'à la fin du jour, ou fenêtre horaire / en secondes).
+## (−1 : jusqu'à la fin du jour, ou fenêtre horaire / en secondes de la
+## campagne). En Garde, toujours un nombre de passagers (D-138).
 func remaining(processed: int) -> int:
-	if end_index < 0 or (event != null and event.window_kind in [StationEventDef.WindowKind.CLOCK, StationEventDef.WindowKind.SECONDS]):
+	if end_index < 0 or window_kind() in [StationEventDef.WindowKind.CLOCK, StationEventDef.WindowKind.SECONDS]:
 		return -1
 	return maxi(end_index - maxi(processed, start_index), 0)
 

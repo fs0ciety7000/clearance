@@ -346,3 +346,41 @@ func test_stratified_schedule_counts_and_strata() -> void:
 	for campaign_seed: int in range(1, 30):
 		assert_eq(StationEventService.schedule(campaign_seed, few, data.days).size(), 1,
 				"deux jours consécutifs : un seul événement")
+
+
+## D-138 (QA-062) : EV-08 en Garde se compte en passagers — annonce, bandeau
+## et Rulebook propres à la Garde, sans heure ; la campagne garde 13:00–14:00.
+func test_ev08_in_garde_counts_passengers_not_hours() -> void:
+	var def: StationEventsDef = StationEventService.load_def()
+	if def == null:
+		pending("données d'événements absentes")
+		return
+	var ev08: StationEventDef = null
+	for event: StationEventDef in def.events:
+		if event.id == &"ev_08":
+			ev08 = event
+	assert_not_null(ev08, "EV-08")
+	if ev08 == null:
+		return
+	var plan: StationEventPlan = StationEventService.garde_plan(ev08, 30)
+	plan.state = StationEventPlan.State.ACTIVE
+	assert_eq(plan.window_kind(), StationEventDef.WindowKind.PASSENGERS)
+	assert_true(plan.counts_passengers())
+	assert_eq(plan.remaining(30), ev08.garde_window_passengers, "5 passagers restants")
+	assert_eq(plan.remaining(33), ev08.garde_window_passengers - 3)
+	assert_true(plan.covers(30) and not plan.covers(30 + ev08.garde_window_passengers), "fenêtre en passagers")
+	for key: String in [plan.announce_key(), plan.title_key(), plan.rulebook_key()]:
+		assert_true(key.ends_with("_garde"), "%s : texte de Garde" % key)
+		var text: String = UiText.t(key, "")
+		assert_false(text.is_empty(), "%s traduit" % key)
+		assert_false(text.contains("13:00") or text.contains("14:00"), "%s : aucune heure (« %s »)" % [key, text])
+	assert_true(UiText.t(plan.announce_key(), "").contains("cinq prochains passagers"))
+	for change: RuleChangeDef in plan.changes():
+		assert_eq(change.from_minute, -1, "surcharge de Garde sans plage horaire")
+	# Campagne : plage horaire inchangée.
+	var day_plan: StationEventPlan = StationEventPlan.new()
+	day_plan.event = ev08
+	assert_eq(day_plan.window_kind(), StationEventDef.WindowKind.CLOCK)
+	assert_eq(day_plan.title_key(), ev08.title_key)
+	assert_eq(day_plan.rulebook_key(), ev08.rulebook_key)
+	assert_eq(day_plan.remaining(3), -1)

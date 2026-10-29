@@ -52,15 +52,25 @@ open_key = "epi_f7_open"
 close_key = "epi_f7_close"
 intro_key = "day31_a_intro_f7"
 
+[sub_resource type="Resource" id="epi_resource_116"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_115"]
+script = ExtResource("2_6xmbx")
+key = "epi_f5c_close_noa"
+condition = SubResource("epi_resource_116")
+
 [sub_resource type="Resource" id="epi_resource_114"]
 script = ExtResource("1_48232")
 key = &"f5c"
 world = &"b"
 open_key = "epi_f5c_open"
 close_key = "epi_f5c_close"
+close_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_115")])
 intro_key = "day31_b_intro_f5c"
 
-[sub_resource type="Resource" id="epi_resource_115"]
+[sub_resource type="Resource" id="epi_resource_117"]
 script = ExtResource("1_48232")
 key = &"f5s"
 world = &"b"
@@ -68,7 +78,7 @@ open_key = "epi_f5s_open"
 close_key = "epi_f5s_close"
 intro_key = "day31_b_intro_f5s"
 
-[sub_resource type="Resource" id="epi_resource_116"]
+[sub_resource type="Resource" id="epi_resource_118"]
 script = ExtResource("1_48232")
 key = &"f9"
 world = &"b"
@@ -76,7 +86,7 @@ open_key = "epi_f9_open"
 close_key = "epi_f9_close"
 intro_key = "day31_b_intro_f9"
 
-[sub_resource type="Resource" id="epi_resource_117"]
+[sub_resource type="Resource" id="epi_resource_119"]
 script = ExtResource("1_48232")
 key = &"f8"
 world = &"c"
@@ -84,7 +94,7 @@ open_key = "epi_f8_open"
 close_key = "epi_f8_close"
 intro_key = "day31_c_intro_f8"
 
-[sub_resource type="Resource" id="epi_resource_118"]
+[sub_resource type="Resource" id="epi_resource_120"]
 script = ExtResource("1_48232")
 key = &"f10"
 world = &"c"
@@ -93,149 +103,169 @@ close_key = "epi_f10_close"
 open_gauge = &"pont31"
 intro_key = "day31_c_intro_f10"
 
-[sub_resource type="Resource" id="epi_resource_121"]
+[sub_resource type="Resource" id="epi_resource_123"]
 script = ExtResource("3_refc7")
 all_of = Array[StringName]([&"ilan_tycho", &"hh_ilan_alive"])
 
-[sub_resource type="Resource" id="epi_resource_120"]
-script = ExtResource("2_6xmbx")
-key = "epi_home_ilan_tycho"
-condition = SubResource("epi_resource_121")
-
-[sub_resource type="Resource" id="epi_resource_123"]
-script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
-
 [sub_resource type="Resource" id="epi_resource_122"]
 script = ExtResource("2_6xmbx")
-key = "epi_home_ilan_reconciled"
+key = "epi_home_ilan_tycho"
 condition = SubResource("epi_resource_123")
 
 [sub_resource type="Resource" id="epi_resource_125"]
 script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"hh_noa_alive"])
+all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
 
 [sub_resource type="Resource" id="epi_resource_124"]
 script = ExtResource("2_6xmbx")
-key = "epi_home_noa"
+key = "epi_home_ilan_reconciled"
 condition = SubResource("epi_resource_125")
 
-[sub_resource type="Resource" id="epi_resource_119"]
+[sub_resource type="Resource" id="epi_resource_127"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_126"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_noa"
+condition = SubResource("epi_resource_127")
+
+[sub_resource type="Resource" id="epi_resource_121"]
 script = ExtResource("1_48232")
 key = &"f2"
 world = &"d"
 open_key = "epi_f2_open"
 close_key = "epi_f2_close"
-home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_120"), SubResource("epi_resource_122"), SubResource("epi_resource_124")])
+home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_122"), SubResource("epi_resource_124"), SubResource("epi_resource_126")])
 intro_key = "day31_d_intro_f2"
-
-[sub_resource type="Resource" id="epi_resource_128"]
-script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"ilan_tycho", &"hh_ilan_alive"])
-
-[sub_resource type="Resource" id="epi_resource_127"]
-script = ExtResource("2_6xmbx")
-key = "epi_home_ilan_tycho"
-condition = SubResource("epi_resource_128")
-
-[sub_resource type="Resource" id="epi_resource_130"]
-script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
-
-[sub_resource type="Resource" id="epi_resource_129"]
-script = ExtResource("2_6xmbx")
-key = "epi_home_ilan_reconciled"
-condition = SubResource("epi_resource_130")
 
 [sub_resource type="Resource" id="epi_resource_132"]
 script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"hh_noa_alive"])
+all_of = Array[StringName]([&"ilan_tycho", &"hh_ilan_alive"])
 
 [sub_resource type="Resource" id="epi_resource_131"]
 script = ExtResource("2_6xmbx")
-key = "epi_home_noa"
+key = "epi_home_ilan_tycho"
 condition = SubResource("epi_resource_132")
 
-[sub_resource type="Resource" id="epi_resource_126"]
+[sub_resource type="Resource" id="epi_resource_134"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_133"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_reconciled"
+condition = SubResource("epi_resource_134")
+
+[sub_resource type="Resource" id="epi_resource_136"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_135"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_noa"
+condition = SubResource("epi_resource_136")
+
+[sub_resource type="Resource" id="epi_resource_130"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_129"]
+script = ExtResource("2_6xmbx")
+key = "epi_f6t_open_noa"
+condition = SubResource("epi_resource_130")
+
+[sub_resource type="Resource" id="epi_resource_128"]
 script = ExtResource("1_48232")
 key = &"f6t"
 world = &"d"
 open_key = "epi_f6t_open"
 close_key = "epi_f6t_close"
-home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_127"), SubResource("epi_resource_129"), SubResource("epi_resource_131")])
+open_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_129")])
+home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_131"), SubResource("epi_resource_133"), SubResource("epi_resource_135")])
 intro_key = "day31_d_intro_f6t"
-
-[sub_resource type="Resource" id="epi_resource_135"]
-script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"ilan_tycho", &"hh_ilan_alive"])
-
-[sub_resource type="Resource" id="epi_resource_134"]
-script = ExtResource("2_6xmbx")
-key = "epi_home_ilan_tycho"
-condition = SubResource("epi_resource_135")
-
-[sub_resource type="Resource" id="epi_resource_137"]
-script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
-
-[sub_resource type="Resource" id="epi_resource_136"]
-script = ExtResource("2_6xmbx")
-key = "epi_home_ilan_reconciled"
-condition = SubResource("epi_resource_137")
 
 [sub_resource type="Resource" id="epi_resource_139"]
 script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"hh_noa_alive"])
+all_of = Array[StringName]([&"hh_noa_present"])
 
 [sub_resource type="Resource" id="epi_resource_138"]
 script = ExtResource("2_6xmbx")
-key = "epi_home_noa"
+key = "epi_f6d_close_noa"
 condition = SubResource("epi_resource_139")
 
-[sub_resource type="Resource" id="epi_resource_133"]
+[sub_resource type="Resource" id="epi_resource_141"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_tycho", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_140"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_tycho"
+condition = SubResource("epi_resource_141")
+
+[sub_resource type="Resource" id="epi_resource_143"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_142"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_reconciled"
+condition = SubResource("epi_resource_143")
+
+[sub_resource type="Resource" id="epi_resource_145"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_144"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_noa"
+condition = SubResource("epi_resource_145")
+
+[sub_resource type="Resource" id="epi_resource_137"]
 script = ExtResource("1_48232")
 key = &"f6d"
 world = &"d"
 open_key = "epi_f6d_open"
 close_key = "epi_f6d_close"
-home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_134"), SubResource("epi_resource_136"), SubResource("epi_resource_138")])
+close_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_138")])
+home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_140"), SubResource("epi_resource_142"), SubResource("epi_resource_144")])
 intro_key = "day31_d_intro_f6d"
-
-[sub_resource type="Resource" id="epi_resource_141"]
-script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"sc90_first_passed"])
-
-[sub_resource type="Resource" id="epi_resource_140"]
-script = ExtResource("2_6xmbx")
-key = "epi_first_passed"
-condition = SubResource("epi_resource_141")
-
-[sub_resource type="Resource" id="epi_resource_143"]
-script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"sc90_first_refused"])
-
-[sub_resource type="Resource" id="epi_resource_142"]
-script = ExtResource("2_6xmbx")
-key = "epi_first_refused"
-condition = SubResource("epi_resource_143")
-
-[sub_resource type="Resource" id="epi_resource_145"]
-script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
-
-[sub_resource type="Resource" id="epi_resource_144"]
-script = ExtResource("2_6xmbx")
-key = "epi_home_ilan_reconciled"
-condition = SubResource("epi_resource_145")
 
 [sub_resource type="Resource" id="epi_resource_147"]
 script = ExtResource("3_refc7")
-all_of = Array[StringName]([&"hh_noa_alive"])
+all_of = Array[StringName]([&"sc90_first_passed"])
 
 [sub_resource type="Resource" id="epi_resource_146"]
 script = ExtResource("2_6xmbx")
-key = "epi_home_noa"
+key = "epi_first_passed"
 condition = SubResource("epi_resource_147")
+
+[sub_resource type="Resource" id="epi_resource_149"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"sc90_first_refused"])
+
+[sub_resource type="Resource" id="epi_resource_148"]
+script = ExtResource("2_6xmbx")
+key = "epi_first_refused"
+condition = SubResource("epi_resource_149")
+
+[sub_resource type="Resource" id="epi_resource_151"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"ilan_reconciled", &"hh_ilan_alive"])
+
+[sub_resource type="Resource" id="epi_resource_150"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_ilan_reconciled"
+condition = SubResource("epi_resource_151")
+
+[sub_resource type="Resource" id="epi_resource_153"]
+script = ExtResource("3_refc7")
+all_of = Array[StringName]([&"hh_noa_present"])
+
+[sub_resource type="Resource" id="epi_resource_152"]
+script = ExtResource("2_6xmbx")
+key = "epi_home_noa"
+condition = SubResource("epi_resource_153")
 
 [sub_resource type="Resource" id="epi_resource_46"]
 script = ExtResource("3_refc7")
@@ -750,6 +780,6 @@ farewell_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_105"),
 script = ExtResource("4_7bxux")
 read_flags = Array[StringName]([&"dora_detained_final", &"exit3_drift", &"final3_denied", &"final3_detained", &"final3_dora", &"final3_passed", &"final3_unprocessed", &"ilan_estranged", &"ilan_reconciled", &"ilan_tycho", &"noa_coached", &"okonkwo_denounced", &"okonkwo_shielded", &"okonkwo_warned", &"sc24_dmitri_hired", &"sc41_sato_spared", &"sc54_sato_reinstated", &"sc56_okafor_refused", &"sc59_beaumont_spared", &"sc63_dmitri_locked_out", &"sc65_yara_passed", &"sc74_elena_passed", &"sc75_okonkwo_passed", &"sc81_okafor_refused", &"sc81b_beaumont_passed"])
 worlds = Array[ExtResource("5_nwyuv")]([SubResource("epi_resource_1"), SubResource("epi_resource_49"), SubResource("epi_resource_71"), SubResource("epi_resource_91")])
-endings = Array[ExtResource("1_48232")]([SubResource("epi_resource_109"), SubResource("epi_resource_110"), SubResource("epi_resource_111"), SubResource("epi_resource_112"), SubResource("epi_resource_113"), SubResource("epi_resource_114"), SubResource("epi_resource_115"), SubResource("epi_resource_116"), SubResource("epi_resource_117"), SubResource("epi_resource_118"), SubResource("epi_resource_119"), SubResource("epi_resource_126"), SubResource("epi_resource_133")])
-first_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_140"), SubResource("epi_resource_142")])
-home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_144"), SubResource("epi_resource_146")])
+endings = Array[ExtResource("1_48232")]([SubResource("epi_resource_109"), SubResource("epi_resource_110"), SubResource("epi_resource_111"), SubResource("epi_resource_112"), SubResource("epi_resource_113"), SubResource("epi_resource_114"), SubResource("epi_resource_117"), SubResource("epi_resource_118"), SubResource("epi_resource_119"), SubResource("epi_resource_120"), SubResource("epi_resource_121"), SubResource("epi_resource_128"), SubResource("epi_resource_137")])
+first_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_146"), SubResource("epi_resource_148")])
+home_lines = Array[ExtResource("2_6xmbx")]([SubResource("epi_resource_150"), SubResource("epi_resource_152")])

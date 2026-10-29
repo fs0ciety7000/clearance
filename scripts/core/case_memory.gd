@@ -162,7 +162,51 @@ static func resolve(data: DataCatalog, day: DayDef, campaign_seed: int, memory: 
 		var entry: Dictionary = recall(data, campaign_seed, source)
 		if not entry.is_empty():
 			result[String(source)] = entry
+	# QA-060 : visage de la photo d'un cas antérieur (SC-84b ← SC-03) absent
+	# d'une mémoire 0.11 (champ ajouté en M12) : recalculé de façon
+	# déterministe (D-057) si le cas rejoué présente la même identité.
+	for scripted: ScriptedCaseDef in day.scripted_cases:
+		if scripted == null or scripted.appearance_from_photo == &"":
+			continue
+		var key: String = String(scripted.appearance_from_photo)
+		var remembered: Variant = result.get(key, null)
+		if not remembered is Dictionary:
+			continue
+		var stored: Dictionary = remembered
+		if stored.has("photo_appearance"):
+			continue
+		var photo: Dictionary = recall_photo(data, campaign_seed, scripted.appearance_from_photo, stored)
+		if not photo.is_empty():
+			stored["photo_appearance"] = photo
 	return result
+
+
+## QA-060 : visage de la photo de la carte présentée par un cas scénarisé
+## (`photo_appearance` de `snapshot`), recalculé en rejouant le cas complet
+## (anomalies imposées comprises) sur la graine de campagne. Vide si le cas
+## n'existe pas, si sa photo est le visage du porteur, ou si l'identité
+## rejouée diffère de celle de `entry` (données d'une autre version).
+static func recall_photo(data: DataCatalog, campaign_seed: int, scripted_id: StringName, entry: Dictionary = {}) -> Dictionary:
+	for day_number: int in data.days:
+		var day: DayDef = data.days[day_number]
+		for scripted: ScriptedCaseDef in day.scripted_cases:
+			if scripted == null or scripted.id != scripted_id:
+				continue
+			var flags: Array[StringName] = []
+			if scripted.requires_flag != &"":
+				flags.append(scripted.requires_flag)
+			var builder: CaseBuilder = CaseBuilder.new(data, day, SeededRng.day_seed(campaign_seed, day_number), flags)
+			builder.set(&"_probing", true)
+			var generated: GeneratedCase = builder.build(scripted.at_index)
+			if generated == null or generated.case == null:
+				return {}
+			var replayed: Dictionary = snapshot(day_number, generated.case, VerdictKind.Kind.APPROVE)
+			for path: String in ["citizen_id", "given_name", "family_name"]:
+				if entry.has(path) and str(entry[path]) != str(replayed.get(path, "")):
+					return {}
+			var photo: Variant = replayed.get("photo_appearance", {})
+			return photo if photo is Dictionary else {}
+	return {}
 
 
 ## Recalcule l'entrée d'un cas scénarisé à partir de la graine de campagne
