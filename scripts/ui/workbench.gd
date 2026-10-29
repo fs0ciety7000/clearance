@@ -32,8 +32,10 @@ const META_PILE: StringName = &"workbench_pile"
 const SIDE_MARGIN: float = DS.SPACE_4
 const MIN_GAP: float = DS.SPACE_2
 ## Écart relatif d'échelle en deçà duquel deux dispositions se valent : la
-## plus large (plus de documents visibles) l'emporte.
-const LAYOUT_TIE: float = 0.03
+## plus large (plus de documents visibles) l'emporte. 5 % (M11) : la carte
+## d'identité redessinée (plus basse) ne borne plus la hauteur, et 5 % de
+## 12 px (0,6 px) ne justifient pas de cacher un document dans une pile.
+const LAYOUT_TIE: float = 0.05
 
 ## Plan de mise en page (QA-020) : documents regroupés en colonnes (« piles »)
 ## et échelle commune. Chaque pile montre en entier son document de devant ;
@@ -54,6 +56,8 @@ var inspection_available: bool = false
 ## Échelle du texte (`Settings.text_scale`, posée par l'UI) : abaisse
 ## l'échelle minimale des documents quand le texte est agrandi.
 var text_scale: float = 1.0
+## Facteur d'affichage imposé (> 0 : tests, mesures Steam Deck émulé).
+var screen_scale_override: float = -1.0
 
 var _title: Label = null
 var _mode_label: Label = null
@@ -124,6 +128,10 @@ func present(documents: Array[DocumentInstance], portrait_provider: Callable = C
 		view.drag_moved.connect(_on_drag_moved)
 		view.zoom_requested.connect(_on_zoom_requested)
 		view.field_picked.connect(_on_field_picked)
+		# Manette / clavier (M11) : un champ qui prend le focus amène son
+		# document devant sa pile (le focus magnétique ne vise jamais un champ caché).
+		for item: InspectableItem in view.get_items():
+			item.focus_entered.connect(_on_item_focused.bind(view))
 		_docs_layer.add_child(view)
 		view.set_inspection_active(inspection_active)
 		view.modulate.a = 0.0
@@ -151,6 +159,16 @@ func _notification(what: int) -> void:
 		_wait_layout_frame()
 	if what == NOTIFICATION_RESIZED and not views.is_empty() and not layout_pending:
 		_relayout.call_deferred()
+
+
+## Remesure et repose les documents (thème reconstruit : écran émulé,
+## tests, M11) ; sans effet pendant une mise en place.
+func relayout() -> void:
+	if views.is_empty() or layout_pending:
+		return
+	layout_pending = true
+	_measured = false
+	_wait_layout_frame()
 
 
 ## Plan redimensionné (Rulebook replié, texte 1,5…) : les documents restés à
@@ -270,10 +288,12 @@ func _plan_layout() -> LayoutPlan:
 
 
 ## Échelle des documents qui donne ≥ `DS.FS_CAPTION` px physiques aux
-## valeurs des champs (`DocFieldValue`), selon l'échelle de la fenêtre.
+## valeurs des champs (`DocValue`), selon l'échelle de la fenêtre.
 func readable_scale() -> float:
-	var value_px: float = float(get_theme_font_size(&"font_size", &"DocFieldValue"))
+	var value_px: float = float(get_theme_font_size(&"font_size", &"DocValue"))
 	var screen: float = get_viewport().get_final_transform().get_scale().x if is_inside_tree() else 1.0
+	if screen_scale_override > 0.0:
+		screen = screen_scale_override
 	return readable_scale_for(value_px, screen, min_fit_scale())
 
 
@@ -689,6 +709,74 @@ func bring_to_front(view: DocumentView) -> void:
 	document_focused.emit(view.instance)
 
 
+## Invites réécrites au changement de périphérique (M11).
+func refresh_prompts() -> void:
+	_refresh_header()
+
+
+func _on_item_focused(view: DocumentView) -> void:
+	if is_instance_valid(view) and not layout_pending and (not is_front(view) or not view.active):
+		bring_to_front(view)
+
+
+## Document au premier plan (actif), sinon le dernier posé au-dessus.
+func front_view() -> DocumentView:
+	for view: DocumentView in views:
+		if is_instance_valid(view) and view.active:
+			return view
+	for i: int in range(_docs_layer.get_child_count() - 1, -1, -1):
+		var view: DocumentView = _docs_layer.get_child(i) as DocumentView
+		if view != null:
+			return view
+	return null
+
+
+## Premier élément focalisable (Mode Inspection) du document de devant, sinon
+## de n'importe quel document posé.
+func first_focusable_item() -> Control:
+	var ordered: Array[DocumentView] = []
+	var front: DocumentView = front_view()
+	if front != null:
+		ordered.append(front)
+	for view: DocumentView in views:
+		if is_instance_valid(view) and view != front:
+			ordered.append(view)
+	for view: DocumentView in ordered:
+		for item: InspectableItem in view.get_items():
+			if item.focus_mode != Control.FOCUS_NONE and item.is_visible_in_tree():
+				return item
+	return null
+
+
+## Document suivant / précédent au premier plan (stick droit ←/→, `,` `.`,
+## M11) ; le focus suit en Mode Inspection. Faux sans document.
+func cycle_front(step: int) -> bool:
+	if views.is_empty() or layout_pending:
+		return false
+	var front: DocumentView = front_view()
+	var index: int = views.find(front)
+	var next: int = posmod(index + step, views.size()) if index >= 0 else 0
+	var had_focus: bool = front != null and is_inside_tree() and front.is_ancestor_of(get_viewport().gui_get_focus_owner())
+	if not focus_document(next):
+		return false
+	views[next].active = true
+	if had_focus or (inspection_active and InputPrompts.is_gamepad()):
+		for item: InspectableItem in views[next].get_items():
+			if item.focus_mode != Control.FOCUS_NONE:
+				item.grab_focus()
+				break
+	return true
+
+
+## Loupe sur le document de devant (bascule, `doc_zoom`). Faux sans document.
+func zoom_front() -> bool:
+	var front: DocumentView = front_view()
+	if front == null or layout_pending:
+		return false
+	zoom_view(front, 0)
+	return true
+
+
 ## Contraint le rectangle visuel (zoom compris) au plan de travail.
 func clamp_view(view: DocumentView) -> void:
 	var visual: Vector2 = view.size * view.scale
@@ -773,7 +861,7 @@ func _build_header() -> void:
 	right.offset_right = -DS.SPACE_8
 	right.offset_top = DS.SPACE_4
 	add_child(right)
-	_mode_icon = UiIcon.make(UiIcon.Kind.DIAMOND, DS.TEXT_SECONDARY, DS.ICON_S)
+	_mode_icon = UiIcon.make(UiIcon.Kind.DIAMOND, Palette.TEXT_SECONDARY, DS.ICON_S)
 	right.add_child(_mode_icon)
 	_mode_label = Label.new()
 	_mode_label.theme_type_variation = &"DocFieldLabel"
@@ -793,7 +881,7 @@ func _build_scanner_chip() -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override("separation", DS.SPACE_2)
 	scanner_chip.add_child(row)
-	_scanner_icon = UiIcon.make(UiIcon.Kind.SCANNER, DS.STATE_AMBER, DS.ICON_S)
+	_scanner_icon = UiIcon.make(UiIcon.Kind.SCANNER, Palette.STATE_AMBER, DS.ICON_S)
 	row.add_child(_scanner_icon)
 	_scanner_label = Label.new()
 	_scanner_label.theme_type_variation = &"DocFieldLabel"
@@ -868,8 +956,13 @@ func _refresh_header() -> void:
 	else:
 		_title.text = UiText.plural("wb_title_count", views.size(), "PLAN DE TRAVAIL · %d DOCUMENT", "PLAN DE TRAVAIL · %d DOCUMENTS")
 		if is_stacked():
-			# Piles à onglets : touches 1–n pour passer un document devant (QA-020).
-			_title.text += " · " + UiText.tf("wb_stack_hint", [views.size()], "TOUCHES 1–%d")
+			# Piles à onglets : touches 1–n pour passer un document devant (QA-020) ;
+			# à la manette, stick droit ← → (`doc_prev` / `doc_next`, M11).
+			if InputPrompts.is_gamepad():
+				_title.text += " · " + UiText.tf("wb_stack_hint_pad", [InputPrompts.text_for(&"doc_next").get_slice(" ", 0)],
+						"%s ← → : DOCUMENT DEVANT")
+			else:
+				_title.text += " · " + UiText.tf("wb_stack_hint", [views.size()], "TOUCHES 1–%d")
 	_place_scanner_chip.call_deferred()
 	if inspection_active:
 		_mode_label.text = UiText.t("wb_mode_active", "MODE INSPECTION ACTIF")
@@ -878,12 +971,12 @@ func _refresh_header() -> void:
 	elif views.is_empty() or not inspection_available:
 		_mode_label.text = _unavailable_reason if not _unavailable_reason.is_empty() and not views.is_empty() \
 				else UiText.t("wb_mode_unavailable", "INSPECTION INDISPONIBLE · AUCUN DOCUMENT")
-		_mode_label.add_theme_color_override(&"font_color", DS.TEXT_SECONDARY)
+		_mode_label.add_theme_color_override(&"font_color", Palette.TEXT_SECONDARY)
 		_mode_icon.color = DS.TEXT_MUTED
 	else:
-		_mode_label.text = UiText.t("wb_mode_hint", "ESPACE · MODE INSPECTION")
-		_mode_label.add_theme_color_override(&"font_color", DS.TEXT_SECONDARY)
-		_mode_icon.color = DS.TEXT_SECONDARY
+		_mode_label.text = UiText.tf("wb_mode_hint_fmt", [InputPrompts.text_for(&"inspect_toggle")], "%s · MODE INSPECTION")
+		_mode_label.add_theme_color_override(&"font_color", Palette.TEXT_SECONDARY)
+		_mode_icon.color = Palette.TEXT_SECONDARY
 
 
 func set_inspection_available(available: bool, reason: String = "") -> void:
@@ -900,14 +993,14 @@ func _build_empty_state() -> void:
 	_empty.add_theme_constant_override("separation", DS.SPACE_3)
 	add_child(_empty)
 	var bar: ColorRect = ColorRect.new()
-	bar.color = DS.LINE_SUBTLE
+	bar.color = Palette.LINE_SUBTLE
 	bar.custom_minimum_size = Vector2(DS.SPACE_16 * 2, 3)
 	bar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_empty.add_child(bar)
 	_empty_title = Label.new()
 	_empty_title.theme_type_variation = &"PanelTitle"
-	_empty_title.add_theme_color_override(&"font_color", DS.TEXT_SECONDARY)
+	_empty_title.add_theme_color_override(&"font_color", Palette.TEXT_SECONDARY)
 	_empty_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_empty_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_empty.add_child(_empty_title)
@@ -940,7 +1033,7 @@ func _build_banner() -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override("separation", DS.SPACE_3)
 	_banner.add_child(row)
-	_banner_icon = UiIcon.make(UiIcon.Kind.WARNING, DS.ACCENT_MAGENTA, DS.ICON_M)
+	_banner_icon = UiIcon.make(UiIcon.Kind.WARNING, Palette.ACCENT_MAGENTA, DS.ICON_M)
 	_banner_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_banner_icon)
 	_banner_title = Label.new()
@@ -951,7 +1044,7 @@ func _build_banner() -> void:
 	_banner_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_banner_title)
 	var sep: ColorRect = ColorRect.new()
-	sep.color = DS.LINE_SUBTLE
+	sep.color = Palette.LINE_SUBTLE
 	sep.custom_minimum_size = Vector2(1, DS.SPACE_5)
 	sep.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -987,14 +1080,16 @@ func header_height() -> float:
 ## scanner) ; `hold` > 0 : s'efface ensuite (CONCORDANT `CONCORDANT_HOLD`,
 ## DISCORDANCE `TOAST_HOLD` : les marques numérotées restent sur les champs).
 func show_banner(kind: BannerKind, title: String, text: String, hold: float = 0.0) -> void:
-	var accent: Color = DS.ACCENT_MAGENTA
-	var icon: UiIcon.Kind = UiIcon.Kind.WARNING
+	var accent: Color = Palette.ACCENT_MAGENTA
+	# Losange « ≠ » (DS §6) : forme propre à la discordance, distincte du
+	# triangle d'avertissement en niveaux de gris comme en mode daltonien.
+	var icon: UiIcon.Kind = UiIcon.Kind.DISCORDANCE
 	match kind:
 		BannerKind.CONCORDANT:
 			accent = DS.ACCENT_CYAN
 			icon = UiIcon.Kind.CHECK
 		BannerKind.INCOMPARABLE:
-			accent = DS.TEXT_SECONDARY
+			accent = Palette.TEXT_SECONDARY
 			icon = UiIcon.Kind.EQUAL
 		BannerKind.INFO:
 			accent = DS.ACCENT_CYAN
@@ -1081,7 +1176,7 @@ func _draw() -> void:
 	var rect: Rect2 = Rect2(Vector2.ZERO, size)
 	draw_rect(rect, DS.BG_VOID)
 	# Grille discrète du plan (décor, jamais d'information).
-	var grid: Color = Color(DS.LINE_SUBTLE, 0.35)
+	var grid: Color = Color(Palette.LINE_SUBTLE, 0.35)
 	var x: float = GRID_STEP
 	while x < size.x:
 		draw_line(Vector2(x, 0), Vector2(x, size.y), grid, 1.0)
@@ -1090,7 +1185,7 @@ func _draw() -> void:
 	while y < size.y:
 		draw_line(Vector2(0, y), Vector2(size.x, y), grid, 1.0)
 		y += GRID_STEP
-	draw_line(Vector2(0, 0.5), Vector2(size.x, 0.5), DS.LINE_SUBTLE, 1.0)
+	draw_line(Vector2(0, 0.5), Vector2(size.x, 0.5), Palette.LINE_SUBTLE, 1.0)
 	if inspection_active:
 		draw_corner_brackets(self, rect.grow(-DS.SPACE_2), DS.ACCENT_CYAN)
 

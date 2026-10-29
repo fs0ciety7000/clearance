@@ -24,7 +24,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	if SaveService.as_int(_saved_state.get("current_day", 0)) >= 1:
 		GameState.apply_save_dict(_saved_state)
 	else:
@@ -369,7 +369,7 @@ func _close(choices: Dictionary[StringName, StringName] = {}) -> StringName:
 	for id: StringName in choices:
 		picked[id] = choices[id]
 	var report: EveningReport = Campaign.preview_evening(data, lines, events, picked)
-	return Campaign.close_evening(data, null, report, 0, DIR)
+	return Campaign.close_evening(data, null, report, 1, DIR)
 
 
 func _event_ids() -> Array[StringName]:

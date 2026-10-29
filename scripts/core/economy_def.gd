@@ -154,6 +154,35 @@ extends Resource
 @export var exit3_tycho_cost: int = 30
 @export var exit3_drift_cost: int = 70
 
+@export_group("Mode Récit")
+## M11 (D-113, QA-049) : le mode Récit protège davantage. Seuils lus
+## **seulement** en Récit (pseudo-drapeau `EveningService.FLAG_STORY_MODE` du
+## contexte du soir) ; le mode Dur garde `review_arrest_score`,
+## `deposition_arrest_score` et `untreated_worsen_evenings`.
+## Réglés par `balance_sim --story` (profils à 65 % : F1 ≤ 15 % hors
+## mercenaire, F3 0 %) ; produits par `tools/build_data.gd`.
+## Revue du J17 : seuil d'arrestation (F1) en Récit.
+@export var story_review_arrest_score: int = 7
+## Déposition du J29 : seuil d'arrestation (F1) en Récit.
+@export var story_deposition_arrest_score: int = 10
+## Soirs sans soins avant aggravation, en Récit (foyer, F3).
+@export var story_untreated_worsen_evenings: int = 3
+
+
+## Seuil d'arrestation de la Revue du J17 selon le mode (D-113).
+func review_arrest_for(story: bool) -> int:
+	return story_review_arrest_score if story else review_arrest_score
+
+
+## Seuil d'arrestation de la Déposition du J29 selon le mode (D-113).
+func deposition_arrest_for(story: bool) -> int:
+	return story_deposition_arrest_score if story else deposition_arrest_score
+
+
+## Soirs sans soins avant aggravation selon le mode (D-113).
+func untreated_worsen_for(story: bool) -> int:
+	return story_untreated_worsen_evenings if story else untreated_worsen_evenings
+
 
 func air_tax_for(day_number: int) -> int:
 	if day_number >= ration_start_day:

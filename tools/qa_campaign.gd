@@ -12,7 +12,12 @@
 ## Usage (racine du projet ; lancé par `tools/qa_boot.gd`, autoloads requis) :
 ##   godot --headless --script res://tools/qa_boot.gd -- --autoplay \
 ##       --qa-seed=7 --qa-profile=default --qa-speed=8 [--qa-credits=N] [--qa-reload] [--qa-load=slot.json]
-##       [--no-booth] [--approve-all]
+##       [--qa-story] [--no-booth] [--approve-all]
+## M11 (sauvegarde v6, D-101) : la partie QA occupe l'emplacement
+## `SaveService.DEFAULT_SLOT` (vidé au départ et à la fin) ; `--qa-load` accepte
+## un ancien `slot_0.json` (v1–v5 : vraie migration `SaveService.migrate_legacy`)
+## ou un `current.json` v6 ; à la fin, la partie doit être archivée
+## (`meta.status = ended`), plus effacée. `--qa-story` : mode Récit (D-102).
 ## Acte II : l'interstitiel « CHAPITRE II » est fermé comme un joueur ; une
 ## option qui termine la campagne (« Embarquer », J10) passe par la boîte de
 ## confirmation ; `QA_EVENING` liste les postes (rations, prélèvements).
@@ -42,6 +47,9 @@ var _reload: bool = false
 ## `--qa-load=/chemin/slot.json` : reprend une sauvegarde réelle (migrations en chaîne jusqu’à v5).
 var _load_path: String = ""
 var _reloaded_day: int = 0
+## `--qa-story` : partie en mode Récit (D-102).
+var _story: bool = false
+const SLOT: int = SaveService.DEFAULT_SLOT
 
 
 func _ready() -> void:
@@ -55,6 +63,8 @@ func _ready() -> void:
 			_credits = arg.trim_prefix("--qa-credits=").to_int()
 		elif arg == "--qa-reload":
 			_reload = true
+		elif arg == "--qa-story":
+			_story = true
 		elif arg.begins_with("--qa-load="):
 			_load_path = arg.trim_prefix("--qa-load=")
 		elif arg.begins_with("--qa-profile="):
@@ -62,12 +72,10 @@ func _ready() -> void:
 	if _profile == null:
 		_profile = SimProfile.preset(&"default")
 	_data = DataCatalog.load_from()
-	SaveService.delete()
-	Campaign.new_game(_data, _seed)
+	SaveService.delete_slot(SLOT)
+	Campaign.new_game(_data, _seed, SLOT, GameState.DIFFICULTY_STORY if _story else GameState.DIFFICULTY_HARD)
 	if not _load_path.is_empty():
-		DirAccess.make_dir_recursive_absolute(SaveService.DEFAULT_DIR)
-		DirAccess.copy_absolute(_load_path, ProjectSettings.globalize_path(SaveService.slot_path()))
-		if not GameState.load_from_slot():
+		if not _import_save(_load_path) or not GameState.load_from_slot(SLOT):
 			_issue("sauvegarde %s refusée" % _load_path)
 			_finish(1)
 			return
@@ -78,9 +86,9 @@ func _ready() -> void:
 		GameState.credits = _credits
 		if not _load_path.is_empty():
 			# La sauvegarde reprise suit le solde imposé (contrôle de rechargement).
-			GameState.save_to_slot()
+			GameState.save_to_slot(SLOT)
 	Engine.time_scale = _speed
-	print("QA_START seed=%d profile=%s speed=%.1f" % [_seed, _profile.name, _speed])
+	print("QA_START seed=%d profile=%s speed=%.1f difficulty=%s" % [_seed, _profile.name, _speed, GameState.difficulty])
 	get_tree().change_scene_to_file(DAY_SCENE)
 	_day_started_msec = Time.get_ticks_msec()
 
@@ -122,8 +130,25 @@ func _process(_delta: float) -> void:
 		_on_end(scene, screen as EndScreen)
 
 
+## `--qa-load` : sauvegarde v1–v5 (`slot_0.json`) migrée par le vrai
+## `SaveService.migrate_legacy`, ou état v6 écrit tel quel dans l'emplacement.
+func _import_save(path: String) -> bool:
+	var text: String = FileAccess.get_file_as_string(path)
+	var parsed: Variant = JSON.parse_string(text)
+	if not parsed is Dictionary:
+		return false
+	var raw: Dictionary = parsed
+	if SaveService.as_int(raw.get("version", 0)) < SaveService.VERSION:
+		var legacy: String = SaveService.resolve_dir(SaveService.DEFAULT_DIR).path_join(SaveService.LEGACY_FILE)
+		DirAccess.make_dir_recursive_absolute(legacy.get_base_dir())
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(legacy))
+		return SaveService.migrate_legacy() == SLOT
+	var data: Dictionary = SaveService.parse(text, path)
+	return not data.is_empty() and SaveService.save_slot(data, SLOT) == OK
+
+
 func _on_new_day() -> void:
-	# Après la fin (J30 ou fin anticipée), la sauvegarde est effacée (D-041).
+	# Après la fin (J30 ou fin anticipée), la partie est archivée (D-101).
 	if _last_day > 0 and not GameState.has_flag(Campaign.FLAG_ENDING):
 		_check_save_roundtrip()
 	_last_day = GameState.current_day
@@ -138,6 +163,8 @@ func _reload_from_save() -> void:
 	if not GameState.load_from_slot():
 		_issue("J%d : sauvegarde illisible au rechargement" % GameState.current_day)
 		return
+	if GameState.active_slot != SLOT:
+		_issue("J%d : « Continuer » a repris l'emplacement %d" % [GameState.current_day, GameState.active_slot])
 	if JSON.stringify(GameState.to_save_dict(), "", true) != before:
 		_issue("J%d : état chargé ≠ état en mémoire" % GameState.current_day)
 	print("QA_RELOAD day=%d" % GameState.current_day)
@@ -201,11 +228,13 @@ func _drive_evening(evening: EveningScreen) -> void:
 
 
 func _check_save_roundtrip() -> void:
-	if not SaveService.has_save():
+	if not SaveService.has_save(SLOT):
 		_issue("J%d : pas de sauvegarde automatique après la soirée" % GameState.current_day)
 		return
+	if not SaveService.list_snapshots(SLOT).has(GameState.current_day):
+		_issue("J%d : pas d'instantané du matin" % GameState.current_day)
 	var probe: Dictionary = GameState.to_save_dict()
-	GameState.apply_save_dict(SaveService.load_slot())
+	GameState.apply_save_dict(SaveService.load_current(SLOT))
 	var reloaded: Dictionary = GameState.to_save_dict()
 	for key: String in probe:
 		if JSON.stringify(probe[key], "", true) != JSON.stringify(reloaded.get(key), "", true):
@@ -222,8 +251,13 @@ func _on_end(scene: DayScene, end: EndScreen) -> void:
 	print("QA_END seed=%d profile=%s ending=%s day=%d credits=%d compliance=%.2f screens=%s epilogue_lines=%d" % [
 			_seed, _profile.name, ending, GameState.current_day, GameState.credits, Campaign.compliance(),
 			scene.screen_history, lines.size()])
-	if SaveService.has_save():
-		_issue("sauvegarde présente après la fin")
+	var meta: Dictionary = SaveService.load_meta(SLOT)
+	if SaveService.has_save(SLOT) and (str(meta.get("status", "")) != SaveService.STATUS_ENDED
+			or str(meta.get("ending_id", "")) != ending):
+		_issue("partie non archivée après la fin (%s)" % meta)
+	if EndingService.ALL_ENDINGS.has(StringName(ending)) \
+			and not ProfileService.has_seen_ending(ProfileService.load_profile(), ending):
+		_issue("fin %s absente du profil" % ending)
 	_finish(0)
 
 
@@ -248,7 +282,7 @@ func _finish(code: int) -> void:
 	_done = true
 	Engine.time_scale = 1.0
 	print("QA_DONE issues=%d" % _issues.size())
-	SaveService.delete()
+	SaveService.delete_slot(SLOT)
 	# Sons arrêtés et retirés par l'AudioServer avant de quitter (QA-025).
 	var barrier: Node = get_tree().root.get_node_or_null("AudioMixBarrier")
 	if barrier != null:

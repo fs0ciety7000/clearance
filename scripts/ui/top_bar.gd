@@ -7,8 +7,15 @@
 ## quand la largeur manque (Steam Deck, texte 1,5, compteur QUOTA), les
 ## éléments secondaires sont abandonnés par paliers, jamais tronqués ; QUOTA,
 ## TRAITÉS, CRÉDITS et l'horloge restent toujours à l'écran.
+## M11 (lot C, D-102) : mode Récit — puce « RÉCIT » (icône + texte) après la
+## date, horloge sans alerte de fin (« SANS CHRONO » : le shift ne se termine
+## pas à l'heure, jamais « FIN DE SHIFT IMMINENTE »), bouton « FERMER LE
+## GUICHET » (quota atteint, `DayController.can_close_booth`).
 class_name TopBar
 extends PanelContainer
+
+## « FERMER LE GUICHET » (mode Récit, quota du jour atteint).
+signal close_booth_pressed()
 
 enum ClockState { NORMAL, WARNING, CRITICAL }
 
@@ -47,6 +54,12 @@ var _captions: Array[Label] = []
 var _one_line: bool = false
 var _day_number: int = 0
 var _date_days: int = 0
+## Mode Récit : puce, horloge sans alerte de fin.
+var story_mode: bool = false
+var story_badge: PanelContainer = null
+var close_button: Button = null
+var _last_remaining: float = 1.0
+var _last_duration: float = 1.0
 
 
 func _ready() -> void:
@@ -89,6 +102,13 @@ func _ready() -> void:
 	_date.theme_type_variation = &"DataSmall"
 	_date.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_date)
+	story_badge = ScreenBase.chip(UiText.t("bar_story", "RÉCIT"), UiIcon.Kind.CHAT, Palette.TEXT_SECONDARY)
+	story_badge.name = "StoryBadge"
+	story_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	story_badge.tooltip_text = UiText.t("bar_story_tip", "Mode Récit : pas de chrono, pas d'amendes.")
+	story_badge.mouse_filter = Control.MOUSE_FILTER_PASS
+	story_badge.visible = false
+	row.add_child(story_badge)
 	row.add_child(_spacer())
 	# Horloge.
 	var shift: Label = Label.new()
@@ -97,7 +117,7 @@ func _ready() -> void:
 	shift.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(shift)
 	_shift_caption = shift
-	_clock_icon = UiIcon.make(UiIcon.Kind.WARNING, DS.STATE_AMBER, DS.ICON_M)
+	_clock_icon = UiIcon.make(UiIcon.Kind.WARNING, Palette.STATE_AMBER, DS.ICON_M)
 	_clock_icon.visible = false
 	row.add_child(_clock_icon)
 	_clock = Label.new()
@@ -122,6 +142,15 @@ func _ready() -> void:
 	quota_view.name = "QuotaCounter"
 	quota_view.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(quota_view)
+	close_button = ScreenBase.button(UiText.t("bar_close_booth", "FERMER LE GUICHET"), &"ButtonTool")
+	close_button.name = "CloseBooth"
+	close_button.custom_minimum_size.y = DS.HIT_TARGET_MIN
+	close_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	close_button.tooltip_text = UiText.t("bar_close_booth_tip", "Quota atteint : le bilan suit le passager en cours.")
+	close_button.visible = false
+	close_button.pressed.connect(close_booth_pressed.emit)
+	close_button.visibility_changed.connect(queue_compaction)
+	row.add_child(close_button)
 	row.add_child(_vline())
 	_credits = _stat(row, UiText.t("bar_credits", "CRÉDITS"), DS.ACCENT_YELLOW)
 	quota_view.visibility_changed.connect(queue_compaction)
@@ -219,7 +248,7 @@ func _spacer() -> Control:
 
 func _vline() -> ColorRect:
 	var line: ColorRect = ColorRect.new()
-	line.color = DS.LINE_SUBTLE
+	line.color = Palette.LINE_SUBTLE
 	line.custom_minimum_size = Vector2(1, DS.SPACE_8)
 	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return line
@@ -257,11 +286,16 @@ func _refresh_date(short: bool) -> void:
 
 ## Horloge à partir du temps réel restant et de la durée du jour.
 func set_clock(remaining_sec: float, duration_sec: float) -> void:
+	_last_remaining = remaining_sec
+	_last_duration = duration_sec
 	var minutes: int = UiText.shift_minutes(remaining_sec, duration_sec)
 	_clock.text = UiText.clock(minutes)
 	progress = float(minutes - UiText.SHIFT_START_MIN) / float(UiText.SHIFT_END_MIN - UiText.SHIFT_START_MIN)
 	var state: ClockState = ClockState.NORMAL
-	if remaining_sec <= DS.TIMER_CRITICAL_SECONDS and duration_sec > 0.0:
+	if story_mode:
+		# Récit : l'horloge ne termine pas le shift, aucune alerte de fin (D-102).
+		state = ClockState.NORMAL
+	elif remaining_sec <= DS.TIMER_CRITICAL_SECONDS and duration_sec > 0.0:
 		state = ClockState.CRITICAL
 	elif UiText.SHIFT_END_MIN - minutes <= UiText.SHIFT_WARN_MIN:
 		state = ClockState.WARNING
@@ -270,21 +304,45 @@ func set_clock(remaining_sec: float, duration_sec: float) -> void:
 	var color: Color = DS.TEXT_PRIMARY
 	match state:
 		ClockState.WARNING:
-			color = DS.STATE_AMBER
+			color = Palette.STATE_AMBER
 			_end_label.text = UiText.t("bar_shift_ending", "FIN DE SHIFT PROCHE")
 		ClockState.CRITICAL:
-			color = DS.STATE_RED
-			_end_label.text = UiText.t("bar_shift_ending", "FIN DE SHIFT PROCHE")
+			color = Palette.STATE_RED
+			# Critique ≠ avertissement par le texte et l'icône, pas la couleur seule (M11).
+			_end_label.text = UiText.t("bar_shift_critical", "FIN DE SHIFT IMMINENTE")
 		_:
-			_end_label.text = UiText.tf("bar_shift_end", [UiText.clock(UiText.SHIFT_END_MIN)], "FIN %s")
+			if story_mode:
+				_end_label.text = UiText.t("bar_story_untimed", "SANS CHRONO")
+			else:
+				_end_label.text = UiText.tf("bar_shift_end", [UiText.clock(UiText.SHIFT_END_MIN)], "FIN %s")
 	if changed:
 		queue_compaction()
 	_clock.add_theme_color_override(&"font_color", color)
-	_end_label.add_theme_color_override(&"font_color", color if state != ClockState.NORMAL else DS.TEXT_SECONDARY)
+	_end_label.add_theme_color_override(&"font_color", color if state != ClockState.NORMAL else Palette.TEXT_SECONDARY)
 	_clock_icon.visible = state != ClockState.NORMAL
 	_clock_icon.kind = UiIcon.Kind.DENIED if state == ClockState.CRITICAL else UiIcon.Kind.WARNING
 	_clock_icon.color = color
 	_progress_bar.queue_redraw()
+
+
+## Mode Récit (D-102) : puce « RÉCIT », horloge sans alerte de fin ; Dur :
+## puce masquée, bouton « FERMER LE GUICHET » masqué.
+func set_story_mode(value: bool) -> void:
+	story_mode = value
+	story_badge.visible = value
+	if not value:
+		set_close_available(false)
+	set_clock(_last_remaining, _last_duration)
+	queue_compaction()
+
+
+## « FERMER LE GUICHET » visible (Récit, quota atteint).
+func set_close_available(value: bool) -> void:
+	close_button.visible = value and story_mode
+
+
+func get_end_text() -> String:
+	return _end_label.text
 
 
 func get_clock_text() -> String:
@@ -316,13 +374,13 @@ func set_credits(credits: int) -> void:
 
 func _draw_progress() -> void:
 	var rect: Rect2 = Rect2(Vector2.ZERO, _progress_bar.size)
-	_progress_bar.draw_rect(rect, DS.LINE_SUBTLE)
+	_progress_bar.draw_rect(rect, Palette.LINE_SUBTLE)
 	var color: Color = DS.ACCENT_CYAN
 	match clock_state:
 		ClockState.WARNING:
-			color = DS.STATE_AMBER
+			color = Palette.STATE_AMBER
 		ClockState.CRITICAL:
-			color = DS.STATE_RED
+			color = Palette.STATE_RED
 	_progress_bar.draw_rect(Rect2(rect.position, Vector2(rect.size.x * clampf(progress, 0.0, 1.0), rect.size.y)), color)
 	# Graduations horaires (1 par heure de shift).
 	var hours: int = roundi((UiText.SHIFT_END_MIN - UiText.SHIFT_START_MIN) / 60.0)

@@ -6,6 +6,9 @@
 ## (n° + titre, rappel du Rulebook) · explication courte · sanction :
 ## avertissement en ambre + triangle (« AVERTISSEMENT 1/2 »), amende en rouge +
 ## octogone sur bandeau `red.12` · bord dentelé en bas.
+## M11 (lot C, D-102) : en mode Récit (`story`), la citation reste numérotée
+## et comptée mais sans amende : « AVERTISSEMENT · MODE RÉCIT », « sans
+## amende en mode Récit » (jamais « AVERTISSEMENT 5/2 »).
 ## États : `archived` (récapitulatif de fin de journée) = opacité 40 %, 100 %
 ## au survol / focus. Impression : déroulé vertical depuis la fente (`ease.snap`),
 ## fondu simple si « réduire les animations ».
@@ -19,15 +22,18 @@ const ARCHIVED_ALPHA: float = 0.4
 
 var result: CaseResult = null
 var archived: bool = false
+## Mode Récit : amende levée (libellé dédié).
+var story: bool = false
 var _paper: Color = DS.BG_ELEVATED
 
 
 ## `rule_number` / `rule_title` : règle citée telle qu'au Rulebook du jour (0 / "" si aucune).
 static func make(p_result: CaseResult, day_number: int, rule_number: int, rule_title: String,
-		free_citations: int = 2, p_archived: bool = false) -> CitationTicket:
+		free_citations: int = 2, p_archived: bool = false, p_story: bool = false) -> CitationTicket:
 	var ticket: CitationTicket = CitationTicket.new()
 	ticket.result = p_result
 	ticket.archived = p_archived
+	ticket.story = p_story
 	ticket._build(day_number, rule_number, rule_title, free_citations)
 	return ticket
 
@@ -39,7 +45,7 @@ func _build(day_number: int, rule_number: int, rule_title: String, free_citation
 	focus_mode = Control.FOCUS_ALL if archived else Control.FOCUS_NONE
 	var body_panel: PanelContainer = PanelContainer.new()
 	body_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	body_panel.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(_paper, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_M, 0))
+	body_panel.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(_paper, Palette.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_M, 0))
 	add_child(body_panel)
 	var column: VBoxContainer = ScreenBase.vbox(0)
 	body_panel.add_child(column)
@@ -80,23 +86,27 @@ func _build(day_number: int, rule_number: int, rule_title: String, free_citation
 		box.add_child(ScreenBase.wrapped(UiText.t(desc_key, ""), &"BodySmall"))
 
 	var warning: bool = result != null and result.is_warning()
-	var accent: Color = DS.STATE_AMBER if warning else DS.STATE_RED
+	var accent: Color = Palette.STATE_AMBER if warning else Palette.STATE_RED
 	var sanction_panel: PanelContainer = PanelContainer.new()
 	sanction_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sanction_panel.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.AMBER_12 if warning else DS.RED_12, accent, 0, 0, DS.SPACE_2))
+	sanction_panel.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(Palette.AMBER_12 if warning else Palette.RED_12, accent, 0, 0, DS.SPACE_2))
 	column.add_child(sanction_panel)
 	var sanction_row: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
 	sanction_panel.add_child(sanction_row)
 	sanction_row.add_child(UiIcon.make(UiIcon.Kind.WARNING if warning else UiIcon.Kind.DENIED, accent, DS.ICON_S))
 	var sanction_text: String
-	if warning:
+	if warning and story:
+		sanction_text = UiText.t("cit_warning_story", "AVERTISSEMENT · MODE RÉCIT")
+	elif warning:
 		sanction_text = UiText.tf("cit_warning_n", [number, free_citations], "AVERTISSEMENT %d/%d")
 	else:
 		sanction_text = UiText.tf("cit_fine", [ScreenBase.credits(-result.fine)], "AMENDE %s")
-	var sanction: Label = ScreenBase.label(sanction_text, &"DocFieldValue", accent)
+	var sanction: Label = ScreenBase.wrapped(sanction_text, &"DocFieldValue", accent) if story else ScreenBase.label(sanction_text, &"DocFieldValue", accent)
+	sanction.name = "Sanction"
 	sanction.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	sanction_row.add_child(sanction)
-	var note: Label = ScreenBase.wrapped(UiText.t("cit_withheld" if not warning else "cit_no_fine", ""), &"CaptionLabel")
+	var note_key: String = "cit_withheld" if not warning else ("cit_no_fine_story" if story else "cit_no_fine")
+	var note: Label = ScreenBase.wrapped(UiText.t(note_key, ""), &"CaptionLabel")
 	note.custom_minimum_size.x = 0.0
 	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER

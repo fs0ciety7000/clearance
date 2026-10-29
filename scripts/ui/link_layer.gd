@@ -25,7 +25,10 @@ class Link:
 	var pulse: float = 0.0
 	var age: float = 0.0
 	## Acte II : couleur de la source d'un lien suggéré.
-	var tint: Color = DS.STATE_AMBER
+	var tint: Color = Palette.STATE_AMBER
+	## Source d'un lien suggéré (`acv`, `luciole`) : glyphe au milieu du fil,
+	## la source ne se lit jamais à la seule couleur (M11).
+	var source: StringName = &""
 
 ## `rect_provider(ref: FieldRef) -> Rect2` : rectangle global de la cible
 ## (taille nulle = cible invisible).
@@ -52,7 +55,7 @@ func _init() -> void:
 
 
 ## Acte II : lien suggéré par le scanner partiel (pointillé, couleur `tint`).
-func add_suggested(p: FieldRef, q: FieldRef, tint: Color) -> Link:
+func add_suggested(p: FieldRef, q: FieldRef, tint: Color, source: StringName = &"") -> Link:
 	var link: Link = find_link(p, q)
 	if link == null:
 		link = Link.new()
@@ -63,6 +66,7 @@ func add_suggested(p: FieldRef, q: FieldRef, tint: Color) -> Link:
 		return link
 	link.state = State.SUGGESTED
 	link.tint = tint
+	link.source = source
 	link.progress = 1.0
 	link.alpha = 1.0
 	link.age = 0.0
@@ -254,6 +258,19 @@ func _diamond(center: Vector2, half: float, color: Color, filled: bool = true) -
 		draw_polyline(pts, color, 1.5, true)
 
 
+## Glyphe de la source d'un lien suggéré, sur une pastille sombre : luciole
+## (boîtier des Lucioles) ou réticule (scanner ACV-2).
+func _draw_source_glyph(center: Vector2, source: StringName, color: Color) -> void:
+	if source == &"":
+		return
+	var half: float = DS.SPACE_2 + 2.0
+	draw_rect(Rect2(center - Vector2(half, half), Vector2(half, half) * 2.0), DS.SUBTITLE_BG)
+	if source == ComparisonUI.SCANNER_LUCIOLE:
+		SlippedItemView.draw_luciole(self, center, half * 0.7, color)
+	else:
+		UiIcon.draw_icon(self, UiIcon.Kind.SCANNER, Rect2(center - Vector2(half, half), Vector2(half, half) * 2.0), color)
+
+
 # ---------------------------------------------------------------------------
 # Dessin
 # ---------------------------------------------------------------------------
@@ -296,7 +313,7 @@ func _draw_link(link: Link) -> void:
 			# Pas d'étiquette sur le fil (elle masquerait des valeurs) : le
 			# bandeau du plan et les coches des champs portent le « ✓ ».
 		State.INCOMPARABLE:
-			var g: Color = Color(DS.TEXT_SECONDARY, link.alpha)
+			var g: Color = Color(Palette.TEXT_SECONDARY, link.alpha)
 			_draw_dashed(shown, g, 1.5, 0.0)
 			_diamond(sa[0], 3.5, g)
 		State.SUGGESTED:
@@ -307,10 +324,11 @@ func _draw_link(link: Link) -> void:
 			_draw_dashed(pts, tint, 2.0, -_time * DS.FX_LINK_DASH_SPEED * fx_intensity)
 			_diamond(sa[0], 4.5, tint, false)
 			_diamond(sb[0], 4.5, tint, false)
+			_draw_source_glyph(pts[pts.size() >> 1], link.source, tint)
 		State.DISCORDANT:
-			var m: Color = Color(DS.ACCENT_MAGENTA, dim)
+			var m: Color = Color(Palette.ACCENT_MAGENTA, dim)
 			if fx_intensity > 0.0:
-				var glow: Color = Color(DS.MAGENTA_60, (0.35 + 0.4 * link.pulse) * fx_intensity * dim)
+				var glow: Color = Color(Palette.MAGENTA_60, (0.35 + 0.4 * link.pulse) * fx_intensity * dim)
 				draw_polyline(pts, glow, 3.0 + 6.0 * fx_intensity, true)
 			draw_polyline(pts, m, 3.0, true)
 			_diamond(sa[0], 5.0, m)
@@ -323,7 +341,7 @@ func _draw_link(link: Link) -> void:
 			var tw: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 			draw_string(font, mid + Vector2(-tw * 0.5, font.get_ascent(font_size) * 0.5 - 1.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, DS.TEXT_ON_ACCENT)
 			if link.pulse > 0.0:
-				_diamond(mid, DS.SPACE_3 + DS.SPACE_3 * (1.0 - link.pulse), Color(DS.ACCENT_MAGENTA, link.pulse), false)
+				_diamond(mid, DS.SPACE_3 + DS.SPACE_3 * (1.0 - link.pulse), Color(Palette.ACCENT_MAGENTA, link.pulse), false)
 
 
 ## Cadre « VISAGE » en coins pointillés (UI_FLOW §4.9) : visible en Mode
@@ -335,7 +353,7 @@ func _draw_face_frame() -> void:
 	var rect: Rect2 = Rect2(inv * face_rect.position, face_rect.size * inv.get_scale())
 	var color: Color = DS.ACCENT_CYAN
 	if face_state == 2:
-		color = DS.ACCENT_MAGENTA
+		color = Palette.ACCENT_MAGENTA
 	elif not inspection_active:
 		color = Color(DS.ACCENT_CYAN, 0.5)
 	var l: float = DS.SPACE_5
@@ -351,6 +369,8 @@ func _draw_face_frame() -> void:
 		else:
 			draw_polyline(corner, color, DS.BORDER_STRONG)
 	var label: String = face_label
+	if face_state == 2:
+		label = "≠ " + label # discordance : signe, pas la couleur seule (M11)
 	if face_masked:
 		label += " · " + UiText.t("face_masked", "MASQUÉ")
 	var font: Font = get_theme_font(&"font", &"DocFieldLabel")

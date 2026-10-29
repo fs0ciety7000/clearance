@@ -43,7 +43,7 @@ func _init() -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override("separation", DS.SPACE_2)
 	margin.add_child(row)
-	_icon = UiIcon.make(UiIcon.Kind.BREATH, DS.TEXT_SECONDARY, DS.ICON_M)
+	_icon = UiIcon.make(UiIcon.Kind.BREATH, Palette.TEXT_SECONDARY, DS.ICON_M)
 	row.add_child(_icon)
 	var column: VBoxContainer = VBoxContainer.new()
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -111,16 +111,16 @@ func _sync_min_size(margin: MarginContainer) -> void:
 func _refresh_content() -> void:
 	if _value == null:
 		return
-	var color: Color = DS.STATE_AMBER if is_full() else DS.TEXT_PRIMARY
+	var color: Color = Palette.STATE_AMBER if is_full() else DS.TEXT_PRIMARY
 	if suspended:
-		color = DS.TEXT_SECONDARY
+		color = Palette.TEXT_SECONDARY
 	if is_flagged():
-		color = DS.ACCENT_MAGENTA
+		color = Palette.ACCENT_MAGENTA
 	elif selected:
 		color = DS.ACCENT_CYAN
 	_value.add_theme_color_override(&"font_color", color)
-	_caption.add_theme_color_override(&"font_color", DS.STATE_AMBER if is_full() and not is_flagged() and not selected else DS.TEXT_SECONDARY)
-	_icon.color = color if is_full() or is_flagged() or selected else DS.TEXT_SECONDARY
+	_caption.add_theme_color_override(&"font_color", Palette.STATE_AMBER if is_full() and not is_flagged() and not selected else Palette.TEXT_SECONDARY)
+	_icon.color = color if is_full() or is_flagged() or selected else Palette.TEXT_SECONDARY
 
 
 func _draw() -> void:
@@ -128,8 +128,8 @@ func _draw() -> void:
 		# Compteur éteint : trait gris barré sous la valeur.
 		draw_rect(Rect2(Vector2(0.0, size.y - DS.BORDER_HAIRLINE), Vector2(size.x, DS.BORDER_HAIRLINE)), DS.TEXT_MUTED)
 	elif is_full() and not is_flagged() and not selected:
-		draw_rect(Rect2(Vector2.ZERO, size), DS.AMBER_12)
-		draw_rect(Rect2(Vector2(0.0, size.y - DS.BORDER_STRONG), Vector2(size.x, DS.BORDER_STRONG)), DS.STATE_AMBER)
+		draw_rect(Rect2(Vector2.ZERO, size), Palette.AMBER_12)
+		draw_rect(Rect2(Vector2(0.0, size.y - DS.BORDER_STRONG), Vector2(size.x, DS.BORDER_STRONG)), Palette.STATE_AMBER)
 	super._draw()
 
 

@@ -51,16 +51,16 @@ func setup(p_notice: WantedNotice, p_number: int, portrait_provider: Callable = 
 	var column: VBoxContainer = ScreenBase.vbox(DS.SPACE_1)
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(column)
-	_eyebrow = ScreenBase.eyebrow(UiText.tf("rb_wanted_number", [p_number], "AVIS N° %02d · RECHERCHÉ·E"), DS.STATE_RED)
+	_eyebrow = ScreenBase.eyebrow(UiText.tf("rb_wanted_number", [p_number], "AVIS N° %02d · RECHERCHÉ·E"), Palette.STATE_RED)
 	column.add_child(_eyebrow)
-	_name = ScreenBase.label(who, &"DataTitle", DS.TEXT_SECONDARY if face_only else DS.TEXT_PRIMARY)
+	_name = ScreenBase.label(who, &"DataTitle", Palette.TEXT_SECONDARY if face_only else DS.TEXT_PRIMARY)
 	_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_name.custom_minimum_size.x = 120.0
 	column.add_child(_name)
 	var reason: Label = ScreenBase.wrapped(UiText.t(p_notice.reason_key, ""), &"BodySmall", DS.TEXT_PRIMARY)
 	column.add_child(reason)
 	if face_only:
-		column.add_child(ScreenBase.chip(UiText.t("rb_wanted_face_only", "VISAGE SEUL"), UiIcon.Kind.SCANNER, DS.TEXT_SECONDARY))
+		column.add_child(ScreenBase.chip(UiText.t("rb_wanted_face_only", "VISAGE SEUL"), UiIcon.Kind.SCANNER, Palette.TEXT_SECONDARY))
 	var chip: PanelContainer = ScreenBase.chip(UiText.t("rb_wanted_action", "MISE EN ATTENTE"), UiIcon.Kind.DETAIN, DS.ACCENT_YELLOW)
 	column.add_child(chip)
 	margin.minimum_size_changed.connect(_sync_min_size.bind(margin))
@@ -79,7 +79,7 @@ func _refresh_content() -> void:
 	if _name == null:
 		return
 	if is_flagged():
-		_name.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+		_name.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 	elif selected:
 		_name.add_theme_color_override(&"font_color", DS.ACCENT_CYAN)
 	else:
@@ -89,8 +89,8 @@ func _refresh_content() -> void:
 func _draw() -> void:
 	# Fond de l'avis (bulletin officiel) : liseré rouge à gauche, fond red.12.
 	if not is_flagged() and not selected:
-		draw_rect(Rect2(Vector2.ZERO, size), DS.RED_12)
-		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), DS.STATE_RED)
+		draw_rect(Rect2(Vector2.ZERO, size), Palette.RED_12)
+		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), Palette.STATE_RED)
 	super._draw()
 
 

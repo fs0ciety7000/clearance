@@ -13,10 +13,10 @@ var caption: String = ""
 static func color_of(p_kind: VerdictKind.Kind) -> Color:
 	match p_kind:
 		VerdictKind.Kind.DENY:
-			return DS.STATE_RED
+			return Palette.STATE_RED
 		VerdictKind.Kind.DETAIN:
 			return DS.ACCENT_YELLOW
-	return DS.STATE_GREEN
+	return Palette.STATE_GREEN
 
 
 static func icon_of(p_kind: VerdictKind.Kind) -> UiIcon.Kind:

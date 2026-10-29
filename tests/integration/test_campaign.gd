@@ -5,6 +5,7 @@
 ## partir des clés (GDD §5.1, §5.2, §5.3) ; aller-retour de sauvegarde.
 extends GutTest
 
+const SaveChecks := preload("res://tests/helpers/save_checks.gd")
 const DayHarness := preload("res://tests/helpers/day_harness.gd")
 const Gen := preload("res://tests/helpers/generation_fixtures.gd")
 const DIR: String = "user://test_campaign_saves"
@@ -25,14 +26,14 @@ func before_all() -> void:
 func before_each() -> void:
 	_saved_state = GameState.to_save_dict()
 	Campaign.new_game(data, CAMPAIGN_SEED)
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 
 
 func after_each() -> void:
 	if h != null:
 		h.dispose()
 		h = null
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	if SaveService.as_int(_saved_state.get("current_day", 0)) >= 1:
 		GameState.apply_save_dict(_saved_state)
 	else:
@@ -80,7 +81,7 @@ func _evening(summary: DaySummary) -> Array:
 	var report: EveningReport = Campaign.preview_evening(data, lines)
 	var before: int = GameState.credits
 	var day_before: int = GameState.current_day
-	var ending: StringName = Campaign.close_evening(data, summary, report, 0, DIR)
+	var ending: StringName = Campaign.close_evening(data, summary, report, 1, DIR)
 	assert_eq(GameState.credits, before - report.spent, "solde débité des dépenses")
 	assert_eq(GameState.current_day, day_before + 1)
 	assert_eq(GameState.household.to_dict(), report.household.to_dict())
@@ -123,7 +124,7 @@ func test_perfect_bot_three_days_null_booth() -> void:
 		var report: EveningReport = result[1]
 		# M7 : la campagne continue après le J3 (J4–J10, `test_m7_campaign.gd`).
 		assert_eq(result[0], EveningReport.ENDING_NONE)
-		assert_true(SaveService.has_save(0, DIR), "sauvegarde automatique entre les jours")
+		assert_true(SaveService.has_save(1, DIR), "sauvegarde automatique entre les jours")
 		assert_eq(report.ending, EveningReport.ENDING_NONE, "un joueur parfait survit (GDD §5.3)")
 		for line: ExpenseLine in report.lines:
 			assert_true(line.paid, "J%d : un joueur parfait paie tout (%s, D-047)" % [day_number, line.id])
@@ -164,21 +165,21 @@ func test_approve_all_bot_three_days_economy_and_citations() -> void:
 		ending = result_pair[0]
 		if ending != EveningReport.ENDING_NONE and ending != Campaign.ENDING_DEMO_COMPLETE:
 			break
-	# M7 : J1–J3 ne terminent plus la campagne ; une fin anticipée efface la sauvegarde.
+	# M7 : J1–J3 ne terminent plus la campagne ; une fin anticipée archive la partie (D-101).
 	if ending != EveningReport.ENDING_NONE:
-		assert_false(SaveService.has_save(0, DIR), "plus de « Continuer » après une fin")
+		SaveChecks.assert_archived(self, 1, DIR, ending, "fin anticipée")
 	else:
-		assert_true(SaveService.has_save(0, DIR), "la campagne continue au J4")
+		assert_true(SaveService.has_save(1, DIR), "la campagne continue au J4")
 
 
 func test_save_load_roundtrip_between_days() -> void:
 	var summary: DaySummary = await _play_current_day(NullBooth.new(), func(key: CaseKey) -> VerdictKind.Kind: return key.expected_verdict, true)
 	_evening(summary)
 	var snapshot: Dictionary = GameState.to_save_dict()
-	assert_true(SaveService.has_save(0, DIR))
+	assert_true(SaveService.has_save(1, DIR))
 	GameState.new_campaign(1)
 	assert_ne(GameState.to_save_dict(), snapshot)
-	assert_true(GameState.load_from_slot(0, DIR), "Continuer")
+	assert_true(GameState.load_from_slot(1, DIR), "Continuer")
 	assert_eq(GameState.to_save_dict(), snapshot, "état restauré à l'identique")
 	assert_eq(GameState.current_day, 2)
 	# Le jour 2 rejoué après chargement est le même que sans interruption.

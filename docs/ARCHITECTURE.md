@@ -177,9 +177,9 @@ AudioMixBarrier="*res://scripts/autoload/audio_mix_barrier.gd"
 
 | Autoload | Rôle (état réel) | Ne fait PAS |
 |---|---|---|
-| `EventBus` | 34 signaux typés (catalogue §7). Aucun état, aucune méthode. | Logique, stockage |
+| `EventBus` | 39 signaux typés (catalogue §7 ; M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed`, §10). Aucun état, aucune méthode. | Logique, stockage |
 | `Settings` | Préférences dans `user://settings.cfg` (`ConfigFile`) : `volume_{master,music,ambience,sfx,voice,ui}` (appliqués aux bus `Master/Music/Ambience/SFX/Voice/UI`), `fx_intensity` (1 / 0,5 / 0), `reduce_motion`, `text_scale` (0,9–1,5, D-026), `subtitles`, `clock_slow_accessibility` (horloge ×0,5), `audio_mono`, `graphics_quality` (M9 : −1 Auto / 0 Bas / 1 Moyen / 2 Élevé ; `graphics_quality_level()` résout Auto = Moyen sur Steam Deck — variable `SteamDeck=1` —, Élevé ailleurs ; appliqué par `BoothQuality`). `set_value()` valide (`_sanitize`), applique et émet `settings_changed` (choix du joueur, persisté ; `persist = false` diffère seulement l'écriture). **Valeurs de session** (QA-006) : `set_session_value()` / `clear_session_value()` (argument `--reduce-motion`, outils, tests) appliquent sans jamais écrire — `save_settings()` écrit pour ces clés la dernière valeur persistée. `use_storage(path)` change de fichier : la suite GUT utilise `user://test_settings/settings.cfg` (crochet `tests/helpers/gut_pre_run.gd`, `.gutconfig.json`). 🎯 Langue, daltonisme, sensibilité manette : non implémentés. | État de partie |
-| `GameState` | État de **campagne** : `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags: Dictionary[StringName, Variant]` (drapeaux et jauges `loyalty` / `lucioles_trust` / `suspicion`), `day_history: Array[Dictionary]`, `household: Household`, `case_memory` (§9.4). `to_save_dict()` / `apply_save_dict()` / `save_to_slot()` / `load_from_slot()` (§10), `get_day_seed()`, `add_to_flag()`, `get_true_flags()`, `remember_case()`. Émet `credits_changed`, `narrative_flag_changed`, `game_saved`, `game_loaded`. | État du jour en cours (porté par `DayController`) |
+| `GameState` | État de **campagne** : `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags: Dictionary[StringName, Variant]` (drapeaux et jauges `loyalty` / `lucioles_trust` / `suspicion`), `day_history: Array[Dictionary]`, `household: Household`, `case_memory` (§9.4). `to_save_dict()` / `apply_save_dict()` / `save_to_slot()` / `load_from_slot()` (§10) ; M11 : `active_slot`, `difficulty` (`is_story_mode()`, `set_difficulty()`), `load_day_snapshot()`, `end_campaign()` (archive + profil, `ProfileService`), `play_time_sec`, `portrait_seed` (§10). `get_day_seed()`, `add_to_flag()`, `get_true_flags()`, `remember_case()`. Émet `credits_changed`, `narrative_flag_changed`, `game_saved`, `game_loaded`, `save_slots_changed`, `profile_changed`, `difficulty_changed`. | État du jour en cours (porté par `DayController`) |
 
 | `AudioMixBarrier` (rév. 3.5, QA-030) | Barrière de mixage : `AudioServer.lock()` / `unlock()` une fois par image (`_process`, `PROCESS_MODE_ALWAYS`, avant `AudioServer.update()`) — contournement de la course de Godot 4.7.2 sur les `bus_details` (§13, R31). | Aucun état, aucun signal, aucun son |
 
@@ -372,7 +372,7 @@ Données des règles Acte II (`tools/build_data.gd` + `build_data_act2.gd`) : R2
 
 ## 7. Catalogue des signaux `EventBus`
 
-Source : `scripts/autoload/event_bus.gd` — **34 signaux**, tous typés (liste exhaustive ci-dessous, vérifiée le 2026-10-28 ; 3 ajoutés en M8 : `quota_changed`, `revocations_published`, `scanner_suggested`). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
+Source : `scripts/autoload/event_bus.gd` — **40 signaux**, tous typés (liste exhaustive ci-dessous, vérifiée le 2026-10-29 ; 3 ajoutés en M8 : `quota_changed`, `revocations_published`, `scanner_suggested` ; 2 en M9 : `ledger_changed`, `summons_published` ; 4 en M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed` (lot A) et `rulebook_consulted` (lot C)). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
 
 | Signal | Paramètres | Émetteurs → Écouteurs (état réel) |
 |---|---|---|
@@ -385,6 +385,8 @@ Source : `scripts/autoload/event_bus.gd` — **34 signaux**, tous typés (liste 
 | `wanted_notices_published` | `notices: Array[WantedNotice]` | DayController (juste après `day_started`) → ComparisonUI (onglet Avis du Rulebook) |
 | `hall_announced` | `text_key: String` | DayController (`hall_announcements` après le n-ième cas ; `HallAnnouncementDef` après un cas ou à `at_minute` ; `hall_quota_full` quand le compteur se remplit), DayScene (debug `--lights-out` seulement) → ComparisonUI (sous-titre haut-parleur), AudioDirector (`amb.pa_announce`), **DayScene** (annonce `ends_shift` ⇒ `lights_out()`, §7.2) |
 | `quota_changed` | `used: int, maximum: int` | DayController (à `start_day` — `maximum` 0 si pas de quota — puis après **chaque tampon** tant que le quota est actif) → ComparisonUI (`TopBar.set_quota` → `QuotaCounterView` ; rafraîchit le texte de R23 dans le Rulebook) |
+| `ledger_changed` | `entries: Array[LedgerEntry]` | DayController (début du shift, puis après chaque admission inscrite), DayScene (debug) → ComparisonUI (onglet Main courante, R34) |
+| `summons_published` | `entries: Array[SummonsEntry]` | DayController (début du shift, trié par N°) → ComparisonUI (onglet Convocations, R36) |
 | `revocations_published` | `entries: Array[RevokedEntry]` | DayController (à `start_day`, juste après `wanted_notices_published`, **chaque jour** : liste vide avant le J17) → ComparisonUI (`RulebookPanel.set_revoked`, onglet Révocations) |
 | **Passager** | | |
 | `next_case_requested` | — | ComparisonUI (« Suivant »), DemoAutoplay, DayScene (debug) → DayController (ignoré hors `WAITING_CASE`) |
@@ -414,6 +416,10 @@ Source : `scripts/autoload/event_bus.gd` — **34 signaux**, tous typés (liste 
 | `narrative_flag_changed` | `flag, value: Variant` | GameState → ⚠️ **aucun écouteur** (les drapeaux sont relus à la demande) |
 | `settings_changed` | `key, value: Variant` | Settings → ComparisonUI, ScreenBase, PauseMenu, AudioDirector, BoothQuality, main.gd |
 | `game_saved` / `game_loaded` | `slot: int` | GameState → ⚠️ **aucun écouteur** |
+| `save_slots_changed` | — | GameState (sauvegarde du soir, archivage d'une fin, passage Récit → Dur inscrit dans l'emplacement — QA-046), LoadScreen (suppression) → écran titre `main.gd` (`refresh_menu`) |
+| `profile_changed` | — | GameState (`ProfileService.record` a changé `profile.json` : fin vue, personnage croisé, mode Récit utilisé) → ⚠️ **aucun écouteur** (prévu M12 : galerie des fins) |
+| `difficulty_changed` | `difficulty: StringName` | GameState (`set_difficulty`, Récit → Dur seulement) → DayController (`set_story_mode(false)`, horloge), ComparisonUI (barre Récit), DayScene (FERMER LE GUICHET) |
+| `rulebook_consulted` | — | RulebookPanel (onglet changé, panneau déplié, carte sélectionnée) → TutorialOverlay (étape « Rulebook », D-111) |
 
 **Robustesse** : tous les signaux du booth portent `case_id` ; `DayController` ignore un signal d'un autre cas ou hors de l'état attendu ; `BoothDirector._emit_once()` n'émet chaque fait qu'une fois par cas, dans l'ordre `passenger_arrived → documents_presented → passenger_departed`. Seule exception à « un émetteur par fait » : le timeout `documents_presented` du `DayController`. `document_handed` a été supprimé au profit de `documents_presented(case_id)` (D-014).
 
@@ -712,14 +718,90 @@ Sérialisation stable : `CaseSerializer` (tests de déterminisme). 🎯 Golden f
 
 ## 10. Sauvegarde
 
-- **Quand** : automatiquement à la validation de la soirée (`Campaign.close_evening`), jamais en plein shift (D-041). Toute fin efface la sauvegarde (`SaveService.delete()`, idempotent).
-- **Où / format** : `user://saves/slot_0.json` (un seul emplacement utilisé), JSON texte ; préférences séparées dans `user://settings.cfg`. Jamais de `.tres` dans `user://` (D-008).
-- **Format v5** (M9, `SaveService.VERSION = 5`) : **aucun champ nouveau** — l'état de l'Acte III vit dans `narrative_flags` (`act3_started`, `climate_*`, `pivot3_done`, `enquete_cible`, jauges `verite`, `aveux`, `pont`, `arbitre_loan`…) ; migration v4 → v5 = changement de numéro (testée sur trois vraies sauvegardes v0.9.0, `tests/fixtures/qa_save_v4_j20_*.json`). Dernier jour : **30**.
-- **Format v4** (`SaveService.VERSION = 4` ; `game_version` = `SaveService.game_version()`, lu dans `application/config/version` de `project.godot`, actuellement `0.8.1`) : `version`, `game_version`, `saved_at`, `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags`, `day_history` (détail par jour : traités, prévus, corrects, erreurs, citations, salaire, amendes, net, dépensé, gagné, solde), `household` (membres : `health`, `hungry`, `cold`, `detained` ; **v4** : `breathless`, `breathless_streak`, `away`), `case_memory`. **Aucune clé de premier niveau nouvelle en v4** : l'état de l'Acte II vit dans `narrative_flags` (`act2_started`, `overrun_yesterday`, `quota_overrun` (compteur), drapeaux du scanner `scanner_consortium` / `scanner_luciole(_removed)`, `meter_refused`, jauges `registre`, `compliance_pct`, `levy_amount`, `review_arrested`…) et dans `case_memory` (visages des cas scénarisés repris par les avis `memory_case_id`).
-- **Sauvegarde du soir pivot** : `Campaign.close_evening` du J10 pose `act2_started` **avant** l'écriture ; l'interstitiel « CHAPITRE II » s'affiche après la sauvegarde (quitter dessus reprend au briefing du J11). « Embarquer » (F6) et toute fin anticipée effacent la sauvegarde.
-- **Migrations** (`SaveService.migrate`, en chaîne) : v1 → v2 (foyer par défaut, historique complété) ; v2 → v3 (`case_memory` vide, `suspicion +1` rétroactif si SC-02 approuvée, D-052/D-057) ; v3 → v4 (M8 : champs `breathless`, `breathless_streak`, `away` du foyer ; un proche `lost` **et** `detained` redevient `well` + `detained` — « mis·e en attente » distinct de PERDU, D-076). Version inconnue ou future ⇒ refus.
-- **Lecture** : JSON → migrations → validation de schéma (`SCHEMA`, `1 ≤ jour ≤ SaveService.last_day()`, dernier `day_NN.tres` de `data/days` — **20** depuis M8, QA-003) ; nombres JSON lus par `as_int()`. **Écriture atomique** (QA-018) : `.tmp` écrit et vidé, puis renommé **par-dessus** la sauvegarde (jamais de suppression préalable) ; si la plateforme refuse d'écraser, l'ancienne passe d'abord en `.bak`. Lecture de secours : sauvegarde principale absente ou refusée ⇒ `.tmp`, puis `.bak` ; `has_save` / `delete` couvrent les trois fichiers.
-- Responsables : `SaveService` (pur, dossier paramétrable pour les tests) ; `GameState.save_to_slot()` / `load_from_slot()` ; écran titre « Continuer ».
+### 10.1 Format v6 (M11, D-101) — état réel
+
+- **Quand** : automatiquement à la validation de la soirée (`Campaign.close_evening` → `GameState.save_to_slot()`), jamais en plein shift (D-041). Une **fin** (F1–F10, fins anticipées comprises) **n'efface plus** la partie : elle l'**archive** (`GameState.end_campaign(ending)`, appelé par `Campaign.close_evening` / `close_final_day` puis, idempotent, par `DayScene.show_end`).
+- **Où** (`SaveService.DEFAULT_DIR` = `user://saves`) ; préférences séparées dans `user://settings.cfg` ; jamais de `.tres` dans `user://` (D-008) :
+
+```
+user://saves/
+  slot_1/ slot_2/ slot_3/   emplacements (SaveService.SLOT_COUNT = 3, DEFAULT_SLOT = 1)
+    current.json            état courant (dernière soirée validée)
+    day_NN.json             instantané « matin du jour NN » (même contenu que current.json à l'écriture)
+    meta.json               résumé pour l'écran Charger
+  profile.json              profil global (ProfileService, §10.3)
+  slot_0.v5.bak             ancienne sauvegarde v5 après migration (jamais supprimée)
+```
+
+- **État** (`current.json`, `day_NN.json`) : le dictionnaire de `GameState.to_save_dict()` + `version` (**6**), `game_version`, `saved_at`. Clés v5 inchangées (`campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags`, `day_history`, `household`, `case_memory`) ; **v6** ajoute trois clés de premier niveau **optionnelles** (hors `SCHEMA`) : `difficulty` (`"hard"` | `"story"`, absente ⇒ `"hard"`), `play_time_sec` (s, cumulé entre deux sauvegardes), `portrait_seed` (visage de l'agent, réservé ; 31 bits pour rester exact en JSON).
+- **`meta.json`** (`SaveService.build_meta`) : `version`, `game_version`, `saved_at`, `current_day`, `act` (1/2/3 d'après `act2_started` / `act3_started`), `credits`, `household_summary` (`alive`, `sick`, `absent` = vivants non présents (attente, Soute, Tycho), `total`), `difficulty`, `status` (`"active"` | `"ended"`), `ending_id` (vide si active), `portrait_seed`, `play_time_sec`, `campaign_seed` ; plus `saved_unix_ms` et `save_serial` (départage de « Continuer » dans la même seconde). Une méta absente ou illisible est **reconstruite** depuis l'état courant (`load_meta`), **statut d'archive compris** (QA-044 : `mark_ended` écrit aussi `status` / `ending_id` dans `current.json`). Emplacement occupé sans **aucun** état lisible (ni `current.json` et ses secours, ni instantané) : méta lue (sinon minimale : `status = active`, `current_day` = plus grand `day_NN` présent) avec **`damaged: true`** (`SaveService.META_DAMAGED`, `is_damaged(meta)`, QA-043) — jamais proposé par « Continuer » ni compté libre ; l'UI ne propose que supprimer / écraser. Champ absent sinon.
+- **Écriture** (`SaveService.save_slot(data, slot, dir)`) : `day_NN.json` du jour courant, puis `current.json` (sans `status` / `ending_id` : une sauvegarde rouvre la partie), puis suppression des instantanés **postérieurs** au jour écrit (tous les fichiers `day_NN*`, lisibles ou non), puis `meta.json` (`status = active`, `ending_id` vide). Chaque fichier est écrit de façon **atomique** (`write_atomic`, QA-018 : `.tmp` écrit et vidé, renommé par-dessus ; si la plateforme refuse d'écraser, l'ancien passe d'abord en `.bak`) et relu avec secours (`read_json` : principal, sinon `.tmp`, sinon `.bak`).
+- **Lecture de l'état courant** (`load_current`) : `current.json`, sinon son `.tmp` / `.bak`, sinon (QA-043) l'**instantané lisible le plus récent** (`day_NN.json` du même matin, même contenu à l'écriture ; `push_warning`). `has_save` est vrai dès qu'un `current.json*` ou un instantané existe.
+- **Instantanés proposés** (`list_snapshots`) : seulement les jours **chargeables** (QA-045 : un `day_NN.json.tmp` orphelin tronqué n'est pas listé ; un `.tmp` complet l'est, QA-018).
+- **« Continuer »** = `SaveService.latest_slot()` : emplacement `active` et non `damaged` au `saved_at` le plus récent (`NO_SLOT` = −1 si aucun). `GameState.load_from_slot()` sans argument fait exactement cela ; l'emplacement chargé devient `GameState.active_slot` (où écriront les soirées suivantes).
+- **Reprendre un jour passé** : `GameState.load_day_snapshot(slot, day)` applique `day_NN.json` **sans rien écrire** (quitter avant le soir laisse `current.json` intact) ; la sauvegarde suivante (soirée du jour repris) supprime les instantanés postérieurs — une seule ligne de temps par emplacement — et repasse la partie en `active` (une partie terminée peut donc être reprise). Une partie passée en Dur reste en Dur même si l'instantané repris date du mode Récit (D-102). Le passage Récit → Dur est **inscrit aussitôt** (QA-046) : `GameState.set_difficulty(&"hard")` → `SaveService.persist_difficulty(active_slot, "hard", campaign_seed)` réécrit `difficulty` dans `current.json` et `meta.json` de l'emplacement actif s'il contient cette campagne (ni instantané, ni `saved_at`, ni temps de jeu touchés), puis `save_slots_changed` ; « Quitter » avant la soirée ne l'annule donc pas.
+- **Fin** (`GameState.end_campaign(ending, slot = NO_SLOT, dir)`) : fin F1–F10 inscrite au profil (première fois : jour = dernier jour joué, date) avec les personnages croisés ; puis `SaveService.mark_ended(slot, ending_id)` (`status = ended`, `ending_id` dans `meta.json` **et** `current.json` ; `current.json` = état du matin du dernier jour joué, instantanés gardés) **si** l'emplacement contient bien cette campagne (même `campaign_seed` — garde-fou des écrans de debug `--screen=end`). Idempotent. Pas de sauvegarde pour une fin survenue avant la première soirée : rien à archiver.
+- **Nouvelle partie** : `Campaign.new_game(data, seed, slot, difficulty)` → `GameState.new_campaign(seed, slot, difficulty)` ; **aucune écriture** avant la première soirée. L'appelant (écran Nouvelle partie, lot C : choix de l'emplacement, écrasement confirmé) choisit l'emplacement et le vide (`SaveService.delete_slot(slot)`) s'il réutilise un emplacement occupé : sinon d'anciens instantanés (jours antérieurs) d'une autre partie resteraient. (`slot_for_new_game`, provisoire avant le lot C, est supprimée.) Une graine tirée au hasard tient sur **53 bits** (`GameState.JSON_SAFE_MASK`) : exacte à travers JSON, où tout nombre est relu en flottant ; `GameState.same_seed` compare à cette précision (graines 64 bits des sauvegardes 0.10).
+- **Migration des fichiers v5 → v6** (`SaveService.migrate_legacy(dir)`, appelée par `list_slots` / `latest_slot` / `first_free_slot`, idempotente) : `user://saves/slot_0.json` (ou son `.tmp` / `.bak`) est lu avec les migrations en chaîne (v1 → … → v6), écrit dans l'emplacement 1 (ou le premier libre) : `current.json`, `meta.json` et `day_NN.json` **du jour courant seulement**, `saved_at` d'origine conservé ; l'ancien fichier est renommé `slot_0.v5.bak` (même illisible ; jamais supprimé). Testée sur deux vraies sauvegardes 0.10.0 (`tests/fixtures/qa_save_v5_j25_{luciole,solidaire}.json`, soir du J24 — écrites par la 0.10.0 en rejouant `qa_save_v4_j20_*`) et une 0.9.0 (v4).
+- **Migrations d'état** (`SaveService.migrate`, en chaîne) : v1 → v2 (foyer par défaut, historique complété) ; v2 → v3 (`case_memory` vide, `suspicion +1` rétroactif si SC-02 approuvée, D-052/D-057) ; v3 → v4 (M8 : `breathless`, `breathless_streak`, `away` ; un proche `lost` **et** `detained` redevient `well` + `detained`, D-076) ; v4 → v5 (numéro seul, Acte III) ; **v5 → v6** (`difficulty = "hard"` explicite). Version inconnue ou future ⇒ refus.
+- **Lecture** : JSON → migrations → validation de schéma (`SCHEMA`, `1 ≤ jour ≤ SaveService.last_day()` = dernier `day_NN.tres` de `data/days`, **30**) ; nombres JSON lus par `as_int()`.
+- **Tests** : `SaveService.use_root(dir)` redirige `DEFAULT_DIR` ; la suite GUT l'appelle (`tests/helpers/gut_pre_run.gd` → `user://test_default_saves`, vidé à chaque exécution) : la vraie scène de jour n'écrit plus dans `user://saves` pendant les tests.
+
+**API** (`SaveService`, statique et pur, `dir` paramétrable ; `GameState` pour l'état) :
+
+```gdscript
+# SaveService
+const VERSION := 6, SLOT_COUNT := 3, DEFAULT_SLOT := 1, NO_SLOT := -1
+const STATUS_ACTIVE := "active", STATUS_ENDED := "ended", DIFFICULTY_HARD := "hard", DIFFICULTY_STORY := "story"
+static func list_slots(dir := DEFAULT_DIR) -> Array[Dictionary]      # meta + "slot" par emplacement 1..3, {} si libre
+static func latest_slot(dir := DEFAULT_DIR) -> int                   # « Continuer », NO_SLOT si aucune partie active
+static func first_free_slot(dir := DEFAULT_DIR) -> int
+static func save_slot(data: Dictionary, slot := DEFAULT_SLOT, dir := DEFAULT_DIR, saved_at := "") -> Error
+static func load_current(slot := DEFAULT_SLOT, dir := DEFAULT_DIR) -> Dictionary   # repli : instantané lisible le plus récent
+static func load_meta(slot: int, dir := DEFAULT_DIR) -> Dictionary
+static func list_snapshots(slot: int, dir := DEFAULT_DIR) -> PackedInt32Array      # jours chargeables seulement
+static func load_snapshot(slot: int, day: int, dir := DEFAULT_DIR) -> Dictionary
+static func mark_ended(slot: int, ending_id: String, dir := DEFAULT_DIR) -> Error      # méta + current.json
+static func persist_difficulty(slot: int, difficulty: String, campaign_seed := 0, dir := DEFAULT_DIR) -> Error  # QA-046
+static func is_damaged(meta: Dictionary) -> bool                      # META_DAMAGED = "damaged" (QA-043)
+static func delete_slot(slot: int, dir := DEFAULT_DIR) -> void       # le profil n'est jamais touché
+static func has_save(slot := DEFAULT_SLOT, dir := DEFAULT_DIR) -> bool
+static func migrate_legacy(dir := DEFAULT_DIR) -> int                # emplacement rempli ou NO_SLOT
+static func build_meta(data: Dictionary, status := "active", ending_id := "") -> Dictionary
+static func write_atomic(path: String, text: String) -> Error         # aussi utilisé par ProfileService
+static func read_json(path: String, accept := Callable()) -> Dictionary
+static func parse(text: String, origin := "<texte>") -> Dictionary   # migrations + validation
+# GameState
+var active_slot: int                         # emplacement de la partie en cours
+var difficulty: StringName                   # &"hard" (défaut) | &"story"
+var play_time_sec: int, portrait_seed: int
+func new_campaign(p_seed := 0, slot := SaveService.DEFAULT_SLOT, p_difficulty := &"hard") -> void
+func save_to_slot(slot := SaveService.NO_SLOT, dir := SaveService.DEFAULT_DIR) -> Error   # NO_SLOT = active_slot
+func load_from_slot(slot := SaveService.NO_SLOT, dir := SaveService.DEFAULT_DIR) -> bool  # NO_SLOT = latest_slot
+func load_day_snapshot(slot: int, day: int, dir := SaveService.DEFAULT_DIR) -> bool
+func end_campaign(ending: StringName, slot := SaveService.NO_SLOT, dir := SaveService.DEFAULT_DIR) -> void
+func is_story_mode() -> bool
+func set_difficulty(value: StringName, dir := SaveService.DEFAULT_DIR) -> bool   # Récit → Dur seulement, inscrit aussitôt
+```
+
+Signaux (`EventBus`, §7) : `game_saved(slot)`, `game_loaded(slot)`, **`save_slots_changed()`** (écriture, archivage), **`profile_changed()`**, **`difficulty_changed(difficulty)`** (Récit → Dur).
+
+### 10.2 Mode Récit (D-102, logique)
+
+- `GameState.difficulty` (`&"hard"` par défaut, `&"story"`), choisi à la nouvelle partie, sauvegardé (`difficulty`) et affiché dans `meta.json`. `set_difficulty(&"hard")` en cours de partie ; `set_difficulty(&"story")` est refusé sur une partie en Dur (jamais l'inverse).
+- `DayController.story_mode` (lu dans `GameState` à `start_day`, `apply_to_game_state`) : l'horloge (`DayClock.untimed`) s'affiche et avance mais s'arrête à 18:00 **sans** `day_time_expired` — le shift se termine quand la file prévue est traitée (ou sur une annonce `ends_shift`, ex. grève). `can_close_booth()` / `close_booth()` : « Fermer le guichet » une fois le quota du jour atteint (jours à quota ; bilan tout de suite entre deux passagers, sinon après le passager en cours). Passage en Dur pendant le shift (`difficulty_changed`) : `set_story_mode(false)` ; une horloge déjà au bout expire aussitôt.
+- Citations émises, numérotées et comptées (`GameState.citations`, Revue, Déposition, fins) mais **amende 0 ₵** (`CaseResult.waive_fine()` après `ScoringService.apply_citation`).
+- **Protection du Récit (D-113, QA-049)** : en Récit seulement, seuils d'arrestation relevés — Revue du J17 `story_review_arrest_score` = 7 (Dur : `review_arrest_score` = 5, D-080), Déposition du J29 `story_deposition_arrest_score` = 10 (Dur : 7, D-094) — et aggravation plus lente d'un proche non soigné, `story_untreated_worsen_evenings` = 3 soirs (Dur : 2). Valeurs dans `EconomyDef` (groupe « Mode Récit », `tools/build_data.gd`), lues par `review_arrest_for(story)`, `deposition_arrest_for(story)`, `untreated_worsen_for(story)`. Le mode passe par le pseudo-drapeau de contexte du soir `EndingService.FLAG_STORY_MODE` (`story_mode`, jamais sauvegardé), posé par `EveningService.evening_context(…, story)` (`Campaign.evening_flags` : `GameState.is_story_mode()` ; simulateur : `profile.story_mode`) ; sans lui, le Dur lit ses valeurs d'avant (sorties `balance_sim` identiques). Mesuré (`balance_sim --story`, 20 graines, 65 %) : F1 5–15 % hors `mercenary3` (80 %), F3 0 % ; F1 et F3 restent atteignables (`test_every_ending_is_reachable_in_story_mode`, `tests/unit/test_story_protection.gd`).
+- Simulation : `SimProfile.story_mode` (`SimProfile.story(preset)`, préfixe `story_` dans `preset()` / `balance_sim --presets=`, ou `balance_sim --story`) ; `DaySimulator.play_day` annule les amendes. `tests/integration/test_story_mode.gd` vérifie que F1–F10 restent atteignables en Récit.
+
+### 10.3 Profil global (`ProfileService`, D-101)
+
+Service statique (pas d'autoload) : `<dossier des sauvegardes>/profile.json` (`user://saves/profile.json`), écriture atomique et lecture de secours de `SaveService`. Champs : `version` (1), `endings_seen: [{id, day, date}]` (première fois seulement), `characters_met: [String]` (identifiants `ScriptedCaseDef.id` des cas scénarisés traités — clés de `case_memory`), `story_mode_used: bool`, réservés M12 `best_runs: []`, `epilogue_unlocked: false` ; champs inconnus conservés. Alimenté par `GameState.save_to_slot` (personnages, mode Récit) et `GameState.end_campaign` (fin F1–F10) — n'écrit que si quelque chose change, puis `profile_changed`. Jamais effacé par une fin ni par `delete_slot`. API : `load_profile(dir)`, `save_profile(profile, dir)`, `record(dir, ending_id, day, characters, story_mode) -> bool`, `ending_ids(profile)`, `has_seen_ending(profile, id)`, `sanitize(raw)`.
+
+### 10.4 Outils
+
+`tools/qa_campaign.gd` joue dans l'emplacement `SaveService.DEFAULT_SLOT` (vidé au départ et à la fin) ; `--qa-load=` accepte un ancien `slot_0.json` (v1–v5, vraie migration `migrate_legacy`) ou un état v6 ; `--qa-reload` = « Continuer » réel (`load_from_slot()`, emplacement vérifié) ; contrôles du soir : état relu identique + instantané du matin ; à la fin : partie archivée avec la bonne fin et fin présente au profil ; `--qa-story` : mode Récit.
+
 - ✅ Version unique : `application/config/version` (`project.godot`) ; l'écran titre l'affiche (QA-013, UI).
 
 ---

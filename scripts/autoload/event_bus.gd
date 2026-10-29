@@ -107,3 +107,14 @@ signal settings_changed(key: StringName, value: Variant)
 signal game_saved(slot: int)
 ## GameState → UI.
 signal game_loaded(slot: int)
+## M11 (D-101) GameState → écrans Nouvelle partie / Charger : un emplacement a
+## été écrit, archivé (fin) ou vidé.
+signal save_slots_changed()
+## M11 (D-101) GameState → UI : `profile.json` a changé (fin vue, personnage
+## croisé, mode Récit utilisé).
+signal profile_changed()
+## M11 (D-102) GameState → DayController, HUD : passage Récit → Dur.
+signal difficulty_changed(difficulty: StringName)
+## M11 lot C — RulebookPanel → tutoriel du J1 (`TutorialOverlay`) : le joueur
+## a consulté le Rulebook (onglet changé, panneau déplié, carte sélectionnée).
+signal rulebook_consulted()

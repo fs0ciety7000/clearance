@@ -53,12 +53,17 @@ func setup(flags: Dictionary[StringName, Variant], p_act: int = 2) -> void:
 
 ## Couleur de l'acte : bleu de registre (II, Commission), ambre (III, Enquête).
 func accent() -> Color:
-	return DS.STATE_AMBER if act == 3 else DS.VOICE_COMMISSION
+	return Palette.STATE_AMBER if act == 3 else Palette.VOICE_COMMISSION
 
 
 ## Clé de texte de l'acte (`chapter2_title`, `chapter3_title`…).
 func text_key(suffix: String) -> String:
 	return "chapter%d_%s" % [act, suffix]
+
+
+## Manette / clavier (M11) : « CONTINUER » par défaut.
+func default_focus() -> Control:
+	return continue_button
 
 
 func _build() -> void:
@@ -91,7 +96,7 @@ func _build() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
 	_parts.append(title)
-	var dates: Label = label(UiText.t(text_key("sub"), ""), &"DataTitle", DS.TEXT_SECONDARY)
+	var dates: Label = label(UiText.t(text_key("sub"), ""), &"DataTitle", Palette.TEXT_SECONDARY)
 	dates.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(dates)
 	_parts.append(dates)
@@ -169,7 +174,7 @@ class RomanTwo:
 			stems = maxi(value, 1)
 			custom_minimum_size = Vector2(STEM * stems + GAP * (stems - 1) + OVERHANG * 2.0, ChapterScreen.NUMERAL_HEIGHT + DS.SPACE_8)
 			queue_redraw()
-	var accent: Color = DS.VOICE_COMMISSION:
+	var accent: Color = Palette.VOICE_COMMISSION:
 		set(value):
 			accent = value
 			queue_redraw()

@@ -4,6 +4,7 @@
 > Passe du 27.10.2026, sur `main` après les commits « Narration : écarts M7 corrigés » et « ARCHITECTURE rév. 3 ».
 > **Passe Acte II du 28.10.2026** (`0.8.1` + M8 A/B, sauvegarde v4, 515 tests) : voir [§12](#12-passe-qa-acte-ii-j10j20) — bugs QA-019 à QA-031.
 > **Passe Acte III du 29.10.2026** (M9 A/B `26eb154`, sauvegarde v5, 573 tests) : voir [§13](#13-passe-qa-acte-iii-j20j30) — bugs QA-032 à QA-040.
+> **Passe M11 « Confort » du 29.10.2026** (`4bbda95`, sauvegarde v6, 638 tests) : voir [§14](#14-passe-qa-m11-confort) — bugs QA-041 à QA-049, 655 tests (8 `pending`).
 > Ce document liste les bugs trouvés ; **QA ne corrige pas le code de jeu** : chaque bug nomme le fichier suspecté et l'agent propriétaire (AGENTS.md).
 
 ## Sommaire
@@ -21,6 +22,7 @@
 11. [Rejouer la passe](#11-rejouer-la-passe)
 12. [Passe QA Acte II (J10–J20)](#12-passe-qa-acte-ii-j10j20)
 13. [Passe QA Acte III (J20–J30)](#13-passe-qa-acte-iii-j20j30)
+14. [Passe QA M11 « Confort »](#14-passe-qa-m11-confort)
 
 ---
 
@@ -706,4 +708,202 @@ XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path 
     --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1920x1080 --qa-wait=30 \
     --qa-after-check=0.8 --qa-out=/tmp/j24.png --seed=3 --day=24 --screen=shift --rulebook-tab=ledger --inspect \
     --start-case=2 --flags=act2_started,act3_started --reduce-motion
+```
+
+---
+
+## 14. Passe QA M11 « Confort »
+
+> Passe du 29.10.2026 sur `claude/laughing-bell-8ayudz` après `4bbda95` (lots A/B/C : sauvegarde v6 à 3 emplacements + instantanés + fins archivées + profil, mode Récit, vision des couleurs `Palette`, manette complète, carte d'identité redessinée, écrans Nouvelle partie / Charger / reprise d'un jour, tutoriel du J1). Godot 4.7.2, GUT 9.7.1. **QA ne corrige pas le code de jeu** : bugs QA-041 à QA-049 ci-dessous, chacun avec son propriétaire suggéré.
+
+### 14.1 Méthode et couverture
+
+| Volet | Outil | Résultat |
+|---|---|---|
+| Suite existante | GUT complet | **638 / 638** avant la passe ; **655 tests (647 verts + 8 `pending` QA-041…047)** après ajout de `tests/integration/test_qa_m11.gd` |
+| Campagnes réelles | `tools/qa_campaign.gd` (vraie `day.tscn`, `--autoplay`, ×10, `--qa-reload` = « Quitter → Continuer » réel chaque jour), tronçons ≤ 9 min repris par `--qa-load=<slot_1/current.json>` | 5 campagnes (§14.2), dont 2 en Récit et une reprise d'une vraie sauvegarde 0.10.0 : **0 `QA_ISSUE`**, 0 `SCRIPT ERROR`, 0 fuite |
+| Campagnes simulées | `balance_sim --story` (8 préréglages × 65 / 80 / 95 %, 20 graines ; 10 pour les 3 derniers) | §14.2.2 |
+| Manette seule | `test_qa_m11.gd` : **vrais** `InputEventJoypadButton` / `InputEventJoypadMotion` via `Input.parse_input_event` (pas d'`InputEventAction`), parcours en largeur du graphe de focus à la croix | §14.3 |
+| Sauvegardes | dossiers `user://` isolés (`XDG_DATA_HOME` temporaire pour les outils, `SaveService.use_root` pour GUT) ; vraie sauvegarde 0.10.0 `tests/fixtures/qa_save_v5_j25_*` posée en `slot_0.json` | §14.4 |
+| Accessibilité | captures réelles OpenGL 3 sous xvfb (`qa_capture` : `--qa-set=color_vision:N`, `--qa-set=text_scale:1.5`, `--qa-discord`, `--qa-pad`, `--demo-saves`, `--title=…`, `--tutorial-step`, `--story --close-booth`) ; lecture des shaders ; ΔE2000 simulé (Machado 2009) de la lumière de porte | §14.5 |
+| Données / exports | `build_data` (md5 de `data/*/*.tres` avant / après), `bash tools/export_all.sh linux`, `bash tools/smoke_export.sh` | §14.6 |
+
+**Vrai `user://saves` jamais touché** : vide avant et après la passe (vérifié), `settings.cfg` du joueur inchangé (md5) ; aucun `override.cfg` créé dans le projet.
+
+### 14.2 Campagnes automatiques
+
+#### 14.2.1 Vraie scène (`day.tscn`, bot `--autoplay`, ×10, `--qa-reload`)
+
+| Graine | Profil | Mode | Départ | Crédits QA | Fin | Jour | Solde final | Conformité | Problèmes |
+|---|---|---|---|---|---|---|---|---|---|
+| 23 | solidaire | **Récit** | J1 | — | **F3** famille perdue | soir J22 | 7 ₵ | 61 % | aucun `QA_ISSUE` (Dora perdue au J15, Noa au J16 : soins non cochés par le bot, choix par défaut) |
+| 7 | loyal | **Récit** | J1 | +3 000 | **F7** Le guichet rouvre | J30 | 1 169 ₵ | 63 % | aucun |
+| 23 | solidaire | Dur | J1 | +3 000 | **F9** grève | J30 | 315 ₵ | 60 % | aucun |
+| 3 | loyal | Dur | J1 | +3 000 | **F7** | J30 | 436 ₵ | 60 % | aucun |
+| 11 | solidaire | Dur | **sauvegarde 0.10.0** `qa_save_v5_j25_solidaire` (vraie `migrate_legacy`) | — | **F9** | J30 | 186 ₵ | 85 % | aucun |
+
+- **Récit** : chaque jour, **toute la file prévue est traitée** (pas de fin à l'heure ; seul le J20 s'arrête à 10/18 sur l'annonce de grève `ends_shift`, comme prévu) ; **0 ₵ d'amende** : net du shift = 5 ₵ × conformes chaque jour (ex. J1 6/8 conformes, 2 citations → +30 ₵ ; en Dur, même graine : +20 ₵) ; citations comptées (Revue, Déposition). Profil après F7 : `endings_seen = [{f7_reopens, J30, date}]`, `story_mode_used = true`, 85 personnages croisés.
+- **À chaque soir** (`qa_campaign`) : sauvegarde relue = état en mémoire + instantané du matin présent ; « Continuer » reprend bien l'emplacement 1 (≈ 115 rechargements réels) ; **à la fin, partie archivée** (`meta.status = ended`, bonne `ending_id`) et fin inscrite au profil — 5 / 5.
+- Remarque outil : `QA_ISSUE solde aberrant` sur les campagnes à +3 000 ₵ (borne du contrôle, attendu) ; `QA_END day=31` après le J30 = jour suivant non joué (attendu).
+
+#### 14.2.2 Simulation en mode Récit (`balance_sim --story`, dépenses `reasoned`)
+
+| Préréglage (Récit) | 65 % | 80 % | 95 % |
+|---|---|---|---|
+| `default` | F1 60 · F7 30 · F3 10 (J6) | F7 95 · F1 5 | F7 100 |
+| `loyal` | F7 95 · F3 5 (J6) | F7 100 | F4 100 |
+| `luciole` | F1 60 · F5 25 · F3 15 (J6) | F5 80 · F1 20 | F5 100 |
+| `passeur` | F1 75 · F3 15 · F7 10 | F7 55 · F1 25 · F10 20 | F10 85 · F7 15 |
+| `temoin` | F1 80 · F3 15 · F8 5 | F8 80 · F1 20 | F8 100 |
+| `solidaire` | F1 50 · F9 40 · F3 10 | F9 100 | F9 100 |
+| `mercenary3` | F1 90 · F3 10 | F1 90 · F7 10 | F1 90 · F7 10 |
+| `drift` | F1 50 · F6 40 · F3 10 | F6 90 · F1 10 | F6 90 · F10 10 |
+
+Fins vues en Récit : F1, F3, F4, F5, F6, F7, F8, F9, F10 (F2 seulement avec `story_evicted`, couvert par `test_every_ending_is_reachable_in_story_mode`). **Lecture (Game Designer)** : sans amendes, un joueur à 65 % reste à 4–10 ₵ du J2 au J6, perd un proche dans 10–15 % des parties dès le J6 (F3) et finit arrêté à la Déposition (F1, J26–J29) dans 50–90 % des cas : le mode « Pour l'histoire, sans pression » ne protège ni le foyer ni la Déposition — voir QA-049.
+
+### 14.3 Manette seule (sans souris ni clavier)
+
+Parcours joués dans la vraie scène avec de vrais événements de manette (Xbox) :
+
+| Étape | Commandes | Résultat | Test |
+|---|---|---|---|
+| Titre → Nouvelle partie → emplacement → RÉCIT | Ⓐ, Ⓐ, croix →, Ⓐ | ✅ partie en Récit, emplacement occupé (matin du J1), tutoriel demandé | `test_pad_title_new_game_story_to_day_one` |
+| Briefing | Ⓐ | ✅ focus PRENDRE SON POSTE | (tous) |
+| Tutoriel complet (6 étapes) + 1ᵉʳ passager | Ⓐ COMMENCER (appelle aussi le passager, cf. QA-041), LT, RB, Ⓐ champ A, croix → jusqu'à une règle, Ⓐ, Y, Ⓐ question, RT maintenu | ✅ 6 étapes validées par les vraies actions, « TUTORIEL TERMINÉ » | `test_pad_only_tutorial_and_first_passenger` |
+| Lien entre deux documents | Ⓐ champ A, stick droit → (document suivant, le focus suit), Ⓐ | ✅ (un champ du **même** document remplace A : prévu, `REPLACED_A`) | — |
+| J1 complet, bilan, soirée | Ⓐ / RT par passager, Ⓐ CONTINUER, Ⓐ VALIDER ET DORMIR | ✅ 8 / 8 tamponnés, nuit validée, sauvegarde du soir | `test_pad_only_day_one_summary_and_evening` |
+| Détention | L3 maintenu 0,8 s (J7) | ✅ verdict DETAIN | `test_pad_detention_with_left_stick_click` |
+| Pause, Options, Récit → Dur | Menu, croix ↓, Ⓐ OPTIONS, croix ↓ ×17, Ⓐ PASSER EN MODE DUR, croix →, Ⓐ, Ⓑ, Ⓑ | ✅ (voir §14.4) | `test_pad_pause_story_to_hard_after_closing_time_ends_the_shift` |
+| Écran de fin | Ⓐ | ✅ retour au titre | `test_pad_end_screen_and_load_screen_past_day` |
+| Charger → jour passé | croix ↓↓, Ⓐ CHARGER, croix ←↓, Ⓐ, croix ←←, Ⓐ, croix →, Ⓐ (boîte : focus ANNULER) | ✅ matin du J4 repris | idem |
+| Quitter en plein shift | Menu, croix ↓↓, Ⓐ, Ⓐ (deux temps) | ✅ | `test_quit_mid_shift_writes_nothing_and_continue_replays_the_day` |
+| **FERMER LE GUICHET** (Récit, quota atteint) | croix ↑ depuis SUIVANT, Ⓐ | ❌ **entre deux passagers, Ⓐ appelle le passager suivant** (QA-041) ; ✅ pendant un passager (bouton joignable à la croix, Ⓐ ferme) | `test_pad_a_on_close_booth_…` (pending) |
+| **PASSER LE TUTORIEL** (accueil) | croix depuis COMMENCER, Ⓐ | ❌ **injoignable** (toute direction → SUIVANT, QA-042) et, focus forcé, **Ⓐ appelle un passager et commence le tutoriel** (QA-041) | `test_pad_a_on_tutorial_skip_…`, `test_pad_dpad_reaches_the_tutorial_buttons` (pending) |
+| PASSER L'ÉTAPE / QUITTER pendant le tutoriel | croix | ⚠️ point connu **confirmé et aggravé** : entre deux passagers, PASSER L'ÉTAPE n'est jamais joignable (6 contrôles atteints depuis SUIVANT, QUITTER seul — et Ⓐ dessus appelle un passager) ; en inspection, les deux sont joignables par navigation géométrique depuis certains champs (22 contrôles), et depuis QUITTER la croix → part sur un bouton du guichet, pas sur PASSER L'ÉTAPE (QA-042) | idem |
+
+**Bilan** : une campagne reste jouable à la manette seule (critère M11 §6 tenu), mais **deux gestes M11 font autre chose que le bouton qui a le focus** (QA-041) et le tutoriel ne se passe pas à la manette depuis son accueil (contournement : COMMENCER puis QUITTER en inspection, ou Options › Partie › Tutoriel du jour 1).
+
+### 14.4 Sauvegardes v6 et mode Récit
+
+| Scénario | Résultat | Preuve |
+|---|---|---|
+| Vraie sauvegarde 0.10.0 (`qa_save_v5_j25_luciole`) posée en `user://saves/slot_0.json` d'un profil vierge, lancement du titre | ✅ emplacement 1 : `current.json`, `meta.json`, `day_25.json` (seul le jour courant) ; `slot_0.v5.bak` gardé ; titre « CONTINUER — JOUR 25 » ; carte JOUR 25 · ACTE III · ₵ 667 · « 3 vivants · 1 absent·e » · date d'origine · « < 1 min » ; état relu = fixture (graine, jour, crédits, score, citations, drapeaux, mémoire, historique) ; `difficulty = hard` | `m11_qa_migration_load.png`, `test_real_v5_save_appears_on_title_and_load_screen` ; `qa_save_v5_j25_solidaire` jouée J25 → F9 (§14.2) |
+| 3 emplacements, « Continuer » = partie active la plus récente, terminées exclues | ✅ | tests existants + `--demo-saves` |
+| Reprendre le J1 d'une partie **terminée** (F3) puis jouer le jour à la manette | ✅ instantanés J3–J5 supprimés à la soirée (`[1, 2]`), partie `active`, Continuer → emplacement 1, F3 reste au profil | `test_resume_first_day_of_ended_game_truncates_and_reactivates` |
+| Fin → partie archivée + fin au profil | ✅ 5 / 5 campagnes réelles (`qa_campaign` contrôle `meta.status`, `ending_id`, profil) | §14.2 |
+| Quitter en plein shift puis Continuer | ✅ `current.json`, `meta.json`, instantanés **identiques à l'octet** ; Continuer reprend le matin du jour abandonné | `test_quit_mid_shift_…` |
+| `meta.json` absent (partie active) | ✅ reconstruite depuis `current.json` | test existant |
+| `meta.json` absent (partie **terminée**) | ❌ reconstruite « active » : la partie terminée revient sous CONTINUER (QA-044) | `test_ended_game_stays_ended_when_meta_is_lost` |
+| `current.json` corrompu, méta et instantanés intacts | ❌ CONTINUER — JOUR 4 et REPRENDRE restent actifs et **ne font rien** (aucun message), alors que `day_04.json` (même contenu) est lisible ; contournement : REPRENDRE UN JOUR PASSÉ (QA-043) | `test_corrupt_current_…` |
+| `.tmp` orphelin tronqué d'un nouvel instantané (`day_06.json.tmp`) | ❌ listé : « JOUR 06 · DERNIER » reçoit le focus, le choisir ne fait rien (QA-045) | `test_orphan_truncated_tmp_snapshot_…` |
+| `current.json.tmp` plus récent que `current.json` (coupure entre écriture et renommage) | ⚠️ l'ancien `current.json` est lu (le `.tmp` n'est qu'un secours) : la dernière soirée est perdue pour Continuer mais son instantané `day_NN` est présent et proposé comme dernier jour ; pas de perte, comportement QA-018 attendu | sonde |
+| Récit : pas de fin à l'heure, 0 ₵ d'amende, fins atteignables | ✅ (§14.2) | campagnes, `balance_sim --story` |
+| Récit → Dur en plein shift, horloge **déjà passée 18:00** (bloquée à 18:00 sans fin en Récit) | ✅ l'horloge expire dès la confirmation ; le shift s'arrête après le passager en cours (bilan) ; RÉCIT et FERMER LE GUICHET disparaissent | `test_pad_pause_story_to_hard_…` |
+| Dur → Récit | ✅ refusé (`set_difficulty(&"story") == false`, aucune commande) | idem |
+| Récit → Dur **puis quitter avant la soirée** | ❌ « Continuer » (et « jour passé ») revient en **Récit** : le choix « irréversible » n'est écrit qu'à la soirée (QA-046) | `test_hard_mode_switch_is_not_undone_…` |
+| Fermer le guichet (Récit, jour à quota) | ✅ pendant un passager ; ❌ entre deux passagers à la manette (QA-041) ; logique : test existant `test_close_booth_once_the_quota_is_full` | — |
+
+### 14.5 Accessibilité
+
+| Contrôle | Résultat | Preuve |
+|---|---|---|
+| Vision des couleurs, 4 modes, sur une vraie DISCORDANCE (J2, carte expirée ↔ date du jour) : bandeau, lien, losange, puce « 1 DOCUMENTÉE », tampons | ✅ Aucune : magenta ; Protan·Deutan : lien rose pâle, APPROUVÉ bleu ; Tritan : lien violet, APPROUVÉ vert-jaune ; Contraste élevé : états plus clairs. Losange au milieu du lien et icônes des tampons dans tous les modes | `m11_qa_colorvision_4modes.png` (Aucune · Protan·Deutan / Tritan · Contraste élevé) |
+| Lumière de porte 3D (`BoothDirector._pulse_light` : `Palette.STATE_GREEN` / `Palette.STATE_RED`, détention `DS.ACCENT_YELLOW`) | ✅ relue à chaque impulsion ; ΔE2000 simulés (Machado, sévérité 1) — Protan·Deutan vu deutan : vert/rouge 59, vert/détention 68, rouge/détention **21** ; Tritan vu tritan : 59 / 32 / 35 ; sans filtre vu deutan : 20 / 16 / 22. Distinguable dans chaque mode ; la détention garde le jaune du contrat (signalé, pas un bug) | calcul §14.5 |
+| Liens du scanner Luciole (J12, `scanner_luciole`) | ⚠️ en-tête « BOÎTIER MAGENTA · SCAN · DATES CONFORMES » vu en Protan·Deutan ; pas de lien de suggestion dans les cas capturés (dates conformes) — glyphes de source non revus à l'écran | capture de travail |
+| `holo_flicker` coupé | ✅ documents (scanlines / bord), hologrammes du guichet (`booth_holo.gdshader`, `flicker = 0`) ; ❌ **néons « instables » (chute de 60 % ≤ 2 Hz) et écrans holo (scanlines, balayage) de `booth_emissive.gdshader` continuent** : ils ne suivent que `fx_intensity` (QA-047) | `test_holo_flicker_off_also_freezes_booth_neons_and_screens` |
+| `text_scale` 1,5 — titre, Nouvelle partie (emplacements, écrasement, difficulté), Charger, jours passés, tutoriel, barre Récit + FERMER LE GUICHET, Options en jeu, 1080p et Deck | ✅ aucun débordement ni texte coupé ; au Deck la barre du haut replie titre, SHIFT et « SANS CHRONO » (QUOTA ATTEINT et FERMER LE GUICHET visibles) ; libellés « maintenir … » des tampons masqués (comme QA-031) ; légendes et puces identiques à 1,0 au Deck (le plancher de 18 px = 12 × 1,5 — attendu) | `m11_qa_game_screens_1080_text150.png`, `m11_qa_game_screens_deck_text150.png`, `m11_qa_tutorial_deck_text150.png`, `m11_qa_story_bar_deck_text150.png`, `m11_qa_options_deck_text150.png` |
+| Deck 1280×800 | ✅ mêmes écrans (ci-dessus) ; carte d'identité et glyphes manette : captures du lot B | — |
+
+### 14.6 Régression
+
+| Contrôle | Résultat |
+|---|---|
+| GUT complet | ✅ **638 / 638** à l'arrivée (306 s) ; après la passe : **655 tests, 647 verts + 8 `pending`**, 0 échec (365 s) |
+| `build_data` | ✅ « build_data : OK », **119 `.tres` identiques** (md5 avant / après) |
+| `bash tools/export_all.sh linux` | ✅ `build/dist/CLEARANCE-0.10.0-linux.tar.gz` (37 Mo) — nom de version : QA-048 |
+| `bash tools/smoke_export.sh` | ✅ release_title + debug J1, J4, J7, J10, J15, J20, J25, J30 : OK |
+| Campagnes J1 → J30 en Dur, 2 profils | ✅ F9 (`solidaire`, graine 23) et F7 (`loyal`, graine 3), 0 `QA_ISSUE` (§14.2) |
+| Journaux | ✅ aucune `SCRIPT ERROR`, aucune fuite à la sortie (QA-039 tient) dans les 10 tronçons de campagne |
+
+### 14.7 Liste des bugs (M11)
+
+Statut : 🔴 ouvert.
+
+| ID | Sév. | Titre | Reproduction | Propriétaire suggéré | Preuve |
+|---|---|---|---|---|---|
+| QA-041 | **Majeur** | ✅ Corrigé (0.11.0) — **Ⓐ entre deux passagers appelle le passager suivant au lieu d'activer le bouton qui a le focus.** `next_case` est lié à Ⓐ (bouton 0, comme `ui_accept`) et traité dans `ComparisonUI._input` (avant l'interface, `set_input_as_handled`) dès que la phase est `WAITING_CASE`. Conséquences manette : **FERMER LE GUICHET** (Récit), atteint comme documenté par croix ↑ depuis SUIVANT, appelle un passager ; **PASSER LE TUTORIEL** appelle un passager et **commence** le tutoriel (impossible de le passer à la manette depuis l'accueil) ; même chose pour QUITTER (tutoriel), une carte de règle du Rulebook, etc. | Récit, quota atteint, entre deux passagers : croix ↑ depuis SUIVANT, Ⓐ. Ou J1 avec tutoriel : focus sur PASSER LE TUTORIEL, Ⓐ | UI/UX Expert (`comparison_ui.gd` `_input` : n'appeler `request_next_case` que si le focus est sur SUIVANT ou hors de tout bouton ; ou `next_case` en `_unhandled_input`) | `test_pad_a_on_close_booth_closes_instead_of_calling_a_passenger`, `test_pad_a_on_tutorial_skip_skips_instead_of_calling_a_passenger` |
+| QA-042 | Mineur | ✅ Corrigé (0.11.0) — **Boutons du tutoriel hors de portée de la croix.** La carte (`TutorialOverlay`) n'est pas dans la racine du guichet : à l'accueil, **toute** direction depuis COMMENCER est reprise par le `FocusGuard` du guichet et renvoie à SUIVANT (PASSER LE TUTORIEL jamais atteint) ; entre deux passagers, PASSER L'ÉTAPE n'est jamais atteint (6 contrôles joignables depuis SUIVANT) ; en inspection, PASSER L'ÉTAPE / QUITTER ne sont joignables que par navigation géométrique depuis certains champs, et la croix → depuis QUITTER ne mène pas à PASSER L'ÉTAPE. Confirme et précise le point connu | J1, tutoriel : croix ← depuis COMMENCER ; puis COMMENCER et explorer à la croix depuis SUIVANT | UI/UX Expert (`tutorial_overlay.gd` : `FocusGuard.attach` sur la carte, voisins explicites COMMENCER ↔ PASSER, et un raccourci manette, ex. Vue maintenue = passer l'étape) | `test_pad_dpad_reaches_the_tutorial_buttons` |
+| QA-043 | Mineur | ✅ Corrigé (0.11.0) — **`current.json` illisible : CONTINUER et REPRENDRE morts, sans message**, alors que `day_NN.json` du même matin (même contenu à l'écriture) est intact. Le joueur croit sa partie perdue ; contournement : REPRENDRE UN JOUR PASSÉ… → dernier jour | corrompre `slot_1/current.json` (méta et instantanés intacts), lancer le titre, CONTINUER | Godot Architect (`SaveService.load_current` : secours sur `day_<current_day>.json` ; sinon désactiver avec « Sauvegarde illisible ») | `test_corrupt_current_does_not_leave_a_dead_continue_button` |
+| QA-044 | Mineur | ✅ Corrigé (0.11.0) — **Partie terminée « ressuscitée » si `meta.json` est perdu** : la méta est reconstruite depuis `current.json` avec `status = active` ; la partie F1–F10 revient sous CONTINUER (rejoue son dernier matin) et la carte n'affiche plus « PARTIE TERMINÉE » | partie terminée, supprimer `slot_N/meta.json`, ouvrir le titre | Godot Architect (`SaveService.mark_ended` : écrire aussi `status` / `ending_id` dans `current.json`, ou garder un `meta.json.bak`) | `test_ended_game_stays_ended_when_meta_is_lost` |
+| QA-045 | Mineur | ✅ Corrigé (0.11.0) — **`.tmp` orphelin tronqué listé comme dernier matin** : `list_snapshots` compte `day_06.json.tmp` (coupure pendant l'écriture d'une soirée) ; la grille affiche « JOUR 06 · DERNIER » avec le focus, le choisir ne fait rien (aucun message) | `slot_3` J1–J5 + `day_06.json.tmp` tronqué ; Charger › REPRENDRE UN JOUR PASSÉ… | Godot Architect (`list_snapshots` : ne garder que les jours lisibles, ou ignorer un `.tmp` sans principal) + UI/UX (`LoadScreen.choose_day` : message si l'instantané est illisible) | `test_orphan_truncated_tmp_snapshot_is_not_offered` |
+| QA-046 | Mineur | ✅ Corrigé (0.11.0) — **Récit → Dur annulé en quittant avant la soirée** : la boîte annonce « Impossible de revenir en mode Récit » mais le choix n'est écrit qu'à la sauvegarde du soir ; « Quitter → Continuer » (ou un plantage) recharge la partie en Récit (D-102 : jamais l'inverse) — contournement exploitable pour éviter un shift en Dur | partie Récit, Pause › Options › PASSER EN MODE DUR, confirmer, QUITTER VERS LE TITRE, CONTINUER | Godot Architect (`GameState.set_difficulty` : mettre à jour `meta.json` / `current.json` de l'emplacement actif, difficulté seule) | `test_hard_mode_switch_is_not_undone_by_quitting_before_the_evening` |
+| QA-047 | Mineur | ✅ Corrigé (0.11.0) — **« Scintillement holographique » coupé : le guichet scintille encore.** `booth_emissive.gdshader` (néons « instables » : chute de 60 % ≤ 2 Hz ; écrans holo : scanlines + balayage) ne lit que `fx_intensity` ; `BoothQuality` ne transmet `holo_flicker` qu'à `booth_holo`. D-109 promet « scintillement, scanlines, glitchs » coupés sans perdre les lueurs. Au passage, l'aide d'Options « Effets visuels » dit encore « Scanlines, scintillement, lueurs des hologrammes » (`opt_fx_hint`) | Options › Scintillement holographique : DÉSACTIVÉ, Effets : COMPLETS ; observer les néons du guichet | 3D Designer / Asset Lead (`booth_emissive.gdshader` : uniforme `flicker` sur les modes 1 et 2) + Design System (`booth_quality.gd`, `opt_fx_hint`) | `test_holo_flicker_off_also_freezes_booth_neons_and_screens` |
+| QA-048 | Cosmétique | ✅ Corrigé (0.11.0) — **Version non montée** : `application/config/version = "0.10.0"` ; les sauvegardes v6 portent `game_version: "0.10.0"` (indistinguables d'une 0.10.0 dans les journaux et la méta), l'export s'appelle `CLEARANCE-0.10.0-linux.tar.gz` et le titre affiche v0.10.0 alors que M11 = 0.11.0 (`docs/M11.md`) | `export_all.sh linux` ; `meta.json` d'une partie neuve | Orchestrateur (`project.godot`, `CHANGELOG.md` au moment de la livraison) | `build/dist`, `meta.json` |
+| QA-049 | Mineur (design) | ✅ Corrigé (0.11.0) — **Mode Récit peu protecteur pour un joueur débutant** : « Pour l'histoire, sans pression » ; à 65 % de précision, `balance_sim --story` : solde 4–10 ₵ du J2 au J6, F3 (famille perdue) 10–15 % dès le J6, F1 (Déposition) 50–90 % aux J26–J29 ; dans la vraie scène, bot ~60 % sans crédits QA : Dora puis Noa perdues aux J15–J16, F3 au soir du J22 | `balance_sim --story --profiles=0.65` ; `qa_campaign --qa-story --qa-seed=23 --qa-profile=solidaire` | Game Designer (`GDD.md` : salaire plancher, Déposition ou soins adoucis en Récit — décision à consigner) | §14.2 |
+
+Total M11 : **0 bloquant, 1 majeur, 6 mineurs (dont 1 de design), 1 cosmétique** (QA-041 à QA-049, 9 bugs). Aucun bug des passes précédentes réapparu (QA-031, QA-032, QA-039 tiennent).
+
+### 14.8 Tests ajoutés (`tests/integration/test_qa_m11.gd`, 17 tests)
+
+| Test | État |
+|---|---|
+| `test_pad_title_new_game_story_to_day_one` | ✅ passe |
+| `test_pad_only_tutorial_and_first_passenger` | ✅ passe |
+| `test_pad_only_day_one_summary_and_evening` | ✅ passe |
+| `test_pad_detention_with_left_stick_click` | ✅ passe |
+| `test_pad_pause_story_to_hard_after_closing_time_ends_the_shift` | ✅ passe |
+| `test_pad_end_screen_and_load_screen_past_day` | ✅ passe |
+| `test_real_v5_save_appears_on_title_and_load_screen` | ✅ passe |
+| `test_quit_mid_shift_writes_nothing_and_continue_replays_the_day` | ✅ passe |
+| `test_resume_first_day_of_ended_game_truncates_and_reactivates` | ✅ passe |
+| `test_pad_a_on_close_booth_closes_instead_of_calling_a_passenger` | ⏸ `pending` QA-041 |
+| `test_pad_a_on_tutorial_skip_skips_instead_of_calling_a_passenger` | ⏸ `pending` QA-041 |
+| `test_pad_dpad_reaches_the_tutorial_buttons` | ⏸ `pending` QA-042 |
+| `test_corrupt_current_does_not_leave_a_dead_continue_button` | ⏸ `pending` QA-043 |
+| `test_ended_game_stays_ended_when_meta_is_lost` | ⏸ `pending` QA-044 |
+| `test_orphan_truncated_tmp_snapshot_is_not_offered` | ⏸ `pending` QA-045 |
+| `test_hard_mode_switch_is_not_undone_by_quitting_before_the_evening` | ⏸ `pending` QA-046 |
+| `test_holo_flicker_off_also_freezes_booth_neons_and_screens` | ⏸ `pending` QA-047 (suppose un uniforme `flicker` dans `booth_emissive`, comme `booth_holo` ; à adapter si le correctif choisit un autre nom) |
+
+Durée du fichier : ≈ 36 s (parcours réels à ×4). Suite complète : **655 tests, 647 verts, 8 `pending`** (QA-041 ×2, QA-042…QA-047), 0 échec, 0 `SCRIPT ERROR`, 365 s.
+
+### 14.9 Recommandations priorisées
+
+1. **QA-041** avant toute campagne de playtest à la manette (Steam Deck) : Ⓐ ne doit jamais faire autre chose que le bouton qui a le focus.
+2. **QA-042** avec QA-041 : le tutoriel doit se passer à la manette depuis son accueil (critère « campagne complète jouable à la manette seule »).
+3. **QA-047** (photosensibilité, D-109).
+4. Robustesse des sauvegardes : QA-043, QA-046, puis QA-044, QA-045.
+5. **QA-049** : décision du Game Designer sur ce que « Récit » protège (foyer, Déposition), à consigner dans `DECISIONS.md`.
+6. QA-048 au moment de la livraison 0.11.0.
+7. QA (suite) : playtest humain à la manette sur Steam Deck réel ; captures des liens du scanner Luciole en Protan·Deutan / Tritan sur un cas discordant ; Fermer le guichet en vraie scène sur un jour à quota.
+
+### 14.10 Rejouer la passe M11
+
+```bash
+godot --headless --import
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json -gexit     # 655 tests, 8 pending QA-041…047
+# Fichier seul (≈ 36 s)
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig= -gtest=res://tests/integration/test_qa_m11.gd \
+    -gpre_run_script=res://tests/helpers/gut_pre_run.gd -gexit
+# Campagne en Récit (tronçons de 9 min ; reprise : --qa-load=<copie de $X/godot/app_userdata/CLEARANCE/saves/slot_1/current.json>)
+X=$(mktemp -d); XDG_DATA_HOME=$X timeout 540 godot --headless --script res://tools/qa_boot.gd -- --autoplay \
+    --qa-seed=7 --qa-profile=loyal --qa-speed=10 --qa-story --qa-credits=3000 --qa-reload
+# Vraie sauvegarde 0.10.0 → v6 (migrate_legacy) puis J25 → J30
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --autoplay \
+    --qa-load=$PWD/tests/fixtures/qa_save_v5_j25_solidaire.json --qa-profile=solidaire --qa-speed=10 --qa-reload
+# Simulation Récit
+godot --headless --script res://tools/balance_sim.gd -- --seeds=20 --seed=1 --profiles=0.65,0.8,0.95 \
+    --presets=default,loyal,luciole,passeur,temoin --story
+# Captures : vision des couleurs sur une vraie discordance (J2, 3ᵉ passager), N = 0..3
+XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
+    --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1920x1080 --qa-wait=30 \
+    --qa-after-check=0.8 --qa-discord --qa-set=color_vision:N --qa-out=/tmp/cvN.png --seed=3 --day=2 --start-case=2 \
+    --screen=shift --reduce-motion
+# Écrans de partie en texte 1,5 (Deck) : --title=new|difficulty|overwrite|load|days
+XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
+    --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-scene=res://scenes/main/main.tscn \
+    --qa-size=1280x800 --qa-wait=5 --qa-set=text_scale:1.5 --qa-out=/tmp/load.png --demo-saves --title=load
+# Données, exports
+godot --headless --script res://tools/build_data.gd && md5sum data/*/*.tres
+bash tools/export_all.sh linux && bash tools/smoke_export.sh
 ```

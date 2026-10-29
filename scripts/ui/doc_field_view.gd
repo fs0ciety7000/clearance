@@ -49,6 +49,22 @@ func set_value_text(text: String) -> void:
 		_value.text = text
 
 
+## Taille de police (px logiques) de la valeur / du libellé (mesures D-085).
+func value_font_px() -> int:
+	return _value.get_theme_font_size(&"font_size") if _value != null else 0
+
+
+func label_font_px() -> int:
+	return _label.get_theme_font_size(&"font_size") if _label != null else 0
+
+
+## Libellé masqué à l'écran (bande MRZ de la carte, M11) : il reste le nom
+## lisible de l'élément (infobulle, messages, lecteur d'écran).
+func hide_label() -> void:
+	if _label != null:
+		_label.visible = false
+
+
 func is_portrait() -> bool:
 	return _portrait != null
 
@@ -89,7 +105,8 @@ func _build_text(label_text: String, value_text: String, large: bool) -> void:
 		_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_child(_label)
 	_value = Label.new()
-	_value.theme_type_variation = &"DataTitle" if large else &"DocFieldValue"
+	# Valeur d'un document : `DocValue` (18 px, plancher physique au Deck, D-085 rév.).
+	_value.theme_type_variation = &"DataTitle" if large else &"DocValue"
 	_value.text = value_text
 	_value.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_value.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -141,7 +158,7 @@ func _refresh_content() -> void:
 		return
 	var disabled: bool = inspection_active and not comparable
 	if is_flagged():
-		_label.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+		_label.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 		_label.text = display_label
 	elif selected:
 		_label.add_theme_color_override(&"font_color", DS.ACCENT_CYAN)
@@ -150,7 +167,7 @@ func _refresh_content() -> void:
 	else:
 		_label.remove_theme_color_override(&"font_color")
 	if disabled:
-		_value.add_theme_color_override(&"font_color", DS.TEXT_SECONDARY)
+		_value.add_theme_color_override(&"font_color", Palette.TEXT_SECONDARY)
 	else:
 		_value.remove_theme_color_override(&"font_color")
 	tooltip_text = display_label + (" — " + UiText.t("ui_discordance", "DISCORDANCE") if is_flagged() else "")

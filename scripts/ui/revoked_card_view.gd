@@ -36,7 +36,7 @@ func setup(p_entry: RevokedEntry, p_number: int, today: int = 0) -> void:
 	add_child(margin)
 	var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_3)
 	margin.add_child(row)
-	var index: Label = ScreenBase.label("%02d" % p_number, &"DataSmall", DS.TEXT_SECONDARY)
+	var index: Label = ScreenBase.label("%02d" % p_number, &"DataSmall", Palette.TEXT_SECONDARY)
 	index.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_child(index)
 	var column: VBoxContainer = ScreenBase.vbox(0)
@@ -59,20 +59,20 @@ func setup(p_entry: RevokedEntry, p_number: int, today: int = 0) -> void:
 	status.name = "Status"
 	status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	if reinstated:
-		status.add_child(UiIcon.make(UiIcon.Kind.APPROVED, DS.STATE_GREEN, DS.ICON_S))
-		status.add_child(ScreenBase.label(UiText.t("cmp_reinstated", "RÉINTÉGRÉ (R33)"), &"DocFieldLabel", DS.STATE_GREEN))
+		status.add_child(UiIcon.make(UiIcon.Kind.APPROVED, Palette.STATE_GREEN, DS.ICON_S))
+		status.add_child(ScreenBase.label(UiText.t("cmp_reinstated", "RÉINTÉGRÉ (R33)"), &"DocFieldLabel", Palette.STATE_GREEN))
 	else:
-		status.add_child(UiIcon.make(UiIcon.Kind.DENIED, DS.STATE_RED, DS.ICON_S))
-		status.add_child(ScreenBase.label(UiText.t("rb_revoked_action", "NON CITOYEN·NE"), &"DocFieldLabel", DS.STATE_RED))
+		status.add_child(UiIcon.make(UiIcon.Kind.DENIED, Palette.STATE_RED, DS.ICON_S))
+		status.add_child(ScreenBase.label(UiText.t("rb_revoked_action", "NON CITOYEN·NE"), &"DocFieldLabel", Palette.STATE_RED))
 	detail_row.add_child(status)
 	# Acte III (R33) : colonne « RÉINTÉGRÉ·E LE » ou motif d'exclusion.
 	if p_entry.reinstated_on > 0:
 		var on: Label = ScreenBase.label("%s %s" % [UiText.t("rb_col_reinstated", "RÉINTÉGRÉ·E LE"), UiText.date(p_entry.reinstated_on)],
-				&"DocFieldLabel", DS.STATE_GREEN if reinstated else DS.TEXT_SECONDARY)
+				&"DocFieldLabel", Palette.STATE_GREEN if reinstated else Palette.TEXT_SECONDARY)
 		on.name = "ReinstatedOn"
 		column.add_child(on)
 	elif not p_entry.excluded_reason_key.is_empty():
-		var excluded: Label = ScreenBase.wrapped(UiText.t(p_entry.excluded_reason_key, ""), &"CaptionLabel", DS.STATE_AMBER)
+		var excluded: Label = ScreenBase.wrapped(UiText.t(p_entry.excluded_reason_key, ""), &"CaptionLabel", Palette.STATE_AMBER)
 		excluded.name = "Excluded"
 		column.add_child(excluded)
 	margin.minimum_size_changed.connect(_sync_min_size.bind(margin))
@@ -87,7 +87,7 @@ func _refresh_content() -> void:
 	if _id_label == null:
 		return
 	if is_flagged():
-		_id_label.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+		_id_label.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 	elif selected:
 		_id_label.add_theme_color_override(&"font_color", DS.ACCENT_CYAN)
 	else:
@@ -98,8 +98,8 @@ func _draw() -> void:
 	# Registre de la Commission : fond élevé, liseré bleu de registre (vert :
 	# réintégré·e, la révocation ne vaut plus).
 	if not is_flagged() and not selected:
-		draw_rect(Rect2(Vector2.ZERO, size), DS.GREEN_12 if reinstated else DS.VOICE_COMMISSION_12)
-		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), DS.STATE_GREEN if reinstated else DS.VOICE_COMMISSION)
+		draw_rect(Rect2(Vector2.ZERO, size), Palette.GREEN_12 if reinstated else Palette.VOICE_COMMISSION_12)
+		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), Palette.STATE_GREEN if reinstated else Palette.VOICE_COMMISSION)
 	super._draw()
 
 

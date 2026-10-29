@@ -6,6 +6,7 @@
 ## marqués `pending("QA-xxx …")` : la suite reste verte, le rapport GUT les liste.
 extends GutTest
 
+const SaveChecks := preload("res://tests/helpers/save_checks.gd")
 const Gen := preload("res://tests/helpers/generation_fixtures.gd")
 const CaseFactory := preload("res://tests/helpers/case_factory.gd")
 const UI_SCENE: PackedScene = preload("res://scenes/ui/comparison_ui.tscn")
@@ -26,11 +27,11 @@ func before_all() -> void:
 
 func before_each() -> void:
 	_saved_state = GameState.to_save_dict()
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 
 
 func after_each() -> void:
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	if SaveService.as_int(_saved_state.get("current_day", 0)) >= 1:
 		GameState.apply_save_dict(_saved_state)
 	else:
@@ -44,11 +45,11 @@ func _play_day(policy: Callable) -> StringName:
 	var summary: DaySummary = DaySimulator.simulate(data, day_number, GameState.get_day_seed(), policy)
 	GameState.add_credits(summary.get_net())
 	if not Campaign.has_evening(data):
-		return Campaign.close_final_day(data, summary, 0, DIR)
+		return Campaign.close_final_day(data, summary, 1, DIR)
 	var events: Array[EveningEvent] = Campaign.prepare_events(data)
 	var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, events)
 	var report: EveningReport = Campaign.preview_evening(data, lines, events)
-	return Campaign.close_evening(data, summary, report, 0, DIR)
+	return Campaign.close_evening(data, summary, report, 1, DIR)
 
 
 func _expected(_c: Case, key: CaseKey, _i: int) -> VerdictKind.Kind:
@@ -87,7 +88,7 @@ func test_real_v3_saves_migrate_and_continue_into_act_two() -> void:
 			assert_true(Campaign.is_act2(), "%s : Acte II commencé" % path.get_file())
 			assert_eq(GameState.current_day, 11)
 			var expected: String = JSON.stringify(GameState.to_save_dict(), "", true)
-			assert_true(GameState.load_from_slot(0, DIR), "sauvegarde v4 du soir du J10 relue")
+			assert_true(GameState.load_from_slot(1, DIR), "sauvegarde v4 du soir du J10 relue")
 			assert_eq(JSON.stringify(GameState.to_save_dict(), "", true), expected)
 
 
@@ -104,9 +105,9 @@ func test_every_act_two_evening_save_roundtrips_with_levies() -> void:
 		var summary: DaySummary = DaySimulator.simulate(data, day_number, GameState.get_day_seed(), policy)
 		GameState.add_credits(summary.get_net())
 		if not Campaign.has_evening(data):
-			var final: StringName = Campaign.close_final_day(data, summary, 0, DIR)
+			var final: StringName = Campaign.close_final_day(data, summary, 1, DIR)
 			assert_true(EndingService.ALL_ENDINGS.has(final), "fin du J20 : %s" % final)
-			assert_false(SaveService.has_save(0, DIR), "sauvegarde effacée à la fin")
+			SaveChecks.assert_archived(self, 1, DIR, final, "fin du J20")
 			return
 		var events: Array[EveningEvent] = Campaign.prepare_events(data)
 		var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, events)
@@ -121,13 +122,13 @@ func test_every_act_two_evening_save_roundtrips_with_levies() -> void:
 		elif not day_number in [11, 17]:
 			assert_eq(levy, 0, "J%d : pas de prélèvement" % day_number)
 		var report: EveningReport = Campaign.preview_evening(data, lines, events)
-		var ending: StringName = Campaign.close_evening(data, summary, report, 0, DIR)
+		var ending: StringName = Campaign.close_evening(data, summary, report, 1, DIR)
 		if ending != EveningReport.ENDING_NONE:
 			fail_test("fin anticipée %s au J%d (politique ~86 %%)" % [ending, day_number])
 			return
 		if day_number >= 10:
 			var expected: String = JSON.stringify(GameState.to_save_dict(), "", true)
-			assert_true(GameState.load_from_slot(0, DIR), "J%d relu" % day_number)
+			assert_true(GameState.load_from_slot(1, DIR), "J%d relu" % day_number)
 			assert_eq(JSON.stringify(GameState.to_save_dict(), "", true), expected, "J%d : état identique" % day_number)
 	assert_true(Campaign.is_act3(), "soirée pivot du J20 : Acte III commencé")
 	assert_eq(GameState.current_day, 21)

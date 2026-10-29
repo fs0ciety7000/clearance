@@ -16,10 +16,10 @@ const LEFT_RATIO: float = 1.45
 ## Pas de défilement au clavier / à la manette (px logiques).
 const SCROLL_STEP: float = 120.0
 ## Commandes rappelées au J1 (tutoriel diégétique court, UI_FLOW §7) :
-## [touches, clé du libellé].
+## [action, clé du libellé] ; glyphes clavier **et** manette (M11).
 const CONTROLS: Array[Array] = [
-	["N · Ⓐ", "br_ctrl_next"], ["ESPACE · LT", "br_ctrl_inspect"], ["Q · Ⓨ", "br_ctrl_ask"],
-	["V · RT", "br_ctrl_approve"], ["X · Ⓧ", "br_ctrl_deny"], ["TAB · R", "br_ctrl_rulebook"],
+	[&"next_case", "br_ctrl_next"], [&"inspect_toggle", "br_ctrl_inspect"], [&"interrogate", "br_ctrl_ask"],
+	[&"stamp_approve", "br_ctrl_approve"], [&"stamp_deny", "br_ctrl_deny"], [&"rulebook_toggle", "br_ctrl_rulebook"],
 ]
 
 var content: BriefingContent = null
@@ -46,6 +46,11 @@ func close(choice: StringName = &"start") -> void:
 		return
 	closed.emit()
 	super.close(choice)
+
+
+## Manette / clavier (M11) : « PRENDRE SON POSTE » par défaut.
+func default_focus() -> Control:
+	return start_button
 
 
 func _build() -> void:
@@ -172,7 +177,7 @@ func _rules() -> Control:
 	var box: VBoxContainer = vbox(DS.SPACE_3)
 	var new_count: int = content.get_new_entries().size()
 	var side: String = UiText.plural("br_new_count", new_count, "%d NOUVELLE", "%d NOUVELLES")
-	box.add_child(section(UiText.t("br_rules", "RÈGLES EN VIGUEUR"), UiIcon.Kind.WARNING, DS.STATE_AMBER, side))
+	box.add_child(section(UiText.t("br_rules", "RÈGLES EN VIGUEUR"), UiIcon.Kind.WARNING, Palette.STATE_AMBER, side))
 	var grid: GridContainer = GridContainer.new()
 	grid.columns = 2
 	grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -210,16 +215,15 @@ func _controls() -> Control:
 	grid.add_theme_constant_override("v_separation", DS.SPACE_2)
 	box.add_child(grid)
 	for control: Array in CONTROLS:
-		var keys: String = control[0]
+		var action: StringName = control[0]
 		var caption_key: String = control[1]
 		var row: HBoxContainer = hbox(DS.SPACE_2)
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var cap: PanelContainer = panel(&"KeyCap")
-		cap.custom_minimum_size.x = 112.0
-		var cap_label: Label = label(keys, &"KeyCapLabel", DS.TEXT_PRIMARY)
-		cap_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		cap.add_child(cap_label)
-		row.add_child(cap)
+		var caps: HBoxContainer = hbox(DS.SPACE_1)
+		caps.custom_minimum_size.x = 112.0
+		caps.add_child(PromptGlyph.make(action).with_device(InputPrompts.Device.KEYBOARD))
+		caps.add_child(PromptGlyph.make(action).with_device(InputPrompts.pad_style()))
+		row.add_child(caps)
 		var text: Label = wrapped(UiText.t(caption_key, caption_key), &"BodySmall")
 		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -234,7 +238,7 @@ func _rule_card(entry: RulebookEntry, number: int) -> Control:
 	card.custom_minimum_size.x = 300.0
 	var row: HBoxContainer = hbox(DS.SPACE_3)
 	card.add_child(row)
-	var num: Label = label("%02d" % number, &"DataTitle", DS.STATE_AMBER if entry.is_new else DS.TEXT_MUTED)
+	var num: Label = label("%02d" % number, &"DataTitle", Palette.STATE_AMBER if entry.is_new else DS.TEXT_MUTED)
 	num.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_child(num)
 	var col: VBoxContainer = vbox(DS.SPACE_1)
@@ -242,7 +246,7 @@ func _rule_card(entry: RulebookEntry, number: int) -> Control:
 	row.add_child(col)
 	var title_row: HBoxContainer = hbox(DS.SPACE_2)
 	col.add_child(title_row)
-	var title: Label = label(UiText.t(entry.title_key, String(entry.rule_id)), &"BodyStrong", DS.TEXT_PRIMARY if entry.is_new else DS.TEXT_SECONDARY)
+	var title: Label = label(UiText.t(entry.title_key, String(entry.rule_id)), &"BodyStrong", DS.TEXT_PRIMARY if entry.is_new else Palette.TEXT_SECONDARY)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title_row.add_child(title)
@@ -270,11 +274,11 @@ func _message_card(speaker_key: String, text_key: String, voice: BriefingContent
 	var bg: Color = DS.BG_ELEVATED
 	match voice:
 		BriefingContent.Voice.LUCIOLES:
-			bg = DS.BG_ELEVATED.blend(DS.MAGENTA_12) # encre magenta, sans signature
+			bg = DS.BG_ELEVATED.blend(Palette.MAGENTA_12) # encre magenta, sans signature
 		BriefingContent.Voice.INSPECTION:
 			bg = DS.BG_ELEVATED.blend(DS.YELLOW_12)
 		BriefingContent.Voice.COMMISSION:
-			bg = DS.BG_ELEVATED.blend(DS.VOICE_COMMISSION_12) # registre administratif, froid
+			bg = DS.BG_ELEVATED.blend(Palette.VOICE_COMMISSION_12) # registre administratif, froid
 		BriefingContent.Voice.BRULANTS:
 			bg = DS.BG_VOID # encre noire : la carte est plus sombre que les autres
 	var card: PanelContainer = panel()
@@ -300,15 +304,15 @@ static func voice_color(voice: BriefingContent.Voice) -> Color:
 		BriefingContent.Voice.CONSORTIUM:
 			return DS.ACCENT_YELLOW
 		BriefingContent.Voice.FAMILY:
-			return DS.TEXT_SECONDARY
+			return Palette.TEXT_SECONDARY
 		BriefingContent.Voice.LUCIOLES:
-			return DS.ACCENT_MAGENTA
+			return Palette.ACCENT_MAGENTA
 		BriefingContent.Voice.INSPECTION:
-			return DS.STATE_AMBER
+			return Palette.STATE_AMBER
 		BriefingContent.Voice.COMMISSION:
-			return DS.VOICE_COMMISSION
+			return Palette.VOICE_COMMISSION
 		BriefingContent.Voice.BRULANTS:
-			return DS.VOICE_BRULANTS
+			return Palette.VOICE_BRULANTS
 	return DS.ACCENT_CYAN
 
 
@@ -357,7 +361,7 @@ func _household() -> Control:
 	var balance_text: String = UiText.tf("br_balance", [ScreenBase.credits(credits_balance)], "SOLDE %s")
 	if content.advance_credits > 0:
 		balance_text = UiText.tf("br_balance_advance", [ScreenBase.credits(credits_balance)], "SOLDE %s · AVANCE INCLUSE")
-	box.add_child(section(UiText.t("br_household", "FOYER · BLOC PÉTREL"), UiIcon.Kind.INFO, DS.TEXT_SECONDARY, balance_text))
+	box.add_child(section(UiText.t("br_household", "FOYER · BLOC PÉTREL"), UiIcon.Kind.INFO, Palette.TEXT_SECONDARY, balance_text))
 	var home: Household = household if household != null else Household.new()
 	for member: Household.Member in home.members:
 		box.add_child(HouseholdView.member_card(member, HouseholdView.member_note(member)))

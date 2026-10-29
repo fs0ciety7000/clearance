@@ -79,7 +79,7 @@ func setup(p_entry: RulebookEntry, p_number: int, quota: int = 0, extra_note: St
 		_text.draw.connect(_draw_strike)
 		tooltip_text = "%s — %s" % [title, note_text] if not note_text.is_empty() else title
 	if not note_text.is_empty():
-		var chip_color: Color = DS.TEXT_SECONDARY if p_entry.retired else DS.STATE_AMBER
+		var chip_color: Color = Palette.TEXT_SECONDARY if p_entry.retired else Palette.STATE_AMBER
 		var note: PanelContainer = ScreenBase.chip(note_text, UiIcon.Kind.STRIKE if p_entry.retired else UiIcon.Kind.LOCK, chip_color)
 		note.name = "Note"
 		note.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
@@ -128,7 +128,7 @@ func _draw_strike() -> void:
 		if i == lines - 1:
 			width = clampf(full - _text.size.x * i, DS.SPACE_8, _text.size.x)
 		var y: float = line_h * (i + 0.55)
-		_text.draw_line(Vector2(0.0, y), Vector2(width, y), DS.TEXT_SECONDARY, DS.BORDER_HAIRLINE)
+		_text.draw_line(Vector2(0.0, y), Vector2(width, y), Palette.TEXT_SECONDARY, DS.BORDER_HAIRLINE)
 
 
 func _sync_min_size(margin: MarginContainer) -> void:
@@ -139,7 +139,7 @@ func _refresh_content() -> void:
 	if _number == null:
 		return
 	if is_flagged():
-		_number.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+		_number.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 	elif selected:
 		_number.add_theme_color_override(&"font_color", DS.ACCENT_CYAN)
 	else:
@@ -151,8 +151,8 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), DS.BG_PANEL)
 		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), DS.TEXT_MUTED)
 	elif entry != null and entry.is_new and not is_flagged() and not selected:
-		draw_rect(Rect2(Vector2.ZERO, size), DS.AMBER_12)
-		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), DS.STATE_AMBER)
+		draw_rect(Rect2(Vector2.ZERO, size), Palette.AMBER_12)
+		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), Palette.STATE_AMBER)
 	super._draw()
 
 

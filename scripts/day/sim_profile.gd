@@ -23,6 +23,9 @@ extends RefCounted
 ## F8), `accusateur` (Accuser, Dire ce qu'on attend), `mercenary3` (garde les
 ## enveloppes à partir du J21 : Déposition) ; `luciole`, `loyal`, `drift`,
 ## `solidaire` prolongés du J20 au J30.
+## M11 (D-102) : `story_mode` (mode Récit : amendes à 0 ₵, citations comptées ;
+## la file est toujours traitée en entier) — `SimProfile.story(preset)` ou
+## préfixe `story_` (`story_luciole`…) dans `preset` / `balance_sim --presets=`.
 const PRESETS: Array[StringName] = [&"default", &"loyal", &"luciole", &"mercenary", &"drift", &"negligent", &"evicted",
 		&"drift10", &"archiviste", &"solidaire", &"overrun", &"mercenary2", &"passeur", &"temoin", &"accusateur",
 		&"mercenary3"]
@@ -57,9 +60,20 @@ var overrun: bool = false
 ## Acte II : rythme de la file (1 = un passager toutes les 8 h / N ; < 1 : plus
 ## rapide, la file finit avant 18:00) — heure de présentation simulée.
 var pace: float = 1.0
+## M11 (D-102) : joueur en mode Récit (amendes à 0 ₵).
+var story_mode: bool = false
+
+## Préfixe d'un préréglage en mode Récit (`story_default`, `story_luciole`…).
+const STORY_PREFIX: String = "story_"
 
 
 static func preset(preset_name: StringName, p_accuracy: float = 0.95) -> SimProfile:
+	var text: String = String(preset_name)
+	if text.begins_with(STORY_PREFIX):
+		var story_profile: SimProfile = preset(StringName(text.trim_prefix(STORY_PREFIX)), p_accuracy)
+		story_profile.name = preset_name
+		story_profile.story_mode = true
+		return story_profile
 	var p: SimProfile = SimProfile.new()
 	p.name = preset_name
 	p.accuracy = p_accuracy
@@ -154,6 +168,11 @@ static func preset(preset_name: StringName, p_accuracy: float = 0.95) -> SimProf
 		&"evicted":
 			p.spending = &"none"
 	return p
+
+
+## Préréglage `preset_name` joué en mode Récit (D-102).
+static func story(preset_name: StringName = &"default", p_accuracy: float = 0.95) -> SimProfile:
+	return preset(StringName(STORY_PREFIX + String(preset_name)), p_accuracy)
 
 
 ## Vrai si un verdict est imposé pour ce cas (étiquette de dialogue).

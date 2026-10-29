@@ -31,7 +31,7 @@ func setup(p_entry: SummonsEntry, p_number: int) -> void:
 	add_child(margin)
 	var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_3)
 	margin.add_child(row)
-	var icon: UiIcon = UiIcon.make(UiIcon.Kind.SCALES, DS.STATE_AMBER, DS.ICON_M)
+	var icon: UiIcon = UiIcon.make(UiIcon.Kind.SCALES, Palette.STATE_AMBER, DS.ICON_M)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_child(icon)
 	var column: VBoxContainer = ScreenBase.vbox(0)
@@ -57,7 +57,7 @@ func _refresh_content() -> void:
 	if _id_label == null:
 		return
 	if is_flagged():
-		_id_label.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+		_id_label.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 	elif selected:
 		_id_label.add_theme_color_override(&"font_color", DS.ACCENT_CYAN)
 	else:
@@ -68,7 +68,7 @@ func _draw() -> void:
 	# Pièce de l'Enquête : fond élevé, liseré ambre.
 	if not is_flagged() and not selected:
 		draw_rect(Rect2(Vector2.ZERO, size), DS.BG_ELEVATED)
-		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), DS.STATE_AMBER)
+		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), Palette.STATE_AMBER)
 	super._draw()
 
 

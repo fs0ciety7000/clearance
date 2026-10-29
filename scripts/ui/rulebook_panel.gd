@@ -92,7 +92,7 @@ var _collapsed_count: Label = null
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_L, DS.SPACE_4))
+	add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL, Palette.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_L, DS.SPACE_4))
 	_content = VBoxContainer.new()
 	_content.add_theme_constant_override("separation", DS.SPACE_2)
 	add_child(_content)
@@ -139,7 +139,7 @@ func _build_nav() -> void:
 	nav.name = "Nav"
 	nav.add_theme_constant_override("separation", DS.SPACE_1)
 	_content.add_child(nav)
-	_prev_button = _keycap_button("[", UiText.t("rb_tab_prev", "Onglet précédent"))
+	_prev_button = _keycap_button(&"rulebook_prev", UiText.t("rb_tab_prev", "Onglet précédent"))
 	_prev_button.pressed.connect(cycle_tab.bind(-1))
 	nav.add_child(_prev_button)
 	_tabs_scroll = ScrollContainer.new()
@@ -154,7 +154,7 @@ func _build_nav() -> void:
 	_tabs_row = HBoxContainer.new()
 	_tabs_row.add_theme_constant_override("separation", 0)
 	_tabs_scroll.add_child(_tabs_row)
-	_next_button = _keycap_button("]", UiText.t("rb_tab_next", "Onglet suivant"))
+	_next_button = _keycap_button(&"rulebook_next", UiText.t("rb_tab_next", "Onglet suivant"))
 	_next_button.pressed.connect(cycle_tab.bind(1))
 	nav.add_child(_next_button)
 	_tabs_menu = MenuButton.new()
@@ -167,19 +167,20 @@ func _build_nav() -> void:
 	_tabs_menu.get_popup().id_pressed.connect(_on_tabs_menu_id)
 	nav.add_child(_tabs_menu)
 	# « Tab » (replier) en bout de rangée : l'en-tête tient au Steam Deck (QA-009).
-	var fold: PanelContainer = make_keycap("Tab")
-	nav.add_child(fold)
+	# Glyphe qui suit le périphérique (Tab / R au clavier, Vue à la manette, M11).
+	nav.add_child(PromptGlyph.make(&"rulebook_toggle"))
 
 
-## Bouton à l'allure d'une touche (`[`, `]`) : cliquable, comme LB / RB.
-func _keycap_button(text: String, tip: String) -> Button:
+## Bouton à l'allure d'une touche (`[`, `]` ; LB / RB à la manette, M11) :
+## cliquable, glyphe qui suit le périphérique.
+func _keycap_button(action: StringName, tip: String) -> Button:
 	var button: Button = Button.new()
 	button.flat = true
 	button.focus_mode = Control.FOCUS_NONE
 	button.tooltip_text = tip
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var cap: PanelContainer = make_keycap(text)
+	var cap: PromptGlyph = PromptGlyph.make(action)
 	button.add_child(cap)
 	var fit: Callable = func() -> void:
 		button.custom_minimum_size = cap.get_combined_minimum_size()
@@ -192,7 +193,7 @@ func _build_footer() -> void:
 	# DATE DU JOUR en pied (QA-032) : toujours visible, sélectionnable.
 	var today_card: PanelContainer = PanelContainer.new()
 	today_card.name = "Today"
-	var today_box: StyleBoxFlat = ThemeBuilder.chamfer_box(DS.BG_ELEVATED, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0)
+	var today_box: StyleBoxFlat = ThemeBuilder.chamfer_box(DS.BG_ELEVATED, Palette.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0)
 	today_card.add_theme_stylebox_override(&"panel", today_box)
 	_content.add_child(today_card)
 	today_item = DocFieldView.new()
@@ -207,7 +208,7 @@ func _build_collapsed_tab() -> void:
 	_collapsed_tab.alignment = BoxContainer.ALIGNMENT_BEGIN
 	_collapsed_tab.add_theme_constant_override("separation", DS.SPACE_3)
 	add_child(_collapsed_tab)
-	_collapsed_tab.add_child(make_keycap("Tab"))
+	_collapsed_tab.add_child(PromptGlyph.make(&"rulebook_toggle"))
 	var label: Label = Label.new()
 	label.theme_type_variation = &"DocFieldLabel"
 	label.text = "R\nU\nL\nE\nS"
@@ -215,7 +216,7 @@ func _build_collapsed_tab() -> void:
 	_collapsed_tab.add_child(label)
 	_collapsed_count = Label.new()
 	_collapsed_count.theme_type_variation = &"DocFieldLabel"
-	_collapsed_count.add_theme_color_override(&"font_color", DS.STATE_AMBER)
+	_collapsed_count.add_theme_color_override(&"font_color", Palette.STATE_AMBER)
 	_collapsed_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_collapsed_tab.add_child(_collapsed_count)
 
@@ -369,7 +370,7 @@ func _build_tabs() -> void:
 		var color: Color = Color.TRANSPARENT
 		if news > 0 and id != TAB_ALL:
 			text += " ·%d" % news
-			color = DS.STATE_AMBER
+			color = Palette.STATE_AMBER
 		_add_tab_button(id, text, color, group)
 	var refs: Array[StringName] = visible_reference_tabs()
 	if not refs.is_empty():
@@ -380,7 +381,7 @@ func _build_tabs() -> void:
 		caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		caption.add_theme_constant_override("separation", DS.SPACE_2)
 		var bar: ColorRect = ColorRect.new()
-		bar.color = DS.LINE_SUBTLE
+		bar.color = Palette.LINE_SUBTLE
 		bar.custom_minimum_size = Vector2(DS.BORDER_HAIRLINE, DS.SPACE_5)
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -399,19 +400,19 @@ func _build_tabs() -> void:
 		var color: Color = Color.TRANSPARENT
 		if tab == RulebookReference.TAB_WANTED:
 			text += " ·%d" % wanted_notices.size()
-			color = DS.STATE_RED
+			color = Palette.STATE_RED
 		elif tab == RulebookReference.TAB_REVOKED:
 			text += " ·%d" % revoked_entries.size()
-			color = DS.VOICE_COMMISSION
+			color = Palette.VOICE_COMMISSION
 		elif tab == RulebookReference.TAB_LEDGER:
 			text += " ·%d" % ledger_entries.size()
-			color = DS.STATE_GREEN if not ledger_entries.is_empty() else DS.TEXT_SECONDARY
+			color = Palette.STATE_GREEN if not ledger_entries.is_empty() else Palette.TEXT_SECONDARY
 		elif tab == RulebookReference.TAB_SUMMONS:
 			text += " ·%d" % summons_entries.size()
-			color = DS.STATE_AMBER
+			color = Palette.STATE_AMBER
 		elif RulebookReference.is_new(tab, day_number):
 			text += " ·" + UiText.t("rb_tab_new", "NEW")
-			color = DS.STATE_AMBER
+			color = Palette.STATE_AMBER
 		var button: Button = _add_tab_button(reference_tab_id(tab), text, color, group)
 		button.name = "Tab_%s" % tab
 
@@ -427,6 +428,7 @@ func _add_tab_button(id: int, text: String, color: Color, group: ButtonGroup) ->
 		button.add_theme_color_override(&"font_color", color)
 		button.set_meta(&"tab_color", color)
 	button.pressed.connect(_show_tab.bind(id))
+	button.pressed.connect(EventBus.rulebook_consulted.emit)
 	_tabs_row.add_child(button)
 	_tab_buttons.append(button)
 	_tab_ids.append(id)
@@ -499,14 +501,14 @@ func _update_nav_hints() -> void:
 		if not is_instance_valid(button) or not button.has_meta(&"tab_color"):
 			continue
 		var color: Color = button.get_meta(&"tab_color")
-		if color == DS.TEXT_SECONDARY:
+		if color == Palette.TEXT_SECONDARY:
 			continue
 		# Caché si plus de la moitié de l'onglet est hors de la rangée.
 		var center: float = button.get_global_rect().get_center().x
 		left = left or center < view.position.x
 		right = right or center > view.end.x
-	_prev_button.modulate = DS.STATE_AMBER if left else Color.WHITE
-	_next_button.modulate = DS.STATE_AMBER if right else Color.WHITE
+	_prev_button.modulate = Palette.STATE_AMBER if left else Color.WHITE
+	_next_button.modulate = Palette.STATE_AMBER if right else Color.WHITE
 
 
 ## Menu « n / N ▾ » : tous les onglets, par section, l'onglet courant coché.
@@ -663,7 +665,7 @@ func _show_reference(tab: StringName, marks: Dictionary[String, Array]) -> void:
 	if faces_only():
 		# J20 : avis sans nom — la comparaison passe par le visage seul.
 		var banner: Label = ScreenBase.wrapped(UiText.t("wanted_faces_only", "AVIS DU JOUR · VISAGES SEULS"), &"DocFieldLabel",
-				DS.STATE_RED)
+				Palette.STATE_RED)
 		banner.name = "FacesOnly"
 		_reference_view = banner
 		_list.add_child(banner)
@@ -715,7 +717,7 @@ func _show_ledger(marks: Dictionary[String, Array]) -> void:
 	head.add_child(ScreenBase.wrapped(UiText.t("rb_ledger_hint", "Répondants admissibles admis aujourd'hui à ce guichet."), &"BodySmall"))
 	if ledger_entries.is_empty():
 		var empty: Label = ScreenBase.wrapped(UiText.t("rb_ledger_empty", "Aucun répondant admis pour l'instant."), &"BodySmall",
-				DS.TEXT_SECONDARY)
+				Palette.TEXT_SECONDARY)
 		empty.name = "LedgerEmpty"
 		head.add_child(empty)
 	_reference_view = head
@@ -797,11 +799,17 @@ static func _restore_marks(card: InspectableItem, marks: Dictionary[String, Arra
 
 
 ## Onglet précédent / suivant ([ / ], LB / RB).
+## Zone défilante du contenu (défilement au stick droit, M11).
+func get_scroll() -> ScrollContainer:
+	return _scroll
+
+
 func cycle_tab(step: int) -> void:
 	if _tab_ids.is_empty():
 		return
 	var index: int = posmod(_tab_ids.find(current_tab) + step, _tab_ids.size())
 	_show_tab(_tab_ids[index])
+	EventBus.rulebook_consulted.emit()
 
 
 func get_items() -> Array[InspectableItem]:
@@ -902,10 +910,13 @@ func set_collapsed(value: bool) -> void:
 	_content.visible = not value
 	_collapsed_tab.visible = value
 	collapse_changed.emit(value)
+	if not value:
+		EventBus.rulebook_consulted.emit()
 
 
 func _on_item_picked(item: InspectableItem) -> void:
 	item_picked.emit(item)
+	EventBus.rulebook_consulted.emit()
 
 
 func _draw() -> void:

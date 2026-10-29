@@ -37,7 +37,7 @@ func _ready() -> void:
 	_waiting_value.theme_type_variation = &"DataTitle"
 	waiting.add_child(_waiting_value)
 	var line: ColorRect = ColorRect.new()
-	line.color = DS.LINE_SUBTLE
+	line.color = Palette.LINE_SUBTLE
 	line.custom_minimum_size.y = 1
 	box.add_child(line)
 	var status: HBoxContainer = HBoxContainer.new()
@@ -49,7 +49,7 @@ func _ready() -> void:
 	caption.text = UiText.t("qp_discrepancies", "DISCORDANCES")
 	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	status.add_child(caption)
-	_status_icon = UiIcon.make(UiIcon.Kind.DIAMOND, DS.TEXT_SECONDARY, DS.ICON_S)
+	_status_icon = UiIcon.make(UiIcon.Kind.DIAMOND, Palette.TEXT_SECONDARY, DS.ICON_S)
 	status.add_child(_status_icon)
 	_status_label = Label.new()
 	_status_label.theme_type_variation = &"DocFieldLabel"
@@ -82,24 +82,24 @@ func set_status(status: Status, discrepancies: int) -> void:
 	match status:
 		Status.APPROACHING:
 			_status_icon.kind = UiIcon.Kind.DIAMOND
-			_status_icon.color = DS.STATE_AMBER
+			_status_icon.color = Palette.STATE_AMBER
 			_status_label.text = UiText.t("qp_approaching", "EN APPROCHE")
-			_status_label.add_theme_color_override(&"font_color", DS.STATE_AMBER)
+			_status_label.add_theme_color_override(&"font_color", Palette.STATE_AMBER)
 		Status.INSPECTING when discrepancies > 0:
 			_status_icon.kind = UiIcon.Kind.WARNING
-			_status_icon.color = DS.ACCENT_MAGENTA
+			_status_icon.color = Palette.ACCENT_MAGENTA
 			_status_label.text = UiText.plural("qp_documented", discrepancies, "%d DOCUMENTÉE", "%d DOCUMENTÉES")
-			_status_label.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+			_status_label.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 		Status.INSPECTING:
 			_status_icon.kind = UiIcon.Kind.DIAMOND
-			_status_icon.color = DS.TEXT_SECONDARY
+			_status_icon.color = Palette.TEXT_SECONDARY
 			_status_label.text = UiText.t("qp_none", "AUCUNE")
-			_status_label.add_theme_color_override(&"font_color", DS.TEXT_SECONDARY)
+			_status_label.add_theme_color_override(&"font_color", Palette.TEXT_SECONDARY)
 		_:
 			_status_icon.kind = UiIcon.Kind.DIAMOND
 			_status_icon.color = DS.TEXT_MUTED
 			_status_label.text = "—"
-			_status_label.add_theme_color_override(&"font_color", DS.TEXT_SECONDARY)
+			_status_label.add_theme_color_override(&"font_color", Palette.TEXT_SECONDARY)
 
 
 func get_status_text() -> String:

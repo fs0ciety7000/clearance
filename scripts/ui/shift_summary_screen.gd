@@ -29,6 +29,11 @@ func setup(p_summary: DaySummary, p_day: DayDef) -> void:
 	day = p_day
 
 
+## Manette / clavier (M11) : « CONTINUER » par défaut.
+func default_focus() -> Control:
+	return continue_button
+
+
 func _build() -> void:
 	if summary == null:
 		summary = DaySummary.new()
@@ -83,18 +88,19 @@ func _tiles() -> Control:
 	var warnings: int = summary.get_warning_count()
 	row.add_child(stat_tile(UiText.t("sum_citations", "CITATIONS"), str(citations),
 			UiText.tf("sum_citation_detail", [warnings, citations - warnings], "%d avert. · %d amende(s)"),
-			DS.STATE_AMBER if citations > 0 else DS.TEXT_PRIMARY, UiIcon.Kind.WARNING))
+			Palette.STATE_AMBER if citations > 0 else DS.TEXT_PRIMARY, UiIcon.Kind.WARNING))
 	row.add_child(stat_tile(UiText.t("sum_wage", "SALAIRE"), credits(summary.get_wage_total(), true),
 			UiText.tf("sum_wage_detail", [day.credit_per_correct if day != null else 5], "%d ₵ par dossier conforme"), DS.TEXT_PRIMARY))
 	row.add_child(stat_tile(UiText.t("sum_fines", "AMENDES"), credits(-summary.get_fine_total()),
-			UiText.t("sum_fines_detail", "Retenues sur salaire"), DS.STATE_RED if summary.get_fine_total() > 0 else DS.TEXT_SECONDARY,
+			UiText.t("sum_fines_detail_story", "Mode Récit : aucune amende") if GameState.is_story_mode()
+				else UiText.t("sum_fines_detail", "Retenues sur salaire"), Palette.STATE_RED if summary.get_fine_total() > 0 else Palette.TEXT_SECONDARY,
 			UiIcon.Kind.DENIED))
 	var net: int = summary.get_net()
 	var bribes: int = summary.get_bribe_total()
 	var reports: int = summary.get_report_total()
 	if bribes > 0:
 		var tile: PanelContainer = stat_tile(UiText.t("sum_bribes", "DIVERS NON DÉCLARÉ"), credits(bribes, true),
-				UiText.t("sum_bribes_detail", "Enveloppes gardées · hors salaire"), DS.STATE_AMBER, UiIcon.Kind.WARNING)
+				UiText.t("sum_bribes_detail", "Enveloppes gardées · hors salaire"), Palette.STATE_AMBER, UiIcon.Kind.WARNING)
 		tile.name = "BribeTile"
 		row.add_child(tile)
 	if reports > 0:
@@ -106,7 +112,7 @@ func _tiles() -> Control:
 	var overruns: int = summary.get_overrun_count()
 	if overruns > 0:
 		var overrun_tile: PanelContainer = stat_tile(UiText.t("ss_overruns", "Entrées imputées").to_upper(), str(overruns),
-				UiText.t("sum_overruns_detail", "Au-delà du quota · 0 ₵ chacune"), DS.STATE_AMBER, UiIcon.Kind.BREATH)
+				UiText.t("sum_overruns_detail", "Au-delà du quota · 0 ₵ chacune"), Palette.STATE_AMBER, UiIcon.Kind.BREATH)
 		overrun_tile.name = "OverrunTile"
 		row.add_child(overrun_tile)
 	# Acte III (J30, F10) : familles de Tycho admises en règle (`admission_gauges`).
@@ -114,7 +120,7 @@ func _tiles() -> Control:
 		var admitted: int = admission_count(summary, day)
 		var pont_tile: PanelContainer = stat_tile(UiText.t("ss_pont", "Familles de Tycho admises").to_upper(), str(admitted),
 				UiText.t("sum_pont_detail", "Admissions en règle · ressortissants de Tycho"),
-				DS.STATE_GREEN if admitted > 0 else DS.TEXT_SECONDARY, UiIcon.Kind.APPROVED)
+				Palette.STATE_GREEN if admitted > 0 else Palette.TEXT_SECONDARY, UiIcon.Kind.APPROVED)
 		pont_tile.name = "PontTile"
 		row.add_child(pont_tile)
 	var total_detail: String = UiText.t("sum_net_detail", "Versé ce soir par la Banque Aurel")
@@ -140,7 +146,7 @@ static func admission_count(p_summary: DaySummary, p_day: DayDef) -> int:
 
 func _ledger() -> Control:
 	var box: VBoxContainer = vbox(DS.SPACE_3)
-	box.add_child(section(UiText.t("sum_ledger", "REGISTRE DU GUICHET"), UiIcon.Kind.DIAMOND, DS.TEXT_SECONDARY,
+	box.add_child(section(UiText.t("sum_ledger", "REGISTRE DU GUICHET"), UiIcon.Kind.DIAMOND, Palette.TEXT_SECONDARY,
 			UiText.plural("sum_errors", summary.get_error_count(), "%d ERREUR", "%d ERREURS")))
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -167,7 +173,7 @@ func _ledger() -> Control:
 func _ledger_row(result: CaseResult) -> Control:
 	var row: PanelContainer = panel(&"ElevatedCard")
 	if not result.correct:
-		row.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.BG_ELEVATED, DS.STATE_RED if result.fine > 0 or not result.verdict_correct else DS.STATE_AMBER))
+		row.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.BG_ELEVATED, Palette.STATE_RED if result.fine > 0 or not result.verdict_correct else Palette.STATE_AMBER))
 	var col: VBoxContainer = vbox(DS.SPACE_1)
 	row.add_child(col)
 	var line: HBoxContainer = hbox(DS.SPACE_3)
@@ -182,19 +188,19 @@ func _ledger_row(result: CaseResult) -> Control:
 	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	who.clip_text = true
 	line.add_child(who)
-	var status_color: Color = DS.ACCENT_CYAN if result.correct else (DS.STATE_AMBER if result.verdict_correct else DS.STATE_RED)
+	var status_color: Color = DS.ACCENT_CYAN if result.correct else (Palette.STATE_AMBER if result.verdict_correct else Palette.STATE_RED)
 	var status_text: String = UiText.t("sum_ok", "Conforme") if result.correct else UiText.t(result.citation_reason_key, result.citation_reason_key)
 	line.add_child(chip(status_text, UiIcon.Kind.CHECK if result.correct else UiIcon.Kind.WARNING, status_color))
 	if result.quota_overrun:
-		line.add_child(chip(UiText.t("sum_item_overrun", "IMPUTÉE"), UiIcon.Kind.BREATH, DS.STATE_AMBER))
+		line.add_child(chip(UiText.t("sum_item_overrun", "IMPUTÉE"), UiIcon.Kind.BREATH, Palette.STATE_AMBER))
 	elif result.quota_refusal:
-		line.add_child(chip(UiText.t("sum_item_quota_refusal", "REFUS QUOTA"), UiIcon.Kind.BREATH, DS.TEXT_SECONDARY))
+		line.add_child(chip(UiText.t("sum_item_quota_refusal", "REFUS QUOTA"), UiIcon.Kind.BREATH, Palette.TEXT_SECONDARY))
 	if result.bribe_credits > 0:
-		line.add_child(chip(UiText.tf("sum_item_bribe", [credits(result.bribe_credits, true)], "ENVELOPPE %s"), UiIcon.Kind.WARNING, DS.STATE_AMBER))
+		line.add_child(chip(UiText.tf("sum_item_bribe", [credits(result.bribe_credits, true)], "ENVELOPPE %s"), UiIcon.Kind.WARNING, Palette.STATE_AMBER))
 	if result.report_credits > 0:
 		line.add_child(chip(UiText.tf("sum_item_report", [credits(result.report_credits, true)], "SIGNALÉ %s"), UiIcon.Kind.LOGO, DS.ACCENT_YELLOW))
 	var money: Label = label(credits(result.credits_delta, true), &"DocFieldValue",
-			DS.TEXT_PRIMARY if result.credits_delta > 0 else (DS.STATE_RED if result.credits_delta < 0 else DS.TEXT_MUTED))
+			DS.TEXT_PRIMARY if result.credits_delta > 0 else (Palette.STATE_RED if result.credits_delta < 0 else DS.TEXT_MUTED))
 	money.custom_minimum_size.x = 72.0
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	line.add_child(money)
@@ -264,7 +270,7 @@ func _tickets() -> Control:
 					number = i + 1
 					title = UiText.t(day.rule_set.rules[i].title_key, "")
 		list.add_child(CitationTicket.make(result, summary.day_number, number, title,
-				day.free_citations_per_day if day != null else 2, true))
+				day.free_citations_per_day if day != null else 2, true, GameState.is_story_mode()))
 	return box
 
 
@@ -284,10 +290,10 @@ func _footer() -> Control:
 static func _stamp_color(kind: VerdictKind.Kind) -> Color:
 	match kind:
 		VerdictKind.Kind.APPROVE:
-			return DS.STATE_GREEN
+			return Palette.STATE_GREEN
 		VerdictKind.Kind.DETAIN:
 			return DS.ACCENT_YELLOW
-	return DS.STATE_RED
+	return Palette.STATE_RED
 
 
 static func _stamp_icon(kind: VerdictKind.Kind) -> UiIcon.Kind:

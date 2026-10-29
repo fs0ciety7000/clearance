@@ -95,6 +95,11 @@ const FS_TIMER := 44 # horloge de service (mono)
 const FS_CAPTION := 12 # mentions, légendes (taille minimale absolue)
 const FS_SUBTITLE := 18 # sous-titres des barks (UI_FLOW §4.8) — 0.2
 const FS_TIMER_COMPACT := 28 # horloge de la barre d'état 56 px (UI_FLOW §2.2) — 0.2
+# M11 (D-085 rév.) — valeurs des documents posés sur le plan de travail : le
+# plan les réduit (`Workbench.fit_scale` ≈ 0,75–0,95), elles partent donc plus
+# grandes que `FS_DATA` et gardent un plancher physique propre au petit écran.
+const FS_DATA_DOC := 18 # valeur d'un DocField de document (mono) @1080p
+const DOC_VALUE_MIN_PHYSICAL := 13 # px physiques visés à l'échelle 1 (Steam Deck : 20 px logiques)
 
 const LINE_HEIGHT_TIGHT := 1.1 # display
 const LINE_HEIGHT_UI := 1.4 # UI / labels
@@ -181,6 +186,8 @@ const DOC_STAGGER := 0.12 # décalage d'arrivée des documents par la fente
 const CONCORDANT_HOLD := 1.2 # fil « CONCORDANT » avant dissolution
 const INCOMPARABLE_HOLD := 0.6 # fil « INCOMPARABLE » avant rétraction
 const NEXT_DEBOUNCE := 0.5 # anti-rebond du bouton « Suivant »
+const PROMPT_INACTIVE_ALPHA := 0.3 # glyphe d'invite qui ne vaut pas en ce moment (Ⓐ de SUIVANT quand le focus est ailleurs)
+const SKIP_HOLD := 1.0 # maintien de VUE (manette) qui passe une étape du tutoriel (QA-042)
 const SUBTITLE_MIN_HOLD := 1.5 # durée mini d'un sous-titre
 const SUBTITLE_PER_CHAR := 0.06 # + 60 ms par caractère
 const DOC_ZOOM := 1.5 # zoom de lecture d'un document

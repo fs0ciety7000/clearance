@@ -37,7 +37,7 @@ func setup(p_entry: LedgerEntry, p_number: int) -> void:
 	add_child(margin)
 	var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_3)
 	margin.add_child(row)
-	var index: Label = ScreenBase.label("%02d" % p_number, &"DataSmall", DS.TEXT_SECONDARY)
+	var index: Label = ScreenBase.label("%02d" % p_number, &"DataSmall", Palette.TEXT_SECONDARY)
 	index.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_child(index)
 	var column: VBoxContainer = ScreenBase.vbox(0)
@@ -53,9 +53,9 @@ func setup(p_entry: LedgerEntry, p_number: int) -> void:
 	detail_row.add_child(ScreenBase.label(p_entry.full_name().strip_edges().to_upper(), &"BodySmall"))
 	var status: HBoxContainer = ScreenBase.hbox(DS.SPACE_1)
 	status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	status.add_child(UiIcon.make(UiIcon.Kind.APPROVED, DS.STATE_GREEN, DS.ICON_S))
+	status.add_child(UiIcon.make(UiIcon.Kind.APPROVED, Palette.STATE_GREEN, DS.ICON_S))
 	var klass: String = String(p_entry.citizen_class)
-	status.add_child(ScreenBase.label(UiText.tf("rb_ledger_admitted", [klass], "ADMIS·E · %s"), &"DocFieldLabel", DS.STATE_GREEN))
+	status.add_child(ScreenBase.label(UiText.tf("rb_ledger_admitted", [klass], "ADMIS·E · %s"), &"DocFieldLabel", Palette.STATE_GREEN))
 	detail_row.add_child(status)
 	margin.minimum_size_changed.connect(_sync_min_size.bind(margin))
 	_sync_min_size(margin)
@@ -79,7 +79,7 @@ func _refresh_content() -> void:
 	if _id_label == null:
 		return
 	if is_flagged():
-		_id_label.add_theme_color_override(&"font_color", DS.ACCENT_MAGENTA)
+		_id_label.add_theme_color_override(&"font_color", Palette.ACCENT_MAGENTA)
 	elif selected:
 		_id_label.add_theme_color_override(&"font_color", DS.ACCENT_CYAN)
 	else:
@@ -92,8 +92,8 @@ func _draw() -> void:
 	if not is_flagged() and not selected:
 		draw_rect(Rect2(Vector2.ZERO, size), DS.BG_ELEVATED)
 		if glow > 0.0:
-			draw_rect(Rect2(Vector2.ZERO, size), Color(DS.GREEN_12, DS.GREEN_12.a * glow * 2.0))
-		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), DS.STATE_GREEN)
+			draw_rect(Rect2(Vector2.ZERO, size), Color(Palette.GREEN_12, Palette.GREEN_12.a * glow * 2.0))
+		draw_rect(Rect2(Vector2.ZERO, Vector2(DS.BORDER_STRONG + 1, size.y)), Palette.STATE_GREEN)
 	super._draw()
 
 

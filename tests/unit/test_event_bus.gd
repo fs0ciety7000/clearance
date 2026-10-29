@@ -47,6 +47,12 @@ const EXPECTED_SIGNALS: Dictionary = {
 	# Acte III (ARCHITECTURE §7.3).
 	&"ledger_changed": 1,
 	&"summons_published": 1,
+	# M11 (D-101, D-102) : emplacements, profil, Récit → Dur.
+	&"save_slots_changed": 0,
+	&"profile_changed": 0,
+	&"difficulty_changed": 1,
+	# M11 lot C : tutoriel interactif du J1 (Rulebook consulté).
+	&"rulebook_consulted": 0,
 }
 
 

@@ -30,7 +30,7 @@ var buttons: Dictionary[SlippedItem.Decision, Button] = {}
 ## Plus de décision possible (tampon posé).
 var locked: bool = false
 
-var _accent: Color = DS.STATE_AMBER
+var _accent: Color = Palette.STATE_AMBER
 var _status: PanelContainer = null
 var _status_label: Label = null
 var _status_icon: UiIcon = null
@@ -48,12 +48,12 @@ static func create(p_item: SlippedItem) -> SlippedItemView:
 ## Couleur sémantique de l'objet (DS §2.1).
 static func accent_of(p_item: SlippedItem) -> Color:
 	if p_item == null:
-		return DS.TEXT_SECONDARY
+		return Palette.TEXT_SECONDARY
 	match p_item.kind:
 		SlippedItem.Kind.ENVELOPE:
-			return DS.STATE_AMBER
+			return Palette.STATE_AMBER
 		SlippedItem.Kind.NOTE:
-			return DS.ACCENT_MAGENTA
+			return Palette.ACCENT_MAGENTA
 	return DS.ACCENT_CYAN
 
 
@@ -151,7 +151,7 @@ func build(p_item: SlippedItem) -> void:
 	_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var status_row: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
 	_status.add_child(status_row)
-	_status_icon = UiIcon.make(UiIcon.Kind.INFO, DS.TEXT_SECONDARY, DS.ICON_S)
+	_status_icon = UiIcon.make(UiIcon.Kind.INFO, Palette.TEXT_SECONDARY, DS.ICON_S)
 	status_row.add_child(_status_icon)
 	_status_label = ScreenBase.label("", &"BodySmall")
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -203,14 +203,14 @@ func _refresh() -> void:
 		else:
 			button.remove_theme_color_override(&"font_color")
 			button.remove_theme_color_override(&"font_pressed_color")
-	var color: Color = DS.TEXT_SECONDARY
+	var color: Color = Palette.TEXT_SECONDARY
 	var icon: UiIcon.Kind = UiIcon.Kind.INFO
 	var text: String = UiText.t("wb_item_pending", "À trancher avant le tampon — sinon rendu d'office.")
 	if item != null and item.default_decision == SlippedItem.Decision.KEEP:
 		text = UiText.t("wb_item_pending_keep", "À trancher avant le tampon — sinon gardé.")
 	match decision:
 		SlippedItem.Decision.KEEP:
-			color = DS.STATE_AMBER if item.kind == SlippedItem.Kind.ENVELOPE else DS.ACCENT_CYAN
+			color = Palette.STATE_AMBER if item.kind == SlippedItem.Kind.ENVELOPE else DS.ACCENT_CYAN
 			icon = UiIcon.Kind.WARNING if item.kind == SlippedItem.Kind.ENVELOPE else UiIcon.Kind.CHECK
 			text = UiText.tf("wb_item_kept_envelope", [ScreenBase.credits(item.amount, true)], "Gardée dans le tiroir · %s divers non déclaré") \
 					if item.kind == SlippedItem.Kind.ENVELOPE else UiText.t("wb_item_kept", "Gardé dans le tiroir.")
@@ -225,7 +225,7 @@ func _refresh() -> void:
 	_status_icon.kind = icon
 	_status_icon.color = color
 	_status_label.text = text
-	_status_label.add_theme_color_override(&"font_color", color if decision != SlippedItem.Decision.NONE else DS.TEXT_SECONDARY)
+	_status_label.add_theme_color_override(&"font_color", color if decision != SlippedItem.Decision.NONE else Palette.TEXT_SECONDARY)
 	var bg: Color = Color(color, 0.12) if decision != SlippedItem.Decision.NONE else Color(DS.BG_PANEL, 0.0)
 	_status.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(bg, Color(color, 0.0), 0, DS.CHAMFER_S, DS.SPACE_1))
 	if _art != null:
@@ -236,7 +236,7 @@ func _refresh() -> void:
 func _draw_art() -> void:
 	var r: Rect2 = Rect2(Vector2.ZERO, _art.size).grow(-DS.SPACE_1)
 	var line: Color = _accent
-	var paper: Color = DS.BG_PANEL.lerp(DS.TEXT_SECONDARY, 0.12)
+	var paper: Color = DS.BG_PANEL.lerp(Palette.TEXT_SECONDARY, 0.12)
 	match item.kind:
 		SlippedItem.Kind.ENVELOPE:
 			var env: Rect2 = Rect2(r.position + Vector2(0, r.size.y * 0.12), Vector2(r.size.x, r.size.y * 0.76))
@@ -260,7 +260,7 @@ func _draw_art() -> void:
 			for i: int in 3:
 				var y: float = r.position.y + r.size.y * (0.28 + 0.13 * i)
 				_art.draw_line(Vector2(r.position.x + r.size.x * 0.22, y), Vector2(r.end.x - r.size.x * 0.25, y + 2.0),
-						Color(DS.TEXT_SECONDARY, 0.6), 1.0)
+						Color(Palette.TEXT_SECONDARY, 0.6), 1.0)
 			draw_luciole(_art, r.end - Vector2(r.size.x * 0.26, r.size.y * 0.3), DS.SPACE_3, line)
 		SlippedItem.Kind.FORM:
 			_draw_form(r, line, paper)
@@ -292,7 +292,7 @@ func _draw_form(r: Rect2, line: Color, paper: Color) -> void:
 	_art.draw_rect(sheet, paper)
 	_art.draw_rect(sheet, line, false, DS.BORDER_STRONG)
 	_art.draw_rect(Rect2(sheet.position, Vector2(sheet.size.x, DS.SPACE_2)), Color(line, 0.3))
-	var muted: Color = Color(DS.TEXT_SECONDARY, 0.6)
+	var muted: Color = Color(Palette.TEXT_SECONDARY, 0.6)
 	for i: int in 4:
 		var y: float = sheet.position.y + sheet.size.y * (0.32 + 0.15 * i)
 		var box: Rect2 = Rect2(Vector2(sheet.position.x + DS.SPACE_1 + 1, y - 3.0), Vector2(5, 5))
@@ -313,7 +313,7 @@ func _draw_object(r: Rect2, line: Color, paper: Color) -> void:
 			Vector2(box.end.x, box.position.y)]
 	var side: PackedVector2Array = [Vector2(box.end.x, box.position.y), Vector2(box.end.x, box.position.y) + depth, box.end + depth,
 			box.end]
-	_art.draw_colored_polygon(top, paper.lerp(DS.TEXT_SECONDARY, 0.1))
+	_art.draw_colored_polygon(top, paper.lerp(Palette.TEXT_SECONDARY, 0.1))
 	_art.draw_colored_polygon(side, paper.lerp(DS.BG_VOID, 0.3))
 	_art.draw_rect(box, paper)
 	for poly: PackedVector2Array in [top, side]:
@@ -335,7 +335,7 @@ func _draw_object(r: Rect2, line: Color, paper: Color) -> void:
 ## Dossier (`FILE`) : chemise à onglet, feuillets qui dépassent ; le registre
 ## de Tycho (`wb_registre_label`) est un cahier relié, dos et tranche.
 func _draw_file(r: Rect2, line: Color, paper: Color) -> void:
-	var muted: Color = Color(DS.TEXT_SECONDARY, 0.6)
+	var muted: Color = Color(Palette.TEXT_SECONDARY, 0.6)
 	if item.label_key == "wb_registre_label":
 		var book: Rect2 = Rect2(r.position + Vector2(r.size.x * 0.1, r.size.y * 0.06), Vector2(r.size.x * 0.8, r.size.y * 0.88))
 		_art.draw_rect(Rect2(book.position + Vector2(3, 3), book.size), Color(paper, 0.7))
@@ -361,7 +361,7 @@ func _draw_file(r: Rect2, line: Color, paper: Color) -> void:
 	_art.draw_rect(back, line, false, 1.0)
 	# Feuillets qui dépassent.
 	_art.draw_rect(Rect2(back.position + Vector2(DS.SPACE_2, DS.SPACE_1), Vector2(back.size.x - DS.SPACE_4, back.size.y * 0.5)),
-			DS.BG_PANEL.lerp(DS.TEXT_SECONDARY, 0.3))
+			DS.BG_PANEL.lerp(Palette.TEXT_SECONDARY, 0.3))
 	var front: Rect2 = Rect2(back.position + Vector2(0, back.size.y * 0.22), Vector2(back.size.x, back.size.y * 0.78))
 	_art.draw_rect(front, paper)
 	_art.draw_rect(front, line, false, DS.BORDER_STRONG)

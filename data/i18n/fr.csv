@@ -552,7 +552,7 @@ pause_quit_confirm,CONFIRMER : LE SHIFT EN COURS SERA PERDU
 opt_accessibility,ACCESSIBILITÉ
 opt_text_scale,Taille du texte
 opt_fx,Effets visuels
-opt_fx_hint,"Scanlines, scintillement, lueurs des hologrammes."
+opt_fx_hint,"Intensité des lueurs et halos, des scanlines et des animations d'effet (liens, tampons, néons, pluie). Désactivés : tout est fixe, sans halo."
 opt_fx_full,COMPLETS
 opt_fx_reduced,RÉDUITS
 opt_fx_off,DÉSACTIVÉS
@@ -2765,3 +2765,164 @@ end_variant_derive,VARIANTE · DÉRIVE
 end_variant_tycho,VARIANTE · TYCHO
 end_figure_dora,DERNIÈRE NAVETTE · DORA
 end_figure_mira,DERNIÈRE NAVETTE · MIRA
+bar_shift_critical,FIN DE SHIFT IMMINENTE
+opt_color_vision,Vision des couleurs
+opt_color_vision_hint,Couleurs d'état distinguables ; icônes et motifs restent affichés.
+opt_cv_none,AUCUNE
+opt_cv_protan,PROTAN · DEUTAN
+opt_cv_tritan,TRITAN
+opt_cv_contrast,CONTRASTE ÉLEVÉ
+opt_holo_flicker,Scintillement holographique
+opt_holo_flicker_hint,"Désactivé : plus aucun clignotement ni défilement (cadres des documents, hologrammes, néons instables et écrans du guichet). Les lueurs restent."
+opt_controls,COMMANDES
+opt_pad_glyphs,Glyphes de manette
+opt_pad_glyphs_hint,"Les invites suivent le dernier appareil utilisé, clavier ou manette."
+opt_pad_auto,AUTO
+opt_pad_xbox,XBOX · DECK
+opt_pad_ps,PLAYSTATION
+ctl_accept,Valider · choisir un champ
+ctl_cancel,Annuler · retour
+ctl_next,Passager suivant
+ctl_inspect,Mode Inspection
+ctl_ask,Interroger
+ctl_face,Visage (inspection)
+ctl_approve,APPROUVÉ (maintenir)
+ctl_deny,REFUSÉ (maintenir)
+ctl_detain,DÉTENTION (maintenir)
+ctl_rulebook,Rulebook
+ctl_rulebook_tabs,Onglet du Rulebook
+ctl_doc_next,Document suivant
+ctl_zoom,Loupe (hors inspection)
+ctl_scroll,Faire défiler
+ctl_pause,Pause
+st_pick_b_fmt,"Champ A sélectionné — choisissez le champ B (document, règle, date du jour ou visage). %s : annuler."
+st_pick_a_pad,Mode Inspection — croix : de champ en champ · %s : choisir le premier champ.
+st_inspect_fmt,Documents posés — %s : Mode Inspection · maintenez %s / %s pour tamponner.
+pp_idle_hint_fmt,Appuyez sur l'intercom (%s) pour faire avancer le passager suivant.
+pp_visor_hint_fmt,Visage masqué : demandez le retrait de la visière (%s).
+tb_hint_hold,maintenir %s
+wb_stack_hint_pad,%s ← → : DOCUMENT DEVANT
+wb_mode_hint_fmt,%s · MODE INSPECTION
+dlg_cancel,ANNULER
+dlg_cancel_hint,annuler
+slot_free,EMPLACEMENT LIBRE
+slot_free_hint,Aucune partie enregistrée ici.
+slot_ended,PARTIE TERMINÉE
+slot_credits,CRÉDITS
+slot_household,FOYER
+slot_saved_at,ENREGISTRÉ
+slot_play_time,TEMPS DE JEU
+diff_story_short,RÉCIT
+diff_hard_short,DUR
+slot_time_none,< 1 min
+slot_title,EMPLACEMENT %d
+slot_ending,Fin : %s
+slot_day_act_last,Dernier jour : %02d · Acte %s
+slot_day,JOUR %02d
+slot_act,ACTE %s
+slot_time_min,%d min
+slot_time_h,%d h %02d
+slot_alive_one,%d vivant
+slot_alive,%d vivants
+slot_sick_one,%d malade
+slot_sick,%d malades
+slot_absent_one,%d absent·e
+slot_absent,%d absent·es
+ng_title,NOUVELLE PARTIE
+ng_back_hint,retour
+ng_back,RETOUR
+ng_step_slot,ÉTAPE 1 / 2 · EMPLACEMENT
+ng_slot_hint,Chaque partie est enregistrée automatiquement chaque soir dans son emplacement.
+ng_use_slot,CHOISIR CET EMPLACEMENT
+ng_overwrite_slot,ÉCRASER CETTE PARTIE…
+ng_overwrite_eyebrow,EMPLACEMENT OCCUPÉ
+ng_overwrite_accept,ÉCRASER
+diff_hard,DUR
+diff_hard_tag,Recommandé · l'expérience prévue
+diff_hard_l1,"Le shift se termine à 18:00, chrono en marche."
+diff_hard_l2,"Les erreurs coûtent des amendes, retenues sur le salaire."
+diff_hard_l3,Chaque crédit compte pour nourrir et soigner le foyer.
+diff_hard_play,JOUER EN DUR
+diff_story,RÉCIT
+diff_story_tag,"Pour l'histoire, sans pression"
+diff_story_l1,Pas de chrono : le shift finit quand la file est traitée.
+diff_story_l2,Pas d'amendes : les citations restent des avertissements.
+diff_story_l3,Toutes les fins restent accessibles.
+diff_story_play,JOUER EN RÉCIT
+diff_one_way,"Vous pourrez passer de Récit à Dur plus tard (Pause › Options), pas l'inverse."
+ng_overwrite_title,Écraser la partie de l'emplacement %d ?
+ng_overwrite_body,La partie enregistrée (jour %02d) et tous ses jours passés seront supprimés. Les fins déjà vues restent au profil.
+ng_step_difficulty,ÉTAPE 2 / 2 · DIFFICULTÉ · EMPLACEMENT %d
+load_eyebrow,PARTIES ENREGISTRÉES
+load_title,CHARGER
+load_empty,Aucune partie enregistrée. Commencez une nouvelle partie depuis le titre.
+load_autosave_hint,"Sauvegarde automatique chaque soir, après la soirée."
+load_resume,REPRENDRE
+load_past_day,REPRENDRE UN JOUR PASSÉ…
+load_delete,SUPPRIMER
+load_delete_confirm,CONFIRMER LA SUPPRESSION
+load_days_warning,Vous reprenez au matin du jour choisi. Les jours suivants de cet emplacement seront remplacés à la prochaine soirée.
+load_days_ended,Partie terminée : reprendre un jour la rouvre.
+load_day_confirm_eyebrow,LIGNE DE TEMPS
+load_day_confirm_accept,REPRENDRE CE JOUR
+load_days_title,REPRENDRE UN JOUR PASSÉ · EMPLACEMENT %d
+load_day_button,MATIN DU JOUR %02d
+load_day_button_last,JOUR %02d · DERNIER
+load_day_confirm_title,Reprendre au matin du jour %02d ?
+load_day_confirm_body,Les jours %02d à %02d de cet emplacement seront remplacés dès la prochaine soirée.
+load_days_count_one,%d matin
+load_days_count,%d matins
+tut_eyebrow,TUTORIEL · JOUR 1
+tut_intro_title,PREMIER SHIFT
+tut_skip_all,PASSER LE TUTORIEL
+tut_start,COMMENCER
+tut_waiting,à vous
+tut_quit,QUITTER
+tut_skip_step,PASSER L'ÉTAPE
+tut_done_title,TUTORIEL TERMINÉ
+tut_done_text,Le reste du shift est à vous. Okonkwo veille à l'intercom.
+tut_intro_text,"%d gestes courts, faits pour de vrai sur les premiers passagers. Passez-les quand vous voulez."
+tut_step_of,TUTORIEL · ÉTAPE %d / %d
+tut_look_title,REGARDEZ LE PASSAGER
+tut_look_text,"Appelez le passager suivant. Pendant qu'il approche, observez son visage : il fait partie du dossier."
+tut_inspect_title,OUVREZ L'INSPECTION
+tut_inspect_text,Le Mode Inspection rend chaque champ des documents sélectionnable.
+tut_rulebook_title,CONSULTEZ LE RULEBOOK
+tut_rulebook_text,"À droite, les règles du jour. Changez d'onglet ou sélectionnez une règle."
+tut_link_title,RELIEZ DEUX CHAMPS
+tut_link_text,"Sélectionnez un champ A, puis un champ B (ou une règle) : la comparaison dit CONCORDANT ou DISCORDANCE."
+tut_interrogate_title,INTERROGEZ
+tut_interrogate_text,Posez une question au passager. Une discordance débloque des questions.
+tut_stamp_title,TAMPONNEZ
+tut_stamp_text,Maintenez APPROUVÉ ou REFUSÉ. Un refus doit s'appuyer sur une discordance épinglée.
+bar_story,RÉCIT
+bar_story_tip,"Mode Récit : pas de chrono, pas d'amendes."
+bar_close_booth,FERMER LE GUICHET
+bar_close_booth_tip,Quota atteint : le bilan suit le passager en cours.
+bar_story_untimed,SANS CHRONO
+opt_game,PARTIE
+opt_tutorial,Tutoriel du jour 1
+opt_tutorial_hint,Gestes guidés au premier jour d'une partie ; se désactive une fois terminé ou passé.
+opt_hard_mode,Mode Récit en cours
+opt_hard_mode_hint,Passer en Dur rétablit le chrono et les amendes. Irréversible pour cette partie.
+opt_hard_mode_button,PASSER EN MODE DUR
+hard_eyebrow,MODE DE JEU
+hard_title,Passer en mode Dur ?
+hard_body,"Le chrono et les amendes s'appliquent dès maintenant, jusqu'à la fin de cette partie. Impossible de revenir en mode Récit."
+hard_accept,PASSER EN DUR
+close_booth_toast_title,GUICHET FERMÉ
+close_booth_toast,Le bilan suit le passager en cours.
+title_load,CHARGER
+title_continue_none,CONTINUER
+title_continue_story,%s · RÉCIT
+cit_warning_story,AVERTISSEMENT · MODE RÉCIT
+sum_fines_detail_story,Mode Récit : aucune amende
+cit_no_fine_story,sans amende en mode Récit
+tut_skip_hold,maintenir
+tut_skip_hold_tail,: passer l'étape
+slot_damaged,SAUVEGARDE ENDOMMAGÉE
+slot_damaged_day,Dernier jour connu : %02d
+slot_damaged_hint,"Le fichier de cette partie est illisible. Reprenez un jour passé s'il en reste, ou supprimez l'emplacement."
+load_failed_title,CHARGEMENT IMPOSSIBLE
+load_failed_day,Le matin du jour %02d est illisible. Choisissez un autre jour.
+load_failed_slot,La sauvegarde de l'emplacement %d est illisible.

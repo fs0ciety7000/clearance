@@ -47,8 +47,8 @@ func _draw() -> void:
 	var radius: float = HIT_SIZE * 0.5 - 1.0
 	var flagged: bool = is_flagged()
 	if flagged:
-		draw_circle(center, radius, DS.MAGENTA_12)
-		draw_arc(center, radius, 0.0, TAU, 32, DS.ACCENT_MAGENTA, DS.BORDER_STRONG, true)
+		draw_circle(center, radius, Palette.MAGENTA_12)
+		draw_arc(center, radius, 0.0, TAU, 32, Palette.ACCENT_MAGENTA, DS.BORDER_STRONG, true)
 	elif selected:
 		draw_circle(center, radius, DS.CYAN_12)
 		draw_arc(center, radius, 0.0, TAU, 32, DS.ACCENT_CYAN, DS.BORDER_STRONG, true)
@@ -56,16 +56,16 @@ func _draw() -> void:
 		draw_circle(center, radius, DS.CYAN_08)
 		draw_arc(center, radius, 0.0, TAU, 32, DS.CYAN_40, 1.0, true)
 	if pulse > 0.0:
-		var glow: Color = DS.MAGENTA_60 if flagged else DS.CYAN_60
+		var glow: Color = Palette.MAGENTA_60 if flagged else DS.CYAN_60
 		glow.a *= pulse
 		draw_arc(center, radius + DS.SPACE_1 * pulse, 0.0, TAU, 32, glow, DS.BORDER_STRONG, true)
 	if has_focus():
 		draw_arc(center, radius + DS.FOCUS_RING_OFFSET, 0.0, TAU, 32, DS.ACCENT_CYAN, DS.FOCUS_RING_WIDTH, true)
-	SlippedItemView.draw_luciole(self, center, glyph_px, Color(DS.ACCENT_MAGENTA, 0.85))
+	SlippedItemView.draw_luciole(self, center, glyph_px, Color(Palette.ACCENT_MAGENTA, 0.85))
 	if flagged:
 		var x: float = size.x + DS.SPACE_2
 		for number: int in flag_numbers:
-			draw_number_badge(self, Vector2(x, -DS.SPACE_1), number, DS.ACCENT_MAGENTA)
+			draw_number_badge(self, Vector2(x, -DS.SPACE_1), number, Palette.ACCENT_MAGENTA)
 			x -= DS.SPACE_5
 	elif selected:
 		draw_letter_badge(self, Vector2(size.x + DS.SPACE_2, -DS.SPACE_1), "A", DS.ACCENT_CYAN)

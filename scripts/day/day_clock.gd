@@ -5,6 +5,10 @@
 ## à chaque avance et `day_time_expired` une seule fois.
 ## Accessibilité « Temps » (`Settings.clock_slow_accessibility`) : ×0,5.
 ## Testable sans attente : `set_process(false)` puis `advance(delta)`.
+## M11, mode Récit (D-102) : `untimed` — l'horloge s'affiche et avance, mais
+## s'arrête à 18:00 sans `day_time_expired` (le shift finit quand la file est
+## traitée) ; repasser en Dur (`set_untimed(false)`) expire aussitôt une
+## horloge déjà au bout.
 class_name DayClock
 extends Node
 
@@ -18,6 +22,8 @@ var duration_sec: float = 0.0
 var remaining_sec: float = 0.0
 var running: bool = false
 var expired: bool = false
+## Mode Récit : pas d'expiration à l'heure.
+var untimed: bool = false
 
 
 ## Réarme l'horloge (arrêtée) pour une durée de shift.
@@ -26,6 +32,21 @@ func setup(p_duration_sec: float) -> void:
 	remaining_sec = duration_sec
 	running = false
 	expired = false
+
+
+## Mode Récit (vrai) ou Dur. Repasser en Dur avec une horloge au bout expire
+## aussitôt (`day_time_expired`).
+func set_untimed(value: bool) -> void:
+	untimed = value
+	if not untimed and not expired and duration_sec > 0.0 and remaining_sec <= 0.0:
+		expired = true
+		running = false
+		EventBus.day_time_expired.emit()
+
+
+## Vrai si l'horloge a atteint 18:00 (expirée, ou arrêtée en mode Récit).
+func is_at_end() -> bool:
+	return expired or (duration_sec > 0.0 and remaining_sec <= 0.0)
 
 
 func start() -> void:
@@ -48,6 +69,10 @@ func advance(delta: float) -> void:
 	remaining_sec = maxf(remaining_sec - delta * _time_scale(), 0.0)
 	EventBus.day_clock_ticked.emit(remaining_sec)
 	if remaining_sec <= 0.0:
+		if untimed:
+			# Récit : l'horloge reste à 18:00, le shift continue.
+			running = false
+			return
 		expired = true
 		running = false
 		EventBus.day_time_expired.emit()

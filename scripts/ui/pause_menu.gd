@@ -7,6 +7,8 @@
 ## QUITTER VERS LE TITRE (second appui de confirmation : la progression du jour
 ## en cours est perdue, la sauvegarde du matin reste). Échap / Ⓑ : retour /
 ## reprendre.
+## M11 lot C : Options > Partie « PASSER EN MODE DUR » (partie en Récit) →
+## `ConfirmDialog` (focus ANNULER, irréversible) → `GameState.set_difficulty`.
 class_name PauseMenu
 extends Control
 
@@ -21,6 +23,8 @@ var is_open: bool = false
 var enabled: bool = true
 var resume_button: Button = null
 var options: OptionsPanel = null
+## Confirmation « Passer en mode Dur » ouverte (null sinon).
+var hard_dialog: ConfirmDialog = null
 
 var _menu_box: VBoxContainer = null
 var _panel: PanelContainer = null
@@ -39,8 +43,9 @@ func _init() -> void:
 func _ready() -> void:
 	_apply_theme()
 	EventBus.settings_changed.connect(func(key: StringName, _v: Variant) -> void:
-		if key == Settings.KEY_TEXT_SCALE:
+		if key == Settings.KEY_TEXT_SCALE or key == Settings.KEY_COLOR_VISION:
 			_apply_theme())
+	InputPrompts.ensure(get_tree())
 	var blur: ColorRect = ColorRect.new()
 	blur.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	blur.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -69,8 +74,12 @@ func _ready() -> void:
 	_menu_box.add_child(head)
 	head.add_child(ScreenBase.label(UiText.t("pause_title", "PAUSE"), &"DisplayLabel"))
 	head.add_child(ScreenBase.spacer())
-	var keys: Label = ScreenBase.label(UiText.t("pause_keys", "ÉCHAP · F10 · MENU"), &"KeyCapLabel")
+	# Glyphes qui suivent le périphérique (Échap / F10 au clavier, B / Menu à la manette).
+	var keys: HBoxContainer = ScreenBase.hbox(DS.SPACE_1)
+	keys.name = "PauseKeys"
 	keys.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	keys.add_child(PromptGlyph.make(&"cancel"))
+	keys.add_child(PromptGlyph.make(&"pause"))
 	head.add_child(keys)
 	_menu_box.add_child(ScreenBase.wrapped(UiText.t("pause_hint", "Le shift est suspendu : l'horloge et la file sont arrêtées."), &"BodySmall"))
 	_menu_box.add_child(ScreenBase.rule_line())
@@ -84,9 +93,14 @@ func _ready() -> void:
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_menu_box.add_child(_quit_button)
 	options = OptionsPanel.new()
+	options.in_game = true
 	options.visible = false
 	options.back_requested.connect(show_menu)
+	options.hard_mode_requested.connect(request_hard_mode)
 	stack.add_child(options)
+	# Manette : une direction sans focus le rend à « REPRENDRE » (ou au premier
+	# réglage), le stick droit fait défiler les options (M11).
+	FocusGuard.attach(self, func() -> Control: return options.first_control() if options.visible else resume_button)
 
 
 func _apply_theme() -> void:
@@ -107,6 +121,8 @@ func open() -> void:
 func close() -> void:
 	if not is_open:
 		return
+	if hard_dialog != null:
+		hard_dialog.cancel()
 	is_open = false
 	visible = false
 	Settings.save_settings()
@@ -115,6 +131,7 @@ func close() -> void:
 
 func show_options() -> void:
 	_menu_box.visible = false
+	options.refresh_game_section()
 	options.visible = true
 	_panel.custom_minimum_size.x = OPTIONS_WIDTH
 	options.focus_first.call_deferred()
@@ -130,6 +147,27 @@ func show_menu() -> void:
 	resume_button.grab_focus.call_deferred()
 
 
+## Récit → Dur (D-102) : confirmation, puis `GameState.set_difficulty(&"hard")`.
+func request_hard_mode() -> void:
+	if hard_dialog != null or not GameState.is_story_mode():
+		return
+	hard_dialog = ConfirmDialog.make(UiText.t("hard_eyebrow", "MODE DE JEU"),
+			UiText.t("hard_title", "Passer en mode Dur ?"),
+			UiText.t("hard_body", "Le chrono et les amendes s'appliquent dès maintenant, jusqu'à la fin de cette partie. Impossible de revenir en mode Récit."),
+			UiText.t("hard_accept", "PASSER EN DUR"))
+	hard_dialog.name = "HardModeDialog"
+	hard_dialog.confirmed.connect(func() -> void:
+		hard_dialog = null
+		GameState.set_difficulty(GameState.DIFFICULTY_HARD)
+		options.refresh_game_section()
+		options.focus_first.call_deferred())
+	hard_dialog.cancelled.connect(func() -> void:
+		hard_dialog = null
+		if options.hard_mode_button != null and options.hard_mode_button.is_visible_in_tree():
+			options.hard_mode_button.grab_focus.call_deferred())
+	add_child(hard_dialog)
+
+
 ## Premier appui : demande confirmation ; second : retour au titre.
 func _on_quit_pressed() -> void:
 	if not _quit_armed:
@@ -141,8 +179,9 @@ func _on_quit_pressed() -> void:
 	quit_to_title_requested.emit()
 
 
+## Échap / Ⓑ (`cancel`), F10 / Menu (`pause`, M11 : action de `project.godot`).
 static func is_pause_event(event: InputEvent) -> bool:
-	if event.is_action_pressed(&"cancel", false, true):
+	if event.is_action_pressed(&"cancel", false, true) or event.is_action_pressed(&"pause", false, true):
 		return true
 	var key: InputEventKey = event as InputEventKey
 	if key != null and key.pressed and not key.echo and key.keycode == KEY_F10:
@@ -160,7 +199,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if not is_open:
+	if not is_open or hard_dialog != null:
 		return
 	if is_pause_event(event):
 		if options.visible:

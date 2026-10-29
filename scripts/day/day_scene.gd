@@ -47,6 +47,13 @@
 ## affichée), `--rulebook-tab=ledger|summons` (+ `--inspect` : Répondant ↔
 ## Main courante, Convocation ↔ onglet ; la Main courante est préremplie des
 ## passagers en règle qui précèdent `--start-case`).
+## M11 (lot C) : mode Récit — « FERMER LE GUICHET » proposé quand
+## `DayController.can_close_booth()` (réévalué sur `quota_changed`,
+## `day_phase_changed`, `difficulty_changed`) ; tutoriel interactif du J1
+## (`TutorialOverlay`, demandé par l'écran titre via `TutorialOverlay.pending`)
+## posé à la fermeture du briefing, sous les écrans plein cadre. Captures :
+## `--story` (partie en Récit), `--close-booth` (bouton forcé, capture),
+## `--tutorial` (+ `--tutorial-step=N`).
 class_name DayScene
 extends Control
 
@@ -92,6 +99,9 @@ var _overlay: Control = null
 ## Acte II : lumières coupées (grève du J20) et voile noir correspondant.
 var lights_out_active: bool = false
 var blackout: ColorRect = null
+## M11 lot C : tutoriel du J1 (null hors tutoriel) et sa demande.
+var tutorial: TutorialOverlay = null
+var _tutorial_requested: bool = false
 
 
 func _ready() -> void:
@@ -105,7 +115,10 @@ func _ready() -> void:
 	data = DataCatalog.load_from()
 	if GameState.current_day <= 0 or _args.has("seed"):
 		var seed_text: String = _args.get("seed", "0")
-		Campaign.new_game(data, seed_text.to_int())
+		Campaign.new_game(data, seed_text.to_int(), SaveService.DEFAULT_SLOT,
+				GameState.DIFFICULTY_STORY if _args.has("story") else GameState.DIFFICULTY_HARD)
+	elif _args.has("story"):
+		GameState.difficulty = GameState.DIFFICULTY_STORY
 	if _args.has("day"):
 		var day_text: String = _args["day"]
 		GameState.current_day = day_text.to_int()
@@ -139,6 +152,15 @@ func _ready() -> void:
 	add_child(intercom)
 	EventBus.day_ended.connect(_on_day_ended)
 	EventBus.hall_announced.connect(_on_hall_announced)
+	var comparison: ComparisonUI = ui as ComparisonUI
+	if comparison != null:
+		comparison.close_booth_requested.connect(request_close_booth)
+		EventBus.quota_changed.connect(func(_u: int, _m: int) -> void: refresh_close_booth.call_deferred())
+		EventBus.day_phase_changed.connect(func(_p: DayPhase.Kind, _c: StringName) -> void: refresh_close_booth.call_deferred())
+		EventBus.difficulty_changed.connect(func(_d: StringName) -> void: refresh_close_booth.call_deferred())
+	# Tutoriel du J1 : demandé par le titre (nouvelle partie / reprise au J1), ou `--tutorial`.
+	_tutorial_requested = (TutorialOverlay.pending or _args.has("tutorial")) and GameState.current_day == 1 and comparison != null
+	TutorialOverlay.pending = false
 	if not day_controller.start_day(data, GameState.current_day, GameState.get_day_seed(), GameState.get_true_flags(),
 			Campaign.memory_for_day(data)):
 		return
@@ -226,6 +248,50 @@ func _on_briefing_closed() -> void:
 	screen = null
 	_set_ui_active(true)
 	day_controller.close_intro()
+	if _tutorial_requested:
+		_tutorial_requested = false
+		start_tutorial()
+
+
+## Pose le tutoriel interactif du J1 (sous les écrans plein cadre et la pause).
+func start_tutorial() -> TutorialOverlay:
+	if tutorial != null and is_instance_valid(tutorial):
+		return tutorial
+	tutorial = TutorialOverlay.new()
+	tutorial.ui = ui as ComparisonUI
+	tutorial.tree_exited.connect(func() -> void: tutorial = null)
+	add_child(tutorial)
+	move_child(tutorial, _overlay.get_index())
+	if _args.has("tutorial-step"):
+		tutorial.begin()
+		for i: int in clampi(_arg("tutorial-step").to_int() - 1, 0, TutorialOverlay.STEPS.size() - 1):
+			tutorial.skip_step()
+	return tutorial
+
+
+## Mode Récit : « FERMER LE GUICHET » proposé une fois le quota atteint.
+func refresh_close_booth() -> void:
+	var comparison: ComparisonUI = ui as ComparisonUI
+	if comparison == null or not is_inside_tree():
+		return
+	var available: bool = day_controller.can_close_booth() and not day_controller.booth_closed
+	if _args.has("close-booth") and GameState.is_story_mode() and day_controller.phase != DayPhase.Kind.SUMMARY:
+		available = true # capture : bouton forcé
+	comparison.set_close_booth_available(available)
+
+
+## « FERMER LE GUICHET » : bilan tout de suite entre deux passagers, sinon
+## après le passager en cours (`DayController.close_booth`).
+func request_close_booth() -> bool:
+	if not day_controller.close_booth():
+		return false
+	var comparison: ComparisonUI = ui as ComparisonUI
+	if comparison != null:
+		comparison.set_close_booth_available(false)
+		if day_controller.phase != DayPhase.Kind.SUMMARY:
+			comparison.toasts.push(ToastStack.Kind.INFO, UiText.t("close_booth_toast_title", "GUICHET FERMÉ"),
+					UiText.t("close_booth_toast", "Le bilan suit le passager en cours."))
+	return true
 
 
 func _on_day_ended(summary: DaySummary) -> void:
@@ -365,8 +431,8 @@ func show_final(summary: DaySummary) -> void:
 
 
 func show_end(ending: StringName) -> void:
-	# Toute fin de partie efface la sauvegarde (D-041) — idempotent.
-	SaveService.delete()
+	# Toute fin archive la partie et l'inscrit au profil (D-101) — idempotent.
+	GameState.end_campaign(ending)
 	var end: EndScreen = EndScreen.new()
 	end.name = "EndScreen"
 	end.epilogue = Campaign.epilogue(ending)

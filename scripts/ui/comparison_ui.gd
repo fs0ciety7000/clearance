@@ -41,6 +41,9 @@ signal departure_line_shown(line_key: String, text: String)
 ## M7 : réplique scénarisée hors interrogatoire sous-titrée (pot-de-vin, phrase
 ## de passe, réaction à l'enveloppe) — même chemin audio que le départ.
 signal passenger_line_shown(line_key: String, text: String)
+## M11 lot C — « FERMER LE GUICHET » (mode Récit, quota atteint) : la scène de
+## jour appelle `DayController.close_booth()`.
+signal close_booth_requested()
 
 # --- Zones (UI_FLOW §2.2, px @1080p) -------------------------------------------
 const BAND_TOP: float = 56.0
@@ -138,6 +141,10 @@ var tool_bar: ToolBar = null
 var passenger_panel: PassengerPanel = null
 var queue_panel: QueuePanel = null
 var subtitles: SubtitleBar = null
+## M11 : focus d'appoint et défilement à la manette.
+var focus_guard: FocusGuard = null
+## Facteur d'affichage imposé (> 0 : `emulate_screen_scale`, tests).
+var screen_scale_override: float = -1.0
 var toasts: ToastStack = null
 var links: LinkLayer = null
 ## M7 : bandeau discret du haut-parleur du Hall (haut de la bande B).
@@ -169,14 +176,56 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_read_settings()
-	theme = ThemeBuilder.build(_text_scale(), _min_text_px())
+	theme = ThemeBuilder.build(_text_scale(), _min_text_px(), _doc_min_px())
 	_applied_min_px = _min_text_px()
 	_build()
 	_connect_bus()
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	_wire_hover(self)
 	get_tree().node_added.connect(_on_node_added)
+	# M11 — manette : focus d'appoint (croix / stick gauche sans focus),
+	# défilement du Rulebook au stick droit, invites qui suivent le périphérique.
+	focus_guard = FocusGuard.attach(self, default_focus_control)
+	focus_guard.scroll_target = func() -> ScrollContainer: return rulebook.get_scroll() if not rulebook.collapsed else null
+	InputPrompts.ensure(get_tree()).device_changed.connect(_on_input_device_changed)
 	_refresh_all()
+
+
+## M11 — contrôle qui reçoit le focus quand une direction arrive sans focus :
+## question du menu ouvert, champ du document de devant en Mode Inspection,
+## « SUIVANT » quand le guichet attend, objet glissé à décider, sinon outil
+## Inspection (puis Interroger).
+func default_focus_control() -> Control:
+	if question_menu_open:
+		var question: Control = FocusGuard.first_focusable(passenger_panel)
+		if question != null:
+			return question
+	if inspection_active:
+		var field: Control = workbench.first_focusable_item()
+		if field != null:
+			return field
+	if phase == DayPhase.Kind.WAITING_CASE and tool_bar.next_button.visible and not tool_bar.next_button.disabled:
+		return tool_bar.next_button
+	for item_view: SlippedItemView in workbench.items:
+		if is_instance_valid(item_view) and item_view.is_visible_in_tree():
+			var button: Control = FocusGuard.first_focusable(item_view)
+			if button != null:
+				return button
+	if not tool_bar.inspect_button.disabled:
+		return tool_bar.inspect_button
+	return tool_bar.interrogate_button
+
+
+## Donne le focus au contrôle par défaut (outils de capture, tests).
+func focus_default() -> bool:
+	return focus_guard.focus_default()
+
+
+func _on_input_device_changed(_device: InputPrompts.Device) -> void:
+	if tool_bar != null:
+		tool_bar.refresh_prompts()
+		workbench.refresh_prompts()
+		_refresh_all()
 
 
 ## Boutons créés plus tard (menu de questions, onglets…) : même branchement.
@@ -217,11 +266,33 @@ func _text_scale() -> float:
 func _min_text_px() -> int:
 	if not is_inside_tree():
 		return 0
-	return ThemeBuilder.min_px_for(get_viewport().get_final_transform().get_scale().x)
+	return ThemeBuilder.min_px_for(screen_scale())
+
+
+## Facteur d'affichage de la fenêtre (`screen_scale_override` > 0 : tests et
+## mesures, ex. Steam Deck 0,667 émulé).
+func screen_scale() -> float:
+	if screen_scale_override > 0.0:
+		return screen_scale_override
+	return get_viewport().get_final_transform().get_scale().x if is_inside_tree() else 1.0
+
+
+## Plancher des valeurs de documents (D-085 rév., Steam Deck : 20 px logiques).
+func _doc_min_px() -> int:
+	return ThemeBuilder.doc_min_px_for(screen_scale()) if is_inside_tree() else 0
+
+
+## Émule un facteur d'affichage (tests, mesures Steam Deck) : thème et plan
+## de travail recalculés comme sur cet écran.
+func emulate_screen_scale(value: float) -> void:
+	screen_scale_override = value
+	workbench.screen_scale_override = value
+	_applied_min_px = _min_text_px()
+	_rebuild_theme(_text_scale())
 
 
 func _rebuild_theme(text_scale: float) -> void:
-	theme = ThemeBuilder.build(text_scale, _min_text_px())
+	theme = ThemeBuilder.build(text_scale, _min_text_px(), _doc_min_px())
 	if workbench != null:
 		workbench.text_scale = text_scale
 	if tool_bar != null:
@@ -288,6 +359,7 @@ func _build() -> void:
 	top_bar.offset_bottom = BAND_TOP
 	add_child(top_bar)
 	top_bar.quota_view.picked.connect(_on_item_picked)
+	top_bar.close_booth_pressed.connect(close_booth_requested.emit)
 
 	passenger_panel = PassengerPanel.new()
 	passenger_panel.name = "PassengerPanel"
@@ -426,6 +498,7 @@ func _connect_bus() -> void:
 	EventBus.scanner_suggested.connect(_on_scanner_suggested)
 	EventBus.ledger_changed.connect(_on_ledger_changed)
 	EventBus.summons_published.connect(_on_summons_published)
+	EventBus.difficulty_changed.connect(func(_d: StringName) -> void: set_story_mode(GameState.is_story_mode()))
 
 
 # ---------------------------------------------------------------------------
@@ -456,8 +529,25 @@ func _on_day_started(p_day: DayDef, p_rulebook: Array[RulebookEntry]) -> void:
 	top_bar.set_clock(remaining_sec, p_day.duration_sec)
 	top_bar.set_processed(processed)
 	top_bar.set_credits(GameState.credits)
+	top_bar.set_story_mode(GameState.is_story_mode())
 	tool_bar.set_detain_available(detain_available)
 	_refresh_all()
+
+
+## M11 lot C — mode Récit (D-102) : puce « RÉCIT », horloge sans alerte de fin.
+func set_story_mode(value: bool) -> void:
+	top_bar.set_story_mode(value)
+	if not value:
+		set_close_booth_available(false)
+
+
+## « FERMER LE GUICHET » proposé (Récit, quota atteint) : bouton de la barre du
+## haut, joignable à la manette depuis « SUIVANT » (croix haut).
+func set_close_booth_available(value: bool) -> void:
+	top_bar.set_close_available(value)
+	var shown: bool = top_bar.close_button.visible
+	tool_bar.next_button.focus_neighbor_top = tool_bar.next_button.get_path_to(top_bar.close_button) if shown else NodePath()
+	top_bar.close_button.focus_neighbor_bottom = top_bar.close_button.get_path_to(tool_bar.next_button) if shown else NodePath()
 
 
 func _on_day_phase_changed(p_phase: DayPhase.Kind, case_id: StringName) -> void:
@@ -732,7 +822,7 @@ func find_revocation(entry_id: StringName) -> RevokedEntry:
 
 ## Couleur d'une source du scanner (ACV-2 ambre, boîtier des Lucioles magenta).
 static func scanner_color(source: StringName) -> Color:
-	return DS.ACCENT_MAGENTA if source == SCANNER_LUCIOLE else DS.STATE_AMBER
+	return Palette.ACCENT_MAGENTA if source == SCANNER_LUCIOLE else Palette.STATE_AMBER
 
 
 func _on_scanner_suggested(case_id: StringName, p_links: Array[Discrepancy], source: StringName) -> void:
@@ -751,12 +841,12 @@ func _on_scanner_suggested(case_id: StringName, p_links: Array[Discrepancy], sou
 ## Trace les liens suggérés (pointillés) et la pastille de source du plan.
 func _show_suggestions() -> void:
 	if scanner_source == &"":
-		workbench.set_scanner("", DS.TEXT_SECONDARY, 0)
+		workbench.set_scanner("", Palette.TEXT_SECONDARY, 0)
 		return
 	var tint: Color = scanner_color(scanner_source)
 	for link: Discrepancy in suggestions:
 		if not selection.is_requested(link.a, link.b):
-			links.add_suggested(link.a, link.b, tint)
+			links.add_suggested(link.a, link.b, tint, scanner_source)
 	var label: String = UiText.t("wb_scanner_src_luciole", "BOÎTIER MAGENTA") if scanner_source == SCANNER_LUCIOLE \
 			else UiText.t("wb_scanner_src_acv", "ACV-2 · CONSORTIUM")
 	workbench.set_scanner(label, tint, pending_suggestion_count())
@@ -913,7 +1003,7 @@ static func final_figure_color(case: Case) -> Color:
 	if case != null:
 		for tag: StringName in FINAL_FIGURES:
 			if case.dialogue_tags.has(tag):
-				return DS.ACCENT_MAGENTA if FINAL_FIGURES[tag] == "mira" else DS.TEXT_SECONDARY
+				return Palette.ACCENT_MAGENTA if FINAL_FIGURES[tag] == "mira" else Palette.TEXT_SECONDARY
 	return Color.TRANSPARENT
 
 
@@ -1104,7 +1194,8 @@ func show_citation(result: CaseResult, reason_key: String = "") -> CitationTicke
 			number = i + 1
 			title = UiText.t(rulebook_entries[i].title_key, String(result.citation_rule_id))
 	var free: int = day.free_citations_per_day if day != null else 2
-	var ticket: CitationTicket = CitationTicket.make(result, day.day_number if day != null else 0, number, title, free)
+	var ticket: CitationTicket = CitationTicket.make(result, day.day_number if day != null else 0, number, title, free, false,
+			top_bar.story_mode)
 	toasts.push_node(ticket, 120)
 	ticket.play_print.call_deferred()
 	return ticket
@@ -1149,6 +1240,12 @@ func _on_settings_changed(key: StringName, value: Variant) -> void:
 			links.reduce_motion = reduce_motion
 		Settings.KEY_SUBTITLES:
 			subtitles.enabled = value
+		Settings.KEY_COLOR_VISION:
+			# Palette changée (DESIGN_SYSTEM §2.5) : thème et tracés (liens,
+			# champs, tampons) suivent ; les panneaux déjà construits gardent
+			# leur teinte jusqu'au prochain cas (formes et icônes inchangées).
+			_rebuild_theme(_text_scale())
+			propagate_call(&"queue_redraw")
 
 
 # ---------------------------------------------------------------------------
@@ -1184,6 +1281,12 @@ func set_inspection_active(enabled: bool) -> void:
 	EventBus.inspection_mode_changed.emit(enabled)
 	_refresh_face()
 	_refresh_all()
+	# Manette (M11) : le focus magnétique se pose sur un champ dès l'entrée
+	# en inspection (aucun curseur à viser) ; il quitte les champs à la sortie.
+	if enabled and InputPrompts.is_gamepad() and is_inside_tree():
+		var field: Control = workbench.first_focusable_item()
+		if field != null:
+			field.grab_focus.call_deferred()
 
 
 func toggle_inspection() -> void:
@@ -1372,7 +1475,7 @@ func _return_documents() -> void:
 	_clear_rulebook_marks()
 	set_inspection_active(false)
 	_refresh_suggestion_buttons()
-	workbench.set_scanner("", DS.TEXT_SECONDARY, 0)
+	workbench.set_scanner("", Palette.TEXT_SECONDARY, 0)
 	_refresh_all()
 
 
@@ -1398,7 +1501,7 @@ func _end_case(animated: bool) -> void:
 	_clear_rulebook_marks()
 	suggestions.clear()
 	scanner_source = &""
-	workbench.set_scanner("", DS.TEXT_SECONDARY, 0)
+	workbench.set_scanner("", Palette.TEXT_SECONDARY, 0)
 	_refresh_suggestion_buttons()
 	if inspection_active:
 		set_inspection_active(false)
@@ -1448,7 +1551,8 @@ func _refresh_all() -> void:
 func _refresh_speaker() -> void:
 	if current_case == null:
 		passenger_panel.set_speaker(UiText.t("pp_idle", "GUICHET OUVERT · FILE D'ATTENTE"), false)
-		passenger_panel.set_hint(UiText.t("pp_idle_hint", "Appuyez sur l'intercom (N) pour faire avancer le passager suivant."))
+		passenger_panel.set_hint(UiText.tf("pp_idle_hint_fmt", [InputPrompts.text_for(&"next_case")],
+				"Appuyez sur l'intercom (%s) pour faire avancer le passager suivant."))
 		return
 	if documents_shown or verdict_sent:
 		passenger_panel.set_speaker("%s · %s" % [UiText.passenger_number(current_case).get_slice(" ", 0), UiText.passenger_name(current_case)], true)
@@ -1478,7 +1582,8 @@ func _refresh_questions() -> void:
 			cards.append({"number": discrepancies.find(d) + 1, "text": InterrogationTopics.question_text(topic, current_case)})
 	passenger_panel.show_unlocked(cards.slice(maxi(cards.size() - 2, 0)))
 	if documents_shown and cards.is_empty() and _face_covered() and not asked_topics.has(InterrogationTopics.REMOVE_VISOR):
-		passenger_panel.set_hint(UiText.t("pp_visor_hint", "Visage masqué : demandez le retrait de la visière (Q)."))
+		passenger_panel.set_hint(UiText.tf("pp_visor_hint_fmt", [InputPrompts.text_for(&"interrogate")],
+				"Visage masqué : demandez le retrait de la visière (%s)."))
 
 
 func _status_text() -> String:
@@ -1487,7 +1592,7 @@ func _status_text() -> String:
 	if verdict_sent:
 		return UiText.t("st_verdict", "Verdict transmis — documents rendus par la fente.")
 	if not documents_shown:
-		return _bb(UiText.t("st_arriving_title", "◆ Passager en approche"), DS.STATE_AMBER) \
+		return _bb(UiText.t("st_arriving_title", "◆ Passager en approche"), Palette.STATE_AMBER) \
 				+ UiText.t("st_arriving", " — lisez le Rulebook en attendant.")
 	var count: int = discrepancies.size()
 	if count > 0:
@@ -1501,18 +1606,23 @@ func _status_text() -> String:
 		if last.reason_key == Discrepancy.REASON_SYMBOL_MATCH:
 			var title: String = UiText.t("st_discordance_one_title", "⚠ 1 discordance") if count == 1 \
 					else UiText.tf("st_discordances_title", [count], "⚠ %d discordances")
-			return _bb(title, DS.ACCENT_MAGENTA) + UiText.t("st_symbol_report",
+			return _bb(title, Palette.ACCENT_MAGENTA) + UiText.t("st_symbol_report",
 					" · marque luciole relevée : DÉTENTION = signalement documenté.")
 		if count == 1:
-			return _bb(UiText.t("st_discordance_one_title", "⚠ 1 discordance"), DS.ACCENT_MAGENTA) \
+			return _bb(UiText.t("st_discordance_one_title", "⚠ 1 discordance"), Palette.ACCENT_MAGENTA) \
 					+ UiText.tf("st_discordance_one", [rule_part], " documentée%s · question débloquée.")
-		return _bb(UiText.tf("st_discordances_title", [count], "⚠ %d discordances"), DS.ACCENT_MAGENTA) \
+		return _bb(UiText.tf("st_discordances_title", [count], "⚠ %d discordances"), Palette.ACCENT_MAGENTA) \
 				+ UiText.tf("st_discordances", [rule_part], " documentées%s · questions débloquées.")
 	if inspection_active:
 		if selection.has_a():
-			return UiText.t("st_pick_b", "Champ A sélectionné — choisissez le champ B (document, règle, date du jour ou visage). Échap : annuler.")
+			return UiText.tf("st_pick_b_fmt", [InputPrompts.text_for(&"ui_cancel")],
+					"Champ A sélectionné — choisissez le champ B (document, règle, date du jour ou visage). %s : annuler.")
+		if InputPrompts.is_gamepad():
+			return UiText.tf("st_pick_a_pad", [InputPrompts.text_for(&"ui_accept")],
+					"Mode Inspection — croix : de champ en champ · %s : choisir le premier champ.")
 		return UiText.t("st_pick_a", "Mode Inspection — cliquez un premier champ à comparer.")
-	return UiText.t("st_inspect", "Documents posés — Espace : Mode Inspection · maintenez V / X pour tamponner.")
+	return UiText.tf("st_inspect_fmt", [InputPrompts.text_for(&"inspect_toggle"), InputPrompts.text_for(&"stamp_approve"),
+			InputPrompts.text_for(&"stamp_deny")], "Documents posés — %s : Mode Inspection · maintenez %s / %s pour tamponner.")
 
 
 func _describe_concordant(result: Discrepancy) -> String:
@@ -1820,6 +1930,8 @@ func describe(result: Discrepancy) -> String:
 
 func _process(delta: float) -> void:
 	_next_cooldown = maxf(_next_cooldown - delta, 0.0)
+	# Ⓐ de SUIVANT atténué quand Ⓐ presserait un autre contrôle (après QA-041).
+	tool_bar.set_next_prompt_dimmed(phase == DayPhase.Kind.WAITING_CASE and focus_takes_accept())
 	_place_suggestion_buttons()
 	if documents_shown and not verdict_sent:
 		elapsed_sec += delta
@@ -1838,15 +1950,31 @@ func _input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"interrogate", false, true):
 		toggle_question_menu()
 		_handled()
-	elif event.is_action_pressed(&"next_case", false, true) and phase == DayPhase.Kind.WAITING_CASE:
+	elif event.is_action_pressed(&"next_case", false, true) and phase == DayPhase.Kind.WAITING_CASE \
+			and not (event.is_action_pressed(&"ui_accept", false, true) and focus_takes_accept()):
+		# QA-041 : Ⓐ est aussi `ui_accept` ; il n'appelle le passager que si
+		# SUIVANT a le focus ou si aucun autre contrôle actionnable ne l'a
+		# (sinon l'événement continue jusqu'au bouton focalisé). N appelle toujours.
 		request_next_case()
 		_handled()
 	elif event.is_action_pressed(&"rulebook_toggle", false, true) and not inspection_active:
 		rulebook.set_collapsed(not rulebook.collapsed)
 		_handled()
-	elif event.is_action_pressed(&"inspect_face", false, true) and _inspection_allowed():
+	elif event.is_action_pressed(&"inspect_face", false, true) and _inspection_allowed() \
+			and (inspection_active or not (event is InputEventJoypadButton)):
+		# Manette : le même bouton (stick droit) vaut « Visage » en inspection,
+		# « Loupe » hors inspection (`doc_zoom`, M11).
 		_on_inspection_target_picked(FieldRef.passenger_face())
 		_handled()
+	elif event.is_action_pressed(&"doc_zoom", false, true) and documents_shown:
+		if workbench.zoom_front():
+			_handled()
+	elif event.is_action_pressed(&"doc_prev", false, true) and documents_shown:
+		if workbench.cycle_front(-1):
+			_handled()
+	elif event.is_action_pressed(&"doc_next", false, true) and documents_shown:
+		if workbench.cycle_front(1):
+			_handled()
 	elif event.is_action_pressed(&"rulebook_prev", false, true):
 		rulebook.cycle_tab(-1)
 		_handled()
@@ -1857,6 +1985,29 @@ func _input(event: InputEvent) -> void:
 		_handle_stamp_input(event)
 		_handle_question_keys(event)
 		_handle_document_keys(event)
+
+
+## QA-041 — vrai si le contrôle qui a le focus sait quoi faire de `ui_accept`
+## (Ⓐ / Entrée) : bouton actif autre que SUIVANT (FERMER LE GUICHET, boutons du
+## tutoriel, onglets du Rulebook…), tampon déverrouillé, champ comparable en
+## Mode Inspection. Le focus peut être hors du guichet (carte du tutoriel).
+func focus_takes_accept() -> bool:
+	if not is_inside_tree():
+		return false
+	var owner_control: Control = get_viewport().gui_get_focus_owner()
+	if owner_control == null or owner_control == tool_bar.next_button or not owner_control.is_visible_in_tree() \
+			or owner_control.focus_mode == Control.FOCUS_NONE:
+		return false
+	var button: BaseButton = owner_control as BaseButton
+	if button != null:
+		return not button.disabled
+	var stamp: StampButton = owner_control as StampButton
+	if stamp != null:
+		return not stamp.locked
+	var item: InspectableItem = owner_control as InspectableItem
+	if item != null:
+		return item.inspection_active and item.comparable
+	return false
 
 
 func _handle_stamp_input(event: InputEvent) -> void:

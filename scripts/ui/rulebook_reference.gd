@@ -180,7 +180,7 @@ static func _vessels() -> Control:
 		cap.name = "Vessel_%s" % vessel.validate_node_name()
 		flow.add_child(cap)
 	var removed: Label = ScreenBase.wrapped(UiText.t("rb_vessels_removed", "Retirés : SILLAGE (démantelé le 20.03.2187)."),
-			&"BodySmall", DS.STATE_AMBER)
+			&"BodySmall", Palette.STATE_AMBER)
 	removed.name = "RemovedNote"
 	box.add_child(removed)
 	return box
@@ -191,7 +191,7 @@ static func _intro(text: String) -> Label:
 	return intro
 
 
-static func _row(lead: Control, title: String, text: String, side: Control = null, accent: Color = DS.LINE_SUBTLE) -> PanelContainer:
+static func _row(lead: Control, title: String, text: String, side: Control = null, accent: Color = Palette.LINE_SUBTLE) -> PanelContainer:
 	var card: PanelContainer = PanelContainer.new()
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.BG_ELEVATED, accent))
@@ -233,7 +233,7 @@ static func _origins() -> Control:
 	# §4.10 (D-068) : naissance « 00.00.AAAA » des Dérivants, comparée par
 	# année (R07). Sous l'intro : lisible sans défiler.
 	var drv_note: Label = ScreenBase.wrapped(UiText.t("rb_origins_drv_birth",
-			"DRV · Dérivants : naissance « 00.00.AAAA » tolérée (année seule)."), &"BodySmall", DS.STATE_AMBER)
+			"DRV · Dérivants : naissance « 00.00.AAAA » tolérée (année seule)."), &"BodySmall", Palette.STATE_AMBER)
 	drv_note.name = "DrvBirthNote"
 	box.add_child(drv_note)
 	var factions: Array[FactionDef] = []
@@ -258,19 +258,19 @@ static func _implants(firmware: bool = false) -> Control:
 	if firmware:
 		# R27 (Acte II) : ligne firmware, lisible sans défiler.
 		var note: Label = ScreenBase.wrapped(UiText.t("rb_implants_firmware", "NX- : firmware de moins de 90 jours."),
-				&"BodySmall", DS.STATE_AMBER)
+				&"BodySmall", Palette.STATE_AMBER)
 		note.name = "FirmwareNote"
 		box.add_child(note)
 	for family: Array in IMPLANT_FAMILIES:
 		var code: String = family[0]
 		var legal: bool = family[1]
 		var key: String = code.to_lower()
-		var color: Color = DS.ACCENT_CYAN if legal else DS.STATE_RED
+		var color: Color = DS.ACCENT_CYAN if legal else Palette.STATE_RED
 		var status: PanelContainer = ScreenBase.chip(
 				UiText.t("rb_implant_%s_status" % key, "LÉGAL SI DÉCLARÉ" if legal else "INTERDIT SANS DÉROGATION"),
-				UiIcon.Kind.CHECK if legal else UiIcon.Kind.DENIED, DS.TEXT_SECONDARY if legal else DS.STATE_RED)
+				UiIcon.Kind.CHECK if legal else UiIcon.Kind.DENIED, Palette.TEXT_SECONDARY if legal else Palette.STATE_RED)
 		box.add_child(_row(_code(code + "-", color), UiText.t("rb_implant_%s_title" % key, code),
-				UiText.t("rb_implant_%s_text" % key, ""), status, color if not legal else DS.LINE_SUBTLE))
+				UiText.t("rb_implant_%s_text" % key, ""), status, color if not legal else Palette.LINE_SUBTLE))
 	return box
 
 
