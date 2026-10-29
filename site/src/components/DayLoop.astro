@@ -1,0 +1,95 @@
+---
+import { Picture } from 'astro:assets';
+import { shot } from '../lib/shots';
+import { t, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const d = t(Astro.props.lang);
+const keys = ['m5_briefing', 'm6_day3_autoplay', 'm7_detain_escort', 'm5_summary'];
+const pic = { formats: ['avif', 'webp'] as ('avif' | 'webp')[], widths: [640, 960, 1280, 1600], loading: 'lazy' as const, decoding: 'async' as const };
+---
+<section class="section day gridbg" aria-labelledby="day-title">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="kicker">{d.day.label}</p>
+      <h2 class="h2" id="day-title" data-reveal>{d.day.title}</h2>
+      <p class="lede" data-reveal style="--d:.1s">{d.day.intro}</p>
+    </header>
+
+    <div class="grid">
+      <ol class="steps">
+        {d.day.steps.map((s, i) => (
+          <li class="step" data-step={i}>
+            <div class="step-head">
+              <span class="idx mono">0{i + 1}</span>
+              <span class="time mono">{s.time}</span>
+            </div>
+            <h3>{s.title}</h3>
+            <p>{s.text}</p>
+            <div class="inline-shot frame">
+              <Picture fallbackFormat="webp" src={shot(keys[i])} alt={s.alt} sizes="(max-width: 900px) 92vw, 1px" {...pic} />
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div class="stage" aria-hidden="true">
+        <div class="screen frame">
+          {keys.map((k, i) => (
+            <div class={i === 0 ? 'layer on' : 'layer'} data-layer={i}>
+              <Picture fallbackFormat="webp" src={shot(k)} alt="" sizes="(max-width: 900px) 1px, 58vw" {...pic} />
+            </div>
+          ))}
+          <div class="screen-bar mono"><span data-stage-label>01 / 04</span><span>HALCYON GATE — GUICHET 04</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .day{border-top:1px solid var(--line)}
+  .grid{display:grid;grid-template-columns:minmax(280px,.8fr) 1.45fr;gap:clamp(32px,5vw,88px);align-items:start}
+  .steps{display:grid}
+  .step{min-height:62vh;padding:40px 0;border-top:1px solid var(--line)}
+  .step h3,.step .time{transition:color var(--dur-slow) var(--ease)}
+  .step:not(.on) h3{color:var(--tx2)}
+  .step:not(.on) .time{color:var(--tx2)}
+  .step:first-child{border-top:0;padding-top:0}
+  .step-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+  .idx{font-size:12px;color:var(--tx2);letter-spacing:.1em}
+  .time{font-size:13px;color:var(--cyan);letter-spacing:.06em}
+  .step.on .idx{color:var(--cyan)}
+  h3{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,2.8vw,40px);line-height:1;text-transform:uppercase;margin-bottom:16px}
+  .step p{color:var(--tx2);font-size:16.5px;line-height:1.6;max-width:36ch}
+  .inline-shot{display:none}
+  .stage{position:sticky;top:calc(var(--nav-h) + 9vh)}
+  .screen{position:relative;aspect-ratio:16/9;background:var(--panel);border:1px solid var(--cyan-40);box-shadow:0 0 0 1px #07080C,0 40px 120px -40px #00E5FF33}
+  .layer{position:absolute;inset:0;opacity:0;transition:opacity .6s var(--ease)}
+  .layer.on{opacity:1}
+  .layer :global(img){width:100%;height:100%;object-fit:cover}
+  .screen-bar{position:absolute;left:0;right:0;bottom:-34px;display:flex;justify-content:space-between;font-size:11px;letter-spacing:.16em;color:var(--tx2)}
+  @media (max-width:900px){
+    .grid{grid-template-columns:1fr}
+    .stage{display:none}
+    .step{min-height:0;padding:36px 0}
+    .step:not(.on) h3{color:var(--tx)}
+    .step:not(.on) .time{color:var(--cyan)}
+    .inline-shot{display:block;margin-top:24px;border:1px solid var(--cyan-40)}
+    .inline-shot :global(img){width:100%}
+  }
+</style>
+
+<script>
+  const steps = [...document.querySelectorAll<HTMLElement>('[data-step]')];
+  const layers = [...document.querySelectorAll<HTMLElement>('[data-layer]')];
+  const label = document.querySelector<HTMLElement>('[data-stage-label]');
+  const activate = (i: number) => {
+    steps.forEach((s, j) => s.classList.toggle('on', j === i));
+    layers.forEach((l, j) => l.classList.toggle('on', j === i));
+    if (label) label.textContent = `0${i + 1} / 0${steps.length}`;
+  };
+  activate(0);
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) activate(Number((e.target as HTMLElement).dataset.step)); });
+  }, { rootMargin: '-45% 0px -45% 0px' });
+  steps.forEach((s) => io.observe(s));
+</script>

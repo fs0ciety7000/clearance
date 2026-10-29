@@ -1,0 +1,71 @@
+---
+import { getImage } from 'astro:assets';
+import Icon from './Icon.astro';
+import { shot } from '../lib/shots';
+import logoPng from '../assets/brand/icon_1024.png?url';
+import { t, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const all = t(Astro.props.lang);
+const d = all.press;
+const pressKeys = ['m9_booth_j1', 'm6_day3_autoplay', 'm7_envelope', 'm8_symbol_report', 'm7_implants', 'm9_booth_j1_deck'];
+const pngs = await Promise.all(pressKeys.map((k) => getImage({ src: shot(k), format: 'png', width: shot(k).width })));
+const files: Record<string, string> = { 'logo-svg': '/press/clearance-icon.svg', 'logo-png': logoPng };
+const names: Record<string, string> = { 'logo-svg': 'clearance-icon.svg', 'logo-png': 'clearance-icon-1024.png' };
+---
+<section class="section press" id="presse" aria-labelledby="press-title">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="kicker">{d.label}</p>
+      <h2 class="h2" id="press-title" data-reveal>{d.title}</h2>
+      <p class="lede">{d.intro}</p>
+    </header>
+    <div class="cols">
+      <div data-reveal>
+        <h3>{d.factsTitle}</h3>
+        <dl class="facts">{d.facts.map(([k, v]) => <div><dt class="label">{k}</dt><dd>{v}</dd></div>)}</dl>
+        <h3>{d.assetsTitle}</h3>
+        <ul class="assets">
+          {d.assets.map((a) => <li><a href={files[a.key]} download={names[a.key]}><Icon name="file" size={18} /><span>{a.label}</span><small class="mono">{a.meta}</small><Icon name="download" size={16} /></a></li>)}
+          {pressKeys.map((k, i) => <li><a href={pngs[i].src} download={`clearance-${k}.png`}><Icon name="file" size={18} /><span>{d.shotsLabel} · {all.gallery.items[k]}</span><small class="mono">{pngs[i].attributes.width} × {pngs[i].attributes.height}</small><Icon name="download" size={16} /></a></li>)}
+        </ul>
+      </div>
+      <div class="texts" data-reveal style="--d:.1s">
+        {[{ t: d.shortTitle, v: d.short, id: 'pr-short' }, { t: d.longTitle, v: d.long, id: 'pr-long' }].map((x) => (
+          <div class="blurb">
+            <div class="bh"><h3>{x.t}</h3><button type="button" class="copy" data-copy={x.id} data-done={d.copied}><Icon name="copy" size={16} /><span>{d.copy}</span></button></div>
+            <p id={x.id}>{x.v}</p>
+          </div>
+        ))}
+        <p class="contact">{d.contact}</p>
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+  .press{border-top:1px solid var(--line)}
+  .cols{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(32px,6vw,96px);align-items:start}
+  h3{font-family:var(--f-display);font-weight:700;font-size:22px;text-transform:uppercase;margin-bottom:16px}
+  .facts>div{display:grid;grid-template-columns:160px 1fr;gap:16px;padding:12px 0;border-top:1px solid var(--line)}
+  .facts dt{font-size:11px;padding-top:3px}
+  .facts dd{font-size:15px}
+  .blurb{background:var(--panel);border:1px solid var(--line);padding:22px;margin-bottom:16px}
+  .bh{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .bh h3{margin:0;font-size:16px;color:var(--tx2)}
+  .blurb p{margin-top:12px;color:var(--tx);font-size:15.5px;line-height:1.65}
+  .copy{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);border:1px solid var(--cyan-40)}
+  .copy:hover{background:var(--cyan-12)}
+  .cols>div>h3+.assets,.facts+h3{margin-top:40px}
+  .assets{border-top:1px solid var(--line)}
+  .assets a{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);font-size:14.5px;transition:background var(--dur-fast),color var(--dur-fast);min-height:48px}
+  .assets a:hover{background:var(--cyan-08);color:var(--cyan)}
+  .assets small{font-size:11px;color:var(--tx2)}
+  .assets :global(svg){color:var(--tx2)}
+  .contact{margin-top:20px;font-size:14px;color:var(--tx2)}
+  @media (max-width:900px){.cols{grid-template-columns:1fr}.facts>div{grid-template-columns:1fr;gap:4px}.assets a{grid-template-columns:auto 1fr auto}.assets small{display:none}}
+</style>
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
+    const txt = document.getElementById(b.dataset.copy!)?.textContent ?? '';
+    try { await navigator.clipboard.writeText(txt); const s = b.querySelector('span')!; const o = s.textContent; s.textContent = b.dataset.done!; setTimeout(() => (s.textContent = o), 1600); } catch { /* presse-papiers indisponible */ }
+  }));
+</script>

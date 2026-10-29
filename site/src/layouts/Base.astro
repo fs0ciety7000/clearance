@@ -1,0 +1,121 @@
+---
+import '../styles/global.css';
+import chakra700 from '@fontsource/chakra-petch/files/chakra-petch-latin-700-normal.woff2?url';
+import chakra600 from '@fontsource/chakra-petch/files/chakra-petch-latin-600-normal.woff2?url';
+import inter from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import mono from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url';
+import type { Lang } from '../lib/i18n';
+import { t } from '../lib/i18n';
+import { VERSION } from '../config';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  description: string;
+  path: string; // chemin canonique de la page (ex. "/" ou "/en/")
+  alternates?: { fr: string; en: string };
+  noindex?: boolean;
+  preloadImage?: { href: string; srcset?: string; sizes?: string; type?: string };
+}
+const { lang, title, description, path, alternates, noindex = false, preloadImage } = Astro.props;
+const d = t(lang);
+const site = Astro.site ?? new URL('https://clearance.cardormedia.com');
+const canonical = new URL(path, site).href;
+const og = new URL(lang === 'fr' ? '/og-fr.jpg' : '/og-en.jpg', site).href;
+const ld = {
+  '@context': 'https://schema.org',
+  '@type': 'VideoGame',
+  name: 'CLEARANCE',
+  description,
+  url: canonical,
+  image: og,
+  inLanguage: 'fr',
+  genre: ['Simulation', 'Narrative', 'Puzzle'],
+  gamePlatform: ['Windows', 'macOS', 'Linux', 'Steam Deck'],
+  operatingSystem: 'Windows, macOS, Linux, SteamOS',
+  applicationCategory: 'Game',
+  softwareVersion: VERSION,
+  playMode: 'SinglePlayer',
+  screenshot: og,
+  author: { '@type': 'Organization', name: 'Studio CLEARANCE' },
+  publisher: { '@type': 'Organization', name: 'Studio CLEARANCE' },
+  // `offers` volontairement absent tant qu'aucune version n'est publiée au lien de téléchargement.
+};
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#07080C" />
+    <meta name="color-scheme" content="dark" />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    {alternates && (
+      <>
+        <link rel="alternate" hreflang="fr" href={new URL(alternates.fr, site).href} />
+        <link rel="alternate" hreflang="en" href={new URL(alternates.en, site).href} />
+        <link rel="alternate" hreflang="x-default" href={new URL(alternates.fr, site).href} />
+      </>
+    )}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CLEARANCE" />
+    <meta property="og:locale" content={d.locale} />
+    <meta property="og:locale:alternate" content={lang === 'fr' ? 'en_US' : 'fr_FR'} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={og} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={d.meta.ogAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={og} />
+    <meta name="twitter:image:alt" content={d.meta.ogAlt} />
+
+    <link rel="preload" href={chakra700} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={inter} as="font" type="font/woff2" crossorigin />
+    {preloadImage && (
+      <link rel="preload" as="image" href={preloadImage.href} imagesrcset={preloadImage.srcset} imagesizes={preloadImage.sizes} type={preloadImage.type} fetchpriority="high" />
+    )}
+    <style is:global set:html={`
+      @font-face{font-family:"Chakra Petch";font-style:normal;font-weight:700;font-display:swap;src:url(${chakra700}) format("woff2")}
+      @font-face{font-family:"Chakra Petch";font-style:normal;font-weight:600;font-display:swap;src:url(${chakra600}) format("woff2")}
+      @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(${inter}) format("woff2")}
+      @font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:100 800;font-display:swap;src:url(${mono}) format("woff2")}
+    `} />
+    <script is:inline>document.documentElement.classList.add('js')</script>
+    <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+  </head>
+  <body>
+    <a class="skip" href="#main">{d.skip}</a>
+    <slot />
+    <div class="grain" aria-hidden="true"></div>
+    <script>
+      // Entrées fail-safe : libère les transforms en fin d'animation, force l'état final si rien ne joue.
+      const els = document.querySelectorAll<HTMLElement>('.appear');
+      els.forEach((el) => el.addEventListener('animationend', (e) => { if (e.target === el) el.classList.add('is-in'); }));
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const running = [...els].some((el) => (el.getAnimations ? el.getAnimations() : []).some((a) => a.playState === 'running' || a.playState === 'finished'));
+        if (!running) els.forEach((el) => el.classList.add('is-in'));
+      }));
+      // Révélations au scroll.
+      const io = new IntersectionObserver((entries) => entries.forEach((en) => {
+        if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); }
+      }), { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      document.querySelectorAll('[data-stagger]').forEach((g) => {
+        const step = Number((g as HTMLElement).dataset.stagger), base = Number((g as HTMLElement).dataset.staggerBase || 0);
+        g.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el, i) => el.style.setProperty('--d', `${base + i * step}ms`));
+      });
+      document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+    </script>
+  </body>
+</html>

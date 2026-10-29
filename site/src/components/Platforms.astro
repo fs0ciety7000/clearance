@@ -1,0 +1,67 @@
+---
+import { Picture } from 'astro:assets';
+import Icon from './Icon.astro';
+import { shot } from '../lib/shots';
+import { t, type Lang } from '../lib/i18n';
+import { DOWNLOAD_URL } from '../config';
+interface Props { lang: Lang }
+const d = t(Astro.props.lang).platforms;
+const icon = { windows: 'windows', macos: 'apple', linux: 'linux', deck: 'deck' } as const;
+---
+<section class="section plat gridbg" aria-labelledby="plat-title">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="kicker">{d.label}</p>
+      <h2 class="h2" id="plat-title" data-reveal>{d.title}</h2>
+    </header>
+    <ul class="tiles" data-stagger="90">
+      {d.items.map((p) => (
+        <li data-reveal><Icon name={icon[p.id as keyof typeof icon]} size={30} /><b>{p.name}</b><span>{p.note}</span></li>
+      ))}
+    </ul>
+    <div class="split">
+      <div class="left" data-reveal style="--y:40px">
+      <div class="deck frame">
+        <Picture fallbackFormat="webp" src={shot('m9_booth_j1_deck')} alt={d.deckAlt} formats={['avif', 'webp']} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 50vw" loading="lazy" decoding="async" />
+      </div>
+          <ul class="os">
+            {d.notes.map((n) => <li><Icon name="tri" size={16} /><span><b>{n.os}</b> — {n.text}</span></li>)}
+          </ul>
+      </div>
+      <div class="specs" data-reveal style="--d:.1s">
+        <h3>{d.specsTitle}</h3>
+        <dl>
+          {d.specs.map(([k, v]) => <div><dt class="label">{k}</dt><dd>{v}</dd></div>)}
+        </dl>
+        <p class="note">{d.specsNote}</p>
+        <div class="dl">
+          <a class="btn btn-primary" href={DOWNLOAD_URL} rel="noopener"><Icon name="download" size={18} />{d.download}</a>
+          <span class="label">{d.downloadNote}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+  .plat{border-top:1px solid var(--line)}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:clamp(48px,6vw,80px)}
+  .tiles li{display:grid;gap:6px;padding:24px;background:var(--panel);border:1px solid var(--line)}
+  .tiles :global(svg){color:var(--cyan);margin-bottom:18px}
+  .tiles b{font-family:var(--f-display);font-weight:700;font-size:24px;text-transform:uppercase}
+  .tiles span{font-size:14px;color:var(--tx2)}
+  .split{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(32px,5vw,80px);align-items:start}
+  .deck{border:1px solid var(--cyan-40);background:var(--panel)}
+  .deck :global(img){width:100%}
+  h3{font-family:var(--f-display);font-weight:700;font-size:26px;text-transform:uppercase;margin-bottom:20px}
+  dl>div{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:12px 0;border-top:1px solid var(--line)}
+  dt{font-size:11px;padding-top:3px}
+  dd{font-size:15px;line-height:1.5}
+  .note{font-size:13.5px;color:var(--tx2);margin:16px 0 20px;line-height:1.55}
+  .os{display:grid;gap:10px;margin-top:28px}
+  .os li{display:flex;gap:10px;font-size:14px;color:var(--tx2);line-height:1.5}
+  .os :global(svg){color:var(--amber);flex:none;margin-top:2px}
+  .os b{color:var(--tx);font-weight:600}
+  .dl{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center}
+  .dl .label{font-size:11px}
+  @media (max-width:900px){.tiles{grid-template-columns:1fr 1fr}.split{grid-template-columns:1fr}dl>div{grid-template-columns:1fr;gap:4px}}
+</style>

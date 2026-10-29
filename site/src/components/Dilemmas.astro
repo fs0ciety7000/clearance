@@ -1,0 +1,58 @@
+---
+import { Picture } from 'astro:assets';
+import { shot } from '../lib/shots';
+import { t, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const d = t(Astro.props.lang).dilemmas;
+const keys = ['m7_envelope', 'm8_symbol_report', 'm5_evening'];
+---
+<section class="section dil" aria-labelledby="dil-title">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="kicker">{d.label}</p>
+      <h2 class="h2" id="dil-title" data-reveal>{d.title}</h2>
+    </header>
+    <div class="cards" data-stagger="120">
+      {d.cards.map((c, i) => (
+        <article class={`card ${c.tone}`} data-reveal>
+          <div class="shot">
+            <Picture fallbackFormat="webp" src={shot(keys[i])} alt={c.alt} formats={['avif', 'webp']} widths={[480, 800, 1200]} sizes="(max-width: 900px) 92vw, 30vw" loading="lazy" decoding="async" />
+          </div>
+          <div class="body">
+            <p class="k mono">{c.kicker}</p>
+            <h3>{c.title}</h3>
+            <p class="t">{c.text}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+    <div class="endings" data-reveal>
+      <p class="big">{d.endings}</p>
+      <p class="lede">{d.endingsText}</p>
+    </div>
+  </div>
+</section>
+<style>
+  .dil{border-top:1px solid var(--line)}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{--tone:var(--yellow);position:relative;background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;transition:border-color var(--dur-base)}
+  .card::before{content:"";position:absolute;left:-1px;top:-1px;width:56px;height:3px;background:var(--tone);z-index:2}
+  .card.magenta{--tone:var(--magenta)}
+  .card.amber{--tone:var(--amber)}
+  .card.cyan{--tone:var(--cyan)}
+  .card:hover{border-color:color-mix(in srgb,var(--tone) 55%,transparent)}
+  .shot{aspect-ratio:4/3;overflow:hidden;border-bottom:1px solid var(--line);background:var(--void)}
+  .shot :global(picture){display:block;width:100%;height:100%}
+  .shot :global(img){width:100%;height:100%;object-fit:cover;transform-origin:var(--fx) var(--fy);transform:scale(var(--z));transition:transform .7s var(--ease)}
+  .card{--fx:66%;--fy:78%;--z:2.1}
+  .card:nth-child(2){--fx:92%;--fy:84%;--z:2.2}
+  .card:nth-child(3){--fx:82%;--fy:42%;--z:1.9}
+  .card:hover .shot :global(img){transform:scale(calc(var(--z) * 1.04))}
+  .body{padding:clamp(22px,2.2vw,30px)}
+  .k{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--tone);margin-bottom:14px}
+  h3{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,2vw,28px);line-height:1.05;text-transform:uppercase;margin-bottom:12px}
+  .t{color:var(--tx2);font-size:15.5px;line-height:1.6}
+  .endings{display:grid;grid-template-columns:auto 1fr;gap:24px 56px;align-items:center;margin-top:clamp(56px,7vw,96px);padding-top:clamp(32px,4vw,48px);border-top:1px solid var(--line)}
+  .big{font-family:var(--f-display);font-weight:700;font-size:clamp(64px,11vw,160px);line-height:.85;letter-spacing:-.02em;text-transform:uppercase;color:var(--tx)}
+  @media (max-width:900px){.cards{grid-template-columns:1fr}.endings{grid-template-columns:1fr}}
+</style>

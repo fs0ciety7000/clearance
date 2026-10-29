@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from './Nav.astro';
+import Hero from './Hero.astro';
+import Ticker from './Ticker.astro';
+import Manifesto from './Manifesto.astro';
+import DayLoop from './DayLoop.astro';
+import Inspection from './Inspection.astro';
+import Passengers from './Passengers.astro';
+import Dilemmas from './Dilemmas.astro';
+import Gallery from './Gallery.astro';
+import Platforms from './Platforms.astro';
+import Press from './Press.astro';
+import Credits from './Credits.astro';
+import Final from './Final.astro';
+import { t, homePath, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const d = t(lang);
+---
+<Base lang={lang} title={d.meta.title} description={d.meta.description} path={homePath(lang)} alternates={{ fr: '/', en: '/en/' }}>
+  <Nav lang={lang} />
+  <main id="main" tabindex="-1">
+    <Hero lang={lang} />
+    <Ticker lang={lang} />
+    <Manifesto lang={lang} />
+    <DayLoop lang={lang} />
+    <Inspection lang={lang} />
+    <Passengers lang={lang} />
+    <Dilemmas lang={lang} />
+    <Gallery lang={lang} />
+    <Platforms lang={lang} />
+    <Press lang={lang} />
+    <Credits lang={lang} />
+    <Final lang={lang} />
+  </main>
+</Base>
