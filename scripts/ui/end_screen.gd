@@ -13,6 +13,11 @@
 ## lue au Hall) et F9 « LES VITRES ÉTEINTES » (gris : les guichets éteints),
 ## épilogues `end2_*`, puce « ACTE II », traces des choix J11–J20, tableau des
 ## 20 shifts défilant.
+## M9 (Acte III) : dix fins (F10 « LE PONT » en vert des admissions, surtitre
+## `end_eyebrow_f10_pont`), puce « ACTE III », variantes de l'Acte III (charte,
+## seconde vanne, Brûlants ; dérive, Tycho), figure finale du J30 (Dora ou
+## Mira, D-088), traces des choix J20–J30 (valeurs `%d` : familles de Tycho),
+## tableau des 30 shifts défilant.
 class_name EndScreen
 extends ScreenBase
 
@@ -32,7 +37,11 @@ const NARRATIVE_FLAGS: Array[StringName] = [&"sc02_mercy", &"sc02_turned_away", 
 		# Acte II (J10 → J20).
 		&"vannes_opened", &"drift_stayed", &"sc25_elena_turned_away", &"quota_overrun", &"sc28_tariq_refused",
 		&"sc35_okonkwo_detained", &"sc35_okonkwo_helped", &"colleagues_listed", &"sc41_sato_spared", &"sc43_mateus_detained",
-		&"beaumont_defied", &"sc45_ravel_spared", &"ilan_joined_soute", &"dora_departed", &"registre_sent", &"strike_joined"]
+		&"beaumont_defied", &"sc45_ravel_spared", &"ilan_joined_soute", &"dora_departed", &"registre_sent", &"strike_joined",
+		# Acte III (J20 → J30).
+		&"amnesty_signed", &"sc53_anouk_detained", &"sc59_beaumont_spared", &"noa_coached", &"ilan_scab", &"ilan_tycho",
+		&"dora_testimony", &"sc70_montclair_refused", &"sc73_celeste_refused", &"tycho_list_saved", &"tycho_list_reported",
+		&"names_given", &"deposition_truth", &"deposition_loyal", &"strike2_joined", &"pont"]
 ## Au plus autant de traces affichées (les plus récentes l'emportent).
 const MAX_TRACES: int = 9
 ## Rythme de lecture de l'épilogue (une ligne toutes les ~1,9 s).
@@ -109,6 +118,8 @@ static func accent_of(p_ending: StringName, variant: String = "") -> Color:
 			return DS.ACCENT_CYAN
 		EndingService.F9_STRIKE:
 			return DS.TEXT_SECONDARY
+		EndingService.F10_PONT:
+			return DS.STATE_GREEN
 		Campaign.ENDING_DEMO_COMPLETE:
 			return DS.ACCENT_YELLOW
 	return DS.STATE_RED
@@ -130,6 +141,8 @@ static func icon_of(p_ending: StringName) -> UiIcon.Kind:
 			return UiIcon.Kind.REGISTER
 		EndingService.F9_STRIKE:
 			return UiIcon.Kind.LOCK
+		EndingService.F10_PONT:
+			return UiIcon.Kind.APPROVED
 	return UiIcon.Kind.INFO
 
 
@@ -144,11 +157,35 @@ static func trace_keys(p_flags: Dictionary[StringName, Variant]) -> PackedString
 	return keys.slice(maxi(keys.size() - MAX_TRACES, 0))
 
 
+## Texte d'une trace ; une jauge (`%d` : familles de Tycho) reçoit sa valeur.
+static func trace_text(key: String, p_flags: Dictionary[StringName, Variant]) -> String:
+	var text: String = UiText.t(key, key.trim_prefix("end_trace_"))
+	if text.contains("%d"):
+		text = text.replace("%d", str(FlagCondition.gauge_value(p_flags, StringName(key.trim_prefix("end_trace_")))))
+	return text
+
+
+## Acte III : figure finale du J30 (D-088) — `dora`, `mira`, vide si aucune.
+static func final_figure(p_flags: Dictionary[StringName, Variant]) -> String:
+	if FlagCondition.is_flag_true(p_flags, &"final3_dora"):
+		return "dora"
+	for flag: StringName in [&"final3_detained", &"final3_passed", &"final3_denied", &"final3_unprocessed"]:
+		if FlagCondition.is_flag_true(p_flags, flag):
+			return "mira"
+	return ""
+
+
 func epilogue_lines() -> PackedStringArray:
 	var lines: PackedStringArray = []
 	var keys: PackedStringArray = epilogue.get("lines", PackedStringArray())
+	var args: Dictionary = epilogue.get("args", {})
 	for key: String in keys:
-		lines.append(ComparisonUI.lumika_text(UiText.t(key, key), true))
+		var text: String = UiText.t(key, key)
+		# Acte III : lignes à valeur (`%d` familles de Tycho, `epilogue.args`).
+		if args.has(key):
+			var values: Array = args[key]
+			text = text % values
+		lines.append(ComparisonUI.lumika_text(text, true))
 	if lines.is_empty():
 		var body: String = UiText.t("end_text_%s" % ending, "")
 		if not body.is_empty():
@@ -171,11 +208,22 @@ func _build() -> void:
 		var act_chip: PanelContainer = chip(UiText.t("end_act2_chip", "ACTE II"), UiIcon.Kind.REGISTER, DS.VOICE_COMMISSION)
 		act_chip.name = "ActChip"
 		top.add_child(act_chip)
-	if ending == EndingService.F5_AIR:
-		var variant_key: String = "end_variant_brulants" if variant == "brulants" else "end_variant_veilleurs"
+	elif act is int and act == 3:
+		var act3_chip: PanelContainer = chip(UiText.t("end_act3_chip", "ACTE III"), UiIcon.Kind.SCALES, DS.STATE_AMBER)
+		act3_chip.name = "ActChip"
+		top.add_child(act3_chip)
+	if ending == EndingService.F5_AIR or (not variant.is_empty() and UiText.has("end_variant_%s" % variant)):
+		var variant_key: String = "end_variant_%s" % variant if not variant.is_empty() else "end_variant_veilleurs"
 		var chip_node: PanelContainer = chip(UiText.t(variant_key, "VARIANTE"), UiIcon.Kind.DISCORDANCE, accent)
 		chip_node.name = "VariantChip"
 		top.add_child(chip_node)
+	# Acte III : la dernière navette (SC-82) — Dora (famille) ou Mira (Lucioles).
+	var figure: String = final_figure(flags) if act is int and act == 3 else ""
+	if not figure.is_empty():
+		var figure_chip: PanelContainer = chip(UiText.t("end_figure_%s" % figure, figure.to_upper()), UiIcon.Kind.DIAMOND,
+				DS.ACCENT_MAGENTA if figure == "mira" else DS.TEXT_SECONDARY)
+		figure_chip.name = "FigureChip"
+		top.add_child(figure_chip)
 	top.add_child(spacer())
 	var date_label: Label = label(date_text(history), &"DataSmall")
 	date_label.name = "EndDate"
@@ -240,7 +288,7 @@ func _recap_column() -> Control:
 		for key: String in traces:
 			var row: HBoxContainer = hbox(DS.SPACE_2)
 			row.add_child(UiIcon.make(UiIcon.Kind.DIAMOND, DS.TEXT_SECONDARY, DS.ICON_S))
-			var trace_label: Label = wrapped(UiText.t(key, key.trim_prefix("end_trace_")), &"BodySmall", DS.TEXT_PRIMARY)
+			var trace_label: Label = wrapped(trace_text(key, flags), &"BodySmall", DS.TEXT_PRIMARY)
 			trace_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			row.add_child(trace_label)
 			right.add_child(row)

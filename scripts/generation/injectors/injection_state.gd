@@ -21,6 +21,19 @@ var params: Dictionary = {}
 ## Clés `document/champ` (ou `document/*`) déjà touchées.
 var used: Dictionary[String, bool] = {}
 var face_anomaly: bool = false
+## Acte III (`SPONSOR_MISMATCH` : répondant placé après / inadmissible) :
+## `func(index: int) -> String`, N° ID présenté par le passager propre d'un
+## autre index du jour (`CaseBuilder.peek_citizen_id`) ; vide si indisponible.
+var peek_citizen_id: Callable = Callable()
+## Nombre de passagers du jour (index valides).
+var passenger_count: int = 0
+
+
+## Acte III : N° ID du passager propre d'un autre index (vide si indisponible).
+func citizen_id_at(index: int) -> String:
+	if not peek_citizen_id.is_valid() or index < 0 or index >= passenger_count:
+		return ""
+	return str(peek_citizen_id.call(index))
 
 
 func get_rule_set() -> RuleSet:

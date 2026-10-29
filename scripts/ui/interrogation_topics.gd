@@ -34,12 +34,20 @@ const ABOUT_QUOTA: StringName = &"about_quota"
 const ABOUT_CURFEW: StringName = &"about_curfew"
 const ABOUT_REVOKED: StringName = &"about_revoked"
 const ABOUT_CONTRACT: StringName = &"about_contract"
+## Acte III (ARCHITECTURE §7.3) : répondant (R34), convocation (R36), lock-out
+## (R35).
+const ABOUT_SPONSOR: StringName = &"about_sponsor"
+const ABOUT_SUMMONS: StringName = &"about_summons"
+const ABOUT_LOCKOUT: StringName = &"about_lockout"
 ## Règle citée → sujet de sa famille (identifiants des `.tres` de `data/rules/`).
 const RULE_TOPICS: Dictionary[StringName, StringName] = {
 	&"r_air_quota": ABOUT_QUOTA,
 	&"r_curfew": ABOUT_CURFEW,
 	&"r_revoked_ids": ABOUT_REVOKED,
 	&"r_contract_consistent": ABOUT_CONTRACT,
+	&"r_sponsor": ABOUT_SPONSOR,
+	&"r_summons": ABOUT_SUMMONS,
+	&"r_tycho_lockout": ABOUT_LOCKOUT,
 }
 
 

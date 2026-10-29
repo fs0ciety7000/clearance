@@ -14,6 +14,9 @@ var clean_attempts: int = 1
 var clean_violation_count: int = 0
 ## Bruit légitime sur la photo (coupe différente, photo ancienne).
 var photo_noise: bool = false
+## Acte III (R32) : un document expiré dans la fenêtre de prorogation (bruit
+## légitime : valide).
+var prorogation_noise: bool = false
 ## Passager arrivé visière baissée (D-021).
 var visor_down: bool = false
 ## Nombre d'anomalies tirées (avant échecs d'injection éventuels).

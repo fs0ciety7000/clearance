@@ -58,7 +58,7 @@ func has_document(document_id: StringName) -> bool:
 ## Acte II — document du porteur (jamais un document d'un tiers, SC-27).
 func get_own_document(document_id: StringName) -> DocumentInstance:
 	for doc: DocumentInstance in documents:
-		if doc.get_document_id() == document_id and not doc.third_party:
+		if doc.get_document_id() == document_id and not doc.is_foreign():
 			return doc
 	return null
 
@@ -125,7 +125,7 @@ func remove_visor() -> bool:
 func find_refs_by_truth_path(path: StringName, include_third_party: bool = false) -> Array[FieldRef]:
 	var refs: Array[FieldRef] = []
 	for doc: DocumentInstance in documents:
-		if doc.third_party and not include_third_party:
+		if doc.is_foreign() and not include_third_party:
 			continue
 		for field: FieldDef in doc.type_def.fields:
 			if field.truth_path == path:

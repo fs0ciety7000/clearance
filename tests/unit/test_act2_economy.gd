@@ -275,7 +275,8 @@ func test_save_migration_v3_to_v4() -> void:
 	var v3: Dictionary = {"version": 3, "campaign_seed": 42, "current_day": 9, "credits": 50, "score_total": 40,
 			"citations": 1, "narrative_flags": {"suspicion": 2}, "day_history": [], "household": home, "case_memory": {}}
 	var migrated: Dictionary = SaveService.parse(JSON.stringify(v3))
-	assert_eq(SaveService.as_int(migrated["version"]), 4)
+	# Chaîne 3 → 4 → 5 (Acte III : v5, D-086).
+	assert_eq(SaveService.as_int(migrated["version"]), SaveService.VERSION)
 	var restored: Household = Household.from_dict(migrated["household"])
 	var ilan: Household.Member = restored.get_member(Household.ILAN)
 	assert_true(ilan.is_alive(), "mis·e en attente ≠ PERDU")

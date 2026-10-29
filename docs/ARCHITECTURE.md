@@ -295,7 +295,7 @@ func get_rulebook_entry() -> RulebookEntry
 - **Vérité terrain** (R1 résolu) : la réponse attendue est recalculée sur le cas final ; invariants vérifiés par `CaseBuilder.check_invariants()` et par les tests : cas propre ⇒ 0 violation (8 re-tirages max), chaque anomalie prouvée par une règle active (sauf `cosmetic`), seuls les types détectables du jour sont tirés.
 - **Procédures** (R06, R08) : `ProcedureRule` ne produit jamais de violation ; vérifiées par le `ScoringService` (D-031).
 
-### 6.1 Familles (21, `scripts/rules/families/`)
+### 6.1 Familles (26, `scripts/rules/families/`)
 
 | Famille | Paramètres `@export` | Règles |
 |---|---|---|
@@ -311,7 +311,7 @@ func get_rulebook_entry() -> RulebookEntry
 | `ImplantsDeclaredRule` | `document_id`, `escalated_prefixes`, `escalated_from_day`, `escalated_severity` | R15 |
 | `BannedImplantsRule` | `document_id`, `always_banned`, `waiver_prefixes`, `waiver_document_id` | R16 |
 | `ApparentAgeRule` | `document_id` | R18 |
-| `FactionBannedRule` | `banned_faction_ids`, `exempt_purposes`, `card_id`, `permit_id` ; Acte II : `exempt_posts`, `contract_id` | R19, R31 |
+| `FactionBannedRule` | `banned_faction_ids`, `exempt_purposes`, `card_id`, `permit_id` ; Acte II : `exempt_posts`, `contract_id` ; M9 : `exempt_if_sponsored` | R19, R31, R37 |
 | `SealValidRule` | — | R20 |
 | `MrzConsistentRule` | `document_id` | R21 |
 | `WantedRule` | `document_id` (lit `RuleContext.wanted`) | R22 |
@@ -319,9 +319,14 @@ func get_rulebook_entry() -> RulebookEntry
 | `ContractConsistentRule` (M8) | `contract_id`, `permit_id`, `employer_codes: Dictionary[String, String]` (employeur → code `XX`), `posts` | R25 |
 | `DriftPassRule` (M8, hérite de `RequireDocumentRule`) | `registered_vessels` (+ paramètres hérités) | R26 : laissez-passer requis, vaisseau inscrit = nom de famille du porteur |
 | `CurfewRule` (M8) | `ticket_id`, `permit_id`, `curfew_minute` (960 = 16:00), `banned_purposes`, `exempt_faction_ids` (HAL) | R29 |
-| `RevokedIdRule` (M8) | `document_id` (lit `RuleContext.revoked`) | R30 |
+| `RevokedIdRule` (M8) | `document_id` (lit `RuleContext.revoked`) ; M9 : ignore une entrée réintégrée si R33 est active | R30 |
+| `ProrogationRule` (M9) | `window_start`, `window_end`, `extended_until` ; `covers()`, `in_window()` | R32 — **règle de lecture** : jamais de violation ; les règles d'expiration lisent `RuleContext.is_document_expired()` |
+| `ReinstatementRule` (M9) | — | R33 (lecture de `RevokedEntry.reinstated_on`) |
+| `SponsorRule` (M9) | `exempt_faction_ids` (HAL), `purposes` (visite familiale), `permit_id` ; `has_valid_sponsor()` | R34 — **contexte du shift** (Main courante) |
+| `ContractSuspendedRule` (M9) | `faction_ids` (TYC), `suspended_codes` (`KA`), `contract_id`, `card_id` | R35 |
+| `SummonsRule` (M9) | `permit_id`, `card_id` ; `is_valid_summons()`, `is_forged()` | R36 ; exemptions déclaratives par `Rule.summons_exempt` |
 
-### 6.2 Les 31 règles (`data/rules/`, introduites cumulativement)
+### 6.2 Les 37 règles (`data/rules/` ; cumulatives jusqu'au J20, liste explicite ensuite)
 
 | Jour | Règles (id, sévérité) |
 |---|---|
@@ -343,6 +348,15 @@ func get_rulebook_entry() -> RulebookEntry
 | J16 | R29 `r_curfew` (`CurfewRule` : ticket de file ≥ 16:00, VISITE/TOURISME refusés, HAL exemptés, 2) |
 | J17 | R30 `r_revoked_ids` (`RevokedIdRule`, lit `RuleContext.revoked`, 2) |
 | J18–J20 | R31 `r_ter_closed` (`FactionBannedRule` + `exempt_posts` : RECYCLEUR / SOINS / HYDROPONIE, 2) |
+| J21 | R32 `r_prorogation` (lecture) ; R29 **retirée** (ticket de file retiré) |
+| J22 | R33 `r_reinstated` (lecture) |
+| J23 | R11–R14 **retirées** (bio-scan repris par les quais) |
+| J24 | R34 `r_sponsor` (2) |
+| J25 | R35 `r_tycho_lockout` (2) |
+| J26 | R36 `r_summons` (2) |
+| J28–J30 | R37 `r_tycho_closed` (`FactionBannedRule` TYC + `exempt_if_sponsored`, 2) |
+
+Acte III (`tools/build_data_act3.gd`) : RuleSets J21–J30 **non cumulatifs** (M1), règles retirées rappelées au Rulebook (`RuleSet.retired_rules`) ; R19, R23, R30, R31 `summons_exempt` ; R31 `exempt_if_sponsored` (SC-61, D-091 proposé) ; R26 `retired_vessels` (`BASSE-MARÉE` au 02.04) ; code employeur `AR` (Arbitrage de Continuité).
 
 Données des règles Acte II (`tools/build_data.gd` + `build_data_act2.gd`) : R24 = `RequireDocumentRule` (`work_contract`, motif `work`, `require_valid`) ; R26 = `DriftPassRule` (`drift_pass`, DRV, `require_valid`) ; R27 = `DocumentNotExpiredRule` (`id_card`, `field_path = firmware_date`, 90 j) ; R28 = `RequireDocumentRule` (`asylum`, TER, classe `C-5`, `require_valid`) ; R31 = `FactionBannedRule` (TER, `exempt_purposes` vide, `exempt_posts` = `post_recycleur` / `post_soins` / `post_hydroponie`). Codes employeurs : `Act2.EMPLOYER_CODES` (LORE + PI/DL/EQ/CR, D-081). Documents d'un **tiers** (`DocumentInstance.third_party`, SC-27) : jamais comparés (`INCOMPARABLE`), ignorés par R07/R10 et par les règles du porteur (`Case.get_own_document`). J19 et J20 : aucune règle nouvelle (31 règles actives).
 
@@ -452,6 +466,25 @@ Logique livrée en M8 partie A (D-076 → D-081), interfaces en M8 partie B (D-0
 | **Accessoires et figure finale** | Étiquettes `companion_child`, `prop_cat_crate`, `prop_drone`, `prop_shunt_led` ; `sc50_ilan` / `sc50_mira` (`Case.dialogue_tags`) | `PassengerActor.apply_props()` → `PropDecor` (caisse et LED fusionnées au maillage de l'acteur : 0 draw ; enfant : 1 draw + ombre ; drone : 1 draw) ; figure finale : accent du `PassengerPanel` (Ilan gris, Mira magenta, D-079) | Ignorées |
 
 🎯 Restent ouverts côté UI/Audio : cue « power down » de la grève et *tick* par lien suggéré (proposés dans `AUDIO.md`, aucune cue nouvelle en M8).
+
+### 7.3 Contrat UI M9 — Acte III (J20 pivot – J30) : logique livrée, UI à faire
+
+Logique livrée en M9 partie A (docs/ACT3.md, D-086 → D-089 ; `test_act3_rules`, `test_act3_campaign`). **Le jeu se joue J1–J30 avec l'UI actuelle** : chaque ligne indique le comportement par défaut sans UI dédiée ; la colonne « À faire (M9 B) » est le travail UI/UX restant. Signaux nouveaux : **36** au catalogue (`test_event_bus`).
+
+| Sujet | API logique | Par défaut (UI actuelle / headless) | À faire (M9 B) |
+|---|---|---|---|
+| **Main courante** (R34, M2) | `ledger_changed(entries: Array[LedgerEntry])` émis au début du shift (vide) puis après chaque admission inscrite ; `LedgerEntry` (`id`, `citizen_id`, `given_name`, `family_name`, `citizen_class`, `faction_id`, `case_index`, `get_ref()` → `FieldRef.ledger(id)`) ; `CaseBuilder.record_verdict(case, verdict)` (APPROUVÉ, carte HAL C-1–C-3, R34 active) ; `CaseBuilder.get_ledger()` ; `RuleContext.ledger`, `find_ledger_by_citizen()` ; discordance Répondant (permis) ↔ entrée : `disc_sponsor_match` (concordant) / R34 `viol_sponsor` | Signal sans effet ; R34 évaluée **au moment de la présentation** (verdict attendu de contexte, comme le quota, D-077) ; preuve = Répondant ↔ R34 au Rulebook | Onglet `rb_tab_ledger` (« Main courante », `DayDef.rulebook_tabs` contient `ledger` dès J24) : cartes sélectionnables (N° ID mono, nom, classe), `rb_ledger_hint`, `rb_ledger_empty` ; paire Répondant ↔ carte en Mode Inspection |
+| **Convocations** (R36, M3) | `summons_published(entries: Array[SummonsEntry])` au début du shift (trié par N°) ; `SummonsEntry` (`number` `ENQ-NNNN`, nom, `reason_key` `summons_reason_*`, `get_ref()` → `FieldRef.summons(id)`) ; `RuleContext.summons`, `has_valid_summons(case)` ; `Rule.summons_exempt` (R19, R23, R30, R31, R34, R35, R37) ; `disc_summons_match` / `disc_summons_name` | R36 et exemptions évaluées ; quota : un convoqué n'est pas compté | Onglet `rb_tab_summons` (J26+) ; libellé `wb_summons_label` |
+| **Champs du permis** | `entry_permit` : `sponsor` et `summons` (`FieldDef.optional` : **non affichés s'ils sont vides**, glue dans `DocumentView`) ; `Passenger.sponsor_id`, `summons_id` | Affichés en ligne générique (`field_sponsor`, `field_summons`) quand renseignés | Mise en page du permis (2 lignes en bas, mono) |
+| **Prorogation, réintégrations** (R32, R33) | `RuleContext.prorogation()`, `is_prorogated(expiry)`, `is_document_expired(expiry)` ; `disc_prorogated` (date ↔ aujourd'hui **concordante**) ; `RevokedEntry.reinstated_on`, `excluded_reason_key`, `is_reinstated(today)` ; `disc_reinstated` | Comparaison date ↔ jour concordante pour un document prorogé ; entrée réintégrée non bloquante | Pastille « PROROGÉ (R32) » (`cmp_prorogated`) au comparateur ; colonne `rb_col_reinstated` + motif `rb_reinstated_excluded` / `rb_excluded_commission` dans l'onglet Révocations |
+| **Retour aux quais** (M1) | `DayDef.retired_documents` (ticket J21, bio-scan J23) ; `DocumentInstance.retired`, `is_foreign()` (INCOMPARABLE, `disc_retired`) ; `RuleSet.retired_rules`, `retired_note_keys`, `build_retired_entries()` ; `RuleSet.rule_note_keys` (`r_air_quota` → `rb_suspended_quota` J21–J26) ; `RulebookEntry.note_key`, `retired` | Documents retirés jamais exigés ; un document retiré présenté (SC-58) s'affiche comme les autres | Puce « RETIRÉ » sur le document ; Rulebook : règles retirées barrées (`rb_retired_curfew`, `rb_retired_quais`), note « SUSPENDU » de R23 ; `tb_quota_suspended` dans la `TopBar` |
+| **Sujets d'interrogatoire** | `InterrogationTopics.ABOUT_SPONSOR/SUMMONS/LOCKOUT` ; familles `sponsor`, `summons`, `lockout` (`InspectionSession.RULE_FAMILIES`) | Débloqués par une discordance de la famille ; répliques `line_about_*_generic` | Boutons des 3 sujets (`q_about_*`) |
+| **Soirée pivot du J20** | `DayDef.has_evening` vrai au J20 ; carte de fin d'acte : 6 lettres `d20_card_<climat>` (`act2_card_*_l1/_l2`, une seule visible, climat prévisualisé par `EveningService.evening_context`) ; `d20_night`, `d20_double` (`enquete_cible`), sort de la figure finale, `d20_flat`, `d20_drift` (« Embarquer » `ends_campaign` → F6) ; `Campaign.is_act3()` (`act3_started`, posé à la clôture) ; soupçon ⌊/2⌋ (+1 si `purge_demoted`) | Soirée générique ; enchaînement direct sur le J21 ; « Embarquer » jamais par défaut (D-058) | Carte « FIN DE L'ACTE II » (`evt_d20_card_eyebrow`) en panneau 0 ; interstitiel `chapter3_title/sub/recall` quand `is_act3()` et `current_day == 21` ; confirmation de « Embarquer » (comme au J10) |
+| **Soirées J21–J29** | Questions de l'Enquête (J22, J26, J28 : options `tell`/`silent`/`accuse`, libellés communs `evt_enq_opt_*`) ; Déposition J29 (`d29_deposition` puis AUDIT `deposition`, recalculé à l'application : `EndingService.deposition_outcome`, arrestation → F1, blâme −30 ₵) ; aides conditionnelles (`EveningEventDef.economy_gauges_below`, `gain`, `gain_gauge` : rappel J21 `%d`, avance J21, caisse J23) ; Contribution J25 (`levy_for`) ; `EveningOptionDef.conditional_flags` ; lignes `LINE_LOAN`, `LINE_HEAD_BONUS`, `LINE_SCAB`, `NOTE_INCLUDED` | `EveningScreen` générique : `%d` via `text_gauges` ; audit affiché comme celui du J17 | Libellés de lignes `exp_loan_repay`, `exp_contribution`, `inc_*`, `ev_note_*` ; mise en scène de la Déposition (choix puis verdict) |
+| **Foyer** | `EveningOptionDef.HOUSEHOLD_ILAN_TYCHO` (`away` Tycho), `HOUSEHOLD_ILAN_HOME`, `HOUSEHOLD_DORA_SICK` ; `hh_ev_*` ; `EndingService.apply_final_household` (Dora figure finale) | États existants (`hh_state_away_tycho_x`) | — |
+| **Briefings J21–J30** | `DayDef.intro_variants` (`ConditionalKey`, `day27_intro_vanne`) ; locuteurs `spk_arbitre` (COMMISSION), `spk_sato_greffier`, `spk_enquete` (INSPECTION), `spk_tycho` (LUCIOLES), `spk_okafor` (FOYER), `spk_comite` (MENTOR) | Voix existantes (aucune nouvelle) | — |
+| **J30 et fins** | `DayDef.admission_gauges` (`tyc` → `pont`) ; F10 `EndingService.F10_PONT` ; `ACT3_PRIORITY` ; `evaluate_final_act3`, `epilogue_act3` (`act = 3`, `args` : `%d` de `end3_f10_l1`, `end3_f7_l3_pont`) ; surtitre `end_eyebrow_f10_pont` | `EndScreen` formate `args` (glue) ; titres `end3_*_title` | Bilan du J30 : ligne `ss_pont` ; écran de fin à 10 fins, puce « ACTE III », surtitre F10, tableau des 30 shifts ; traces `end_trace_*` de l'Acte III |
+| **Accessoires** | Étiquettes `prop_bandaged_hands`, `prop_certificate_crate`, `prop_armband_pocket`, `prop_school_satchel`, `sc81b` | Ignorées | `PROP_TAGS` / `PropDecor` |
 
 ---
 
@@ -681,6 +714,7 @@ Sérialisation stable : `CaseSerializer` (tests de déterminisme). 🎯 Golden f
 
 - **Quand** : automatiquement à la validation de la soirée (`Campaign.close_evening`), jamais en plein shift (D-041). Toute fin efface la sauvegarde (`SaveService.delete()`, idempotent).
 - **Où / format** : `user://saves/slot_0.json` (un seul emplacement utilisé), JSON texte ; préférences séparées dans `user://settings.cfg`. Jamais de `.tres` dans `user://` (D-008).
+- **Format v5** (M9, `SaveService.VERSION = 5`) : **aucun champ nouveau** — l'état de l'Acte III vit dans `narrative_flags` (`act3_started`, `climate_*`, `pivot3_done`, `enquete_cible`, jauges `verite`, `aveux`, `pont`, `arbitre_loan`…) ; migration v4 → v5 = changement de numéro (testée sur trois vraies sauvegardes v0.9.0, `tests/fixtures/qa_save_v4_j20_*.json`). Dernier jour : **30**.
 - **Format v4** (`SaveService.VERSION = 4` ; `game_version` = `SaveService.game_version()`, lu dans `application/config/version` de `project.godot`, actuellement `0.8.1`) : `version`, `game_version`, `saved_at`, `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags`, `day_history` (détail par jour : traités, prévus, corrects, erreurs, citations, salaire, amendes, net, dépensé, gagné, solde), `household` (membres : `health`, `hungry`, `cold`, `detained` ; **v4** : `breathless`, `breathless_streak`, `away`), `case_memory`. **Aucune clé de premier niveau nouvelle en v4** : l'état de l'Acte II vit dans `narrative_flags` (`act2_started`, `overrun_yesterday`, `quota_overrun` (compteur), drapeaux du scanner `scanner_consortium` / `scanner_luciole(_removed)`, `meter_refused`, jauges `registre`, `compliance_pct`, `levy_amount`, `review_arrested`…) et dans `case_memory` (visages des cas scénarisés repris par les avis `memory_case_id`).
 - **Sauvegarde du soir pivot** : `Campaign.close_evening` du J10 pose `act2_started` **avant** l'écriture ; l'interstitiel « CHAPITRE II » s'affiche après la sauvegarde (quitter dessus reprend au briefing du J11). « Embarquer » (F6) et toute fin anticipée effacent la sauvegarde.
 - **Migrations** (`SaveService.migrate`, en chaîne) : v1 → v2 (foyer par défaut, historique complété) ; v2 → v3 (`case_memory` vide, `suspicion +1` rétroactif si SC-02 approuvée, D-052/D-057) ; v3 → v4 (M8 : champs `breathless`, `breathless_streak`, `away` du foyer ; un proche `lost` **et** `detained` redevient `well` + `detained` — « mis·e en attente » distinct de PERDU, D-076). Version inconnue ou future ⇒ refus.

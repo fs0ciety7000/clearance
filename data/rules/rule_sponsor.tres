@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SponsorRule" format=3 uid="uid://d0cy0g8l2n5vt"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/sponsor_rule.gd" id="1_kti73"]
+
+[resource]
+script = ExtResource("1_kti73")
+id = &"r_sponsor"
+title_key = "r_sponsor_title"
+rulebook_text_key = "r_sponsor_text"
+summons_exempt = true

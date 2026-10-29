@@ -24,11 +24,21 @@
 ## suivants, qui n'ont plus lieu) — « ObjectDB instances leaked » et
 ## « resources still in use » à la sortie. On arrête tous les lecteurs, on
 ## laisse passer quelques images de mixage, puis on quitte.
+## QA-039 : arrêter les lecteurs ne suffisait pas — la scène restait vivante
+## pendant ces images et pouvait relancer un son (musique de l'écran de fin
+## posée juste après son apparition, pas, annonces, barks du shift) : lecture
+## active à la sortie. La scène courante est donc d'abord **déchargée**
+## (`AudioDirector._exit_tree` : plus aucun son, lecteurs vidés, caches
+## d'`AudioCueBank` et de barks libérés), les lecteurs restants arrêtés, puis
+## une seconde passe juste avant `quit()`.
 extends Node
 
 ## Images et délai réel laissés au mixage pour retirer les lectures arrêtées.
 const QUIT_FRAMES: int = 8
 const QUIT_DELAY_SEC: float = 0.25
+
+## Vrai dès le premier appel de `quit_after_silence()` (appels suivants ignorés).
+var _quitting: bool = false
 
 
 func _ready() -> void:
@@ -42,11 +52,20 @@ func _process(_delta: float) -> void:
 ## Arrête tous les lecteurs audio de l'arbre, attend que l'`AudioServer` les
 ## ait retirés, puis quitte avec `exit_code`.
 func quit_after_silence(exit_code: int = 0) -> void:
+	if _quitting:
+		return
+	_quitting = true
 	var tree: SceneTree = get_tree()
+	if tree.current_scene != null:
+		tree.unload_current_scene()
 	_stop_players(tree.root)
 	for i: int in QUIT_FRAMES:
 		await tree.process_frame
 	await tree.create_timer(QUIT_DELAY_SEC, true, false, true).timeout
+	# Un son relancé pendant l'attente (nœud hors scène) : arrêté et retiré.
+	_stop_players(tree.root)
+	for i: int in QUIT_FRAMES:
+		await tree.process_frame
 	tree.quit(exit_code)
 
 

@@ -17,6 +17,16 @@ enum RuleCategory { DOCUMENTS, IDENTITY, FACTION, PURPOSE, SPECIAL }
 @export var category: RuleCategory = RuleCategory.DOCUMENTS
 ## 1 = procédure, 2 = refus, ≥ 3 = détention (`RuleEngine.DETAIN_SEVERITY`).
 @export_range(1, 3) var severity: int = 2
+## Acte III (R36, B40) : exemption **déclarative** — une convocation
+## authentique de l'Enquête (`RuleContext.has_valid_summons`) lève cette règle
+## (R19, R23, R30, R31, R34, R35, R37 ; jamais R22). Lue par le `RuleEngine`
+## et la comparaison « champ ↔ règle » (`DiscrepancyChecker`).
+@export var summons_exempt: bool = false
+
+
+## Vrai si la règle est levée pour ce cas par une convocation authentique.
+func is_exempted(case: Case, ctx: RuleContext) -> bool:
+	return summons_exempt and ctx != null and case != null and ctx.has_valid_summons(case)
 
 
 ## Violations de cette règle sur le cas présenté (vide = conforme).

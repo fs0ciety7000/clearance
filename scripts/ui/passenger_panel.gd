@@ -41,7 +41,9 @@ func _ready() -> void:
 	_speaker_label.theme_type_variation = &"DocIssuer"
 	_speaker_label.uppercase = true
 	_speaker_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_speaker_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	# Nom composé au Deck (« D. LINDQVIST-REY ») : repli sur deux lignes plutôt
+	# qu'un nom tronqué contre « INTERCOM » (QA-040).
+	_speaker_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	header.add_child(_speaker_label)
 	_led = Control.new()
 	_led.custom_minimum_size = Vector2(DS.SPACE_2, DS.SPACE_2)

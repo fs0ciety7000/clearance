@@ -7,6 +7,9 @@ extends Resource
 @export var amount: int = 0
 @export var label_key: String = ""
 @export var text_key: String = ""
+## Acte III : variantes du texte principal (première vraie, sinon `text_key`)
+## — SC-56 : dessin de Noa « toutes les vitres éteintes » au climat Vitres.
+@export var text_variants: Array[ConditionalKey] = []
 ## Lignes additionnelles conditionnelles (drapeaux vrais au début du jour).
 @export var extra_text_keys: Array[ConditionalKey] = []
 @export var allowed: Array[SlippedItem.Decision] = [SlippedItem.Decision.KEEP, SlippedItem.Decision.RETURN]
@@ -24,7 +27,7 @@ func instantiate(case_id: StringName, n: int, flags: Dictionary[StringName, Vari
 	item.kind = kind
 	item.amount = amount
 	item.label_key = label_key
-	item.text_key = text_key
+	item.text_key = ConditionalKey.first_match(text_variants, flags, text_key)
 	item.extra_text_keys = ConditionalKey.all_matches(extra_text_keys, flags)
 	item.allowed = allowed.duplicate()
 	item.default_decision = default_decision

@@ -3,6 +3,7 @@
 > Propriétaire : **QA / Playtester** · Version du jeu : `0.7.0-m7` (sauvegarde v3) · Godot 4.7.2 · GUT 9.7.1
 > Passe du 27.10.2026, sur `main` après les commits « Narration : écarts M7 corrigés » et « ARCHITECTURE rév. 3 ».
 > **Passe Acte II du 28.10.2026** (`0.8.1` + M8 A/B, sauvegarde v4, 515 tests) : voir [§12](#12-passe-qa-acte-ii-j10j20) — bugs QA-019 à QA-031.
+> **Passe Acte III du 29.10.2026** (M9 A/B `26eb154`, sauvegarde v5, 573 tests) : voir [§13](#13-passe-qa-acte-iii-j20j30) — bugs QA-032 à QA-040.
 > Ce document liste les bugs trouvés ; **QA ne corrige pas le code de jeu** : chaque bug nomme le fichier suspecté et l'agent propriétaire (AGENTS.md).
 
 ## Sommaire
@@ -19,6 +20,7 @@
 10. [Recommandations priorisées](#10-recommandations-priorisées)
 11. [Rejouer la passe](#11-rejouer-la-passe)
 12. [Passe QA Acte II (J10–J20)](#12-passe-qa-acte-ii-j10j20)
+13. [Passe QA Acte III (J20–J30)](#13-passe-qa-acte-iii-j20j30)
 
 ---
 
@@ -527,3 +529,181 @@ Correctifs QA-019, QA-022, QA-024 à QA-028 (données), QA-030, R28 et R30 de la
 | `export_all.sh linux` + `smoke_export.sh` | — | OK (titre, J1, J4, J7, J10, J15, J20) |
 
 Outils de ces mesures (stress de rechargements, sonde d'asile) gardés hors dépôt ; le stress se rejoue avec une boucle `reload_current_scene.call_deferred()` à intervalles aléatoires depuis un nœud lancé par `tools/qa_boot.gd`.
+
+## 13. Passe QA Acte III (J20–J30)
+
+> Passe du 29.10.2026 sur `main` après « M9 partie B — interfaces de l'Acte III » (`26eb154`, 573/573 tests), sauvegarde **v5**. Même méthode qu'aux §1–§12 ; QA n'a corrigé aucun code de jeu ni aucune donnée. Après la passe : **581 tests** (573 + 8 de `tests/integration/test_qa_act3.gd`, dont 4 en `pending("QA-0xx")`), suite verte. Le conteneur a redémarré pendant la passe : les campagnes ont été rejouées en **tronçons ≤ 9 min** (« Quitter » par arrêt du processus, puis reprise de la vraie sauvegarde automatique par `--qa-load`), ce qui ajoute un « Quitter → Continuer » réel à chaque tronçon.
+
+### 13.1 Outils
+
+Aucun outil QA modifié : `tools/qa_campaign.gd` (J1–J30, `--qa-reload`, `--qa-load`, `--qa-credits`), `tools/qa_capture.gd` (`--qa-after-check`), `tools/qa_perf.gd`, `tools/balance_sim.gd`, `tools/gen_stats.gd` suffisent. Toutes les exécutions avec `XDG_DATA_HOME` jetable (Qualité Basse + FX 0 + texte 1,5 : `settings.cfg` posé dans ce `user://` jetable), rien laissé dans le dépôt.
+
+### 13.2 Campagnes automatiques
+
+#### Vraie scène (`day.tscn`, booth 3D, bot `--autoplay`, `--qa-reload`)
+
+| Graine | Profil (soirées) | Départ | Climat (carte du J20) | Fin | Jour | Solde final | Conformité |
+|---|---|---|---|---|---|---|---|
+| 3 | loyal | **sauvegarde v4 réelle** `qa_save_v4_j20_loyal` | statu quo | **F7** | J30 | 121 ₵ | 80 % |
+| 5 | luciole | sauvegarde v4 `…_luciole` (Ilan dans la Soute) | statu quo | **F7** | J30 | 90 ₵ | 81 % |
+| 11 | solidaire | sauvegarde v4 `…_solidaire` (grève) | vitres | **F2** | soir J29 | −34 ₵ | 79 % |
+| 23 | solidaire | J1, +3 000 ₵ | vitres | **F9** (grève du J30, lumières coupées) | J30 | 306 ₵ | 60 % |
+| 13 | passeur | J1, +3 000 ₵ | statu quo | **F7** | J30 | 407 ₵ | 62 % |
+| 19 | temoin | J1, +3 000 ₵ | statu quo | **F7** | J30 | 389 ₵ | 60 % |
+| 7 | passeur | J1, +1 500 ₵ | statu quo | **F2** | soir J28 | 0 ₵ | 62 % |
+| 42 | luciole | J1, +1 500 ₵ | statu quo | **F2** | soir J28 | −41 ₵ | 60 % |
+| 3 | drift | J1, +1 500 ₵ | statu quo (« Rester » au J20) | **F3** (Dora puis Ilan et Noa) | soir J27 | −43 ₵ | 58 % |
+| 11 | temoin | J1, +1 500 ₵ | registre | **F2** | soir J24 | −63 ₵ | 56 % |
+
+- **10 campagnes, 229 jours joués dans la vraie scène dont 86 de l'Acte III, ≈ 220 « Quitter → Continuer » réels (≈ 85 aux soirs J20–J29) : aucune `SCRIPT ERROR`, aucun plantage, aucun blocage de phase, aucun écart sauvegarde relue ↔ état** (seuls `QA_ISSUE` : « solde aberrant » > 2 000 ₵, attendus avec +3 000 ₵ de crédits QA). Seules sorties moteur : fuites à la sortie (QA-039).
+- **Migration v4 → v5** : les trois vraies sauvegardes v4 du J20 reprennent au J20, jouent la carte « FIN DE L'ACTE II », la soirée pivot, le CHAPITRE III et l'Acte III jusqu'au J29/J30 ; aussi `test_qa_act3::test_real_v4_j20_saves_roundtrip_every_act_three_evening` (chaque soir J20–J29 relu à l'identique).
+- **Fins atteintes dans la vraie scène : F2, F3, F7, F9.** F1 (Déposition), F4, F5, F6, F8, F10 restent hors de portée du bot (il n'aide jamais sciemment, ne lit ni répondants ni convocations, ne garde rien) : couvertes par la simulation (ci-dessous). Toutes les cartes de fin d'acte vues : `statu_quo`, `vitres`, `registre` (+ `vanne`, `promu` en capture / test).
+- **Répondants / Main courante** : signaux `ledger_changed` et onglet cohérents (captures J24) ; le bot n'utilise pas la Main courante. **Retour aux quais** : ticket de file absent dès le J21, bio-scan dès le J23 (plans de travail à 2 documents, côte à côte). **Enquête** : Q1/Q2/Q3 présentes les soirs J22/J26/J28 dans les 10 campagnes ; **Déposition** + verdict au J29 (6 campagnes arrivées au J29) ; `d29_strike` seulement si solidarité suffisante.
+- **Aides** : rappel des salaires imputés (`d21_recall`, +30 ₵ pour `quota_overrun` 7) ; caisse des vitres (`d23_fund`) vue à bas solde ; **avance de l'Arbitre (`d21_loan`, solde < 40 ₵ au J21) jamais déclenchée** dans ces campagnes (non couverte en vraie scène). **Prélèvements** : J25 « Contribution » = ⌊20 % × (solde − 60)⌋ (342 → 56 ; 322 → 52 ; 161 → 20 ; aucun sous 60 ₵), J11/J17 inchangés ; aucun ailleurs.
+- **Foyer** : Ilan quitte la Soute au J20 (`d20_ilan_back`) puis part à Tycho au J24 (`d23_job` = tycho) : ration retirée, aucune ligne pour un absent ; ration non payée → ESSOUFFLÉ·E puis MALADE, puis GRAVEMENT MALADE et perdu·e (F3 vue au soir du J27).
+- **Profil `loyal` au J29** : « choix d29_deposition:loyal refusé par l'écran » → Déposition « Se taire » par défaut (QA-036).
+
+#### Simulation (`tools/balance_sim.gd`, 20 graines, graine 1, J1–J30)
+
+| Préréglage | 65 % | 80 % | 95 % |
+|---|---|---|---|
+| `default` | F2 50 · F3 45 · F1 5 | F7 85 · F1 15 (Déposition) | F7 100 |
+| `loyal` | F2/F3 100 | F7 100 | **F4 100** |
+| `luciole` | F2/F3 100 | F5 80 · F1 20 | **F5 100** |
+| `passeur` | F2/F3 95 · F1 5 | F7 45 · F10 25 · F1 25 · F3 5 | **F10 85** · F7 15 |
+| `temoin` | F2/F3 95 · F1 5 | F8 75 · F1 25 | **F8 100** |
+| `solidaire` | F2/F3 85 · F1 10 · F9 5 | F9 90 · F1 10 | **F9 100** |
+| `mercenary3` | F2/F3 90 · F1 10 | F1 95 | F1 80 · F7 20 |
+| `drift` | F2/F3 95 · F1 5 | F6 60 · F7 20 · F10 10 · F1 10 | **F6 85** · F10 15 |
+
+**Les dix fins F1–F10 sont atteignables** ; ordres de grandeur conformes à ACT3 §6.6 (20 graines au lieu de 40 : ±10 points). `gen_stats` (40 campagnes × 30 jours) : invariants OK, 0 re-tirage, anomalies non placées J21–J30 : 0–4 par jour ; écarts de poids en QA-037.
+
+### 13.3 Passe visuelle (captures réelles 1920×1080 et 1280×800)
+
+`tools/qa_capture.gd` sous xvfb (OpenGL 3 / llvmpipe), graine 3, `--reduce-motion`. Seules les captures de bugs sont versionnées (`docs/qa/QA-0xx.png`).
+
+| Écran | 1080p | Deck | Constat |
+|---|---|---|---|
+| Carte « FIN DE L'ACTE II » (J20, vitres, `--hold-card`) | ✅ | ✅ | titre deux lignes dans la couleur de fin, bouton « LA NUIT DU 1ᵉʳ AVRIL ▶ » |
+| CHAPITRE III | ✅ | ✅ | Ⅲ dessiné, « TÉMOINS » ambre, dates lun. 02.04 → mer. 11.04, rappel du climat ; pas de spoiler |
+| Guichet J24, Main courante + comparaison Répondant ↔ entrée (`--qa-after-check`) | ❌ | ❌ | **bandeau CONCORDANT sur la MRZ et le code-barres de la carte** (QA-033, `QA-033.png`) ; au Deck la carte de la Main courante est coupée par le pied du Rulebook (QA-032) |
+| Guichet J26 / J28, Convocations (SC-66 Lev, SC-76 Sato) | ⚠️ | ⚠️ | liste à 5–6 convocations : **une seule carte visible** (QA-032) ; objets glissés OBJET / CONVOCATION / REGISTRE dessinés comme une carte de quai « Q6 » (QA-035, `QA-035.png`) |
+| Rulebook J26 / J30, onglet Règles (16 onglets) | ❌ | ❌ | **2 règles visibles**, la rangée de 16 onglets prend ≈ 240 px (QA-032, `QA-032.png`) ; même capture : carte d'identité seule, libellé « FIRMWARE NX » écrit lettre par lettre en colonne (QA-038) |
+| Soirée J22, Enquête Q1 | ⚠️ | ✅ | panneau ambre « ⚖ ENQUÊTE · C. RAVEL », options Dire / Se taire / Accuser ; **rations : Noa et Dora sous le bord** (QA-034) |
+| Soirée J29, Déposition (« Se taire » → RIEN À RETENIR) | ❌ | ✅ | verdict révélé après le choix ✅ ; **« Ration d'air · Dora » coupée en bas** (QA-034, `QA-034.png`) |
+| Fin F10 « LE PONT » | ✅ | ✅ | vert, surtitre « HALL DES GUICHETS · QUAI 2 », puce ACTE III, trace « 6 personnes de Tycho… » |
+| J30 figure finale Dora / Mira (SC-82) | ✅ | ⚠️ | Dora (répondant HG-1404-AGNT, registre glissé) et Mira (visière, ‹[mot inconnu]› sans *lumika*) ; au Deck « PASSAGÈRE · D. LINDQVIST- » tronqué contre « INTERCOM » (QA-040, `QA-040-deck.png`) |
+| Qualité Basse + FX 0 + texte 1,5 (Deck) : J24, J29 | ❌ | ❌ | barre du haut ✅ (QA-031 tient : QUOTA SUSPENDU et CRÉDITS visibles) ; **Main courante illisible** (entrée réduite à une bande sous la date, `QA-032-deck.png`) ; soirée : 3 rations sur 4, sous-titres des postes qui débordent de leur ligne |
+
+### 13.4 Robustesse
+
+| Scénario | Résultat | Preuve |
+|---|---|---|
+| Sauvegarde relue à chaque soir J20–J29 (3 sauvegardes v4 réelles → v5) | ✅ | `test_real_v4_j20_saves_roundtrip_every_act_three_evening` ; ≈ 85 « Quitter → Continuer » réels aux soirs J20–J29 |
+| Processus tué en plein shift (redémarrage du conteneur, arrêts de tronçon) puis reprise de la sauvegarde | ✅ reprise au briefing du jour non validé, aucune perte au-delà | 13 tronçons |
+| Déposition : choix changé 4 fois puis VALIDER ET DORMIR ×4 | ✅ une validation, dernier choix retenu | `test_deposition_spam_validates_once_with_last_choice` |
+| Carte de fin d'acte : passe seule ≈ 3 s, ou clic / Entrée ; `--hold-card` | ✅ | captures |
+| `reduce_motion` : carte, CHAPITRE III, verdict de la Déposition | ✅ apparition immédiate | captures |
+| Qualité Basse + FX 0 + texte 1,5 | ❌ Main courante, rations (QA-032, QA-034) | captures `low_*` |
+| Pause / « Quitter » au milieu d'une soirée d'Enquête | ✅ (au correctif) vraie scène, Q1 du J22 répondue, pause, QUITTER confirmé : nuit non validée, aucune sauvegarde écrite ; « Continuer » relit le matin du J22, le jour est rejoué et Q1 reposée | `test_pause_quit_during_the_inquiry_replays_the_day` |
+| Avance de l'Arbitre (`d21_loan`, solde < 40 ₵ au J21) | ✅ (au correctif) vraie scène : offre présentée, « Accepter » → `arbitre_loan`, nuit validée ; remboursement obligatoire de 35 ₵ au soir du J27 | `test_arbitre_loan_is_offered_and_repaid_in_the_real_scene` |
+| Sortie après un écran de fin | ⚠️ fuites (QA-039) | logs |
+
+### 13.5 i18n
+
+| Contrôle | Résultat |
+|---|---|
+| `fr.csv` | 2 760 clés (+835 depuis l'Acte II), aucun doublon, aucune valeur vide |
+| Clés manquantes | **aucune** : briefings, soirées (titres, textes, options, résultats) J20–J30 × 5 climats × 3 foyers, épilogues F1–F10 × 5 climats (`test_act_three_texts_have_no_raw_key`) ; aucune clé brute dans les 10 épilogues des campagnes réelles |
+| Orphelines | non mesurables statiquement (clés composées : `evt_<événement>_opt_<option>`, `end3_<fin>_l<n>`…) ; rien d'anormal vu à l'écran |
+| Sous-titres > 90 car. (SC-51 → SC-82) | **aucun** ; aucun message de soirée / briefing > 220 |
+| Tessar entre ‹…› | ✅ chevrons équilibrés dans les 656 clés de l'Acte III ; aucun mot tessar (*tal ka*, *nesu*, *vanu*, *vesh*, *lumika*) hors chevrons |
+| Spoilers | aucun : CHAPITRE III ne rappelle que le 1ᵉʳ avril et le climat ; « la dernière navette » n'est annoncée (J28) que comme un fait public ; la figure finale n'est nommée nulle part avant le J30 |
+| Libellés de gain | « Accuser (+10 ₵) » affiche aussi « +10 ₵ » à droite : convention héritée de l'Acte I (`evt_d08_neighbor_opt_denounce`…), signalée sans numéro |
+
+### 13.6 Tests ajoutés (`tests/integration/test_qa_act3.gd`)
+
+| Test | État |
+|---|---|
+| `test_real_v4_j20_saves_roundtrip_every_act_three_evening` | ✅ passe |
+| `test_act_three_texts_have_no_raw_key` | ✅ passe |
+| `test_act_three_subtitles_fit_and_tessar_is_bracketed` | ✅ passe |
+| `test_deposition_spam_validates_once_with_last_choice` | ✅ passe |
+| `test_rulebook_shows_enough_rules_with_sixteen_tabs` | ✅ passe (QA-032 corrigé) |
+| `test_result_banner_does_not_cover_documents` | ✅ passe (QA-033 corrigé) |
+| `test_evening_rations_are_all_visible_at_1080p` | ✅ passe (QA-034 corrigé) |
+| `test_sim_profiles_choose_an_available_deposition_option` | ✅ passe (QA-036 corrigé) |
+| `test_pause_quit_during_the_inquiry_replays_the_day` (ajouté au correctif) | ✅ passe |
+| `test_arbitre_loan_is_offered_and_repaid_in_the_real_scene` (ajouté au correctif) | ✅ passe |
+
+Les tests `pending` mesurent le défaut et redeviennent des assertions dès qu'il disparaît.
+
+### 13.7 Liste des bugs (Acte III)
+
+Statut : 🔴 ouvert.
+
+| ID | Sév. | Titre | Agent propriétaire | Preuve |
+|---|---|---|---|---|
+| QA-032 | **Majeur** | ✅ Corrigé (commit à venir) — **Rulebook à 15–16 onglets (J24+) : liste rognée.** La rangée d'onglets (Règles … Main courante, Convocations) et le bloc DATE DU JOUR laissent ≈ 110 px à la liste en 1920×1080 : **2 règles visibles** sur ~30 (J26, J30), **une seule** entrée de Main courante ou de Convocations (5–6 au J26/J28), à faire défiler une à une ; au Deck l'unique entrée est coupée par « ONGLET n / 16 » ; avec le texte 1,5 la Main courante devient une bande illisible. Les règles nouvelles de l'Acte III se lisent dans ces listes. Repro : `--day=26 --screen=shift --rulebook-tab=rules` (ou `summons`, `ledger`). Pistes : onglets repliés en liste déroulante / deux niveaux (Règles · Bulletins), date du jour dans l'en-tête | UI/UX Expert (+ Design System) (`rulebook_panel.gd`) | `QA-032.png`, `QA-032-deck.png`, `test_rulebook_shows_enough_rules_with_sixteen_tabs` |
+| QA-033 | **Majeur** | ✅ Corrigé (commit à venir) — **Bandeau de résultat posé sur les documents.** Depuis que l'Acte III repasse à 2 documents à grande échelle (D-085), le bas des documents atteint le bandeau : MRZ et code-barres de la carte, et à l'échelle la ligne Répondant / Convocation du permis ; le bandeau CONCORDANT reste 1,2 s, **DISCORDANCE reste jusqu'à la comparaison suivante** et cache donc durablement la MRZ. Repro : `--day=24 --start-case=2 --rulebook-tab=ledger --inspect --qa-after-check=0.8` | UI/UX Expert (`workbench.gd` `show_banner`, `_plan_layout`) | `QA-033.png`, `test_result_banner_does_not_cover_documents` |
+| QA-034 | Mineur | ✅ Corrigé (commit à venir) — **Rations coupées en bas de la soirée** : foyer complet (vous + Ilan, Noa, Dora) + loyer, nourriture, chauffage, oxygène : la liste des dépenses défile dans un cadre trop court, « Ration d'air · Dora » est coupée au bord sans indice de défilement (barre de 2 px), 1080p (J22, J29 — tous les soirs à 4 rations) ; Deck texte 1,5 : 3 rations sur 4 et sous-titres de postes qui débordent. Un joueur peut ne pas voir qu'il ne paie pas l'air de Dora | UI/UX Expert (`evening_screen.gd` `_budget` / `_rations_group`) | `QA-034.png`, `test_evening_rations_are_all_visible_at_1080p` |
+| QA-036 | Mineur | ✅ Corrigé (commit à venir) — choix des profils **par intention** : `EveningEvent.option_for_intent()` (l'option demandée, sinon la variante offerte au même libellé : `loyal` → `loyal_paid`, `pay` → `pay_denounced`, `keep` → `keep_broke`), `SimProfile.choices_for()` / `option_for()` utilisés par `BalanceSimulator` (coûts de postes compris), `qa_campaign` et `test_act3_campaign` ; `test_sim_profiles_choose_an_available_deposition_option` sans `pending` (`loyal`, `accusateur`, avec et sans `montclair_pliable`) ; vraie scène graine 3 `loyal` depuis la sauvegarde v4 : `d29_deposition: loyal_paid`, plus aucun « choix refusé ». Constat d'origine : **Profil `loyal` : option de Déposition absente** quand `montclair_pliable` (SC-70 approuvée) : l'option `loyal` est remplacée par `loyal_paid` (même libellé, +20 ₵), le profil demande `loyal`, le choix est refusé et la Déposition retombe sur « Se taire » (soupçon +1) — dans `balance_sim` comme dans `qa_campaign` (graine 3). Fausse les mesures F4 / F1 du profil loyal quand Montclair est passée | Gameplay Systems (`sim_profile.gd`, ou repli `loyal` → `loyal_paid` dans `balance_simulator.gd`) | `test_sim_profiles_choose_an_available_deposition_option`, log graine 3 |
+| QA-037 | Mineur | ✅ Corrigé (commit à venir) — `DayDef.anomaly_count_targets` (cible §2.1, scénarisés inclus, lue par `gen_stats`) et `anomaly_count_weights` **compensés** par jour (`build_data_act3.gd` `COUNT_WEIGHTS`) : J21 0/1 anomalie 47,8 / 37,7 % (cibles 48 / 37), J29 42,4 % et J30 36,8 % de cas propres (42 / 36), tous les jours J21–J30 à ±2 points (graine 7 : ±3) ; `EXPIRED_DOCUMENT` du J21 0,12 → 0,06 (18,1 → 12,4 % des anomalies ; `WANTED_PERSON` reste à 2 entrées imposées, avis du jour + SC-53) ; `SPONSOR_MISMATCH` / `SUSPENDED_CONTRACT` **conditionnels** relevés (0,6–1,5 / 0,3–0,8, J25–J27, J29) et visites familiales `TYC` 0,50 aux J25–J27 : R34 4,4 / 3,4 / 2,5 / 7,9 % des cas (J25/J26/J27/J29 ; 0,6 / 1,6 / 0,7 / 1,5 avant), R35 7,8 / 6,5 / 4,3 % (J25–J27 ; 3,7 / 1,3 / 0,6) ; au passage, `ForgedSummonsInjector` refuse un cas sans carte d'identité (invariant violé MISSING_DOCUMENT + FORGED_SUMMONS révélé par les nouveaux poids). `gen_stats` J1–J30 : invariants OK, 0 re-tirage ; `balance_sim` J1–J30 (8 préréglages + `accusateur`, 20 graines) dans ±5 points sauf `drift` 80 % (F6 60 → 75 %, voulu : ACT3 §6.6). Constat d'origine : **Générateur Acte III, écarts aux cibles** (`gen_stats`, 40 campagnes) : **J21 « respiration » plus dense que prévu** — 0 anomalie 41 % (cible 48 %), 1 anomalie 49,5 % (37 %), `WANTED_PERSON` 19 % et `EXPIRED_DOCUMENT` 18 % des anomalies (poids 4,7 / 9,4 %), DÉTENTION attendue 19 % des cas : c'est le 2ᵉ jour le plus raté du bot (51 %) ; **mécaniques nouvelles peu exercées après leur jour d'introduction** : R34 répondant 6,6 % des cas au J24 puis 0,6 % (J25) et 1,6 % (J26) pour 6–8 % de poids ; R35 lock-out 3,7 % au J25 (poids 11,8 %), ≈ 0 ensuite ; `UNREGISTERED_VESSEL` 0,2–1,5 % pour 15,7 % de poids (sauf J27 : 7,7 %). J29/J30 : 52–53 % de cas propres (cibles 42/36 %) | Gameplay Systems (`build_data_act3.gd`, injecteurs) + Game Designer | `gen_stats` |
+| QA-039 | Mineur | ✅ Corrigé (commit à venir) — cause : `AudioMixBarrier.quit_after_silence()` arrêtait les lecteurs mais laissait la scène vivante pendant l'attente (8 images + 250 ms) : la scène pouvait **relancer** un son (musique posée juste après l'apparition de l'écran de fin quand le bot le lit dans la même image, pas / annonces / barks du shift) → lecture active à la sortie. Désormais la scène courante est d'abord **déchargée** (`AudioDirector._exit_tree` : plus aucun son, lecteurs vidés, caches libérés), puis arrêt des lecteurs restants avant et juste avant `quit()` (appel unique). Vérifié : 3 campagnes réelles J20 → J30 depuis les sauvegardes v4 (`loyal` F7, `solidaire` F9, `luciole` F7 ; avant le correctif, `loyal` : `18 ObjectDB … / 10 resources …`), captures de l'écran de fin F7 / F2 / F9 et du J30 (figure finale) : 0 fuite. Constat d'origine : **Fuites à la sortie revenues** (QA-025) : `11 ObjectDB instances were leaked` + `8 resources still in use at exit` après l'écran de fin (F7 graine 3, F2 graines 7 et 42 : 3 campagnes sur 10) ; `7 … / 4 …` après une capture du J30 (figure finale). Aucun effet joueur, journal pollué | Audio Designer / Godot Architect (`AudioMixBarrier.quit_after_silence`, ressources de l'écran de fin / SC-82) | logs |
+| QA-035 | Cosmétique | ✅ Corrigé (commit à venir) — **Objets glissés de l'Acte III dessinés comme une carte de quai « Q6 »** : le dessin par défaut de `SlippedItemView` (branche `_`) sert pour OBJET (« Douze convocations vierges », SC-66), CONVOCATION (ENQ-0004, SC-76), REGISTRE (SC-82) | UI/UX Expert (`slipped_item_view.gd:265-273`) | `QA-035.png` |
+| QA-038 | Cosmétique | ✅ Corrigé (commit à venir) — **Carte d'identité seule sur le plan de travail** (J26, permis manquant) : le libellé « FIRMWARE NX » est replié **lettre par lettre** en colonne (repli de QA-029 dans une colonne trop étroite), la valeur glisse à côté du sceau | UI/UX Expert (`doc_field_view.gd`, `document_view.gd`) | `QA-032.png` (carte au centre) |
+| QA-040 | Cosmétique | ✅ Corrigé (commit à venir) — Deck : en-tête du panneau passager tronqué pour les noms composés (« PASSAGÈRE · D. LINDQVIST- » contre « INTERCOM ») | UI/UX Expert (`passenger_panel.gd`) | `QA-040-deck.png` |
+
+Total Acte III : **0 bloquant, 2 majeurs, 4 mineurs, 3 cosmétiques** (9 bugs, QA-032 à QA-040). Aucun bug de l'Acte II réapparu hors QA-025 (QA-039) ; QA-020 (plan de travail à 2–3 documents côte à côte), QA-031 (barre du haut en texte 1,5), QA-021/QA-023 tiennent ; suite verte.
+
+### 13.8 Difficulté observée (Game Designer)
+
+- **Le bot de la vraie scène (56–62 % de conformité cumulée depuis le J1) n'atteint le J30 qu'avec +3 000 ₵** (3/3 : F9, F7, F7, solde final 306–407 ₵) ; avec +1 500 ₵ (qui suffisaient au J20 à l'Acte II), **0/4** : F2 au soir du J24 (registre) et du J28 (×2), F3 au soir du J27. Les prélèvements emportent ≈ 30 % des crédits QA (J11 : 369 ₵ sur 1 270 ; J17 : 126 ; J25 : 20–56) et l'Acte III coûte au bot ≈ 25–40 ₵ par jour (charges ≈ 52 ₵ + oxygène 15 ₵ les jours pairs, net de shift moyen ≈ +5 à +15 ₵).
+- **Depuis une vraie sauvegarde du J20 (80 % de conformité)** : 2/3 atteignent le J30 (F7, 90–121 ₵) ; la 3ᵉ (grève, 592 ₵ au J20) finit F2 au soir du J29 après un J22 à 3/16.
+- **Précision du bot par jour (10 campagnes)** : J20 60 %, **J21 51 %**, J22 53 %, J23 56 %, J24 55 %, J25 64 %, J26 61 %, **J27 48 %** (net −22 ₵ en moyenne), J28 58 %, J29 71 %, J30 77 %. Le J21 de « respiration » est l'un des plus durs (QA-037) ; le J27 (« respiration », quota rétabli à 4) est le plus coûteux.
+- **Simulation** (erreurs au hasard) : à 65 %, **aucune** campagne complète n'atteint le J21 (F2/F3 vers J10–J14) ; à 80 %, 75–100 % atteignent le J30 mais **la Déposition arrête 10–25 % des profils** (F1 au J29 : `default` 15 %, `luciole` 20 %, `temoin` 25 %, `passeur` 25 %) ; à 95 %, chaque profil obtient sa fin (F4, F5, F8, F9, F10 85 %, F6 85 %).
+- **Lecture** : l'Acte III tient la cible « dur mais pas un mur » pour un joueur ≥ 80 % (D-089), mais il **ajoute peu de respiration réelle** : J21 et J27 sont plus durs que les jours à règle nouvelle pour un joueur qui ne lit pas les onglets. Recommandé (Game Designer) : ramener le J21 à sa cible (moins d'avis de recherche / d'expirés, QA-037) ; vérifier en playtest humain que la Déposition à 7 (D-094) n'arrête pas un quart des joueurs prudents qui « se taisent » ; avec QA-032 corrigé avant tout playtest J24–J28 (Main courante et Convocations lisibles).
+
+### 13.9 Perf indicative
+
+`tools/qa_perf.gd` sous xvfb (llvmpipe, machine non chargée), graine 3, 1920×1080.
+
+| Scène | Appels de dessin | Primitives | Image moyenne / p95 (llvmpipe) |
+|---|---|---|---|
+| J7, 1ᵉʳ passager (référence Acte I) | **325** | 50 000 | 253 / 285 ms |
+| **J24**, 3ᵉ passager (répondant, 2 documents) | **302** | 51 200 | 254 / 282 ms |
+| **J30**, figure finale (Dora, registre glissé) | **323** | 48 600 | 253 / 270 ms |
+
+Lecture : le Retour aux quais (D-085) **ramène l'Acte III sous l'Acte I** (−100 appels par rapport au J20 de l'Acte II, 408) ; la figure finale et les accessoires de SC-81/82 ne coûtent rien (pièces fusionnées).
+
+### 13.10 Recommandations priorisées
+
+1. **QA-032** (Rulebook à 16 onglets) avant tout playtest J24–J30 : les mécaniques propres à l'acte (Main courante, Convocations, règles R32–R37) se lisent dans une liste de 1–2 lignes.
+2. **QA-033** : bandeau de résultat hors des documents (réserver sa hauteur dans `_plan_layout`, ou le poser en haut du plan de travail).
+3. **QA-034** : soirée — cadre des dépenses à hauteur du contenu (ou rations repliées), indice de défilement visible.
+4. **Difficulté (§13.8)** : J21 à sa cible (QA-037), décider si l'Acte III doit être atteignable pour un joueur ~60 % sans crédits ; playtest humain J21–J24 et Déposition (D-094).
+5. QA-036 (profil `loyal` → `loyal_paid`) puis relancer `balance_sim` ; QA-037 (R34/R35 exercées après leur jour d'introduction).
+6. Journaux propres : QA-039.
+7. Cosmétique : QA-035, QA-038, QA-040.
+8. QA (suite) : pause / « Quitter » en pleine Enquête dans la vraie scène, avance de l'Arbitre (`d21_loan`) en vraie scène, F1 (Déposition), F10 et F6 du J27 jouées à la main, perf sur GPU / Steam Deck réel.
+
+### 13.11 Rejouer la passe Acte III
+
+```bash
+godot --headless --import
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json -gexit     # 581 tests, 4 pending QA-032…036
+# Reprise d'une sauvegarde v4 réelle du J20 (migration v4 → v5, carte de fin d'acte, J20 → J30)
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --autoplay \
+    --qa-load=$PWD/tests/fixtures/qa_save_v4_j20_solidaire.json --qa-profile=solidaire --qa-speed=10 --qa-reload
+# Campagne J1–J30 (≈ 20 min ; en tronçons : `timeout 540`, puis --qa-load=<copie de user://saves/slot_0.json>)
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --autoplay \
+    --qa-seed=23 --qa-profile=solidaire --qa-speed=10 --qa-credits=3000 --qa-reload
+# Fins F1–F10 simulées
+godot --headless --script res://tools/balance_sim.gd -- --seeds=20 --seed=1 --profiles=0.65,0.8,0.95 \
+    --presets=default,loyal,luciole,passeur,temoin,solidaire,mercenary3,drift
+# Captures (QA-033 : bandeau juste après la comparaison ; QA-032 : onglet Règles du J26)
+XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
+    --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1920x1080 --qa-wait=30 \
+    --qa-after-check=0.8 --qa-out=/tmp/j24.png --seed=3 --day=24 --screen=shift --rulebook-tab=ledger --inspect \
+    --start-case=2 --flags=act2_started,act3_started --reduce-motion
+```

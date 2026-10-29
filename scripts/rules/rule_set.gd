@@ -12,6 +12,13 @@ extends Resource
 @export var new_rule_ids: Array[StringName] = []
 ## Documents exigés (dérivé des `RequireDocumentRule`, vérifié par les tests de données).
 @export var required_document_ids: Array[StringName] = []
+## Acte III (M1 « Retour aux quais », B37) : règles retirées ce jour, affichées
+## barrées au Rulebook (jamais évaluées) ; motif par règle (`rb_retired_*`).
+@export var retired_rules: Array[Rule] = []
+@export var retired_note_keys: Dictionary[StringName, String] = {}
+## Acte III : note du jour sous une règle active (`r_air_quota` →
+## `rb_suspended_quota`).
+@export var rule_note_keys: Dictionary[StringName, String] = {}
 
 
 func get_rule(rule_id: StringName) -> Rule:
@@ -41,6 +48,22 @@ func build_rulebook() -> Array[RulebookEntry]:
 			continue
 		var entry: RulebookEntry = rule.get_rulebook_entry()
 		entry.is_new = new_rule_ids.has(rule.id)
+		entry.note_key = rule_note_keys.get(rule.id, "")
+		entries.append(entry)
+	return entries
+
+
+## Acte III (M1, I21) : lignes barrées des règles retirées ce jour (motif dans
+## `note_key`, `retired` vrai). Séparées de `build_rulebook()` : l'UI qui ne
+## les connaît pas n'affiche pas une règle retirée comme active.
+func build_retired_entries() -> Array[RulebookEntry]:
+	var entries: Array[RulebookEntry] = []
+	for rule: Rule in retired_rules:
+		if rule == null:
+			continue
+		var entry: RulebookEntry = rule.get_rulebook_entry()
+		entry.retired = true
+		entry.note_key = retired_note_keys.get(rule.id, "")
 		entries.append(entry)
 	return entries
 

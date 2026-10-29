@@ -4,6 +4,9 @@
 ## (`--qa-size=1280x800` : Steam Deck), attend `--qa-wait` secondes de temps
 ## réel puis enregistre la dernière image dans `--qa-out=/chemin.png` et quitte.
 ## `--qa-quota=n/max` : publie un compteur QUOTA (capture de l'état « ATTEINT »).
+## `--qa-after-check=s` : capture `s` secondes après la première comparaison
+## (`discrepancy_checked`) — un résultat CONCORDANT ne reste affiché qu'un
+## instant (M9 : Répondant ↔ Main courante) ; `--qa-wait` reste le délai maximal.
 ## Lancé par `tools/qa_boot.gd` (autoloads requis), sous xvfb :
 ##   xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
 ##       --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1280x800 \
@@ -17,6 +20,7 @@ var _size: Vector2i = Vector2i(1920, 1080)
 var _wait: float = 20.0
 var _out: String = ""
 var _quota: PackedInt32Array = []
+var _after_check: float = -1.0
 var _t: float = 0.0
 var _done: bool = false
 
@@ -36,8 +40,16 @@ func _ready() -> void:
 		elif arg.begins_with("--qa-quota="):
 			var q: PackedStringArray = arg.trim_prefix("--qa-quota=").split("/")
 			_quota = PackedInt32Array([q[0].to_int(), q[1].to_int()])
+		elif arg.begins_with("--qa-after-check="):
+			_after_check = arg.trim_prefix("--qa-after-check=").to_float()
+	if _after_check >= 0.0:
+		EventBus.discrepancy_checked.connect(_on_checked, CONNECT_ONE_SHOT)
 	get_window().size = _size
 	get_tree().change_scene_to_file(_scene)
+
+
+func _on_checked(_result: Discrepancy) -> void:
+	_wait = minf(_wait, _t + _after_check)
 
 
 func _process(delta: float) -> void:

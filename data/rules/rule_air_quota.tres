@@ -9,3 +9,4 @@ title_key = "r_air_quota_title"
 rulebook_text_key = "r_air_quota_text"
 category = 4
 severity = 1
+summons_exempt = true

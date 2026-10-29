@@ -20,6 +20,13 @@
 ## clic : `confirm_suggestion`), répliques lues par `Case.scripted_key`
 ## (variantes conditionnelles), étiquettes d'ambiance des accessoires
 ## (`companion_child`, `prop_*`) et figure finale du J20 (SC-50).
+## M9 (Acte III, ARCHITECTURE §7.3) : Main courante (`ledger_changed`) et
+## Convocations (`summons_published`) au Rulebook, sélectionnables (paires
+## Répondant ↔ Main courante, Convocation ↔ onglet) ; règles retirées barrées
+## et quota « SUSPENDU » (barre d'état, R23) ; résultats PROROGÉ / RÉINTÉGRÉ
+## au comparateur (puce sur le document prorogé) ; sujets `about_sponsor`,
+## `about_summons`, `about_lockout` ; accessoires de l'Acte III et figure finale
+## du J30 (SC-82 : Dora, voix de la famille, ou Mira).
 class_name ComparisonUI
 extends Control
 
@@ -60,9 +67,17 @@ const PROP_TAGS: Dictionary[StringName, String] = {
 	&"prop_cat_crate": "tag_prop_cat_crate",
 	&"prop_drone": "tag_prop_drone",
 	&"prop_shunt_led": "tag_prop_shunt_led",
+	# Acte III.
+	&"prop_bandaged_hands": "tag_prop_bandaged_hands",
+	&"prop_certificate_crate": "tag_prop_certificate_crate",
+	&"prop_armband_pocket": "tag_prop_armband_pocket",
+	&"prop_school_satchel": "tag_prop_school_satchel",
+	&"sc81b": "tag_sc81b",
 }
 ## Acte II : figure finale du J20 (SC-50, D-079) — dialogue → voix (couleur).
-const FINAL_FIGURES: Dictionary[StringName, String] = {&"sc50_ilan": "ilan", &"sc50_mira": "mira"}
+## Acte III : figure finale du J30 (SC-82, D-088) — Dora (famille) ou Mira.
+const FINAL_FIGURES: Dictionary[StringName, String] = {&"sc50_ilan": "ilan", &"sc50_mira": "mira", &"sc82_dora": "dora",
+	&"sc82_mira": "mira"}
 ## Grève du J20 : voile de la vue 3D et luminosité des panneaux.
 const LIGHTS_OUT_BAND: float = 0.82
 const LIGHTS_OUT_PANELS: float = 0.38
@@ -103,6 +118,11 @@ var announcement_text: String = ""
 var quota_used: int = 0
 var quota_max: int = 0
 var revocations: Array[RevokedEntry] = []
+## Acte III : Main courante du shift et convocations du jour.
+var ledger: Array[LedgerEntry] = []
+var summons: Array[SummonsEntry] = []
+## Acte III : quota suspendu ce jour (R23 en vigueur, maximum levé).
+var quota_suspended: bool = false
 ## Acte II : liens suggérés par le scanner partiel pour le cas courant
 ## (non encore confirmés) et leur source (`acv`, `luciole`).
 var suggestions: Array[Discrepancy] = []
@@ -404,6 +424,8 @@ func _connect_bus() -> void:
 	EventBus.quota_changed.connect(_on_quota_changed)
 	EventBus.revocations_published.connect(_on_revocations_published)
 	EventBus.scanner_suggested.connect(_on_scanner_suggested)
+	EventBus.ledger_changed.connect(_on_ledger_changed)
+	EventBus.summons_published.connect(_on_summons_published)
 
 
 # ---------------------------------------------------------------------------
@@ -419,8 +441,17 @@ func _on_day_started(p_day: DayDef, p_rulebook: Array[RulebookEntry]) -> void:
 	detain_available = p_day.detain_enabled
 	wanted_notices.clear()
 	revocations.clear()
+	ledger.clear()
+	summons.clear()
 	rulebook.quota_max = p_day.air_quota
+	# Acte III : R23 en vigueur sans maximum (Enquête J21–J26), ou levée par le
+	# climat (`quota_suspended_if`, réévalué par `quota_changed`).
+	quota_suspended = has_quota_rule() and p_day.air_quota <= 0
+	rulebook.quota_suspended = quota_suspended
+	rulebook.reduce_motion = reduce_motion
 	rulebook.set_rulebook(rulebook_entries, p_day.game_date, p_day.day_number, p_day.rulebook_tabs)
+	rulebook.set_retired(p_day.rule_set.build_retired_entries() if p_day.rule_set != null else [] as Array[RulebookEntry])
+	top_bar.set_quota_suspended(quota_suspended)
 	top_bar.set_day(p_day.day_number, p_day.game_date)
 	top_bar.set_clock(remaining_sec, p_day.duration_sec)
 	top_bar.set_processed(processed)
@@ -638,6 +669,13 @@ func set_lights_out(duration: float = DS.DUR_DRAMATIC) -> void:
 func _on_quota_changed(used: int, maximum: int) -> void:
 	quota_used = used
 	quota_max = maximum
+	# Acte III : quota du jour levé par le climat (R23 affichée, maximum 0).
+	var suspended: bool = maximum <= 0 and has_quota_rule() and day != null and (day.air_quota > 0 or quota_suspended)
+	if suspended != quota_suspended:
+		quota_suspended = suspended
+		rulebook.quota_suspended = suspended
+		rulebook.refresh_cards()
+	top_bar.set_quota_suspended(quota_suspended)
 	top_bar.set_quota(used, maximum)
 	if rulebook.quota_max != maximum and maximum > 0:
 		rulebook.quota_max = maximum
@@ -647,6 +685,41 @@ func _on_quota_changed(used: int, maximum: int) -> void:
 func _on_revocations_published(entries: Array[RevokedEntry]) -> void:
 	revocations = entries.duplicate()
 	rulebook.set_revoked(revocations)
+
+
+## Vrai si R23 (quota respiratoire) est au Rulebook du jour.
+func has_quota_rule() -> bool:
+	for entry: RulebookEntry in rulebook_entries:
+		if entry.rule_id == RulebookPanel.RULE_QUOTA:
+			return true
+	return false
+
+
+## Acte III : Main courante du shift (liste qui s'allonge, R34).
+func _on_ledger_changed(entries: Array[LedgerEntry]) -> void:
+	ledger = entries.duplicate()
+	rulebook.reduce_motion = reduce_motion
+	rulebook.set_ledger(ledger)
+
+
+## Acte III : convocations du jour (R36).
+func _on_summons_published(entries: Array[SummonsEntry]) -> void:
+	summons = entries.duplicate()
+	rulebook.set_summons(summons)
+
+
+func find_ledger_entry(entry_id: StringName) -> LedgerEntry:
+	for entry: LedgerEntry in ledger:
+		if entry.id == entry_id:
+			return entry
+	return null
+
+
+func find_summons(entry_id: StringName) -> SummonsEntry:
+	for entry: SummonsEntry in summons:
+		if entry.id == entry_id:
+			return entry
+	return null
 
 
 ## Révocation par identifiant (null si inconnue).
@@ -840,7 +913,7 @@ static func final_figure_color(case: Case) -> Color:
 	if case != null:
 		for tag: StringName in FINAL_FIGURES:
 			if case.dialogue_tags.has(tag):
-				return DS.TEXT_SECONDARY if FINAL_FIGURES[tag] == "ilan" else DS.ACCENT_MAGENTA
+				return DS.ACCENT_MAGENTA if FINAL_FIGURES[tag] == "mira" else DS.TEXT_SECONDARY
 	return Color.TRANSPARENT
 
 
@@ -894,10 +967,18 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 			var topic: StringName = InterrogationTopics.topic_for(result)
 			if topic != &"" and not unlocked_topics.has(topic) and not asked_topics.has(topic):
 				unlocked_topics.append(topic)
+			# S'efface comme un toast (DS `TOAST_HOLD`) : les marques numérotées
+			# restent sur les champs (QA-033).
 			workbench.show_banner(Workbench.BannerKind.DISCORDANT,
-					UiText.tf("res_discordance", [number], "DISCORDANCE %d"), describe(result))
+					UiText.tf("res_discordance", [number], "DISCORDANCE %d"), describe(result), DS.TOAST_HOLD)
 		Discrepancy.Result.CONCORDANT:
 			links.resolve(result, 0)
+			if result.reason_key == Discrepancy.REASON_PROROGATED:
+				# Acte III (R32) : la date du document est prorogée — puce sur le document.
+				for ref: FieldRef in [result.a, result.b]:
+					var prorogated: DocumentView = workbench.get_view(ref.document_id) if ref.is_document_field() else null
+					if prorogated != null:
+						prorogated.set_prorogated()
 			for item: InspectableItem in [item_a, item_b]:
 				if item != null:
 					item.set_concordant(true)
@@ -1132,6 +1213,8 @@ func pick(ref: FieldRef) -> InspectionSelection.Action:
 				if item != null:
 					_pulse_item(item)
 	links.pending_a = selection.a
+	if action != InspectionSelection.Action.IGNORED and (ref.is_ledger() or ref.is_summons() or ref.is_revoked()):
+		rulebook.scroll_to(ref)
 	_refresh_face()
 	return action
 
@@ -1433,6 +1516,33 @@ func _status_text() -> String:
 
 
 func _describe_concordant(result: Discrepancy) -> String:
+	match result.reason_key:
+		Discrepancy.REASON_PROROGATED:
+			# « PROROGÉ (R32) — Expiré le 28.03.2187 : prorogé jusqu'au 10.04 (R32). »
+			var dated: FieldRef = result.b if result.a.is_today() else result.a
+			var value: Variant = current_case.get_value(dated)
+			var expiry_text: String = "—"
+			if value is int:
+				var expiry_days: int = value
+				expiry_text = UiText.date(expiry_days)
+			return UiText.tf("conc_prorogated_detail", [UiText.t("cmp_prorogated", "PROROGÉ (R32)"), expiry_text],
+					"%s — expiré le %s : prorogé jusqu'au 10.04.")
+		Discrepancy.REASON_REINSTATED:
+			var revoked_ref: FieldRef = result.a if result.a.is_revoked() else result.b
+			var entry: RevokedEntry = find_revocation(revoked_ref.field_id)
+			if entry != null and entry.reinstated_on > 0:
+				return UiText.tf("conc_reinstated_detail", [UiText.t("cmp_reinstated", "RÉINTÉGRÉ (R33)"), entry.citizen_id,
+						UiText.date(entry.reinstated_on)], "%s — N° %s réintégré le %s : la révocation est levée.")
+			return UiText.t(result.reason_key, result.reason_key)
+		Discrepancy.REASON_SPONSOR_MATCH:
+			var ledger_ref: FieldRef = result.a if result.a.is_ledger() else result.b
+			var sponsor: LedgerEntry = find_ledger_entry(ledger_ref.field_id)
+			if sponsor != null:
+				return UiText.tf("conc_sponsor_detail", [sponsor.citizen_id, sponsor.full_name().strip_edges().to_upper()],
+						"Répondant %s (%s) admis aujourd'hui : inscrit à la main courante.")
+			return UiText.t(result.reason_key, result.reason_key)
+		Discrepancy.REASON_SUMMONS_MATCH:
+			return UiText.t(result.reason_key, result.reason_key)
 	if result.a.is_today() or result.b.is_today():
 		var dated: FieldRef = result.b if result.a.is_today() else result.a
 		var value: Variant = current_case.get_value(dated)
@@ -1548,7 +1658,7 @@ func _find_item(ref: FieldRef) -> InspectableItem:
 		return null
 	if ref.is_quota_counter():
 		return top_bar.quota_view
-	if ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted() or ref.is_symbol() or ref.is_revoked():
+	if is_rulebook_ref(ref):
 		return rulebook.find_item(ref, true)
 	return workbench.find_item(ref)
 
@@ -1563,10 +1673,16 @@ func _rect_of(ref: FieldRef) -> Rect2:
 	if item == null or not item.is_visible_in_tree():
 		return Rect2()
 	var rect: Rect2 = item.get_global_rect()
-	if (ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted() or ref.is_symbol() or ref.is_revoked()) \
-			and rulebook.collapsed:
+	if is_rulebook_ref(ref) and rulebook.collapsed:
 		return Rect2()
 	return rect
+
+
+## Vrai pour une cible portée par le Rulebook (règle, date, avis, symbole,
+## révocation, Main courante, convocation).
+static func is_rulebook_ref(ref: FieldRef) -> bool:
+	return ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted() or ref.is_symbol() or ref.is_revoked() \
+			or ref.is_ledger() or ref.is_summons()
 
 
 func _on_item_picked(item: InspectableItem) -> void:
@@ -1689,6 +1805,12 @@ func describe(result: Discrepancy) -> String:
 			if entry != null:
 				return UiText.tf("disc_revoked_detail", [entry.citizen_id, entry.full_name().to_upper()],
 						"N° ID %s révoqué — %s n'est plus citoyen·ne.")
+		Discrepancy.REASON_SUMMONS_NAME:
+			var summons_ref: FieldRef = result.a if result.a.is_summons() else result.b
+			var called: SummonsEntry = find_summons(summons_ref.field_id) if summons_ref != null else null
+			if called != null:
+				return UiText.tf("disc_summons_name_detail", [called.number, called.full_name().strip_edges().to_upper()],
+						"Convocation %s au nom de %s : ce n'est pas le porteur.")
 	return UiText.t(result.reason_key, result.reason_key)
 
 

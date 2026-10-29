@@ -9,6 +9,11 @@
 ## Acte II : document **d'un tiers** (`DocumentInstance.third_party`, SC-27)
 ## signalé par une puce « TIERS » (jamais comparé aux papiers du porteur) ;
 ## document sans sceau (ticket de file) : pas de sceau dessiné.
+## Acte III (ARCHITECTURE §7.3) : lignes optionnelles du permis (Répondant,
+## Convocation) seules sur leur ligne en bas, valeurs mono, absentes si vides ;
+## puce « RETIRÉ » sur un document repris par les quais (`retired`, SC-58 :
+## jamais contrôlé) ; puce « PROROGÉ (R32) » posée par le comparateur
+## (`set_prorogated`) quand la date du document est couverte par la prorogation.
 class_name DocumentView
 extends PanelContainer
 
@@ -29,7 +34,7 @@ const COMPACT_KINDS: Array[FieldDef.FieldKind] = [
 	FieldDef.FieldKind.ID_CODE,
 ]
 ## Champs texte longs, toujours seuls sur leur ligne.
-const WIDE_FIELD_IDS: Array[StringName] = [&"employer", &"origin_sector", &"mrz"]
+const WIDE_FIELD_IDS: Array[StringName] = [&"employer", &"origin_sector", &"mrz", &"sponsor", &"summons"]
 const MRZ_FIELD_ID: StringName = &"mrz"
 const SERIAL_PATH: StringName = &"document.serial"
 ## Champ renommé « TITULAIRE » sur un document d'un tiers (QA-028).
@@ -45,6 +50,9 @@ var fields: Array[DocFieldView] = []
 var portrait_field: DocFieldView = null
 ## M7 : marques au coin (luciole), sélectionnables en Mode Inspection (§4.9).
 var mark_items: Array[DocMarkView] = []
+## Acte III : puce « PROROGÉ (R32) » (null tant que le comparateur ne l'a pas posée).
+var prorogated_chip: PanelContainer = null
+var _titles: VBoxContainer = null
 ## Zoom courant (1 = lecture normale, `DS.DOC_ZOOM` = loupe).
 var zoom: float = 1.0
 var inspection_active: bool = false
@@ -103,6 +111,9 @@ func build(p_instance: DocumentInstance, portrait_provider: Callable = Callable(
 			portrait_def = field
 		elif field.id == MRZ_FIELD_ID:
 			mrz_def = field
+		elif field.optional and str(instance.get_value(field.id) if instance.get_value(field.id) != null else "").is_empty():
+			# Acte III (B39) : ligne optionnelle du permis absente (Répondant, Convocation).
+			continue
 		else:
 			body_fields.append(field)
 			has_serial_field = has_serial_field or field.truth_path == SERIAL_PATH
@@ -140,6 +151,17 @@ func has_luciole_mark() -> bool:
 ## Coin bas-droit, au-dessus du code-barres (repère local du document).
 func luciole_mark_position() -> Vector2:
 	return Vector2(size.x - DS.SPACE_5 - MARK_SIZE_PX, size.y - DS.SPACE_8)
+
+
+## Acte III (R32) : la date de ce document est prorogée (comparateur) — puce
+## « PROROGÉ (R32) » cyan sous le titre, posée une fois.
+func set_prorogated() -> void:
+	if prorogated_chip != null or _titles == null:
+		return
+	prorogated_chip = ScreenBase.chip(UiText.t("cmp_prorogated", "PROROGÉ (R32)"), UiIcon.Kind.CHECK, DS.ACCENT_CYAN)
+	prorogated_chip.name = "Prorogated"
+	prorogated_chip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_titles.add_child(prorogated_chip)
 
 
 func get_document_id() -> StringName:
@@ -248,6 +270,14 @@ func _build_header(def: DocumentTypeDef, show_serial: bool) -> Control:
 		third.name = "ThirdParty"
 		third.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		titles.add_child(third)
+	if instance.retired:
+		# Acte III (M1, SC-58) : repris par les quais, plus contrôlé au guichet.
+		var retired: PanelContainer = ScreenBase.chip(UiText.t("doc_retired", "RETIRÉ · NON CONTRÔLÉ"), UiIcon.Kind.STRIKE,
+				DS.TEXT_SECONDARY)
+		retired.name = "Retired"
+		retired.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		titles.add_child(retired)
+	_titles = titles
 	var side: VBoxContainer = VBoxContainer.new()
 	side.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	side.alignment = BoxContainer.ALIGNMENT_CENTER

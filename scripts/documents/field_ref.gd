@@ -30,6 +30,11 @@ const REVOKED_DOCUMENT_ID: StringName = &"__revoked__"
 ## Acte II — compteur QUOTA de la barre d'état (R23) : `(__counter__, quota)`.
 const COUNTER_DOCUMENT_ID: StringName = &"__counter__"
 const QUOTA_FIELD_ID: StringName = &"quota"
+## Acte III — onglet « Main courante » (R34, répondants admis aujourd'hui) :
+## `(__ledger__, <entry_id>)`.
+const LEDGER_DOCUMENT_ID: StringName = &"__ledger__"
+## Acte III — onglet « Convocations » de l'Enquête (R36) : `(__summons__, <entry_id>)`.
+const SUMMONS_DOCUMENT_ID: StringName = &"__summons__"
 
 var document_id: StringName = &""
 var field_id: StringName = &""
@@ -77,6 +82,24 @@ static func quota_counter() -> FieldRef:
 	return FieldRef.new(COUNTER_DOCUMENT_ID, QUOTA_FIELD_ID)
 
 
+## Acte III — entrée de la Main courante (R34).
+static func ledger(entry_id: StringName) -> FieldRef:
+	return FieldRef.new(LEDGER_DOCUMENT_ID, entry_id)
+
+
+## Acte III — entrée de l'onglet Convocations (R36).
+static func summons(entry_id: StringName) -> FieldRef:
+	return FieldRef.new(SUMMONS_DOCUMENT_ID, entry_id)
+
+
+func is_ledger() -> bool:
+	return document_id == LEDGER_DOCUMENT_ID
+
+
+func is_summons() -> bool:
+	return document_id == SUMMONS_DOCUMENT_ID
+
+
 func is_revoked() -> bool:
 	return document_id == REVOKED_DOCUMENT_ID
 
@@ -119,7 +142,8 @@ func is_rule() -> bool:
 func is_document_field() -> bool:
 	return document_id != PASSENGER_DOCUMENT_ID and document_id != RULEBOOK_DOCUMENT_ID \
 			and document_id != WANTED_DOCUMENT_ID and document_id != REVOKED_DOCUMENT_ID \
-			and document_id != COUNTER_DOCUMENT_ID and document_id != SYMBOLS_DOCUMENT_ID and document_id != &""
+			and document_id != COUNTER_DOCUMENT_ID and document_id != SYMBOLS_DOCUMENT_ID \
+			and document_id != LEDGER_DOCUMENT_ID and document_id != SUMMONS_DOCUMENT_ID and document_id != &""
 
 
 func equals(other: FieldRef) -> bool:

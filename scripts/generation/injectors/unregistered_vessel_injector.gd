@@ -31,12 +31,12 @@ func inject(state: InjectionState) -> Anomaly:
 		if vessel.is_empty():
 			var pool: PackedStringArray = []
 			for name: String in UNREGISTERED:
-				if not drift.is_registered(name):
+				if not drift.is_registered(name, state.ctx.today):
 					pool.append(name)
 			if pool.is_empty():
 				return null
 			vessel = pool[state.rng.randi_range(0, pool.size() - 1)]
-		if drift.is_registered(vessel):
+		if drift.is_registered(vessel, state.ctx.today):
 			return null
 		pass_doc.set_value(field_id, vessel.to_upper())
 		state.mark(drift.document_id, field_id)

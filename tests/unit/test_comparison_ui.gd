@@ -49,8 +49,13 @@ func test_document_view_builds_every_document_type() -> void:
 		var view: DocumentView = DocumentView.create(doc)
 		add_child_autofree(view)
 		var items: Array[InspectableItem] = view.get_items()
-		assert_eq(items.size(), def.fields.size(), "%s : un élément par champ" % document_id)
+		# Acte III : un champ facultatif vide (Répondant, Convocation) n'est pas affiché.
+		var shown_fields: Array[FieldDef] = []
 		for field: FieldDef in def.fields:
+			if not (field.optional and str(doc.get_value(field.id) if doc.get_value(field.id) != null else "").is_empty()):
+				shown_fields.append(field)
+		assert_eq(items.size(), shown_fields.size(), "%s : un élément par champ" % document_id)
+		for field: FieldDef in shown_fields:
 			var item: InspectableItem = view.find_item(FieldRef.new(document_id, field.id))
 			assert_not_null(item, "%s/%s affiché" % [document_id, field.id])
 			if item == null:
@@ -71,7 +76,7 @@ func test_document_view_builds_every_document_type() -> void:
 			shown.append(field_view.field.id)
 		var expected_order: Array[StringName] = []
 		for field: FieldDef in def.get_sorted_fields():
-			if field.kind != FieldDef.FieldKind.PORTRAIT:
+			if field.kind != FieldDef.FieldKind.PORTRAIT and shown_fields.has(field):
 				expected_order.append(field.id)
 		assert_eq(shown, expected_order, "%s : ordre display_order" % document_id)
 

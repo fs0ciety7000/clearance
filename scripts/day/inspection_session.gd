@@ -85,12 +85,19 @@ const FAMILY_QUOTA: String = "quota"
 const FAMILY_CURFEW: String = "curfew"
 const FAMILY_REVOKED: String = "revoked"
 const FAMILY_CONTRACT: String = "contract"
+## Acte III.
+const FAMILY_SPONSOR: String = "sponsor"
+const FAMILY_SUMMONS: String = "summons"
+const FAMILY_LOCKOUT: String = "lockout"
 const FAMILIES: Array[String] = [FAMILY_FACE, FAMILY_ID_NUMBER, FAMILY_NAME, FAMILY_BIRTH, FAMILY_VALIDITY,
 		FAMILY_MISSING, FAMILY_ISSUER, FAMILY_ORIGIN, FAMILY_HEALTH, FAMILY_OTHER]
 ## M7 : familles à réplique unique (`line_about_<famille>_generic`, NARRATIVE
 ## §7.3) ; l'indignation (non constatée) reprend la famille « autre ».
 const GENERIC_FAMILIES: Array[String] = [FAMILY_IMPLANT, FAMILY_WANTED, FAMILY_QUOTA, FAMILY_CURFEW,
-		FAMILY_REVOKED, FAMILY_CONTRACT]
+		FAMILY_REVOKED, FAMILY_CONTRACT, FAMILY_SPONSOR, FAMILY_SUMMONS, FAMILY_LOCKOUT]
+## Familles débloquant un sujet `about_<famille>` sans document.
+const RULE_FAMILIES: Array[String] = [FAMILY_QUOTA, FAMILY_CURFEW, FAMILY_REVOKED, FAMILY_CONTRACT, FAMILY_SPONSOR,
+		FAMILY_SUMMONS, FAMILY_LOCKOUT]
 ## `truth_path` d'un champ → famille de réplique.
 const TRUTH_PATH_FAMILIES: Dictionary[StringName, String] = {
 	&"appearance": FAMILY_FACE,
@@ -107,6 +114,9 @@ const TRUTH_PATH_FAMILIES: Dictionary[StringName, String] = {
 	&"implants": FAMILY_IMPLANT,
 	&"document.mrz": FAMILY_ID_NUMBER,
 	&"document.seal_id": FAMILY_ISSUER,
+	# Acte III.
+	&"sponsor_id": FAMILY_SPONSOR,
+	&"summons_id": FAMILY_SUMMONS,
 	# Acte II.
 	&"document.presented_at": FAMILY_CURFEW,
 	&"employer_code": FAMILY_CONTRACT,
@@ -325,6 +335,12 @@ static func family_of(d: Discrepancy, p_case: Case, p_ctx: RuleContext) -> Strin
 				return FAMILY_REVOKED
 			if rule is ContractConsistentRule:
 				return FAMILY_CONTRACT
+			if rule is SponsorRule:
+				return FAMILY_SPONSOR
+			if rule is SummonsRule:
+				return FAMILY_SUMMONS
+			if rule is ContractSuspendedRule:
+				return FAMILY_LOCKOUT
 			if rule is DriftPassRule and other != null and not other.is_rule():
 				var drift_field: FieldDef = p_case.get_field_def(other) if p_case != null else null
 				if drift_field != null and drift_field.truth_path == DriftPassRule.VESSEL_PATH:
@@ -373,6 +389,12 @@ static func family_of_reason(reason: String) -> String:
 			return FAMILY_REVOKED
 		"contract":
 			return FAMILY_CONTRACT
+		"sponsor":
+			return FAMILY_SPONSOR
+		"summons":
+			return FAMILY_SUMMONS
+		"lockout":
+			return FAMILY_LOCKOUT
 	return FAMILY_OTHER
 
 
@@ -426,7 +448,7 @@ func find_confirmed(reason: String, doc: StringName = &"") -> Discrepancy:
 			return d
 	# Acte II : sujets par famille (`about_quota`, `about_curfew`, `about_revoked`,
 	# `about_contract`) débloqués par une discordance de cette famille.
-	if [FAMILY_QUOTA, FAMILY_CURFEW, FAMILY_REVOKED, FAMILY_CONTRACT].has(reason):
+	if RULE_FAMILIES.has(reason):
 		for d: Discrepancy in confirmed:
 			if family_of(d, case, ctx) == reason:
 				return d

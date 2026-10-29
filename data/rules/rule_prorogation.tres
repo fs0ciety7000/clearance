@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ProrogationRule" format=3 uid="uid://dcq6k1g6nl0v7"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/prorogation_rule.gd" id="1_qbs6h"]
+
+[resource]
+script = ExtResource("1_qbs6h")
+window_start = 31856
+window_end = 31866
+extended_until = 31875
+id = &"r_prorogation"
+title_key = "r_prorogation_title"
+rulebook_text_key = "r_prorogation_text"

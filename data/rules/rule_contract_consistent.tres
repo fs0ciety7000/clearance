@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_1yhm0")
 employer_codes = Dictionary[String, String]({
+"Arbitrage de Continuité": "AR",
 "Autorité de Transit": "AT",
 "Banque Aurel": "BA",
 "Bureau de Continuité": "BC",

@@ -29,5 +29,24 @@ func get_option(option_id: StringName) -> EveningOptionDef:
 	return null
 
 
+## Option disponible qui porte la même intention que `option_id` (QA-036) :
+## l'option elle-même si elle est offerte, sinon une variante conditionnelle
+## au même libellé (`loyal` → `loyal_paid` quand `montclair_pliable`,
+## `pay` → `pay_denounced`, `keep` → `keep_broke`) ; `null` sinon.
+func option_for_intent(option_id: StringName) -> EveningOptionDef:
+	if option_id == &"":
+		return null
+	var exact: EveningOptionDef = get_option(option_id)
+	if exact != null or def == null:
+		return exact
+	var wanted: EveningOptionDef = def.get_option(option_id)
+	if wanted == null or wanted.label_key == "":
+		return null
+	for option: EveningOptionDef in options:
+		if option.label_key == wanted.label_key:
+			return option
+	return null
+
+
 func is_choice() -> bool:
 	return kind == EveningEventDef.Kind.CHOICE and not options.is_empty()

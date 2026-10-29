@@ -8,10 +8,14 @@
 ## Usage (depuis la racine du projet) :
 ##   godot --headless --script res://tools/build_data.gd   # si les données ont changé
 ##   godot --headless --script res://tools/gen_stats.gd -- --campaigns=200 --seed=1
+##   godot --headless --script res://tools/gen_stats.gd -- --campaigns=40 --days=21-30   # Acte III seul
 extends SceneTree
 
 var _campaigns: int = 200
 var _seed: int = 1
+## Jours mesurés (`--days=A-B` ou `--days=N`) ; tous par défaut.
+var _first_day: int = 1
+var _last_day: int = 999
 
 
 func _init() -> void:
@@ -28,7 +32,8 @@ func _init() -> void:
 	day_numbers.sort()
 	print("gen_stats : %d campagne(s), graine %d, jours %s" % [_campaigns, _seed, day_numbers])
 	for n: int in day_numbers:
-		failures += _run_day(data, data.days[n])
+		if n >= _first_day and n <= _last_day:
+			failures += _run_day(data, data.days[n])
 	print("Durée : %d ms" % (Time.get_ticks_msec() - start))
 	quit(1 if failures > 0 else 0)
 
@@ -39,6 +44,10 @@ func _parse_args() -> void:
 			_campaigns = maxi(arg.trim_prefix("--campaigns=").to_int(), 1)
 		elif arg.begins_with("--seed="):
 			_seed = arg.trim_prefix("--seed=").to_int()
+		elif arg.begins_with("--days="):
+			var span: PackedStringArray = arg.trim_prefix("--days=").split("-")
+			_first_day = span[0].to_int()
+			_last_day = span[span.size() - 1].to_int()
 
 
 func _run_day(data: DataCatalog, day: DayDef) -> int:
@@ -91,7 +100,9 @@ func _run_day(data: DataCatalog, day: DayDef) -> int:
 	print("\n=== J%d (%d passagers × %d campagnes = %d cas) ===" % [day.day_number, day.passenger_count, _campaigns, cases])
 	var hist: PackedStringArray = []
 	for k: int in 4:
-		hist.append("%d:%s (cible %s)" % [k, _pct(count_hist[k], cases), _pct_f(day.anomaly_count_weights[k])])
+		var targets: PackedFloat32Array = day.anomaly_count_targets if day.anomaly_count_targets.size() == 4 \
+				else day.anomaly_count_weights
+		hist.append("%d:%s (cible %s)" % [k, _pct(count_hist[k], cases), _pct_f(targets[k])])
 	print("Anomalies/cas  : " + " · ".join(hist) + " — scénarisés inclus")
 	var weight_total: float = 0.0
 	for kind: AnomalyType.Kind in day.anomaly_weights:

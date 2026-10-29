@@ -9,3 +9,4 @@ id = &"r_tharsis_banned"
 title_key = "r_tharsis_banned_title"
 rulebook_text_key = "r_tharsis_banned_text"
 category = 2
+summons_exempt = true

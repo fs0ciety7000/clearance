@@ -301,6 +301,12 @@ func set_quota(used: int, maximum: int) -> void:
 	_quota_line.visible = quota_view.visible
 
 
+## Acte III : quota suspendu ce jour (« QUOTA SUSPENDU » gris, M1).
+func set_quota_suspended(value: bool) -> void:
+	quota_view.set_suspended(value)
+	_quota_line.visible = quota_view.visible
+
+
 func set_credits(credits: int) -> void:
 	var text: String = "₵ %d" % credits
 	if text.length() != _credits.text.length():

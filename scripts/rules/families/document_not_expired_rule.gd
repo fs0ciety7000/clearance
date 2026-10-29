@@ -31,7 +31,9 @@ func get_evidence_path() -> StringName:
 	return ISSUE_PATH if max_age_days > 0 else EXPIRY_PATH
 
 
-func is_expired(doc: DocumentInstance, today: int) -> bool:
+## Acte III (R32) : `ctx` fourni, un document expiré dans la fenêtre de
+## prorogation est valide (`RuleContext.is_document_expired`).
+func is_expired(doc: DocumentInstance, today: int, ctx: RuleContext = null) -> bool:
 	if field_path != &"":
 		var field: FieldDef = doc.type_def.find_field_by_truth_path(field_path) if doc.type_def != null else null
 		var value: Variant = doc.get_value(field.id) if field != null else null
@@ -41,13 +43,15 @@ func is_expired(doc: DocumentInstance, today: int) -> bool:
 		return date > 0 and today - date >= max_age_days
 	if max_age_days > 0:
 		return today - doc.issue_date >= max_age_days
+	if ctx != null:
+		return ctx.is_document_expired(doc.expiry_date)
 	return doc.expiry_date < today
 
 
 func evaluate(case: Case, ctx: RuleContext) -> Array[Violation]:
 	var violations: Array[Violation] = []
 	var doc: DocumentInstance = case.get_document(document_id)
-	if doc == null or not is_expired(doc, ctx.today):
+	if doc == null or not is_expired(doc, ctx.today, ctx):
 		return violations
 	var refs: Array[FieldRef] = []
 	var evidence: FieldRef = Rule.find_ref(case, document_id, get_evidence_path())
@@ -71,7 +75,7 @@ func check_against(case: Case, ref: FieldRef, ctx: RuleContext) -> Discrepancy.R
 	if field == null or field.truth_path != get_evidence_path():
 		return Discrepancy.Result.INCOMPARABLE
 	var doc: DocumentInstance = case.get_document(document_id)
-	return Discrepancy.Result.DISCORDANT if is_expired(doc, ctx.today) else Discrepancy.Result.CONCORDANT
+	return Discrepancy.Result.DISCORDANT if is_expired(doc, ctx.today, ctx) else Discrepancy.Result.CONCORDANT
 
 
 func get_referenced_truth_paths() -> Dictionary[StringName, Array]:

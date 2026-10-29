@@ -22,6 +22,9 @@
 ##    Luciole généré approuvé en infraction ne donne plus de confiance ; un
 ##    Brûlant (SC-47, `password_grants_trust` faux) ne donne jamais de
 ##    confiance pour la phrase de passe (`flags_on_password` seuls).
+## 7. Acte III : admission **correcte** (APPROUVÉ sans violation) d'un passager
+##    d'une origine de `admission_gauges` (`DayDef`, J30 : `tyc` → `pont`,
+##    F10) → jauge +1.
 ## Résultat : valeurs **absolues** `{drapeau: valeur}` à poser dans le
 ## `GameState` (`true` pour un delta 0, sinon valeur actuelle + deltas).
 class_name CaseConsequences
@@ -44,7 +47,8 @@ const OVERRUNS_PER_SUSPICION: int = 3
 
 static func compute(scripted: ScriptedCaseDef, case: Case, verdict: VerdictKind.Kind, had_violations: bool,
 		password_answered: bool, day_number: int, flags: Dictionary[StringName, Variant],
-		luciole_report: bool = false, contexts: Array[StringName] = [], trust_on_breach: bool = true) -> Dictionary[StringName, Variant]:
+		luciole_report: bool = false, contexts: Array[StringName] = [], trust_on_breach: bool = true,
+		admission_gauges: Dictionary[StringName, StringName] = {}) -> Dictionary[StringName, Variant]:
 	var changes: Dictionary[StringName, Variant] = {}
 	if scripted != null:
 		if scripted.sets_flag != &"":
@@ -81,6 +85,10 @@ static func compute(scripted: ScriptedCaseDef, case: Case, verdict: VerdictKind.
 			add(changes, flags, FLAG_TRUST, 1)
 		if day_number == AUDIT_DAY:
 			add(changes, flags, FLAG_SUSPICION, 1)
+	if case != null and verdict == VerdictKind.Kind.APPROVE and not had_violations and not admission_gauges.is_empty():
+		var origin: StringName = Rule.visible_origin(case)
+		if admission_gauges.has(origin):
+			add(changes, flags, admission_gauges[origin], 1)
 	if contexts.has(CaseEffectDef.CONTEXT_OVERRUN):
 		add(changes, flags, FLAG_QUOTA_OVERRUN, 1)
 		if SaveService.as_int(changes[FLAG_QUOTA_OVERRUN]) % OVERRUNS_PER_SUSPICION == 0:

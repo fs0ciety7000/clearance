@@ -1,18 +1,19 @@
 [gd_resource type="Resource" script_class="DayDef" format=3 uid="uid://0x3ehtavx8ha"]
 
-[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_xwlxw"]
-[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_dmx8n"]
-[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="3_hm12v"]
-[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="4_yoym1"]
-[ext_resource type="Resource" path="res://data/days/ruleset_day_03.tres" id="5_qyoqb"]
-[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="6_k1gf5"]
-[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="7_olrn3"]
-[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="8_t2wtq"]
-[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="9_gd2i6"]
-[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="10_7tspe"]
+[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_dmx8n"]
+[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_hm12v"]
+[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="3_yoym1"]
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="4_qyoqb"]
+[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="5_k1gf5"]
+[ext_resource type="Resource" path="res://data/days/ruleset_day_03.tres" id="6_olrn3"]
+[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="7_t2wtq"]
+[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="8_gd2i6"]
+[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="9_7tspe"]
+[ext_resource type="Script" path="res://scripts/core/summons_def.gd" id="10_c3q0c"]
+[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="11_ia86x"]
 
 [sub_resource type="Resource" id="scripted_sc_04"]
-script = ExtResource("7_olrn3")
+script = ExtResource("8_gd2i6")
 id = &"sc_04"
 at_index = 2
 passenger_overrides = {
@@ -34,7 +35,7 @@ sets_flag = &"met_mira"
 luciole_codes = PackedInt32Array()
 
 [sub_resource type="Resource" id="scripted_sc_05"]
-script = ExtResource("7_olrn3")
+script = ExtResource("8_gd2i6")
 id = &"sc_05"
 at_index = 7
 passenger_overrides = {
@@ -58,10 +59,10 @@ flags_on_approve = Dictionary[StringName, int]({
 luciole_codes = PackedInt32Array(1, 7)
 
 [resource]
-script = ExtResource("6_k1gf5")
+script = ExtResource("7_t2wtq")
 day_number = 3
 game_date = 31849
-rule_set = ExtResource("5_qyoqb")
+rule_set = ExtResource("6_olrn3")
 duration_sec = 600.0
 passenger_count = 11
 anomaly_count_weights = PackedFloat32Array(0.45, 0.45, 0.1, 0)
@@ -72,7 +73,7 @@ anomaly_weights = Dictionary[int, float]({
 3: 0.2,
 4: 0.2
 })
-scripted_cases = Array[ExtResource("7_olrn3")]([SubResource("scripted_sc_04"), SubResource("scripted_sc_05")])
+scripted_cases = Array[ExtResource("8_gd2i6")]([SubResource("scripted_sc_04"), SubResource("scripted_sc_05")])
 intro_text_key = "day03_intro"
 faction_weights = Dictionary[StringName, float]({
 &"hal": 0.25,

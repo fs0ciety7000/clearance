@@ -44,6 +44,9 @@ const EXPECTED_SIGNALS: Dictionary = {
 	&"quota_changed": 2,
 	&"revocations_published": 1,
 	&"scanner_suggested": 3,
+	# Acte III (ARCHITECTURE §7.3).
+	&"ledger_changed": 1,
+	&"summons_published": 1,
 }
 
 

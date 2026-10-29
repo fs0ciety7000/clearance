@@ -39,6 +39,14 @@
 ## termine le shift (`HallAnnouncementDef.ends_shift`, grève du J20) : les
 ## lumières du guichet s'éteignent (`BoothDirector.lights_out`), voile noir qui
 ## s'épaissit, puis fondu au noir complet avant le bilan.
+## M9 (Acte III, ARCHITECTURE §7.3) : soirée pivot du J20 ouverte par la carte
+## « FIN DE L'ACTE II » (`EveningScreen`), verdict de la Déposition recalculé
+## avec le choix du joueur (`EveningScreen.audit_preview` →
+## `Campaign.preview_evening`), interstitiel « CHAPITRE III · TÉMOINS » avant
+## le J21. Captures : `--screen=chapter3`, `--hold-card` (la carte reste
+## affichée), `--rulebook-tab=ledger|summons` (+ `--inspect` : Répondant ↔
+## Main courante, Convocation ↔ onglet ; la Main courante est préremplie des
+## passagers en règle qui précèdent `--start-case`).
 class_name DayScene
 extends Control
 
@@ -297,6 +305,10 @@ func show_evening(summary: DaySummary) -> void:
 	evening.set_events(events)
 	evening.set_income(EveningService.income_lines(data.get_economy(), GameState.current_day, GameState.household,
 			Campaign.evening_flags()))
+	# Acte III : verdict de la Déposition recalculé avec le choix du joueur.
+	evening.audit_preview = func(choices: Dictionary[StringName, StringName]) -> void:
+		Campaign.preview_evening(data, lines, events, choices)
+	evening.act_card_auto_close = not _args.has("hold-card")
 	evening.luciole_decided.connect(Campaign.decide_luciole_note)
 	evening.confirmed.connect(func(confirmed_lines: Array[ExpenseLine]) -> void:
 		var report: EveningReport = Campaign.preview_evening(data, confirmed_lines, events, evening.get_choices())
@@ -310,6 +322,9 @@ func _after_evening(choice: StringName) -> void:
 	if choice == &"next":
 		if chapter_two_pending():
 			show_chapter_two()
+			return
+		if chapter_three_pending():
+			show_chapter_three()
 			return
 		get_tree().reload_current_scene()
 		return
@@ -330,7 +345,21 @@ func show_chapter_two() -> void:
 	_open(chapter, &"chapter2")
 
 
-## Dernier jour sans soirée (J20 depuis D-076) → évaluation de la fin.
+## Vrai juste après la soirée pivot du J20 si l'Acte III commence.
+func chapter_three_pending() -> bool:
+	return data != null and Campaign.is_act3() and GameState.current_day == data.get_economy().act3_pivot_day + 1
+
+
+## Interstitiel « CHAPITRE III · TÉMOINS » puis le J21 (rechargement).
+func show_chapter_three() -> void:
+	var chapter: ChapterScreen = ChapterScreen.new()
+	chapter.name = "ChapterScreen"
+	chapter.setup(GameState.narrative_flags, 3)
+	chapter.finished.connect(func(_choice: StringName) -> void: get_tree().reload_current_scene())
+	_open(chapter, &"chapter3")
+
+
+## Dernier jour sans soirée (J30 depuis D-086) → évaluation de la fin.
 func show_final(summary: DaySummary) -> void:
 	show_end(Campaign.close_final_day(data, summary))
 
@@ -401,10 +430,20 @@ func _debug_screen(which: String) -> void:
 				briefing = null
 			GameState.set_flag(EndingService.FLAG_ACT2, true)
 			show_chapter_two()
+		"chapter3":
+			if briefing != null:
+				briefing.closed.disconnect(_on_briefing_closed)
+				briefing.queue_free()
+				briefing = null
+			GameState.set_flag(EndingService.FLAG_ACT2, true)
+			GameState.set_flag(EndingService.FLAG_ACT3, true)
+			show_chapter_three()
 		"shift", "detain":
 			# M7 : premier passager appelé (objets glissés, onglets, avis, escorte).
 			if briefing != null:
 				briefing.close()
+			if _arg("rulebook-tab") == "ledger":
+				_debug_prefill_ledger()
 			EventBus.documents_presented.connect(_debug_shift.bind(which), CONNECT_ONE_SHOT)
 			EventBus.next_case_requested.emit.call_deferred()
 		"citation":
@@ -457,6 +496,23 @@ func _debug_shift(_case_id: StringName, which: String) -> void:
 				var ids: Array[FieldRef] = day_controller.current_case.find_refs_by_truth_path(&"citizen_id")
 				if not ids.is_empty():
 					comparison.pick(ids[0])
+		elif (tab == "ledger" or tab == "summons") and day_controller.current_case != null:
+			# Acte III : Répondant (permis) ↔ Main courante, Convocation ↔ onglet.
+			var path: StringName = SponsorRule.SPONSOR_PATH if tab == "ledger" else SummonsRule.SUMMONS_PATH
+			var refs: Array[FieldRef] = day_controller.current_case.find_refs_by_truth_path(path)
+			var target: FieldRef = null
+			var value: Variant = day_controller.current_case.get_value(refs[0]) if not refs.is_empty() else null
+			if tab == "ledger":
+				for entry: LedgerEntry in comparison.ledger:
+					if value != null and FieldValue.equals(value, entry.citizen_id):
+						target = entry.get_ref()
+			else:
+				for entry: SummonsEntry in comparison.summons:
+					if value != null and FieldValue.equals(value, entry.number):
+						target = entry.get_ref()
+			if not refs.is_empty() and target != null:
+				comparison.pick(refs[0])
+				comparison.pick(target)
 		elif tab == "symbols":
 			# §4.9 : marque luciole (A) ↔ bulletin des symboles (B), vraie comparaison.
 			for view: DocumentView in comparison.workbench.views:
@@ -478,6 +534,19 @@ func _debug_shift(_case_id: StringName, which: String) -> void:
 	if which == "detain":
 		await get_tree().create_timer(0.6).timeout
 		comparison.get_stamp_button(VerdictKind.Kind.DETAIN).begin_hold()
+
+
+## Capture de la Main courante : les passagers en règle qui précèdent
+## `--start-case` sont inscrits comme s'ils avaient été approuvés (R34).
+func _debug_prefill_ledger() -> void:
+	var builder: CaseBuilder = day_controller.builder
+	if builder == null:
+		return
+	for index: int in day_controller.next_index:
+		var generated: GeneratedCase = builder.build(index)
+		if generated != null and generated.key.expected_verdict == VerdictKind.Kind.APPROVE:
+			builder.record_verdict(generated.case, VerdictKind.Kind.APPROVE)
+	EventBus.ledger_changed.emit(builder.get_ledger())
 
 
 func _debug_citation(_case_id: StringName) -> void:

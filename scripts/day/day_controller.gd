@@ -29,6 +29,10 @@
 ## (`scanner_suggested` aux documents), annonces conditionnelles ou horaires
 ## (`DayDef.announcements`) dont la fin anticipée du shift (grève du J20),
 ## `luciole_trust_on_breach`.
+## Acte III (docs/ACT3.md M2, B41–B43, ARCHITECTURE §7.3) : Main courante
+## tenue au fil du shift (`CaseBuilder.record_verdict`, `ledger_changed`),
+## convocations du jour (`summons_published`), quota suspendu selon le climat
+## (`DayDef.quota_suspended_if`), annonces horaires au début du shift.
 class_name DayController
 extends Node
 
@@ -112,7 +116,7 @@ func start_day(p_data: DataCatalog, day_number: int, day_seed: int, flags: Array
 	current_key = null
 	current_scripted = null
 	detain_bonus = data.get_economy().detain_bonus
-	quota = QuotaTracker.for_day(day)
+	quota = QuotaTracker.for_day(day, builder.get_flag_values())
 	quota.sync(builder.ctx)
 	scanner_source = PartialScanner.source_for(builder.get_flag_values())
 	shift_ended_early = false
@@ -124,6 +128,8 @@ func start_day(p_data: DataCatalog, day_number: int, day_seed: int, flags: Array
 	EventBus.day_started.emit(day, day.rule_set.build_rulebook())
 	EventBus.wanted_notices_published.emit(builder.get_wanted_notices())
 	EventBus.revocations_published.emit(builder.get_revocations())
+	EventBus.summons_published.emit(builder.get_summons())
+	EventBus.ledger_changed.emit(builder.get_ledger())
 	EventBus.quota_changed.emit(quota.used, quota.maximum if quota.is_active() else 0)
 	return true
 
@@ -260,6 +266,8 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 	var was_full: bool = quota.is_full()
 	result.quota_overrun = quota.after_verdict(current_case, verdict.kind)
 	quota.sync(builder.ctx)
+	# Acte III (R34) : un répondant approuvé entre à la Main courante.
+	var ledger_entry: LedgerEntry = builder.record_verdict(current_case, verdict.kind)
 	result.passenger_label = _passenger_label(current_case)
 	if result.has_citation():
 		citations_today += 1
@@ -284,6 +292,8 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 		EventBus.quota_changed.emit(quota.used, quota.maximum)
 		if quota.is_full() and not was_full:
 			EventBus.hall_announced.emit(HALL_QUOTA_FULL)
+	if ledger_entry != null:
+		EventBus.ledger_changed.emit(builder.get_ledger())
 	var announcement: String = day.hall_announcements.get(summary.results.size(), "")
 	if not announcement.is_empty():
 		EventBus.hall_announced.emit(announcement)
@@ -322,7 +332,8 @@ func _apply_narrative(result: CaseResult) -> void:
 		result.scripted_id = current_scripted.id
 	result.narrative_changes = CaseConsequences.compute(current_scripted, current_case, result.verdict_kind,
 			not current_key.expected_violations.is_empty(), result.password_answered, day.day_number, flag_values(),
-			result.luciole_report, shift_contexts(current_case, result), day.luciole_trust_on_breach)
+			result.luciole_report, shift_contexts(current_case, result), day.luciole_trust_on_breach,
+			day.admission_gauges)
 
 
 ## Acte II : contexte du shift d'un verdict (`CaseEffectDef.context`).

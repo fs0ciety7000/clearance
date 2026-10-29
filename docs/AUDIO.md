@@ -371,6 +371,8 @@ L'`AudioDirector` (nœud de `day.tscn`) est le **seul** écouteur audio de l'Eve
 
 À proposer à l'Audio Designer (post-M8) : une coupure de bourdonnement (« power down ») sur la grève du J20 et un *tick* discret par lien suggéré.
 
+**M9 (interfaces de l'Acte III) — aucune cue nouvelle ni branchement** : carte « FIN DE L'ACTE II », « CHAPITRE III », verdict de la Déposition et onglets Main courante / Convocations utilisent les clics et survols existants ; une comparaison Répondant ↔ Main courante passe par les cues d'évaluation habituelles. À proposer : carillon grave « quota suspendu » et annonce de la Transit-7 (ACT3 §8.3).
+
 **Accessibilité vérifiée** : chaque cue critique a son doublage visuel existant (timer : barre ambre/rouge ; tampon : animation + empreinte ; discordance : lien magenta + numéro ; concordance : chip ; citation : ticket ; règle nouvelle : badge NOUVEAU ; barks : sous-titres). « Réduire les effets » (`fx_intensity < 1`) coupe `ui.timer_critical_tick` et adoucit les tampons de 4 dB.
 
 ## Changelog
@@ -378,3 +380,4 @@ L'`AudioDirector` (nœud de `day.tscn`) est le **seul** écouteur audio de l'Eve
 - 0.1 — Création : intentions, bus, cue sheet, barks MVP, budget, mix, conventions, licences.
 - 0.2 — M6 : implémentation (§12), registre des licences (§10.1), bus layout à la racine.
 - 0.3 — M8 : interfaces de l'Acte II sans cue nouvelle (§12).
+- 0.4 — M9 : interfaces de l'Acte III sans cue nouvelle (§12).

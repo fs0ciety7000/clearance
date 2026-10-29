@@ -22,8 +22,8 @@ func test_all_resources_load_without_error() -> void:
 func test_expected_content_counts() -> void:
 	assert_eq(_catalog.documents.size(), 8, "Carte, Permis, Bio-scan, Dérogation MIL (M7) + Contrat, Laissez-passer, Asile, Ticket (Acte II)")
 	assert_eq(_catalog.factions.keys().size(), 6, "origines : TYC, HAL, TER + CER, THR, DRV (M7)")
-	assert_eq(_catalog.rules.size(), 31, "R01–R22 (GDD §7) + R23–R31 (docs/ACT2.md)")
-	assert_eq(_catalog.days.keys().size(), 20)
+	assert_eq(_catalog.rules.size(), 37, "R01–R22 (GDD §7) + R23–R31 (docs/ACT2.md) + R32–R37 (docs/ACT3.md)")
+	assert_eq(_catalog.days.keys().size(), 30)
 	for document_id: StringName in [&"id_card", &"entry_permit", &"bioscan", &"mil_waiver", &"work_contract", &"drift_pass",
 			&"asylum", &"queue_ticket"]:
 		assert_true(_catalog.documents.has(document_id), String(document_id))
@@ -135,7 +135,7 @@ func test_days() -> void:
 	numbers.assign(_catalog.days.keys())
 	numbers.sort()
 	var expected_days: Array[int] = []
-	for n: int in range(1, 21):
+	for n: int in range(1, 31):
 		expected_days.append(n)
 	assert_eq(numbers, expected_days)
 	for n: int in numbers:
@@ -193,13 +193,41 @@ func test_days_follow_gdd_progression() -> void:
 	for n: int in range(1, 21):
 		var day: DayDef = _catalog.get_day(n)
 		assert_eq(day.detain_enabled, n >= 7, "J%d : DÉTENTION à partir du J7" % n)
-		assert_eq(day.has_evening, n < 20, "J%d : soirée jusqu'au J19, pivot du J10 compris (D-076)" % n)
+		# Acte III (D-086) : le J20 gagne sa soirée pivot ; le J30 n'en a pas.
+		assert_eq(day.has_evening, true, "J%d : soirée jusqu'au J20 (pivots J10 et J20, D-076, D-086)" % n)
 		assert_eq(day.luciole_trust_on_breach, n <= 10, "J%d : confiance des Lucioles sur infraction (Acte I seulement)" % n)
 		if n >= 11:
 			quotas.append(day.air_quota)
 	assert_eq(quotas, [5, 5, 5, 5, 4, 4, 4, 4, 3, 3] as Array[int], "quota respiratoire (ACT2 §2.3)")
 	assert_eq(_catalog.get_day(10).wanted_notices.size(), 3, "avis de recherche du J10")
 	assert_gt(_catalog.get_day(10).evening_events.size(), 0, "soirée pivot du J10")
+
+
+## Acte III (docs/ACT3.md §2.1, §2.4) : liste explicite non cumulative — R32
+## → R37 ajoutées de J21 à J28, couvre-feu (J21) et bio-scan (J23) retirés.
+func test_act3_rule_progression() -> void:
+	var counts: Array[int] = []
+	for n: int in range(21, 31):
+		var day: DayDef = _catalog.get_day(n)
+		counts.append(day.rule_set.get_rule_ids().size())
+		assert_eq(day.has_evening, n < 30, "J%d : soirée jusqu'au J29" % n)
+		assert_true(day.detain_enabled, "J%d" % n)
+	assert_eq(counts, [31, 32, 28, 29, 30, 31, 31, 32, 32, 32] as Array[int])
+	assert_false(_catalog.get_day(21).rule_set.has_rule(&"r_curfew"), "couvre-feu levé au J21")
+	assert_true(_catalog.get_day(21).rule_set.has_rule(&"r_prorogation"))
+	assert_true(_catalog.get_day(22).rule_set.has_rule(&"r_bioscan_valid"))
+	for rule_id: StringName in [&"r_bioscan_required", &"r_bioscan_valid", &"r_bioscan_issuer", &"r_bioscan_fit"]:
+		assert_false(_catalog.get_day(23).rule_set.has_rule(rule_id), "J23 : %s retirée" % rule_id)
+	assert_false(_catalog.get_day(23).rule_set.required_document_ids.has(&"bioscan"), "bio-scan plus exigé au J23")
+	var added: Dictionary[int, StringName] = {24: &"r_sponsor", 25: &"r_tycho_lockout", 26: &"r_summons", 28: &"r_tycho_closed"}
+	for n: int in added:
+		var rule_id: StringName = added[n]
+		assert_false(_catalog.get_day(n - 1).rule_set.has_rule(rule_id), "%s absente la veille" % rule_id)
+		assert_true(_catalog.get_day(n).rule_set.has_rule(rule_id), "J%d : %s" % [n, rule_id])
+		assert_true(_catalog.get_day(n).rule_set.new_rule_ids.has(rule_id))
+	assert_eq(_catalog.get_day(23).rule_set.retired_rules.size(), 4, "règles retirées rappelées au Rulebook")
+	assert_eq(_catalog.get_day(30).game_date, GameDate.from_ymd(2187, 4, 11), "J30 = mercredi 11.04.2187")
+	assert_eq(_catalog.get_day(20).game_date, GameDate.from_ymd(2187, 4, 1))
 
 
 func _check_scripted_cases(day: DayDef, label: String) -> void:

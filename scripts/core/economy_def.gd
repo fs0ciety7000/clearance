@@ -99,6 +99,61 @@ extends Resource
 @export var registre_threshold: int = 3
 @export var drift2_min_present: int = 2
 
+@export_group("Acte III")
+## Soirée pivot du J20 (« Nuit du 1ᵉʳ avril », D-086) : suspicion divisée
+## (+1 si `act3_pivot_bonus_flag`), climat posé par la carte de fin d'acte.
+@export var act3_pivot_day: int = 20
+@export var act3_pivot_bonus_flag: StringName = &"purge_demoted"
+## Aides conditionnelles (D-089) : rappel des salaires imputés (J21, 5 ₵ par
+## entrée imputée, plafond), avance de l'Arbitre (+30, −35 au J27), caisse
+## des vitres (J23).
+@export var recall_per_overrun: int = 5
+@export var recall_cap: int = 30
+@export var loan_amount: int = 30
+@export var loan_repay: int = 35
+@export var loan_day: int = 27
+@export var loan_balance_below: int = 40
+@export var vitres_fund: int = 15
+@export var vitres_fund_balance_below: int = 20
+## Contribution « pour Tycho » (J25) : `contribution_rate` de l'épargne au-delà
+## de `contribution_floor`.
+@export var contribution_rate: float = 0.20
+@export var contribution_floor: int = 60
+@export var contribution_day: int = 25
+## Climat Promu·e : prime de chef·fe de guichet ; Anneau D (`moved_ring_d`) :
+## loyer, chauffage et rations inclus.
+@export var head_bonus: int = 10
+@export var ring_d_rent: int = 30
+@export var move_cost: int = 20
+## Salaire d'Ilan briseur·se de grève (`ilan_scab`), soirs J24 → J29.
+@export var scab_income: int = 10
+@export var scab_first_day: int = 24
+@export var scab_last_day: int = 29
+## Climat Vanne : rations à 1 ₵ (« air de la Vanne »), à partir du J21.
+@export var vanne_ration: int = 1
+@export var act3_first_day: int = 21
+## Dernier soir des dépenses récurrentes de l'Acte III (le J30 n'a pas de soirée).
+@export var act3_last_evening: int = 29
+## Déposition du J29 (docs/ACT3.md §5.3).
+@export var deposition_arrest_score: int = 7
+@export var deposition_blame_score: int = 4
+@export var deposition_retention: int = 30
+## Seuils des fins du J30 (§1.4) — réglés par `tools/balance_sim.gd`.
+@export var double_game3_threshold: int = 10
+@export var air3_trust_threshold: int = 10
+@export var glory3_loyalty_threshold: int = 10
+@export var strike3_solidarity_threshold: int = 5
+@export var pont_threshold: int = 6
+@export var verite_threshold: int = 3
+@export var registre3_threshold: int = 5
+@export var exit3_min_present: int = 2
+## Dépenses datées (montants des options du soir, reportés dans les données).
+@export var noa_fine: int = 10
+@export var dora_transport: int = 5
+@export var tycho_fund: int = 10
+@export var exit3_tycho_cost: int = 30
+@export var exit3_drift_cost: int = 70
+
 
 func air_tax_for(day_number: int) -> int:
 	if day_number >= ration_start_day:
@@ -135,11 +190,24 @@ func ration_of(member_id: StringName) -> int:
 	return 0
 
 
-## Prélèvement de Rééquilibrage du soir sur un solde (0 hors jours de prélèvement).
+## Prélèvement de Rééquilibrage du soir sur un solde (0 hors jours de
+## prélèvement) ; Acte III : Contribution « pour Tycho » (`contribution_day`).
 func levy_for(day_number: int, balance: int) -> int:
+	if day_number == contribution_day and contribution_rate > 0.0:
+		return floori(maxf(balance - contribution_floor, 0.0) * contribution_rate)
 	if not levy_days.has(day_number):
 		return 0
 	return floori(maxf(balance - levy_floor, 0.0) * levy_rate)
+
+
+## Acte III : soir de la Contribution « pour Tycho » (libellé du poste).
+func is_contribution_day(day_number: int) -> bool:
+	return day_number == contribution_day and contribution_rate > 0.0
+
+
+## Acte III : rappel des salaires imputés pour `overruns` entrées (plafonné).
+func recall_for(overruns: int) -> int:
+	return mini(maxi(overruns, 0) * recall_per_overrun, recall_cap)
 
 
 func rent_for(day_number: int) -> int:

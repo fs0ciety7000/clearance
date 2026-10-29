@@ -4,11 +4,15 @@
 ## **Sélectionnable en Mode Inspection** comme un champ (`FieldRef.quota_counter()`) :
 ## la paire « Compteur ↔ R23 » documente un refus motivé par le quota.
 ## Masqué tant que le jour n'a pas de quota (`maximum` 0).
+## Acte III (M1, I21) : quota **suspendu** (R23 en vigueur mais levée : Enquête
+## J21–J26, climat Vanne) — compteur gris « QUOTA SUSPENDU », non comparable.
 class_name QuotaCounterView
 extends InspectableItem
 
 var used: int = 0
 var maximum: int = 0
+## Acte III : quota suspendu ce jour (affiché gris, jamais comparable).
+var suspended: bool = false
 ## Barre d'état compacte (QA-031, palier 8) : une seule ligne « QUOTA n/max »
 ## (« QUOTA ATTEINT » plein), sans légende au-dessus.
 var compact: bool = false:
@@ -67,21 +71,32 @@ func is_full() -> bool:
 func set_quota(p_used: int, p_maximum: int) -> void:
 	used = maxi(p_used, 0)
 	maximum = maxi(p_maximum, 0)
-	visible = maximum > 0
+	if maximum > 0:
+		suspended = false
+	visible = maximum > 0 or suspended
 	comparable = maximum > 0
 	_caption.text = UiText.t("tb_quota_caption", "QUOTA")
-	_caption.visible = not compact
-	if compact:
+	_caption.visible = not compact and not suspended
+	if suspended:
+		_value.text = UiText.t("tb_quota_suspended", "QUOTA SUSPENDU")
+	elif compact:
 		_value.text = UiText.t("tb_quota_full", "QUOTA ATTEINT") if is_full() \
 				else UiText.tf("tb_quota", [used, maximum], "QUOTA %d/%d")
 	elif is_full():
 		_value.text = UiText.tf("tb_quota_reached", [used, maximum], "ATTEINT · %d / %d")
 	else:
 		_value.text = UiText.tf("tb_quota_value", [used, maximum], "%d / %d")
-	display_label = _value.text if compact else "%s %s" % [_caption.text, _value.text]
-	tooltip_text = UiText.t("tb_quota_tip", "Entrées imputables du jour. Mode Inspection : comparez le compteur à la règle du quota.")
+	display_label = _value.text if compact or suspended else "%s %s" % [_caption.text, _value.text]
+	tooltip_text = UiText.t("tb_quota_suspended_tip", "Quota suspendu : aucune entrée n'est imputée aujourd'hui.") if suspended \
+			else UiText.t("tb_quota_tip", "Entrées imputables du jour. Mode Inspection : comparez le compteur à la règle du quota.")
 	_refresh_content()
 	queue_redraw()
+
+
+## Acte III : quota suspendu ce jour (R23 levée) — compteur gris affiché.
+func set_suspended(value: bool) -> void:
+	suspended = value
+	set_quota(used if not value else 0, maximum if not value else 0)
 
 
 func get_value_text() -> String:
@@ -97,6 +112,8 @@ func _refresh_content() -> void:
 	if _value == null:
 		return
 	var color: Color = DS.STATE_AMBER if is_full() else DS.TEXT_PRIMARY
+	if suspended:
+		color = DS.TEXT_SECONDARY
 	if is_flagged():
 		color = DS.ACCENT_MAGENTA
 	elif selected:
@@ -107,7 +124,10 @@ func _refresh_content() -> void:
 
 
 func _draw() -> void:
-	if is_full() and not is_flagged() and not selected:
+	if suspended:
+		# Compteur éteint : trait gris barré sous la valeur.
+		draw_rect(Rect2(Vector2(0.0, size.y - DS.BORDER_HAIRLINE), Vector2(size.x, DS.BORDER_HAIRLINE)), DS.TEXT_MUTED)
+	elif is_full() and not is_flagged() and not selected:
 		draw_rect(Rect2(Vector2.ZERO, size), DS.AMBER_12)
 		draw_rect(Rect2(Vector2(0.0, size.y - DS.BORDER_STRONG), Vector2(size.x, DS.BORDER_STRONG)), DS.STATE_AMBER)
 	super._draw()

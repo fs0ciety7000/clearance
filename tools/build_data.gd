@@ -35,6 +35,7 @@ const ECONOMY_DIR: String = "res://data/economy"
 
 const K := AnomalyType.Kind
 const Act2 := preload("res://tools/build_data_act2.gd")
+const Act3 := preload("res://tools/build_data_act3.gd")
 const FK := FieldDef.FieldKind
 const CAT := Rule.RuleCategory
 
@@ -46,7 +47,9 @@ const CAT := Rule.RuleCategory
 const RESERVED_FAMILY_NAMES: PackedStringArray = ["Okonkwo", "Vasquez-Orlov", "Ravel", "Valcourt", "Petrenko",
 		"Whitmore", "Novak", "Montclair", "Achebe-Sörensen", "Moreno-Lind", "Long-Ruban", "Basse-Marée",
 		# Acte II (docs/ACT2.md §8.5) : récurrents et le cargo démantelé.
-		"Lindgren", "Beaumont", "Oyelaran-Holm", "Lindqvist-Rey", "Sillage"]
+		"Lindgren", "Beaumont", "Oyelaran-Holm", "Lindqvist-Rey", "Sillage",
+		# Acte III (docs/ACT3.md §4) : nouveaux personnages nommés.
+		"Okafor", "Halvorsen", "Delacroix-Tan", "Sorel", "Adeyemi", "Kerr"]
 ## QA-022 : noms de famille de figurants ajoutés après les 15 du LORE §5 pour
 ## les origines dont la réserve tirable fondait (TYC et HAL : 5 noms sur 15 une
 ## fois les personnages réservés ; TER : 8) — 15 noms tirables au moins.
@@ -54,8 +57,10 @@ const RESERVED_FAMILY_NAMES: PackedStringArray = ["Okonkwo", "Vasquez-Orlov", "R
 const EXTRA_FAMILY_NAMES: Dictionary[StringName, PackedStringArray] = {
 	&"tyc": ["Ostrowski", "Varga", "Lindahl-Moreau", "Kuznetsova", "Abebe", "Rasmussen", "Tanaka-Roy", "Soto-Berg",
 			"Hallorann", "Mendes-Ivers"],
-	&"hal": ["Delaunay", "Ashworth", "Kobayashi", "Sorel", "Vidal-Mori", "Thorne", "Achterberg", "Nakamura",
-			"Castelli", "Hargreave"],
+	&"hal": ["Delaunay", "Ashworth", "Kobayashi", "Vidal-Mori", "Thorne", "Achterberg", "Nakamura",
+			"Castelli", "Hargreave",
+			# Acte III : Sorel, Okafor, Delacroix-Tan et Adeyemi deviennent des personnages.
+			"Marchetti", "Ellery", "Fontaine-Wu", "Quennell", "Brightwater"],
 	&"ter": ["Owusu", "Bello", "Chaudhry", "Kamau", "Sarr", "Mwangi", "Touré"],
 }
 ## Prénoms du foyer de l'agent·e (LORE §6, NARRATIVE §1.2) : jamais générés.
@@ -64,7 +69,7 @@ const RESERVED_HOUSEHOLD_NAMES: PackedStringArray = ["Ilan", "Noa", "Dora"]
 ## Scripts de données chargés par ce générateur. Un script qui ne s'analyse pas
 ## ne bloque pas l'exécution (appels « Nonexistent function », `_build()`
 ## interrompu sans bruit) : vérifiés avant toute écriture.
-const DATA_SCRIPTS: PackedStringArray = ["res://tools/build_data_act2.gd"]
+const DATA_SCRIPTS: PackedStringArray = ["res://tools/build_data_act2.gd", "res://tools/build_data_act3.gd"]
 
 ## Compte les erreurs moteur et de script (`push_error`, erreurs d'exécution)
 ## émises pendant la génération : toute erreur fait échouer le build.
@@ -131,7 +136,15 @@ func _build() -> void:
 	var sets: Array[RuleSet] = _build_rule_sets(rules)
 	_build_days(sets)
 	_build_days_m7(sets)
-	for day: DayDef in Act2.build_days(sets):
+	var act2_days: Array[DayDef] = Act2.build_days(sets)
+	# Acte III (D-086) : le J20 gagne sa soirée pivot.
+	Act3.extend_day20(act2_days[act2_days.size() - 1])
+	for day: DayDef in act2_days:
+		_save_day(day)
+	var act3_sets: Array[RuleSet] = Act3.build_rule_sets(rules, sets[sets.size() - 1].get_rule_ids())
+	for i: int in act3_sets.size():
+		_save(act3_sets[i], DAYS_DIR, "ruleset_day_%02d" % (i + 21))
+	for day: DayDef in Act3.build_days(act3_sets):
 		_save_day(day)
 	_build_economy()
 	_reserve_character_names(pools)
@@ -176,6 +189,7 @@ func _build_economy() -> void:
 	e.drift_min_credits = 30
 	e.glory_min_compliance = 0.85
 	Act2.configure_economy(e)
+	Act3.configure_economy(e)
 	_save(e, ECONOMY_DIR, "economy")
 
 
@@ -447,6 +461,9 @@ func _build_documents() -> Dictionary[StringName, DocumentTypeDef]:
 		_field(&"expiry_date", FK.DATE, &"document.expiry_date"),
 		_field(&"issuer", FK.ENUM, &"document.issuer_id", false),
 		_field(&"seal", FK.ENUM, &"document.seal_id"),
+		# Acte III (M2, M3) : répondant (R34) et convocation (R36), vides sinon.
+		_optional_field(&"sponsor", FK.ID_CODE, &"sponsor_id"),
+		_optional_field(&"summons", FK.ID_CODE, &"summons_id"),
 	]
 	result[permit.id] = permit
 
@@ -555,6 +572,13 @@ func _doc(id: StringName, issuer: StringName, seal: StringName, pattern: String,
 	return d
 
 
+## Champ affiché seulement s'il est renseigné (`FieldDef.optional`).
+func _optional_field(id: StringName, kind: FieldDef.FieldKind, truth_path: StringName) -> FieldDef:
+	var f: FieldDef = _field(id, kind, truth_path)
+	f.optional = true
+	return f
+
+
 func _field(id: StringName, kind: FieldDef.FieldKind, truth_path: StringName, comparable: bool = true) -> FieldDef:
 	var f: FieldDef = FieldDef.new()
 	f.id = id
@@ -659,6 +683,8 @@ func _build_rules() -> Dictionary[StringName, Rule]:
 	rules.append(_rule(r24, &"r_contract_required", CAT.DOCUMENTS, 2))
 	var r25: ContractConsistentRule = ContractConsistentRule.new()
 	r25.employer_codes = Act2.EMPLOYER_CODES.duplicate()
+	# Acte III (SC-70, SC-64, SC-77) : l'Arbitrage de Continuité.
+	r25.employer_codes[Act3.EMPLOYER_AR] = "AR"
 	r25.posts = Act2.CONTRACT_POSTS.duplicate()
 	rules.append(_rule(r25, &"r_contract_consistent", CAT.DOCUMENTS, 2))
 	var r26: DriftPassRule = DriftPassRule.new()
@@ -687,10 +713,14 @@ func _build_rules() -> Dictionary[StringName, Rule]:
 	r31.exempt_posts = [&"post_recycleur", &"post_soins", &"post_hydroponie"]
 	rules.append(_rule(r31, &"r_ter_closed", CAT.FACTION, 2))
 
+	# --- Acte III : R32–R37 (docs/ACT3.md §2.4) ---
+	rules.append_array(Act3.build_rules())
 	var result: Dictionary[StringName, Rule] = {}
 	for rule: Rule in rules:
-		_save(rule, RULES_DIR, "rule_%s" % String(rule.id).trim_prefix("r_"))
 		result[rule.id] = rule
+	Act3.configure_existing_rules(result)
+	for rule: Rule in rules:
+		_save(rule, RULES_DIR, "rule_%s" % String(rule.id).trim_prefix("r_"))
 	return result
 
 

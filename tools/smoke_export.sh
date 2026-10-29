@@ -6,7 +6,8 @@
 #    de jour (override.cfg à côté du binaire : un binaire exporté refuse un
 #    chemin de scène en ligne de commande) avec les arguments de debug
 #    `--day=N --seed=3 --autoplay` (booth 3D compris) pour J1, J4, J7, J10,
-#    J15 et J20 (Acte II : quota, couvre-feu, révocations, dernier jour).
+#    J15, J20 (Acte II : quota, couvre-feu, révocations, pivot), J25 et J30
+#    (Acte III : répondants, lock-out, dernier jour).
 #    Détecte ce que la suite GUT ne voit pas : ressources mal converties à
 #    l'export, fichiers non embarqués, traduction absente…
 # Échec si une ligne ERROR / SCRIPT ERROR apparaît (hors fuites signalées à la
@@ -46,7 +47,7 @@ run release_title "$ROOT/build/linux" --quit-after 300
 "$GODOT" --headless --path "$ROOT" --export-debug "Linux" "$SMOKE/debug/CLEARANCE.x86_64" >"$SMOKE/export_debug.log" 2>&1 \
 	|| die "export debug en échec (journal : build/smoke/export_debug.log)"
 printf '[application]\n\nrun/main_scene="res://scenes/main/day.tscn"\n' > "$SMOKE/debug/override.cfg"
-for day in 1 4 7 10 15 20; do
+for day in 1 4 7 10 15 20 25 30; do
 	run "debug_day$day" "$SMOKE/debug" --quit-after 2000 -- --day="$day" --seed=3 --autoplay
 done
 rm -rf "$SMOKE/debug" "$SMOKE/xdg"

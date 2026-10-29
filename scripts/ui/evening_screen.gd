@@ -24,6 +24,15 @@
 ## absents grisés), postes défilants, **confirmation** avant une option qui
 ## termine la campagne (« Embarquer », F6 au J10) ; soirée pivot du J10
 ## (panneaux des vannes, d'Ilan, du double jeu, de la promotion, du quai 6).
+## M9 (Acte III, ARCHITECTURE §7.3) : **carte « FIN DE L'ACTE II »** plein cadre
+## à l'ouverture de la soirée pivot du J20 (événement `d20_card_<climat>` :
+## titre de la fin de l'Acte II + 2 lignes, ≈ 3 s, passable), « Embarquer »
+## confirmé comme au J10 ; panneaux de l'**Enquête** (questions de Ravel J22,
+## J26, J28 : voix ambre, balance) ; **Déposition** du J29 mise en scène — le
+## verdict reste « en délibéré » tant que la déposition n'est pas choisie, puis
+## il est recalculé avec le choix (`audit_preview`) et révélé (arrestation,
+## blâme, rien à retenir) ; aides du soir versées par lettre (rappel des
+## salaires, caisse des vitres) comptées dans les revenus.
 class_name EveningScreen
 extends ScreenBase
 
@@ -44,10 +53,31 @@ const EVENT_ACCENTS: Dictionary[StringName, Color] = {
 	&"d11_levy": DS.VOICE_COMMISSION, &"d14_lease": DS.VOICE_COMMISSION, &"d17_review": DS.VOICE_COMMISSION,
 	&"d17_list": DS.VOICE_COMMISSION, &"d13_scanner": DS.ACCENT_MAGENTA, &"d16_unplug": DS.ACCENT_MAGENTA,
 	&"d19_registre": DS.ACCENT_MAGENTA,
+	# Acte III : l'Enquête (Ravel, voix INSPECTION ambre), l'Arbitre (registre).
+	&"d22_q1": DS.STATE_AMBER, &"d26_q2": DS.STATE_AMBER, &"d28_q3": DS.STATE_AMBER,
+	&"d29_deposition": DS.STATE_AMBER, &"d29_verdict": DS.STATE_AMBER, &"d20_double": DS.STATE_AMBER,
+	&"d20_flat": DS.ACCENT_YELLOW, &"d20_drift": DS.ACCENT_CYAN, &"d20_drift_refused": DS.ACCENT_CYAN,
+	&"d21_loan": DS.VOICE_COMMISSION, &"d27_loan": DS.VOICE_COMMISSION, &"d25_levy": DS.VOICE_COMMISSION,
 }
+## Acte III : carte de fin d'acte (J20, panneau 0) — préfixe des événements,
+## durée de lecture avant de passer seule (ACT3 §1.2 : « 3 s, passable »).
+const ACT_CARD_PREFIX: String = "d20_card_"
+const ACT_CARD_HOLD_SEC: float = DS.DUR_DRAMATIC * 5.0
+## Climat de la carte → fin de l'Acte II correspondante (couleur, icône).
+const ACT_CARD_ENDINGS: Dictionary[String, StringName] = {
+	"vanne": EndingService.F5_AIR, "brulants": EndingService.F5_AIR, "vitres": EndingService.F9_STRIKE,
+	"registre": EndingService.F8_REGISTRE, "promu": EndingService.F4_GLORY, "statu_quo": EndingService.F7_REOPENS,
+}
+## Acte III : panneaux de l'Enquête (locuteur « ENQUÊTE · C. RAVEL »).
+const ENQUETE_EVENTS: Array[StringName] = [&"d22_q1", &"d26_q2", &"d28_q3", &"d29_deposition", &"d29_verdict"]
+## Acte III : aides versées par lettre → libellé de revenu.
+const LETTER_INCOME_KEYS: Dictionary[StringName, String] = {&"d21_recall": "inc_recall", &"d23_fund": "inc_vitres_fund"}
 ## Hauteur d'une ligne de dépense (rations : plus compactes, groupées).
-const ROW_H: float = 56.0
-const RATION_ROW_H: float = 48.0
+## Compactes (QA-034) : libellé et note sur une ligne quand la largeur le
+## permet (repli sinon) ; foyer complet + 4 rations tiennent sans défiler en
+## 1080p ; la ligne grandit avec son contenu (texte 1,5). ≥ `HIT_TARGET_MIN`.
+const ROW_H: float = 44.0
+const RATION_ROW_H: float = 40.0
 
 var day_number: int = 1
 var game_date: int = 0
@@ -76,6 +106,9 @@ var next_button: Button = null
 var prev_button: Button = null
 
 var _rows: Array[Button] = []
+## Liste des dépenses (défile au-delà de sa hauteur) et indice « plus bas ».
+var _lines_scroll: ScrollContainer = null
+var _more_hint: Label = null
 var _spent_label: Label = null
 var _available_label: Label = null
 var _bonus_row: HBoxContainer = null
@@ -96,6 +129,15 @@ var incomes: Array[ExpenseLine] = []
 ## Acte II : boîte de confirmation d'une option qui termine la campagne.
 var confirm_layer: Control = null
 var _pending_final: Array[StringName] = []
+## Acte III : carte « FIN DE L'ACTE II » affichée (null sinon) ; elle passe
+## seule après `ACT_CARD_HOLD_SEC` sauf si `act_card_auto_close` est faux.
+var act_card_layer: Control = null
+var act_card_auto_close: bool = true
+var _act_card_button: Button = null
+## Acte III : recalcule les audits qui dépendent des choix du soir (Déposition) :
+## `func(choices: Dictionary[StringName, StringName]) -> void` (la scène passe
+## par `Campaign.preview_evening`, qui met `EveningEvent.audit` à jour).
+var audit_preview: Callable = Callable()
 
 
 func setup(p_day: DayDef, p_balance: int, p_shift_net: int, p_lines: Array[ExpenseLine], p_household: Household,
@@ -146,9 +188,18 @@ func _build() -> void:
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.size_flags_stretch_ratio = LEFT_RATIO
 	columns.add_child(left)
+	# Colonne de droite défilante (QA-034) : au texte 1,5 en 1080p, foyer +
+	# Déposition dépassent la hauteur ; la page (et VALIDER ET DORMIR) reste à l'écran.
+	var right_scroll: ScrollContainer = ScrollContainer.new()
+	right_scroll.name = "RightColumn"
+	right_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right_scroll.follow_focus = true
+	columns.add_child(right_scroll)
 	_right = vbox(DS.SPACE_5)
 	_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	columns.add_child(_right)
+	_right.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right_scroll.add_child(_right)
 	_right.add_child(_family())
 	if not events.is_empty():
 		_events_box = vbox(DS.SPACE_3)
@@ -161,6 +212,9 @@ func _build() -> void:
 	page.add_child(_footer())
 	_refresh()
 	confirm_button.grab_focus.call_deferred()
+	var card: EveningEvent = act_card_event()
+	if card != null:
+		_open_act_card(card)
 
 
 func _header() -> Control:
@@ -196,12 +250,25 @@ func _budget() -> VBoxContainer:
 		head_box.add_child(_money_row(UiText.t("ev_advance", "Avance du Consortium (prise de poste)"),
 				credits(consortium_advance, true), DS.ACCENT_YELLOW))
 	head_box.add_child(_money_row(UiText.t("ev_shift_net", "Net du shift (salaire − amendes)"), credits(shift_net, true), DS.TEXT_SECONDARY))
-	if not incomes.is_empty():
+	var letter_incomes: Array[EveningEvent] = []
+	for event: EveningEvent in events:
+		if letter_gain(event) > 0:
+			letter_incomes.append(event)
+	if not incomes.is_empty() or not letter_incomes.is_empty():
 		var income_head: Label = eyebrow(UiText.t("ev_incomes", "REVENUS DU FOYER"), DS.STATE_GREEN)
 		income_head.name = "Incomes"
 		head_box.add_child(income_head)
 		for income: ExpenseLine in incomes:
-			head_box.add_child(_money_row(UiText.t(income.label_key, String(income.id)), credits(income.cost, true), DS.STATE_GREEN))
+			var income_row: HBoxContainer = _money_row(UiText.t(income.label_key, String(income.id)), credits(income.cost, true),
+					DS.STATE_GREEN)
+			income_row.name = "Income_%s" % income.id
+			head_box.add_child(income_row)
+		# Acte III : aides versées par une lettre du soir (rappel, caisse des vitres).
+		for event: EveningEvent in letter_incomes:
+			var key: String = LETTER_INCOME_KEYS.get(event.id, event.title_key)
+			var gain_row: HBoxContainer = _money_row(UiText.t(key, String(event.id)), credits(letter_gain(event), true), DS.STATE_GREEN)
+			gain_row.name = "Income_%s" % event.id
+			head_box.add_child(gain_row)
 	_bonus_row = _money_row(UiText.t("ev_report_bonus", "Prime de signalement (Consortium)"), "", DS.ACCENT_YELLOW)
 	_bonus_row.visible = false
 	head_box.add_child(_bonus_row)
@@ -219,6 +286,17 @@ func _budget() -> VBoxContainer:
 	var list: VBoxContainer = vbox(DS.SPACE_2)
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
+	_lines_scroll = scroll
+	# Indice visible quand des postes sont sous le bord (QA-034) : un poste non
+	# vu (la ration d'un proche) ne passe jamais pour absent.
+	_more_hint = label("", &"CaptionLabel", DS.STATE_AMBER)
+	_more_hint.name = "MoreLines"
+	_more_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_more_hint.visible = false
+	box.add_child(_more_hint)
+	scroll.get_v_scroll_bar().value_changed.connect(func(_v: float) -> void: _update_more_hint())
+	scroll.resized.connect(_update_more_hint.call_deferred)
+	list.resized.connect(_update_more_hint.call_deferred)
 	var rations: Array[ExpenseLine] = []
 	for line: ExpenseLine in lines:
 		if is_ration(line):
@@ -259,6 +337,20 @@ func _money_row(caption: String, value: String, color: Color, value_variation: S
 	return row
 
 
+## « ▼ n postes plus bas » sous la liste tant que des postes sont sous le bord.
+func _update_more_hint() -> void:
+	if _lines_scroll == null or _more_hint == null or not is_instance_valid(_lines_scroll):
+		return
+	var view: Rect2 = _lines_scroll.get_global_rect().grow(1.0)
+	var below: int = 0
+	for row: Button in _rows:
+		if is_instance_valid(row) and row.get_global_rect().end.y > view.end.y:
+			below += 1
+	_more_hint.text = UiText.plural("ev_more_lines", below, "▼ %d poste plus bas — faites défiler",
+			"▼ %d postes plus bas — faites défiler")
+	_more_hint.visible = below > 0
+
+
 ## Ration d'air (Acte II, M2) : la vôtre ou celle d'un proche.
 static func is_ration(line: ExpenseLine) -> bool:
 	return line.ration_of != &"" or line.id == EveningService.LINE_RATION_SELF
@@ -271,7 +363,7 @@ func _rations_group(rations: Array[ExpenseLine]) -> Control:
 	var group: PanelContainer = panel()
 	group.name = "Rations"
 	group.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.BG_PANEL, DS.STATE_AMBER))
-	var box: VBoxContainer = vbox(DS.SPACE_2)
+	var box: VBoxContainer = vbox(DS.SPACE_1)
 	group.add_child(box)
 	var head: HBoxContainer = hbox(DS.SPACE_2)
 	box.add_child(head)
@@ -316,24 +408,35 @@ func _expense_row(line: ExpenseLine, height: float = ROW_H) -> Button:
 	for side: String in ["left", "right"]:
 		margin.add_theme_constant_override("margin_" + side, DS.SPACE_4)
 	for side: String in ["top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, DS.SPACE_2)
+		margin.add_theme_constant_override("margin_" + side, DS.SPACE_1)
 	row.add_child(margin)
+	# Un Button ne grandit pas avec ses enfants : la ligne suit son contenu
+	# (sous-titre de poste au texte 1,5, QA-034).
+	margin.minimum_size_changed.connect(func() -> void:
+		row.custom_minimum_size.y = maxf(height, margin.get_combined_minimum_size().y))
 	var content: HBoxContainer = hbox(DS.SPACE_4)
 	margin.add_child(content)
 	var check: CheckMark = CheckMark.new()
 	check.name = "Check"
 	check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	content.add_child(check)
-	var texts: VBoxContainer = vbox(0)
+	# Libellé · note sur une ligne si la place le permet, repliés sinon (QA-034).
+	var texts: HFlowContainer = HFlowContainer.new()
+	texts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texts.add_theme_constant_override("h_separation", DS.SPACE_3)
+	texts.add_theme_constant_override("v_separation", 0)
 	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	texts.alignment = BoxContainer.ALIGNMENT_CENTER
+	texts.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	content.add_child(texts)
 	var title: String = UiText.t(line.label_key, String(line.id))
 	if line.member_id != &"":
 		title = title % HouseholdView.member_name(line.member_id) if title.contains("%s") else title
-	texts.add_child(label(title, &"BodyStrong"))
+	var title_label: Label = label(title, &"BodyStrong")
+	title_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	texts.add_child(title_label)
 	var note: Label = label(UiText.t(line.note_key, ""), &"CaptionLabel")
 	note.name = "Note"
+	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	texts.add_child(note)
 	if line.mandatory:
 		var lock: PanelContainer = chip(UiText.t("ev_mandatory", "PRÉLEVÉE D'OFFICE"), UiIcon.Kind.LOCK, DS.TEXT_SECONDARY)
@@ -439,8 +542,10 @@ func event_balance_delta(except_event: StringName = &"") -> int:
 		if event.id == except_event or is_skipped(event):
 			continue
 		if event.kind == EveningEventDef.Kind.AUDIT:
-			delta -= SaveService.as_int(event.audit.get("cost", 0))
+			if not is_audit_pending(event):
+				delta -= SaveService.as_int(event.audit.get("cost", 0))
 			continue
+		delta += letter_gain(event)
 		var chosen: StringName = choices.get(event.id, &"")
 		var option: EveningOptionDef = event.get_option(chosen)
 		if option != null:
@@ -457,9 +562,37 @@ func available_for(event: EveningEvent) -> int:
 func is_skipped(event: EveningEvent) -> bool:
 	var index: int = events.find(event)
 	for i: int in index:
-		if events[i].kind == EveningEventDef.Kind.AUDIT and events[i].audit.get("ending", &"") != &"":
+		if events[i].kind == EveningEventDef.Kind.AUDIT and not is_audit_pending(events[i]) \
+				and events[i].audit.get("ending", &"") != &"":
 			return true
 	return false
+
+
+## Acte III : audit qui dépend d'un choix du soir encore en suspens (la
+## Déposition du J29 : verdict « en délibéré » tant qu'elle n'est pas choisie).
+func is_audit_pending(event: EveningEvent) -> bool:
+	if event == null or event.kind != EveningEventDef.Kind.AUDIT or event.def == null \
+			or event.def.audit_id != EndingService.AUDIT_DEPOSITION:
+		return false
+	for other: EveningEvent in events:
+		if other == event:
+			break
+		if other.is_choice() and not choices.has(other.id):
+			return true
+	return false
+
+
+## Acte III : gain versé par une lettre du soir (aide fixe `gain`, ou jauge
+## `gain_gauge` lue dans les valeurs du texte, ex. rappel des salaires).
+static func letter_gain(event: EveningEvent) -> int:
+	if event == null or event.def == null or event.kind != EveningEventDef.Kind.LETTER:
+		return 0
+	var gain: int = event.def.gain
+	if event.def.gain_gauge != &"":
+		var index: int = event.def.text_gauges.find(String(event.def.gain_gauge))
+		if index >= 0 and index < event.text_args.size():
+			gain += SaveService.as_int(event.text_args[index])
+	return gain
 
 
 ## Choix encore à faire (événements à choix non tranchés, non sautés).
@@ -480,10 +613,37 @@ func choose(event_id: StringName, option_id: StringName) -> bool:
 	if option == null or not can_afford(event, option):
 		return false
 	choices[event_id] = option_id
+	_refresh_audits()
 	_apply_choice_costs()
 	event_choice_made.emit(event_id, option_id)
 	_refresh()
+	# Déposition (J29) : le choix fait, le verdict de l'Enquête est révélé.
+	var verdict: EveningEvent = _dependent_audit(event)
+	if verdict != null and is_inside_tree() and _events_box != null and events[step] == event:
+		_show_step(events.find(verdict))
 	return true
+
+
+## Audit recalculé par un choix (Déposition) qui suit `event`, null sinon.
+func _dependent_audit(event: EveningEvent) -> EveningEvent:
+	var index: int = events.find(event)
+	for i: int in range(index + 1, events.size()):
+		var other: EveningEvent = events[i]
+		if other.kind == EveningEventDef.Kind.AUDIT and other.def != null and other.def.audit_id == EndingService.AUDIT_DEPOSITION:
+			return other if not is_audit_pending(other) else null
+	return null
+
+
+## Recalcule les audits qui dépendent des choix (Déposition), une fois tous
+## les choix qui les précèdent faits.
+func _refresh_audits() -> void:
+	if not audit_preview.is_valid():
+		return
+	for event: EveningEvent in events:
+		if event.kind == EveningEventDef.Kind.AUDIT and event.def != null and event.def.audit_id == EndingService.AUDIT_DEPOSITION \
+				and not is_audit_pending(event):
+			audit_preview.call(get_choices())
+			return
 
 
 ## Option finançable : gratuite, ou couverte par les fonds restants
@@ -529,6 +689,8 @@ func _apply_choice_costs() -> void:
 
 
 func _event_accent(event: EveningEvent) -> Color:
+	if is_act_card(event):
+		return act_card_accent(event)
 	if EVENT_ACCENTS.has(event.id):
 		return EVENT_ACCENTS[event.id]
 	match event.kind:
@@ -596,9 +758,20 @@ func _show_step(index: int) -> void:
 	head.add_child(_step_dots(accent))
 	head.add_child(spacer())
 	var kind_key: String = ["ev_kind_letter", "ev_kind_choice", "ev_kind_audit"][event.kind]
+	if is_act_card(event):
+		kind_key = "evt_d20_card_eyebrow"
+	elif event.def != null and event.def.audit_id == EndingService.AUDIT_DEPOSITION:
+		kind_key = "ev_kind_verdict"
 	head.add_child(eyebrow(UiText.t(kind_key, "LETTRE"), accent))
+	if ENQUETE_EVENTS.has(event.id):
+		# Acte III : l'Enquête parle (Ravel), comme une voix de briefing.
+		var speaker: HBoxContainer = hbox(DS.SPACE_2)
+		speaker.name = "Speaker"
+		speaker.add_child(UiIcon.make(UiIcon.Kind.SCALES, accent, DS.ICON_S))
+		speaker.add_child(eyebrow(UiText.t("spk_enquete", "ENQUÊTE · C. RAVEL"), accent))
+		box.add_child(speaker)
 	if not event.title_key.is_empty():
-		var title: Label = label(UiText.t(event.title_key, String(event.id)), &"PanelTitle", DS.TEXT_PRIMARY)
+		var title: Label = label(UiText.t(event.title_key, String(event.id)), &"PanelTitle", accent if is_act_card(event) else DS.TEXT_PRIMARY)
 		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		title.custom_minimum_size.x = 120.0
 		box.add_child(title)
@@ -655,6 +828,22 @@ func _step_dots(accent: Color) -> Control:
 
 
 func _audit_result(event: EveningEvent) -> Control:
+	if is_audit_pending(event):
+		# Déposition (J29) : rien n'est jugé avant votre déposition.
+		var waiting: PanelContainer = panel()
+		waiting.name = "VerdictPending"
+		waiting.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE,
+				DS.CHAMFER_S, DS.SPACE_3))
+		var wait_row: HBoxContainer = hbox(DS.SPACE_3)
+		waiting.add_child(wait_row)
+		wait_row.add_child(UiIcon.make(UiIcon.Kind.SCALES, DS.TEXT_SECONDARY, DS.ICON_M))
+		var wait_text: Label = wrapped(UiText.t("ev_deposition_pending", "Le greffe délibère. Votre déposition d'abord."), &"BodyLabel",
+				DS.TEXT_SECONDARY)
+		wait_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		wait_row.add_child(wait_text)
+		return waiting
+	if event.def != null and event.def.audit_id == EndingService.AUDIT_DEPOSITION:
+		return _deposition_verdict(event)
 	var outcome: Dictionary = event.audit
 	var ending: StringName = outcome.get("ending", &"")
 	var cost: int = SaveService.as_int(outcome.get("cost", 0))
@@ -671,6 +860,50 @@ func _audit_result(event: EveningEvent) -> Control:
 		var amount: Label = label(credits(-cost), &"DataTitle", color)
 		amount.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(amount)
+	return card
+
+
+## Déposition (J29) : verdict de l'Enquête et sa conséquence (arrestation →
+## fin de la campagne, blâme → retenue, rien à retenir), révélé en fondu.
+func _deposition_verdict(event: EveningEvent) -> Control:
+	var outcome: Dictionary = event.audit
+	var ending: StringName = outcome.get("ending", &"")
+	var cost: int = SaveService.as_int(outcome.get("cost", 0))
+	var color: Color = DS.STATE_RED if ending != &"" else (DS.STATE_AMBER if cost > 0 else DS.ACCENT_CYAN)
+	var card: PanelContainer = panel()
+	card.name = "Verdict"
+	card.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(Color(color, 0.12), color, DS.BORDER_STRONG, DS.CHAMFER_S, DS.SPACE_4))
+	var box: VBoxContainer = vbox(DS.SPACE_3)
+	card.add_child(box)
+	var head: HBoxContainer = hbox(DS.SPACE_2)
+	box.add_child(head)
+	var icon: UiIcon.Kind = UiIcon.Kind.DETAIN if ending != &"" else (UiIcon.Kind.WARNING if cost > 0 else UiIcon.Kind.CHECK)
+	head.add_child(UiIcon.make(icon, color, DS.ICON_M))
+	var chip_key: String = "ev_dep_arrest" if ending != &"" else ("ev_dep_blame" if cost > 0 else "ev_dep_clean")
+	var chip_fallback: String = "MISE EN ATTENTE · FIN DE LA CAMPAGNE" if ending != &"" else ("BLÂME · RETENUE" if cost > 0 else "RIEN À RETENIR")
+	var consequence: Label = label(UiText.t(chip_key, chip_fallback), &"PanelTitle", color)
+	consequence.name = "Consequence"
+	consequence.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	consequence.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	consequence.custom_minimum_size.x = 120.0
+	head.add_child(consequence)
+	if cost > 0:
+		var amount: Label = label(credits(-cost), &"DataTitle", color)
+		amount.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		head.add_child(amount)
+	box.add_child(wrapped(UiText.t(str(outcome.get("result_key", "")), ""), &"BodyLabel", DS.TEXT_PRIMARY))
+	# Rappel de ce que vous avez dit (le choix qui précède le verdict).
+	for i: int in range(events.find(event) - 1, -1, -1):
+		var said_id: StringName = choices.get(events[i].id, &"")
+		var said: EveningOptionDef = events[i].get_option(said_id)
+		if events[i].is_choice() and said != null:
+			var quote: Label = label("« %s »" % UiText.t(said.label_key, String(said.id)), &"CaptionLabel", DS.TEXT_SECONDARY)
+			quote.name = "Said"
+			box.add_child(quote)
+			break
+	if not Settings.reduce_motion:
+		card.modulate.a = 0.0
+		card.create_tween().tween_property(card, "modulate:a", 1.0, DS.DUR_DRAMATIC).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	return card
 
 
@@ -812,9 +1045,136 @@ static func _trap_focus(from: Button, other: Button) -> void:
 	from.focus_neighbor_bottom = me
 
 
+# ---------------------------------------------------------------------------
+# Acte III : carte « FIN DE L'ACTE II » (soirée pivot du J20)
+# ---------------------------------------------------------------------------
+
+static func is_act_card(event: EveningEvent) -> bool:
+	return event != null and String(event.id).begins_with(ACT_CARD_PREFIX)
+
+
+## Événement « carte de fin d'acte » du soir (un seul climat), null sinon.
+func act_card_event() -> EveningEvent:
+	for event: EveningEvent in events:
+		if is_act_card(event):
+			return event
+	return null
+
+
+## Climat de la carte (`vanne`, `brulants`, `vitres`…).
+static func act_card_climate(event: EveningEvent) -> String:
+	return String(event.id).trim_prefix(ACT_CARD_PREFIX) if event != null else ""
+
+
+## Couleur de la fin de l'Acte II que la carte rappelle (DS, comme l'écran de fin).
+static func act_card_accent(event: EveningEvent) -> Color:
+	var climate: String = act_card_climate(event)
+	return EndScreen.accent_of(act_card_ending(event), "brulants" if climate == "brulants" else "")
+
+
+## Fin de l'Acte II que la carte rappelle (F7 par défaut).
+static func act_card_ending(event: EveningEvent) -> StringName:
+	var ending: StringName = ACT_CARD_ENDINGS.get(act_card_climate(event), EndingService.F7_REOPENS)
+	return ending
+
+
+## Plein cadre noir : « FIN DE L'ACTE II », titre de la fin (couleur de la
+## fin), deux lignes ; passe seule après `ACT_CARD_HOLD_SEC` ou au clic, à
+## Entrée, à « CONTINUER ». La soirée pivot est derrière.
+func _open_act_card(event: EveningEvent) -> void:
+	close_act_card()
+	var accent: Color = act_card_accent(event)
+	act_card_layer = Control.new()
+	act_card_layer.name = "ActCard"
+	act_card_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	act_card_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(act_card_layer)
+	var fill: ColorRect = ColorRect.new()
+	fill.color = DS.BG_VOID
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fill.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	act_card_layer.add_child(fill)
+	var center: CenterContainer = CenterContainer.new()
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	act_card_layer.add_child(center)
+	var box: VBoxContainer = vbox(DS.SPACE_5)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.custom_minimum_size.x = 960.0
+	center.add_child(box)
+	var head: HBoxContainer = hbox(DS.SPACE_3)
+	head.alignment = BoxContainer.ALIGNMENT_CENTER
+	head.add_child(UiIcon.make(EndScreen.icon_of(act_card_ending(event)), accent,
+			DS.ICON_M))
+	head.add_child(eyebrow(UiText.t("evt_d20_card_eyebrow", "FIN DE L'ACTE II"), accent))
+	box.add_child(head)
+	var title: Label = label(UiText.t(event.title_key, String(event.id)), &"DisplayLabel", accent)
+	title.name = "CardTitle"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.custom_minimum_size.x = 640.0
+	box.add_child(title)
+	var line: ColorRect = rule_line(Color(accent, 0.4))
+	line.custom_minimum_size = Vector2(480.0, DS.BORDER_HAIRLINE)
+	line.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(line)
+	var keys: PackedStringArray = [event.text_key]
+	keys.append_array(event.extra_keys)
+	for key: String in keys:
+		if key.is_empty():
+			continue
+		var text: Label = wrapped(UiText.t(key, ""), &"TitleLabel", DS.TEXT_PRIMARY)
+		text.name = "CardLine_%d" % box.get_child_count()
+		text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		box.add_child(text)
+	var footer: VBoxContainer = vbox(DS.SPACE_2)
+	footer.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(footer)
+	_act_card_button = button(UiText.t("act_card_continue", "LA NUIT DU 1ᵉʳ AVRIL ▶"), &"ButtonGhost")
+	_act_card_button.name = "Continue"
+	_act_card_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_act_card_button.pressed.connect(close_act_card)
+	footer.add_child(_act_card_button)
+	_act_card_button.grab_focus.call_deferred()
+	if Settings.reduce_motion:
+		return
+	box.modulate.a = 0.0
+	var reveal: Tween = box.create_tween()
+	reveal.tween_property(box, "modulate:a", 1.0, DS.DUR_DRAMATIC).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if act_card_auto_close:
+		get_tree().create_timer(ACT_CARD_HOLD_SEC).timeout.connect(_fade_act_card.bind(act_card_layer))
+
+
+func _fade_act_card(layer: Control) -> void:
+	if layer != act_card_layer or not is_instance_valid(layer) or not act_card_auto_close:
+		return
+	var fade: Tween = layer.create_tween()
+	fade.tween_property(layer, "modulate:a", 0.0, DS.DUR_DRAMATIC)
+	fade.tween_callback(close_act_card)
+
+
+## Ferme la carte de fin d'acte (la soirée pivot reste affichée).
+func close_act_card() -> void:
+	if act_card_layer == null:
+		return
+	act_card_layer.queue_free()
+	act_card_layer = null
+	_act_card_button = null
+	if confirm_button != null and is_inside_tree():
+		confirm_button.grab_focus.call_deferred()
+
+
 ## Échap / B (`cancel`, `ui_cancel`) dans la boîte « QUITTER HALCYON ? » :
-## annule (QA-021) ; le menu pause ne s'ouvre pas par-dessus.
+## annule (QA-021) ; le menu pause ne s'ouvre pas par-dessus. Carte de fin
+## d'acte : clic, Entrée ou Échap la passent.
 func _input(event: InputEvent) -> void:
+	if act_card_layer != null and is_visible_in_tree():
+		var click: InputEventMouseButton = event as InputEventMouseButton
+		if (click != null and click.pressed and click.button_index == MOUSE_BUTTON_LEFT) or event.is_action_pressed(&"ui_accept", false, true) \
+				or event.is_action_pressed(&"cancel", false, true) or event.is_action_pressed(&"ui_cancel", false, true):
+			close_act_card()
+			get_viewport().set_input_as_handled()
+		return
 	if confirm_layer == null or not is_visible_in_tree():
 		return
 	if event.is_action_pressed(&"cancel", false, true) or event.is_action_pressed(&"ui_cancel", false, true):
@@ -954,6 +1314,7 @@ func confirm() -> void:
 	# Boîte « QUITTER HALCYON ? » ouverte : elle seule répond (QA-021).
 	if _report_layer != null or confirm_layer != null:
 		return
+	close_act_card()
 	if luciole_pending:
 		_decide_luciole(false)
 	for row: Button in _rows:

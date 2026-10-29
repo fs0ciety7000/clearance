@@ -28,6 +28,16 @@ const REASON_SYMBOL_MATCH: String = "disc_symbol_match"
 ## Acte II (R30) : N° ID ↔ entrée de l'onglet Révocations.
 const REASON_REVOKED_MATCH: String = "disc_revoked_match"
 const REASON_REVOKED_NO_MATCH: String = "disc_revoked_no_match"
+## Acte III : document expiré dans la fenêtre de prorogation (R32, CONCORDANT) ;
+## N° ID révoqué puis réintégré (R33, CONCORDANT) ; Répondant ↔ entrée de la
+## Main courante (R34) ; Convocation ↔ entrée de l'onglet Convocations (R36 :
+## même N°, autre nom = DISCORDANT) ; document retiré (M1, INCOMPARABLE).
+const REASON_PROROGATED: String = "disc_prorogated"
+const REASON_REINSTATED: String = "disc_reinstated"
+const REASON_SPONSOR_MATCH: String = "disc_sponsor_match"
+const REASON_SUMMONS_MATCH: String = "disc_summons_match"
+const REASON_SUMMONS_NAME: String = "disc_summons_name"
+const REASON_RETIRED: String = "disc_retired"
 
 var a: FieldRef = null
 var b: FieldRef = null

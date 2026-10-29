@@ -335,7 +335,7 @@ func _available() -> Vector2:
 	for item_view: SlippedItemView in items:
 		if is_instance_valid(item_view):
 			reserve = maxf(reserve, item_view.get_combined_minimum_size().x + DS.SPACE_4)
-	return Vector2(maxf(size.x - SIDE_MARGIN * 2.0 - reserve, 1.0), maxf(size.y - HEADER_H - DS.SPACE_4, 1.0))
+	return Vector2(maxf(size.x - SIDE_MARGIN * 2.0 - reserve, 1.0), maxf(size.y - header_height() - DS.SPACE_4, 1.0))
 
 
 ## Taille d'une pile à l'échelle 1 : largeur du plus large, hauteur des onglets
@@ -408,18 +408,19 @@ func default_layout() -> Array[Vector2]:
 		squeeze = maxf(available.x - last, 0.0) / (used - last)
 	var x: float = SIDE_MARGIN + maxf((available.x - used) * 0.5, 0.0)
 	var hand: Array[float] = [DS.SPACE_4, 0.0, DS.SPACE_6, DS.SPACE_2, DS.SPACE_4]
+	var header: float = header_height()
 	var side_by_side: bool = _piles.size() == views.size()
 	for p: int in _piles.size():
 		var pile: PackedInt32Array = _piles[p]
 		var offsets: Array[float] = _pile_offsets(pile)
 		var pile_h: float = _pile_size(pile).y * fit_scale
-		var top: float = HEADER_H + (hand[p % hand.size()] if side_by_side else 0.0)
-		top = minf(top, maxf(size.y - pile_h - DS.SPACE_4, HEADER_H))
+		var top: float = header + (hand[p % hand.size()] if side_by_side else 0.0)
+		top = minf(top, maxf(size.y - pile_h - DS.SPACE_4, header))
 		for k: int in pile.size():
 			var view: DocumentView = views[pile[k]]
 			view.set_meta(META_PILE, p)
 			var y: float = top + offsets[k] * fit_scale
-			y = minf(y, maxf(size.y - view.get_combined_minimum_size().y * fit_scale - DS.SPACE_4, HEADER_H))
+			y = minf(y, maxf(size.y - view.get_combined_minimum_size().y * fit_scale - DS.SPACE_4, header))
 			result[pile[k]] = Vector2(x, y)
 		x += (widths[p] + gap) * squeeze
 	_restack()
@@ -556,8 +557,9 @@ func _place_item(view: SlippedItemView, index: int) -> void:
 ## (ou la moins couverte) le long des bords droit puis gauche, hors des
 ## documents et des autres objets (QA-015).
 func item_target(item_size: Vector2, index: int) -> Vector2:
+	var header: float = header_height()
 	var preferred: Vector2 = Vector2(size.x - item_size.x - DS.SPACE_8 - DS.SPACE_6 * index,
-			maxf(size.y - item_size.y - DS.SPACE_6 - DS.SPACE_4 * index, HEADER_H))
+			maxf(size.y - item_size.y - DS.SPACE_6 - DS.SPACE_4 * index, header))
 	var obstacles: Array[Rect2] = _doc_targets.duplicate()
 	for i: int in mini(index, items.size()):
 		var other: SlippedItemView = items[i]
@@ -565,9 +567,9 @@ func item_target(item_size: Vector2, index: int) -> Vector2:
 			var placed: Vector2 = other.get_meta(&"target", other.position)
 			obstacles.append(Rect2(placed, other.size))
 	var candidates: Array[Vector2] = [preferred]
-	var bottom: float = maxf(size.y - item_size.y - DS.SPACE_4, HEADER_H)
+	var bottom: float = maxf(size.y - item_size.y - DS.SPACE_4, header)
 	var y: float = bottom
-	while y >= HEADER_H:
+	while y >= header:
 		candidates.append(Vector2(size.x - item_size.x - DS.SPACE_4, y))
 		candidates.append(Vector2(DS.SPACE_4, y))
 		y -= DS.SPACE_6
@@ -924,22 +926,28 @@ func set_empty_state(title: String, text: String) -> void:
 
 func _build_banner() -> void:
 	_banner = PanelContainer.new()
+	_banner.name = "ResultBanner"
 	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	_banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_banner.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_banner.offset_bottom = -DS.SPACE_4
+	# Bandeau dans la bande d'en-tête du plan (QA-033) : jamais sur un document,
+	# qui se pose sous `header_height()`.
+	_banner.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	_banner.offset_left = DS.SPACE_4
+	_banner.offset_right = -DS.SPACE_4
 	_banner.visible = false
+	_banner.add_theme_stylebox_override(&"panel", _banner_box(DS.ACCENT_CYAN))
 	add_child(_banner)
 	var row: HBoxContainer = HBoxContainer.new()
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override("separation", DS.SPACE_3)
 	_banner.add_child(row)
 	_banner_icon = UiIcon.make(UiIcon.Kind.WARNING, DS.ACCENT_MAGENTA, DS.ICON_M)
+	_banner_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_banner_icon)
 	_banner_title = Label.new()
 	_banner_title.theme_type_variation = &"BodyStrong"
 	_banner_title.uppercase = true
+	_banner_title.text = "—"
+	_banner_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_banner_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_banner_title)
 	var sep: ColorRect = ColorRect.new()
@@ -950,11 +958,34 @@ func _build_banner() -> void:
 	row.add_child(sep)
 	_banner_text = Label.new()
 	_banner_text.theme_type_variation = &"BodyLabel"
+	_banner_text.text = "—"
+	_banner_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_banner_text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# Une ligne : la hauteur de la bande d'en-tête est fixe pour le jour.
+	_banner_text.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_banner_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_banner_text)
 
 
-## Bandeau de résultat (bas du plan) ; `hold` > 0 : disparaît ensuite.
+static func _banner_box(accent: Color) -> StyleBoxFlat:
+	var box: StyleBoxFlat = ThemeBuilder.chamfer_box(DS.BG_PANEL.blend(Color(accent, 0.12)), accent, DS.BORDER_HAIRLINE, DS.CHAMFER_S, DS.SPACE_1)
+	box.content_margin_left = DS.SPACE_4
+	box.content_margin_right = DS.SPACE_5
+	return box
+
+
+## Hauteur de la bande d'en-tête du plan (libellés, bandeau de résultat) :
+## `HEADER_H`, ou plus avec un texte agrandi (le bandeau y tient toujours).
+## Les documents et objets glissés se posent dessous (QA-033).
+func header_height() -> float:
+	if _banner == null:
+		return HEADER_H
+	return maxf(HEADER_H, ceilf(_banner.get_combined_minimum_size().y) + DS.SPACE_2)
+
+
+## Bandeau de résultat (bande d'en-tête du plan, à droite de la pastille du
+## scanner) ; `hold` > 0 : s'efface ensuite (CONCORDANT `CONCORDANT_HOLD`,
+## DISCORDANCE `TOAST_HOLD` : les marques numérotées restent sur les champs).
 func show_banner(kind: BannerKind, title: String, text: String, hold: float = 0.0) -> void:
 	var accent: Color = DS.ACCENT_MAGENTA
 	var icon: UiIcon.Kind = UiIcon.Kind.WARNING
@@ -968,20 +999,23 @@ func show_banner(kind: BannerKind, title: String, text: String, hold: float = 0.
 		BannerKind.INFO:
 			accent = DS.ACCENT_CYAN
 			icon = UiIcon.Kind.INFO
-	var bg: Color = DS.BG_PANEL.blend(Color(accent, 0.12))
-	var box: StyleBoxFlat = ThemeBuilder.chamfer_box(bg, accent, DS.BORDER_HAIRLINE, DS.CHAMFER_S, DS.SPACE_3)
-	box.content_margin_left = DS.SPACE_4
-	box.content_margin_right = DS.SPACE_5
-	_banner.add_theme_stylebox_override(&"panel", box)
+	_banner.add_theme_stylebox_override(&"panel", _banner_box(accent))
 	_banner_icon.kind = icon
 	_banner_icon.color = accent
 	_banner_title.text = title
 	_banner_title.add_theme_color_override(&"font_color", accent)
 	_banner_text.text = text
 	_banner_text.visible = not text.is_empty()
+	_banner.tooltip_text = text
+	var left: float = DS.SPACE_4
+	if scanner_chip != null and scanner_chip.visible:
+		left = scanner_chip.position.x + scanner_chip.size.x + DS.SPACE_4
+	var height: float = _banner.get_combined_minimum_size().y
+	_banner.offset_left = left
+	_banner.offset_top = maxf((header_height() - height) * 0.5, 0.0)
+	_banner.offset_bottom = _banner.offset_top + height
 	_banner.visible = true
 	_banner.modulate.a = 1.0
-	_banner.reset_size()
 	if _banner_tween != null:
 		_banner_tween.kill()
 		_banner_tween = null

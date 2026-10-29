@@ -5,6 +5,9 @@
 [resource]
 script = ExtResource("1_5p6na")
 registered_vessels = PackedStringArray("LONG-RUBAN", "PIERRE-BLEUE", "NADIR", "VASQUE", "HELIODORE", "MAINSOLEIL", "CORAIL-9", "BASSE-MARÉE", "TESSARIDE", "CENDRE", "KALLIOPE", "LOINTAIN", "SAINT-ORBE", "VARECH")
+retired_vessels = Dictionary[String, int]({
+"BASSE-MARÉE": 31867
+})
 document_id = &"drift_pass"
 applies_to_faction_ids = Array[StringName]([&"drv"])
 require_valid = true

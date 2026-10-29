@@ -13,6 +13,15 @@ var family_name: String = ""
 var reason_key: String = ""
 ## Index du passager concerné dans la file du jour (−1 : leurre sans passager).
 var case_index: int = -1
+## Acte III (R33) : date de réintégration (`GameDate`), 0 = non réintégré·e
+## (colonne « RÉINTÉGRÉ·E LE » ; `reinstated_reason_key` sinon : exclusion).
+var reinstated_on: int = 0
+var excluded_reason_key: String = ""
+
+
+## Réintégré·e à la date `today` (date de réintégration atteinte).
+func is_reinstated(today: int) -> bool:
+	return reinstated_on > 0 and reinstated_on <= today
 
 
 func full_name() -> String:

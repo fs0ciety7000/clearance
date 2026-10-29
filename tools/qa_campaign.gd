@@ -1,5 +1,5 @@
 ## Campagne QA réelle (docs/QA.md §2) — la vraie scène de jour (`day.tscn` :
-## booth 3D, `ComparisonUI`, écrans, `reload_current_scene`) jouée du J1 au J20 (fin anticipée possible)
+## booth 3D, `ComparisonUI`, écrans, `reload_current_scene`) jouée du J1 au J30 (fin anticipée possible)
 ## par le bot `--autoplay`, accélérée par `Engine.time_scale`.
 ##
 ## Le pilote ne fait que ce que ferait un joueur pressé : ferme le bilan,
@@ -30,7 +30,7 @@ var _seed: int = 7
 var _profile: SimProfile = null
 var _speed: float = 8.0
 ## `--qa-credits=N` : solde de départ (le bot `--autoplay`, ~70 % de précision,
-## s'effondre sinon avant l'Acte II ; permet de jouer la vraie scène jusqu'au J20).
+## s'effondre sinon avant l'Acte II ; permet de jouer la vraie scène jusqu'au J30).
 var _credits: int = -1
 var _data: DataCatalog = null
 var _day_started_msec: int = 0
@@ -39,7 +39,7 @@ var _handled: Dictionary = {}
 var _issues: PackedStringArray = []
 var _done: bool = false
 var _reload: bool = false
-## `--qa-load=/chemin/slot.json` : reprend une sauvegarde réelle (migration v3 → v4).
+## `--qa-load=/chemin/slot.json` : reprend une sauvegarde réelle (migrations en chaîne jusqu’à v5).
 var _load_path: String = ""
 var _reloaded_day: int = 0
 
@@ -76,6 +76,9 @@ func _ready() -> void:
 				GameState.household.to_dict()])
 	if _credits >= 0:
 		GameState.credits = _credits
+		if not _load_path.is_empty():
+			# La sauvegarde reprise suit le solde imposé (contrôle de rechargement).
+			GameState.save_to_slot()
 	Engine.time_scale = _speed
 	print("QA_START seed=%d profile=%s speed=%.1f" % [_seed, _profile.name, _speed])
 	get_tree().change_scene_to_file(DAY_SCENE)
@@ -120,7 +123,7 @@ func _process(_delta: float) -> void:
 
 
 func _on_new_day() -> void:
-	# Après la fin (J20 ou fin anticipée), la sauvegarde est effacée (D-041).
+	# Après la fin (J30 ou fin anticipée), la sauvegarde est effacée (D-041).
 	if _last_day > 0 and not GameState.has_flag(Campaign.FLAG_ENDING):
 		_check_save_roundtrip()
 	_last_day = GameState.current_day
@@ -163,8 +166,9 @@ func _drive_evening(evening: EveningScreen) -> void:
 	var before: int = GameState.credits
 	for event_id: StringName in _profile.choices:
 		var event: EveningEvent = evening.get_event(event_id)
-		var option_id: StringName = _profile.choices[event_id]
-		var option: EveningOptionDef = event.get_option(option_id) if event != null else null
+		# QA-036 : option choisie par intention (variante conditionnelle au même libellé).
+		var option: EveningOptionDef = _profile.option_for(event)
+		var option_id: StringName = option.id if option != null else _profile.choices[event_id]
 		if option != null and option.ends_campaign != &"":
 			# Chemin joueur : la boîte « QUITTER HALCYON ? » puis CONFIRMER.
 			evening.request_choice(event_id, option_id)
@@ -174,8 +178,7 @@ func _drive_evening(evening: EveningScreen) -> void:
 				print("QA_NOTE J%d : choix %s:%s refusé par l'écran" % [day, event_id, option_id])
 			continue
 		if event != null and not evening.choose(event_id, option_id):
-			print("QA_NOTE J%d : choix %s:%s refusé par l'écran" % [GameState.current_day, event_id,
-					_profile.choices[event_id]])
+			print("QA_NOTE J%d : choix %s:%s refusé par l'écran" % [GameState.current_day, event_id, option_id])
 	if evening.luciole_pending and _profile.report_note:
 		evening.call(&"_decide_luciole", true)
 	var parts: PackedStringArray = []

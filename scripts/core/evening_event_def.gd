@@ -43,9 +43,29 @@ enum Kind { LETTER, CHOICE, AUDIT }
 ## seuil, en plus de `condition`. `balance_sim --set=` les règle donc aussi.
 @export var economy_gauges_min: Dictionary[StringName, StringName] = {}
 
+@export_group("Acte III")
+## Gain d'une lettre (aides conditionnelles, D-089 : caisse des vitres +15 ₵).
+@export var gain: int = 0
+## Gain d'une lettre lu dans une jauge du contexte (rappel des salaires
+## imputés : `recall_amount`), ajouté à `gain`.
+@export var gain_gauge: StringName = &""
 
-## Vrai si chaque jauge de `economy_gauges_min` atteint le seuil de l'`EconomyDef`.
+
+## Acte III : jauge → champ de l'`EconomyDef` qu'elle doit rester **sous**
+## (aides conditionnelles « si solde < 40 ₵ » : `balance` → `loan_balance_below`).
+@export var economy_gauges_below: Dictionary[StringName, StringName] = {}
+
+
+## Vrai si chaque jauge de `economy_gauges_min` atteint le seuil de l'`EconomyDef`
+## (Acte III : et chaque jauge de `economy_gauges_below` reste sous le sien).
 func economy_gauges_met(p_flags: Dictionary[StringName, Variant], economy: EconomyDef) -> bool:
+	for gauge: StringName in economy_gauges_below:
+		var below: StringName = economy_gauges_below[gauge]
+		if economy == null or not below in economy:
+			push_error("EveningEventDef « %s » : seuil %s absent de l'EconomyDef" % [id, below])
+			return false
+		if FlagCondition.gauge_value(p_flags, gauge) >= SaveService.as_int(economy.get(below)):
+			return false
 	for gauge: StringName in economy_gauges_min:
 		var field: StringName = economy_gauges_min[gauge]
 		if economy == null or not field in economy:

@@ -31,6 +31,10 @@ enum Kind {
 	UNREGISTERED_VESSEL = 18,
 	OUTDATED_FIRMWARE = 19,
 	REVOKED_ID = 20,
+	# Acte III (docs/ACT3.md §2.2, B38) — ajoutés en fin d'enum (D-033).
+	SPONSOR_MISMATCH = 21,
+	FORGED_SUMMONS = 22,
+	SUSPENDED_CONTRACT = 23,
 }
 
 
