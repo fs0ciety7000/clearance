@@ -54,6 +54,7 @@ static func simulate(data: DataCatalog, day_number: int, day_seed: int, policy: 
 ## shift des effets, fin anticipée sur une annonce (grève du J20).
 ## Acte III : Main courante (`CaseBuilder.record_verdict` après chaque
 ## verdict), quota suspendu selon le climat, jauges d'admissions (`pont`).
+## M11 : `profile.story_mode` (Récit, D-102) — amendes à 0 ₵.
 static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile: SimProfile,
 		flags: Dictionary[StringName, Variant], memory: Dictionary, rng: SeededRng) -> DaySummary:
 	var day: DayDef = data.get_day(day_number)
@@ -99,6 +100,8 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		if result.has_citation():
 			citations += 1
 			ScoringService.apply_citation(result, citations, day)
+			if profile.story_mode:
+				result.waive_fine()
 		for item: SlippedItem in case.slipped_items:
 			item.decision = profile.decision_for(case, item, rng.randf())
 			result.item_decisions[item.id] = item.decision

@@ -365,8 +365,8 @@ func show_final(summary: DaySummary) -> void:
 
 
 func show_end(ending: StringName) -> void:
-	# Toute fin de partie efface la sauvegarde (D-041) — idempotent.
-	SaveService.delete()
+	# Toute fin archive la partie et l'inscrit au profil (D-101) — idempotent.
+	GameState.end_campaign(ending)
 	var end: EndScreen = EndScreen.new()
 	end.name = "EndScreen"
 	end.epilogue = Campaign.epilogue(ending)

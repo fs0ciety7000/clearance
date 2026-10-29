@@ -33,6 +33,11 @@
 ## tenue au fil du shift (`CaseBuilder.record_verdict`, `ledger_changed`),
 ## convocations du jour (`summons_published`), quota suspendu selon le climat
 ## (`DayDef.quota_suspended_if`), annonces horaires au début du shift.
+## M11, mode Récit (D-102, `story_mode`, lu dans `GameState` au début du jour) :
+## l'horloge ne termine pas le shift (`DayClock.untimed`) — il finit quand la
+## file prévue est traitée, ou par `close_booth()` une fois le quota atteint ;
+## amendes à 0 ₵ (`CaseResult.waive_fine`), citations comptées. Passage Récit →
+## Dur en cours de shift : `EventBus.difficulty_changed`.
 class_name DayController
 extends Node
 
@@ -77,6 +82,10 @@ var quota: QuotaTracker = QuotaTracker.new()
 var scanner_source: StringName = &""
 ## Acte II : le shift s'est arrêté sur une annonce (grève du J20).
 var shift_ended_early: bool = false
+## M11 (D-102) : mode Récit pour ce shift (pas de fin à l'heure, 0 ₵ d'amende).
+var story_mode: bool = false
+## M11 : guichet fermé par le joueur (Récit, quota atteint) : fin après le cas.
+var booth_closed: bool = false
 var _fired_announcements: Array[int] = []
 
 var _documents_presented: bool = false
@@ -93,6 +102,7 @@ func _ready() -> void:
 	EventBus.verdict_stamped.connect(_on_verdict_stamped)
 	EventBus.passenger_departed.connect(_on_passenger_departed)
 	EventBus.day_time_expired.connect(_on_day_time_expired)
+	EventBus.difficulty_changed.connect(_on_difficulty_changed)
 
 
 ## Prépare le jour `day_number` (phase INTRO) et émet `day_started`.
@@ -120,10 +130,13 @@ func start_day(p_data: DataCatalog, day_number: int, day_seed: int, flags: Array
 	quota.sync(builder.ctx)
 	scanner_source = PartialScanner.source_for(builder.get_flag_values())
 	shift_ended_early = false
+	booth_closed = false
+	story_mode = apply_to_game_state and GameState.is_story_mode()
 	_fired_announcements.clear()
 	_started = true
 	if clock != null:
 		clock.setup(day.duration_sec)
+		clock.untimed = story_mode
 	_set_phase(DayPhase.Kind.INTRO, &"")
 	EventBus.day_started.emit(day, day.rule_set.build_rulebook())
 	EventBus.wanted_notices_published.emit(builder.get_wanted_notices())
@@ -272,6 +285,8 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 	if result.has_citation():
 		citations_today += 1
 		ScoringService.apply_citation(result, citations_today, day)
+		if story_mode:
+			result.waive_fine()
 	_resolve_items(result)
 	result.password_answered = inspection != null and inspection.luciole_replied
 	_apply_narrative(result)
@@ -389,18 +404,48 @@ func _finish_departure() -> void:
 
 ## Après un cas : cas suivant, ou bilan si le temps est écoulé / la file vide.
 func _after_case() -> void:
-	if time_expired or shift_ended_early or not has_remaining_cases():
+	if time_expired or shift_ended_early or booth_closed or not has_remaining_cases():
 		_end_day()
 	else:
 		_set_phase(DayPhase.Kind.WAITING_CASE, &"")
 
 
 func _on_day_time_expired() -> void:
-	if not _started:
+	if not _started or story_mode:
 		return
 	time_expired = true
 	if phase == DayPhase.Kind.WAITING_CASE:
 		_end_day()
+
+
+## Mode Récit (D-102) : passe en mode Récit (vrai) ou Dur pour ce shift.
+## Repasser en Dur avec l'horloge déjà à 18:00 termine le shift comme à l'heure.
+func set_story_mode(value: bool) -> void:
+	story_mode = value
+	if clock != null:
+		clock.set_untimed(value)
+
+
+func _on_difficulty_changed(_difficulty: StringName) -> void:
+	if _started and apply_to_game_state and story_mode and not GameState.is_story_mode():
+		set_story_mode(false)
+
+
+## Mode Récit : « Fermer le guichet » possible une fois le quota du jour
+## atteint (jour à quota seulement).
+func can_close_booth() -> bool:
+	return story_mode and _started and phase != DayPhase.Kind.SUMMARY and quota.is_active() and quota.is_full()
+
+
+## Ferme le guichet (`can_close_booth`) : bilan tout de suite entre deux
+## passagers, sinon après le passager en cours. Renvoie vrai si accepté.
+func close_booth() -> bool:
+	if not can_close_booth():
+		return false
+	booth_closed = true
+	if phase == DayPhase.Kind.WAITING_CASE:
+		_end_day()
+	return true
 
 
 func _end_day() -> void:

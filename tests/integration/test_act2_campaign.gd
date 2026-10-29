@@ -6,6 +6,7 @@
 ## par un profil du simulateur (docs/ACT3.md §6.4) ; déterminisme.
 extends GutTest
 
+const SaveChecks := preload("res://tests/helpers/save_checks.gd")
 const DayHarness := preload("res://tests/helpers/day_harness.gd")
 const Gen := preload("res://tests/helpers/generation_fixtures.gd")
 const DIR: String = "user://test_act2_campaign_saves"
@@ -29,7 +30,7 @@ func before_all() -> void:
 func before_each() -> void:
 	_saved_state = GameState.to_save_dict()
 	Campaign.new_game(data, CAMPAIGN_SEED)
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	_announcements.clear()
 	_quota.clear()
 	_revoked.clear()
@@ -48,7 +49,7 @@ func after_each() -> void:
 	if h != null:
 		h.dispose()
 		h = null
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	if SaveService.as_int(_saved_state.get("current_day", 0)) >= 1:
 		GameState.apply_save_dict(_saved_state)
 	else:
@@ -100,7 +101,7 @@ func _evening(summary: DaySummary) -> StringName:
 	var events: Array[EveningEvent] = Campaign.prepare_events(data)
 	var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, events)
 	var report: EveningReport = Campaign.preview_evening(data, lines, events)
-	return Campaign.close_evening(data, summary, report, 0, DIR)
+	return Campaign.close_evening(data, summary, report, 1, DIR)
 
 
 ## Campagne complète J1–J30 ; renvoie la fin.
@@ -110,7 +111,7 @@ func _play_campaign(policy: Callable) -> StringName:
 		var summary: DaySummary = await _play_day(policy)
 		if not Campaign.has_evening(data):
 			assert_eq(day_number, 30, "seul le J30 n'a pas de soirée")
-			return Campaign.close_final_day(data, summary, 0, DIR)
+			return Campaign.close_final_day(data, summary, 1, DIR)
 		var ending: StringName = _evening(summary)
 		if ending != EveningReport.ENDING_NONE:
 			return ending
@@ -119,7 +120,7 @@ func _play_campaign(policy: Callable) -> StringName:
 
 func _assert_ended(ending: StringName) -> void:
 	assert_true(EndingService.ALL_ENDINGS.has(ending), "fin connue : %s" % ending)
-	assert_false(SaveService.has_save(0, DIR), "sauvegarde effacée à la fin")
+	SaveChecks.assert_archived(self, 1, DIR, ending, String(ending))
 	var epilogue: Dictionary = Campaign.epilogue(ending)
 	assert_gt((epilogue.get("lines", PackedStringArray()) as PackedStringArray).size(), 0)
 

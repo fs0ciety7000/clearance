@@ -3,6 +3,7 @@
 ## reprise de la scène de jour depuis une sauvegarde. Bugs ouverts : `pending`.
 extends GutTest
 
+const SaveChecks := preload("res://tests/helpers/save_checks.gd")
 const Gen := preload("res://tests/helpers/generation_fixtures.gd")
 const DAY_SCENE: PackedScene = preload("res://scenes/main/day.tscn")
 const DIR: String = "user://test_qa_saves"
@@ -18,12 +19,12 @@ func before_all() -> void:
 
 func before_each() -> void:
 	_saved_state = GameState.to_save_dict()
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 
 
 func after_each() -> void:
 	get_tree().paused = false
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	if SaveService.as_int(_saved_state.get("current_day", 0)) >= 1:
 		GameState.apply_save_dict(_saved_state)
 	else:
@@ -32,8 +33,8 @@ func after_each() -> void:
 
 
 func _write_raw(text: String) -> void:
-	DirAccess.make_dir_recursive_absolute(DIR)
-	var file: FileAccess = FileAccess.open(SaveService.slot_path(0, DIR), FileAccess.WRITE)
+	DirAccess.make_dir_recursive_absolute(SaveService.slot_dir(1, DIR))
+	var file: FileAccess = FileAccess.open(SaveService.slot_path(1, DIR), FileAccess.WRITE)
 	file.store_string(text)
 	file.close()
 
@@ -58,12 +59,12 @@ func test_every_evening_save_roundtrips() -> void:
 		var events: Array[EveningEvent] = Campaign.prepare_events(data)
 		var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, events)
 		var report: EveningReport = Campaign.preview_evening(data, lines, events)
-		var ending: StringName = Campaign.close_evening(data, summary, report, 0, DIR)
+		var ending: StringName = Campaign.close_evening(data, summary, report, 1, DIR)
 		if ending != EveningReport.ENDING_NONE:
-			assert_false(SaveService.has_save(0, DIR), "fin %s au J%d : sauvegarde effacée" % [ending, day_number])
+			SaveChecks.assert_archived(self, 1, DIR, ending, "fin %s au J%d" % [ending, day_number])
 			return
 		var expected: String = JSON.stringify(GameState.to_save_dict(), "", true)
-		assert_true(GameState.load_from_slot(0, DIR), "J%d relu" % day_number)
+		assert_true(GameState.load_from_slot(1, DIR), "J%d relu" % day_number)
 		assert_eq(JSON.stringify(GameState.to_save_dict(), "", true), expected, "J%d : état identique après relecture" % day_number)
 
 
@@ -71,7 +72,7 @@ func test_garbage_files_are_refused_without_crash() -> void:
 	for text: String in ["", "{", "null", "[]", "\u0000\u0001\u0002", "{\"version\": \"3\"}",
 			JSON.stringify({"version": 3, "current_day": 2})]:
 		_write_raw(text)
-		assert_true(SaveService.load_slot(0, DIR).is_empty(), "refusé : %s" % text.c_escape())
+		assert_true(SaveService.load_current(1, DIR).is_empty(), "refusé : %s" % text.c_escape())
 
 
 func test_wrong_inner_types_load_safely() -> void:
@@ -81,7 +82,7 @@ func test_wrong_inner_types_load_safely() -> void:
 	d["narrative_flags"] = {"loyalty": "beaucoup", "suspicion": {"a": 1}, "met_mira": "oui"}
 	d["case_memory"] = {"sc_02": "rien"}
 	_write_raw(JSON.stringify(d))
-	assert_true(GameState.load_from_slot(0, DIR), "schéma de premier niveau conforme")
+	assert_true(GameState.load_from_slot(1, DIR), "schéma de premier niveau conforme")
 	assert_eq(GameState.household.members.size(), 3, "foyer par défaut")
 	# Le jour se construit malgré des jauges illisibles.
 	var content: BriefingContent = BriefingContent.build(data.get_day(GameState.current_day), GameState.narrative_flags,
@@ -97,33 +98,33 @@ func test_out_of_range_day_is_refused() -> void:
 	assert_eq(SaveService.last_day(), last, "borne lue dans data/days")
 	for day: int in [last + 1, 99]:
 		_write_raw(JSON.stringify(_valid_dict(day)))
-		assert_true(SaveService.load_slot(0, DIR).is_empty(), "J%d refusé" % day)
-		assert_false(GameState.load_from_slot(0, DIR), "J%d : état inchangé" % day)
+		assert_true(SaveService.load_current(1, DIR).is_empty(), "J%d refusé" % day)
+		assert_false(GameState.load_from_slot(1, DIR), "J%d : état inchangé" % day)
 	_write_raw(JSON.stringify(_valid_dict(last)))
-	assert_false(SaveService.load_slot(0, DIR).is_empty(), "J%d accepté" % last)
+	assert_false(SaveService.load_current(1, DIR).is_empty(), "J%d accepté" % last)
 
 
 ## QA-018 (corrigé) : l'écriture renomme le `.tmp` par-dessus la sauvegarde
 ## (jamais de suppression préalable) ; un `.tmp` complet laissé par un arrêt
 ## avant le renommage est relu si la sauvegarde principale manque.
 func test_interrupted_save_is_recovered_from_tmp() -> void:
-	assert_eq(SaveService.save(_valid_dict(4), 0, DIR), OK)
-	assert_eq(SaveService.save(_valid_dict(5), 0, DIR), OK, "écrase la précédente")
-	var path: String = SaveService.slot_path(0, DIR)
+	assert_eq(SaveService.save_slot(_valid_dict(4), 1, DIR), OK)
+	assert_eq(SaveService.save_slot(_valid_dict(5), 1, DIR), OK, "écrase la précédente")
+	var path: String = SaveService.slot_path(1, DIR)
 	assert_false(FileAccess.file_exists(path + SaveService.TMP_SUFFIX), "pas de .tmp résiduel")
 	assert_false(FileAccess.file_exists(path + SaveService.BACKUP_SUFFIX), "pas de .bak résiduel")
-	assert_eq(SaveService.as_int(SaveService.load_slot(0, DIR).get("current_day")), 5)
+	assert_eq(SaveService.as_int(SaveService.load_current(1, DIR).get("current_day")), 5)
 	# Arrêt simulé entre l'écriture du .tmp et le renommage, ancienne absente.
 	DirAccess.rename_absolute(path, path + SaveService.TMP_SUFFIX)
-	assert_true(SaveService.has_save(0, DIR), ".tmp vu comme sauvegarde")
-	assert_eq(SaveService.as_int(SaveService.load_slot(0, DIR).get("current_day")), 5, "relu depuis le .tmp")
-	SaveService.delete(0, DIR)
-	assert_false(SaveService.has_save(0, DIR), "delete efface aussi le .tmp")
+	assert_true(SaveService.has_save(1, DIR), ".tmp vu comme sauvegarde")
+	assert_eq(SaveService.as_int(SaveService.load_current(1, DIR).get("current_day")), 5, "relu depuis le .tmp")
+	SaveService.delete_slot(1, DIR)
+	assert_false(SaveService.has_save(1, DIR), "delete efface aussi le .tmp")
 
 
 func test_scene_resumes_from_a_loaded_save() -> void:
 	_write_raw(JSON.stringify(_valid_dict(6)))
-	assert_true(GameState.load_from_slot(0, DIR))
+	assert_true(GameState.load_from_slot(1, DIR))
 	var scene: DayScene = DAY_SCENE.instantiate()
 	add_child_autofree(scene)
 	await wait_process_frames(2)

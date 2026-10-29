@@ -40,7 +40,7 @@ func _ready() -> void:
 	var version: Label = _content.get_node_or_null("Version") as Label
 	if version != null:
 		version.text = version_text()
-	var save: Dictionary = SaveService.load_slot()
+	var save: Dictionary = SaveService.load_current(SaveService.latest_slot())
 	_saved_day = SaveService.as_int(save.get("current_day", 0)) if not save.is_empty() else 0
 	# Le bouton de la scène devient le CTA principal (Continuer ou Nouvelle partie).
 	_start_button.custom_minimum_size = Vector2(360, DS.HIT_TARGET_MIN + DS.SPACE_1)
@@ -131,8 +131,9 @@ func _on_continue_pressed() -> void:
 
 
 func _on_new_game_pressed() -> void:
-	SaveService.delete()
-	Campaign.new_game(DataCatalog.load_from())
+	var slot: int = SaveService.slot_for_new_game()
+	SaveService.delete_slot(slot)
+	Campaign.new_game(DataCatalog.load_from(), 0, slot)
 	_start_day()
 
 

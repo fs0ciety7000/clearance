@@ -45,8 +45,11 @@ const EVENING_SALT: String = "evening"
 
 
 ## Nouvelle partie : campagne neuve, solde de départ du barème.
-static func new_game(data: DataCatalog, campaign_seed: int = 0) -> void:
-	GameState.new_campaign(campaign_seed)
+## M11 : emplacement (`slot`, écrit au premier soir) et difficulté
+## (`GameState.DIFFICULTY_HARD` / `DIFFICULTY_STORY`, D-102).
+static func new_game(data: DataCatalog, campaign_seed: int = 0, slot: int = SaveService.DEFAULT_SLOT,
+		difficulty: StringName = &"hard") -> void:
+	GameState.new_campaign(campaign_seed, slot, difficulty)
 	var start: int = data.get_economy().starting_credits if data != null else 0
 	if start != 0:
 		GameState.add_credits(start)
@@ -108,10 +111,12 @@ static func preview_evening(data: DataCatalog, lines: Array[ExpenseLine], events
 
 
 ## Valide la soirée : débit, foyer, historique, passage au jour suivant,
-## sauvegarde (ou suppression de la sauvegarde si la campagne se termine).
+## sauvegarde (ou, si la campagne se termine, archivage de la partie et fin
+## enregistrée dans le profil : `GameState.end_campaign`, D-101).
+## `save_slot` = `SaveService.NO_SLOT` : emplacement actif.
 ## Renvoie la fin atteinte (`EveningReport.ENDING_*`, `ENDING_DEMO_COMPLETE`) ou vide.
 static func close_evening(data: DataCatalog, summary: DaySummary, report: EveningReport,
-		save_slot: int = SaveService.DEFAULT_SLOT, save_dir: String = SaveService.DEFAULT_DIR) -> StringName:
+		save_slot: int = SaveService.NO_SLOT, save_dir: String = SaveService.DEFAULT_DIR) -> StringName:
 	GameState.add_credits(report.gained - report.spent)
 	GameState.household = report.household
 	for flag: StringName in report.flag_changes:
@@ -148,7 +153,7 @@ static func close_evening(data: DataCatalog, summary: DaySummary, report: Evenin
 		GameState.save_to_slot(save_slot, save_dir)
 	else:
 		GameState.set_flag(FLAG_ENDING, String(ending))
-		SaveService.delete(save_slot, save_dir)
+		GameState.end_campaign(ending, save_slot, save_dir)
 	return ending
 
 
@@ -161,9 +166,9 @@ static func has_evening(data: DataCatalog) -> bool:
 
 ## Dernier jour (sans soirée, J20) : historique, évaluation de la fin (Acte II :
 ## F1–F9, `EndingService.evaluate_final_act2` ; sinon F1–F7,
-## `evaluate_final` ; crédits après le bilan), effacement de la
-## sauvegarde (D-041). Renvoie la fin atteinte.
-static func close_final_day(data: DataCatalog, summary: DaySummary, save_slot: int = SaveService.DEFAULT_SLOT,
+## `evaluate_final` ; crédits après le bilan), partie archivée et fin
+## enregistrée dans le profil (`GameState.end_campaign`, D-101). Renvoie la fin.
+static func close_final_day(data: DataCatalog, summary: DaySummary, save_slot: int = SaveService.NO_SLOT,
 		save_dir: String = SaveService.DEFAULT_DIR) -> StringName:
 	GameState.record_day_entry({
 		"processed": summary.get_processed_count() if summary != null else 0,
@@ -190,7 +195,7 @@ static func close_final_day(data: DataCatalog, summary: DaySummary, save_slot: i
 		ending = EndingService.evaluate_final(GameState.narrative_flags, GameState.household, GameState.credits,
 				compliance(), data.get_economy())
 	GameState.set_flag(FLAG_ENDING, String(ending))
-	SaveService.delete(save_slot, save_dir)
+	GameState.end_campaign(ending, save_slot, save_dir)
 	return ending
 
 

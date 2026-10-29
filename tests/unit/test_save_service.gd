@@ -10,13 +10,14 @@ var _state: Node
 
 func before_each() -> void:
 	_state = autofree(GameStateScript.new())
-	SaveService.delete(0, DIR)
-	SaveService.delete(1, DIR)
+	SaveService.delete_slot(1, DIR)
+	SaveService.delete_slot(2, DIR)
 
 
 func after_all() -> void:
-	SaveService.delete(0, DIR)
-	SaveService.delete(1, DIR)
+	SaveService.delete_slot(1, DIR)
+	SaveService.delete_slot(2, DIR)
+	DirAccess.remove_absolute(ProfileService.profile_path(DIR))
 	DirAccess.remove_absolute(DIR)
 
 
@@ -38,12 +39,12 @@ func _fill(state: Node) -> void:
 
 func test_roundtrip_through_game_state() -> void:
 	_fill(_state)
-	assert_false(SaveService.has_save(0, DIR))
-	assert_eq(_state.call(&"save_to_slot", 0, DIR), OK)
-	assert_true(SaveService.has_save(0, DIR))
-	assert_false(FileAccess.file_exists(SaveService.slot_path(0, DIR) + ".tmp"), "écriture atomique : pas de .tmp résiduel")
+	assert_false(SaveService.has_save(1, DIR))
+	assert_eq(_state.call(&"save_to_slot", 1, DIR), OK)
+	assert_true(SaveService.has_save(1, DIR))
+	assert_false(FileAccess.file_exists(SaveService.slot_path(1, DIR) + ".tmp"), "écriture atomique : pas de .tmp résiduel")
 	var other: Node = autofree(GameStateScript.new())
-	assert_true(other.call(&"load_from_slot", 0, DIR))
+	assert_true(other.call(&"load_from_slot", 1, DIR))
 	assert_eq(other.call(&"to_save_dict"), _state.call(&"to_save_dict"), "aller-retour exact")
 	assert_eq(typeof(other.call(&"get_flag", &"lucioles_trust")), TYPE_INT, "entiers restaurés en int")
 	var home: Household = other.get(&"household")
@@ -52,8 +53,8 @@ func test_roundtrip_through_game_state() -> void:
 
 func test_file_is_versioned_json() -> void:
 	_fill(_state)
-	_state.call(&"save_to_slot", 0, DIR)
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SaveService.slot_path(0, DIR)))
+	_state.call(&"save_to_slot", 1, DIR)
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SaveService.slot_path(1, DIR)))
 	assert_true(parsed is Dictionary)
 	var data: Dictionary = parsed
 	assert_eq(SaveService.as_int(data["version"]), SaveService.VERSION)
@@ -75,7 +76,7 @@ func test_migration_from_v1() -> void:
 	var history: Array = data["day_history"]
 	var day: Dictionary = history[0]
 	assert_eq(SaveService.as_int(day["wage"]), 40)
-	assert_true(_state.call(&"load_from_slot", 0, DIR) == false)
+	assert_true(_state.call(&"load_from_slot", 1, DIR) == false)
 	_state.call(&"apply_save_dict", data)
 	assert_eq(_state.get(&"current_day"), 2)
 	assert_eq(_state.get(&"credits"), 12)
@@ -88,15 +89,15 @@ func test_rejects_invalid_files() -> void:
 	var bad_type: Dictionary = {"version": 2, "campaign_seed": 1, "current_day": 1, "credits": "beaucoup",
 			"score_total": 0, "citations": 0, "narrative_flags": {}, "day_history": [], "household": {}}
 	assert_true(SaveService.parse(JSON.stringify(bad_type)).is_empty(), "type invalide")
-	DirAccess.make_dir_recursive_absolute(DIR)
-	var file: FileAccess = FileAccess.open(SaveService.slot_path(1, DIR), FileAccess.WRITE)
+	DirAccess.make_dir_recursive_absolute(SaveService.slot_dir(2, DIR))
+	var file: FileAccess = FileAccess.open(SaveService.slot_path(2, DIR), FileAccess.WRITE)
 	file.store_string("<resource>")
 	file.close()
-	assert_false(_state.call(&"load_from_slot", 1, DIR), "fichier corrompu refusé")
+	assert_false(_state.call(&"load_from_slot", 2, DIR), "fichier corrompu refusé")
 
 
 func test_delete() -> void:
 	_fill(_state)
-	_state.call(&"save_to_slot", 0, DIR)
-	SaveService.delete(0, DIR)
-	assert_false(SaveService.has_save(0, DIR))
+	_state.call(&"save_to_slot", 1, DIR)
+	SaveService.delete_slot(1, DIR)
+	assert_false(SaveService.has_save(1, DIR))

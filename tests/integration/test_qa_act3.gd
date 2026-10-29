@@ -28,11 +28,11 @@ func before_all() -> void:
 
 func before_each() -> void:
 	_saved_state = GameState.to_save_dict()
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 
 
 func after_each() -> void:
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	if SaveService.as_int(_saved_state.get("current_day", 0)) >= 1:
 		GameState.apply_save_dict(_saved_state)
 	else:
@@ -65,7 +65,7 @@ func test_real_v4_j20_saves_roundtrip_every_act_three_evening() -> void:
 			var events: Array[EveningEvent] = Campaign.prepare_events(data)
 			var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, events)
 			var report: EveningReport = Campaign.preview_evening(data, lines, events)
-			var ending: StringName = Campaign.close_evening(data, summary, report, 0, DIR)
+			var ending: StringName = Campaign.close_evening(data, summary, report, 1, DIR)
 			if ending != EveningReport.ENDING_NONE:
 				assert_true(EndingService.ALL_ENDINGS.has(ending), "%s J%d : fin %s connue" % [path.get_file(), n, ending])
 				break
@@ -73,7 +73,7 @@ func test_real_v4_j20_saves_roundtrip_every_act_three_evening() -> void:
 			if n == 20:
 				assert_true(Campaign.is_act3(), "%s : soirée pivot → Acte III" % path.get_file())
 			var expected: String = JSON.stringify(GameState.to_save_dict(), "", true)
-			assert_true(GameState.load_from_slot(0, DIR), "%s J%d relu" % [path.get_file(), n])
+			assert_true(GameState.load_from_slot(1, DIR), "%s J%d relu" % [path.get_file(), n])
 			assert_eq(JSON.stringify(GameState.to_save_dict(), "", true), expected, "%s J%d : état identique" % [path.get_file(), n])
 		assert_gt(evenings, 3, "%s : soirées de l'Acte III jouées" % path.get_file())
 
@@ -208,7 +208,7 @@ func _backup_default_slot() -> String:
 
 
 func _restore_default_slot(text: String) -> void:
-	SaveService.delete()
+	SaveService.delete_slot(SaveService.DEFAULT_SLOT)
 	if text.is_empty():
 		return
 	DirAccess.make_dir_recursive_absolute(SaveService.DEFAULT_DIR)
@@ -239,7 +239,7 @@ func _scene_evening(scene: DayScene, day_number: int) -> EveningScreen:
 func test_pause_quit_during_the_inquiry_replays_the_day() -> void:
 	var player_save: String = _backup_default_slot()
 	_act_three_morning(22, 200)
-	assert_eq(GameState.save_to_slot(0, DIR), OK)
+	assert_eq(GameState.save_to_slot(1, DIR), OK)
 	var morning: String = JSON.stringify(GameState.to_save_dict(), "", true)
 	var scene: DayScene = DAY_SCENE.instantiate()
 	add_child_autofree(scene)
@@ -267,7 +267,7 @@ func test_pause_quit_during_the_inquiry_replays_the_day() -> void:
 	assert_eq(confirmed[0], 0, "nuit non validée")
 	assert_eq(_backup_default_slot(), player_save, "aucune sauvegarde écrite par la soirée quittée")
 	# « Continuer » : la sauvegarde du matin, puis le même jour.
-	assert_true(GameState.load_from_slot(0, DIR), "Continuer")
+	assert_true(GameState.load_from_slot(1, DIR), "Continuer")
 	assert_eq(JSON.stringify(GameState.to_save_dict(), "", true), morning, "état du matin du J22")
 	scene.queue_free()
 	await wait_process_frames(2)

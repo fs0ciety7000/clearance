@@ -4,6 +4,7 @@
 ## vrai shift ; déterminisme des campagnes simulées J1–J30.
 extends GutTest
 
+const SaveChecks := preload("res://tests/helpers/save_checks.gd")
 const DayHarness := preload("res://tests/helpers/day_harness.gd")
 const Gen := preload("res://tests/helpers/generation_fixtures.gd")
 const DIR: String = "user://test_act3_campaign_saves"
@@ -30,7 +31,7 @@ func before_all() -> void:
 
 func before_each() -> void:
 	_saved_state = GameState.to_save_dict()
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	_ledger.clear()
 	_summons.clear()
 	EventBus.ledger_changed.connect(_on_ledger)
@@ -43,7 +44,7 @@ func after_each() -> void:
 	if h != null:
 		h.dispose()
 		h = null
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	if SaveService.as_int(_saved_state.get("current_day", 0)) >= 1:
 		GameState.apply_save_dict(_saved_state)
 	else:
@@ -72,7 +73,7 @@ func _play_simulated_day(profile: SimProfile) -> StringName:
 	for key: Variant in memory:
 		GameState.case_memory[key] = memory[key]
 	if not Campaign.has_evening(data):
-		return Campaign.close_final_day(data, summary, 0, DIR)
+		return Campaign.close_final_day(data, summary, 1, DIR)
 	var events: Array[EveningEvent] = Campaign.prepare_events(data)
 	var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, events)
 	var choices: Dictionary[StringName, StringName] = Campaign.default_choices(events, lines)
@@ -80,7 +81,7 @@ func _play_simulated_day(profile: SimProfile) -> StringName:
 	for event_id: StringName in wanted:
 		choices[event_id] = wanted[event_id]
 	var report: EveningReport = Campaign.preview_evening(data, lines, events, choices)
-	return Campaign.close_evening(data, summary, report, 0, DIR)
+	return Campaign.close_evening(data, summary, report, 1, DIR)
 
 
 func test_real_v4_saves_migrate_and_play_to_j30() -> void:
@@ -91,7 +92,7 @@ func test_real_v4_saves_migrate_and_play_to_j30() -> void:
 		var migrated: Dictionary = SaveService.parse(text, path)
 		assert_false(migrated.is_empty(), "%s acceptée" % path.get_file())
 		assert_eq(SaveService.as_int(migrated["version"]), SaveService.VERSION)
-		assert_eq(SaveService.VERSION, 5)
+		assert_eq(SaveService.VERSION, 6)
 		assert_eq(SaveService.as_int(migrated["current_day"]), 20, "soir du J19 → J20")
 		GameState.apply_save_dict(migrated)
 		assert_true(Campaign.is_act2(), "%s : Acte II en cours" % path.get_file())
@@ -105,12 +106,12 @@ func test_real_v4_saves_migrate_and_play_to_j30() -> void:
 				assert_ne(EndingService.climate_of(GameState.narrative_flags), &"", "climat posé")
 			if ending == EveningReport.ENDING_NONE and day_number in [20, 25, 29]:
 				var expected: String = JSON.stringify(GameState.to_save_dict(), "", true)
-				assert_true(GameState.load_from_slot(0, DIR), "J%d : sauvegarde v5 relue" % day_number)
+				assert_true(GameState.load_from_slot(1, DIR), "J%d : sauvegarde v6 relue" % day_number)
 				assert_eq(JSON.stringify(GameState.to_save_dict(), "", true), expected, "J%d : état identique" % day_number)
-				var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveService.slot_path(0, DIR)))
-				assert_eq(SaveService.as_int(saved["version"]), 5)
+				var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveService.slot_path(1, DIR)))
+				assert_eq(SaveService.as_int(saved["version"]), 6)
 		assert_true(EndingService.ALL_ENDINGS.has(ending), "%s : fin %s" % [path.get_file(), ending])
-		assert_false(SaveService.has_save(0, DIR), "sauvegarde effacée à la fin")
+		SaveChecks.assert_archived(self, 1, DIR, ending, path.get_file())
 		var epilogue: Dictionary = Campaign.epilogue(ending)
 		var lines: PackedStringArray = epilogue.get("lines", PackedStringArray())
 		assert_gt(lines.size(), 1, String(ending))

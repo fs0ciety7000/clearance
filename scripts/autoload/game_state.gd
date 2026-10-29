@@ -6,6 +6,12 @@
 ## M5 : foyer (`Household`), sauvegarde/chargement JSON entre les jours
 ## (`save_to_slot` / `load_from_slot`, §10) via `SaveService` (format,
 ## migrations, validation) ; ce nœud ne fait que (dé)sérialiser son état.
+## M11 (D-101, D-102, ARCHITECTURE §10) : emplacement actif (`active_slot`),
+## reprise d'un jour passé (`load_day_snapshot`), fin archivée
+## (`end_campaign` : `SaveService.mark_ended` + `ProfileService`), profil
+## global alimenté à chaque sauvegarde (personnages croisés, mode Récit),
+## difficulté (`difficulty` : `&"hard"` / `&"story"`, Récit → Dur seulement),
+## temps de jeu (`play_time_sec`, compté entre deux sauvegardes).
 ## Pas de `class_name` (autoload).
 extends Node
 
@@ -24,10 +30,27 @@ var household: Household = Household.new()
 ## M7 : mémoire des passagers scénarisés (`CaseMemory`), clé = `ScriptedCaseDef.id`.
 var case_memory: Dictionary = {}
 
+const DIFFICULTY_HARD: StringName = &"hard"
+const DIFFICULTY_STORY: StringName = &"story"
+## M11 : emplacement de la partie en cours (1..`SaveService.SLOT_COUNT`).
+var active_slot: int = SaveService.DEFAULT_SLOT
+## M11 (D-102) : `&"hard"` (défaut) ou `&"story"` (mode Récit : pas de fin de
+## shift à l'heure, amendes à 0 ₵). Récit → Dur possible, jamais l'inverse.
+var difficulty: StringName = DIFFICULTY_HARD
+## Temps de jeu cumulé (s) à la dernière sauvegarde / au chargement.
+var play_time_sec: int = 0
+## Visage de l'agent (réservé, `meta.portrait_seed`).
+var portrait_seed: int = 0
+## Début du temps de jeu non encore compté (`Time.get_ticks_msec`).
+var _play_mark_msec: int = 0
+
 
 ## Démarre une nouvelle campagne. `p_seed = 0` tire une graine non
 ## déterministe (seul tirage hors SeededRng, à « Nouvelle partie »).
-func new_campaign(p_seed: int = 0) -> void:
+## M11 : emplacement `slot` (écrit à la première sauvegarde du soir ; la
+## nouvelle partie n'efface rien) et difficulté (`&"hard"` / `&"story"`).
+func new_campaign(p_seed: int = 0, slot: int = SaveService.DEFAULT_SLOT,
+		p_difficulty: StringName = DIFFICULTY_HARD) -> void:
 	if p_seed == 0:
 		var entropy: RandomNumberGenerator = RandomNumberGenerator.new()
 		entropy.randomize()
@@ -41,6 +64,30 @@ func new_campaign(p_seed: int = 0) -> void:
 	day_history.clear()
 	household = Household.new()
 	case_memory = {}
+	active_slot = slot
+	difficulty = DIFFICULTY_STORY if p_difficulty == DIFFICULTY_STORY else DIFFICULTY_HARD
+	play_time_sec = 0
+	# 31 bits : exact à travers JSON (nombres flottants).
+	portrait_seed = SeededRng.mix_string(campaign_seed, "portrait") & 0x7FFFFFFF
+	_play_mark_msec = Time.get_ticks_msec()
+
+
+## Mode Récit (D-102).
+func is_story_mode() -> bool:
+	return difficulty == DIFFICULTY_STORY
+
+
+## Change la difficulté en cours de partie : Récit → Dur seulement (D-102).
+## Renvoie vrai si la difficulté demandée est en vigueur. Émet
+## `difficulty_changed` (le `DayController` en cours remet l'horloge).
+func set_difficulty(value: StringName) -> bool:
+	if value == difficulty:
+		return true
+	if value != DIFFICULTY_HARD:
+		return false
+	difficulty = DIFFICULTY_HARD
+	EventBus.difficulty_changed.emit(difficulty)
+	return true
 
 
 ## Graine du jour courant (§9.1).
@@ -133,6 +180,9 @@ func to_save_dict() -> Dictionary:
 		"day_history": day_history.duplicate(true),
 		"household": household.to_dict(),
 		"case_memory": case_memory.duplicate(true),
+		"difficulty": String(difficulty),
+		"play_time_sec": play_time_sec,
+		"portrait_seed": portrait_seed,
 	}
 
 
@@ -165,24 +215,103 @@ func apply_save_dict(data: Dictionary) -> void:
 			var entry: Variant = dict[key]
 			if entry is Dictionary:
 				case_memory[str(key)] = _json_deep(entry)
+	difficulty = StringName(SaveService.difficulty_of(data))
+	play_time_sec = maxi(SaveService.as_int(data.get("play_time_sec", 0)), 0)
+	portrait_seed = SaveService.as_int(data.get("portrait_seed", 0))
+	_play_mark_msec = Time.get_ticks_msec()
 	EventBus.credits_changed.emit(credits, 0)
 
 
-func save_to_slot(slot: int = SaveService.DEFAULT_SLOT, dir: String = SaveService.DEFAULT_DIR) -> Error:
-	var err: Error = SaveService.save(to_save_dict(), slot, dir)
+## Sauvegarde du soir dans l'emplacement `slot` (`NO_SLOT` : `active_slot`) :
+## état courant, instantané du jour, méta (`SaveService.save_slot`), puis
+## profil global (personnages croisés, mode Récit). Émet `game_saved`,
+## `save_slots_changed` (et `profile_changed` si le profil change).
+func save_to_slot(slot: int = SaveService.NO_SLOT, dir: String = SaveService.DEFAULT_DIR) -> Error:
+	var target: int = active_slot if slot == SaveService.NO_SLOT else slot
+	_bank_play_time()
+	var err: Error = SaveService.save_slot(to_save_dict(), target, dir)
 	if err == OK:
-		EventBus.game_saved.emit(slot)
+		active_slot = target
+		EventBus.game_saved.emit(target)
+		EventBus.save_slots_changed.emit()
+		_record_profile(dir)
 	return err
 
 
-## Charge une sauvegarde ; `false` si absente ou invalide (état inchangé).
-func load_from_slot(slot: int = SaveService.DEFAULT_SLOT, dir: String = SaveService.DEFAULT_DIR) -> bool:
-	var data: Dictionary = SaveService.load_slot(slot, dir)
+## Charge l'état courant d'un emplacement (`NO_SLOT` : « Continuer », la partie
+## active la plus récente, `SaveService.latest_slot`) ; `false` si absent ou
+## invalide (état inchangé). L'emplacement chargé devient `active_slot`.
+func load_from_slot(slot: int = SaveService.NO_SLOT, dir: String = SaveService.DEFAULT_DIR) -> bool:
+	var target: int = SaveService.latest_slot(dir) if slot == SaveService.NO_SLOT else slot
+	if target == SaveService.NO_SLOT:
+		return false
+	var data: Dictionary = SaveService.load_current(target, dir)
 	if data.is_empty():
 		return false
 	apply_save_dict(data)
+	active_slot = target
+	EventBus.game_loaded.emit(target)
+	return true
+
+
+## Reprend le matin du jour `day` d'un emplacement (instantané `day_NN.json`,
+## D-101). Rien n'est écrit : à la sauvegarde suivante (soirée du jour repris),
+## les instantanés postérieurs sont supprimés et la partie redevient `active`
+## (même terminée). Une partie passée en Dur reste en Dur (D-102). `false` si
+## l'instantané est absent ou invalide (état inchangé).
+func load_day_snapshot(slot: int, day: int, dir: String = SaveService.DEFAULT_DIR) -> bool:
+	var data: Dictionary = SaveService.load_snapshot(slot, day, dir)
+	if data.is_empty():
+		return false
+	var meta: Dictionary = SaveService.load_meta(slot, dir)
+	apply_save_dict(data)
+	if str(meta.get("difficulty", SaveService.DIFFICULTY_HARD)) == SaveService.DIFFICULTY_HARD:
+		difficulty = DIFFICULTY_HARD
+	active_slot = slot
 	EventBus.game_loaded.emit(slot)
 	return true
+
+
+## Fin de partie (F1–F10, fins anticipées comprises, D-101) : la partie n'est
+## plus effacée. Fin enregistrée dans le profil (fins de `EndingService`),
+## avec les personnages croisés ; emplacement archivé (`status = ended`,
+## `ending_id`) s'il contient bien cette campagne (même graine). Idempotent
+## (`Campaign` puis `DayScene.show_end`). `slot` = `NO_SLOT` : `active_slot`.
+func end_campaign(ending: StringName, slot: int = SaveService.NO_SLOT, dir: String = SaveService.DEFAULT_DIR) -> void:
+	var target: int = active_slot if slot == SaveService.NO_SLOT else slot
+	var ending_id: String = String(ending)
+	var known: bool = EndingService.ALL_ENDINGS.has(ending)
+	var day: int = current_day
+	if not day_history.is_empty():
+		day = SaveService.as_int(day_history[day_history.size() - 1].get("day", current_day), current_day)
+	if ProfileService.record(dir, ending_id if known else "", day, case_memory.keys(), is_story_mode()):
+		EventBus.profile_changed.emit()
+	if ending_id.is_empty() or not SaveService.has_save(target, dir):
+		return
+	var meta: Dictionary = SaveService.load_meta(target, dir)
+	if SaveService.as_int(meta.get("campaign_seed", 0)) != campaign_seed:
+		return
+	if str(meta.get("status", "")) == SaveService.STATUS_ENDED and str(meta.get("ending_id", "")) == ending_id:
+		return
+	if SaveService.mark_ended(target, ending_id, dir) == OK:
+		EventBus.save_slots_changed.emit()
+
+
+## Profil global après une sauvegarde : personnages croisés, mode Récit.
+func _record_profile(dir: String) -> void:
+	if ProfileService.record(dir, "", current_day, case_memory.keys(), is_story_mode()):
+		EventBus.profile_changed.emit()
+
+
+## Ajoute au temps de jeu le temps écoulé depuis la dernière marque.
+func _bank_play_time() -> void:
+	var now: int = Time.get_ticks_msec()
+	if _play_mark_msec <= 0 or now < _play_mark_msec:
+		_play_mark_msec = now
+		return
+	var seconds: int = floori((now - _play_mark_msec) / 1000.0)
+	play_time_sec += seconds
+	_play_mark_msec += seconds * 1000
 
 
 ## Variante récursive (dictionnaires et tableaux imbriqués, clés en texte).

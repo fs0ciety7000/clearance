@@ -80,6 +80,12 @@ func has_citation() -> bool:
 	return not citation_reason_key.is_empty()
 
 
+## M11, mode Récit (D-102) : citation gardée (comptée), amende à 0 ₵.
+func waive_fine() -> void:
+	fine = 0
+	credits_delta = wage
+
+
 ## Avertissement : citation sans amende (les `free_citations_per_day` premières).
 func is_warning() -> bool:
 	return has_citation() and fine == 0

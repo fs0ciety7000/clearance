@@ -394,15 +394,24 @@ func test_f5_variants_are_signalled() -> void:
 		assert_has(texts, UiText.t(str(variant_flags[1])))
 
 
-func test_show_end_leaves_no_save() -> void:
+func test_show_end_archives_the_save() -> void:
 	GameState.new_campaign(20_871_315)
 	GameState.current_day = 10
 	var scene: DayScene = DAY_SCENE.instantiate()
 	add_child_autofree(scene)
 	GameState.save_to_slot()
-	assert_false(SaveService.load_slot().is_empty())
+	var slot: int = GameState.active_slot
+	assert_false(SaveService.load_current(slot).is_empty())
+	assert_eq(SaveService.latest_slot(), slot, "« Continuer » avant la fin")
 	scene.show_end(EndingService.F7_REOPENS)
-	assert_true(SaveService.load_slot().is_empty(), "D-041 : aucune sauvegarde après une fin")
+	# D-101 : la partie n'est plus effacée, elle est archivée « terminée ».
+	assert_false(SaveService.load_current(slot).is_empty(), "D-101 : état gardé après une fin")
+	var meta: Dictionary = SaveService.load_meta(slot)
+	assert_eq(str(meta.get("status")), SaveService.STATUS_ENDED)
+	assert_eq(str(meta.get("ending_id")), String(EndingService.F7_REOPENS))
+	assert_eq(SaveService.latest_slot(), SaveService.NO_SLOT, "plus de « Continuer » après une fin")
+	assert_true(ProfileService.has_seen_ending(ProfileService.load_profile(), String(EndingService.F7_REOPENS)),
+			"fin inscrite au profil")
 	assert_true(scene.screen is EndScreen)
 
 

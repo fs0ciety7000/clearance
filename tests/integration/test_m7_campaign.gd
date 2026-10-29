@@ -6,6 +6,7 @@
 ## déterminisme. La campagne J1–J20 et les fins F1–F9 : `test_act2_campaign.gd`.
 extends GutTest
 
+const SaveChecks := preload("res://tests/helpers/save_checks.gd")
 const DayHarness := preload("res://tests/helpers/day_harness.gd")
 const Gen := preload("res://tests/helpers/generation_fixtures.gd")
 const DIR: String = "user://test_m7_campaign_saves"
@@ -29,7 +30,7 @@ func before_all() -> void:
 func before_each() -> void:
 	_saved_state = GameState.to_save_dict()
 	Campaign.new_game(data, CAMPAIGN_SEED)
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	_slipped.clear()
 	_decided.clear()
 	_wanted.clear()
@@ -48,7 +49,7 @@ func after_each() -> void:
 	if h != null:
 		h.dispose()
 		h = null
-	SaveService.delete(0, DIR)
+	SaveService.delete_slot(1, DIR)
 	if SaveService.as_int(_saved_state.get("current_day", 0)) >= 1:
 		GameState.apply_save_dict(_saved_state)
 	else:
@@ -116,7 +117,7 @@ func _evening(summary: DaySummary) -> StringName:
 	var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, events)
 	var report: EveningReport = Campaign.preview_evening(data, lines, events)
 	var before: int = GameState.credits
-	var ending: StringName = Campaign.close_evening(data, summary, report, 0, DIR)
+	var ending: StringName = Campaign.close_evening(data, summary, report, 1, DIR)
 	assert_eq(GameState.credits, before - report.spent + report.gained)
 	return ending
 
@@ -127,11 +128,11 @@ func _play_campaign(policy: Callable, decide: Callable = Callable()) -> StringNa
 		assert_eq(GameState.current_day, day_number)
 		var summary: DaySummary = await _play_day(policy, decide)
 		if not Campaign.has_evening(data):
-			return Campaign.close_final_day(data, summary, 0, DIR)
+			return Campaign.close_final_day(data, summary, 1, DIR)
 		var ending: StringName = _evening(summary)
 		if ending != EveningReport.ENDING_NONE:
 			return ending
-		assert_true(SaveService.has_save(0, DIR), "sauvegarde automatique (J%d)" % day_number)
+		assert_true(SaveService.has_save(1, DIR), "sauvegarde automatique (J%d)" % day_number)
 	return &""
 
 
@@ -145,7 +146,7 @@ func test_conscientious_agent_reaches_the_pivot_promoted() -> void:
 	assert_eq(GameState.get_flag(&"promotion_offered"), true, "anciennes conditions de F4 : C-2 à l'essai")
 	assert_eq(GameState.get_flag(EndingService.FLAG_ACT2), true)
 	assert_true(Campaign.is_act2())
-	assert_true(SaveService.has_save(0, DIR), "sauvegarde après la soirée pivot")
+	assert_true(SaveService.has_save(1, DIR), "sauvegarde après la soirée pivot")
 	assert_eq(GameState.current_day, 11)
 	assert_eq(GameState.day_history.size(), 10)
 	assert_eq(_wanted.size(), 3, "avis de recherche publiés au J10")
@@ -168,10 +169,10 @@ func test_approve_all_bot_ends_the_campaign_cleanly() -> void:
 	var ending: StringName = await _play_campaign(func(_c: Case, _key: CaseKey) -> VerdictKind.Kind: return VK.APPROVE)
 	if ending == EveningReport.ENDING_NONE:
 		assert_true(Campaign.is_act2(), "pas de fin : l'Acte II commence")
-		assert_true(SaveService.has_save(0, DIR))
+		assert_true(SaveService.has_save(1, DIR))
 		return
 	assert_true(EndingService.ALL_ENDINGS.has(ending), "fin connue : %s" % ending)
-	assert_false(SaveService.has_save(0, DIR))
+	SaveChecks.assert_archived(self, 1, DIR, ending, "bot « tout approuver »")
 	assert_eq(GameState.get_flag(&"ending"), String(ending))
 
 

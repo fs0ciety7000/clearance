@@ -16,12 +16,14 @@
 ## profils `passeur`, `temoin`, `accusateur`, `mercenary3` (docs/ACT3.md §6.5) ;
 ## `--climate=vanne|brulants|vitres|registre|promu|statu_quo` démarre au J21
 ## depuis un état synthétique de ce climat (solde selon la précision).
+## M11 : `--story` joue chaque préréglage en mode Récit (D-102 : amendes à
+## 0 ₵) ; équivalent à `--presets=story_<nom>` (`SimProfile.STORY_PREFIX`).
 ##
 ## Usage (depuis la racine du projet) :
 ##   godot --headless --script res://tools/balance_sim.gd -- --seeds=200 --seed=1 \
 ##       --profiles=0.6,0.8,0.95 --spending=reasoned|default [--set=heating=6,starting_credits=10] \
 ##       [--presets=default,loyal,luciole,mercenary,drift,negligent,archiviste,solidaire] [--days=30] \
-##       [--climate=vanne]
+##       [--climate=vanne] [--story]
 ## `--set` surcharge en mémoire des champs de l'`EconomyDef` (essais sans
 ## régénérer les données ; les valeurs retenues vont dans `build_data.gd`).
 extends SceneTree
@@ -35,6 +37,8 @@ var _presets: Array[StringName] = [&"default"]
 var _days: int = -1
 ## Acte III : climat d'entrée synthétique (vide : campagne depuis le J1).
 var _climate: String = ""
+## M11 : préréglages joués en mode Récit (`--story`).
+var _story: bool = false
 
 ## État synthétique du J21 par climat : drapeaux et jauges (docs/ACT3.md §1.3).
 const CLIMATES: Dictionary[String, Dictionary] = {
@@ -70,6 +74,10 @@ func _init() -> void:
 			e.starting_credits, e.rent, e.air_tax, e.food, e.heating, e.oxygen, e.medicine_per_member,
 			e.noa_cold_sick_chance, e.deprivation_sick_evenings, e.untreated_worsen_evenings])
 	var start: int = Time.get_ticks_msec()
+	if _story:
+		for i: int in _presets.size():
+			if not String(_presets[i]).begins_with(SimProfile.STORY_PREFIX):
+				_presets[i] = StringName(SimProfile.STORY_PREFIX + String(_presets[i]))
 	for preset: StringName in _presets:
 		for accuracy: float in _profiles:
 			_run_profile(data, accuracy, preset)
@@ -103,6 +111,8 @@ func _parse_args() -> void:
 			if not CLIMATES.has(_climate):
 				push_error("balance_sim: climat inconnu %s (%s)" % [_climate, ", ".join(CLIMATES.keys())])
 				_climate = ""
+		elif arg == "--story":
+			_story = true
 		elif arg == "--spending=default":
 			_spending = BalanceSimulator.Spending.DEFAULT
 
