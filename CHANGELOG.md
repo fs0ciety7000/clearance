@@ -1,5 +1,19 @@
 # Changelog — CLEARANCE
 
+## 0.10.0 — 2026-10-29
+
+### Acte III « Témoins » — jours 21 à 30
+- **J20** devient un pivot obligatoire (carte « FIN DE L'ACTE II », soirée « Nuit du 1ᵉʳ avril ») ; interstitiel « Chapitre III · Témoins » (D-086).
+- **Nouvelles mécaniques** : **Répondants** — un passager n'est admissible que si son garant a été admis le jour même (onglet Main courante) ; **Retour aux quais** (le ticket de file et le bio-scan disparaissent) ; **Enquête** et **Déposition** du J29 (D-087).
+- **Contenu** : nouvelles règles et anomalies, cas scénarisés de l'Acte III, briefings et soirées J20–J29 ; aides conditionnelles seulement (D-089).
+- **Fins** : 10 fins au J30, dont **F10 « Le Pont »** (familles de Tycho admises en règle) ; figure finale Dora ou Mira (D-088).
+- Sauvegarde **v5** (conversion automatique des sauvegardes 0.9.x).
+
+### Corrections (QA-032 à QA-040)
+- Manuel des règles à une seule rangée d'onglets défilante, date du jour dans le pied (D-097).
+- Bandeau de résultat dans l'en-tête du plan de travail, plus de chevauchement avec les documents ; soirée défilante (D-098).
+- Objets glissés dessinés selon leur type ; en-tête du passager sur deux lignes ; convocations falsifiées jamais générées sans carte d'identité ; équilibrage de l'Acte III (D-099, D-100) ; sortie du jeu plus sûre côté audio.
+
 ## 0.9.0 — 2026-10-28
 
 ### Acte II — jours 11 à 20
