@@ -21,6 +21,10 @@ func inject(state: InjectionState) -> Anomaly:
 		if permit == null or field_id == &"" or not state.is_free(summons_rule.permit_id, field_id) \
 				or state.filter_documents([summons_rule.permit_id]).is_empty():
 			continue
+		# Le nom de la carte est le témoin de R36 : sans carte (MISSING_DOCUMENT
+		# tiré avant), la convocation ne peut pas être prouvée fausse.
+		if state.case.get_own_document(summons_rule.card_id) == null:
+			continue
 		var original: Variant = permit.get_value(field_id)
 		var current: String = str(original) if original != null else ""
 		var variant: String = str(state.param(&"variant", ""))

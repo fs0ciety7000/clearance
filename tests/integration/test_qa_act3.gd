@@ -194,6 +194,137 @@ func test_deposition_spam_validates_once_with_last_choice() -> void:
 
 
 # ---------------------------------------------------------------------------
+# Vraie scène : scénarios non joués par la passe (§13.4, §13.2)
+# ---------------------------------------------------------------------------
+
+const DAY_SCENE: PackedScene = preload("res://scenes/main/day.tscn")
+
+
+## Sauvegarde du joueur (`user://saves`) : la vraie scène y écrit en
+## validant une soirée ; rendue telle quelle après le test.
+func _backup_default_slot() -> String:
+	var path: String = SaveService.slot_path()
+	return FileAccess.get_file_as_string(path) if FileAccess.file_exists(path) else ""
+
+
+func _restore_default_slot(text: String) -> void:
+	SaveService.delete()
+	if text.is_empty():
+		return
+	DirAccess.make_dir_recursive_absolute(SaveService.DEFAULT_DIR)
+	var file: FileAccess = FileAccess.open(SaveService.slot_path(), FileAccess.WRITE)
+	if file != null:
+		file.store_string(text)
+		file.close()
+
+
+func _act_three_morning(day_number: int, credits: int) -> void:
+	GameState.new_campaign(4242)
+	GameState.current_day = day_number
+	GameState.credits = credits
+	GameState.set_flag(EndingService.FLAG_ACT2, true)
+	GameState.set_flag(EndingService.FLAG_ACT3, true)
+
+
+func _scene_evening(scene: DayScene, day_number: int) -> EveningScreen:
+	var summary: DaySummary = DaySimulator.simulate(data, day_number, GameState.get_day_seed(), _expected)
+	scene.show_evening(summary)
+	return scene.screen as EveningScreen
+
+
+## Pause puis « QUITTER VERS LE TITRE » (confirmé) en pleine Enquête (soirée du
+## J22, question Q1 déjà répondue) : la nuit n'est pas validée, aucune
+## sauvegarde écrite ; « Continuer » relit la sauvegarde du matin et rejoue le
+## J22, dont la soirée repose la même question.
+func test_pause_quit_during_the_inquiry_replays_the_day() -> void:
+	var player_save: String = _backup_default_slot()
+	_act_three_morning(22, 200)
+	assert_eq(GameState.save_to_slot(0, DIR), OK)
+	var morning: String = JSON.stringify(GameState.to_save_dict(), "", true)
+	var scene: DayScene = DAY_SCENE.instantiate()
+	add_child_autofree(scene)
+	await wait_process_frames(2)
+	var evening: EveningScreen = _scene_evening(scene, 22)
+	await wait_process_frames(2)
+	assert_not_null(evening, "soirée du J22")
+	if evening == null:
+		_restore_default_slot(player_save)
+		return
+	assert_not_null(evening.get_event(&"d22_q1"), "Enquête : question Q1")
+	assert_true(evening.choose(&"d22_q1", &"tell"), "Q1 : Dire")
+	var confirmed: Array[int] = [0]
+	evening.confirmed.connect(func(_lines: Array[ExpenseLine]) -> void: confirmed[0] += 1)
+	var quits: Array[int] = [0]
+	scene.pause_menu.quit_to_title_requested.disconnect(scene.go_to_title)
+	scene.pause_menu.quit_to_title_requested.connect(func() -> void: quits[0] += 1)
+	scene.pause_menu.open()
+	assert_true(get_tree().paused, "pause ouverte pendant l'Enquête")
+	scene.pause_menu.call(&"_on_quit_pressed")
+	assert_eq(quits[0], 0, "premier appui : confirmation demandée")
+	scene.pause_menu.call(&"_on_quit_pressed")
+	assert_eq(quits[0], 1, "second appui : retour au titre")
+	assert_false(get_tree().paused, "arbre relâché au retour au titre")
+	assert_eq(confirmed[0], 0, "nuit non validée")
+	assert_eq(_backup_default_slot(), player_save, "aucune sauvegarde écrite par la soirée quittée")
+	# « Continuer » : la sauvegarde du matin, puis le même jour.
+	assert_true(GameState.load_from_slot(0, DIR), "Continuer")
+	assert_eq(JSON.stringify(GameState.to_save_dict(), "", true), morning, "état du matin du J22")
+	scene.queue_free()
+	await wait_process_frames(2)
+	var again: DayScene = DAY_SCENE.instantiate()
+	add_child_autofree(again)
+	await wait_process_frames(2)
+	assert_eq(again.day_controller.day.day_number, 22, "le J22 est rejoué")
+	var replay: EveningScreen = _scene_evening(again, 22)
+	await wait_process_frames(2)
+	assert_not_null(replay.get_event(&"d22_q1") if replay != null else null, "Q1 reposée")
+	_restore_default_slot(player_save)
+
+
+## Avance de l'Arbitre (`d21_loan`) dans la vraie scène : solde < 40 ₵ au soir
+## du J21 → l'offre est présentée, « Accepter » crédite 30 ₵ et pose
+## `arbitre_loan` ; le remboursement (35 ₵, obligatoire) tombe au soir du J27.
+func test_arbitre_loan_is_offered_and_repaid_in_the_real_scene() -> void:
+	var player_save: String = _backup_default_slot()
+	var economy: EconomyDef = data.get_economy()
+	_act_three_morning(21, 10)
+	var scene: DayScene = DAY_SCENE.instantiate()
+	add_child_autofree(scene)
+	await wait_process_frames(2)
+	var evening: EveningScreen = _scene_evening(scene, 21)
+	await wait_process_frames(2)
+	assert_not_null(evening, "soirée du J21")
+	if evening == null:
+		_restore_default_slot(player_save)
+		return
+	assert_not_null(evening.get_event(&"d21_loan"), "avance proposée sous %d ₵" % economy.loan_balance_below)
+	assert_true(evening.choose(&"d21_loan", &"take"), "avance acceptée")
+	var before: int = GameState.credits
+	evening.confirm()
+	await wait_process_frames(2)
+	assert_true(FlagCondition.is_flag_true(GameState.narrative_flags, EveningService.FLAG_LOAN), "avance enregistrée")
+	assert_eq(GameState.current_day, 22, "nuit validée")
+	var spent: int = 0
+	for line: ExpenseLine in evening.lines:
+		if line.paid:
+			spent += line.cost
+	assert_true(GameState.credits >= before + economy.loan_amount - spent, "avance créditée (+%d ₵)" % economy.loan_amount)
+	assert_true(SaveService.has_save(), "sauvegarde du soir écrite")
+	# Soir du J27 : remboursement imposé.
+	GameState.current_day = economy.loan_day
+	var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, Campaign.prepare_events(data))
+	var repay: ExpenseLine = null
+	for line: ExpenseLine in lines:
+		if line.id == EveningService.LINE_LOAN:
+			repay = line
+	assert_not_null(repay, "remboursement au J%d" % economy.loan_day)
+	if repay != null:
+		assert_eq(repay.cost, economy.loan_repay)
+		assert_true(repay.mandatory, "remboursement obligatoire")
+	_restore_default_slot(player_save)
+
+
+# ---------------------------------------------------------------------------
 # Bugs ouverts (pending tant qu'ils existent)
 # ---------------------------------------------------------------------------
 
@@ -225,11 +356,9 @@ func test_rulebook_shows_enough_rules_with_sixteen_tabs() -> void:
 		if card.is_visible_in_tree() and view.encloses(card.get_global_rect()):
 			whole += 1
 	assert_gt(rulebook.cards.size(), 10, "règles du J26")
-	if whole < 4:
-		pending("QA-032 : %d règle(s) entière(s) visible(s) sur %d (hauteur de liste %d px, 1080p, 16 onglets)" % [
-				whole, rulebook.cards.size(), int(view.size.y)])
-		return
-	assert_gte(whole, 4, "au moins 4 règles lisibles sans défiler")
+	assert_gte(whole, 4, "au moins 4 règles lisibles sans défiler (%d px de liste)" % int(view.size.y))
+	# Navigation sur une rangée : la liste garde ≥ 60 % de la hauteur du panneau.
+	assert_gte(view.size.y, rulebook.size.y * 0.6, "liste ≥ 60 %% du panneau (%d / %d px)" % [int(view.size.y), int(rulebook.size.y)])
 
 
 ## QA-033 : le bandeau de résultat (CONCORDANT 1,2 s ; DISCORDANCE sans délai)
@@ -252,10 +381,7 @@ func test_result_banner_does_not_cover_documents() -> void:
 		var cover: Rect2 = banner.get_global_rect().intersection(view.get_global_rect())
 		if cover.has_area() and cover.get_area() > view.get_global_rect().get_area() * 0.02:
 			covered.append("%s (%d %%)" % [view.get_document_id(), int(100.0 * cover.get_area() / view.get_global_rect().get_area())])
-	if not covered.is_empty():
-		pending("QA-033 : bandeau de résultat sur %s" % ", ".join(covered))
-		return
-	assert_eq(covered.size(), 0)
+	assert_eq(covered.size(), 0, "bandeau de résultat sur %s" % ", ".join(covered))
 
 
 ## QA-034 : soirée en 1920×1080, foyer complet (vous + Ilan, Noa, Dora) : la
@@ -277,31 +403,33 @@ func test_evening_rations_are_all_visible_at_1080p() -> void:
 			parent = parent.get_parent()
 		if scroll != null and not scroll.get_global_rect().grow(1.0).encloses(row.get_global_rect()):
 			hidden.append(row.name if row.name != &"" else row.text)
-	if not hidden.is_empty():
-		pending("QA-034 : %d ligne(s) de dépense coupée(s) ou hors cadre à 1080p : %s" % [hidden.size(), ", ".join(hidden)])
-		return
-	assert_eq(hidden.size(), 0)
+	assert_eq(hidden.size(), 0, "ligne(s) de dépense coupée(s) ou hors cadre à 1080p : %s" % ", ".join(hidden))
 
 
-## QA-036 : profil `loyal` (et `mercenary3`) : au J29, si `montclair_pliable`
-## (SC-70 approuvée), l'option « loyal » est remplacée par « loyal_paid » ;
-## le profil demande « loyal », le choix est refusé et la Déposition tombe sur
-## « Se taire » (soupçon +1) — en simulation comme dans `qa_campaign`.
+## QA-036 (corrigé) : profils `loyal` et `accusateur` : au J29, si
+## `montclair_pliable` (SC-70 approuvée), l'option « loyal » est remplacée par
+## « loyal_paid » (même libellé, +20 ₵) ; le profil choisit par intention et
+## obtient la variante offerte au lieu de retomber sur « Se taire ».
 func test_sim_profiles_choose_an_available_deposition_option() -> void:
 	var economy: EconomyDef = data.get_economy()
-	var flags: Dictionary[StringName, Variant] = {EndingService.FLAG_ACT3: true, &"montclair_pliable": true}
-	var context: Dictionary[StringName, Variant] = EveningService.context_flags(flags, Household.new(), 0.95, 0)
-	var deposition: EveningEvent = null
-	for event: EveningEvent in EveningService.build_events(data.get_day(29).evening_events, context, economy):
-		if event.id == &"d29_deposition":
-			deposition = event
-	assert_not_null(deposition, "Déposition")
-	var refused: PackedStringArray = []
-	for preset: StringName in [&"loyal", &"mercenary3"]:
-		var wanted: StringName = SimProfile.preset(preset).choices.get(&"d29_deposition", &"")
-		if wanted != &"" and deposition.get_option(wanted) == null:
-			refused.append("%s → %s" % [preset, wanted])
-	if not refused.is_empty():
-		pending("QA-036 : option de Déposition absente pour %s (montclair_pliable)" % ", ".join(refused))
-		return
-	assert_eq(refused.size(), 0)
+	for pliable: bool in [true, false]:
+		var flags: Dictionary[StringName, Variant] = {EndingService.FLAG_ACT3: true}
+		if pliable:
+			flags[&"montclair_pliable"] = true
+		var context: Dictionary[StringName, Variant] = EveningService.context_flags(flags, Household.new(), 0.95, 0)
+		var deposition: EveningEvent = null
+		var events: Array[EveningEvent] = EveningService.build_events(data.get_day(29).evening_events, context, economy)
+		for event: EveningEvent in events:
+			if event.id == &"d29_deposition":
+				deposition = event
+		assert_not_null(deposition, "Déposition")
+		if deposition == null:
+			return
+		for preset: StringName in [&"loyal", &"accusateur"]:
+			var profile: SimProfile = SimProfile.preset(preset)
+			var option: EveningOptionDef = profile.option_for(deposition)
+			assert_not_null(option, "%s : option de Déposition offerte (pliable=%s)" % [preset, pliable])
+			if option != null:
+				assert_eq(option.id, &"loyal_paid" if pliable else &"loyal", "%s : variante attendue" % preset)
+				var resolved: StringName = profile.choices_for(events).get(&"d29_deposition", &"")
+				assert_eq(resolved, option.id)

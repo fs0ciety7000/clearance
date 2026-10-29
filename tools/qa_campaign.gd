@@ -166,8 +166,9 @@ func _drive_evening(evening: EveningScreen) -> void:
 	var before: int = GameState.credits
 	for event_id: StringName in _profile.choices:
 		var event: EveningEvent = evening.get_event(event_id)
-		var option_id: StringName = _profile.choices[event_id]
-		var option: EveningOptionDef = event.get_option(option_id) if event != null else null
+		# QA-036 : option choisie par intention (variante conditionnelle au même libellé).
+		var option: EveningOptionDef = _profile.option_for(event)
+		var option_id: StringName = option.id if option != null else _profile.choices[event_id]
 		if option != null and option.ends_campaign != &"":
 			# Chemin joueur : la boîte « QUITTER HALCYON ? » puis CONFIRMER.
 			evening.request_choice(event_id, option_id)
@@ -177,8 +178,7 @@ func _drive_evening(evening: EveningScreen) -> void:
 				print("QA_NOTE J%d : choix %s:%s refusé par l'écran" % [day, event_id, option_id])
 			continue
 		if event != null and not evening.choose(event_id, option_id):
-			print("QA_NOTE J%d : choix %s:%s refusé par l'écran" % [GameState.current_day, event_id,
-					_profile.choices[event_id]])
+			print("QA_NOTE J%d : choix %s:%s refusé par l'écran" % [GameState.current_day, event_id, option_id])
 	if evening.luciole_pending and _profile.report_note:
 		evening.call(&"_decide_luciole", true)
 	var parts: PackedStringArray = []

@@ -371,7 +371,8 @@ game_date = 31872
 rule_set = ExtResource("9_ekmrh")
 duration_sec = 765.0
 passenger_count = 17
-anomaly_count_weights = PackedFloat32Array(0.38, 0.38, 0.19, 0.05)
+anomaly_count_weights = PackedFloat32Array(0.3033367, 0.35085946, 0.26491407, 0.08088979)
+anomaly_count_targets = PackedFloat32Array(0.38, 0.38, 0.19, 0.05)
 anomaly_weights = Dictionary[int, float]({
 0: 0.07,
 1: 0.04,
@@ -391,9 +392,9 @@ anomaly_weights = Dictionary[int, float]({
 17: 0.04,
 18: 0.2,
 19: 0.04,
-21: 0.08,
+21: 1.5,
 22: 0.15,
-23: 0.06
+23: 0.8
 })
 scripted_cases = Array[ExtResource("11_s8yxf")]([SubResource("scripted_sc_66"), SubResource("scripted_sc_67"), SubResource("scripted_sc_68"), SubResource("scripted_sc_69")])
 intro_text_key = "day26_intro"
@@ -424,7 +425,7 @@ retired_documents = Array[StringName]([&"queue_ticket", &"bioscan"])
 prorogation_noise_rate = 0.1
 reinstated_decoy_rate = 0.5
 family_visit_rates = Dictionary[StringName, float]({
-&"tyc": 0.4
+&"tyc": 0.5
 })
 summons = Array[ExtResource("13_rgy6q")]([SubResource("d26_resource_32")])
 summons_decoys = 4

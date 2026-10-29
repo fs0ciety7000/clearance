@@ -14,6 +14,11 @@ extends Resource
 @export var passenger_count: int = 8
 ## Probabilités de 0, 1, 2, 3 anomalies par cas.
 @export var anomaly_count_weights: PackedFloat32Array = PackedFloat32Array([1.0, 0.0, 0.0, 0.0])
+## Distribution **cible** de 0, 1, 2, 3 anomalies par cas, cas scénarisés,
+## avis, révocations et répondants propres compris (docs/ACT3.md §2.1, QA-037) :
+## `anomaly_count_weights` est alors compensé pour l'atteindre. Vide : la cible
+## est `anomaly_count_weights` (outil `gen_stats`).
+@export var anomaly_count_targets: PackedFloat32Array
 ## Poids relatifs des types (filtrés par le générateur sur les types détectables).
 @export var anomaly_weights: Dictionary[AnomalyType.Kind, float] = {}
 @export var scripted_cases: Array[ScriptedCaseDef] = []

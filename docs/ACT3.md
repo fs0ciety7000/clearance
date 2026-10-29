@@ -2003,6 +2003,19 @@ Mesures de la logique livrée (données `tools/build_data_act3.gd`, graines 1…
 
 Générateur (`tools/gen_stats.gd`, 40 campagnes) : invariants OK J21–J30, zéro re-tirage propre ; part sans anomalie 40–53 % (cibles 36–48 %, scénarisés et répondants propres compris) ; `UNREGISTERED_VESSEL` conditionnel à 0,20 comme à l'Acte II (QA-026) au lieu de 0,02–0,03.
 
+**Correctif QA-037 (v0.10.0).** Les cibles `[0,1,2,3]` du §2.1 sont des cibles **scénarisés inclus** (`DayDef.anomaly_count_targets`) ; les cas imposés (scénarisés, avis et révocation générés, répondants et protégés liés propres) déformant la distribution, `anomaly_count_weights` est **compensé** par jour (`build_data_act3.gd`, `COUNT_WEIGHTS` : J21 [.58, .18, .20, .04] … J30 [.02, .42, .38, .18]). Écarts au §2.2 : `EXPIRED_DOCUMENT` du J21 **.06** (SC-51 est déjà un expiré) ; `SPONSOR_MISMATCH` et `SUSPENDED_CONTRACT` sont, comme `UNREGISTERED_VESSEL`, des poids **conditionnels** (protégé au motif VISITE FAMILIALE ; `TYC` au motif TRAVAIL) relevés après leur jour d'introduction (R34 : 1,5 aux J25–J27, 0,6 au J29 ; R35 : 0,6 / 0,8 / 0,8 aux J25–J27, 0,3 au J29) ; visites familiales `TYC` **0,50** aux J25–J27 (0,40). La colonne « poids » de `gen_stats` n'est donc pas comparable pour ces trois types.
+
+| Mesure (`gen_stats`, 40 campagnes, graine 1) | Cible | Avant | Après |
+|---|---|---|---|
+| J21 : 0 / 1 anomalie | 48 / 37 % | 41,2 / 49,5 % | 47,8 / 37,7 % |
+| J21 : `EXPIRED_DOCUMENT` / `WANTED_PERSON` (part des anomalies) ; DÉTENTION attendue | — | 18,1 / 19,3 % ; 19,0 % | 12,4 / 19,4 % ; 19,3 % (2 avis imposés : SC-53 + avis du jour, D-056) |
+| J22–J28 : cas sans anomalie | 36–44 % | 36,6–44,9 % | 35,7–44,2 % (±1,5 point de la cible du jour) |
+| J29 / J30 : cas sans anomalie | 42 / 36 % | 51,8 / 53,2 % | 42,4 / 36,8 % |
+| R34 (`r_sponsor`, part des cas) J25 / J26 / J27 / J29 | exercée après le J24 | 0,6 / 1,6 / 0,7 / 1,5 % | 4,4 / 3,4 / 2,5 / 7,9 % |
+| R35 (`r_tycho_lockout`) J25 / J26 / J27 (J28+ : R37 ferme `TYC`) | exercée après le J25 | 3,7 / 1,3 / 0,6 % | 7,8 / 6,5 / 4,3 % |
+
+Fins (`balance_sim`, J1–J30, 20 graines, graine 1 ; QA §13.2 → après correctifs QA-036 / QA-037) : toutes dans **±5 points** sauf **`drift` 80 % : F6 60 → 75 %** (F10 10 → 0 %, F7 20 → 15 %, F1 10 %) — conforme à l'intention (« fins dominantes selon la politique : F6 (`drift`) », §6.4) : un J30 plus dense laisse moins d'admissions correctes au `pont`. Autres valeurs : `default` 80 % F7 85 · F1 15 ; `loyal` 95 % F4 100 (Déposition « loyal_paid » prise quand `montclair_pliable`) ; `luciole` 80 % F5 75 · F1 25 ; `passeur` 80 % F7 45 · F1 30 · F10 20 · F3 5, 95 % F10 85 · F7 15 ; `temoin` 80 % F8 80 · F1 20 ; `solidaire` 80 % F9 90 · F1 10 ; `mercenary3` 80 % F1 90 · F7 10, 95 % F1 85 · F7 15 ; `drift` 95 % F6 90 · F10 10 ; `accusateur` 80–95 % F7 100. À 65 %, aucune campagne complète n'atteint le J21 (F2/F3 vers J10–J14), sauf `loyal` 5 % (F7).
+
 **Prérequis recommandé** (QA §12.8, hors périmètre de ce document) : `luciole_trust_on_breach = false` dès le J8–J10, sinon les « vannes ouvertes par accident » se propagent en climat Vanne par accident.
 
 ---

@@ -146,29 +146,30 @@ func _run_profile(data: DataCatalog, accuracy: float, preset: StringName = &"def
 		ending_counts[ending_name] = ending_counts.get(ending_name, 0) + 1
 		ending_days[ending_name] = ending_days.get(ending_name, 0) + SaveService.as_int(tail["day"])
 		for row: Dictionary in rows:
-			var i: int = int(row["day"]) - 1
+			var i: int = SaveService.as_int(row["day"]) - 1
 			reached[i] += 1
-			acc[i] += float(row["accuracy"])
-			income[i] += int(row["income"])
-			balance[i] += int(row["balance_after"])
-			sick[i] += int(row["sick"])
-			grave[i] += int(row["grave"])
-			lost[i] += int(row["lost"])
+			var row_accuracy: float = row["accuracy"]
+			acc[i] += row_accuracy
+			income[i] += SaveService.as_int(row["income"])
+			balance[i] += SaveService.as_int(row["balance_after"])
+			sick[i] += SaveService.as_int(row["sick"])
+			grave[i] += SaveService.as_int(row["grave"])
+			lost[i] += SaveService.as_int(row["lost"])
 			if row["all_sick"]:
 				all_sick[i] += 1
-			if int(row["sick"]) + int(row["grave"]) + int(row["lost"]) > 0:
+			if SaveService.as_int(row["sick"]) + SaveService.as_int(row["grave"]) + SaveService.as_int(row["lost"]) > 0:
 				any_sick[i] += 1
 			if row["ending"] != EveningReport.ENDING_NONE:
 				endings[i] += 1
 			var u: Dictionary = row["unpaid"]
 			var any_unpaid: bool = false
 			for id: StringName in BalanceSimulator.TRACKED_LINES:
-				if int(u[id]) > 0:
+				if SaveService.as_int(u[id]) > 0:
 					unpaid[i][id] += 1
 					any_unpaid = true
 			if any_unpaid:
 				sacrificed[i] += 1
-		if int(tail["day"]) == last and (rows[rows.size() - 1]["ending"] == EveningReport.ENDING_NONE or rows[rows.size() - 1].get("final", false)):
+		if SaveService.as_int(tail["day"]) == last and (rows[rows.size() - 1]["ending"] == EveningReport.ENDING_NONE or rows[rows.size() - 1].get("final", false)):
 			finished += 1
 	print("")
 	print("== Profil %d %% · %s ==" % [roundi(accuracy * 100.0), preset])
@@ -179,7 +180,8 @@ func _run_profile(data: DataCatalog, accuracy: float, preset: StringName = &"def
 		cumulative += endings[i]
 		var parts: PackedStringArray = []
 		for id: StringName in BalanceSimulator.TRACKED_LINES:
-			parts.append("%3d" % roundi(100.0 * unpaid[i][id] / r))
+			var missed: int = SaveService.as_int(unpaid[i][id])
+			parts.append("%3d" % roundi(100.0 * missed / r))
 		print("J%d   | %5.1f %% | %6.1f | %5.1f | %5.1f %% | %s | %7.2f | %6.2f | %6.2f | %7.1f %% | %6.1f %% | %5.1f %%" % [
 				i + 1, 100.0 * acc[i] / r, float(income[i]) / r, float(balance[i]) / r, 100.0 * sacrificed[i] / r, " / ".join(parts),
 				float(sick[i]) / r, float(grave[i]) / r, float(lost[i]) / r, 100.0 * any_sick[i] / r,

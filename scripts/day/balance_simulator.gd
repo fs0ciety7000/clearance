@@ -101,7 +101,8 @@ static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: f
 				economy.levy_for(day_number, credits), day_number, economy, credits)
 		var events: Array[EveningEvent] = EveningService.build_events(day.evening_events, context, economy)
 		var lines: Array[ExpenseLine] = EveningService.build_lines(economy, day_number, household, flags, credits)
-		EveningService.apply_line_costs(lines, events, profile.choices)
+		var wanted_choices: Dictionary[StringName, StringName] = profile.choices_for(events)
+		EveningService.apply_line_costs(lines, events, wanted_choices)
 		if profile.spending == &"rent_only" or profile.spending == &"none":
 			for line: ExpenseLine in lines:
 				line.paid = line.mandatory or (profile.spending == &"rent_only" and line.id == EveningService.LINE_RENT)
@@ -112,10 +113,10 @@ static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: f
 		var choices: Dictionary[StringName, StringName] = EveningService.default_choices(events,
 				credits - EveningService.total_spent(lines))
 		for event: EveningEvent in events:
-			var wanted: StringName = profile.choices.get(event.id, &"")
+			var wanted: StringName = wanted_choices.get(event.id, &"")
 			var option: EveningOptionDef = event.get_option(wanted)
 			if option != null and EveningService.can_choose(option, credits - EveningService.total_spent(lines)):
-				choices[event.id] = wanted
+				choices[event.id] = option.id
 		var evening_seed: int = SeededRng.mix_string(day_seed, EVENING_SALT)
 		var report: EveningReport = EveningService.apply(economy, day_number, household, lines, credits, evening_seed,
 				events, choices, context)

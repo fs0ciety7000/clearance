@@ -189,6 +189,28 @@ func decision_for(case: Case, item: SlippedItem, roll: float) -> SlippedItem.Dec
 	return item.default_decision
 
 
+## Choix du soir du profil résolus sur les événements offerts (QA-036) : par
+## intention plutôt que par identifiant exact — une variante conditionnelle au
+## même libellé remplace l'option demandée (`d29_deposition` : `loyal` →
+## `loyal_paid` si `montclair_pliable`). Les choix sans option offerte sont omis.
+func choices_for(events: Array[EveningEvent]) -> Dictionary[StringName, StringName]:
+	var resolved: Dictionary[StringName, StringName] = {}
+	for event: EveningEvent in events:
+		var wanted: StringName = choices.get(event.id, &"")
+		var option: EveningOptionDef = event.option_for_intent(wanted)
+		if option != null:
+			resolved[event.id] = option.id
+	return resolved
+
+
+## Option offerte pour l'intention du profil sur un événement (`null` : aucune).
+func option_for(event: EveningEvent) -> EveningOptionDef:
+	if event == null:
+		return null
+	var wanted: StringName = choices.get(event.id, &"")
+	return event.option_for_intent(wanted)
+
+
 ## Jour d'un cas (identifiant `dNN_cMM`), 0 si inconnu.
 static func day_of(case: Case) -> int:
 	var text: String = String(case.case_id)

@@ -168,6 +168,10 @@ rb_day,JOUR %02d
 rb_today,DATE DU JOUR
 rb_new_count,%d NOUVEAUX
 rb_page,ONGLET %d / %d
+rb_tabs_menu,%d / %d ▾
+rb_tabs_all,Tous les onglets
+rb_tab_prev,Onglet précédent ( [ · LB )
+rb_tab_next,Onglet suivant ( ] · RB )
 rb_tab_all,Règles
 rb_tab_documents,Documents
 rb_tab_identity,Identité
@@ -435,6 +439,8 @@ ev_shift_net,Net du shift (salaire − amendes)
 ev_available,Disponible ce soir
 ev_report_bonus,Prime de signalement (Consortium)
 ev_lines,DÉPENSES DU SOIR — COCHEZ CE QUE VOUS PAYEZ
+ev_more_lines,▼ %d postes plus bas — faites défiler
+ev_more_lines_one,▼ %d poste plus bas — faites défiler
 ev_spent,Dépenses
 ev_after,Solde après la soirée
 ev_debt_hint,Découvert : trois soirs de suite et l'Autorité de Transit vous réaffecte.

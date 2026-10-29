@@ -54,16 +54,38 @@ const WEIGHT_KINDS: Array[AnomalyType.Kind] = [K.EXPIRED_DOCUMENT, K.MISSING_DOC
 		K.INVALID_SEAL, K.MRZ_MISMATCH, K.WANTED_PERSON, K.CONTRACT_MISMATCH, K.UNREGISTERED_VESSEL,
 		K.OUTDATED_FIRMWARE, K.REVOKED_ID, K.SPONSOR_MISMATCH, K.FORGED_SUMMONS, K.SUSPENDED_CONTRACT]
 const WEIGHTS: Dictionary[int, Array] = {
-	21: [0.12, 0.05, 0.03, 0.05, 0.05, 0.04, 0.05, 0.04, 0.04, 0.06, 0.05, 0.07, 0.06, 0.07, 0.06, 0.06, 0.06, 0.06, 0.20, 0.05, 0, 0, 0, 0],
+	21: [0.06, 0.05, 0.03, 0.05, 0.05, 0.04, 0.05, 0.04, 0.04, 0.06, 0.05, 0.07, 0.06, 0.07, 0.06, 0.06, 0.06, 0.06, 0.20, 0.05, 0, 0, 0, 0],
 	22: [0.10, 0.05, 0.03, 0.05, 0.05, 0.04, 0.05, 0.04, 0.04, 0.06, 0.05, 0.07, 0.06, 0.07, 0.06, 0.06, 0.06, 0.06, 0.20, 0.07, 0, 0, 0, 0],
 	23: [0.10, 0.06, 0.04, 0.06, 0.06, 0.05, 0.06, 0, 0, 0.07, 0.06, 0.08, 0.07, 0.07, 0.06, 0.06, 0.06, 0.06, 0.20, 0.05, 0, 0, 0, 0],
 	24: [0.08, 0.05, 0.03, 0.05, 0.05, 0.04, 0.05, 0, 0, 0.06, 0.05, 0.07, 0.06, 0.06, 0.05, 0.05, 0.05, 0.05, 0.20, 0.04, 0, 0.18, 0, 0],
-	25: [0.07, 0.05, 0.03, 0.04, 0.04, 0.04, 0.05, 0, 0, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.05, 0.05, 0.20, 0.04, 0, 0.10, 0, 0.15],
-	26: [0.07, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0, 0, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.05, 0.04, 0.20, 0.04, 0, 0.08, 0.15, 0.06],
-	27: [0.07, 0.05, 0.03, 0.04, 0.04, 0.04, 0.05, 0, 0, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.06, 0.05, 0.20, 0.04, 0, 0.08, 0.08, 0.08],
+	25: [0.07, 0.05, 0.03, 0.04, 0.04, 0.04, 0.05, 0, 0, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.05, 0.05, 0.20, 0.04, 0, 1.50, 0, 0.60],
+	26: [0.07, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0, 0, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.05, 0.04, 0.20, 0.04, 0, 1.50, 0.15, 0.80],
+	27: [0.07, 0.05, 0.03, 0.04, 0.04, 0.04, 0.05, 0, 0, 0.05, 0.04, 0.06, 0.05, 0.06, 0.05, 0.05, 0.06, 0.05, 0.20, 0.04, 0, 1.50, 0.08, 0.80],
 	28: [0.06, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0, 0, 0.05, 0.04, 0.06, 0.05, 0.16, 0.05, 0.04, 0.05, 0.04, 0.20, 0.04, 0, 0.08, 0.06, 0.04],
-	29: [0.08, 0.05, 0.03, 0.04, 0.04, 0.04, 0.05, 0, 0, 0.05, 0.04, 0.06, 0.05, 0.10, 0.05, 0.05, 0.05, 0.04, 0.20, 0.04, 0, 0.08, 0.06, 0.05],
+	29: [0.08, 0.05, 0.03, 0.04, 0.04, 0.04, 0.05, 0, 0, 0.05, 0.04, 0.06, 0.05, 0.10, 0.05, 0.05, 0.05, 0.04, 0.20, 0.04, 0, 0.60, 0.06, 0.30],
 	30: [0.05, 0.04, 0.03, 0.04, 0.04, 0.03, 0.04, 0, 0, 0.05, 0.04, 0.06, 0.05, 0.13, 0.04, 0.04, 0.10, 0.04, 0.20, 0.03, 0, 0.09, 0.06, 0.04],
+}
+## QA-037 : `EXPIRED_DOCUMENT` du J21 (respiration) ramené de 0,12 à 0,06 (SC-51
+## est déjà un expiré) ; `SPONSOR_MISMATCH` (R34) et `SUSPENDED_CONTRACT` (R35)
+## sont **conditionnels** (protégé au motif VISITE FAMILIALE ; `TYC` au motif
+## TRAVAIL) : poids relevés à 0,6–1,5 après leur jour d'introduction (J25–J27,
+## J29) pour que la règle reste exercée, comme `UNREGISTERED_VESSEL` (QA-026).
+## Distribution **compensée** de 0–3 anomalies par cas (QA-037) : les cas
+## imposés (scénarisés, avis et révocation générés, répondants et protégés
+## liés propres) déforment la distribution du jour ; ces poids tirés sur les
+## cas ordinaires redonnent la cible du §2.1, scénarisés inclus
+## (`DayDef.anomaly_count_targets`, mesurée par `tools/gen_stats.gd`).
+const COUNT_WEIGHTS: Dictionary[int, Array] = {
+	21: [0.581, 0.183, 0.198, 0.038],
+	22: [0.401, 0.330, 0.200, 0.070],
+	23: [0.453, 0.267, 0.229, 0.051],
+	24: [0.413, 0.254, 0.266, 0.067],
+	25: [0.330, 0.360, 0.240, 0.063],
+	26: [0.300, 0.347, 0.262, 0.080],
+	27: [0.497, 0.246, 0.191, 0.066],
+	28: [0.271, 0.280, 0.350, 0.099],
+	29: [0.280, 0.401, 0.239, 0.080],
+	30: [0.020, 0.420, 0.380, 0.180],
 }
 ## Jours de règle nouvelle : 3ᵉ avertissement gratuit (§6.1, D-089).
 const NEW_RULE_DAYS: Array[int] = [21, 22, 24, 25, 26, 28]
@@ -321,7 +343,9 @@ static func _act3_day(n: int, rule_set: RuleSet, duration: float, count: int, co
 	d.rule_set = rule_set
 	d.duration_sec = duration
 	d.passenger_count = count
-	d.anomaly_count_weights = PackedFloat32Array(count_weights)
+	d.anomaly_count_targets = PackedFloat32Array(count_weights)
+	var counts: Array = COUNT_WEIGHTS.get(n, count_weights)
+	d.anomaly_count_weights = PackedFloat32Array(_normalized(counts))
 	var weights: Array = WEIGHTS[n]
 	for i: int in WEIGHT_KINDS.size():
 		var w: float = weights[i]
@@ -365,9 +389,22 @@ static func _act3_day(n: int, rule_set: RuleSet, duration: float, count: int, co
 		d.summons_rate = 0.12 if n == 26 or n == 28 else 0.10
 		d.summons_decoys = 4
 	if n >= 25:
-		d.family_visit_rates = {&"tyc": 0.40 if n <= 27 else (0.55 if n <= 29 else 0.60)}
+		# QA-037 : 0,50 aux J25–J27 (au lieu de 0,40) pour que R34 reste exercée
+		# après le J24 (protégés : seuls porteurs possibles de SPONSOR_MISMATCH).
+		d.family_visit_rates = {&"tyc": 0.50 if n <= 27 else (0.55 if n <= 29 else 0.60)}
 	d.revoked_decoys = 4
 	return d
+
+
+## Poids ramenés à une somme de 1 (`test_data_integrity`).
+static func _normalized(weights: Array) -> Array[float]:
+	var total: float = 0.0
+	for w: float in weights:
+		total += w
+	var result: Array[float] = []
+	for w: float in weights:
+		result.append(w / total if total > 0.0 else 0.0)
+	return result
 
 
 ## Avis du jour : une entrée générée (+1 au climat Brûlants, D-056).

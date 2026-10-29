@@ -73,8 +73,11 @@ const ENQUETE_EVENTS: Array[StringName] = [&"d22_q1", &"d26_q2", &"d28_q3", &"d2
 ## Acte III : aides versées par lettre → libellé de revenu.
 const LETTER_INCOME_KEYS: Dictionary[StringName, String] = {&"d21_recall": "inc_recall", &"d23_fund": "inc_vitres_fund"}
 ## Hauteur d'une ligne de dépense (rations : plus compactes, groupées).
-const ROW_H: float = 56.0
-const RATION_ROW_H: float = 48.0
+## Compactes (QA-034) : libellé et note sur une ligne quand la largeur le
+## permet (repli sinon) ; foyer complet + 4 rations tiennent sans défiler en
+## 1080p ; la ligne grandit avec son contenu (texte 1,5). ≥ `HIT_TARGET_MIN`.
+const ROW_H: float = 44.0
+const RATION_ROW_H: float = 40.0
 
 var day_number: int = 1
 var game_date: int = 0
@@ -103,6 +106,9 @@ var next_button: Button = null
 var prev_button: Button = null
 
 var _rows: Array[Button] = []
+## Liste des dépenses (défile au-delà de sa hauteur) et indice « plus bas ».
+var _lines_scroll: ScrollContainer = null
+var _more_hint: Label = null
 var _spent_label: Label = null
 var _available_label: Label = null
 var _bonus_row: HBoxContainer = null
@@ -182,9 +188,18 @@ func _build() -> void:
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.size_flags_stretch_ratio = LEFT_RATIO
 	columns.add_child(left)
+	# Colonne de droite défilante (QA-034) : au texte 1,5 en 1080p, foyer +
+	# Déposition dépassent la hauteur ; la page (et VALIDER ET DORMIR) reste à l'écran.
+	var right_scroll: ScrollContainer = ScrollContainer.new()
+	right_scroll.name = "RightColumn"
+	right_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right_scroll.follow_focus = true
+	columns.add_child(right_scroll)
 	_right = vbox(DS.SPACE_5)
 	_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	columns.add_child(_right)
+	_right.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right_scroll.add_child(_right)
 	_right.add_child(_family())
 	if not events.is_empty():
 		_events_box = vbox(DS.SPACE_3)
@@ -271,6 +286,17 @@ func _budget() -> VBoxContainer:
 	var list: VBoxContainer = vbox(DS.SPACE_2)
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
+	_lines_scroll = scroll
+	# Indice visible quand des postes sont sous le bord (QA-034) : un poste non
+	# vu (la ration d'un proche) ne passe jamais pour absent.
+	_more_hint = label("", &"CaptionLabel", DS.STATE_AMBER)
+	_more_hint.name = "MoreLines"
+	_more_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_more_hint.visible = false
+	box.add_child(_more_hint)
+	scroll.get_v_scroll_bar().value_changed.connect(func(_v: float) -> void: _update_more_hint())
+	scroll.resized.connect(_update_more_hint.call_deferred)
+	list.resized.connect(_update_more_hint.call_deferred)
 	var rations: Array[ExpenseLine] = []
 	for line: ExpenseLine in lines:
 		if is_ration(line):
@@ -311,6 +337,20 @@ func _money_row(caption: String, value: String, color: Color, value_variation: S
 	return row
 
 
+## « ▼ n postes plus bas » sous la liste tant que des postes sont sous le bord.
+func _update_more_hint() -> void:
+	if _lines_scroll == null or _more_hint == null or not is_instance_valid(_lines_scroll):
+		return
+	var view: Rect2 = _lines_scroll.get_global_rect().grow(1.0)
+	var below: int = 0
+	for row: Button in _rows:
+		if is_instance_valid(row) and row.get_global_rect().end.y > view.end.y:
+			below += 1
+	_more_hint.text = UiText.plural("ev_more_lines", below, "▼ %d poste plus bas — faites défiler",
+			"▼ %d postes plus bas — faites défiler")
+	_more_hint.visible = below > 0
+
+
 ## Ration d'air (Acte II, M2) : la vôtre ou celle d'un proche.
 static func is_ration(line: ExpenseLine) -> bool:
 	return line.ration_of != &"" or line.id == EveningService.LINE_RATION_SELF
@@ -323,7 +363,7 @@ func _rations_group(rations: Array[ExpenseLine]) -> Control:
 	var group: PanelContainer = panel()
 	group.name = "Rations"
 	group.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.BG_PANEL, DS.STATE_AMBER))
-	var box: VBoxContainer = vbox(DS.SPACE_2)
+	var box: VBoxContainer = vbox(DS.SPACE_1)
 	group.add_child(box)
 	var head: HBoxContainer = hbox(DS.SPACE_2)
 	box.add_child(head)
@@ -368,24 +408,35 @@ func _expense_row(line: ExpenseLine, height: float = ROW_H) -> Button:
 	for side: String in ["left", "right"]:
 		margin.add_theme_constant_override("margin_" + side, DS.SPACE_4)
 	for side: String in ["top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, DS.SPACE_2)
+		margin.add_theme_constant_override("margin_" + side, DS.SPACE_1)
 	row.add_child(margin)
+	# Un Button ne grandit pas avec ses enfants : la ligne suit son contenu
+	# (sous-titre de poste au texte 1,5, QA-034).
+	margin.minimum_size_changed.connect(func() -> void:
+		row.custom_minimum_size.y = maxf(height, margin.get_combined_minimum_size().y))
 	var content: HBoxContainer = hbox(DS.SPACE_4)
 	margin.add_child(content)
 	var check: CheckMark = CheckMark.new()
 	check.name = "Check"
 	check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	content.add_child(check)
-	var texts: VBoxContainer = vbox(0)
+	# Libellé · note sur une ligne si la place le permet, repliés sinon (QA-034).
+	var texts: HFlowContainer = HFlowContainer.new()
+	texts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texts.add_theme_constant_override("h_separation", DS.SPACE_3)
+	texts.add_theme_constant_override("v_separation", 0)
 	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	texts.alignment = BoxContainer.ALIGNMENT_CENTER
+	texts.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	content.add_child(texts)
 	var title: String = UiText.t(line.label_key, String(line.id))
 	if line.member_id != &"":
 		title = title % HouseholdView.member_name(line.member_id) if title.contains("%s") else title
-	texts.add_child(label(title, &"BodyStrong"))
+	var title_label: Label = label(title, &"BodyStrong")
+	title_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	texts.add_child(title_label)
 	var note: Label = label(UiText.t(line.note_key, ""), &"CaptionLabel")
 	note.name = "Note"
+	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	texts.add_child(note)
 	if line.mandatory:
 		var lock: PanelContainer = chip(UiText.t("ev_mandatory", "PRÉLEVÉE D'OFFICE"), UiIcon.Kind.LOCK, DS.TEXT_SECONDARY)

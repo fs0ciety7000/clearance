@@ -406,7 +406,8 @@ game_date = 31871
 rule_set = ExtResource("9_21f8e")
 duration_sec = 750.0
 passenger_count = 17
-anomaly_count_weights = PackedFloat32Array(0.4, 0.38, 0.17, 0.05)
+anomaly_count_weights = PackedFloat32Array(0.3323263, 0.36253777, 0.24169184, 0.06344411)
+anomaly_count_targets = PackedFloat32Array(0.4, 0.38, 0.17, 0.05)
 anomaly_weights = Dictionary[int, float]({
 0: 0.07,
 1: 0.05,
@@ -426,8 +427,8 @@ anomaly_weights = Dictionary[int, float]({
 17: 0.05,
 18: 0.2,
 19: 0.04,
-21: 0.1,
-23: 0.15
+21: 1.5,
+23: 0.6
 })
 scripted_cases = Array[ExtResource("11_05o0a")]([SubResource("scripted_sc_63"), SubResource("scripted_sc_64"), SubResource("scripted_sc_65")])
 intro_text_key = "day25_intro"
@@ -459,7 +460,7 @@ retired_documents = Array[StringName]([&"queue_ticket", &"bioscan"])
 prorogation_noise_rate = 0.12
 reinstated_decoy_rate = 0.5
 family_visit_rates = Dictionary[StringName, float]({
-&"tyc": 0.4
+&"tyc": 0.5
 })
 anomaly_weight_modifiers = Dictionary[StringName, Dictionary]({
 &"sc62_tariq_passed": {

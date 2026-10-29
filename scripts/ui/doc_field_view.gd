@@ -61,8 +61,8 @@ func _build_text(label_text: String, value_text: String, large: bool) -> void:
 	margin.add_theme_constant_override("margin_left", DS.SPACE_2 if not large else DS.SPACE_4)
 	# Place réservée à l'icône « ≠ » d'un champ flagged (jamais sur la valeur).
 	margin.add_theme_constant_override("margin_right", DS.SPACE_2 if not large else DS.SPACE_4 + DS.ICON_M)
-	margin.add_theme_constant_override("margin_top", 2 if not large else DS.SPACE_3)
-	margin.add_theme_constant_override("margin_bottom", DS.SPACE_1 if not large else DS.SPACE_3)
+	margin.add_theme_constant_override("margin_top", 2 if not large else DS.SPACE_2)
+	margin.add_theme_constant_override("margin_bottom", DS.SPACE_1 if not large else DS.SPACE_2)
 	add_child(margin)
 	var box: BoxContainer = null
 	if large:
@@ -78,8 +78,11 @@ func _build_text(label_text: String, value_text: String, large: bool) -> void:
 	_label.text = label_text
 	# Libellé jamais tronqué (« VALIDE JUS… » au Steam Deck, QA-029) : faute de
 	# place il passe à la ligne, sans élargir le document.
+	# Repli **entre les mots** seulement : la colonne ne descend jamais sous
+	# le plus long mot du libellé (« FIRMWARE » d'une carte seule, QA-038).
 	if not large:
 		_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_label.theme_changed.connect(_fit_label_words)
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	if large:
@@ -109,6 +112,23 @@ func _build_portrait(p_value: Variant, portrait_provider: Callable) -> void:
 				_portrait.texture = provided
 	add_child(_portrait)
 	custom_minimum_size = PORTRAIT_SIZE
+
+
+## Largeur minimale du libellé replié : son plus long mot (police du thème,
+## capitales), pour qu'il ne se coupe jamais lettre par lettre (QA-038).
+func _fit_label_words() -> void:
+	if _label == null or not _label.is_inside_tree():
+		return
+	var font: Font = _label.get_theme_font(&"font")
+	var font_size: int = _label.get_theme_font_size(&"font_size")
+	if font == null:
+		return
+	var widest: float = 0.0
+	for word: String in _label.text.to_upper().split(" ", false):
+		widest = maxf(widest, font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
+	widest = ceilf(widest) + 1.0
+	if not is_equal_approx(_label.custom_minimum_size.x, widest):
+		_label.custom_minimum_size.x = widest
 
 
 func _sync_min_size(margin: MarginContainer) -> void:

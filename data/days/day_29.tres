@@ -451,7 +451,8 @@ game_date = 31875
 rule_set = ExtResource("9_7ns40")
 duration_sec = 750.0
 passenger_count = 17
-anomaly_count_weights = PackedFloat32Array(0.42, 0.38, 0.15, 0.05)
+anomaly_count_weights = PackedFloat32Array(0.28, 0.401, 0.239, 0.08)
+anomaly_count_targets = PackedFloat32Array(0.42, 0.38, 0.15, 0.05)
 anomaly_weights = Dictionary[int, float]({
 0: 0.08,
 1: 0.05,
@@ -471,9 +472,9 @@ anomaly_weights = Dictionary[int, float]({
 17: 0.04,
 18: 0.2,
 19: 0.04,
-21: 0.08,
+21: 0.6,
 22: 0.06,
-23: 0.05
+23: 0.3
 })
 scripted_cases = Array[ExtResource("11_ljt8v")]([SubResource("scripted_sc_77"), SubResource("scripted_sc_78"), SubResource("scripted_sc_79")])
 intro_text_key = "day29_intro"

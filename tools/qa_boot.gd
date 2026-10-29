@@ -24,6 +24,6 @@ func _boot() -> void:
 		push_error("qa_boot: %s illisible" % _path)
 		quit(2)
 		return
-	var node: Node = script.new() as Node
+	var node: Node = script.new()
 	node.name = "QA"
 	root.add_child(node)

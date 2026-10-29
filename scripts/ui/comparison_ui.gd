@@ -967,8 +967,10 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 			var topic: StringName = InterrogationTopics.topic_for(result)
 			if topic != &"" and not unlocked_topics.has(topic) and not asked_topics.has(topic):
 				unlocked_topics.append(topic)
+			# S'efface comme un toast (DS `TOAST_HOLD`) : les marques numérotées
+			# restent sur les champs (QA-033).
 			workbench.show_banner(Workbench.BannerKind.DISCORDANT,
-					UiText.tf("res_discordance", [number], "DISCORDANCE %d"), describe(result))
+					UiText.tf("res_discordance", [number], "DISCORDANCE %d"), describe(result), DS.TOAST_HOLD)
 		Discrepancy.Result.CONCORDANT:
 			links.resolve(result, 0)
 			if result.reason_key == Discrepancy.REASON_PROROGATED:

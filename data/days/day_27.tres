@@ -476,7 +476,8 @@ game_date = 31873
 rule_set = ExtResource("9_abecx")
 duration_sec = 750.0
 passenger_count = 17
-anomaly_count_weights = PackedFloat32Array(0.42, 0.37, 0.16, 0.05)
+anomaly_count_weights = PackedFloat32Array(0.497, 0.246, 0.191, 0.066)
+anomaly_count_targets = PackedFloat32Array(0.42, 0.37, 0.16, 0.05)
 anomaly_weights = Dictionary[int, float]({
 0: 0.07,
 1: 0.05,
@@ -496,9 +497,9 @@ anomaly_weights = Dictionary[int, float]({
 17: 0.05,
 18: 0.2,
 19: 0.04,
-21: 0.08,
+21: 1.5,
 22: 0.08,
-23: 0.08
+23: 0.8
 })
 scripted_cases = Array[ExtResource("11_gtyw0")]([SubResource("scripted_sc_70"), SubResource("scripted_sc_71a"), SubResource("scripted_sc_71b"), SubResource("scripted_sc_71c"), SubResource("scripted_sc_72")])
 intro_text_key = "day27_intro"
@@ -532,7 +533,7 @@ quota_suspended_if = SubResource("d27_resource_47")
 prorogation_noise_rate = 0.1
 reinstated_decoy_rate = 0.5
 family_visit_rates = Dictionary[StringName, float]({
-&"tyc": 0.4
+&"tyc": 0.5
 })
 summons = Array[ExtResource("13_6304m")]([SubResource("d27_resource_48"), SubResource("d27_resource_49"), SubResource("d27_resource_50")])
 summons_decoys = 4

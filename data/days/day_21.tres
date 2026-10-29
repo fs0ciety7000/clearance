@@ -441,9 +441,10 @@ game_date = 31867
 rule_set = ExtResource("9_phk1b")
 duration_sec = 720.0
 passenger_count = 15
-anomaly_count_weights = PackedFloat32Array(0.48, 0.37, 0.13, 0.02)
+anomaly_count_weights = PackedFloat32Array(0.581, 0.183, 0.198, 0.038)
+anomaly_count_targets = PackedFloat32Array(0.48, 0.37, 0.13, 0.02)
 anomaly_weights = Dictionary[int, float]({
-0: 0.12,
+0: 0.06,
 1: 0.05,
 2: 0.03,
 3: 0.05,

@@ -14,6 +14,10 @@
 ## (`SummonsCardView`), sélectionnables ; colonne « RÉINTÉGRÉ·E LE » des
 ## Révocations ; règles retirées barrées un jour (`retired_entries`) ; R23
 ## « SUSPENDU » quand le quota est levé (`quota_suspended`).
+## QA-032 : navigation sur **une seule rangée** défilante (catégories de règles
+## puis « BULLETINS »), flèches `[` `]`, menu « n / N ▾ » de tous les onglets
+## regroupés par section, et DATE DU JOUR en pied : la liste garde ≥ 60 % de
+## la hauteur du panneau même à 16 onglets et au texte 1,5.
 class_name RulebookPanel
 extends PanelContainer
 
@@ -69,52 +73,31 @@ var _content: VBoxContainer = null
 var _day_label: Label = null
 var _new_badge: PanelContainer = null
 var _new_label: Label = null
-var _tabs_row: HFlowContainer = null
-var _ref_box: VBoxContainer = null
-var _ref_row: HFlowContainer = null
+## Rangée unique d'onglets (défile horizontalement) et séparateur « BULLETINS ».
+var _tabs_scroll: ScrollContainer = null
+var _tabs_row: HBoxContainer = null
+var _ref_caption: Control = null
+var _prev_button: Button = null
+var _next_button: Button = null
+## Menu de tous les onglets (« n / N ▾ ») : remplace le pied « ONGLET n / N ».
+var _tabs_menu: MenuButton = null
 var _reference_view: Control = null
 var _tab_buttons: Array[Button] = []
 var _tab_ids: Array[int] = []
 var _list: VBoxContainer = null
 var _scroll: ScrollContainer = null
-var _page_label: Label = null
 var _collapsed_tab: VBoxContainer = null
 var _collapsed_count: Label = null
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_L, DS.SPACE_5))
+	add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_L, DS.SPACE_4))
 	_content = VBoxContainer.new()
-	_content.add_theme_constant_override("separation", DS.SPACE_3)
+	_content.add_theme_constant_override("separation", DS.SPACE_2)
 	add_child(_content)
 	_build_header()
-	_tabs_row = HFlowContainer.new()
-	_tabs_row.add_theme_constant_override("h_separation", 0)
-	_tabs_row.add_theme_constant_override("v_separation", 0)
-	_content.add_child(_tabs_row)
-	_ref_box = VBoxContainer.new()
-	_ref_box.add_theme_constant_override("separation", DS.SPACE_1)
-	_ref_box.visible = false
-	_content.add_child(_ref_box)
-	var ref_caption: Label = Label.new()
-	ref_caption.theme_type_variation = &"DocFieldLabel"
-	ref_caption.uppercase = true
-	ref_caption.text = UiText.t("rb_bulletins", "BULLETINS")
-	_ref_box.add_child(ref_caption)
-	_ref_row = HFlowContainer.new()
-	_ref_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_ref_row.add_theme_constant_override("h_separation", 0)
-	_ref_row.add_theme_constant_override("v_separation", 0)
-	_ref_box.add_child(_ref_row)
-	var today_card: PanelContainer = PanelContainer.new()
-	var today_box: StyleBoxFlat = ThemeBuilder.chamfer_box(DS.BG_ELEVATED, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0)
-	today_card.add_theme_stylebox_override(&"panel", today_box)
-	_content.add_child(today_card)
-	today_item = DocFieldView.new()
-	today_item.setup_custom(FieldRef.today(), UiText.t("rb_today", "DATE DU JOUR"), "—")
-	today_item.picked.connect(_on_item_picked)
-	today_card.add_child(today_item)
+	_build_nav()
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -150,19 +133,72 @@ func _build_header() -> void:
 	header.add_child(_new_badge)
 
 
+## Rangée de navigation (QA-032) : `[` · onglets défilants · `]` · menu · Tab.
+func _build_nav() -> void:
+	var nav: HBoxContainer = HBoxContainer.new()
+	nav.name = "Nav"
+	nav.add_theme_constant_override("separation", DS.SPACE_1)
+	_content.add_child(nav)
+	_prev_button = _keycap_button("[", UiText.t("rb_tab_prev", "Onglet précédent"))
+	_prev_button.pressed.connect(cycle_tab.bind(-1))
+	nav.add_child(_prev_button)
+	_tabs_scroll = ScrollContainer.new()
+	_tabs_scroll.name = "Tabs"
+	_tabs_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tabs_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_tabs_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	_tabs_scroll.gui_input.connect(_on_tabs_input)
+	_tabs_scroll.get_h_scroll_bar().value_changed.connect(func(_v: float) -> void: _update_nav_hints())
+	_tabs_scroll.resized.connect(_update_nav_hints.call_deferred)
+	nav.add_child(_tabs_scroll)
+	_tabs_row = HBoxContainer.new()
+	_tabs_row.add_theme_constant_override("separation", 0)
+	_tabs_scroll.add_child(_tabs_row)
+	_next_button = _keycap_button("]", UiText.t("rb_tab_next", "Onglet suivant"))
+	_next_button.pressed.connect(cycle_tab.bind(1))
+	nav.add_child(_next_button)
+	_tabs_menu = MenuButton.new()
+	_tabs_menu.name = "TabsMenu"
+	_tabs_menu.theme_type_variation = &"ButtonGhost"
+	_tabs_menu.focus_mode = Control.FOCUS_NONE
+	_tabs_menu.flat = true
+	_tabs_menu.tooltip_text = UiText.t("rb_tabs_all", "Tous les onglets")
+	_tabs_menu.about_to_popup.connect(_fill_tabs_menu)
+	_tabs_menu.get_popup().id_pressed.connect(_on_tabs_menu_id)
+	nav.add_child(_tabs_menu)
+	# « Tab » (replier) en bout de rangée : l'en-tête tient au Steam Deck (QA-009).
+	var fold: PanelContainer = make_keycap("Tab")
+	nav.add_child(fold)
+
+
+## Bouton à l'allure d'une touche (`[`, `]`) : cliquable, comme LB / RB.
+func _keycap_button(text: String, tip: String) -> Button:
+	var button: Button = Button.new()
+	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.tooltip_text = tip
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var cap: PanelContainer = make_keycap(text)
+	button.add_child(cap)
+	var fit: Callable = func() -> void:
+		button.custom_minimum_size = cap.get_combined_minimum_size()
+	cap.minimum_size_changed.connect(fit)
+	fit.call()
+	return button
+
+
 func _build_footer() -> void:
-	var footer: HBoxContainer = HBoxContainer.new()
-	footer.add_theme_constant_override("separation", DS.SPACE_2)
-	_content.add_child(footer)
-	_page_label = Label.new()
-	_page_label.theme_type_variation = &"DataSmall"
-	_page_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	footer.add_child(_page_label)
-	# « Tab » (replier) rejoint « [ » « ] » en pied : l'en-tête tient dans la
-	# largeur du panneau avec le plancher de texte du Steam Deck (QA-009).
-	footer.add_child(make_keycap("Tab"))
-	footer.add_child(make_keycap("["))
-	footer.add_child(make_keycap("]"))
+	# DATE DU JOUR en pied (QA-032) : toujours visible, sélectionnable.
+	var today_card: PanelContainer = PanelContainer.new()
+	today_card.name = "Today"
+	var today_box: StyleBoxFlat = ThemeBuilder.chamfer_box(DS.BG_ELEVATED, DS.LINE_SUBTLE, DS.BORDER_HAIRLINE, DS.CHAMFER_S, 0)
+	today_card.add_theme_stylebox_override(&"panel", today_box)
+	_content.add_child(today_card)
+	today_item = DocFieldView.new()
+	today_item.setup_custom(FieldRef.today(), UiText.t("rb_today", "DATE DU JOUR"), "—")
+	today_item.picked.connect(_on_item_picked)
+	today_card.add_child(today_item)
 
 
 func _build_collapsed_tab() -> void:
@@ -316,59 +352,191 @@ func _build_tabs() -> void:
 		button.queue_free()
 	_tab_buttons.clear()
 	_tab_ids.clear()
+	if _ref_caption != null:
+		_ref_caption.queue_free()
+		_ref_caption = null
 	var group: ButtonGroup = ButtonGroup.new()
 	var ids: Array[int] = [TAB_ALL]
 	for entry: RulebookEntry in entries:
 		if not ids.has(entry.category):
 			ids.append(entry.category)
 	for id: int in ids:
-		var button: Button = Button.new()
-		button.theme_type_variation = &"ToggleTab"
-		button.toggle_mode = true
-		button.button_group = group
-		button.focus_mode = Control.FOCUS_NONE
 		var news: int = 0
 		for entry: RulebookEntry in entries:
 			if entry.is_new and (id == TAB_ALL or entry.category == id):
 				news += 1
-		button.text = _tab_name(id)
+		var text: String = _tab_name(id)
+		var color: Color = Color.TRANSPARENT
 		if news > 0 and id != TAB_ALL:
-			button.text += " ·%d" % news
-			button.add_theme_color_override(&"font_color", DS.STATE_AMBER)
-		button.pressed.connect(_show_tab.bind(id))
-		_tabs_row.add_child(button)
-		_tab_buttons.append(button)
-		_tab_ids.append(id)
+			text += " ·%d" % news
+			color = DS.STATE_AMBER
+		_add_tab_button(id, text, color, group)
 	var refs: Array[StringName] = visible_reference_tabs()
-	_ref_box.visible = not refs.is_empty()
+	if not refs.is_empty():
+		# Séparateur « BULLETINS » dans la rangée : les onglets de référence
+		# suivent les catégories de règles (QA-032).
+		var caption: HBoxContainer = HBoxContainer.new()
+		caption.name = "Bulletins"
+		caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		caption.add_theme_constant_override("separation", DS.SPACE_2)
+		var bar: ColorRect = ColorRect.new()
+		bar.color = DS.LINE_SUBTLE
+		bar.custom_minimum_size = Vector2(DS.BORDER_HAIRLINE, DS.SPACE_5)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		caption.add_child(bar)
+		var ref_caption: Label = Label.new()
+		ref_caption.theme_type_variation = &"DocFieldLabel"
+		ref_caption.uppercase = true
+		ref_caption.text = UiText.t("rb_bulletins", "BULLETINS")
+		ref_caption.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		ref_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		caption.add_child(ref_caption)
+		_tabs_row.add_child(caption)
+		_ref_caption = caption
 	for tab: StringName in refs:
-		var id: int = reference_tab_id(tab)
-		var button: Button = Button.new()
-		button.theme_type_variation = &"ToggleTab"
-		button.toggle_mode = true
-		button.button_group = group
-		button.focus_mode = Control.FOCUS_NONE
-		button.text = RulebookReference.tab_title(tab)
-		button.name = "Tab_%s" % tab
+		var text: String = RulebookReference.tab_title(tab)
+		var color: Color = Color.TRANSPARENT
 		if tab == RulebookReference.TAB_WANTED:
-			button.text += " ·%d" % wanted_notices.size()
-			button.add_theme_color_override(&"font_color", DS.STATE_RED)
+			text += " ·%d" % wanted_notices.size()
+			color = DS.STATE_RED
 		elif tab == RulebookReference.TAB_REVOKED:
-			button.text += " ·%d" % revoked_entries.size()
-			button.add_theme_color_override(&"font_color", DS.VOICE_COMMISSION)
+			text += " ·%d" % revoked_entries.size()
+			color = DS.VOICE_COMMISSION
 		elif tab == RulebookReference.TAB_LEDGER:
-			button.text += " ·%d" % ledger_entries.size()
-			button.add_theme_color_override(&"font_color", DS.STATE_GREEN if not ledger_entries.is_empty() else DS.TEXT_SECONDARY)
+			text += " ·%d" % ledger_entries.size()
+			color = DS.STATE_GREEN if not ledger_entries.is_empty() else DS.TEXT_SECONDARY
 		elif tab == RulebookReference.TAB_SUMMONS:
-			button.text += " ·%d" % summons_entries.size()
-			button.add_theme_color_override(&"font_color", DS.STATE_AMBER)
+			text += " ·%d" % summons_entries.size()
+			color = DS.STATE_AMBER
 		elif RulebookReference.is_new(tab, day_number):
-			button.text += " ·" + UiText.t("rb_tab_new", "NEW")
-			button.add_theme_color_override(&"font_color", DS.STATE_AMBER)
-		button.pressed.connect(_show_tab.bind(id))
-		_ref_row.add_child(button)
-		_tab_buttons.append(button)
-		_tab_ids.append(id)
+			text += " ·" + UiText.t("rb_tab_new", "NEW")
+			color = DS.STATE_AMBER
+		var button: Button = _add_tab_button(reference_tab_id(tab), text, color, group)
+		button.name = "Tab_%s" % tab
+
+
+func _add_tab_button(id: int, text: String, color: Color, group: ButtonGroup) -> Button:
+	var button: Button = Button.new()
+	button.theme_type_variation = &"ToggleTab"
+	button.toggle_mode = true
+	button.button_group = group
+	button.focus_mode = Control.FOCUS_NONE
+	button.text = text
+	if color.a > 0.0:
+		button.add_theme_color_override(&"font_color", color)
+		button.set_meta(&"tab_color", color)
+	button.pressed.connect(_show_tab.bind(id))
+	_tabs_row.add_child(button)
+	_tab_buttons.append(button)
+	_tab_ids.append(id)
+	return button
+
+
+## Molette sur la rangée d'onglets : défilement horizontal.
+func _on_tabs_input(event: InputEvent) -> void:
+	var button: InputEventMouseButton = event as InputEventMouseButton
+	if button == null or not button.pressed:
+		return
+	var step: float = 0.0
+	match button.button_index:
+		MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_LEFT:
+			step = -1.0
+		MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_RIGHT:
+			step = 1.0
+	if step == 0.0:
+		return
+	_tabs_scroll.scroll_horizontal += roundi(step * DS.SPACE_16)
+	_tabs_scroll.accept_event()
+
+
+## Onglet courant ramené dans la rangée visible.
+func _reveal_current_tab() -> void:
+	var index: int = _tab_ids.find(current_tab)
+	if index < 0 or not is_inside_tree() or _tabs_scroll == null:
+		return
+	var button: Button = _tab_buttons[index]
+	if not is_instance_valid(button):
+		return
+	# Onglet courant entier ; le bord gauche de la rangée tombe sur le début
+	# d'un onglet (jamais un libellé coupé à gauche).
+	var width: float = _tabs_scroll.size.x
+	var scroll: float = float(_tabs_scroll.scroll_horizontal)
+	var left: float = button.position.x
+	var right: float = left + button.size.x
+	if left < scroll:
+		scroll = left
+	elif right > scroll + width:
+		scroll = right - width
+		for other: Button in _tab_buttons:
+			if is_instance_valid(other) and other.position.x >= scroll - 0.5:
+				scroll = minf(other.position.x, left)
+				break
+	if _ref_caption != null and button.name.begins_with("Tab_") and _tab_buttons.find(button) == _first_reference_index() \
+			and _ref_caption.position.x + width >= right:
+		# Premier bulletin : la légende « BULLETINS » reste visible.
+		scroll = minf(scroll, _ref_caption.position.x)
+	_tabs_scroll.scroll_horizontal = roundi(scroll)
+	_update_nav_hints()
+
+
+func _first_reference_index() -> int:
+	for i: int in _tab_ids.size():
+		if _tab_ids[i] <= TAB_REFERENCE_BASE:
+			return i
+	return -1
+
+
+## Flèches `[` `]` : ambre si un onglet signalé (couleur d'état : nouveautés,
+## avis, convocations…) est caché de ce côté de la rangée.
+func _update_nav_hints() -> void:
+	if _tabs_scroll == null or _prev_button == null:
+		return
+	var view: Rect2 = _tabs_scroll.get_global_rect().grow(1.0)
+	var left: bool = false
+	var right: bool = false
+	for button: Button in _tab_buttons:
+		if not is_instance_valid(button) or not button.has_meta(&"tab_color"):
+			continue
+		var color: Color = button.get_meta(&"tab_color")
+		if color == DS.TEXT_SECONDARY:
+			continue
+		# Caché si plus de la moitié de l'onglet est hors de la rangée.
+		var center: float = button.get_global_rect().get_center().x
+		left = left or center < view.position.x
+		right = right or center > view.end.x
+	_prev_button.modulate = DS.STATE_AMBER if left else Color.WHITE
+	_next_button.modulate = DS.STATE_AMBER if right else Color.WHITE
+
+
+## Menu « n / N ▾ » : tous les onglets, par section, l'onglet courant coché.
+func _fill_tabs_menu() -> void:
+	var popup: PopupMenu = _tabs_menu.get_popup()
+	popup.clear()
+	var in_refs: bool = false
+	popup.add_separator(UiText.t("rb_tab_all", "Règles").to_upper())
+	for i: int in _tab_ids.size():
+		var id: int = _tab_ids[i]
+		if id <= TAB_REFERENCE_BASE and not in_refs:
+			in_refs = true
+			popup.add_separator(UiText.t("rb_bulletins", "BULLETINS"))
+		popup.add_radio_check_item(_tab_buttons[i].text, i)
+		var index: int = popup.get_item_index(i)
+		popup.set_item_checked(index, id == current_tab)
+
+
+func _on_tabs_menu_id(index: int) -> void:
+	if index >= 0 and index < _tab_ids.size():
+		_show_tab(_tab_ids[index])
+
+
+func _update_page(id: int) -> void:
+	var index: int = _tab_ids.find(id)
+	_tabs_menu.text = UiText.tf("rb_tabs_menu", [index + 1, _tab_ids.size()], "%d / %d ▾")
+	_tabs_menu.tooltip_text = UiText.tf("rb_page", [index + 1, _tab_ids.size()], "ONGLET %d / %d")
+	# Après le placement des onglets recréés (une image).
+	if is_inside_tree() and not get_tree().process_frame.is_connected(_reveal_current_tab):
+		get_tree().process_frame.connect(_reveal_current_tab, CONNECT_ONE_SHOT)
 
 
 static func _tab_name(id: int) -> String:
@@ -411,8 +579,7 @@ func _show_tab(id: int) -> void:
 		_reference_view = null
 	if id <= TAB_REFERENCE_BASE:
 		_show_reference(reference_of(id), marks)
-		var ref_index: int = _tab_ids.find(id)
-		_page_label.text = UiText.tf("rb_page", [ref_index + 1, _tab_ids.size()], "ONGLET %d / %d")
+		_update_page(id)
 		return
 	for i: int in entries.size():
 		var entry: RulebookEntry = entries[i]
@@ -444,8 +611,7 @@ func _show_tab(id: int) -> void:
 		_list.add_child(retired)
 		retired.set_inspection_active(inspection_active)
 		cards.append(retired)
-	var index: int = _tab_ids.find(id)
-	_page_label.text = UiText.tf("rb_page", [index + 1, _tab_ids.size()], "ONGLET %d / %d")
+	_update_page(id)
 
 
 func _list_items() -> Array[InspectableItem]:

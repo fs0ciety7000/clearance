@@ -262,15 +262,111 @@ func _draw_art() -> void:
 				_art.draw_line(Vector2(r.position.x + r.size.x * 0.22, y), Vector2(r.end.x - r.size.x * 0.25, y + 2.0),
 						Color(DS.TEXT_SECONDARY, 0.6), 1.0)
 			draw_luciole(_art, r.end - Vector2(r.size.x * 0.26, r.size.y * 0.3), DS.SPACE_3, line)
+		SlippedItem.Kind.FORM:
+			_draw_form(r, line, paper)
+		SlippedItem.Kind.OBJECT:
+			_draw_object(r, line, paper)
+		SlippedItem.Kind.FILE:
+			_draw_file(r, line, paper)
 		_:
-			var card: Rect2 = Rect2(r.position + Vector2(0, r.size.y * 0.15), Vector2(r.size.x, r.size.y * 0.7))
-			_art.draw_rect(card, paper)
-			_art.draw_rect(card, line, false, DS.BORDER_STRONG)
-			_art.draw_rect(Rect2(card.position, Vector2(card.size.x, DS.SPACE_3)), Color(line, 0.3))
-			var font: Font = get_theme_font(&"font", &"DataSmall")
-			var size_px: int = get_theme_font_size(&"font_size", &"CaptionLabel")
-			_art.draw_string(font, card.position + Vector2(DS.SPACE_2, card.size.y * 0.72), "Q6", HORIZONTAL_ALIGNMENT_LEFT, -1,
-					size_px + 6, line)
+			_draw_dock_card(r, line, paper)
+
+
+## Carte de quai (« Q6 ») : seulement pour `DOCK_CARD` (QA-035).
+func _draw_dock_card(r: Rect2, line: Color, paper: Color) -> void:
+	var card: Rect2 = Rect2(r.position + Vector2(0, r.size.y * 0.15), Vector2(r.size.x, r.size.y * 0.7))
+	_art.draw_rect(card, paper)
+	_art.draw_rect(card, line, false, DS.BORDER_STRONG)
+	_art.draw_rect(Rect2(card.position, Vector2(card.size.x, DS.SPACE_3)), Color(line, 0.3))
+	var font: Font = get_theme_font(&"font", &"DataSmall")
+	var size_px: int = get_theme_font_size(&"font_size", &"CaptionLabel")
+	_art.draw_string(font, card.position + Vector2(DS.SPACE_2, card.size.y * 0.72), "Q6", HORIZONTAL_ALIGNMENT_LEFT, -1,
+			size_px + 6, line)
+
+
+## Formulaire (27-B) ou convocation (ENQ) : feuille debout, en-tête, lignes à
+## remplir, cases ; la convocation porte le cachet rond de l'Enquête.
+func _draw_form(r: Rect2, line: Color, paper: Color) -> void:
+	var w: float = r.size.y * 0.78
+	var sheet: Rect2 = Rect2(Vector2(r.get_center().x - w * 0.5, r.position.y), Vector2(w, r.size.y))
+	_art.draw_rect(sheet, paper)
+	_art.draw_rect(sheet, line, false, DS.BORDER_STRONG)
+	_art.draw_rect(Rect2(sheet.position, Vector2(sheet.size.x, DS.SPACE_2)), Color(line, 0.3))
+	var muted: Color = Color(DS.TEXT_SECONDARY, 0.6)
+	for i: int in 4:
+		var y: float = sheet.position.y + sheet.size.y * (0.32 + 0.15 * i)
+		var box: Rect2 = Rect2(Vector2(sheet.position.x + DS.SPACE_1 + 1, y - 3.0), Vector2(5, 5))
+		_art.draw_rect(box, muted, false, 1.0)
+		_art.draw_line(Vector2(box.end.x + DS.SPACE_1, y), Vector2(sheet.end.x - DS.SPACE_2, y), muted, 1.0)
+	if item.label_key == "wb_summons_label":
+		var seal: Vector2 = sheet.end - Vector2(DS.SPACE_2 + 2, DS.SPACE_2 + 2)
+		_art.draw_arc(seal, DS.SPACE_2, 0.0, TAU, 20, line, DS.ICON_STROKE)
+		_art.draw_line(seal + Vector2(-4, 0), seal + Vector2(4, 0), line, 1.0)
+		_art.draw_line(seal + Vector2(0, -4), seal + Vector2(0, 3), line, 1.0)
+
+
+## Objet (écrou, liasse…) : petit colis ficelé, étiquette pendante.
+func _draw_object(r: Rect2, line: Color, paper: Color) -> void:
+	var box: Rect2 = Rect2(r.position + Vector2(r.size.x * 0.14, r.size.y * 0.22), Vector2(r.size.x * 0.56, r.size.y * 0.66))
+	var depth: Vector2 = Vector2(r.size.x * 0.14, -r.size.y * 0.16)
+	var top: PackedVector2Array = [box.position, box.position + depth, Vector2(box.end.x, box.position.y) + depth,
+			Vector2(box.end.x, box.position.y)]
+	var side: PackedVector2Array = [Vector2(box.end.x, box.position.y), Vector2(box.end.x, box.position.y) + depth, box.end + depth,
+			box.end]
+	_art.draw_colored_polygon(top, paper.lerp(DS.TEXT_SECONDARY, 0.1))
+	_art.draw_colored_polygon(side, paper.lerp(DS.BG_VOID, 0.3))
+	_art.draw_rect(box, paper)
+	for poly: PackedVector2Array in [top, side]:
+		var closed: PackedVector2Array = poly.duplicate()
+		closed.append(poly[0])
+		_art.draw_polyline(closed, line, DS.BORDER_HAIRLINE + 0.5)
+	_art.draw_rect(box, line, false, DS.BORDER_STRONG)
+	# Ficelle en croix et étiquette.
+	var string_color: Color = Color(line, 0.6)
+	_art.draw_line(Vector2(box.get_center().x, box.position.y), Vector2(box.get_center().x, box.end.y), string_color, 1.0)
+	_art.draw_line(Vector2(box.position.x, box.get_center().y), Vector2(box.end.x, box.get_center().y), string_color, 1.0)
+	var knot: Vector2 = box.get_center()
+	var tag: Rect2 = Rect2(Vector2(box.end.x + depth.x * 0.3, box.end.y - DS.SPACE_4), Vector2(DS.SPACE_4, DS.SPACE_3))
+	_art.draw_line(knot, tag.position, string_color, 1.0)
+	_art.draw_rect(tag, paper)
+	_art.draw_rect(tag, line, false, 1.0)
+
+
+## Dossier (`FILE`) : chemise à onglet, feuillets qui dépassent ; le registre
+## de Tycho (`wb_registre_label`) est un cahier relié, dos et tranche.
+func _draw_file(r: Rect2, line: Color, paper: Color) -> void:
+	var muted: Color = Color(DS.TEXT_SECONDARY, 0.6)
+	if item.label_key == "wb_registre_label":
+		var book: Rect2 = Rect2(r.position + Vector2(r.size.x * 0.1, r.size.y * 0.06), Vector2(r.size.x * 0.8, r.size.y * 0.88))
+		_art.draw_rect(Rect2(book.position + Vector2(3, 3), book.size), Color(paper, 0.7))
+		_art.draw_rect(Rect2(book.position + Vector2(3, 3), book.size), muted, false, 1.0)
+		_art.draw_rect(book, paper)
+		_art.draw_rect(book, line, false, DS.BORDER_STRONG)
+		var spine: Rect2 = Rect2(book.position, Vector2(DS.SPACE_3, book.size.y))
+		_art.draw_rect(spine, Color(line, 0.35))
+		for i: int in 3:
+			var y: float = book.position.y + book.size.y * (0.2 + 0.3 * i)
+			_art.draw_line(Vector2(spine.position.x, y), Vector2(spine.end.x, y), line, 1.0)
+		var label_rect: Rect2 = Rect2(Vector2(spine.end.x + DS.SPACE_2, book.position.y + book.size.y * 0.3),
+				Vector2(book.end.x - spine.end.x - DS.SPACE_4, book.size.y * 0.24))
+		_art.draw_rect(label_rect, line, false, 1.0)
+		_art.draw_line(label_rect.position + Vector2(DS.SPACE_1, label_rect.size.y * 0.5),
+				Vector2(label_rect.end.x - DS.SPACE_1, label_rect.position.y + label_rect.size.y * 0.5), muted, 1.0)
+		return
+	var back: Rect2 = Rect2(r.position + Vector2(0, r.size.y * 0.12), Vector2(r.size.x, r.size.y * 0.8))
+	var tab: Rect2 = Rect2(back.position - Vector2(0, DS.SPACE_2), Vector2(back.size.x * 0.36, DS.SPACE_2 + 1))
+	_art.draw_rect(tab, paper.lerp(line, 0.18))
+	_art.draw_rect(tab, line, false, 1.0)
+	_art.draw_rect(back, paper.lerp(line, 0.18))
+	_art.draw_rect(back, line, false, 1.0)
+	# Feuillets qui dépassent.
+	_art.draw_rect(Rect2(back.position + Vector2(DS.SPACE_2, DS.SPACE_1), Vector2(back.size.x - DS.SPACE_4, back.size.y * 0.5)),
+			DS.BG_PANEL.lerp(DS.TEXT_SECONDARY, 0.3))
+	var front: Rect2 = Rect2(back.position + Vector2(0, back.size.y * 0.22), Vector2(back.size.x, back.size.y * 0.78))
+	_art.draw_rect(front, paper)
+	_art.draw_rect(front, line, false, DS.BORDER_STRONG)
+	var label_rect: Rect2 = Rect2(front.position + Vector2(front.size.x * 0.3, front.size.y * 0.3), Vector2(front.size.x * 0.4, DS.SPACE_3))
+	_art.draw_rect(label_rect, line, false, 1.0)
 
 
 ## Glyphe « luciole » (code 1, bulletin « Symboles subversifs ») : corps,

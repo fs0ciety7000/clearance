@@ -76,10 +76,9 @@ func _play_simulated_day(profile: SimProfile) -> StringName:
 	var events: Array[EveningEvent] = Campaign.prepare_events(data)
 	var lines: Array[ExpenseLine] = Campaign.prepare_evening(data, events)
 	var choices: Dictionary[StringName, StringName] = Campaign.default_choices(events, lines)
-	for event: EveningEvent in events:
-		var wanted: StringName = profile.choices.get(event.id, &"")
-		if event.get_option(wanted) != null:
-			choices[event.id] = wanted
+	var wanted: Dictionary[StringName, StringName] = profile.choices_for(events)
+	for event_id: StringName in wanted:
+		choices[event_id] = wanted[event_id]
 	var report: EveningReport = Campaign.preview_evening(data, lines, events, choices)
 	return Campaign.close_evening(data, summary, report, 0, DIR)
 
