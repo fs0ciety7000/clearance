@@ -6,6 +6,9 @@
 ## ambre (`Palette`), voile ≥ 85 % derrière le texte (DS §5 règle 5).
 ## Piloté par `ComparisonUI` (`set_events(plans, processed)`), qui écoute
 ## `station_event_started` / `station_event_ended` et compte les passagers.
+## Garde de nuit (D-138, QA-062) : toute fenêtre se compte en **passagers**,
+## même celle d'un événement horaire de campagne (EV-08 « 13:00–14:00 ») :
+## titre sans plage horaire, « 5 PASSAGERS », ligne de Rulebook en passagers.
 class_name StationEventBanner
 extends PanelContainer
 
@@ -58,19 +61,26 @@ static func icon_for(plan: StationEventPlan) -> UiIcon.Kind:
 	return ICONS.get(plan.event.key, UiIcon.Kind.WARNING)
 
 
-## Titre du bandeau (`sev_<key>_title`).
+## Passagers restants dans la fenêtre (−1 : sans borne ; en Garde, toujours
+## un nombre — `StationEventPlan.remaining`, D-138).
+static func passengers_left(plan: StationEventPlan, p_processed: int) -> int:
+	return plan.remaining(p_processed) if plan != null else -1
+
+
+## Titre du bandeau (`StationEventPlan.title_key` : `sev_<key>_title`, en Garde
+## `garde_title_key` s'il existe — EV-08 sans plage horaire).
 static func title_for(plan: StationEventPlan) -> String:
 	if plan == null or plan.event == null:
 		return ""
-	var key: String = plan.event.title_key if not plan.event.title_key.is_empty() else "sev_%s_title" % plan.event.key
-	return UiText.t(key, String(plan.event.key).to_upper())
+	return UiText.t(plan.title_key(), String(plan.event.key).to_upper())
 
 
-## Durée restante : passagers, heure de fin ou fin du shift.
+## Durée restante : passagers, heure de fin ou fin du shift (fenêtre effective
+## `StationEventPlan.window_kind` : en Garde, toujours en passagers).
 static func remaining_text(plan: StationEventPlan, p_processed: int) -> String:
 	if plan == null or plan.event == null:
 		return ""
-	match plan.event.window_kind:
+	match plan.window_kind():
 		StationEventDef.WindowKind.CLOCK:
 			if plan.clock_to >= 0:
 				return UiText.tf("sev_ui_until", [UiText.clock(plan.clock_to)], "JUSQU'À %s")
@@ -82,12 +92,13 @@ static func remaining_text(plan: StationEventPlan, p_processed: int) -> String:
 	return UiText.plural("sev_ui_remaining", left, "%d PASSAGER", "%d PASSAGERS")
 
 
-## Ligne ambre du Rulebook (`sev_<key>_rb`), `%d` = passagers restants ; vide
-## si l'événement n'en a pas.
+## Ligne ambre du Rulebook (`StationEventPlan.rulebook_key` : `sev_<key>_rb`,
+## en Garde `garde_rulebook_key` s'il existe), `%d` = passagers restants ;
+## vide si l'événement n'en a pas.
 static func rulebook_line(plan: StationEventPlan, p_processed: int) -> String:
-	if plan == null or plan.event == null or plan.event.rulebook_key.is_empty():
+	if plan == null or plan.event == null or plan.rulebook_key().is_empty():
 		return ""
-	var text: String = UiText.t(plan.event.rulebook_key, "")
+	var text: String = UiText.t(plan.rulebook_key(), "")
 	if not text.contains("%d"):
 		return text
 	var left: int = plan.remaining(p_processed)

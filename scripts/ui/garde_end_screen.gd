@@ -160,16 +160,66 @@ static func error_row(error: Dictionary, titles: Dictionary = {}) -> Control:
 	if not who.is_empty():
 		head.add_child(ScreenBase.label(who, &"DataSmall", Palette.TEXT_SECONDARY))
 	head.add_child(ScreenBase.spacer())
-	head.add_child(ScreenBase.label(UiText.tf("garde_end_verdicts", [verdict_text(str(error.get("verdict", ""))),
-			verdict_text(str(error.get("expected", "")))], "%s → %s"), &"DataSmall", DS.TEXT_PRIMARY))
+	var verdicts: Label = ScreenBase.label(verdict_line(error), &"DataSmall", DS.TEXT_PRIMARY)
+	verdicts.name = "Verdicts"
+	head.add_child(verdicts)
 	var citation: String = str(error.get("citation", ""))
-	box.add_child(ScreenBase.wrapped(UiText.t(citation, citation), &"BodyStrong", DS.TEXT_PRIMARY))
+	var nature: Label = ScreenBase.wrapped(UiText.t(citation, citation), &"BodyStrong", DS.TEXT_PRIMARY)
+	nature.name = "Nature"
+	box.add_child(nature)
+	var detail: String = error_detail(error)
+	if not detail.is_empty():
+		var detail_label: Label = ScreenBase.wrapped(detail, &"BodySmall", Palette.TEXT_SECONDARY)
+		detail_label.name = "Detail"
+		box.add_child(detail_label)
 	var rule_id: String = str(error.get("rule_id", ""))
 	if not rule_id.is_empty():
 		var title_key: String = str(titles.get(rule_id, ""))
 		box.add_child(ScreenBase.wrapped(UiText.tf("garde_end_rule", [UiText.t(title_key, rule_id) if not title_key.is_empty() else rule_id],
 				"Règle en cause : %s"), &"BodySmall"))
 	return card
+
+
+## Vrai pour une erreur de procédure (QA-054) : le verdict rendu est le bon,
+## la faute est ailleurs (visage non contrôlé, interrogatoire omis, refus non
+## motivé, détention sans discordance documentée).
+static func is_procedure_error(error: Dictionary) -> bool:
+	var verdict: String = str(error.get("verdict", ""))
+	return not verdict.is_empty() and verdict == str(error.get("expected", ""))
+
+
+## « REFUSÉ → APPROUVÉ » ; erreur de procédure : « APPROUVÉ · ERREUR DE
+## PROCÉDURE » (jamais « APPROUVÉ → APPROUVÉ », QA-054).
+static func verdict_line(error: Dictionary) -> String:
+	var verdict: String = verdict_text(str(error.get("verdict", "")))
+	if is_procedure_error(error):
+		return UiText.tf("garde_end_procedure", [verdict], "%s · ERREUR DE PROCÉDURE")
+	return UiText.tf("garde_end_verdicts", [verdict, verdict_text(str(error.get("expected", "")))], "%s → %s")
+
+
+## Ce que la faute veut dire : description de la citation (`<clé>_desc`,
+## « Approbation d'un passager dont le visage restait masqué. ») pour une
+## erreur de procédure, puis les motifs des violations manquées
+## (`violations[].reason_key`, « En cause : … ») quand ils ont un texte.
+static func error_detail(error: Dictionary) -> String:
+	var parts: PackedStringArray = []
+	var citation: String = str(error.get("citation", ""))
+	if is_procedure_error(error) and not citation.is_empty() and UiText.has(citation + "_desc"):
+		parts.append(UiText.t(citation + "_desc"))
+	var reasons: PackedStringArray = []
+	var violations: Array = error.get("violations", []) if error.get("violations") is Array else []
+	for value: Variant in violations:
+		if not value is Dictionary:
+			continue
+		var key: String = str((value as Dictionary).get("reason_key", ""))
+		if key.is_empty() or not UiText.has(key):
+			continue
+		var text: String = UiText.t(key)
+		if not reasons.has(text):
+			reasons.append(text)
+	if not reasons.is_empty():
+		parts.append(UiText.tf("garde_end_cause", [" · ".join(reasons)], "En cause : %s"))
+	return " ".join(parts)
 
 
 ## « APPROUVÉ », « REFUSÉ », « DÉTENTION » (noms de `SlippedItem.VERDICT_NAMES`).

@@ -10,7 +10,10 @@
 ##   AFFICHER, Entrée, clic), réplique Tessar de la figure si approuvée, puis
 ##   « RETOUR AU TITRE » (`finished(&"title")`).
 ## Texte large et lisible (colonne ≤ `COLUMN_WIDTH`, `TitleLabel`), défilant au
-## texte 1,5 ; jamais la couleur seule (icône du monde + texte).
+## texte 1,5 (QA-058) : les lignes occupent toute la hauteur libre, défilent au
+## stick droit (Pg↑ / Pg↓, molette) et à la croix ↑ ↓ depuis les boutons, et
+## un repère « suite » (glyphe + texte) dit qu'il reste du texte plus bas ;
+## jamais la couleur seule (icône du monde + texte).
 class_name EpilogueScreen
 extends ScreenBase
 
@@ -34,8 +37,15 @@ var line_labels: Array[Label] = []
 var revealed: int = 0
 var _farewell: Control = null
 var _scroll: ScrollContainer = null
+## Repère « suite » sous les lignes (visible tant qu'il reste du texte plus bas).
+var more_hint: Control = null
 var _reveal_left: float = 0.0
 var _done: bool = false
+
+
+func _ready() -> void:
+	super._ready()
+	focus_guard.scroll_target = func() -> ScrollContainer: return _scroll
 
 
 func setup_intro(epi: Dictionary) -> void:
@@ -145,13 +155,14 @@ func _build_conclusion() -> void:
 	var tint: Color = world_color(world)
 	var page: VBoxContainer = ScreenBase.vbox(DS.SPACE_4)
 	root_box().add_child(page)
-	var center: CenterContainer = CenterContainer.new()
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	page.add_child(center)
+	# QA-058 : la colonne prend toute la hauteur libre (pas de CenterContainer,
+	# qui la réduisait à sa hauteur minimale et tronquait les lignes).
 	var column: VBoxContainer = ScreenBase.vbox(DS.SPACE_4)
+	column.name = "Column"
 	column.custom_minimum_size.x = COLUMN_WIDTH
-	center.add_child(column)
+	column.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page.add_child(column)
 	_head(column, tint, str(card.get("eyebrow_key", "epi_eyebrow_%s" % world)))
 	var title: Label = ScreenBase.label(UiText.t(str(card.get("title_key", "epi_title")), "UN AN PLUS TARD"), &"DisplayLabel", DS.TEXT_PRIMARY)
 	title.name = "EpilogueTitle"
@@ -173,9 +184,9 @@ func _build_conclusion() -> void:
 	_scroll = ScrollContainer.new()
 	_scroll.name = "Lines"
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_scroll.follow_focus = true
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_scroll.custom_minimum_size.y = 360.0
 	column.add_child(_scroll)
 	var lines_box: VBoxContainer = ScreenBase.vbox(DS.SPACE_5)
 	lines_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -202,6 +213,11 @@ func _build_conclusion() -> void:
 		farewell.modulate.a = 0.0
 		lines_box.add_child(farewell)
 		_farewell = farewell
+	more_hint = _more_hint()
+	column.add_child(more_hint)
+	_scroll.get_v_scroll_bar().changed.connect(update_more_hint)
+	_scroll.get_v_scroll_bar().value_changed.connect(func(_value: float) -> void: update_more_hint())
+	_scroll.resized.connect(update_more_hint)
 	page.add_child(ScreenBase.rule_line())
 	var foot: HBoxContainer = ScreenBase.hbox(DS.SPACE_4)
 	page.add_child(foot)
@@ -220,6 +236,52 @@ func _build_conclusion() -> void:
 	foot.add_child(continue_button)
 	_start_reveal()
 	(skip_button if not _done else continue_button).grab_focus.call_deferred()
+
+
+## « SUITE · défiler » : glyphe du stick droit + texte, centré sous les lignes.
+func _more_hint() -> Control:
+	var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
+	row.name = "MoreHint"
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(PromptGlyph.make(&"scroll_down"))
+	var label_node: Label = ScreenBase.label(UiText.t("epi_scroll_more", "SUITE · défiler"), &"CaptionLabel", Palette.TEXT_SECONDARY)
+	label_node.name = "MoreLabel"
+	row.add_child(label_node)
+	row.modulate.a = 0.0
+	return row
+
+
+## Zone défilante des lignes de conclusion (null sur la carte d'ouverture).
+func lines_scroll() -> ScrollContainer:
+	return _scroll
+
+
+## Vrai s'il reste du texte sous la zone visible des lignes.
+func has_more_below() -> bool:
+	if _scroll == null:
+		return false
+	var bar: VScrollBar = _scroll.get_v_scroll_bar()
+	return bar.max_value - bar.page > 1.0 and bar.value < bar.max_value - bar.page - 1.0
+
+
+## Le repère garde sa place (pas de saut de mise en page) : seule son opacité change.
+func update_more_hint() -> void:
+	if more_hint != null:
+		more_hint.modulate.a = 1.0 if has_more_below() else 0.0
+
+
+## Croix / flèches ↑ ↓ depuis les boutons du pied : défile les lignes d'une
+## demi-page (rien d'autre n'est focalisable au-dessus). Vrai si consommé.
+func scroll_lines(direction: int) -> bool:
+	if _scroll == null:
+		return false
+	var bar: VScrollBar = _scroll.get_v_scroll_bar()
+	if bar.max_value - bar.page <= 1.0:
+		return false
+	var before: int = _scroll.scroll_vertical
+	_scroll.scroll_vertical = before + direction * roundi(maxf(_scroll.size.y * 0.5, 1.0))
+	return _scroll.scroll_vertical != before
 
 
 func _start_reveal() -> void:
@@ -290,6 +352,12 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _input(event: InputEvent) -> void:
 	if is_closing() or not is_visible_in_tree():
+		return
+	if mode == Mode.CONCLUSION and (event.is_action_pressed(&"ui_up", false, true) or event.is_action_pressed(&"ui_down", false, true)):
+		var focused: Control = get_viewport().gui_get_focus_owner()
+		if focused != null and (focused == continue_button or focused == skip_button) \
+				and scroll_lines(-1 if event.is_action_pressed(&"ui_up", false, true) else 1):
+			get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed(&"cancel", false, true) or event.is_action_pressed(&"ui_cancel", false, true):
 		# Ⓑ : conclusion — tout afficher d'abord, puis retour au titre ; carte

@@ -236,13 +236,15 @@ func _arrange_views() -> void:
 			view.position = target
 			view.scale = Vector2(fit_scale, fit_scale)
 			view.modulate.a = 0.0
-			create_tween().tween_property(view, "modulate:a", 1.0, DS.DUR_FAST).set_delay(DS.DOC_STAGGER * i * 0.5)
+			view.create_tween().tween_property(view, "modulate:a", 1.0, DS.DUR_FAST).set_delay(DS.DOC_STAGGER * i * 0.5)
 			continue
 		view.position = slot - Vector2(view.size.x * 0.5, view.size.y * 0.3)
 		view.scale = Vector2(0.9, 0.06) * fit_scale
 		view.pivot_offset = Vector2(view.size.x * 0.5, 0.0)
 		view.modulate.a = 0.0
-		var tween: Tween = create_tween().set_parallel(true)
+		# QA-061 : tween porté par le document (il meurt avec lui si le verdict
+		# tombe avant la fin de l'arrivée : plus de `_reset_pivot` sur un objet libéré).
+		var tween: Tween = view.create_tween().set_parallel(true)
 		_arrivals.append(tween)
 		var delay: float = DS.DOC_STAGGER * i
 		tween.tween_property(view, "modulate:a", 1.0, DS.DUR_FAST).set_delay(delay)
@@ -530,9 +532,18 @@ func _undock(view: DocumentView) -> void:
 	view.set_meta(META_PILE, -1)
 
 
-func _reset_pivot(view: DocumentView) -> void:
-	if is_instance_valid(view):
-		view.pivot_offset = Vector2.ZERO
+func _reset_pivot(view: Object) -> void:
+	var control: Control = view as Control if is_instance_valid(view) else null
+	if control != null:
+		control.pivot_offset = Vector2.ZERO
+
+
+## QA-061 : arrête les arrivées en cours (documents retirés avant la fin).
+func _kill_arrivals() -> void:
+	for tween: Tween in _arrivals:
+		if tween != null and tween.is_valid():
+			tween.kill()
+	_arrivals.clear()
 
 
 ## M7 : pose un objet glissé (enveloppe, mot…) : il glisse par la fente
@@ -633,6 +644,7 @@ func clear(animated: bool = true) -> void:
 		layout_done.emit()
 	_hide_stamp()
 	hide_banner()
+	_kill_arrivals()
 	for item_view: SlippedItemView in items:
 		if not is_instance_valid(item_view):
 			continue

@@ -7,10 +7,15 @@
 ## Défilement : actions `scroll_up` / `scroll_down` (stick droit, Pg↑ / Pg↓)
 ## sur le `ScrollContainer` qui contient le focus, sinon `scroll_target`,
 ## sinon le premier défilable visible de l'écran.
+## Boîtes modales (QA-057) : tant qu'une boîte du groupe `MODAL_GROUP`
+## (`ConfirmDialog`) est ouverte hors de l'écran gardé, le garde se tait — il
+## ne ramène pas le focus derrière le voile.
 ## Enfant de l'écran qu'il garde (`ScreenBase`, `ComparisonUI`).
 class_name FocusGuard
 extends Node
 
+## Groupe des boîtes modales ouvertes (`ConfirmDialog`).
+const MODAL_GROUP: StringName = &"ui_modal"
 const DIRECTIONS: Array[StringName] = [&"ui_up", &"ui_down", &"ui_left", &"ui_right", &"ui_focus_next", &"ui_focus_prev"]
 
 ## Racine gardée : seuls ses descendants comptent comme « focus dans l'écran ».
@@ -80,10 +85,43 @@ func _input(event: InputEvent) -> void:
 		if event.is_action_pressed(action, false, true):
 			direction = true
 			break
-	if not direction or has_focus_inside():
+	if not direction or has_focus_inside() or modal_over(root):
 		return
 	if focus_default():
 		get_viewport().set_input_as_handled()
+
+
+## Vrai si une boîte modale visible (`MODAL_GROUP`) recouvre `node` : une
+## boîte qui n'est ni `node`, ni l'un de ses descendants, ni l'un de ses
+## ancêtres (QA-057 : la croix et Ⓐ restent dans la boîte).
+static func modal_over(node: Node) -> bool:
+	if node == null or not node.is_inside_tree():
+		return false
+	for modal: Node in node.get_tree().get_nodes_in_group(MODAL_GROUP):
+		var control: Control = modal as Control
+		if control == null or control.is_queued_for_deletion() or not control.is_visible_in_tree():
+			continue
+		if control == node or node.is_ancestor_of(control) or control.is_ancestor_of(node):
+			continue
+		return true
+	return false
+
+
+## Rend le focus à la boîte modale ouverte (dernière ouverte) : son premier
+## contrôle focalisable (ANNULER d'une `ConfirmDialog`). Faux si aucune.
+static func focus_modal(tree: SceneTree) -> bool:
+	if tree == null:
+		return false
+	var modals: Array[Node] = tree.get_nodes_in_group(MODAL_GROUP)
+	for i: int in range(modals.size() - 1, -1, -1):
+		var control: Control = modals[i] as Control
+		if control == null or control.is_queued_for_deletion() or not control.is_visible_in_tree():
+			continue
+		var target: Control = first_focusable(control)
+		if target != null:
+			target.grab_focus()
+			return true
+	return false
 
 
 ## Vrai si un contrôle visible de l'écran a le focus.

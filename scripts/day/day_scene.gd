@@ -71,8 +71,9 @@
 ##   `ComparisonUI` (`rule_context_provider`).
 ## Captures : `--garde[=CODE]`, `--epilogue=<fin>` (+ `--flags`),
 ## `--skip-cases=N` (N passagers jugés juste d'un coup), `--wrong-cases=N`
-## (les N derniers jugés faux), `--station-event=<clé>` (bandeau seul, sans
-## effet de règle).
+## (les N derniers jugés faux), `--undocumented-denials` (refus justes sans
+## discordance épinglée : erreurs de procédure), `--station-event=<clé>`
+## (bandeau seul, sans effet de règle).
 class_name DayScene
 extends Control
 
@@ -92,10 +93,6 @@ static var pending_garde_run: GardeRun = null
 ## Tests (GUT) : guichet sans 3D (`NullBooth`), comme `--no-booth` — pour
 ## enchaîner des passagers plus vite que les marches du booth.
 static var force_null_booth: bool = false
-## Arguments de capture M12 (`--garde`, `--epilogue`, `--skip-cases`…) : une
-## seule fois par processus, comme les `DebugArgs.ONE_SHOT` (QA-017).
-const M12_ONE_SHOT: PackedStringArray = ["garde", "epilogue", "skip-cases", "wrong-cases", "station-event", "call-next"]
-static var _m12_args_used: bool = false
 
 ## Grève du J20 : extinction des lumières, voile sur le guichet, fondu final.
 const LIGHTS_OUT_SEC: float = DS.DUR_DRAMATIC * 4.0
@@ -144,11 +141,7 @@ var epilogue_card: Dictionary = {}
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(DS.BG_VOID)
-	_args = DebugArgs.for_scene()
-	if _m12_args_used:
-		for key: String in M12_ONE_SHOT:
-			_args.erase(key)
-	_m12_args_used = true
+	_args = DebugArgs.for_scene() # `--garde`, `--epilogue`… : `DebugArgs.ONE_SHOT`
 	debug_keys = _args.has("debug-keys")
 	if _args.has("no-booth") or force_null_booth:
 		_replace_booth_with_null()
@@ -654,6 +647,10 @@ func request_end_garde() -> ConfirmDialog:
 			UiText.tf("garde_end_confirm_body", [score], "Le score de %d est enregistré. Le passager au guichet est jugé d'abord."),
 			UiText.t("garde_end_button", "TERMINER LA GARDE"))
 	end_garde_dialog.name = "EndGardeDialog"
+	# Hors de `ComparisonUI` : même thème (texte à l'échelle, cartes Holo).
+	var themed: Control = ui as Control
+	if themed != null and themed.theme != null:
+		end_garde_dialog.theme = themed.theme
 	end_garde_dialog.confirmed.connect(func() -> void:
 		end_garde_dialog = null
 		day_controller.request_end_garde()
@@ -1001,8 +998,14 @@ func _skip_cases(count: int, wrong: int) -> void:
 		if i >= count - wrong:
 			kind = VerdictKind.Kind.DENY if expected == VerdictKind.Kind.APPROVE else VerdictKind.Kind.APPROVE
 		# Verdict documenté (discordances épinglées, question posée) : jugé juste.
+		# `--undocumented-denials` (captures QA-054) : refus justes sans
+		# discordance épinglée — erreurs de procédure « refus non motivé ».
 		var verdict: Verdict = Verdict.new(case.case_id, kind)
-		for violation: Violation in day_controller.current_key.expected_violations:
+		var undocumented: bool = _args.has("undocumented-denials") and kind == VerdictKind.Kind.DENY and kind == expected
+		var pins: Array[Violation] = []
+		if not undocumented:
+			pins = day_controller.current_key.expected_violations
+		for violation: Violation in pins:
 			if not violation.refs.is_empty():
 				var pinned: Discrepancy = Discrepancy.new(violation.refs[0], violation.refs[violation.refs.size() - 1])
 				pinned.confirmed = true
@@ -1022,7 +1025,8 @@ func _show_station_event(key: StringName) -> void:
 		return
 	for event: StationEventDef in events.events:
 		if event != null and (event.key == key or event.id == key):
-			var plan: StationEventPlan = StationEventService.garde_plan(event, 0)
+			var processed: int = day_controller.summary.results.size() if day_controller.summary != null else 0
+			var plan: StationEventPlan = StationEventService.garde_plan(event, processed)
 			plan.state = StationEventPlan.State.ACTIVE
 			EventBus.hall_announced.emit(plan.announce_key())
 			EventBus.station_event_started.emit(plan)

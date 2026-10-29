@@ -180,6 +180,32 @@ func _free_card() -> Control:
 	return card
 
 
+## Clé du message d'erreur d'un code refusé (QA-055) : la raison renvoyée par
+## `GardeService.normalize_code` (`error_key` : caractère interdit, caractère
+## hors alphabet, date `NUIT-…` impossible) ; l'erreur de longueur
+## (`ERROR_BAD_LENGTH`, clé de l'intitulé du champ) devient `garde_seed_length`.
+static func seed_error_key(service_key: String) -> String:
+	if service_key.is_empty() or service_key == GardeService.ERROR_BAD_LENGTH:
+		return "garde_seed_length"
+	return service_key
+
+
+## Texte d'une clé de `seed_error_key` (repli : la clé de longueur).
+static func seed_error_text(key: String) -> String:
+	match key:
+		GardeService.ERROR_INVALID_CHARS:
+			return UiText.t(key, "Les codes n'utilisent ni O, ni I, ni 0, ni 1.")
+		GardeService.ERROR_BAD_DATE:
+			return UiText.t(key, "Date invalide : NUIT-AAAA-MM-JJ, une vraie date du calendrier.")
+		GardeService.ERROR_BAD_CHAR:
+			return UiText.t(key, "Caractère non admis : lettres A–Z et chiffres 2–9 seulement.")
+		"garde_seed_length":
+			return UiText.t(key, "Il faut 6 caractères (le tiret ne compte pas).")
+	if UiText.has(key):
+		return UiText.t(key)
+	return UiText.t("garde_seed_length", "Il faut 6 caractères (le tiret ne compte pas).")
+
+
 ## Validation en direct de la saisie : code canonique (`free_code`), message
 ## (aide, erreur `garde_seed_invalid` / longueur, ou code reconnu) et état de
 ## « JOUER CE CODE ».
@@ -195,15 +221,14 @@ func _validate(text: String) -> void:
 		color = Palette.STATE_GREEN
 		message = UiText.tf("garde_seed_ok", [free_code], "Code reconnu : %s")
 	elif not raw.is_empty():
-		var key: String = str(result.get("error_key", ""))
-		if key == GardeService.ERROR_INVALID_CHARS:
-			kind = UiIcon.Kind.DENIED
-			color = Palette.STATE_RED
-			message = UiText.t("garde_seed_invalid", "Les codes n'utilisent ni O, ni I, ni 0, ni 1.")
-		else:
+		var key: String = seed_error_key(str(result.get("error_key", "")))
+		if key == "garde_seed_length":
 			kind = UiIcon.Kind.WARNING
 			color = Palette.STATE_AMBER
-			message = UiText.t("garde_seed_length", "Il faut 6 caractères (le tiret ne compte pas).")
+		else:
+			kind = UiIcon.Kind.DENIED
+			color = Palette.STATE_RED
+		message = seed_error_text(key)
 	if _status_icon != null:
 		_status_icon.kind = kind
 		_status_icon.color = color

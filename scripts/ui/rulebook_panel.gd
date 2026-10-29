@@ -80,6 +80,11 @@ var event_notes: PackedStringArray = []
 var _event_box: VBoxContainer = null
 ## Règle à surligner à sa prochaine apparition (`focus_rule` différé).
 var _pending_focus: StringName = &""
+## QA-061 : règle à amener à l'écran après la mise en page (dernière demande).
+var _scroll_rule: StringName = &""
+## Dernière règle surlignée par `focus_rule` et nombre de surlignages (tests, QA).
+var last_focused_rule: StringName = &""
+var focus_count: int = 0
 var portrait_provider: Callable = Callable()
 ## Marques des cartes masquées par l'onglet courant (clé `FieldRef.key()`).
 var _kept_marks: Dictionary[String, Array] = {}
@@ -332,10 +337,36 @@ func focus_rule(rule_id: StringName, after_change: bool = false) -> bool:
 	if card == null or after_change:
 		_pending_focus = rule_id
 		return false
-	if is_inside_tree():
-		_scroll.ensure_control_visible.call_deferred(card)
+	scroll_to_rule(rule_id)
 	card.highlight(reduce_motion)
+	last_focused_rule = rule_id
+	focus_count += 1
 	return true
+
+
+## QA-061 : amène la carte de `rule_id` à l'écran **après** la mise en page
+## (frame suivante) et en la recherchant à ce moment-là : la liste a pu être
+## reconstruite entre-temps (`apply_rules`, `_show_tab`) et la carte d'origine
+## libérée — `ensure_control_visible` différé sur elle échouait (« Must be an
+## ancestor of the control ») et la règle NOUVEAU restait hors de l'écran.
+func scroll_to_rule(rule_id: StringName) -> void:
+	_scroll_rule = rule_id
+	if not is_inside_tree():
+		return
+	var tree: SceneTree = get_tree()
+	if not tree.process_frame.is_connected(_scroll_to_pending_rule):
+		tree.process_frame.connect(_scroll_to_pending_rule, CONNECT_ONE_SHOT)
+
+
+func _scroll_to_pending_rule() -> void:
+	var rule_id: StringName = _scroll_rule
+	_scroll_rule = &""
+	if rule_id == &"" or not is_inside_tree():
+		return
+	var card: RuleCardView = get_rule_card(rule_id)
+	if card == null or not is_instance_valid(card) or card.is_queued_for_deletion() or not _scroll.is_ancestor_of(card):
+		return
+	_scroll.ensure_control_visible(card)
 
 
 ## M12 (B58) : lignes ambre des événements en cours, en tête du Rulebook

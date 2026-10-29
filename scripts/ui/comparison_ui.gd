@@ -2071,6 +2071,16 @@ func _process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion or not is_visible_in_tree():
 		return
+	if FocusGuard.modal_over(self):
+		# QA-057 : boîte modale ouverte (« Terminer la garde ») : ni Ⓐ
+		# (SUIVANT), ni tampons, ni raccourcis du guichet ; la boîte décide.
+		# Si le focus est resté derrière le voile, il y retourne et l'appui
+		# (Ⓐ, croix…) est consommé.
+		var owner_control: Control = get_viewport().gui_get_focus_owner()
+		if event.is_pressed() and not event is InputEventMouse and owner_control != null and is_ancestor_of(owner_control):
+			if FocusGuard.focus_modal(get_tree()):
+				_handled()
+		return
 	if event.is_action_pressed(&"inspect_toggle", false, true):
 		toggle_inspection()
 		_handled()

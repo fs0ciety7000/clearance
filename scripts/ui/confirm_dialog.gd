@@ -4,7 +4,9 @@
 ## jamais vers ce qui est derrière le voile ; Échap / Ⓑ (`cancel`,
 ## `ui_cancel`) annule. Fonctionne pendant la pause (menu pause).
 ## Utilisée par « Nouvelle partie » (écrasement), « Charger » (reprise d'un
-## jour passé) et Pause > Options (passage Récit → Dur).
+## jour passé), Pause > Options (passage Récit → Dur) et « Terminer la garde »
+## (barre du guichet, QA-057). Membre de `FocusGuard.MODAL_GROUP` : le
+## `FocusGuard` et les commandes du guichet se taisent tant qu'elle est ouverte.
 class_name ConfirmDialog
 extends Control
 
@@ -32,6 +34,7 @@ func _init() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	add_to_group(FocusGuard.MODAL_GROUP)
 
 
 func _ready() -> void:
@@ -91,6 +94,7 @@ func accept() -> void:
 	if _done:
 		return
 	_done = true
+	remove_from_group(FocusGuard.MODAL_GROUP)
 	confirmed.emit()
 	queue_free()
 
@@ -99,6 +103,7 @@ func cancel() -> void:
 	if _done:
 		return
 	_done = true
+	remove_from_group(FocusGuard.MODAL_GROUP)
 	cancelled.emit()
 	queue_free()
 

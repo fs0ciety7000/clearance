@@ -232,7 +232,8 @@ static func is_pause_event(event: InputEvent) -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if is_open or not enabled:
+	if is_open or not enabled or FocusGuard.modal_over(self):
+		# QA-057 : pas de pause par-dessus une boîte modale ouverte (elle se ferme d'abord).
 		return
 	if is_pause_event(event):
 		open()
