@@ -1,0 +1,22 @@
+{
+	"act": 3.0,
+	"campaign_seed": 11.0,
+	"credits": 176.0,
+	"current_day": 30.0,
+	"difficulty": "hard",
+	"ending_id": "f9_strike",
+	"game_version": "0.11.0",
+	"household_summary": {
+		"absent": 1.0,
+		"alive": 3.0,
+		"sick": 0.0,
+		"total": 3.0
+	},
+	"play_time_sec": 153.0,
+	"portrait_seed": 0.0,
+	"save_serial": 6.0,
+	"saved_at": "2026-10-29T18:55:42",
+	"saved_unix_ms": 1793300142332.0,
+	"status": "ended",
+	"version": 6.0
+}
