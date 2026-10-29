@@ -32,6 +32,8 @@ var case_memory: Dictionary = {}
 
 const DIFFICULTY_HARD: StringName = &"hard"
 const DIFFICULTY_STORY: StringName = &"story"
+## Entiers exacts en JSON (flottants double précision) : 53 bits.
+const JSON_SAFE_MASK: int = 0x1FFFFFFFFFFFFF
 ## M11 : emplacement de la partie en cours (1..`SaveService.SLOT_COUNT`).
 var active_slot: int = SaveService.DEFAULT_SLOT
 ## M11 (D-102) : `&"hard"` (défaut) ou `&"story"` (mode Récit : pas de fin de
@@ -54,7 +56,9 @@ func new_campaign(p_seed: int = 0, slot: int = SaveService.DEFAULT_SLOT,
 	if p_seed == 0:
 		var entropy: RandomNumberGenerator = RandomNumberGenerator.new()
 		entropy.randomize()
-		p_seed = SeededRng.mix(entropy.randi(), entropy.randi())
+		# 53 bits : exact à travers JSON (nombres flottants), sinon la graine
+		# relue (méta, Continuer) diffère de celle en mémoire.
+		p_seed = maxi(SeededRng.mix(entropy.randi(), entropy.randi()) & JSON_SAFE_MASK, 1)
 	campaign_seed = p_seed
 	current_day = 1
 	credits = 0
@@ -79,14 +83,20 @@ func is_story_mode() -> bool:
 
 ## Change la difficulté en cours de partie : Récit → Dur seulement (D-102).
 ## Renvoie vrai si la difficulté demandée est en vigueur. Émet
-## `difficulty_changed` (le `DayController` en cours remet l'horloge).
-func set_difficulty(value: StringName) -> bool:
+## `difficulty_changed` (le `DayController` en cours remet l'horloge). QA-046 :
+## le choix est inscrit **tout de suite** dans l'emplacement actif s'il
+## contient cette campagne (`SaveService.persist_difficulty` : `current.json`
+## et `meta.json`, sans instantané) — quitter avant la soirée ne l'annule pas.
+func set_difficulty(value: StringName, dir: String = SaveService.DEFAULT_DIR) -> bool:
 	if value == difficulty:
 		return true
 	if value != DIFFICULTY_HARD:
 		return false
 	difficulty = DIFFICULTY_HARD
 	EventBus.difficulty_changed.emit(difficulty)
+	if SaveService.has_save(active_slot, dir) \
+			and SaveService.persist_difficulty(active_slot, String(difficulty), campaign_seed, dir) == OK:
+		EventBus.save_slots_changed.emit()
 	return true
 
 
@@ -289,12 +299,18 @@ func end_campaign(ending: StringName, slot: int = SaveService.NO_SLOT, dir: Stri
 	if ending_id.is_empty() or not SaveService.has_save(target, dir):
 		return
 	var meta: Dictionary = SaveService.load_meta(target, dir)
-	if SaveService.as_int(meta.get("campaign_seed", 0)) != campaign_seed:
+	if not same_seed(SaveService.as_int(meta.get("campaign_seed", 0)), campaign_seed):
 		return
 	if str(meta.get("status", "")) == SaveService.STATUS_ENDED and str(meta.get("ending_id", "")) == ending_id:
 		return
 	if SaveService.mark_ended(target, ending_id, dir) == OK:
 		EventBus.save_slots_changed.emit()
+
+
+## Graines égales à la précision de JSON près (une graine 64 bits d'avant
+## M11 relue depuis un fichier est arrondie à 53 bits).
+static func same_seed(a: int, b: int) -> bool:
+	return a == b or SaveService.as_int(float(a)) == SaveService.as_int(float(b))
 
 
 ## Profil global après une sauvegarde : personnages croisés, mode Récit.

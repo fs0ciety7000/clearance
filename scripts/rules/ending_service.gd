@@ -66,6 +66,10 @@ const AUDIT_REVIEW: StringName = &"review"
 const FLAG_REVIEW_ARRESTED: StringName = &"review_arrested"
 ## Drapeau posé quand F1 tombe à l'audit (variante d'épilogue).
 const FLAG_AUDIT_ARRESTED: StringName = &"audit_arrested"
+## M11 (D-113) : pseudo-drapeau de contexte du soir (jamais sauvegardé, posé par
+## `EveningService.evening_context(…, story)`) : partie en mode Récit — seuils
+## d'arrestation de la Revue et de la Déposition propres au Récit.
+const FLAG_STORY_MODE: StringName = &"story_mode"
 const DOUBLE_GAME_THRESHOLD: int = 3
 const AIR_TRUST_THRESHOLD: int = 4
 const GLORY_LOYALTY_THRESHOLD: int = 3
@@ -124,13 +128,19 @@ static func review_score(flags: Dictionary[StringName, Variant]) -> int:
 	return score
 
 
-## Acte II — Revue de Rééquilibrage (J17) : ≥ `review_arrest_score` → F1 ;
+## Vrai si le contexte du soir est celui d'une partie en mode Récit (D-113).
+static func is_story(flags: Dictionary[StringName, Variant]) -> bool:
+	return FlagCondition.is_flag_true(flags, FLAG_STORY_MODE)
+
+
+## Acte II — Revue de Rééquilibrage (J17) : ≥ `review_arrest_score` → F1
+## (Récit : `story_review_arrest_score`, D-113) ;
 ## ≥ `review_demote_score` → rétrogradation (−40 ₵, `loyalty −1`,
 ## `purge_demoted`, `promotion_revoked`) ; sinon `purge_clean`.
 static func review_outcome(flags: Dictionary[StringName, Variant], economy: EconomyDef) -> Dictionary:
 	var score: int = review_score(flags)
 	var outcome: Dictionary = {"score": score, "cost": 0, "flags": {}, "ending": &""}
-	if score >= economy.review_arrest_score:
+	if score >= economy.review_arrest_for(is_story(flags)):
 		outcome["result"] = AUDIT_ARREST
 		outcome["result_key"] = "evt_d17_review_arrest"
 		outcome["flags"] = {FLAG_REVIEW_ARRESTED: 0}
@@ -422,13 +432,14 @@ static func deposition_score(flags: Dictionary[StringName, Variant]) -> int:
 	return score
 
 
-## Déposition du J29 : ≥ `deposition_arrest_score` → F1 ; ≥
+## Déposition du J29 : ≥ `deposition_arrest_score` → F1 (Récit :
+## `story_deposition_arrest_score`, D-113) ; ≥
 ## `deposition_blame_score` → blâme (−30 ₵, `loyalty −1`, `promotion_revoked`) ;
 ## sinon `deposition_clean`.
 static func deposition_outcome(flags: Dictionary[StringName, Variant], economy: EconomyDef) -> Dictionary:
 	var score: int = deposition_score(flags)
 	var outcome: Dictionary = {"score": score, "cost": 0, "flags": {}, "ending": &""}
-	if score >= economy.deposition_arrest_score:
+	if score >= economy.deposition_arrest_for(is_story(flags)):
 		outcome["result"] = AUDIT_ARREST
 		outcome["result_key"] = "evt_d29_verdict_arrest"
 		outcome["flags"] = {FLAG_DEPOSITION_ARRESTED: 0}

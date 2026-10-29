@@ -75,12 +75,13 @@ static func prepare_events(data: DataCatalog) -> Array[EveningEvent]:
 
 
 ## Drapeaux du soir : narratifs + contexte (foyer, conformité ; Acte III :
-## solde, rappel des salaires, climat du J20), jamais sauvegardés.
+## solde, rappel des salaires, climat du J20 ; M11 : mode Récit, D-113),
+## jamais sauvegardés.
 static func evening_flags() -> Dictionary[StringName, Variant]:
 	var economy: EconomyDef = DataCatalog.load_economy()
 	var levy: int = economy.levy_for(GameState.current_day, GameState.credits)
 	return EveningService.evening_context(GameState.narrative_flags, GameState.household, compliance(), levy,
-			GameState.current_day, economy, GameState.credits)
+			GameState.current_day, economy, GameState.credits, GameState.is_story_mode())
 
 
 ## Postes de la soirée du jour courant, présélectionnés (coûts imposés par les

@@ -250,10 +250,15 @@ static func context_flags(flags: Dictionary[StringName, Variant], household: Hou
 ## imputés (`recall_amount`), et le soir du pivot du J20 le **climat d'entrée**
 ## prévisualisé (`climate_*`, `vanne2_brulants` : même évaluation que les fins
 ## du J20, D-086) pour les lettres de la soirée pivot.
+## M11 (D-113) : `story` pose le pseudo-drapeau `EndingService.FLAG_STORY_MODE`
+## (mode Récit : seuils de la Revue / Déposition et aggravation du foyer
+## propres au Récit) ; absent en Dur.
 static func evening_context(flags: Dictionary[StringName, Variant], household: Household, compliance: float,
-		levy: int, day_number: int, economy: EconomyDef, balance: int) -> Dictionary[StringName, Variant]:
+		levy: int, day_number: int, economy: EconomyDef, balance: int, story: bool = false) -> Dictionary[StringName, Variant]:
 	var result: Dictionary[StringName, Variant] = context_flags(flags, household, compliance, levy)
 	result[GAUGE_BALANCE] = balance
+	if story:
+		result[EndingService.FLAG_STORY_MODE] = true
 	if economy != null:
 		result[GAUGE_RECALL] = economy.recall_for(FlagCondition.gauge_value(flags, CaseConsequences.FLAG_QUOTA_OVERRUN))
 		if day_number == economy.act3_pivot_day and not FlagCondition.is_flag_true(flags, FLAG_ACT3):
@@ -325,7 +330,8 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 	report.spent = total_spent(lines) + report.event_spent
 	report.balance_after = balance_before - report.spent + report.gained
 
-	# 1. Soins des proches déjà malades.
+	# 1. Soins des proches déjà malades (Récit : aggravation plus lente, D-113).
+	var worsen_evenings: int = economy.untreated_worsen_for(EndingService.is_story(flags))
 	for member: Household.Member in home.sick_members():
 		if _is_paid(lines, StringName(MEDS_PREFIX + String(member.id))):
 			member.untreated_evenings = 0
@@ -337,7 +343,7 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 				report.add_event("hh_ev_cured", EveningReport.Tone.GOOD, member.id)
 			continue
 		member.untreated_evenings += 1
-		if member.untreated_evenings < economy.untreated_worsen_evenings:
+		if member.untreated_evenings < worsen_evenings:
 			report.add_event("hh_ev_untreated", EveningReport.Tone.WARNING, member.id)
 			continue
 		member.untreated_evenings = 0

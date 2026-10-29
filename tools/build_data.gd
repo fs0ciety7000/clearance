@@ -188,6 +188,12 @@ func _build_economy() -> void:
 	e.audit_retention = 30
 	e.drift_min_credits = 30
 	e.glory_min_compliance = 0.85
+	# M11 (D-113, QA-049) : mode Récit plus protecteur, Dur inchangé. Mesuré
+	# (`balance_sim --story`, 20 graines, profils à 65 %) : F1 5–15 % hors
+	# mercenaire (50–80 % avant), F3 0 % (5–15 % avant).
+	e.story_review_arrest_score = 7
+	e.story_deposition_arrest_score = 10
+	e.story_untreated_worsen_evenings = 3
 	Act2.configure_economy(e)
 	Act3.configure_economy(e)
 	_save(e, ECONOMY_DIR, "economy")

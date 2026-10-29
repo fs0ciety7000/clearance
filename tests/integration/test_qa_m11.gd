@@ -251,6 +251,12 @@ func test_pad_only_tutorial_and_first_passenger() -> void:
 	var done: Array = []
 	tut.finished.connect(func(completed: bool) -> void: done.append(completed))
 	await _pad(JOY_BUTTON_A)
+	# QA-041 : Ⓐ sur COMMENCER commence le tutoriel sans appeler de passager ;
+	# le focus revient à SUIVANT pour l'étape 1.
+	assert_eq(tut.current_step(), TutorialOverlay.Step.LOOK, "Ⓐ COMMENCER : étape 1")
+	assert_false(ui.documents_shown, "COMMENCER n'appelle pas le passager")
+	assert_eq(_focus(), ui.tool_bar.next_button, "focus rendu à SUIVANT")
+	await _pad(JOY_BUTTON_A)
 	assert_true(await _wait_until(func() -> bool: return ui.documents_shown), "passager appelé")
 	await wait_process_frames(3)
 	assert_eq(tut.current_step(), TutorialOverlay.Step.INSPECT, "1. papiers posés")
@@ -502,9 +508,6 @@ func test_pad_a_on_close_booth_closes_instead_of_calling_a_passenger() -> void:
 	assert_eq(_focus(), ui.top_bar.close_button, "croix ↑ depuis SUIVANT : FERMER LE GUICHET")
 	await _pad(JOY_BUTTON_A)
 	EventBus.next_case_requested.disconnect(on_next)
-	if closes.is_empty() and nexts.size() == 1:
-		pending("QA-041 : Ⓐ sur FERMER LE GUICHET (guichet en attente) appelle le passager suivant")
-		return
 	assert_eq(closes.size(), 1, "Ⓐ : guichet fermé")
 	assert_eq(nexts.size(), 0, "aucun passager appelé")
 
@@ -520,9 +523,6 @@ func test_pad_a_on_tutorial_skip_skips_instead_of_calling_a_passenger() -> void:
 	tut.skip_all_button.grab_focus()
 	await _pad(JOY_BUTTON_A)
 	EventBus.next_case_requested.disconnect(on_next)
-	if done.is_empty() and nexts.size() == 1:
-		pending("QA-041 : Ⓐ sur PASSER LE TUTORIEL appelle un passager et commence le tutoriel")
-		return
 	assert_eq(done, [false], "tutoriel passé")
 	assert_eq(nexts.size(), 0)
 
@@ -541,15 +541,13 @@ func test_pad_dpad_reaches_the_tutorial_buttons() -> void:
 	await wait_process_frames(3)
 	var reached: Array[Control] = await _reach(ui.tool_bar.next_button)
 	var skip_step: bool = reached.has(tut.skip_step_button)
-	if not from_start or not skip_step:
-		pending("QA-042 : croix ← depuis COMMENCER → %s ; PASSER L'ÉTAPE joignable entre deux passagers : %s" % [
-				after_left.name if after_left != null else "rien", skip_step])
-		return
-	assert_true(from_start, "croix ← depuis COMMENCER : PASSER LE TUTORIEL")
+	assert_true(from_start, "croix ← depuis COMMENCER : PASSER LE TUTORIEL (obtenu : %s)" % [
+			after_left.name if after_left != null else "rien"])
 	assert_true(skip_step, "PASSER L'ÉTAPE joignable à la croix")
 
 
-## QA-043 : `current.json` illisible alors que l'instantané du même matin est intact.
+## QA-043 : `current.json` illisible alors que l'instantané du même matin est
+## intact → « Continuer » reprend l'instantané (`SaveService.load_current`).
 func test_corrupt_current_does_not_leave_a_dead_continue_button() -> void:
 	_write_slot(1, 4)
 	var file: FileAccess = FileAccess.open(SaveService.slot_path(1), FileAccess.WRITE)
@@ -557,26 +555,49 @@ func test_corrupt_current_does_not_leave_a_dead_continue_button() -> void:
 	file.close()
 	var main: Control = await _main()
 	var cont: Button = main.get(&"continue_button")
+	assert_false(cont.disabled, "CONTINUER actif : l'instantané du J4 est lisible")
 	var loaded: bool = main.call(&"continue_game")
-	if not loaded and not cont.disabled:
-		pending("QA-043 : CONTINUER — JOUR 4 reste actif mais ne fait rien (day_04.json intact : %s)" % [
-				not SaveService.load_snapshot(1, 4).is_empty()])
-		return
-	assert_true(loaded or cont.disabled, "Continuer reprend l'instantané, ou est désactivé")
-	if loaded:
-		assert_eq(GameState.current_day, 4)
+	assert_true(loaded, "Continuer reprend l'instantané day_04.json")
+	assert_eq([GameState.active_slot, GameState.current_day], [1, 4])
 
 
-## QA-044 : le statut « terminée » ne vit que dans `meta.json`.
+## QA-043 : rien de lisible (ni `current.json` ni instantané) → emplacement
+## marqué `damaged` dans sa méta, jamais proposé par « Continuer ».
+func test_unreadable_slot_is_flagged_damaged() -> void:
+	_write_slot(1, 3)
+	for path: String in [SaveService.slot_path(1), SaveService.snapshot_path(1, 1), SaveService.snapshot_path(1, 2),
+			SaveService.snapshot_path(1, 3)]:
+		var file: FileAccess = FileAccess.open(path, FileAccess.WRITE)
+		file.store_string("{ corrompu")
+		file.close()
+	var meta: Dictionary = SaveService.list_slots()[0]
+	assert_true(SaveService.is_damaged(meta), "méta : %s = true" % SaveService.META_DAMAGED)
+	assert_eq(SaveService.as_int(meta.get("slot")), 1)
+	assert_eq(SaveService.as_int(meta.get("current_day")), 3, "dernier jour connu (méta intacte)")
+	assert_eq(SaveService.latest_slot(), SaveService.NO_SLOT, "pas de Continuer")
+	assert_eq(SaveService.list_snapshots(1), PackedInt32Array(), "aucun jour proposé")
+	assert_eq(SaveService.first_free_slot(), 2, "pas libre : à supprimer ou écraser")
+	assert_false(GameState.load_from_slot(1))
+	DirAccess.remove_absolute(SaveService.meta_path(1))
+	assert_true(SaveService.is_damaged(SaveService.load_meta(1)), "méta perdue aussi : toujours endommagé")
+	assert_eq(SaveService.as_int(SaveService.load_meta(1).get("current_day")), 3, "jour déduit des fichiers")
+
+
+## QA-044 : le statut « terminée » survit à la perte de `meta.json` (écrit
+## aussi dans `current.json` par `mark_ended`).
 func test_ended_game_stays_ended_when_meta_is_lost() -> void:
 	_write_slot(2, 7, false, "f2_reassigned")
 	DirAccess.remove_absolute(SaveService.meta_path(2))
 	var meta: Dictionary = SaveService.load_meta(2)
-	if str(meta.get("status")) == SaveService.STATUS_ACTIVE and SaveService.latest_slot() == 2:
-		pending("QA-044 : méta perdue → partie F2 terminée reproposée par CONTINUER (statut reconstruit « active »)")
-		return
 	assert_eq(str(meta.get("status")), SaveService.STATUS_ENDED)
+	assert_eq(str(meta.get("ending_id")), "f2_reassigned")
 	assert_eq(SaveService.latest_slot(), SaveService.NO_SLOT)
+	# Reprise d'un jour passé puis soirée : la partie est rouverte.
+	assert_true(GameState.load_day_snapshot(2, 5))
+	assert_eq(GameState.save_to_slot(), OK)
+	DirAccess.remove_absolute(SaveService.meta_path(2))
+	assert_eq(str(SaveService.load_meta(2).get("status")), SaveService.STATUS_ACTIVE, "rouverte : active")
+	assert_eq(SaveService.latest_slot(), 2)
 
 
 ## QA-045 : `.tmp` orphelin et tronqué (coupure pendant l'écriture d'un nouvel instantané).
@@ -586,22 +607,26 @@ func test_orphan_truncated_tmp_snapshot_is_not_offered() -> void:
 	file.store_string("{\"version\": 6, \"current_d")
 	file.close()
 	var days: PackedInt32Array = SaveService.list_snapshots(3)
-	if days.has(6) and SaveService.load_snapshot(3, 6).is_empty():
-		pending("QA-045 : matin du J6 illisible proposé comme « JOUR 06 · DERNIER » (le choisir ne fait rien)")
-		return
-	assert_false(days.has(6) and SaveService.load_snapshot(3, 6).is_empty(), "aucun matin illisible proposé")
+	assert_eq(days, PackedInt32Array([1, 2, 3, 4, 5]), "aucun matin illisible proposé")
+	for day: int in days:
+		assert_false(SaveService.load_snapshot(3, day).is_empty(), "J%d chargeable" % day)
 
 
-## QA-046 : Récit → Dur n'est écrit qu'à la soirée suivante.
+## QA-046 : Récit → Dur est inscrit tout de suite dans l'emplacement actif.
 func test_hard_mode_switch_is_not_undone_by_quitting_before_the_evening() -> void:
 	_write_slot(1, 4, true)
+	var snapshot_before: String = FileAccess.get_file_as_string(SaveService.snapshot_path(1, 4))
+	var saved_at: String = str(SaveService.load_meta(1).get("saved_at"))
 	assert_true(GameState.load_from_slot(1))
 	assert_true(GameState.set_difficulty(GameState.DIFFICULTY_HARD))
+	assert_eq(str(SaveService.load_meta(1).get("difficulty")), SaveService.DIFFICULTY_HARD, "méta à jour")
+	assert_eq(str(SaveService.load_meta(1).get("saved_at")), saved_at, "pas une sauvegarde")
+	assert_eq(FileAccess.get_file_as_string(SaveService.snapshot_path(1, 4)), snapshot_before, "instantané intact")
+	assert_eq(SaveService.list_snapshots(1), PackedInt32Array([1, 2, 3, 4]))
 	assert_true(GameState.load_from_slot())
-	if GameState.is_story_mode():
-		pending("QA-046 : passer en Dur puis quitter avant la soirée → « Continuer » revient en Récit")
-		return
 	assert_eq(GameState.difficulty, GameState.DIFFICULTY_HARD, "jamais Dur → Récit, même en quittant")
+	assert_true(GameState.load_day_snapshot(1, 2))
+	assert_eq(GameState.difficulty, GameState.DIFFICULTY_HARD, "jour passé : reste en Dur")
 
 
 ## QA-047 : `holo_flicker` coupé laisse scintiller les néons instables et les
@@ -619,7 +644,7 @@ func test_holo_flicker_off_also_freezes_booth_neons_and_screens() -> void:
 	quality.apply()
 	assert_eq(holo.get_shader_parameter(&"flicker"), 0.0, "hologrammes figés")
 	var value: Variant = emissive.get_shader_parameter(&"flicker")
-	if value == null or float(value) != 0.0:
-		pending("QA-047 : néons (« chute brève ≤ 2 Hz ») et écrans holo du guichet scintillent encore, scintillement coupé")
+	assert_not_null(value, "booth_emissive : uniforme flicker")
+	if value == null:
 		return
-	assert_eq(float(value), 0.0)
+	assert_eq(float(value), 0.0, "néons instables et écrans holo figés")

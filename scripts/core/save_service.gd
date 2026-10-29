@@ -9,6 +9,12 @@
 ##   `active` | `ended` (fin F1–F10 archivée, `mark_ended`) ;
 ## à côté : `profile.json` (`ProfileService`, progression globale).
 ## « Continuer » = `latest_slot()` (emplacement actif au `saved_at` le plus récent).
+## Robustesse (QA M11, QA-043 → QA-046) : `current.json` illisible → repli sur
+## l'instantané lisible le plus récent (`load_current`) ; rien de lisible →
+## méta marquée `damaged` (`META_DAMAGED`) ; le statut « terminée » est aussi
+## écrit dans `current.json` (`mark_ended`, survit à la perte de `meta.json`) ;
+## `list_snapshots` ne liste que les jours chargeables ; Récit → Dur écrit
+## aussitôt (`persist_difficulty`).
 ## - Jamais de `.tres` (un `.tres` peut exécuter du code) ; écriture atomique
 ##   de **chaque** fichier (`write_atomic`) : `.tmp` écrit puis renommé
 ##   par-dessus (jamais de suppression préalable, QA-018) ; si la plateforme
@@ -65,6 +71,14 @@ const LEGACY_FILE: String = "slot_0.json"
 const LEGACY_BACKUP_FILE: String = "slot_0.v5.bak"
 const STATUS_ACTIVE: String = "active"
 const STATUS_ENDED: String = "ended"
+## Clés de statut aussi écrites dans `current.json` par `mark_ended` (QA-044),
+## effacées à la sauvegarde suivante (`save_slot` : partie rouverte).
+const KEY_STATUS: String = "status"
+const KEY_ENDING_ID: String = "ending_id"
+## Méta : emplacement occupé dont aucun état n'est lisible (ni `current.json`
+## ni instantané, QA-043) — ni « Continuer », ni reprise ; l'UI désactive ses
+## actions (sauf supprimer / écraser). Absente sinon.
+const META_DAMAGED: String = "damaged"
 const DIFFICULTY_HARD: String = "hard"
 const DIFFICULTY_STORY: String = "story"
 ## Clés obligatoires après migration, avec leur type JSON attendu.
@@ -238,9 +252,10 @@ static func read_json(path: String, accept: Callable = Callable()) -> Dictionary
 
 # --- Emplacements (D-101) --------------------------------------------------------------
 
-## Vrai si l'emplacement a un état courant (principal, `.tmp` ou `.bak`).
+## Vrai si l'emplacement a un état courant (principal, `.tmp` ou `.bak`) ou,
+## à défaut, un instantané (secours de `load_current`).
 static func has_save(slot: int = DEFAULT_SLOT, dir: String = DEFAULT_DIR) -> bool:
-	return file_exists_any(slot_path(slot, dir))
+	return file_exists_any(slot_path(slot, dir)) or not _snapshot_days(slot, dir).is_empty()
 
 
 ## Écrit l'état `data` dans l'emplacement : `current.json`, instantané du jour
@@ -253,6 +268,9 @@ static func save_slot(data: Dictionary, slot: int = DEFAULT_SLOT, dir: String = 
 		push_warning("SaveService: emplacement %d invalide" % slot)
 		return ERR_INVALID_PARAMETER
 	var payload: Dictionary = data.duplicate(true)
+	# Une sauvegarde rouvre la partie (statut d'archive de `mark_ended` retiré).
+	for key: String in [KEY_STATUS, KEY_ENDING_ID, META_DAMAGED]:
+		payload.erase(key)
 	payload["version"] = VERSION
 	payload["game_version"] = game_version()
 	payload["saved_at"] = saved_at if not saved_at.is_empty() else Time.get_datetime_string_from_system(true)
@@ -266,7 +284,7 @@ static func save_slot(data: Dictionary, slot: int = DEFAULT_SLOT, dir: String = 
 	err = write_atomic(slot_path(slot, dir), text)
 	if err != OK:
 		return err
-	for later: int in list_snapshots(slot, dir):
+	for later: int in _snapshot_days(slot, dir):
 		if later > day:
 			remove_with_fallbacks(snapshot_path(slot, later, dir))
 	var meta: Dictionary = build_meta(payload)
@@ -276,15 +294,39 @@ static func save_slot(data: Dictionary, slot: int = DEFAULT_SLOT, dir: String = 
 	return write_atomic(meta_path(slot, dir), JSON.stringify(meta, "\t", true))
 
 
-## État courant d'un emplacement (migré, validé) ; vide si absent ou invalide.
+## État courant d'un emplacement (migré, validé). Si `current.json` (et ses
+## `.tmp` / `.bak`) est illisible, repli sur l'instantané lisible le plus
+## récent (QA-043 : `day_NN.json` du même matin, écrit avec le même contenu) ;
+## vide si rien n'est lisible.
 static func load_current(slot: int = DEFAULT_SLOT, dir: String = DEFAULT_DIR) -> Dictionary:
 	if slot < 0:
 		return {}
-	return read_json(slot_path(slot, dir), parse)
+	var data: Dictionary = read_json(slot_path(slot, dir), parse)
+	if not data.is_empty():
+		return data
+	var days: PackedInt32Array = _snapshot_days(slot, dir)
+	for i: int in range(days.size() - 1, -1, -1):
+		data = load_snapshot(slot, days[i], dir)
+		if not data.is_empty():
+			if file_exists_any(slot_path(slot, dir)):
+				push_warning("SaveService: %s illisible, reprise de l'instantané du jour %d" % [slot_path(slot, dir), days[i]])
+			return data
+	return {}
 
 
-## Jours dont l'emplacement garde un instantané, croissants.
+## Jours dont l'emplacement garde un instantané **chargeable** (QA-045 : un
+## `.tmp` orphelin tronqué n'est pas proposé), croissants.
 static func list_snapshots(slot: int, dir: String = DEFAULT_DIR) -> PackedInt32Array:
+	var days: PackedInt32Array = []
+	for day: int in _snapshot_days(slot, dir):
+		if not load_snapshot(slot, day, dir).is_empty():
+			days.append(day)
+	return days
+
+
+## Jours dont l'emplacement a un fichier d'instantané (principal, `.tmp` ou
+## `.bak`, lisible ou non), croissants.
+static func _snapshot_days(slot: int, dir: String = DEFAULT_DIR) -> PackedInt32Array:
 	var days: PackedInt32Array = []
 	var folder: DirAccess = DirAccess.open(slot_dir(slot, dir))
 	if folder == null:
@@ -307,16 +349,39 @@ static func load_snapshot(slot: int, day: int, dir: String = DEFAULT_DIR) -> Dic
 	return read_json(snapshot_path(slot, day, dir), parse)
 
 
-## Résumé d'un emplacement (`meta.json`), reconstruit depuis `current.json`
-## s'il manque ou est illisible ; vide si l'emplacement est libre.
+## Résumé d'un emplacement (`meta.json`), reconstruit depuis l'état courant
+## (`load_current`, avec son statut d'archive, QA-044) s'il manque ou est
+## illisible ; vide si l'emplacement est libre. Emplacement occupé sans aucun
+## état lisible : méta (lue, sinon minimale) avec `damaged = true` (QA-043).
 static func load_meta(slot: int, dir: String = DEFAULT_DIR) -> Dictionary:
 	var meta: Dictionary = read_json(meta_path(slot, dir))
-	if not meta.is_empty() and meta.has("status") and meta.has("current_day"):
-		return meta
+	var meta_ok: bool = not meta.is_empty() and meta.has("status") and meta.has("current_day")
 	var current: Dictionary = load_current(slot, dir)
 	if current.is_empty():
-		return {}
-	return build_meta(current)
+		if not meta_ok and not _slot_has_files(slot, dir):
+			return {}
+		if not meta_ok:
+			var days: PackedInt32Array = _snapshot_days(slot, dir)
+			meta = {"version": VERSION, "status": STATUS_ACTIVE, "ending_id": "",
+				"current_day": days[days.size() - 1] if not days.is_empty() else 0}
+		meta[META_DAMAGED] = true
+		return meta
+	meta.erase(META_DAMAGED)
+	if meta_ok:
+		return meta
+	return build_meta(current, str(current.get(KEY_STATUS, STATUS_ACTIVE)), str(current.get(KEY_ENDING_ID, "")))
+
+
+## Vrai si le dossier de l'emplacement contient au moins un fichier.
+static func _slot_has_files(slot: int, dir: String) -> bool:
+	var folder: DirAccess = DirAccess.open(slot_dir(slot, dir))
+	return folder != null and not folder.get_files().is_empty()
+
+
+## Vrai si une méta d'emplacement est marquée endommagée (`META_DAMAGED`).
+static func is_damaged(meta: Dictionary) -> bool:
+	var value: Variant = meta.get(META_DAMAGED, false)
+	return value is bool and value
 
 
 ## Méta de chaque emplacement 1..`SLOT_COUNT` (`{}` pour un emplacement
@@ -332,13 +397,13 @@ static func list_slots(dir: String = DEFAULT_DIR) -> Array[Dictionary]:
 	return result
 
 
-## Emplacement de « Continuer » : partie `active` au `saved_at` le plus
-## récent ; `NO_SLOT` (-1) si aucune. Migre d'abord un `slot_0.json` v5.
+## Emplacement de « Continuer » : partie `active` (non endommagée) au
+## `saved_at` le plus récent ; `NO_SLOT` (-1) si aucune. Migre d'abord un `slot_0.json` v5.
 static func latest_slot(dir: String = DEFAULT_DIR) -> int:
 	var best: int = NO_SLOT
 	var best_key: String = ""
 	for meta: Dictionary in list_slots(dir):
-		if meta.is_empty() or str(meta.get("status", STATUS_ACTIVE)) != STATUS_ACTIVE:
+		if meta.is_empty() or is_damaged(meta) or str(meta.get("status", STATUS_ACTIVE)) != STATUS_ACTIVE:
 			continue
 		var key: String = _recency_key(meta)
 		if best == NO_SLOT or key > best_key:
@@ -351,42 +416,53 @@ static func latest_slot(dir: String = DEFAULT_DIR) -> int:
 static func first_free_slot(dir: String = DEFAULT_DIR) -> int:
 	migrate_legacy(dir)
 	for slot: int in range(1, SLOT_COUNT + 1):
-		if not has_save(slot, dir) and not FileAccess.file_exists(meta_path(slot, dir)):
+		if not has_save(slot, dir) and not _slot_has_files(slot, dir):
 			return slot
 	return NO_SLOT
 
 
-## Emplacement proposé à une nouvelle partie sans écran de choix (écran titre
-## actuel, en attendant le lot C) : premier libre, sinon la partie terminée la
-## plus ancienne, sinon la partie la moins récente.
-static func slot_for_new_game(dir: String = DEFAULT_DIR) -> int:
-	var free: int = first_free_slot(dir)
-	if free != NO_SLOT:
-		return free
-	var best: int = NO_SLOT
-	var best_key: String = ""
-	for status: String in [STATUS_ENDED, STATUS_ACTIVE]:
-		for meta: Dictionary in list_slots(dir):
-			if meta.is_empty() or str(meta.get("status", STATUS_ACTIVE)) != status:
-				continue
-			var key: String = _recency_key(meta)
-			if best == NO_SLOT or key < best_key:
-				best = as_int(meta["slot"])
-				best_key = key
-		if best != NO_SLOT:
-			return best
-	return DEFAULT_SLOT
-
-
 ## Archive une partie terminée (F1–F10, D-101) : `status = ended`,
-## `ending_id` ; `current.json` et les instantanés sont gardés.
+## `ending_id` dans `meta.json` **et** dans `current.json` (QA-044 : la
+## méta reconstruite garde le statut) ; état et instantanés gardés.
 static func mark_ended(slot: int, ending_id: String, dir: String = DEFAULT_DIR) -> Error:
 	var meta: Dictionary = load_meta(slot, dir)
 	if meta.is_empty():
 		return ERR_DOES_NOT_EXIST
+	var current: Dictionary = load_current(slot, dir)
+	if not current.is_empty():
+		current[KEY_STATUS] = STATUS_ENDED
+		current[KEY_ENDING_ID] = ending_id
+		var err: Error = write_atomic(slot_path(slot, dir), JSON.stringify(current, "\t", true))
+		if err != OK:
+			return err
 	meta.erase("slot")
+	meta.erase(META_DAMAGED)
 	meta["status"] = STATUS_ENDED
 	meta["ending_id"] = ending_id
+	return write_atomic(meta_path(slot, dir), JSON.stringify(meta, "\t", true))
+
+
+## Inscrit tout de suite la difficulté d'une partie dans son emplacement
+## (QA-046 : Récit → Dur, D-102 — un « Quitter » avant la soirée ne l'annule
+## pas) : `current.json` et `meta.json` seulement, ni instantané ni
+## `saved_at` changés. `campaign_seed` ≠ 0 : n'écrit que si l'emplacement
+## contient cette campagne. Erreur si l'emplacement n'a pas d'état lisible.
+static func persist_difficulty(slot: int, difficulty: String, campaign_seed: int = 0,
+		dir: String = DEFAULT_DIR) -> Error:
+	var current: Dictionary = load_current(slot, dir)
+	if current.is_empty():
+		return ERR_DOES_NOT_EXIST
+	if campaign_seed != 0 and as_int(float(as_int(current.get("campaign_seed", 0)))) != as_int(float(campaign_seed)):
+		return ERR_INVALID_PARAMETER
+	var value: String = DIFFICULTY_STORY if difficulty == DIFFICULTY_STORY else DIFFICULTY_HARD
+	current["difficulty"] = value
+	var err: Error = write_atomic(slot_path(slot, dir), JSON.stringify(current, "\t", true))
+	if err != OK:
+		return err
+	var meta: Dictionary = read_json(meta_path(slot, dir))
+	if meta.is_empty() or not meta.has("status"):
+		return OK
+	meta["difficulty"] = value
 	return write_atomic(meta_path(slot, dir), JSON.stringify(meta, "\t", true))
 
 

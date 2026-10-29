@@ -92,7 +92,7 @@ func test_three_slots_and_continue_picks_the_latest_active_game() -> void:
 	var ended: Node = _game(3, 2)
 	ended.call(&"end_campaign", EndingService.F7_REOPENS, SaveService.NO_SLOT, DIR)
 	assert_eq(SaveService.latest_slot(DIR), 3)
-	assert_eq(SaveService.slot_for_new_game(DIR), 2, "nouvelle partie : la terminée d'abord")
+	assert_eq(str(SaveService.list_slots(DIR)[1].get("status")), SaveService.STATUS_ENDED, "la 2 archivée, toujours listée")
 	# « Continuer » par défaut : la partie active la plus récente.
 	assert_true(_state.call(&"load_from_slot", SaveService.NO_SLOT, DIR))
 	assert_eq(_state.get(&"active_slot"), 3)
