@@ -4022,3 +4022,63 @@ viol_contraband,Objet interdit trouvé à la fouille.
 viol_weapon,Arme trouvée à la fouille : mise en attente.
 viol_implant_concealed,Implant dissimulé absent des implants déclarés.
 field_sponsor_name,Nom du répondant
+jr_tab_dialogue,DIALOGUE
+jr_tab_search,FOUILLE
+jr_tab_search_count,FOUILLE · %d
+jr_declared,DÉCLARÉ :
+jr_frozen,FIGÉE · DISCORDANCE
+jr_struck_tip,Valeur corrigée par le passager : non comparable
+srch_close,FERMER
+srch_pick_zone,"Choisissez une zone à scanner, ou TOUT SCANNER."
+srch_zone_queued,EN FILE
+srch_zone_scanning,SCAN…
+srch_zone_items_one,%d OBJET
+srch_zone_items,%d OBJETS
+q_search_reopen,"Repassez dans le portique, s'il vous plaît."
+q_about_weapon,Cette arme ne passe pas le guichet.
+q_about_concealed_implant,Cet implant caché n'est pas déclaré.
+busy_answer,Le passager répond
+busy_search_activation,Activation du portique
+busy_search_zone,Scan · %s
+busy_search_scan,Scan en cours
+st_search_fmt,Portique — choisissez une zone (%s) ou TOUT SCANNER · %s : refermer.
+conc_statement_detail,Déclaré : %s = %s : %s
+disc_weapon_detail,Arme : mise en attente (%s)
+disc_item_allowed_detail,Objet autorisé (%s)
+disc_implant_found_detail,Implant trouvé : %s · absent des implants déclarés
+conc_implant_found_detail,Implant trouvé : %s · déclaré
+disc_item_rule_detail,%s : interdit par la règle %02d
+rb_contraband_intro,"Objets trouvés au portique. Mode Inspection : comparez l'objet à sa catégorie. Scellé, étiquette : lisez la ligne de l'objet."
+rb_cb_deny,REFUS · R45
+rb_cb_detain,MISE EN ATTENTE · R46
+rb_cb_report,SIGNALEMENT · BULLETIN
+rb_margin_note,MARGE D'OKONKWO
+qp_manifest,MANIFESTE · %s · %s · %d DOC.
+qp_upgrades,GUICHET
+seal_uv,UV · %s
+shop_after,Solde après achat
+shop_empty,Rien de nouveau ce soir à l'Économat.
+shop_price_note,Prix : %s
+shop_one_only,Un achat par soir : décochez l'autre d'abord.
+shop_bought,ACQUIS · %s · effet dès demain
+sum_item_searched,FOUILLE
+sum_item_unmotivated,FOUILLE SANS MOTIF
+pause_upgrades,GUICHET 04 · AMÉLIORATIONS
+help_eyebrow,AIDE · NOUVEAU AU GUICHET
+help_statements_title,DÉCLARATIONS · CE QU'ILS DISENT
+help_statements_text,"La réponse du passager s'inscrit au journal. Ses valeurs soulignées » se comparent comme des champs : choisissez-en une, puis le champ du permis. Une déclaration contradictoire documente un refus (R43)."
+help_statements_step_1,%s : poser la question
+help_statements_step_2,%s : Mode Inspection
+help_statements_step_3,"Croix ↑ vers le journal · %s : choisir la puce, puis le champ"
+help_search_title,PORTIQUE · FOUILLE SUR MOTIF
+help_search_text,"Interroger › « Placez-vous dans le portique ». Le MOTIF s'affiche avant la fouille : sans motif, fouiller un passager en règle est une faute (FOUILLE SANS MOTIF). Choisissez une zone, ou TOUT SCANNER, puis comparez les objets à l'onglet Contrebande."
+help_search_step_1,%s : Interroger › Portique
+help_search_step_2,Croix + %s : scanner une zone
+help_search_step_3,%s : refermer le portique
+help_hint,Cette aide ne reviendra pas. Options › Partie pour la revoir.
+help_next,SUIVANT
+help_ok,COMPRIS
+opt_help_statements,Aide : déclarations
+opt_help_statements_hint,Carte d'aide au premier jour où les réponses orales se comparent (J4).
+opt_help_search,Aide : portique
+opt_help_search_hint,Carte d'aide au premier jour du portique de fouille (J8).

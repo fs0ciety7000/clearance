@@ -146,10 +146,16 @@ func test_day_controller_search_consequences() -> void:
 	var scripted: ScriptedCaseDef = ScriptedCaseDef.new()
 	scripted.flags_on_search = {&"sc105_searched": 0} as Dictionary[StringName, int]
 	controller.current_scripted = scripted
-	var with_flags: CaseResult = CaseResult.new(c.case_id)
-	with_flags.verdict = _verdict(VerdictKind.Kind.DENY, true, SearchLayout.MOTIVE_CUE)
-	controller._apply_search_consequences(with_flags)
-	assert_eq(with_flags.narrative_changes.get(&"sc105_searched"), true, "flags_on_search (delta 0 = vrai)")
+	var empty_flags: Dictionary[StringName, Variant] = {}
+	var with_flags: Dictionary[StringName, Variant] = controller.search_flag_changes(
+			_verdict(VerdictKind.Kind.DENY, true, SearchLayout.MOTIVE_CUE), empty_flags)
+	assert_eq(with_flags.get(&"sc105_searched"), true, "flags_on_search (delta 0 = vrai)")
+	assert_true(controller.search_flag_changes(_verdict(VerdictKind.Kind.DENY, false), empty_flags).is_empty(),
+			"sans fouille : pas de flags_on_search")
+	var searched_deny: CaseResult = CaseResult.new(c.case_id)
+	searched_deny.verdict = _verdict(VerdictKind.Kind.DENY, true, SearchLayout.MOTIVE_CUE)
+	controller._apply_search_consequences(searched_deny)
+	assert_true(searched_deny.narrative_changes.is_empty(), "flags_on_search posés avant le verdict, pas ici")
 	var not_searched: CaseResult = CaseResult.new(c.case_id)
 	not_searched.verdict = _verdict(VerdictKind.Kind.APPROVE, false)
 	controller._apply_search_consequences(not_searched)
@@ -177,3 +183,39 @@ func test_day_controller_configures_the_session() -> void:
 	assert_not_null(session.timing)
 	assert_false(controller.search_available(), "J5 : pas de portique")
 	harness.teardown()
+
+
+## Finition M13 : les `flags_on_search` sont posés **avant** les effets du
+## verdict, sinon les `extra_effects` de SC-106 (APPROUVER après fouille →
+## `suspicion +1`) et de SC-108 (REFUSER après fouille → `lucioles_trust -1`)
+## ne se déclenchent jamais.
+func test_flags_on_search_precede_verdict_effects() -> void:
+	var controller: DayController = DayController.new()
+	controller.apply_to_game_state = false
+	add_child_autofree(controller)
+	controller.set_process(false)
+	controller.data = Gen.data()
+	for spec: Array in [[9, &"sc_106", VerdictKind.Kind.APPROVE, CaseConsequences.FLAG_SUSPICION, 1, &"sc106_searched"],
+			[16, &"sc_108", VerdictKind.Kind.DENY, CaseConsequences.FLAG_TRUST, -1, &"sc108_searched"]]:
+		var day: DayDef = Gen.data().get_day(int(spec[0]))
+		var scripted: ScriptedCaseDef = null
+		for candidate: ScriptedCaseDef in day.scripted_cases:
+			if candidate.id == spec[1]:
+				scripted = candidate
+		assert_not_null(scripted, String(spec[1]))
+		controller.day = day
+		controller.builder = CaseBuilder.new(Gen.data(), day, Gen.day_seed(0, int(spec[0])))
+		controller.current_scripted = scripted
+		controller.current_case = CaseFactory.valid_case()
+		controller.current_key = _key(spec[2])
+		for searched: bool in [true, false]:
+			var result: CaseResult = CaseResult.new(controller.current_case.case_id)
+			result.verdict = _verdict(spec[2], searched, SearchLayout.MOTIVE_CUE)
+			result.verdict_kind = spec[2]
+			controller._apply_narrative(result)
+			var label: String = "%s %s" % [spec[1], "fouillé" if searched else "sans fouille"]
+			assert_eq(result.narrative_changes.has(spec[5]), searched, label + " : drapeau de fouille")
+			if searched:
+				assert_eq(result.narrative_changes.get(spec[3]), spec[4], label + " : effet conditionné")
+			else:
+				assert_false(result.narrative_changes.has(spec[3]), label + " : pas d'effet")

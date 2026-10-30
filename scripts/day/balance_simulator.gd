@@ -168,15 +168,22 @@ static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: f
 const UPGRADE_ORDER: Array[StringName] = [&"ag05", &"ag01", &"ag06", &"ag03", &"ag02"]
 ## M13 §4.4 dit « solde après les postes essentiels > prix + 15 ₵ » ; mesuré
 ## (`balance_sim --m13=compare`, 80 %) : trop d'achats (≈ 80 % des campagnes
-## pour chaque AG). Marge portée à 40 ₵ (≈ deux soirs de loyer et de nourriture).
-const SMART_MARGIN: int = 40
+## pour chaque AG). Lot B : marge de 40 ₵ sans horizon (AG-03 55–64 %, AG-05
+## 17–20 %, solde du J29 −20 à −24 ₵). Finition M13 : 30 ₵ restants après
+## l'achat et plus d'achat après le soir du J22 (un achat tardif ne s'amortit
+## plus : M13 §4.4, ≤ 12 jours) — AG-01 68 %, AG-02 32 %, AG-03 48 %, AG-05
+## 32 %, AG-06 34 % (`default`, 80 %).
+const SMART_MARGIN: int = 30
+## Dernier soir d'achat `smart` (0 = tous).
+const SMART_LAST_EVENING: int = 22
 ## Postes essentiels qui doivent être payés avant un achat `smart`.
 const ESSENTIAL_LINES: Array[StringName] = [&"rent", &"food", &"heating", &"oxygen"]
 
 
 ## M13 : ajoute les offres de l'Économat aux postes et coche au plus un achat
 ## (un par soir, sans découvert) selon la politique du profil : `smart` si le
-## solde, une fois les postes essentiels payés, dépasse le prix de 15 ₵ ;
+## solde, une fois les postes essentiels payés et l'achat fait, reste ≥
+## `SMART_MARGIN`, jusqu'au soir `SMART_LAST_EVENING` ;
 ## `eager` dès que le solde le permet ; `list` dans l'ordre de `upgrade_list`.
 static func buy_upgrade(profile: SimProfile, economy: EconomyDef, lines: Array[ExpenseLine], credits: int,
 		day_number: int, flags: Dictionary[StringName, Variant]) -> void:
@@ -189,7 +196,10 @@ static func buy_upgrade(profile: SimProfile, economy: EconomyDef, lines: Array[E
 	var order: Array[StringName] = UPGRADE_ORDER.duplicate()
 	if profile.is_mercenary():
 		order.append(UpgradeDef.ID_DOUBLE_DRAWER)
-	var margin: int = SMART_MARGIN
+	var margin: int = profile.smart_margin if profile.smart_margin >= 0 else SMART_MARGIN
+	var last_evening: int = profile.smart_last_evening if profile.smart_last_evening >= 0 else SMART_LAST_EVENING
+	if profile.upgrade_policy == SimProfile.UPGRADES_SMART and last_evening > 0 and day_number > last_evening:
+		return
 	match profile.upgrade_policy:
 		SimProfile.UPGRADES_EAGER:
 			margin = 0
@@ -204,6 +214,10 @@ static func buy_upgrade(profile: SimProfile, economy: EconomyDef, lines: Array[E
 	var remaining: int = credits - EveningService.total_spent(lines)
 	for upgrade_id: StringName in order:
 		if profile.avoid_upgrades.has(upgrade_id):
+			continue
+		# Finition M13 : le tiroir n'est acheté que par qui garde déjà les
+		# enveloppes (`mercenary3`, honnête jusqu'au J20, ne l'achète pas).
+		if upgrade_id == UpgradeDef.ID_DOUBLE_DRAWER and (profile.keep_bribes <= 0.0 or day_number + 1 < profile.bribes_from_day):
 			continue
 		for line: ExpenseLine in shop:
 			if line.upgrade_id == upgrade_id and remaining - line.cost >= margin \

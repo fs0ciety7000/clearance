@@ -89,9 +89,15 @@ const SEARCH_NOISE_J16: float = 0.12
 ## `balance_sim --m13=compare` ». Mesuré (100 graines, 80 %) : avec +25 / +40,
 ## la file traitée **monte** de 3 à 6 points (coût réel ≈ +2,4 s par cas avant
 ## améliorations) et les profils qui dépassent le quota accumulent de la
-## suspicion (F1 +5 à +8 points). Retenu : +15 s et +25 s.
-const EXTRA_SECONDS_EARLY: float = 15.0
-const EXTRA_SECONDS_LATE: float = 25.0
+## suspicion (F1 +5 à +8 points). Lot B : +15 s et +25 s. Finition M13 (200
+## graines, 80 %) : avec +25 s, la file traitée dépasse encore la 0.12 de 2 à
+## 3 points à l'Acte II et de 4 à 6 points à l'Acte III (AG-01, lampe, carnet,
+## moniteur) ; retenu +15 s (J4–J7), +20 s (J8–J20), +10 s (J21–J30) : écarts
+## de file entre −2 et +2 points.
+## Valeurs : `M13Sim.extra_seconds()` (source unique, partagée avec la simulation).
+const EXTRA_SECONDS_EARLY: float = M13Sim.EXTRA_SECONDS_EARLY
+const EXTRA_SECONDS_LATE: float = M13Sim.EXTRA_SECONDS_LATE
+const EXTRA_SECONDS_ACT3: float = M13Sim.EXTRA_SECONDS_ACT3
 ## 3ᵉ avertissement gratuit aux jours de mécanique nouvelle (D-144).
 const FREE_CITATION_DAYS: Array[int] = [4, 8]
 
@@ -525,11 +531,19 @@ static func extend_events(events: Array[StationEventDef]) -> void:
 	alert.window_kind = StationEventDef.WindowKind.PASSENGERS
 	alert.window_passengers = 5
 	alert.rulebook_key = "sev_contraband_alert_rb"
-	# Profil « fouille autorisée » (MF-4) : ressortissants de Cérès (cartouches
-	# d'O₂ de la Transit-7) ; 1 ou 2 porteurs du profil dans la fenêtre
-	# (`CaseBuilder.on_rules_changed`).
+	# Profil « fouille autorisée » (MF-4, M13 §2.10) tiré par plan (graine du
+	# jour, ou de la directive en Garde) : Tycho, Cérès, motif COMMERCE ou motif
+	# TRANSIT ; 1 ou 2 porteurs du profil dans la fenêtre
+	# (`CaseBuilder.on_rules_changed`). La portée des données (Cérès) reste le
+	# repli d'un plan sans profil.
 	alert.changes = [RuleChangeDef.override(R44, {&"search_authorized": true}, [&"cer"])]
 	alert.garde_changes = [RuleChangeDef.override(R44, {&"search_authorized": true}, [&"cer"])]
+	alert.override_profiles = [
+		{"faction_ids": [&"tyc"], "purposes": [], "label_key": "sev_contraband_alert_tyc"},
+		{"faction_ids": [&"cer"], "purposes": [], "label_key": "sev_contraband_alert_cer"},
+		{"faction_ids": [], "purposes": [Passenger.PURPOSE_TRADE], "label_key": "sev_contraband_alert_trade"},
+		{"faction_ids": [], "purposes": [Passenger.PURPOSE_TRANSIT], "label_key": "sev_contraband_alert_transit"},
+	] as Array[Dictionary]
 	alert.garde_required_unit = &"u22"
 	alert.garde_window_passengers = 5
 	alert.garde_announce_key = "sev_contraband_alert_announce_garde"
@@ -552,7 +566,7 @@ static func extend_day(day: DayDef) -> PackedStringArray:
 	var errors: PackedStringArray = []
 	if n < 4:
 		return errors
-	day.duration_sec += EXTRA_SECONDS_EARLY if n <= 7 else EXTRA_SECONDS_LATE
+	day.duration_sec += M13Sim.extra_seconds(n)
 	if FREE_CITATION_DAYS.has(n):
 		day.free_citations_per_day = maxi(day.free_citations_per_day, 3)
 	# Déclarations (R43).

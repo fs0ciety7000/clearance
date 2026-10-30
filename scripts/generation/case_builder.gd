@@ -1279,7 +1279,7 @@ func _build_revocations() -> void:
 	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(day_seed, REVOKED_SALT))
 	var faction_ids: Array[StringName] = []
 	faction_ids.assign(data.factions.keys())
-	faction_ids.sort()
+	SeededRng.sort_names(faction_ids)
 	for n: int in day.revoked_decoys:
 		var faction: FactionDef = data.factions[faction_ids[rng.randi_range(0, faction_ids.size() - 1)]]
 		var entry: RevokedEntry = RevokedEntry.new()
@@ -1737,7 +1737,7 @@ func _build_summons() -> void:
 		var rng: SeededRng = SeededRng.new(SeededRng.mix_string(day_seed, SUMMONS_DECOY_SALT))
 		var faction_ids: Array[StringName] = []
 		faction_ids.assign(data.factions.keys())
-		faction_ids.sort()
+		SeededRng.sort_names(faction_ids)
 		for n: int in day.summons_decoys:
 			var faction: FactionDef = data.factions[faction_ids[rng.randi_range(0, faction_ids.size() - 1)]]
 			var entry: SummonsEntry = SummonsEntry.new()
@@ -1901,8 +1901,13 @@ func _plan_search_alert(start: int) -> void:
 		var entry: AppearanceRoster.Entry = roster.get_entry(index)
 		if entry == null:
 			continue
-		if change.faction_ids.is_empty() or change.faction_ids.has(entry.faction_id):
-			matching.append(index)
+		if not change.faction_ids.is_empty() and not change.faction_ids.has(entry.faction_id):
+			continue
+		# Profil par motif (finition M13) : jamais un motif qui rendrait le
+		# passager interdit d'entrée par son origine (R19 Tharsis…).
+		if not change.purposes.is_empty() and not _purposes_allowed(entry.faction_id, change.purposes):
+			continue
+		matching.append(index)
 	var carriers: int = mini(rng.randi_range(1, 2), matching.size())
 	var picked: Array = rng.shuffled(matching)
 	for k: int in carriers:
@@ -1911,6 +1916,19 @@ func _plan_search_alert(start: int) -> void:
 			overrides[&"purpose"] = change.purposes[rng.randi_range(0, change.purposes.size() - 1)]
 		_forced[int(picked[k])] = {"kinds": [AnomalyType.Kind.CONTRABAND], "params": {}, "overrides": overrides,
 				"rule_id": SearchGenerator.SEARCH_RULE_ID}
+
+
+## Vrai si aucune `FactionBannedRule` active n'interdit l'origine `faction_id`
+## pour l'un des motifs `purposes` (motif non exempté).
+func _purposes_allowed(faction_id: StringName, purposes: Array[StringName]) -> bool:
+	for rule: Rule in day.rule_set.rules:
+		var banned: FactionBannedRule = rule as FactionBannedRule
+		if banned == null or not banned.banned_faction_ids.has(faction_id):
+			continue
+		for purpose: StringName in purposes:
+			if not banned.exempt_purposes.has(purpose):
+				return false
+	return true
 
 
 ## Index libres de la fenêtre `[start, start + size)` (ni scénarisés, ni imposés,
@@ -1962,7 +1980,7 @@ func _publish_named_list(rule: RevokedIdRule, start: int) -> void:
 func _decoy_entry(rng: SeededRng, id: StringName, reason_key: String) -> RevokedEntry:
 	var faction_ids: Array[StringName] = []
 	faction_ids.assign(data.factions.keys())
-	faction_ids.sort()
+	SeededRng.sort_names(faction_ids)
 	var faction: FactionDef = data.factions[faction_ids[rng.randi_range(0, faction_ids.size() - 1)]]
 	var entry: RevokedEntry = RevokedEntry.new()
 	entry.id = id
@@ -2047,7 +2065,7 @@ func _renew_garde_lists(start: int, fresh: Array[Rule], rng: SeededRng) -> Array
 func _decoy_notice(rng: SeededRng, id: StringName) -> WantedNotice:
 	var faction_ids: Array[StringName] = []
 	faction_ids.assign(day.faction_weights.keys())
-	faction_ids.sort()
+	SeededRng.sort_names(faction_ids)
 	var faction_id: StringName = faction_ids[rng.randi_range(0, faction_ids.size() - 1)] if not faction_ids.is_empty() else &"tyc"
 	var notice: WantedNotice = WantedNotice.new()
 	notice.id = id

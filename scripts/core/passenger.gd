@@ -33,7 +33,7 @@ const TRUTH_PATHS: Array[StringName] = [
 	&"sponsor_id", &"summons_id",
 	# M13 (B64, B69) : implants de localisation dissimulée (bras, jambes, torse, nuque).
 	&"concealed_implants",
-	# M13 (lot B, contournement local) : nom du Répondant imprimé sur le permis
+	# M13 (D-157) : nom du Répondant imprimé sur le permis
 	# (`Statement.PATH_SPONSOR_NAME`, R43 s4 — personne visitée).
 	&"sponsor_name",
 ]
@@ -85,9 +85,10 @@ var summons_id: String = ""
 ## la fouille (`SearchLayout`). La carte déclare `implants ∪ dissimulés
 ## déclarés`. Vides avant le J8.
 var concealed_implants: PackedStringArray = []
-## M13 (lot B, contournement local réversible, à confirmer par le lot A) :
-## nom et prénom du Répondant, imprimés en petit sur la ligne Répondant du
-## permis (ACT3 §2.5) ; vide sans répondant. Comparé à la personne visitée (R43 s4).
+## M13 (D-157, ARCHITECTURE §12.13) : nom et prénom du Répondant, imprimés en
+## petit sur la ligne Répondant du permis (ACT3 §2.5, champ facultatif
+## `sponsor_name`) ; vide sans répondant. Posé avec `sponsor_id` par le
+## générateur ; comparé à la personne visitée (R43 s4, `compare_to`).
 var sponsor_name: String = ""
 
 

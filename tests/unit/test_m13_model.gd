@@ -147,7 +147,7 @@ func test_fragments_frames_and_segments() -> void:
 	var corrected: Statement = Statement.duration(10, 10, "stmt_dur_d10")
 	corrected.corrected_from = "stmt_dur_w1"
 	assert_eq(Statement.compose(_t("line_stmt_frame_correct_1"), [purpose, corrected] as Array[Statement], _t),
-			"Le commerce. Une semaine… non, Dix jours.")
+			"Le commerce. Une semaine… non, dix jours.")
 	var employer: Statement = Statement.make(Statement.ID_EMPLOYER, "Kessler-Ashe Orbital", "stmt_employer",
 			["Kessler-Ashe"])
 	assert_eq(employer.fragment_text(_t), "chez Kessler-Ashe", "jeton {…} remplacé")
@@ -156,13 +156,39 @@ func test_fragments_frames_and_segments() -> void:
 	assert_eq(Statement.compose(_t("line_stmt_frame_work_1"), statements, _t), "Le commerce, . Cinq jours.",
 			"emplacement sans déclaration : vide")
 	var segments: Array[Dictionary] = Statement.segments("{motif}. {duree_barree}… non, {duree}. {inconnu}")
-	assert_eq(segments[0], {"statement": Statement.ID_PURPOSE, "struck": false})
+	assert_eq(segments[0], {"statement": Statement.ID_PURPOSE, "struck": false, "sentence_start": true})
 	assert_eq(segments[1], {"text": ". "})
-	assert_eq(segments[2], {"statement": Statement.ID_STAY, "struck": true})
-	assert_eq(segments[4], {"statement": Statement.ID_STAY, "struck": false})
+	assert_eq(segments[2], {"statement": Statement.ID_STAY, "struck": true, "sentence_start": true})
+	assert_eq(segments[4], {"statement": Statement.ID_STAY, "struck": false, "sentence_start": false})
 	assert_eq(segments[segments.size() - 1], {"text": "{inconnu}"}, "jeton inconnu gardé en texte")
 	assert_eq(Statement.ids_for_question(Statement.QUESTION_PURPOSE),
 			[Statement.ID_PURPOSE, Statement.ID_STAY, Statement.ID_EMPLOYER, Statement.ID_HOST] as Array[StringName])
+
+
+## Finition M13 : casse des fragments selon leur place dans la phrase.
+func test_fragment_case_follows_the_sentence() -> void:
+	var purpose: Statement = Statement.make(Statement.ID_PURPOSE, Passenger.PURPOSE_TRADE, "stmt_purpose_trade_1")
+	var stay: Statement = Statement.duration(5, 5, "stmt_dur_d5")
+	var statements: Array[Statement] = [purpose, stay]
+	var tr: Callable = func(key: String) -> String: return UiText.t(key)
+	assert_eq(Statement.compose(tr.call("line_stmt_frame_gen_2"), statements, tr),
+			"Le commerce, pour cinq jours. C'est écrit sur le permis.", "minuscule en milieu de phrase")
+	assert_eq(Statement.compose(tr.call("line_stmt_frame_gen_3"), statements, tr), "Euh… le commerce. Cinq jours, normalement.")
+	assert_eq(Statement.compose(tr.call("line_stmt_frame_tyc_2"), statements, tr),
+			"‹Esh ta.› Le commerce. Cinq jours. On ne demande pas plus, chez nous.", "après une phrase tessar")
+	var host: Statement = Statement.make(Statement.ID_HOST, "Tomás", "stmt_host_son", ["Tomás"])
+	var visit: Statement = Statement.make(Statement.ID_PURPOSE, Passenger.PURPOSE_FAMILY_VISIT, "stmt_purpose_family_visit_1")
+	assert_eq(Statement.compose(tr.call("line_stmt_frame_visit_2"), [host, visit, stay] as Array[Statement], tr),
+			"Mon fils, Tomás. Voir ma famille. Cinq jours, pas plus.", "majuscule en début de phrase")
+	assert_eq(Statement.compose(tr.call("line_stmt_frame_visit_1"), [host, visit, stay] as Array[Statement], tr),
+			"Voir ma famille : mon fils, Tomás. Cinq jours.", "deux-points : minuscule")
+	var origin: Statement = Statement.make(Statement.ID_ORIGIN, &"tyc", "stmt_origin_tyc")
+	var provenance: Statement = Statement.make(Statement.ID_PROVENANCE, &"shuttle", "stmt_prov_place", ["Cérès"])
+	assert_eq(Statement.compose(tr.call("line_stmt_origin_3"), [origin, provenance] as Array[Statement], tr),
+			"J'arrive de Cérès. Mais je suis de Tycho, oui.", "les noms propres des arguments gardent leur casse")
+	assert_eq(Statement.apply_case("PH-2 calibré", false), "PH-2 calibré", "sigle intact")
+	assert_eq(Statement.apply_case("%s jours", true), "%s jours", "gabarit qui commence par un argument")
+	assert_eq(Statement.duration(12, 12).cased_fragment_text(tr, false), "12", "valeur brute")
 
 
 func test_case_statement_helpers() -> void:

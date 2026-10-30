@@ -178,17 +178,20 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 				result.bribe_credits += item.credits_for(item.decision)
 		var scripted: ScriptedCaseDef = builder.get_scripted_case(i) if generated.scripted_id != &"" else null
 		result.scripted_id = generated.scripted_id
+		var search_changes: Dictionary[StringName, Variant] = {}
 		if scripted != null and verdict.search_done:
 			# M13 : drapeaux de fouille posés pendant le cas (avant les effets du verdict).
-			for flag: StringName in scripted.flags_on_search:
-				CaseConsequences.add(result.narrative_changes, flags, flag, scripted.flags_on_search[flag])
-			CaseConsequences.merge_into(flags, result.narrative_changes)
+			CaseConsequences.add_all(search_changes, flags, scripted.flags_on_search)
+			CaseConsequences.merge_into(flags, search_changes)
 		result.password_answered = profile.answer_password and case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE_PASSWORD) \
 				and FlagCondition.gauge_value(flags, CaseConsequences.FLAG_TRUST) >= CaseConsequences.PASSWORD_TRUST
 		result.narrative_changes = CaseConsequences.compute(scripted, case, result.verdict_kind,
 				not generated.key.expected_violations.is_empty(), result.password_answered, day_number, flags,
 				result.luciole_report, CaseConsequences.contexts_for(day, case, result), day.luciole_trust_on_breach,
 				day.admission_gauges)
+		for flag: StringName in search_changes:
+			if not result.narrative_changes.has(flag):
+				result.narrative_changes[flag] = search_changes[flag]
 		_m13_consequences(result, verdict, played, scripted, flags, data.get_economy())
 		CaseConsequences.merge_into(flags, result.narrative_changes)
 		if scripted != null:

@@ -475,14 +475,35 @@ func flag_values() -> Dictionary[StringName, Variant]:
 func _apply_narrative(result: CaseResult) -> void:
 	if current_scripted != null:
 		result.scripted_id = current_scripted.id
+	# M13 : les `flags_on_search` sont posés pendant le cas, donc **avant** les
+	# effets du verdict (SC-106, SC-108 : `extra_effects` conditionnés à
+	# `sc10N_searched`) ; `flag_values()` n'est jamais modifié.
+	var flags: Dictionary[StringName, Variant] = flag_values()
+	var search_changes: Dictionary[StringName, Variant] = search_flag_changes(result.verdict, flags)
+	if not search_changes.is_empty():
+		flags = flags.duplicate()
+		CaseConsequences.merge_into(flags, search_changes)
 	result.narrative_changes = CaseConsequences.compute(current_scripted, current_case, result.verdict_kind,
-			not current_key.expected_violations.is_empty(), result.password_answered, day.day_number, flag_values(),
+			not current_key.expected_violations.is_empty(), result.password_answered, day.day_number, flags,
 			result.luciole_report, shift_contexts(current_case, result), day.luciole_trust_on_breach,
 			day.admission_gauges)
+	for flag: StringName in search_changes:
+		if not result.narrative_changes.has(flag):
+			result.narrative_changes[flag] = search_changes[flag]
+
+
+## M13 (B72) : `ScriptedCaseDef.flags_on_search` du cas courant si le verdict
+## porte une fouille (valeurs absolues calculées sur `flags`) ; vide sinon.
+func search_flag_changes(verdict: Verdict, flags: Dictionary[StringName, Variant]) -> Dictionary[StringName, Variant]:
+	var changes: Dictionary[StringName, Variant] = {}
+	if verdict != null and verdict.search_done and current_scripted != null:
+		CaseConsequences.add_all(changes, flags, current_scripted.flags_on_search)
+	return changes
 
 
 ## M13 (B72, B74) : conséquences narratives de la fouille, ajoutées aux
-## changements du cas (valeurs absolues, comme `CaseConsequences`).
+## changements du cas (valeurs absolues, comme `CaseConsequences`) ; les
+## `flags_on_search` sont posés plus tôt, par `_apply_narrative`.
 func _apply_search_consequences(result: CaseResult) -> void:
 	var verdict: Verdict = result.verdict
 	if verdict == null or current_case == null:
@@ -496,8 +517,6 @@ func _apply_search_consequences(result: CaseResult) -> void:
 		var gate: UpgradeDef = data.get_economy().get_upgrade(UpgradeDef.ID_CALIBRATED_GATE) if data != null else null
 		var amount: int = SaveService.as_int(gate.get_effect(UpgradeDef.EFFECT_SUSPICION_ON_FOUND, 1)) if gate != null else 1
 		CaseConsequences.add(result.narrative_changes, flags, CaseConsequences.FLAG_SUSPICION, amount)
-	if verdict.search_done and current_scripted != null:
-		CaseConsequences.add_all(result.narrative_changes, flags, current_scripted.flags_on_search)
 
 
 ## M13 : R43 (déclarations conformes) active dans le shift.

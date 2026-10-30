@@ -84,7 +84,10 @@ const BUSY_QUESTION: StringName = &"question"
 const BUSY_CONFRONT: StringName = &"confront"
 const BUSY_REPEAT: StringName = &"repeat"
 const BUSY_SEARCH_ACTIVATION: StringName = &"search_activation"
+## Zone en cours : l'action émise est `search_zone:<zone>` (`search_zone:z2`) ;
+## `busy_kind()` / `busy_zone()` la décomposent.
 const BUSY_SEARCH_ZONE: StringName = &"search_zone"
+const BUSY_SEPARATOR: String = ":"
 ## Paramètre de surcharge de R44 posé par EV-09 (« fouille autorisée », MF-4).
 const PARAM_SEARCH_AUTHORIZED: StringName = &"search_authorized"
 
@@ -417,6 +420,22 @@ func _answer_base(topic: StringName, repeated: bool) -> void:
 
 
 ## Annonce une interface occupée (`inspection_busy`, indicatif).
+## Action `inspection_busy` d'une zone scannée : `search_zone:<zone>`.
+static func busy_zone_action(zone: StringName) -> StringName:
+	return StringName("%s%s%s" % [BUSY_SEARCH_ZONE, BUSY_SEPARATOR, zone])
+
+
+## Type d'une action `inspection_busy` (`search_zone:z2` → `search_zone`).
+static func busy_kind(action: StringName) -> StringName:
+	return StringName(String(action).get_slice(BUSY_SEPARATOR, 0))
+
+
+## Zone d'une action `search_zone:<zone>`, `&""` sinon.
+static func busy_zone(action: StringName) -> StringName:
+	var text: String = String(action)
+	return StringName(text.get_slice(BUSY_SEPARATOR, 1)) if text.contains(BUSY_SEPARATOR) else &""
+
+
 func _busy(duration: float, action: StringName) -> void:
 	if duration <= 0.0 or case == null:
 		return
@@ -560,7 +579,7 @@ func _advance_search(delta: float) -> void:
 				return
 			_current_zone = _zone_queue.pop_front()
 			_zone_left = _zone_costs.pop_front()
-			_busy(_zone_left, BUSY_SEARCH_ZONE)
+			_busy(_zone_left, busy_zone_action(_current_zone))
 		if _zone_left > left:
 			_zone_left -= left
 			return

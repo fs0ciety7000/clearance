@@ -36,3 +36,20 @@ end_key = "sev_contraband_alert_end"
 garde_required_unit = &"u22"
 garde_changes = Array[ExtResource("1_43bcy")]([SubResource("ev_09_resource_2")])
 garde_announce_key = "sev_contraband_alert_announce_garde"
+override_profiles = Array[Dictionary]([{
+"faction_ids": [&"tyc"],
+"label_key": "sev_contraband_alert_tyc",
+"purposes": []
+}, {
+"faction_ids": [&"cer"],
+"label_key": "sev_contraband_alert_cer",
+"purposes": []
+}, {
+"faction_ids": [],
+"label_key": "sev_contraband_alert_trade",
+"purposes": [&"trade"]
+}, {
+"faction_ids": [],
+"label_key": "sev_contraband_alert_transit",
+"purposes": [&"transit"]
+}])

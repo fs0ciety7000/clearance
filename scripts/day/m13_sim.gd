@@ -24,9 +24,13 @@ const KINDS: Array[AnomalyType.Kind] = [AnomalyType.Kind.STATEMENT_MISMATCH, Ano
 		AnomalyType.Kind.CONCEALED_IMPLANT, AnomalyType.Kind.CONCEALED_WEAPON]
 const SCRIPTED_IDS: Array[StringName] = [&"sc_104", &"sc_105", &"sc_106", &"sc_107", &"sc_108", &"sc_109", &"sc_110",
 		&"sc_111"]
-## Compensation de M13 §4.2 (retirée par `strip`).
+## Compensation de M13 §4.2 (`duration_sec`, retirée par `strip`) — seule
+## source, lue par `tools/build_data_m13.gd` : J4–J7, J8–J20, J21–J30
+## (finition M13 : +15 / +20 / +10 s ; lot B : +15 / +25 / +25 s).
 const EXTRA_SECONDS_EARLY: float = 15.0
-const EXTRA_SECONDS_LATE: float = 25.0
+const EXTRA_SECONDS_LATE: float = 20.0
+const EXTRA_SECONDS_ACT3: float = 10.0
+const ACT3_FIRST_DAY: int = 21
 const FREE_CITATION_DAYS: Array[int] = [4, 8]
 const PURPOSE_MISMATCH_CUT: Dictionary[int, float] = {4: 0.06, 5: 0.02}
 ## Coût d'une question avant M13 (durée d'un sous-titre, ≈ 2,5 s).
@@ -44,6 +48,15 @@ const CONFRONT_RATE: float = 0.3
 const SECOND_ZONE_RATE: float = 0.5
 const SALT: String = "m13_player"
 const R08_ID: StringName = &"r_tycho_interview"
+
+
+## Secondes ajoutées au shift du jour `day_number` par M13 (0 avant le J4).
+static func extra_seconds(day_number: int) -> float:
+	if day_number < 4:
+		return 0.0
+	if day_number <= 7:
+		return EXTRA_SECONDS_EARLY
+	return EXTRA_SECONDS_LATE if day_number < ACT3_FIRST_DAY else EXTRA_SECONDS_ACT3
 
 
 ## Copie de shift du jour sans M13 (« 0.12 »).
@@ -74,7 +87,7 @@ static func strip(day: DayDef) -> DayDef:
 	copy.statement_topic_weights = {}
 	copy.search_cue_noise_rate = 0.0
 	if day.mode == DayDef.MODE_CAMPAIGN and day.day_number >= 4:
-		copy.duration_sec = day.duration_sec - (EXTRA_SECONDS_EARLY if day.day_number <= 7 else EXTRA_SECONDS_LATE)
+		copy.duration_sec = day.duration_sec - extra_seconds(day.day_number)
 		if FREE_CITATION_DAYS.has(day.day_number):
 			copy.free_citations_per_day = 2
 	return copy

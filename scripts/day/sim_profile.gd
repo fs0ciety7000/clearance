@@ -101,6 +101,11 @@ var search_zones: StringName = ZONES_TARGETED
 var cue_spot: float = 0.8
 ## Achats du soir : `never`, `smart` (§4.4), `eager`, `list` (`upgrade_list`).
 var upgrade_policy: StringName = UPGRADES_SMART
+## Politique `smart` : solde minimal **après** l'achat (postes essentiels
+## payés) et dernier soir d'achat (0 = jusqu'au J29). Finition M13 : voir
+## `BalanceSimulator.SMART_MARGIN` / `SMART_LAST_EVENING`.
+var smart_margin: int = -1
+var smart_last_evening: int = -1
 var upgrade_list: Array[StringName] = []
 ## Améliorations jamais achetées par ce profil (`luciole` : ni le PH-2 qui
 ## transmet ses relevés, ni le moniteur de Valcourt-Hsu).

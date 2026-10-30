@@ -22,6 +22,9 @@ const ID_ANNOTATED_BOOK: StringName = &"ag05"
 const ID_QUEUE_MONITOR: StringName = &"ag06"
 ## AG-04 trouvé par Ravel à un audit (tiroir confisqué, effet perdu).
 const FLAG_DRAWER_FOUND: StringName = &"upg_ag04_found"
+## Première enveloppe présentée au guichet (condition d'offre d'AG-04),
+## posé par `CaseConsequences.compute`.
+const FLAG_BRIBE_SEEN: StringName = &"bribe_seen"
 ## Jauge des fouilles sans motif (texte seulement : Okonkwo J9, Revue J17).
 const FLAG_SEARCH_ABUSE: StringName = &"fouille_abus"
 

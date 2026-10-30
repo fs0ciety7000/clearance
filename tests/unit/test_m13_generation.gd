@@ -202,6 +202,13 @@ func test_generated_answers_fit_ninety_characters() -> void:
 				too_long.append("%s %s : %s" % [g.case.case_id, frame, text])
 			if text.count("‹") != text.count("›") or text.count("‹") > 1:
 				too_long.append("%s : Tessar %s" % [g.case.case_id, text])
+			var sentences: PackedStringArray = text.replace("‹", "").replace("›", "").replace("! ", ". ").replace("? ", ". ").split(". ")
+			for sentence: String in sentences:
+				if not sentence.is_empty() and sentence[0] != sentence[0].to_upper():
+					too_long.append("%s : casse %s" % [g.case.case_id, text])
+					break
+			if text.contains(", pour ") and not text.contains(", pour " + text.get_slice(", pour ", 1).left(1).to_lower()):
+				too_long.append("%s : casse en milieu de phrase %s" % [g.case.case_id, text])
 	assert_gt(checked, PASSENGERS)
 	assert_eq(too_long.size(), 0, Gen.head(too_long))
 
@@ -398,3 +405,72 @@ func test_generation_is_deterministic() -> void:
 			var ca: Case = a.build(i).case
 			var cb: Case = b.build(i).case
 			assert_eq(JSON.stringify(CaseSerializer.serialize_case(ca)), JSON.stringify(CaseSerializer.serialize_case(cb)), "J%d @%d" % [n, i])
+
+
+# ---------------------------------------------------------------------------
+# Finition M13 : fuite d'état entre générations (FORGED_SUMMONS non détectée)
+# ---------------------------------------------------------------------------
+
+## Signature d'un jour généré : verdicts, anomalies, noms, et leurres des
+## onglets (Convocations, Révocations) tirés dans des listes d'origines.
+func _day_signature(day_number: int, group: int) -> PackedStringArray:
+	var builder: CaseBuilder = CaseBuilder.new(data, data.get_day(day_number), Gen.day_seed(group, day_number))
+	var lines: PackedStringArray = []
+	for g: GeneratedCase in builder.build_day():
+		lines.append("%s %s %s %s %s" % [g.case.case_id, g.case.passenger_presented.given_name,
+				g.case.passenger_presented.family_name, g.key.expected_verdict, g.get_anomaly_kinds()])
+		assert_eq(g.invariant_errors.size(), 0, "J%d g%d %s : %s" % [day_number, group, g.case.case_id, g.invariant_errors])
+	for entry: SummonsEntry in builder.ctx.summons:
+		lines.append("summons %s %s %s" % [entry.number, entry.given_name, entry.family_name])
+	return lines
+
+
+## `Array.sort()` ordonnait les origines (`StringName`) par adresse interne :
+## une même graine tirait d'autres leurres de Convocation selon les
+## générations précédentes du processus (1 FORGED_SUMMONS non détectée sur
+## ~18 700 au J30 dans `gen_stats`). Plusieurs générations successives dans le
+## même processus, entrecoupées d'autres jours et de nouveaux `StringName`,
+## donnent exactement le même jour, sans invariant violé.
+func test_successive_generations_in_one_process_are_identical() -> void:
+	var names: Array = [StringName("zeta_m13_order"), StringName("alpha_m13_order"), StringName("mu_m13_order")]
+	SeededRng.sort_names(names)
+	assert_eq(names, [&"alpha_m13_order", &"mu_m13_order", &"zeta_m13_order"], "ordre alphabétique, pas d'adresse")
+	var groups: Array[int] = [33, 34, 35, 36]
+	var first: Array[PackedStringArray] = []
+	for group: int in groups:
+		first.append(_day_signature(30, group))
+	for n: int in [21, 26, 28, 29]:
+		CaseBuilder.new(data, data.get_day(n), Gen.day_seed(900 + n, n)).build_day()
+	var interned: Array[StringName] = []
+	for k: int in 300:
+		interned.append(StringName("m13_leak_probe_%d" % k))
+	for i: int in groups.size():
+		assert_eq(_day_signature(30, groups[i]), first[i], "J30 g%d : même résultat après d'autres générations" % groups[i])
+	# L'ordre des origines ne dépend plus du processus : les leurres de
+	# l'onglet Convocations suivent la liste **alphabétique** des origines.
+	for group: int in groups:
+		var day: DayDef = data.get_day(30)
+		var day_seed: int = Gen.day_seed(group, 30)
+		var builder: CaseBuilder = CaseBuilder.new(data, day, day_seed)
+		var rng: SeededRng = SeededRng.new(SeededRng.mix_string(day_seed, CaseBuilder.SUMMONS_DECOY_SALT))
+		var faction_ids: Array = data.factions.keys()
+		faction_ids.sort_custom(func(a: Variant, b: Variant) -> bool: return String(a) < String(b))
+		var taken: PackedStringArray = []
+		for entry: SummonsEntry in builder.ctx.summons:
+			if entry.case_index >= 0:
+				taken.append(entry.number)
+		var decoys: Dictionary[String, String] = {}
+		for entry: SummonsEntry in builder.ctx.summons:
+			if entry.case_index < 0:
+				decoys[entry.number] = "%s %s" % [entry.given_name, entry.family_name]
+		assert_eq(decoys.size(), day.summons_decoys)
+		for n: int in day.summons_decoys:
+			var faction: FactionDef = data.factions[faction_ids[rng.randi_range(0, faction_ids.size() - 1)]]
+			var number: String = "%s%04d" % [CaseBuilder.SUMMONS_PREFIX, rng.randi_range(CaseBuilder.SUMMONS_RANGE.x, CaseBuilder.SUMMONS_RANGE.y)]
+			while taken.has(number):
+				number = "%s%04d" % [CaseBuilder.SUMMONS_PREFIX, rng.randi_range(CaseBuilder.SUMMONS_RANGE.x, CaseBuilder.SUMMONS_RANGE.y)]
+			taken.append(number)
+			var sex: StringName = PassengerGenerator.SEXES[rng.randi_range(0, 1)]
+			var given: String = faction.name_pool.pick_given_name(rng, sex)
+			var family: String = faction.name_pool.pick_family_name(rng)
+			assert_eq(decoys.get(number, ""), "%s %s" % [given, family], "J30 g%d : leurre %d" % [group, n])

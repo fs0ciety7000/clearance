@@ -68,6 +68,9 @@ static func compute(scripted: ScriptedCaseDef, case: Case, verdict: VerdictKind.
 				add_all(changes, flags, effect.flags)
 	if case != null:
 		for item: SlippedItem in case.slipped_items:
+			if item.kind == SlippedItem.Kind.ENVELOPE and not FlagCondition.is_flag_true(flags, UpgradeDef.FLAG_BRIBE_SEEN):
+				# M13 (AG-04) : la première enveloppe présentée, quel que soit son sort.
+				add(changes, flags, UpgradeDef.FLAG_BRIBE_SEEN, 0)
 			var effects: Dictionary = item.effects_for(verdict, item.final_decision())
 			if item.kind == SlippedItem.Kind.ENVELOPE and item.final_decision() == SlippedItem.Decision.KEEP \
 					and UpgradeDef.owns(flags, UpgradeDef.ID_DOUBLE_DRAWER):

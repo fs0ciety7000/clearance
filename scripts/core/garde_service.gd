@@ -261,13 +261,12 @@ static func directive_changes(def: GardeDef, entry: Dictionary) -> Array[RuleCha
 			continue
 		match StringName(entry.get("action", ACTION_ADD)):
 			ACTION_ADD:
-				# M13 (U24, contournement du lot B) : un palier de R43 remplace le
-				# palier en vigueur (même identifiant) — retrait, oubli de la ligne
-				# barrée, puis ajout.
+				# M13 (U24) : un palier de R43 (même identifiant) remplace le
+				# palier en vigueur, à sa place (`RuleChangeDef.replace`).
 				if rule is StatementsConsistentRule and (rule as StatementsConsistentRule).tier > 1:
-					changes.append(RuleChangeDef.retire(rule.id))
-					changes.append(RuleChangeDef.forget(rule.id))
-				changes.append(RuleChangeDef.add(rule, true))
+					changes.append(RuleChangeDef.replace(rule, true))
+				else:
+					changes.append(RuleChangeDef.add(rule, true))
 			ACTION_RETIRE:
 				changes.append(RuleChangeDef.retire(rule.id, def.rotation_note_key))
 			ACTION_RESTORE:

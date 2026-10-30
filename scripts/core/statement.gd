@@ -228,6 +228,51 @@ func struck_text(translate: Callable) -> String:
 	return format_fragment(str(translate.call(corrected_from)), corrected_args)
 
 
+## Fragment selon sa place dans la phrase (finition M13) : majuscule en début
+## de phrase, minuscule au milieu (« Le commerce, pour cinq jours. ») ;
+## `struck` = la valeur barrée. La casse porte sur le **gabarit** traduit,
+## jamais sur les arguments (noms propres) ; une valeur brute n'est jamais
+## mise en minuscule.
+func cased_fragment_text(translate: Callable, sentence_start: bool, struck: bool = false) -> String:
+	var key: String = corrected_from if struck else phrase_key
+	if key.is_empty():
+		if struck:
+			return ""
+		return apply_case(_value_text(), true) if sentence_start else _value_text()
+	return format_fragment(apply_case(str(translate.call(key)), sentence_start), corrected_args if struck else args)
+
+
+## Casse de la première lettre d'un gabarit : majuscule si `sentence_start`,
+## sinon minuscule quand le premier mot est en casse de phrase (« Je »,
+## « J'arrive », « Ça » ; pas un sigle). Un gabarit qui commence par un
+## argument (`%s`, `{…}`) ou une ponctuation (‹tessar›) est laissé tel quel.
+static func apply_case(text: String, sentence_start: bool) -> String:
+	if text.is_empty() or not _is_letter(text[0]):
+		return text
+	if sentence_start:
+		return text[0].to_upper() + text.substr(1)
+	if text.length() > 1 and _is_letter(text[1]) and text[1] != text[1].to_lower():
+		return text
+	return text[0].to_lower() + text.substr(1)
+
+
+## Vrai si la suite d'un cadre commence une phrase : texte vide, ou dernier
+## signe non blanc `.`, `!`, `?` (éventuellement suivi d'un guillemet `›`,
+## `»`, `"`). Les points de suspension et deux-points ne terminent pas.
+static func is_sentence_start(prefix: String) -> bool:
+	var trimmed: String = prefix.strip_edges(false, true)
+	if trimmed.is_empty():
+		return true
+	var last: String = trimmed[trimmed.length() - 1]
+	if last in ["›", "»", "\""] and trimmed.length() > 1:
+		last = trimmed[trimmed.length() - 2]
+	return last in [".", "!", "?"]
+
+
+static func _is_letter(c: String) -> bool:
+	return c.to_upper() != c.to_lower()
+
+
 static func format_fragment(text: String, p_args: Array) -> String:
 	if p_args.is_empty():
 		return text
@@ -246,12 +291,14 @@ static func format_fragment(text: String, p_args: Array) -> String:
 
 
 ## Découpe un cadre de réponse en segments : `{"text": …}` ou
-## `{"statement": id, "struck": bool}` (l'UI en fait des puces, lot C).
-## Un emplacement inconnu reste du texte.
+## `{"statement": id, "struck": bool, "sentence_start": bool}` (l'UI en fait
+## des puces, lot C ; texte de la puce : `cased_fragment_text(translate,
+## sentence_start, struck)`). Un emplacement inconnu reste du texte.
 static func segments(frame_text: String) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	var rest: String = frame_text
 	while not rest.is_empty():
+		var prefix: String = frame_text.substr(0, frame_text.length() - rest.length())
 		var start: int = rest.find("{")
 		var stop: int = rest.find("}", start) if start >= 0 else -1
 		if start < 0 or stop < 0:
@@ -260,10 +307,11 @@ static func segments(frame_text: String) -> Array[Dictionary]:
 		if start > 0:
 			result.append({"text": rest.substr(0, start)})
 		var token: String = rest.substr(start + 1, stop - start - 1)
+		var opening: bool = is_sentence_start(prefix + rest.substr(0, start))
 		if token == PLACEHOLDER_STRUCK:
-			result.append({"statement": ID_STAY, "struck": true})
+			result.append({"statement": ID_STAY, "struck": true, "sentence_start": opening})
 		elif PLACEHOLDERS.has(token):
-			result.append({"statement": PLACEHOLDERS[token], "struck": false})
+			result.append({"statement": PLACEHOLDERS[token], "struck": false, "sentence_start": opening})
 		else:
 			result.append({"text": rest.substr(start, stop - start + 1)})
 		rest = rest.substr(stop + 1)
@@ -272,7 +320,8 @@ static func segments(frame_text: String) -> Array[Dictionary]:
 
 ## Réplique composée (texte brut : sous-titre, tests de longueur ≤ 90) : le
 ## cadre `frame_text` dont les emplacements reçoivent les fragments des
-## déclarations ; un emplacement sans déclaration reste vide.
+## déclarations, à la casse de leur place (`cased_fragment_text`) ; un
+## emplacement sans déclaration reste vide.
 static func compose(frame_text: String, statements: Array[Statement], translate: Callable) -> String:
 	var text: String = ""
 	for segment: Dictionary in segments(frame_text):
@@ -282,8 +331,7 @@ static func compose(frame_text: String, statements: Array[Statement], translate:
 		var statement: Statement = find_in(statements, StringName(str(segment["statement"])))
 		if statement == null:
 			continue
-		var struck: bool = segment["struck"]
-		text += statement.struck_text(translate) if struck else statement.fragment_text(translate)
+		text += statement.cased_fragment_text(translate, bool(segment["sentence_start"]), bool(segment["struck"]))
 	return text
 
 

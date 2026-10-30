@@ -35,6 +35,7 @@
 ## d'événement.
 ##
 ## Usage (depuis la racine du projet) :
+## `--from=K` : graines K → K + N − 1 (lots d'une même mesure).
 ##   godot --headless --script res://tools/balance_sim.gd -- --seeds=200 --seed=1 \
 ##       --profiles=0.6,0.8,0.95 --spending=reasoned|default [--set=heating=6,starting_credits=10] \
 ##       [--presets=default,loyal,luciole,mercenary,drift,negligent,archiviste,solidaire] [--days=30] \
@@ -45,6 +46,9 @@ extends SceneTree
 
 var _seeds: int = 200
 var _seed: int = 1
+## Finition M13 : index de la première graine (`--from=K` : graines K → K + N − 1,
+## pour découper une mesure en lots de même base `--seed`).
+var _from: int = 0
 var _profiles: Array[float] = [0.6, 0.8, 0.95]
 var _spending: BalanceSimulator.Spending = BalanceSimulator.Spending.REASONED
 var _overrides: Dictionary[String, String] = {}
@@ -64,6 +68,9 @@ var _events: String = "on"
 ## `--timed` (modèle de temps : part de la file traitée).
 var _m13: String = "on"
 var _upgrades: String = ""
+## Finition M13 : `--smart=marge[,dernier_soir]` (essais de la politique `smart`).
+var _smart_margin: int = -1
+var _smart_last_evening: int = -1
 var _timed: bool = false
 
 ## État synthétique du J21 par climat : drapeaux et jauges (docs/ACT3.md §1.3).
@@ -140,6 +147,8 @@ func _parse_args() -> void:
 			_seeds = maxi(arg.trim_prefix("--seeds=").to_int(), 1)
 		elif arg.begins_with("--seed="):
 			_seed = arg.trim_prefix("--seed=").to_int()
+		elif arg.begins_with("--from="):
+			_from = maxi(arg.trim_prefix("--from=").to_int(), 0)
 		elif arg.begins_with("--profiles="):
 			_profiles.clear()
 			for part: String in arg.trim_prefix("--profiles=").split(",", false):
@@ -174,6 +183,10 @@ func _parse_args() -> void:
 			_m13 = arg.trim_prefix("--m13=")
 		elif arg.begins_with("--upgrades="):
 			_upgrades = arg.trim_prefix("--upgrades=")
+		elif arg.begins_with("--smart="):
+			var smart: PackedStringArray = arg.trim_prefix("--smart=").split(",")
+			_smart_margin = smart[0].to_int()
+			_smart_last_evening = smart[1].to_int() if smart.size() > 1 else -1
 		elif arg == "--timed":
 			_timed = true
 		elif arg == "--spending=default":
@@ -206,7 +219,7 @@ func _run_profile(data: DataCatalog, accuracy: float, preset: StringName = &"def
 			d[id] = 0
 		unpaid.append(d)
 	var finished: int = 0
-	for n: int in _seeds:
+	for n: int in range(_from, _from + _seeds):
 		var rows: Array[Dictionary] = []
 		if _climate.is_empty():
 			var profile: SimProfile = _profile(preset, accuracy)
@@ -298,7 +311,7 @@ func _garde_codes() -> PackedStringArray:
 		for d: int in _daily:
 			codes.append(GardeService.daily_code(base + d * 86400))
 		return codes
-	for n: int in _seeds:
+	for n: int in range(_from, _from + _seeds):
 		codes.append(GardeService.code_from_bits(SeededRng.mix(_seed, n)))
 	return codes
 
@@ -356,7 +369,7 @@ func _compare_events(data: DataCatalog, accuracy: float, preset: StringName) -> 
 	var delta_sum: float = 0.0
 	var delta_days: int = 0
 	var types: Dictionary[String, int] = {}
-	for n: int in _seeds:
+	for n: int in range(_from, _from + _seeds):
 		var campaign_seed: int = SeededRng.mix(_seed, n)
 		var plain_profile: SimProfile = SimProfile.preset(preset, accuracy)
 		var rows_plain: Array[Dictionary] = BalanceSimulator.run_campaign(data, campaign_seed, accuracy, _spending, last,
@@ -419,6 +432,8 @@ func _profile(preset: StringName, accuracy: float, m13: bool = true) -> SimProfi
 	profile.timed = _timed or _m13 == "compare"
 	if not _upgrades.is_empty():
 		profile.upgrade_policy = StringName(_upgrades)
+	profile.smart_margin = _smart_margin
+	profile.smart_last_evening = _smart_last_evening
 	return profile
 
 
@@ -445,7 +460,7 @@ func _compare_m13(data: DataCatalog, accuracy: float, preset: StringName) -> voi
 	for i: int in last:
 		share[0].append(0.0)
 		share[1].append(0.0)
-	for n: int in _seeds:
+	for n: int in range(_from, _from + _seeds):
 		var campaign_seed: int = SeededRng.mix(_seed, n)
 		for arm: int in 2:
 			var profile: SimProfile = _profile(preset, accuracy, arm == 1)
@@ -551,6 +566,20 @@ func _compare_m13(data: DataCatalog, accuracy: float, preset: StringName) -> voi
 			"cit_interview_skipped"]:
 		citation_parts.append("%s %d → %d" % [key, int(citations[0].get(key, 0)), int(citations[1].get(key, 0))])
 	print("citations (total) : " + " · ".join(citation_parts))
+	# Ligne brute (comptes) pour agréger des lots `--from` (finition M13).
+	print("M13RAW " + JSON.stringify({"preset": String(preset), "accuracy": accuracy, "from": _from, "seeds": _seeds,
+			"endings": endings, "bought": bought, "balances": balances, "reached": [reached[0].get(10, 0),
+			reached[0].get(20, 0), reached[0].get(29, 0), reached[1].get(10, 0), reached[1].get(20, 0), reached[1].get(29, 0)],
+			"sacrificed": sacrificed, "evenings": evenings, "share": share,
+			"days_reached": [_reached_days(reached[0], last), _reached_days(reached[1], last)]}))
+
+
+## Nombre de campagnes ayant joué chaque jour (clés négatives de `reached`).
+static func _reached_days(reached: Dictionary, last: int) -> Array[int]:
+	var result: Array[int] = []
+	for i: int in last:
+		result.append(int(reached.get(-(i + 1), 0)))
+	return result
 
 
 static func _percentile(values: Array[int], q: float) -> float:

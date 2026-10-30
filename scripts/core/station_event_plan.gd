@@ -33,6 +33,11 @@ var list_size: int = 0
 var state: State = State.PENDING
 ## Secondes réelles restantes (fenêtre `SECONDS`, tenu par le `DayController`).
 var seconds_left: float = 0.0
+## M13 (EV-09) : profil tiré parmi `StationEventDef.override_profiles` (−1 =
+## aucun : portée des données).
+var profile_index: int = -1
+## Copies des surcharges à la portée du profil (jamais la Resource partagée).
+var _scoped: Array[RuleChangeDef] = []
 
 
 ## Source des changements de règles (`ev_05@j12`, `ev_04@g37`).
@@ -46,10 +51,54 @@ func changes() -> Array[RuleChangeDef]:
 	var result: Array[RuleChangeDef] = []
 	if event == null:
 		return result
+	if not _scoped.is_empty():
+		return _scoped.duplicate()
 	var list: Array[RuleChangeDef] = event.garde_changes if garde and not event.garde_changes.is_empty() else event.changes
+	var scope: Dictionary = profile()
 	for change: RuleChangeDef in list:
-		if change != null:
+		if change == null:
+			continue
+		if not scope.is_empty() and change.op == RuleChangeDef.Op.OVERRIDE:
+			var scoped: RuleChangeDef = change.duplicate() as RuleChangeDef
+			scoped.params = change.params.duplicate()
+			scoped.faction_ids = _names(scope.get("faction_ids", []))
+			scoped.purposes = _names(scope.get("purposes", []))
+			result.append(scoped)
+		else:
 			result.append(change)
+	if not scope.is_empty():
+		_scoped = result.duplicate()
+	return result
+
+
+## M13 (EV-09) : tire le profil de l'événement (`override_profiles`) avec
+## `rng` ; sans profils, rien n'est tiré (aucun tirage consommé).
+func draw_profile(rng: SeededRng) -> void:
+	_scoped.clear()
+	if event == null or event.override_profiles.is_empty():
+		profile_index = -1
+		return
+	profile_index = rng.randi_range(0, event.override_profiles.size() - 1)
+
+
+## Profil tiré (`{faction_ids, purposes, label_key}`), vide sans profil.
+func profile() -> Dictionary:
+	if event == null or profile_index < 0 or profile_index >= event.override_profiles.size():
+		return {}
+	return event.override_profiles[profile_index]
+
+
+## Clé du libellé du profil (`sev_contraband_alert_tyc`…) : argument `%s` de
+## l'annonce et de la ligne du Rulebook ; vide sans profil.
+func profile_label_key() -> String:
+	return str(profile().get("label_key", ""))
+
+
+static func _names(values: Variant) -> Array[StringName]:
+	var result: Array[StringName] = []
+	if values is Array:
+		for value: Variant in values:
+			result.append(StringName(str(value)))
 	return result
 
 

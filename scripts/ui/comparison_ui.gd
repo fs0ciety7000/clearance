@@ -2353,11 +2353,13 @@ func _on_inspection_busy(case_id: StringName, duration_sec: float, action: Strin
 
 ## Raison affichée de l'attente (« LE PASSAGER RÉPOND », « SCAN · TORSE »…).
 func busy_text(action: StringName) -> String:
-	match action:
+	match InspectionSession.busy_kind(action):
 		InspectionSession.BUSY_SEARCH_ACTIVATION:
 			return UiText.t("busy_search_activation", "Activation du portique")
 		InspectionSession.BUSY_SEARCH_ZONE:
-			var zone: StringName = search_panel.scanning_zone()
+			var zone: StringName = InspectionSession.busy_zone(action)
+			if zone == &"":
+				zone = search_panel.scanning_zone()
 			return UiText.tf("busy_search_zone", [UiText.t("zone_%s" % zone, String(zone))], "Scan · %s") if zone != &"" \
 					else UiText.t("busy_search_scan", "Scan en cours")
 	return UiText.t("busy_answer", "Le passager répond")

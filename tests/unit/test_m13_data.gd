@@ -11,7 +11,8 @@ const M13 := preload("res://tools/build_data_m13.gd")
 const K := AnomalyType.Kind
 const VK := VerdictKind.Kind
 ## Durées du shift de la 0.12 (avant compensation M13 §4.2).
-const DURATION_012: Dictionary[int, float] = {3: 600.0, 4: 600.0, 7: 660.0, 8: 660.0, 9: 690.0}
+const DURATION_012: Dictionary[int, float] = {3: 600.0, 4: 600.0, 7: 660.0, 8: 660.0, 9: 690.0, 20: 780.0, 21: 720.0,
+		30: 780.0}
 
 var data: DataCatalog = null
 
@@ -32,7 +33,13 @@ func test_time_compensation_and_free_citations() -> void:
 	assert_eq(data.get_day(7).duration_sec, DURATION_012[7] + M13.EXTRA_SECONDS_EARLY)
 	assert_eq(data.get_day(8).duration_sec, DURATION_012[8] + M13.EXTRA_SECONDS_LATE, "J8 → J30")
 	assert_eq(data.get_day(9).duration_sec, DURATION_012[9] + M13.EXTRA_SECONDS_LATE)
+	assert_eq(data.get_day(20).duration_sec, DURATION_012[20] + M13.EXTRA_SECONDS_LATE, "J8 → J20")
+	assert_eq(data.get_day(21).duration_sec, DURATION_012[21] + M13.EXTRA_SECONDS_ACT3, "Acte III (finition M13)")
+	assert_eq(data.get_day(30).duration_sec, DURATION_012[30] + M13.EXTRA_SECONDS_ACT3)
 	assert_eq(M13Sim.EXTRA_SECONDS_LATE, M13.EXTRA_SECONDS_LATE, "simulation et données alignées")
+	for n: int in range(1, 31):
+		assert_eq(M13Sim.strip(data.get_day(n)).duration_sec, data.get_day(n).duration_sec - M13Sim.extra_seconds(n),
+				"J%d : la simulation retire exactement la compensation" % n)
 	for world: StringName in [&"a", &"b", &"c", &"d"]:
 		assert_true(data.get_epilogue_day(world).untimed, "J31 : aucune compensation")
 
@@ -206,6 +213,36 @@ func test_upgrades_catalog_and_shop() -> void:
 	assert_true(EveningService.shop_lines(economy, 30, flags).is_empty(), "jusqu'au soir du J29")
 
 
+## Finition M13 : la première enveloppe présentée pose `bribe_seen` (rendue ou
+## gardée), ce qui ouvre l'offre d'AG-04 ; les effets de l'enveloppe ne changent pas.
+func test_first_envelope_sets_bribe_seen_and_offers_the_drawer() -> void:
+	var sc07: ScriptedCaseDef = null
+	for scripted: ScriptedCaseDef in data.get_day(4).scripted_cases:
+		if scripted.id == &"sc_07":
+			sc07 = scripted
+	assert_not_null(sc07)
+	var flags: Dictionary[StringName, Variant] = {}
+	for decision: SlippedItem.Decision in [SlippedItem.Decision.RETURN, SlippedItem.Decision.KEEP]:
+		var c: Case = Case.new()
+		var item: SlippedItem = sc07.slipped_item.instantiate(&"x", 0, {})
+		item.decision = decision
+		c.slipped_items.append(item)
+		var changes: Dictionary[StringName, Variant] = CaseConsequences.compute(sc07, c, VerdictKind.Kind.APPROVE, true,
+				false, 4, flags)
+		assert_eq(changes.get(UpgradeDef.FLAG_BRIBE_SEEN), true, "enveloppe vue (%d)" % decision)
+		if decision == SlippedItem.Decision.KEEP:
+			assert_eq(changes.get(&"suspicion"), 1, "effets de l'enveloppe gardée inchangés")
+			assert_eq(changes.get(&"sc07_bribe_kept"), true)
+	var seen: Dictionary[StringName, Variant] = {UpgradeDef.FLAG_BRIBE_SEEN: true}
+	var again: Case = Case.new()
+	again.slipped_items.append(sc07.slipped_item.instantiate(&"y", 0, {}))
+	assert_false(CaseConsequences.compute(null, again, VerdictKind.Kind.APPROVE, false, false, 6, seen)
+			.has(UpgradeDef.FLAG_BRIBE_SEEN), "posé une seule fois")
+	assert_false(CaseConsequences.compute(null, Case.new(), VerdictKind.Kind.APPROVE, false, false, 6, flags)
+			.has(UpgradeDef.FLAG_BRIBE_SEEN), "sans enveloppe : rien")
+	assert_true(_ids(EveningService.shop_lines(data.get_economy(), 6, seen)).has(UpgradeDef.ID_DOUBLE_DRAWER))
+
+
 func test_one_purchase_per_evening_without_overdraft_and_flags() -> void:
 	var economy: EconomyDef = data.get_economy()
 	var home: Household = Household.new()
@@ -257,6 +294,38 @@ func test_double_drawer_envelopes_and_audits() -> void:
 	assert_false(UpgradeDef.owns(found, UpgradeDef.ID_DOUBLE_DRAWER), "confisqué : effet perdu")
 
 
+## Finition M13 : U24 remplace le palier de R43 en vigueur **à sa place**
+## (`RuleChangeDef.replace`), sans ligne barrée ; défaire la source rétablit
+## le palier s1 ; un ajout ordinaire d'un identifiant actif reste ignoré.
+func test_garde_tier_replaces_r43_in_place() -> void:
+	var g: GardeDef = data.garde
+	var base: StatementsConsistentRule = g.get_unit(&"u21").rules[0] as StatementsConsistentRule
+	var tier3: StatementsConsistentRule = g.get_unit(&"u24").rules[0] as StatementsConsistentRule
+	assert_eq(base.id, tier3.id, "même identifiant")
+	var before: Rule = ProcedureRule.new()
+	before.id = &"r_before"
+	var after: Rule = ProcedureRule.new()
+	after.id = &"r_after"
+	var rs: RuleSet = RuleSet.new()
+	rs.rules = [before, base, after] as Array[Rule]
+	var shift: RuleSet = rs.make_shift_copy()
+	var changes: Array[RuleChangeDef] = GardeService.directive_changes(g, {"unit_id": &"u24", "action": GardeService.ACTION_ADD})
+	assert_eq(changes.size(), 1)
+	assert_true(changes[0].replaces)
+	var diff: RuleDiff = shift.apply_changes(changes, &"directive_9")
+	assert_eq(shift.get_rule_ids(), [&"r_before", base.id, &"r_after"] as Array[StringName], "à sa place")
+	assert_eq((shift.get_rule(base.id) as StatementsConsistentRule).tier, 3)
+	assert_true(shift.retired_rules.is_empty(), "aucune ligne barrée")
+	assert_true(shift.new_rule_ids.has(base.id), "badge NOUVEAU")
+	assert_true(diff.added.has(base.id))
+	assert_true(shift.apply_changes([RuleChangeDef.add(base)] as Array[RuleChangeDef], &"x").added.is_empty(),
+			"ADD ordinaire d'un identifiant actif : ignoré")
+	shift.revert_source(&"directive_9")
+	assert_eq((shift.get_rule(base.id) as StatementsConsistentRule).tier, 1, "défaire : palier s1 rétabli")
+	assert_eq(shift.get_rule_ids(), [&"r_before", base.id, &"r_after"] as Array[StringName])
+	assert_eq(rs.rules[1], base, "RuleSet partagé intact")
+
+
 func test_garde_units_events_and_version() -> void:
 	var g: GardeDef = data.garde
 	assert_eq(g.version, 2, "garde_version 2 (D-152)")
@@ -300,6 +369,53 @@ func test_alert_plans_one_or_two_carriers_of_the_profile() -> void:
 		var g: GeneratedCase = builder.build(index)
 		assert_eq(g.case.passenger_presented.faction_id, &"cer", "profil de l'alerte")
 		assert_true(g.key.get_violated_rule_ids().has(&"r_contraband"))
+
+
+## Finition M13 : le profil d'EV-09 est tiré (Tycho, Cérès, COMMERCE,
+## TRANSIT), déterministe par graine ; la surcharge appliquée suit le profil
+## (copie : la Resource partagée garde sa portée) ; porteurs du profil.
+func test_alert_profile_is_drawn_per_seed() -> void:
+	var alert: StationEventDef = data.events[&"ev_09"]
+	assert_eq(alert.override_profiles.size(), 4)
+	var day: DayDef = data.get_day(9)
+	var seen: Dictionary[String, int] = {}
+	for s: int in 40:
+		var plan: StationEventPlan = StationEventService.place(alert, day, SeededRng.new(1000 + s))
+		var again: StationEventPlan = StationEventService.place(alert, day, SeededRng.new(1000 + s))
+		assert_eq(plan.profile_index, again.profile_index, "déterministe")
+		assert_eq(plan.announce_after, again.announce_after)
+		seen[plan.profile_label_key()] = seen.get(plan.profile_label_key(), 0) + 1
+		var change: RuleChangeDef = plan.changes()[0]
+		assert_ne(change, alert.changes[0], "copie, jamais la Resource partagée")
+		assert_eq(change.params.get(&"search_authorized", false), true)
+		assert_eq(change.faction_ids, StationEventPlan._names(plan.profile().get("faction_ids", [])))
+		assert_eq(change.purposes, StationEventPlan._names(plan.profile().get("purposes", [])))
+		assert_eq(plan.changes()[0], change, "mêmes copies à chaque appel (annulation par source)")
+	assert_eq(seen.size(), 4, "les quatre profils sont tirés : %s" % [seen])
+	assert_eq(alert.changes[0].faction_ids, [&"cer"] as Array[StringName], "données intactes")
+	var garde_a: StationEventPlan = StationEventService.garde_plan(alert, 12, 77)
+	assert_eq(garde_a.profile_index, StationEventService.garde_plan(alert, 12, 77).profile_index, "Garde : déterministe")
+	assert_ne(garde_a.profile_index, -1)
+	# Profils par motif : les porteurs forcés ont le motif du profil.
+	for profile_index: int in [0, 2, 3]:
+		var plan: StationEventPlan = StationEventService.place(alert, day, SeededRng.new(5))
+		plan.profile_index = profile_index
+		plan._scoped.clear()
+		var shift: DayDef = day.make_shift_copy()
+		var builder: CaseBuilder = CaseBuilder.new(data, shift, Gen.day_seed(3, 9))
+		builder.build(0)
+		builder.on_rules_changed(builder.ctx.apply_changes(plan.changes(), plan.source()))
+		var carriers: int = 0
+		for index: int in builder._forced:
+			if StringName(str(builder._forced[index].get("rule_id", ""))) != &"r_search_cause":
+				continue
+			carriers += 1
+			var p: Passenger = builder.build(index).case.passenger_presented
+			if plan.profile().get("purposes", []).is_empty():
+				assert_eq(p.faction_id, &"tyc", "profil Tycho")
+			else:
+				assert_eq(p.purpose, StringName(str(plan.profile()["purposes"][0])), "profil par motif")
+		assert_between(carriers, 1, 2, plan.profile_label_key())
 
 
 func _ids(lines: Array[ExpenseLine]) -> Array[StringName]:
