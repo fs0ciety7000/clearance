@@ -37,7 +37,8 @@ static func simulate(data: DataCatalog, day_number: int, day_seed: int, policy: 
 		if document and kind != VerdictKind.Kind.APPROVE and not undocumented_indices.has(i):
 			verdict.flagged = evidence_for(case, generated.key, builder.ctx)
 		verdict.elapsed_sec = 30.0
-		var result: CaseResult = ScoringService.score(verdict, generated.key, case.case_id, case, day, data.get_economy().detain_bonus)
+		var result: CaseResult = ScoringService.score(verdict, generated.key, case.case_id, case, day,
+				data.get_economy().detain_bonus, false, data.get_economy().finding_bonus)
 		result.passenger_label = case.passenger_presented.short_label() if case.passenger_presented != null else ""
 		builder.record_verdict(case, kind)
 		if result.has_citation():
@@ -147,7 +148,7 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		verdict.search_motive = played["motive"]
 		verdict.zones_scanned.assign(played["zones"])
 		var result: CaseResult = ScoringService.score(verdict, generated.key, case.case_id, case, day,
-				data.get_economy().detain_bonus, quota_full)
+				data.get_economy().detain_bonus, quota_full, data.get_economy().finding_bonus)
 		if plan != null:
 			_waive_if_comparator_down(result, builder.ctx, day, data.get_economy().detain_bonus)
 		result.quota_counted = quota.counts(case)

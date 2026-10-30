@@ -2,8 +2,11 @@
 ## jour « 0.12 » reconstruit par `M13Sim.strip`, joueur simulé (questions,
 ## fouille, motifs, temps), préréglages `presse`, `curieux`, `zele`,
 ## `economiste`, achats de l'Économat et déterminisme. Les cibles chiffrées
-## (≤ 3 points par fin sur 200 graines) se mesurent avec
-## `tools/balance_sim.gd -- --m13=compare` (rapport du lot B).
+## (≤ 3 points par fin, D-151) se mesurent avec
+## `tools/balance_sim.gd -- --m13=compare` sur ≥ 500 graines par préréglage
+## (1 000 près du seuil ; lots `--from`, lignes `M13RAW`) : docs/M13.md §4.7
+## (passe économique D-168 : prime de relevé, compensation +15 / +10 / +5 s,
+## AG-01 → AG-03 à 25 ₵).
 extends GutTest
 
 const Gen := preload("res://tests/helpers/generation_fixtures.gd")
@@ -68,6 +71,24 @@ func test_time_model_and_compensation() -> void:
 	assert_gt(on["share"], off["share"] - 0.08, "compensation : file traitée comparable")
 
 
+## D-168 : la compensation (+10 s à l'Acte II, +5 s à l'Acte III) ne couvre
+## pas tout le coût de M13 — sans amélioration, la file reste un peu sous la
+## 0.12 (−8 points au plus sur ces jours) ; ce sont les améliorations qui
+## rendent le temps, dans la limite de leur gain borné (M13 §3.1 : ≤ 6 s par
+## cas, ≈ 12 % de file ; mesuré +7 points). Chaque passager traité en plus au-delà
+## du quota est un dépassement (`suspicion`) : c'est la cause n° 1 des écarts de
+## fins mesurés par la passe économique (M13 §4.7).
+func test_compensation_does_not_outrun_the_0_12_queue() -> void:
+	var days: Array = [12, 15, 18, 24, 27]
+	var off: Dictionary = _play_days(&"default", 0.8, days, true, false)
+	var bare: Dictionary = _play_days(&"default", 0.8, days, true, true)
+	var equipped: Dictionary = _play_days(&"default", 0.8, days, true, true, true)
+	assert_gt(bare["share"], off["share"] - 0.08, "sans amélioration : file comparable")
+	assert_lt(bare["share"], off["share"], "sans amélioration : M13 coûte du temps")
+	assert_lt(equipped["share"], off["share"] + 0.10, "équipé : gain borné (≤ 6 s par cas)")
+	assert_gt(equipped["share"], bare["share"], "les améliorations rendent du temps")
+
+
 func test_shop_purchases_follow_the_policy_and_are_deterministic() -> void:
 	var smart: Array[Dictionary] = BalanceSimulator.run_campaign(data, 4242, 0.95, BalanceSimulator.Spending.REASONED, 14,
 			SimProfile.preset(&"default", 0.95))
@@ -91,6 +112,55 @@ func test_shop_purchases_follow_the_policy_and_are_deterministic() -> void:
 	assert_eq(again[again.size() - 1]["balance_after"], eager[eager.size() - 1]["balance_after"])
 
 
+## D-168 : prime de relevé — REFUS juste et documenté d'une violation de M13
+## (puce de déclaration ou objet révélé), jamais sur un refus de papiers, une
+## approbation ou un refus non documenté.
+func test_finding_bonus_pays_documented_m13_findings_only() -> void:
+	var day: DayDef = DayDef.new()
+	day.rule_set = RuleSet.new()
+	day.credit_per_correct = 5
+	var lie: Violation = Violation.new(&"r_statements", [FieldRef.statement(&"stay"),
+			FieldRef.new(&"entry_permit", &"stay_days")] as Array[FieldRef], "viol_statement", 2)
+	var paper: Violation = Violation.new(&"r_expired", [FieldRef.new(&"id_card", &"expiry"),
+			FieldRef.rulebook_rule(&"r_expired")] as Array[FieldRef], "viol_expired", 2)
+	var item: Violation = Violation.new(&"r_contraband", [FieldRef.scan(&"z2", 0),
+			FieldRef.contraband_entry(&"oxygen")] as Array[FieldRef], "viol_contraband", 2)
+	assert_true(ScoringService.is_m13_finding([lie] as Array[Violation]))
+	assert_true(ScoringService.is_m13_finding([item] as Array[Violation]))
+	assert_false(ScoringService.is_m13_finding([paper] as Array[Violation]))
+	var bonus: int = data.get_economy().finding_bonus
+	assert_eq(bonus, 2, "D-168 : prime de relevé de 2 ₵")
+	for violation: Violation in [lie, item]:
+		var key: CaseKey = CaseKey.new()
+		key.expected_verdict = VerdictKind.Kind.DENY
+		key.expected_violations = [violation] as Array[Violation]
+		var documented: Verdict = Verdict.new(&"c", VerdictKind.Kind.DENY)
+		var pin: Discrepancy = Discrepancy.new(violation.refs[0], violation.refs[1])
+		pin.confirmed = true
+		documented.flagged = [pin] as Array[Discrepancy]
+		var paid: CaseResult = ScoringService.score(documented, key, &"c", null, day, 5, false, bonus)
+		assert_true(paid.correct)
+		assert_eq(paid.wage, 5 + bonus, "REFUS documenté d'une trouvaille de M13")
+		var bare: CaseResult = ScoringService.score(Verdict.new(&"c", VerdictKind.Kind.DENY), key, &"c", null, day, 5,
+				false, bonus)
+		assert_eq(bare.wage, 0, "REFUS NON MOTIVÉ : ni salaire ni prime")
+		var missed: CaseResult = ScoringService.score(Verdict.new(&"c", VerdictKind.Kind.APPROVE), key, &"c", null, day, 5,
+				false, bonus)
+		assert_eq(missed.wage, 0, "ENTRÉE IRRÉGULIÈRE")
+	var paper_key: CaseKey = CaseKey.new()
+	paper_key.expected_verdict = VerdictKind.Kind.DENY
+	paper_key.expected_violations = [paper] as Array[Violation]
+	var paper_pin: Discrepancy = Discrepancy.new(paper.refs[0], paper.refs[1])
+	paper_pin.confirmed = true
+	var paper_verdict: Verdict = Verdict.new(&"c", VerdictKind.Kind.DENY)
+	paper_verdict.flagged = [paper_pin] as Array[Discrepancy]
+	assert_eq(ScoringService.score(paper_verdict, paper_key, &"c", null, day, 5, false, bonus).wage, 5,
+			"refus de papiers : salaire seul")
+	# Jour « 0.12 » : aucune prime possible (aucune violation de M13).
+	var stripped: Dictionary = _play_days(&"default", 0.95, [12], false, false)
+	assert_eq(stripped["lies"], 0.0)
+
+
 func _bought(rows: Array[Dictionary]) -> Array[String]:
 	var result: Array[String] = []
 	for row: Dictionary in rows:
@@ -100,7 +170,8 @@ func _bought(rows: Array[Dictionary]) -> Array[String]:
 
 
 ## Joue des jours isolés (drapeaux vides) et agrège les mesures M13.
-func _play_days(preset: StringName, accuracy: float, days: Array, timed: bool = false, m13: bool = true) -> Dictionary:
+func _play_days(preset: StringName, accuracy: float, days: Array, timed: bool = false, m13: bool = true,
+		equipped: bool = false) -> Dictionary:
 	var stats: Dictionary = {"lies": 0.0, "seen": 0.0, "searches": 0.0, "unwarranted": 0.0, "seconds": 0.0,
 			"processed": 0, "planned": 0, "irregular": 0, "citations": {}, "share": 0.0}
 	for seed_index: int in 6:
@@ -109,6 +180,10 @@ func _play_days(preset: StringName, accuracy: float, days: Array, timed: bool = 
 			profile.timed = timed
 			profile.m13 = m13
 			var flags: Dictionary[StringName, Variant] = {}
+			if equipped:
+				for upgrade_id: StringName in [UpgradeDef.ID_HYGIAPHONE, UpgradeDef.ID_WOOD_LAMP, UpgradeDef.ID_CALIBRATED_GATE,
+						UpgradeDef.ID_ANNOTATED_BOOK, UpgradeDef.ID_QUEUE_MONITOR]:
+					flags[UpgradeDef.flag_of(upgrade_id)] = true
 			var summary: DaySummary = DaySimulator.play_day(data, n, Gen.day_seed(300 + seed_index, n), profile, flags, {},
 					SeededRng.new(seed_index * 31 + n))
 			stats["lies"] += float(summary.get_meta("m13_lies", 0.0))

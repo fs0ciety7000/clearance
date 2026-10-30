@@ -1,4 +1,4 @@
-[gd_resource type="AudioBusLayout" format=3]
+[gd_resource type="AudioBusLayout" format=3 uid="uid://dahi847m85l12"]
 
 [sub_resource type="AudioEffectStereoEnhance" id="AudioEffectStereoEnhance_j3pel"]
 resource_name = "Mono"

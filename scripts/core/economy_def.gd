@@ -178,6 +178,11 @@ extends Resource
 ## Premier soir de l'Économat et nombre d'achats par soir.
 @export var shop_open_evening: int = 5
 @export var upgrades_per_evening: int = 1
+## M13 (D-168) — **prime de relevé** : ₵ ajoutés au salaire d'un REFUS ou
+## d'une DÉTENTION justes et documentés qui reposent sur une trouvaille de
+## M13 (déclaration contradictoire épinglée, objet ou implant révélé par la
+## fouille : `ScoringService.is_m13_finding`). 0 = pas de prime.
+@export var finding_bonus: int = 0
 
 
 ## Seuil d'arrestation de la Revue du J17 selon le mode (D-113).

@@ -93,7 +93,11 @@ const SEARCH_NOISE_J16: float = 0.12
 ## graines, 80 %) : avec +25 s, la file traitée dépasse encore la 0.12 de 2 à
 ## 3 points à l'Acte II et de 4 à 6 points à l'Acte III (AG-01, lampe, carnet,
 ## moniteur) ; retenu +15 s (J4–J7), +20 s (J8–J20), +10 s (J21–J30) : écarts
-## de file entre −2 et +2 points.
+## de file entre −2 et +2 points. Passe économique (D-168, 500 à 1 000 graines
+## par préréglage, `upgrades=smart`) : avec +20 / +10 s, 0,2 à 0,5 passager de
+## plus par jour qu'en 0.12 aux Actes II et III (améliorations comprises), donc
+## des dépassements de quota (`suspicion`, F1 de la Déposition) ; retenu +15 s,
+## +10 s, +5 s, le salaire rendu par la prime de relevé (`finding_bonus`).
 ## Valeurs : `M13Sim.extra_seconds()` (source unique, partagée avec la simulation).
 const EXTRA_SECONDS_EARLY: float = M13Sim.EXTRA_SECONDS_EARLY
 const EXTRA_SECONDS_LATE: float = M13Sim.EXTRA_SECONDS_LATE
@@ -435,9 +439,12 @@ static func _item(id: StringName, kind: SearchItem.Kind, category: StringName, z
 # ---------------------------------------------------------------------------
 
 static func build_upgrades() -> Array[UpgradeDef]:
-	var ag01: UpgradeDef = _upgrade(UpgradeDef.ID_HYGIAPHONE, 20, 5, 29)
-	var ag02: UpgradeDef = _upgrade(UpgradeDef.ID_WOOD_LAMP, 20, 9, 29)
-	var ag03: UpgradeDef = _upgrade(UpgradeDef.ID_CALIBRATED_GATE, 20, 9, 29)
+	# Passe économique (D-168) : AG-01 → AG-03 à 25 ₵ (20 ₵ au lot B) — achats
+	# `smart` à 80 % ramenés dans les cibles de M13 §4.4 (AG-01 75 → 70 %,
+	# AG-03 49 → 44 %) et moins de vitesse gagnée à l'Acte II.
+	var ag01: UpgradeDef = _upgrade(UpgradeDef.ID_HYGIAPHONE, 25, 5, 29)
+	var ag02: UpgradeDef = _upgrade(UpgradeDef.ID_WOOD_LAMP, 25, 9, 29)
+	var ag03: UpgradeDef = _upgrade(UpgradeDef.ID_CALIBRATED_GATE, 25, 9, 29)
 	ag03.note_key = "upg_ag03_note"
 	ag03.effects = {UpgradeDef.EFFECT_SUSPICION_ON_FOUND: 1}
 	var ag04: UpgradeDef = _upgrade(UpgradeDef.ID_DOUBLE_DRAWER, 15, 5, 16)
@@ -476,6 +483,11 @@ static func configure_economy(e: EconomyDef, upgrades: Array[UpgradeDef]) -> voi
 	e.upgrades = upgrades.duplicate()
 	e.shop_open_evening = 5
 	e.upgrades_per_evening = 1
+	# Passe économique (D-168) : prime de relevé (REFUS / DÉTENTION justes et
+	# documentés d'une trouvaille de M13) — rend les 7 à 10 ₵ de citations et de
+	# salaire que M13 coûtait au J20 et au J29, et le salaire de la compensation
+	# de temps réduite (`M13Sim.extra_seconds`).
+	e.finding_bonus = 2
 
 
 # ---------------------------------------------------------------------------

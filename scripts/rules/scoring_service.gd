@@ -21,6 +21,10 @@
 ##   APPROUVÉ d'un passager visé sans fouille. Citations de procédure
 ##   ordinaires : la plus grave l'emporte (REFUS INJUSTIFIÉ sur un innocent
 ##   fouillé puis refusé).
+## - **M13 — prime de relevé** (D-168) : `finding_bonus` (`EconomyDef`)
+##   s'ajoute au salaire d'un REFUS / d'une DÉTENTION **corrects** dont une
+##   violation attendue repose sur une déclaration (R43) ou sur un objet de
+##   fouille (R45, R46, implant dissimulé) : `is_m13_finding`.
 ## - **Citation** : au plus une par cas, la plus grave (table `GRAVITY`).
 ## - **Crédits** : `credit_per_correct` si correct, + prime de détention ; 0
 ##   sinon. L'amende dépend du rang de la citation dans la journée
@@ -69,7 +73,8 @@ const LUCIOLE_REPORT_CODE: int = 1
 ## la visière) et `day` (RuleSet, barème) sont facultatifs : sans eux, pas de
 ## contrôle de procédure et barème par défaut.
 static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Case = null,
-		day: DayDef = null, detain_bonus: int = DEFAULT_DETAIN_BONUS, quota_full: bool = false) -> CaseResult:
+		day: DayDef = null, detain_bonus: int = DEFAULT_DETAIN_BONUS, quota_full: bool = false,
+		finding_bonus: int = 0) -> CaseResult:
 	var result: CaseResult = CaseResult.new(case_id)
 	if verdict == null or key == null:
 		push_error("ScoringService.score: verdict ou clé manquant (%s)" % case_id)
@@ -148,6 +153,10 @@ static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Cas
 		result.wage = day.credit_per_correct if day != null else DEFAULT_CREDIT_PER_CORRECT
 		if verdict.kind == VerdictKind.Kind.DETAIN and key.expected_verdict == VerdictKind.Kind.DETAIN:
 			result.wage += detain_bonus
+		if finding_bonus > 0 and verdict.kind != VerdictKind.Kind.APPROVE and not result.quota_refusal \
+				and is_m13_finding(key.expected_violations):
+			# M13 (D-168) : prime de relevé.
+			result.wage += finding_bonus
 		if quota_full and verdict.kind == VerdictKind.Kind.APPROVE:
 			# D-077 : entrée imputée au guichet, le cas ne rapporte rien.
 			result.wage = 0
@@ -186,6 +195,16 @@ static func is_luciole_report(verdict: Verdict, case: Case) -> bool:
 	for discrepancy: Discrepancy in verdict.flagged:
 		if discrepancy != null and discrepancy.confirmed and discrepancy.reason_key == Discrepancy.REASON_SYMBOL_MATCH:
 			return true
+	return false
+
+
+## M13 (D-168) : une violation attendue repose sur une déclaration (puce de
+## R43) ou sur un objet révélé par la fouille (R45, R46, implant dissimulé).
+static func is_m13_finding(violations: Array[Violation]) -> bool:
+	for violation: Violation in violations:
+		for ref: FieldRef in violation.refs:
+			if ref != null and (ref.is_statement() or ref.is_scan()):
+				return true
 	return false
 
 

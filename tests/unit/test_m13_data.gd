@@ -199,7 +199,7 @@ func test_upgrades_catalog_and_shop() -> void:
 	for upgrade: UpgradeDef in economy.upgrades:
 		prices[upgrade.id] = upgrade.price
 		assert_between(upgrade.price, 10, 35, String(upgrade.id))
-	assert_eq(prices, {&"ag01": 20, &"ag02": 20, &"ag03": 20, &"ag04": 15, &"ag05": 10, &"ag06": 35} as Dictionary[StringName, int])
+	assert_eq(prices, {&"ag01": 25, &"ag02": 25, &"ag03": 25, &"ag04": 15, &"ag05": 10, &"ag06": 35} as Dictionary[StringName, int])
 	var flags: Dictionary[StringName, Variant] = {}
 	assert_true(EveningService.shop_lines(economy, 4, flags).is_empty(), "Économat à partir du soir du J5")
 	var j5: Array[StringName] = _ids(EveningService.shop_lines(economy, 5, flags))

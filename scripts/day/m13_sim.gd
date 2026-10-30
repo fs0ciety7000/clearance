@@ -26,10 +26,15 @@ const SCRIPTED_IDS: Array[StringName] = [&"sc_104", &"sc_105", &"sc_106", &"sc_1
 		&"sc_111"]
 ## Compensation de M13 §4.2 (`duration_sec`, retirée par `strip`) — seule
 ## source, lue par `tools/build_data_m13.gd` : J4–J7, J8–J20, J21–J30
-## (finition M13 : +15 / +20 / +10 s ; lot B : +15 / +25 / +25 s).
+## (passe économique D-168 : +15 / +10 / +5 s ; finition : +15 / +20 / +10 s ;
+## lot B : +15 / +25 / +25 s). Mesuré (500–1 000 graines, `upgrades=smart`) :
+## avec +20 / +10 s, la file traitée dépassait la 0.12 de 0,2 à 0,5 passager
+## par jour aux Actes II et III (améliorations comprises) — dépassements de
+## quota, donc `suspicion`, chez les profils `overrun` ; le salaire perdu est
+## rendu par la prime de relevé (`EconomyDef.finding_bonus`).
 const EXTRA_SECONDS_EARLY: float = 15.0
-const EXTRA_SECONDS_LATE: float = 20.0
-const EXTRA_SECONDS_ACT3: float = 10.0
+const EXTRA_SECONDS_LATE: float = 10.0
+const EXTRA_SECONDS_ACT3: float = 5.0
 const ACT3_FIRST_DAY: int = 21
 const FREE_CITATION_DAYS: Array[int] = [4, 8]
 const PURPOSE_MISMATCH_CUT: Dictionary[int, float] = {4: 0.06, 5: 0.02}

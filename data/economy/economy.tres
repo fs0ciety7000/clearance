@@ -20,3 +20,4 @@ levy_days = PackedInt32Array(11, 17)
 pont_threshold = 5
 interrogation_timing = SubResource("Resource_cefhu")
 upgrades = Array[ExtResource("3_55y6s")]([ExtResource("4_v68gh"), ExtResource("5_c3ps8"), ExtResource("6_7ix54"), ExtResource("7_5qher"), ExtResource("8_qkaa4"), ExtResource("9_krimb")])
+finding_bonus = 2

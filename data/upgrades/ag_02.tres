@@ -7,6 +7,6 @@ script = ExtResource("1_dr6yv")
 id = &"ag02"
 name_key = "upg_ag02_name"
 desc_key = "upg_ag02_desc"
-price = 20
+price = 25
 expense_key = "exp_upgrade_ag02"
 first_evening = 9

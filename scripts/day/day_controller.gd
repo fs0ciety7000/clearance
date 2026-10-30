@@ -90,6 +90,8 @@ var timeouts_fired: int = 0
 var citations_today: int = 0
 ## Prime de détention (`EconomyDef.detain_bonus`).
 var detain_bonus: int = ScoringService.DEFAULT_DETAIN_BONUS
+## M13 (D-168) : prime de relevé (`EconomyDef.finding_bonus`).
+var finding_bonus: int = 0
 ## Cas scénarisé du cas courant (null sinon).
 var current_scripted: ScriptedCaseDef = null
 ## Confiance minimale des Lucioles pour répondre à la phrase de passe (GDD §4.7).
@@ -222,6 +224,7 @@ func _begin(source: DayDef, day_seed: int, flags: Array[StringName], memory: Dic
 	current_key = null
 	current_scripted = null
 	detain_bonus = data.get_economy().detain_bonus
+	finding_bonus = data.get_economy().finding_bonus
 	quota = QuotaTracker.for_day(day, builder.get_flag_values())
 	quota.sync(builder.ctx)
 	scanner_source = PartialScanner.source_for(builder.get_flag_values()) if mode == DayDef.MODE_CAMPAIGN else &""
@@ -387,7 +390,7 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 		inspection.end(verdict)
 	var quota_full: bool = quota.before_verdict(current_case)
 	var result: CaseResult = ScoringService.score(verdict, current_key, current_case_id(), current_case, day, detain_bonus,
-			quota_full)
+			quota_full, finding_bonus)
 	_apply_shift_modifiers_before_citation(result)
 	result.quota_counted = quota.counts(current_case)
 	var was_full: bool = quota.is_full()

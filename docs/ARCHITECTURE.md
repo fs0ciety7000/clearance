@@ -1283,11 +1283,13 @@ Correctifs et reprises d'API après les lots A et B (Godot Architect + Gameplay 
 | `inspection_busy` d'une zone | action `search_zone` (zone lue dans le panneau) | action `search_zone:<zone>` (`busy_zone_action`), décomposée par `busy_kind` / `busy_zone` ; `ComparisonUI.busy_text` les utilise (retombe sur la zone du panneau sinon) | `test_m13_session` |
 | Voix d'une réponse à cadre | `AudioDirector` lisait le cadre brut (`{motif}`) | `AudioDirector.answer_text(case, line_key)` : cadre composé par `Statement.compose` | `test_audio_director` : `test_statement_frame_is_spoken_composed` |
 | EV-09 par motif et R19 | un porteur forcé « motif COMMERCE / TRANSIT » pouvait être un Tharsien (R19) : aucun cas propre (`test_m12_balance`, Garde) | `CaseBuilder._purposes_allowed` : un profil par motif ne choisit jamais un passager dont l'origine est interdite pour ce motif | `test_m12_balance` (10 000 passagers de Garde) |
+| Prime de relevé (D-168) | — | `EconomyDef.finding_bonus` (groupe M13, **2 ₵**, posé par `build_data_m13.configure_economy`) ; `ScoringService.score(…, quota_full, finding_bonus = 0)` l'ajoute au salaire d'un REFUS / d'une DÉTENTION **corrects** (donc documentés) hors refus « quota atteint » quand `ScoringService.is_m13_finding(expected_violations)` (une référence `FieldRef.is_statement()` ou `is_scan()`) ; passé par le `DayController` (`finding_bonus`, lu au début du shift) et le `DaySimulator` ; rien en Garde (économie coupée), rien sur un jour « 0.12 » (aucune violation de M13) ; EV-02 ne la rend pas (refus non motivé repêché) | `test_m13_balance` : `test_finding_bonus_pays_documented_m13_findings_only` |
+| Compensation de temps (D-168) | +15 / +20 / +10 s | **+15 s (J4–J7), +10 s (J8–J20), +5 s (J21–J30)** : `M13Sim.EXTRA_SECONDS_*`, lues par `build_data_m13` ; AG-01 → AG-03 à **25 ₵** | `test_m13_data` (durées, prix) |
 | Fuite d'état entre générations | `Array.sort()` sur des `StringName` ordonne par **adresse interne** : l'ordre des origines (leurres de Convocations, de Révocations, avis) dépendait de l'histoire du processus ; un leurre de Convocation pouvait porter le nom du passager (1 `FORGED_SUMMONS` non détectée sur ~18 700 au J30) | `SeededRng.sort_names()` (ordre alphabétique) pour toute liste d'identifiants dans laquelle on tire ; `ForgedSummonsInjector` n'utilise jamais un leurre homonyme du passager. Règle : **jamais `Array.sort()` sur des `StringName`** (les `sort()` restants trient des entiers ou des `String`) | `test_m13_generation` : `test_successive_generations_in_one_process_are_identical` ; `gen_stats` J30, 40 campagnes : 0 invariant violé |
 
 **Simulation** (`tools/balance_sim.gd`, `BalanceSimulator`) : `--from=K` (graines K → K + N − 1, lots d'une même mesure) ; ligne `M13RAW {…}` (comptes bruts, agrégeables) ; `--smart=marge[,dernier_soir]`. Compensation de temps : source unique `M13Sim.extra_seconds(jour)` (lue par `build_data_m13.gd` et par `M13Sim.strip`).
 
-**Équilibrage** (`balance_sim --m13=compare --upgrades=smart`, 80 %, graine 1, **200 graines** en lots `--from` de 50, données finales) :
+**Équilibrage des finitions** (`balance_sim --m13=compare --upgrades=smart`, 80 %, graine 1, **200 graines** en lots `--from` de 50 ; remplacé par la passe économique D-168 ci-dessous) :
 
 | Préréglage | Écart max 0.12 → 0.13 (lot B → finition) | Détail (finition) |
 |---|---|---|
@@ -1302,6 +1304,23 @@ Correctifs et reprises d'API après les lots A et B (Godot Architect + Gameplay 
 - **Compensation retenue** : +15 s (J4–J7), +20 s (J8–J20), +10 s (J21–J30) (`M13Sim.extra_seconds`) : file traitée entre −2 et +2 points de la 0.12 chaque jour (avec +25 s : +2 à +3 à l'Acte II, +4 à +6 à l'Acte III).
 - **Achats** (`smart` : 30 ₵ restants après l'achat, aucun achat après le soir du J22) : `default` AG-01 74 %, AG-02 32 %, AG-03 51 %, AG-05 34 %, AG-06 34 % (lot B : 76 / 48 / 64 / 20 / 52 %) ; soldes J10 −10, J20 −24, J29 −12 ₵ ; soirs sacrifiés +4,6 points.
 - **AG-04** (`--upgrades=eager`, 100 graines ; le tiroir n'est acheté que par un profil qui garde déjà les enveloppes) : achat 86 % (`mercenary`), 84 % (`mercenary2`), 0 % (`mercenary3`, honnête jusqu'au J20 ; 62 % avant la règle). F1 total : `mercenary` 100 → 100, `mercenary2` 100 → 98 (mais Revue 45 → 86 et Déposition 55 → 12 : le tiroir trouvé à la Revue, +2, avance l'arrestation), `mercenary3` 80 → 88 (Déposition 79 → 86 : relevés du PH-2, acheté à 96 % en `eager`).
+
+**Passe économique D-168** (Game Designer ; détail, essais et causes : docs/M13.md §4.7 ; décisions proposées D-169 → D-171). Leviers : **prime de relevé 2 ₵** (`finding_bonus`), compensation **+15 / +10 / +5 s**, **AG-01 → AG-03 à 25 ₵**. Mesure : chaque bras joué par `BalanceSimulator.run_campaign` avec le profil de `balance_sim --m13=compare` (identique graine par graine), `upgrades=smart`, graine 1, 500 graines par préréglage, 1 000 pour les quatre premiers ; F1 compté par cause.
+
+| Préréglage (80 %) | Graines | Finitions (même protocole) | **D-168** | Détail D-168 (0.12 → 0.13) |
+|---|---|---|---|---|
+| `passeur` | 1 000 | 12,0 | **9,0** | F7 58,7 → 49,7 ; F1 Déposition 15,8 → 22,1 ; F10 13,5 → 15,2 |
+| `luciole` | 1 000 | 5,8 | **3,0** (F1 réunies 3,6) | F1 Déposition 16,6 → 19,6 ; F5 68,5 → 66,4 |
+| `drift` | 1 000 | 3,4 (500) | **2,8** | F7 44,1 → 41,3 ; F1 Déposition 11,4 → 13,5 ; F6 36,4 → 37,6 |
+| `default` | 1 000 | 3,4 (500) | **2,4** | F1 Déposition 10,9 → 13,3 ; F7 83,0 → 81,1 |
+| `curieux` | 500 | 4,0 | **2,0** | F1 Déposition 10,2 → 12,2 |
+| `solidaire` | 500 | 3,2 | **2,2** | F9 79,8 → 77,6 |
+| `loyal` | 500 | 1,0 | **0,6** | — |
+
+- **65 %** (500 graines) : 1,4 à 3,4 (`passeur` 5,0 → 3,4) ; `loyal` **3,3** à 1 000 graines (0,2 avant : survie au J30 7,9 → 11,2 %, la prime aide les joueurs faibles). **95 %** : ≤ 2,8, sauf `passeur` 20,0 → **17,2** (F10 : file du J30 et achats complets, déjà là avant). **Récit** (80 %) : ≤ 1,2.
+- **Économie** (`default`, 80 %) : soldes −8 / −19 / −6 ₵ aux J10 / J20 / J29 (finitions −11 / −19 / −6) ; achats AG-01 75 %, AG-02 29 %, AG-03 45 %, AG-05 42 %, AG-06 44 % ; soirs sacrifiés +0,6 point. À 95 % : J29 +48 à +79 ₵ (finitions +44 à +59).
+- **Bruit** : écart-type de l'écart d'une part de fin ≈ √(2p(1−p)/N), 3,2 points à 500 graines et 2,2 à 1 000 pour p = 0,5.
+- **Causes** : dépassements de quota (+1 à +1,5 par campagne chez les profils `overrun` : file plus longue qu'en 0.12, menteurs non vus approuvés, SC-109 compté au J19) et argent (achats et citations à l'Acte II). Relevé du PH-2 et effet de SC-106 : jamais déclenchés par le joueur simulé (un objet révélé impose le verdict juste).
 
 
 ---
