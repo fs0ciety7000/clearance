@@ -64,8 +64,10 @@ static func generate(c: Case, tables: StatementTablesDef, rule: StatementsConsis
 	var stay: Statement = null
 	if lie_topic == Statement.ID_STAY and lie_statement != null:
 		stay = lie_statement
-	elif stay_rng.chance(tables.vague_rate) and not tables.vague_keys.is_empty():
-		stay = Statement.vague_answer(Statement.ID_STAY, tables.vague_keys[stay_rng.randi_range(0, tables.vague_keys.size() - 1)])
+	elif stay_rng.chance(tables.vague_rate) and not tables.vague_keys_for(purpose.value).is_empty():
+		# QA-068 : « Ça dépend du travail » seulement pour qui dit venir travailler.
+		var vague_keys: PackedStringArray = tables.vague_keys_for(purpose.value)
+		stay = Statement.vague_answer(Statement.ID_STAY, vague_keys[stay_rng.randi_range(0, vague_keys.size() - 1)])
 	else:
 		stay = duration_statement(tables, days, stay_rng)
 	var correction_rng: SeededRng = rng.fork(SALT_CORRECTION)
@@ -161,7 +163,8 @@ static func employer_statement(tables: StatementTablesDef, canonical: String, rn
 	var aliases: PackedStringArray = tables.aliases_of(canonical)
 	if not aliases.is_empty() and rng.chance(tables.alias_rate):
 		said = aliases[rng.randi_range(0, aliases.size() - 1)]
-	return Statement.make(Statement.ID_EMPLOYER, canonical, tables.employer_key, [said])
+	var fragment: Array = tables.employer_fragment(said)
+	return Statement.make(Statement.ID_EMPLOYER, canonical, str(fragment[0]), [fragment[1]])
 
 
 ## Vrai si le texte d'employeur désigne un employeur (ni vide ni « SANS EMPLOYEUR »).
@@ -244,11 +247,22 @@ static func _pick_frames(c: Case, tables: StatementTablesDef, rng: SeededRng) ->
 		pools.append(_without(first, FRAME_HESITATION))
 		pools.append(_without(generic, FRAME_HESITATION))
 	pools.append(PackedStringArray(["line_stmt_frame_gen_1"]))
+	var vague: bool = stay != null and stay.vague
+	if vague:
+		# QA-068 : aucun cadre qui contredit une durée vague.
+		var fit: Array[PackedStringArray] = []
+		for pool: PackedStringArray in pools:
+			var kept: PackedStringArray = _without_all(pool, tables.vague_unfit_frames)
+			if not kept.is_empty():
+				fit.append(kept)
+		pools = fit
 	var frame: String = _pick_fitting(tables, pools, purpose_parts, rng)
 	if not frame.is_empty():
 		c.statement_frames[Statement.QUESTION_PURPOSE] = frame
 	if stay != null:
-		var stay_frame: String = _pick_fitting(tables, [tables.stay_frames], [stay], rng)
+		var stay_pool: PackedStringArray = tables.stay_frames_vague if vague and not tables.stay_frames_vague.is_empty() \
+				else tables.stay_frames
+		var stay_frame: String = _pick_fitting(tables, [stay_pool], [stay], rng)
 		if not stay_frame.is_empty():
 			c.statement_frames[Statement.QUESTION_STAY] = stay_frame
 	var origin: Statement = c.get_statement(Statement.ID_ORIGIN)
@@ -264,6 +278,9 @@ static func _pick_frames(c: Case, tables: StatementTablesDef, rng: SeededRng) ->
 		origin_pool = tables.origin_frames_drv
 	elif origin != null and provenance != null:
 		origin_pool = tables.origin_frames
+		if _provenance_is_origin(tables, origin, provenance):
+			# QA-068 : « J'arrive de Tycho. Mais je suis de Tycho » : pas d'opposition.
+			origin_pool = _without_all(origin_pool, tables.origin_contrast_frames)
 	elif origin != null:
 		origin_pool = tables.origin_frames_plain
 	if not origin_pool.is_empty():
@@ -288,6 +305,22 @@ static func _pick_fitting(tables: StatementTablesDef, pools: Array, parts: Array
 		if not fitting.is_empty():
 			return _pick(fitting, rng)
 	return fallback
+
+
+## QA-068 : la provenance dite est le lieu même de l'origine dite.
+static func _provenance_is_origin(tables: StatementTablesDef, origin: Statement, provenance: Statement) -> bool:
+	if provenance.phrase_key != tables.provenance_place_key or provenance.args.is_empty():
+		return false
+	var place: String = str(tables.origin_places.get(StringName(str(origin.value)), ""))
+	return not place.is_empty() and Statement.normalize_text(place) == Statement.normalize_text(str(provenance.args[0]))
+
+
+static func _without_all(keys: PackedStringArray, excluded: PackedStringArray) -> PackedStringArray:
+	var result: PackedStringArray = []
+	for key: String in keys:
+		if not excluded.has(key):
+			result.append(key)
+	return result
 
 
 static func _without(keys: PackedStringArray, excluded: String) -> PackedStringArray:

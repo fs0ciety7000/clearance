@@ -22,6 +22,9 @@
 ## Correctifs M12 : `--qa-focus=end-garde` ouvre la boîte « Terminer la garde »
 ## (barre) et pousse la croix → (focus TERMINER LA GARDE, piégé dans la boîte,
 ## QA-057).
+## Correctifs M13 : `--qa-evening-step=N|last` affiche l'événement N de « CE SOIR »
+## (lettre d'offre de l'Économat, QA-069) ; avec `--qa-focus=offer` (après lui),
+## le focus va à « VOIR L'OFFRE ».
 ## Lancé par `tools/qa_boot.gd` (autoloads requis), sous xvfb :
 ##   xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
 ##       --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1280x800 \
@@ -45,6 +48,8 @@ var _discord: bool = false
 var _inspect: bool = false
 var _focus_target: String = ""
 var _close_briefing: bool = false
+## `--qa-evening-step=N` (ou `last`) : événement N (0…) de « CE SOIR » affiché.
+var _evening_step: String = ""
 var _t: float = 0.0
 var _done: bool = false
 
@@ -85,6 +90,8 @@ func _ready() -> void:
 			_inspect = true
 		elif arg == "--qa-close-briefing":
 			_close_briefing = true
+		elif arg.begins_with("--qa-evening-step="):
+			_evening_step = arg.trim_prefix("--qa-evening-step=")
 		elif arg.begins_with("--qa-focus="):
 			_focus_target = arg.trim_prefix("--qa-focus=")
 	if _after_check >= 0.0:
@@ -124,6 +131,11 @@ func _process(delta: float) -> void:
 		var ui: Node = _find(get_tree().root, func(n: Node) -> bool: return n is ComparisonUI)
 		if ui != null:
 			(ui as ComparisonUI).focus_default()
+	if not _evening_step.is_empty() and _t > _wait - 2.0:
+		var evening: EveningScreen = _find(get_tree().root, func(n: Node) -> bool: return n is EveningScreen) as EveningScreen
+		if evening != null and not evening.events.is_empty():
+			evening.show_step(evening.events.size() - 1 if _evening_step == "last" else _evening_step.to_int())
+		_evening_step = ""
 	if not _focus_target.is_empty() and _t > _wait - 1.5:
 		_apply_focus_target()
 		_focus_target = ""
@@ -165,6 +177,10 @@ func _apply_focus_target() -> void:
 			var ui: ComparisonUI = _find(get_tree().root, func(n: Node) -> bool: return n is ComparisonUI) as ComparisonUI
 			if ui != null:
 				target = ui.top_bar.close_button
+		"offer":
+			var evening: EveningScreen = _find(get_tree().root, func(n: Node) -> bool: return n is EveningScreen) as EveningScreen
+			if evening != null:
+				target = evening.find_child("OfferGoto", true, false) as Control
 	if target != null and target.is_visible_in_tree():
 		target.grab_focus()
 	else:

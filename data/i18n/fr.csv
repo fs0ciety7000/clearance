@@ -3672,6 +3672,8 @@ stmt_purpose_transit_2,Une correspondance
 stmt_purpose_diplomatic_1,Une mission officielle
 stmt_purpose_diplomatic_2,Affaires d'État
 stmt_employer,chez %s
+stmt_employer_au,au %s
+stmt_employer_aux,aux %s
 stmt_host_sister,"ma sœur, %s"
 stmt_host_brother,"mon frère, %s"
 stmt_host_son,"mon fils, %s"
@@ -3742,6 +3744,7 @@ line_stmt_frame_correct_2,"{motif}… {duree_barree}. Enfin, {duree}. Je confond
 line_stmt_stay_1,{duree}. C'est ce qu'on m'a accordé.
 line_stmt_stay_2,{duree}. Pas un jour de plus.
 line_stmt_stay_3,‹Ha.› {duree}.
+line_stmt_stay_4,{duree}. Je ne peux pas vous dire mieux.
 line_stmt_origin_1,{origine}. {provenance}.
 line_stmt_origin_2,"{origine}. Ça se voit, non ?"
 line_stmt_origin_3,"{provenance}. Mais {origine}, oui."
@@ -3934,6 +3937,7 @@ sev_contraband_alert_cer,Cérès
 sev_contraband_alert_trade,motif COMMERCE
 sev_contraband_alert_transit,motif TRANSIT
 sev_blackout_rb_search,R44 SUSPENDUE · PORTIQUE HORS TENSION
+sev_blackout_rb_belt_search,R47 SUSPENDUE · PORTIQUE HORS TENSION
 garde_unit_u21,Déclarations : motif et durée
 garde_unit_u22,"Portique : fouille sur motif, objets interdits"
 garde_unit_u23,Armes : mise en attente
@@ -4082,3 +4086,7 @@ opt_help_statements,Aide : déclarations
 opt_help_statements_hint,Carte d'aide au premier jour où les réponses orales se comparent (J4).
 opt_help_search,Aide : portique
 opt_help_search_hint,Carte d'aide au premier jour du portique de fouille (J8).
+ev_kind_offer,OFFRE · ÉCONOMAT
+ev_offer_at_shop,À L'ÉCONOMAT CE SOIR · %s
+ev_offer_goto,VOIR L'OFFRE
+disc_statement_doc_detail,%s : %s ≠ déclaré : %s

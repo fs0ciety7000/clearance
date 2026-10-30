@@ -11,9 +11,17 @@
 ## - origine dite (« Je suis de Cérès »…) différente de l'origine imposée.
 ## Les cas qui déclarent `statements` (puces) sont contrôlés à part par R43.
 ##
-## Usage : `godot --headless --script res://tools/qa_statements_audit.gd [-- --strict]`
-## Sortie : une ligne par réplique relevée (`CONTRADICTION`, `À VÉRIFIER`) ;
-## code 0, ou 1 avec `--strict` s'il reste une contradiction.
+## QA-068 — **réponses composées** (cadre + puces, `Statement.compose`)
+## réellement générées sur `--campaigns=N` campagnes (défaut 8) × J4 → J30 :
+## rejet des tournures fautives (`BAD_PHRASINGS` : « pour je ne sais pas
+## encore », « Quelques jours. Pas un jour de plus. », « J'arrive de Tycho.
+## Mais je suis de Tycho », « chez le Bureau »…) et des incohérences de
+## structure (durée vague « du travail » sans motif TRAVAIL), ligne
+## `TOURNURE` ; comptées comme contradictions.
+##
+## Usage : `godot --headless --script res://tools/qa_statements_audit.gd [-- --strict] [--campaigns=N]`
+## Sortie : une ligne par réplique relevée (`CONTRADICTION`, `À VÉRIFIER`,
+## `TOURNURE`) ; code 0, ou 1 avec `--strict` s'il reste une contradiction.
 extends SceneTree
 
 const CSV_PATH: String = "res://data/i18n/fr.csv"
@@ -45,6 +53,18 @@ const ORIGIN_WORDS: Dictionary[String, StringName] = {
 const REVIEWED: PackedStringArray = ["sc84_miner_purpose", "sc86_kaito_purpose", "sc60_margaux_stay",
 		"sc63_dmitri_purpose", "sc78_mazur_origin"]
 
+## QA-068 : tournures fautives d'une réponse composée (motifs FR).
+const BAD_PHRASINGS: PackedStringArray = [
+	"pour (je|ça|aussi|le temps) ",
+	"^(Quelques jours|Le temps du contrat|Je ne sais pas encore|Aussi longtemps qu'on voudra de moi|Ça dépend du travail)\\. (C'est ce qu'on m'a accordé|Pas un jour de plus)",
+	"(Quelques jours|Le temps du contrat|Je ne sais pas encore|Aussi longtemps qu'on voudra de moi|Ça dépend du travail)(, pas plus|, normalement|, le temps du chantier)",
+	"J'arrive de (\\S+( \\S+)?)\\. Mais je suis de \\1,",
+	"chez (le|les) ",
+	"Le temps du contrat, le temps du chantier",
+	"\\.\\.(?!\\.)|,,| ,| \\.",
+]
+const DEFAULT_CAMPAIGNS: int = 8
+
 var _texts: Dictionary[String, String] = {}
 var _contradictions: int = 0
 var _checks: int = 0
@@ -63,8 +83,58 @@ func _init() -> void:
 			if scripted != null and scripted.dialogue_id != &"":
 				cases.append(scripted)
 				_audit(n, scripted)
-	print("qa_statements_audit : %d répliques relues, %d contradiction(s)" % [_checks, _contradictions])
+	var campaigns: int = DEFAULT_CAMPAIGNS
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--campaigns="):
+			campaigns = maxi(arg.trim_prefix("--campaigns=").to_int(), 0)
+	var composed: int = _audit_composed(data, days, campaigns)
+	print("qa_statements_audit : %d répliques relues, %d réponses composées, %d contradiction(s)" % [
+			_checks, composed, _contradictions])
 	quit(1 if strict and _contradictions > 0 else 0)
+
+
+## QA-068 : réponses composées réellement générées (passagers générés et
+## scénarisés à puces) ; renvoie le nombre de réponses uniques relues.
+func _audit_composed(data: DataCatalog, days: Array[int], campaigns: int) -> int:
+	var patterns: Array[RegEx] = []
+	for pattern: String in BAD_PHRASINGS:
+		patterns.append(RegEx.create_from_string(pattern))
+	var translate: Callable = func(k: String) -> String: return _texts.get(k, k)
+	var tables: StatementTablesDef = data.statement_tables
+	var seen: Dictionary[String, bool] = {}
+	for campaign: int in campaigns:
+		for n: int in days:
+			if n < 4:
+				continue
+			var builder: CaseBuilder = CaseBuilder.new(data, data.get_day(n), SeededRng.day_seed(campaign + 1, n))
+			builder.presentation_minute = 12 * 60
+			for g: GeneratedCase in builder.build_day():
+				if g == null or g.case.statements.is_empty():
+					continue
+				_check_structure("J%d %s" % [n, g.case.case_id], g.case, tables)
+				for q: StringName in g.case.statement_frames:
+					var line: String = Statement.compose(translate.call(g.case.statement_frames[q]),
+							g.case.statements_for_question(q), translate)
+					if seen.has(line):
+						continue
+					seen[line] = true
+					for rx: RegEx in patterns:
+						if rx.search(line) != null:
+							_contradictions += 1
+							print("TOURNURE      J%d %s %s : « %s »" % [n, g.case.case_id, g.case.statement_frames[q], line])
+							break
+	return seen.size()
+
+
+## QA-068 : durée vague « du travail » dite sans le motif TRAVAIL.
+func _check_structure(where: String, c: Case, tables: StatementTablesDef) -> void:
+	var stay: Statement = c.get_statement(Statement.ID_STAY)
+	var purpose: Statement = c.get_statement(Statement.ID_PURPOSE)
+	if tables == null or stay == null or purpose == null or not stay.vague:
+		return
+	if tables.vague_work_keys.has(stay.phrase_key) and StringName(str(purpose.value)) != Passenger.PURPOSE_WORK:
+		_contradictions += 1
+		print("TOURNURE      %s : « %s » avec le motif %s" % [where, _texts.get(stay.phrase_key, stay.phrase_key), purpose.value])
 
 
 func _audit(day_number: int, scripted: ScriptedCaseDef) -> void:

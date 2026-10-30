@@ -13,6 +13,8 @@ first_evening = 6
 last_evening = 8
 off_catalog = true
 offer_message_key = "msg_okonkwo_book"
+offer_speaker_key = "spk_okonkwo"
+offer_voice = 1
 purchase_flags = Dictionary[StringName, int]({
 &"okonkwo_book": 0
 })

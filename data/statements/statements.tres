@@ -14,6 +14,7 @@ exact_duration_keys = Dictionary[int, String]({
 5: "stmt_dur_d5"
 })
 vague_keys = PackedStringArray("stmt_dur_vague_1", "stmt_dur_vague_2", "stmt_dur_vague_3", "stmt_dur_vague_4", "stmt_dur_vague_5")
+vague_work_keys = PackedStringArray("stmt_dur_vague_2", "stmt_dur_vague_5")
 purpose_keys = Dictionary[StringName, PackedStringArray]({
 &"diplomatic": PackedStringArray("stmt_purpose_diplomatic_1", "stmt_purpose_diplomatic_2"),
 &"family_visit": PackedStringArray("stmt_purpose_family_visit_1", "stmt_purpose_family_visit_2"),
@@ -29,6 +30,10 @@ origin_keys = Dictionary[StringName, String]({
 &"ter": "stmt_origin_ter",
 &"thr": "stmt_origin_thr",
 &"tyc": "stmt_origin_tyc"
+})
+employer_article_keys = Dictionary[String, String]({
+"le ": "stmt_employer_au",
+"les ": "stmt_employer_aux"
 })
 host_keys = Dictionary[StringName, String]({
 &"brother": "stmt_host_brother",
@@ -65,7 +70,15 @@ work_frames = PackedStringArray("line_stmt_frame_work_1", "line_stmt_frame_work_
 visit_frames = PackedStringArray("line_stmt_frame_visit_1", "line_stmt_frame_visit_2")
 correction_frames = PackedStringArray("line_stmt_frame_correct_1", "line_stmt_frame_correct_2")
 stay_frames = PackedStringArray("line_stmt_stay_1", "line_stmt_stay_2", "line_stmt_stay_3")
+stay_frames_vague = PackedStringArray("line_stmt_stay_3", "line_stmt_stay_4")
+vague_unfit_frames = PackedStringArray("line_stmt_frame_gen_2", "line_stmt_frame_gen_3", "line_stmt_frame_work_2", "line_stmt_frame_visit_2")
 origin_frames = PackedStringArray("line_stmt_origin_1", "line_stmt_origin_3")
+origin_contrast_frames = PackedStringArray("line_stmt_origin_3")
+origin_places = Dictionary[StringName, String]({
+&"cer": "Cérès",
+&"ter": "la Terre",
+&"tyc": "Tycho"
+})
 origin_frames_plain = PackedStringArray("line_stmt_origin_2")
 origin_frames_drv = PackedStringArray("line_stmt_origin_drv_1", "line_stmt_origin_drv_2")
 origin_frames_tessar = PackedStringArray("line_stmt_origin_tessar_1")
@@ -103,6 +116,7 @@ text_lengths = Dictionary[String, int]({
 "line_stmt_stay_1": 29,
 "line_stmt_stay_2": 22,
 "line_stmt_stay_3": 7,
+"line_stmt_stay_4": 33,
 "stmt_dur_d1": 7,
 "stmt_dur_d10": 9,
 "stmt_dur_d2": 10,
@@ -126,6 +140,8 @@ text_lengths = Dictionary[String, int]({
 "stmt_dur_y1": 5,
 "stmt_dur_y3": 9,
 "stmt_employer": 7,
+"stmt_employer_au": 5,
+"stmt_employer_aux": 6,
 "stmt_host_brother": 13,
 "stmt_host_daughter": 12,
 "stmt_host_friend": 30,
@@ -187,7 +203,8 @@ frame_tokens = Dictionary[String, PackedStringArray]({
 "line_stmt_origin_tessar_1": PackedStringArray("provenance"),
 "line_stmt_stay_1": PackedStringArray("duree"),
 "line_stmt_stay_2": PackedStringArray("duree"),
-"line_stmt_stay_3": PackedStringArray("duree")
+"line_stmt_stay_3": PackedStringArray("duree"),
+"line_stmt_stay_4": PackedStringArray("duree")
 })
 lie_purposes = Dictionary[StringName, PackedStringArray]({
 &"cer": PackedStringArray("trade", "transit"),

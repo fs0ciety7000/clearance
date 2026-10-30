@@ -1,5 +1,17 @@
 # Changelog — CLEARANCE
 
+## 0.13.0 — 2026-10-30
+
+### M13 « Gameplay »
+- **Interrogatoire à contradictions** : les réponses du passager (motif, durée, employeur, origine, personne visitée) apparaissent soulignées dans un journal de dialogue ; une réponse qui contredit un document s'épingle comme une discordance et justifie un refus (règle R43, introduite par paliers aux J4, J12, J13, J24). Un passager honnête ne peut jamais être pris en défaut (D-139, D-142, D-143).
+- **Fouille holographique** : portique installé au J8, scan en 5 zones, motif affiché avant la fouille ; contrebande, armes (détention), implants non déclarés ; fouille sans motif sanctionnée ; fouille obligatoire des Ceinturiers au J19 (R44–R47, D-140, D-145–D-148).
+- **Économat du soir** : 6 améliorations du guichet (hygiaphone, lampe de Wood, portique PH-2, tiroir à double fond, recueil d'Okonkwo, moniteur de file), un achat par soir, certaines avec un prix narratif ; prime de relevé pour les trouvailles documentées (D-141, D-150, D-169).
+- **Contenu** : 8 cas scénarisés (SC-104 à SC-111), dont deux contradictions honnêtes ; offres d'Okonkwo, de la Soute et de Valcourt-Hsu ; Garde de nuit v2 (4 directives) ; événement EV-09 « Alerte des quais » ; cartes d'aide aux J4 et J8.
+- Journées ajustées (+15 / +10 / +5 s) pour compenser le temps des questions et de la fouille.
+
+### Corrections
+- Passe QA M13 (QA-063 à QA-071) : coupure de courant qui suspend aussi la fouille obligatoire (D-172), contrat faux d'un honnête affiché comme faute du document, alerte des quais toujours suivie d'un passager concerné, prime de relevé seulement sur trouvaille épinglée, réponses mieux tournées, journal et Rulebook lisibles au Deck en grand texte.
+
 ## 0.12.0 — 2026-10-29
 
 ### M12 « Rejouabilité »

@@ -166,6 +166,14 @@ static func drawer_found(flags: Dictionary[StringName, Variant], economy: Econom
 	return {"penalty": penalty, "flags": {UpgradeDef.FLAG_DRAWER_FOUND: 0}}
 
 
+## QA-069 (M13 §3.5) : message d'Okonkwo après la confiscation du tiroir.
+const DRAWER_FOUND_MESSAGE_KEY: String = "msg_okonkwo_drawer_found"
+const DRAWER_FOUND_SPEAKER_KEY: String = "spk_okonkwo"
+
+
+## Tiroir trouvé : drapeaux fusionnés, `drawer_found` et le message d'Okonkwo
+## (`drawer_message_key`, `drawer_speaker_key`), remis par
+## `EveningService.apply` (`EveningReport.events` / `event_texts`).
 static func _merge_drawer(outcome: Dictionary, drawer: Dictionary) -> void:
 	if drawer.is_empty():
 		return
@@ -174,6 +182,8 @@ static func _merge_drawer(outcome: Dictionary, drawer: Dictionary) -> void:
 		merged[flag] = drawer["flags"][flag]
 	outcome["flags"] = merged
 	outcome["drawer_found"] = true
+	outcome["drawer_message_key"] = DRAWER_FOUND_MESSAGE_KEY
+	outcome["drawer_speaker_key"] = DRAWER_FOUND_SPEAKER_KEY
 
 
 static func is_double_game(flags: Dictionary[StringName, Variant]) -> bool:

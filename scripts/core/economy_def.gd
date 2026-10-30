@@ -180,8 +180,9 @@ extends Resource
 @export var upgrades_per_evening: int = 1
 ## M13 (D-168) — **prime de relevé** : ₵ ajoutés au salaire d'un REFUS ou
 ## d'une DÉTENTION justes et documentés qui reposent sur une trouvaille de
-## M13 (déclaration contradictoire épinglée, objet ou implant révélé par la
-## fouille : `ScoringService.is_m13_finding`). 0 = pas de prime.
+## M13 **épinglée par le joueur** (déclaration contradictoire, objet ou implant
+## révélé par la fouille, ayant servi de preuve :
+## `ScoringService.is_m13_finding_pinned`, QA-067). 0 = pas de prime.
 @export var finding_bonus: int = 0
 
 

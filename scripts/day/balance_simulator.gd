@@ -110,7 +110,7 @@ static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: f
 				credits += economy.report_bonus
 		var context: Dictionary[StringName, Variant] = EveningService.evening_context(flags, household, compliance,
 				economy.levy_for(day_number, credits), day_number, economy, credits, profile.story_mode)
-		var events: Array[EveningEvent] = EveningService.build_events(day.evening_events, context, economy)
+		var events: Array[EveningEvent] = EveningService.build_events(day.evening_events, context, economy, day_number)
 		var lines: Array[ExpenseLine] = EveningService.build_lines(economy, day_number, household, flags, credits)
 		var wanted_choices: Dictionary[StringName, StringName] = profile.choices_for(events)
 		EveningService.apply_line_costs(lines, events, wanted_choices)

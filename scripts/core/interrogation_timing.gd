@@ -34,9 +34,9 @@ extends Resource
 ## Scan d'une zone ; avec AG-03.
 @export var search_zone_sec: float = 2.0
 @export var search_zone_sec_upgraded: float = 1.0
-## « TOUT SCANNER » (5 zones) ; avec AG-03. M13 §2.3 : 10 s → 5 s (fouille
-## complète 12 s → 6 s) ; §3.2 annonce 4 s : écart signalé au Game Designer,
-## la donnée tranche.
+## « TOUT SCANNER » (5 zones) ; avec AG-03. M13 §2.3 et §3.2 : 10 s → 5 s
+## (fouille complète 12 s → 6 s, activation comprise) — la donnée fait foi,
+## M13 §3.2 alignée (QA M13 §16).
 @export var search_all_sec: float = 10.0
 @export var search_all_sec_upgraded: float = 5.0
 

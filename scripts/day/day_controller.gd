@@ -794,6 +794,9 @@ func _update_station_events(processed: int) -> void:
 ## Annonce : changements en attente du passager suivant, effets du contrôleur.
 func _start_station_event(plan: StationEventPlan, queue_changes: bool = true) -> void:
 	plan.state = StationEventPlan.State.ACTIVE
+	# M13 (EV-09, QA-066) : profil annoncé qui vise au moins un passager de la fenêtre.
+	if builder.has_method(&"fit_alert_profile"):
+		builder.call(&"fit_alert_profile", plan)
 	if queue_changes:
 		builder.ctx.queue_changes(plan.changes(), plan.source())
 	var extra: int = plan.modifier(RuleChangeDef.MOD_EXTRA_PASSENGERS)

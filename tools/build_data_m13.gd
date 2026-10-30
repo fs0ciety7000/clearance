@@ -253,12 +253,16 @@ static func build_statement_tables(text_of: Callable) -> StatementTablesDef:
 	t.interval_above = 10
 	t.vague_keys = PackedStringArray(["stmt_dur_vague_1", "stmt_dur_vague_2", "stmt_dur_vague_3", "stmt_dur_vague_4",
 			"stmt_dur_vague_5"])
+	# QA-068 : « Le temps du contrat », « Ça dépend du travail » : motif TRAVAIL seulement.
+	t.vague_work_keys = PackedStringArray(["stmt_dur_vague_2", "stmt_dur_vague_5"])
 	for purpose: StringName in [Passenger.PURPOSE_WORK, Passenger.PURPOSE_FAMILY_VISIT, Passenger.PURPOSE_RETURN,
 			Passenger.PURPOSE_TRADE, Passenger.PURPOSE_TRANSIT, Passenger.PURPOSE_DIPLOMATIC]:
 		t.purpose_keys[purpose] = PackedStringArray(["stmt_purpose_%s_1" % purpose, "stmt_purpose_%s_2" % purpose])
 	for faction: StringName in [&"tyc", &"hal", &"ter", &"cer", &"thr", &"drv"]:
 		t.origin_keys[faction] = "stmt_origin_%s" % faction
 	t.employer_key = "stmt_employer"
+	# QA-068 : « au Bureau », jamais « chez le Bureau ».
+	t.employer_article_keys = {"le ": "stmt_employer_au", "les ": "stmt_employer_aux"}
 	for relation: StringName in [&"sister", &"brother", &"son", &"daughter", &"mother", &"friend"]:
 		t.host_keys[relation] = "stmt_host_%s" % relation
 	t.family_relations = PackedStringArray(["sister", "brother", "son", "daughter", "mother"])
@@ -283,7 +287,15 @@ static func build_statement_tables(text_of: Callable) -> StatementTablesDef:
 	t.visit_frames = PackedStringArray(["line_stmt_frame_visit_1", "line_stmt_frame_visit_2"])
 	t.correction_frames = PackedStringArray(["line_stmt_frame_correct_1", "line_stmt_frame_correct_2"])
 	t.stay_frames = PackedStringArray(["line_stmt_stay_1", "line_stmt_stay_2", "line_stmt_stay_3"])
+	# QA-068 : durée vague — ni « C'est ce qu'on m'a accordé », ni « Pas un jour
+	# de plus », ni « pour {duree} », « {duree}, pas plus », « {duree},
+	# normalement », « {duree}, le temps du chantier ».
+	t.stay_frames_vague = PackedStringArray(["line_stmt_stay_3", "line_stmt_stay_4"])
+	t.vague_unfit_frames = PackedStringArray(["line_stmt_frame_gen_2", "line_stmt_frame_gen_3", "line_stmt_frame_work_2",
+			"line_stmt_frame_visit_2"])
 	t.origin_frames = PackedStringArray(["line_stmt_origin_1", "line_stmt_origin_3"])
+	t.origin_contrast_frames = PackedStringArray(["line_stmt_origin_3"])
+	t.origin_places = {&"tyc": "Tycho", &"cer": "Cérès", &"ter": "la Terre"}
 	t.origin_frames_plain = PackedStringArray(["line_stmt_origin_2"])
 	t.origin_frames_drv = PackedStringArray(["line_stmt_origin_drv_1", "line_stmt_origin_drv_2"])
 	t.origin_frames_tessar = PackedStringArray(["line_stmt_origin_tessar_1"])
@@ -332,12 +344,14 @@ static func _text_keys(t: StatementTablesDef) -> PackedStringArray:
 	for faction: StringName in t.origin_keys:
 		keys.append(t.origin_keys[faction])
 	keys.append(t.employer_key)
+	for article: String in t.employer_article_keys:
+		keys.append(t.employer_article_keys[article])
 	for relation: StringName in t.host_keys:
 		keys.append(t.host_keys[relation])
 	keys.append_array([t.provenance_shuttle_key, t.provenance_place_key, t.provenance_tessar_key])
 	for faction: StringName in t.frames:
 		keys.append_array(t.frames[faction])
-	for list: PackedStringArray in [t.work_frames, t.visit_frames, t.correction_frames, t.stay_frames, t.origin_frames,
+	for list: PackedStringArray in [t.work_frames, t.visit_frames, t.correction_frames, t.stay_frames, t.stay_frames_vague, t.origin_frames,
 			t.origin_frames_plain, t.origin_frames_drv, t.origin_frames_tessar]:
 		keys.append_array(list)
 	return keys
@@ -452,15 +466,22 @@ static func build_upgrades() -> Array[UpgradeDef]:
 	ag04.condition = Act3._all([&"bribe_seen"])
 	ag04.off_catalog = true
 	ag04.offer_message_key = "msg_soute_drawer"
+	# QA-069 : M13 §3.5 — un mot glissé (voix sans signature), Okonkwo, le Bureau.
+	ag04.offer_speaker_key = "spk_note"
+	ag04.offer_voice = BriefingContent.Voice.BRULANTS
 	ag04.expense_key = "exp_upgrade_ag04"
 	ag04.effects = {UpgradeDef.EFFECT_ENVELOPE_TRACE_EVERY: 2, UpgradeDef.EFFECT_AUDIT_PENALTY: 2}
 	var ag05: UpgradeDef = _upgrade(UpgradeDef.ID_ANNOTATED_BOOK, 10, 6, 8)
 	ag05.off_catalog = true
 	ag05.offer_message_key = "msg_okonkwo_book"
+	ag05.offer_speaker_key = BriefingContent.SPEAKER_OKONKWO
+	ag05.offer_voice = BriefingContent.Voice.MENTOR
 	ag05.purchase_flags = {&"okonkwo_book": 0}
 	var ag06: UpgradeDef = _upgrade(UpgradeDef.ID_QUEUE_MONITOR, 35, 11, 29)
 	ag06.note_key = "upg_ag06_note"
 	ag06.offer_message_key = "msg_vh_monitor"
+	ag06.offer_speaker_key = "spk_consortium"
+	ag06.offer_voice = BriefingContent.Voice.CONSORTIUM
 	ag06.purchase_flags = {&"loyalty": 1}
 	return [ag01, ag02, ag03, ag04, ag05, ag06]
 
@@ -529,14 +550,21 @@ static func configure_garde(g: GardeDef) -> void:
 
 
 # ---------------------------------------------------------------------------
-# Événements : EV-05 suspend R44, EV-09 « Alerte des quais » (M13 §2.10 ; B77)
+# Événements : EV-05 suspend R44 et R47 (D-172), EV-09 « Alerte des quais » (M13 §2.10 ; B77)
 # ---------------------------------------------------------------------------
 
 static func extend_events(events: Array[StationEventDef]) -> void:
 	for event: StationEventDef in events:
 		if event.key == &"blackout":
-			event.changes.append(RuleChangeDef.retire(R44, "sev_blackout_rb_search"))
-			event.garde_changes.append(RuleChangeDef.retire(R44, "sev_blackout_rb_search"))
+			# Portique hors tension : ni fouille sur motif (R44) ni fouille
+			# obligatoire des Ceinturiers (R47, D-172 / QA-063 : sans quoi un
+			# Ceinturier au long séjour en règle ne peut être que cité FOUILLE
+			# OMISE ou refusé à tort). Retirer une règle absente (R47 avant le
+			# J19) ne fait rien.
+			for rule_id: StringName in [R44, R47]:
+				var note: String = "sev_blackout_rb_search" if rule_id == R44 else "sev_blackout_rb_belt_search"
+				event.changes.append(RuleChangeDef.retire(rule_id, note))
+				event.garde_changes.append(RuleChangeDef.retire(rule_id, note))
 	var alert: StationEventDef = M12._event(9, &"contraband_alert", StationEventDef.EventClass.A)
 	alert.required_rule_id = R44
 	alert.day_min = 8

@@ -76,7 +76,8 @@ static func prepare_events(data: DataCatalog) -> Array[EveningEvent]:
 	var defs: Array[EveningEventDef] = []
 	if day != null:
 		defs = day.evening_events
-	return EveningService.build_events(defs, evening_flags(), data.get_economy())
+	# M13 (QA-069) : lettres d'offre de l'Économat (AG-04, AG-05, AG-06) en fin de liste.
+	return EveningService.build_events(defs, evening_flags(), data.get_economy(), GameState.current_day)
 
 
 ## Drapeaux du soir : narratifs + contexte (foyer, conformité ; Acte III :

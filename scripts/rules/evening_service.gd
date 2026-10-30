@@ -521,9 +521,60 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 # M7 : événements du soir
 # ---------------------------------------------------------------------------
 
-## Événements du soir dont la condition est vraie, triés par `order`.
+## M13 (QA-069) : préfixe des lettres d'offre (`offer_ag05`) et leur rang
+## (après les événements des données).
+const OFFER_EVENT_PREFIX: String = "offer_"
+const OFFER_EVENT_ORDER: int = 900
+
+
+## QA-069 (M13 §3.3, §3.5) : messages d'offre dus ce soir (AG-04, AG-05,
+## AG-06 : `UpgradeDef.offer_message_due`), dans l'ordre du catalogue, au
+## format des messages du briefing : `{upgrade_id, speaker, text, voice, args}`.
+static func offer_messages(economy: EconomyDef, day_number: int, flags: Dictionary[StringName, Variant]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if economy == null or day_number < economy.shop_open_evening:
+		return result
+	for upgrade: UpgradeDef in economy.upgrades:
+		if upgrade != null and upgrade.offer_message_due(day_number, flags):
+			result.append({"upgrade_id": upgrade.id, "speaker": upgrade.offer_speaker_key, "text": upgrade.offer_message_key,
+					"voice": upgrade.offer_voice, "args": []})
+	return result
+
+
+## QA-069 : lettres d'offre du soir (canal « CE SOIR » des événements) : une
+## lettre `offer_<id>` par message dû (`offer_messages`), sans option ni
+## coût ; à l'application (`apply`), sa définition pose le drapeau
+## `UpgradeDef.offer_seen_flag` : le message n'est remis qu'une fois.
+static func offer_events(economy: EconomyDef, day_number: int, flags: Dictionary[StringName, Variant]) -> Array[EveningEvent]:
+	var events: Array[EveningEvent] = []
+	for message: Dictionary in offer_messages(economy, day_number, flags):
+		var upgrade_id: StringName = message["upgrade_id"]
+		var def: EveningEventDef = EveningEventDef.new()
+		def.id = StringName(OFFER_EVENT_PREFIX + String(upgrade_id))
+		def.kind = EveningEventDef.Kind.LETTER
+		def.order = OFFER_EVENT_ORDER
+		def.title_key = str(message["speaker"])
+		def.text_key = str(message["text"])
+		var upgrade: UpgradeDef = economy.get_upgrade(upgrade_id)
+		def.flags[upgrade.offer_seen_flag()] = 0
+		var event: EveningEvent = EveningEvent.new()
+		event.def = def
+		event.id = def.id
+		event.kind = def.kind
+		event.title_key = def.title_key
+		event.text_key = def.text_key
+		event.upgrade_id = upgrade_id
+		event.speaker_key = def.title_key
+		event.voice = int(message["voice"])
+		events.append(event)
+	return events
+
+
+## Événements du soir dont la condition est vraie, triés par `order`. M13
+## (QA-069) : avec `day_number` (≥ 0), suivis des lettres d'offre du soir
+## (`offer_events`).
 static func build_events(defs: Array[EveningEventDef], flags: Dictionary[StringName, Variant],
-		economy: EconomyDef) -> Array[EveningEvent]:
+		economy: EconomyDef, day_number: int = -1) -> Array[EveningEvent]:
 	var events: Array[EveningEvent] = []
 	var sorted: Array[EveningEventDef] = []
 	for def: EveningEventDef in defs:
@@ -553,6 +604,8 @@ static func build_events(defs: Array[EveningEventDef], flags: Dictionary[StringN
 		for gauge: String in def.text_gauges:
 			event.text_args.append(FlagCondition.gauge_value(flags, StringName(gauge)))
 		events.append(event)
+	if day_number >= 0:
+		events.append_array(offer_events(economy, day_number, flags))
 	return events
 
 
@@ -640,6 +693,11 @@ static func _apply_events(report: EveningReport, events: Array[EveningEvent], ch
 					report.ending = ending
 				report.add_event(str(outcome.get("result_key", "")),
 						EveningReport.Tone.BAD if ending != &"" or SaveService.as_int(outcome.get("cost", 0)) > 0 else EveningReport.Tone.INFO)
+				if bool(outcome.get("drawer_found", false)):
+					# QA-069 (M13 §3.5) : Okonkwo, après la confiscation du tiroir.
+					var drawer_key: String = str(outcome.get("drawer_message_key", EndingService.DRAWER_FOUND_MESSAGE_KEY))
+					report.event_texts.append(drawer_key)
+					report.add_event(drawer_key, EveningReport.Tone.WARNING)
 			EveningEventDef.Kind.LETTER:
 				report.event_texts.append(event.text_key)
 				report.event_texts.append_array(event.extra_keys)

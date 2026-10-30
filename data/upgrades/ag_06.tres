@@ -12,6 +12,7 @@ price = 35
 expense_key = "exp_upgrade_ag06"
 first_evening = 11
 offer_message_key = "msg_vh_monitor"
+offer_speaker_key = "spk_consortium"
 purchase_flags = Dictionary[StringName, int]({
 &"loyalty": 1
 })

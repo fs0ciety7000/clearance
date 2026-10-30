@@ -81,6 +81,15 @@ func draw_profile(rng: SeededRng) -> void:
 	profile_index = rng.randi_range(0, event.override_profiles.size() - 1)
 
 
+## QA-066 : profil imposé (`CaseBuilder.fit_alert_profile`, avant l'annonce) ;
+## les copies de surcharges (`changes()`) sont recalculées.
+func set_profile_index(index: int) -> void:
+	if index == profile_index:
+		return
+	_scoped.clear()
+	profile_index = index
+
+
 ## Profil tiré (`{faction_ids, purposes, label_key}`), vide sans profil.
 func profile() -> Dictionary:
 	if event == null or profile_index < 0 or profile_index >= event.override_profiles.size():

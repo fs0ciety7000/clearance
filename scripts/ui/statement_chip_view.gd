@@ -18,6 +18,12 @@ const VAGUE_GLYPH: String = "≈"
 var statement: Statement = null
 ## Valeur barrée (première valeur d'une auto-correction) : jamais comparable.
 var struck: bool = false
+## Ponctuation collée juste après (QA-070) : pas de marge de droite, le signe
+## suit la valeur sans espace visible (« passer. » et non « passer . »).
+var tight_end: bool = false:
+	set(value):
+		tight_end = value
+		_sync_min_size()
 
 var _glyph: Label = null
 var _label: Label = null
@@ -85,7 +91,14 @@ func _sync_min_size() -> void:
 	_box.size = inner
 	# Puce en ligne dans une phrase : cible un peu plus basse que `HIT_TARGET_MIN`
 	# (la manette y va par le focus, DS §7.12), jamais sous la hauteur du texte.
-	custom_minimum_size = Vector2(inner.x + DS.SPACE_1 + DS.BORDER_STRONG, maxf(inner.y + DS.SPACE_1, DS.HIT_TARGET_MIN - DS.SPACE_2))
+	# Discordance (QA-070) : place réservée à droite pour le repère et la
+	# pastille numérotée (①), qui ne se posent plus sur le texte de la puce.
+	var end_pad: float = 0.0 if tight_end else float(DS.BORDER_STRONG)
+	if is_flagged():
+		end_pad = flag_reserve(flag_numbers.size())
+	elif concordant:
+		end_pad = DS.ICON_S + DS.SPACE_2
+	custom_minimum_size = Vector2(inner.x + DS.SPACE_1 + end_pad, maxf(inner.y + DS.SPACE_1, DS.HIT_TARGET_MIN - DS.SPACE_2))
 	_box.position = Vector2(DS.SPACE_1, (custom_minimum_size.y - inner.y) * 0.5)
 
 
@@ -94,9 +107,24 @@ func _notification(what: int) -> void:
 		_box.position.y = (size.y - _box.size.y) * 0.5
 
 
+## Largeur réservée à droite d'une puce en discordance : repère DISCORDANCE
+## (`ICON_M`, dessiné par `InspectableItem`) et pastilles numérotées (une
+## tous les `SPACE_5` vers la gauche ; le losange déborde de `SPACE_3 * 1.5`
+## à gauche du coin).
+static func flag_reserve(count: int = 1) -> float:
+	return maxf(DS.ICON_M + DS.SPACE_2, DS.SPACE_3 * 1.5 + DS.SPACE_1 + DS.SPACE_5 * maxi(count - 1, 0))
+
+
+## Coche de concordance (QA-070) : place réservée comme pour la discordance.
+func set_concordant(value: bool) -> void:
+	super.set_concordant(value)
+	_sync_min_size()
+
+
 func _refresh_content() -> void:
 	if _label == null:
 		return
+	_sync_min_size()
 	var color: Color = DS.TEXT_PRIMARY
 	if struck:
 		color = DS.TEXT_MUTED

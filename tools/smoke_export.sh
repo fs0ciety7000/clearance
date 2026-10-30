@@ -7,7 +7,9 @@
 #    chemin de scène en ligne de commande) avec les arguments de debug
 #    `--day=N --seed=3 --autoplay` (booth 3D compris) pour J1, J4, J7, J10,
 #    J15, J20 (Acte II : quota, couvre-feu, révocations, pivot), J25 et J30
-#    (Acte III : répondants, lock-out, dernier jour).
+#    (Acte III : répondants, lock-out, dernier jour) ; M13 : J8 (portique,
+#    R44 → R46), J19 (R47, fouille obligatoire des Ceinturiers) et J24
+#    (palier s4 de R43, personne visitée).
 #    Détecte ce que la suite GUT ne voit pas : ressources mal converties à
 #    l'export, fichiers non embarqués, traduction absente…
 # 3. M12 : une Garde de nuit courte (`--garde=CODE`, 8 passagers jugés dont
@@ -69,7 +71,7 @@ run release_title "$ROOT/build/linux" --quit-after 300
 "$GODOT" --headless --path "$ROOT" --export-debug "Linux" "$SMOKE/debug/CLEARANCE.x86_64" >"$SMOKE/export_debug.log" 2>&1 \
 	|| die "export debug en échec (journal : build/smoke/export_debug.log)"
 printf '[application]\n\nrun/main_scene="res://scenes/main/day.tscn"\n' > "$SMOKE/debug/override.cfg"
-for day in 1 4 7 10 15 20 25 30; do
+for day in 1 4 7 8 10 15 19 20 24 25 30; do
 	run "debug_day$day" "$SMOKE/debug" --quit-after 2000 -- --day="$day" --seed=3 --autoplay
 done
 if [[ $WITH_M12 -eq 1 ]]; then

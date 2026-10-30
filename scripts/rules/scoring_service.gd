@@ -21,10 +21,13 @@
 ##   APPROUVÉ d'un passager visé sans fouille. Citations de procédure
 ##   ordinaires : la plus grave l'emporte (REFUS INJUSTIFIÉ sur un innocent
 ##   fouillé puis refusé).
-## - **M13 — prime de relevé** (D-168) : `finding_bonus` (`EconomyDef`)
-##   s'ajoute au salaire d'un REFUS / d'une DÉTENTION **corrects** dont une
-##   violation attendue repose sur une déclaration (R43) ou sur un objet de
-##   fouille (R45, R46, implant dissimulé) : `is_m13_finding`.
+## - **M13 — prime de relevé** (D-168, QA-067) : `finding_bonus` (`EconomyDef`)
+##   s'ajoute au salaire d'un REFUS / d'une DÉTENTION **corrects** quand le
+##   joueur a **épinglé** la trouvaille elle-même : une discordance confirmée
+##   de `Verdict.flagged` dont la puce (R43) ou l'objet révélé (R45, R46,
+##   implant dissimulé) est une preuve d'une violation attendue
+##   (`is_m13_finding_pinned`). Un refus documenté par une autre anomalie du
+##   même passager ne la rapporte pas.
 ## - **Citation** : au plus une par cas, la plus grave (table `GRAVITY`).
 ## - **Crédits** : `credit_per_correct` si correct, + prime de détention ; 0
 ##   sinon. L'amende dépend du rang de la citation dans la journée
@@ -154,8 +157,8 @@ static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Cas
 		if verdict.kind == VerdictKind.Kind.DETAIN and key.expected_verdict == VerdictKind.Kind.DETAIN:
 			result.wage += detain_bonus
 		if finding_bonus > 0 and verdict.kind != VerdictKind.Kind.APPROVE and not result.quota_refusal \
-				and is_m13_finding(key.expected_violations):
-			# M13 (D-168) : prime de relevé.
+				and is_m13_finding_pinned(verdict.flagged, key.expected_violations):
+			# M13 (D-168, QA-067) : prime de relevé, pour la trouvaille épinglée.
 			result.wage += finding_bonus
 		if quota_full and verdict.kind == VerdictKind.Kind.APPROVE:
 			# D-077 : entrée imputée au guichet, le cas ne rapporte rien.
@@ -205,6 +208,24 @@ static func is_m13_finding(violations: Array[Violation]) -> bool:
 		for ref: FieldRef in violation.refs:
 			if ref != null and (ref.is_statement() or ref.is_scan()):
 				return true
+	return false
+
+
+## M13 (QA-067) : une discordance confirmée épinglée porte sur une puce du
+## journal ou sur un objet révélé **et** ce côté est une preuve d'une violation
+## attendue (la trouvaille de M13 a servi de preuve). Une puce honnête
+## épinglée contre un document faux (QA-064) ne prouve aucune violation de
+## déclaration : elle ne compte pas.
+static func is_m13_finding_pinned(flagged: Array[Discrepancy], violations: Array[Violation]) -> bool:
+	for discrepancy: Discrepancy in flagged:
+		if discrepancy == null or not discrepancy.confirmed:
+			continue
+		for ref: FieldRef in [discrepancy.a, discrepancy.b]:
+			if ref == null or not (ref.is_statement() or ref.is_scan()):
+				continue
+			for violation: Violation in violations:
+				if violation != null and violation.has_ref(ref):
+					return true
 	return false
 
 

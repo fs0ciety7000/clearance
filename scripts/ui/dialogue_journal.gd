@@ -29,6 +29,11 @@ const TAB_DIALOGUE: StringName = &"dialogue"
 const TAB_SEARCH: StringName = &"search"
 ## Style du texte des répliques (même taille pour la phrase et ses puces).
 const LINE_VARIATION: StringName = &"BodyLabel"
+## Espace insécable (typographie française avant « : ; ! ? » »).
+const NBSP: String = "\u00a0"
+## Ponctuation en tête d'un texte qui suit une puce (QA-070) : groupe de
+## signes, éventuellement précédé d'une espace (« : », « ? »).
+static var PUNCT_AFTER_CHIP: RegEx = RegEx.create_from_string("^( ?[,.;:…?!»)]+)")
 
 ## Entrées : {node, frozen, chips: Array[StatementChipView], words: Array[Label], tag}.
 var entries: Array[Dictionary] = []
@@ -145,7 +150,15 @@ func add_statement_line(frame_text: String, statements: Array[Statement], captio
 	var chips: Array[StatementChipView] = []
 	for segment: Dictionary in Statement.segments(frame_text):
 		if segment.has("text"):
-			words.append_array(_add_words(flow, ComparisonUI.passenger_text(str(segment["text"]))))
+			var text: String = ComparisonUI.passenger_text(str(segment["text"]))
+			var last: Node = flow.get_child(flow.get_child_count() - 1) if flow.get_child_count() > 0 else null
+			if last is StatementChipView:
+				# QA-070 : la ponctuation qui suit une puce lui reste attachée.
+				var glued: Dictionary = _glue_punctuation(flow, last as StatementChipView, text)
+				if glued.has("label"):
+					words.append(glued["label"])
+				text = str(glued["rest"])
+			words.append_array(_add_words(flow, text))
 			continue
 		var statement: Statement = Statement.find_in(statements, StringName(str(segment["statement"])))
 		if statement == null:
@@ -230,9 +243,42 @@ func _flow() -> HFlowContainer:
 	return flow
 
 
+## Ponctuation qui suit une puce (QA-070) : « , » « . » « … » « ? » et, en
+## typographie française, « : » « ; » « ! » « ? » « » » précédés d'une espace
+## insécable. Elle est posée **dans le même groupe insécable** que la puce
+## (`ChipGroup`, `HBoxContainer` sans séparation) : le flux ne peut plus la
+## renvoyer seule en tête de ligne, et la puce perd sa marge de droite (pas
+## d'espace visible avant le point). Rend {label, rest} (`rest` : la suite).
+func _glue_punctuation(flow: HFlowContainer, chip: StatementChipView, text: String) -> Dictionary:
+	var found: RegExMatch = PUNCT_AFTER_CHIP.search(text)
+	if found == null:
+		return {"rest": text}
+	var mark: String = found.get_string(1)
+	var rest: String = text.substr(found.get_end())
+	var glued: String = mark.strip_edges()
+	if mark.begins_with(" "):
+		glued = NBSP + glued
+	if rest.begins_with(" "):
+		glued += " "
+		rest = rest.substr(1)
+	var group: HBoxContainer = HBoxContainer.new()
+	group.name = "ChipGroup_%s" % chip.name
+	group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	group.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	group.add_theme_constant_override("separation", 0)
+	var index: int = chip.get_index()
+	flow.remove_child(chip)
+	group.add_child(chip)
+	flow.add_child(group)
+	flow.move_child(group, index)
+	chip.tight_end = true
+	var label: Label = _word(group, glued)
+	return {"label": label, "rest": rest}
+
+
 ## Un `Label` par mot, espace compris (le flux replie la phrase autour des
-## puces ; une ponctuation collée à une puce le reste : « jours, » et non
-## « jours , »).
+## puces ; la ponctuation qui suit une puce est collée à celle-ci par
+## `_glue_punctuation`).
 func _add_words(flow: HFlowContainer, text: String) -> Array[Label]:
 	var labels: Array[Label] = []
 	if text.begins_with(" ") and flow.get_child_count() > 0:
@@ -244,7 +290,7 @@ func _add_words(flow: HFlowContainer, text: String) -> Array[Label]:
 	return labels
 
 
-func _word(flow: HFlowContainer, text: String) -> Label:
+func _word(flow: Container, text: String) -> Label:
 	var label: Label = Label.new()
 	label.theme_type_variation = LINE_VARIATION
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -302,14 +348,43 @@ func _restyle() -> void:
 		var box: VBoxContainer = entry["node"]
 		if not is_instance_valid(box):
 			continue
-		var pin: Node = box.get_node_or_null("Frozen")
-		if entry.get("frozen", false) and pin == null:
-			var chip: PanelContainer = ScreenBase.chip(UiText.t("jr_frozen", "FIGÉE · DISCORDANCE"), UiIcon.Kind.DISCORDANCE,
-					Palette.ACCENT_MAGENTA)
-			chip.name = "Frozen"
-			chip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-			box.add_child(chip)
-			box.move_child(chip, 0)
+		if entry.get("frozen", false) and box.find_child("Frozen", true, false) == null:
+			_add_frozen_tag(box)
+
+
+## Repère « FIGÉE · DISCORDANCE » (QA-070) : posé **au bout de la réplique**,
+## dans son dernier flux (la rangée « DÉCLARÉ : » s'il y en a une), comme un
+## élément insécable, puis ramené entier dans la vue. Le journal défile vers sa
+## fin : le repère d'une réplique figée récente est en bas, jamais coupé par le
+## haut (il l'était quand il coiffait la réplique).
+func _add_frozen_tag(box: VBoxContainer) -> void:
+	var flow: HFlowContainer = null
+	for child: Node in box.get_children():
+		if child is HFlowContainer:
+			flow = child
+	var chip: PanelContainer = ScreenBase.chip(UiText.t("jr_frozen", "FIGÉE · DISCORDANCE"), UiIcon.Kind.DISCORDANCE,
+			Palette.ACCENT_MAGENTA)
+	chip.name = "Frozen"
+	chip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if flow == null:
+		box.add_child(chip)
+		return
+	var holder: MarginContainer = MarginContainer.new()
+	holder.name = "FrozenTag"
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	holder.add_theme_constant_override("margin_left", DS.SPACE_2)
+	holder.add_child(chip)
+	flow.add_child(holder)
+	# Une image plus tard (mise en page faite) : le repère entier dans la vue.
+	if is_inside_tree():
+		get_tree().process_frame.connect(_reveal.bind(holder), CONNECT_ONE_SHOT)
+
+
+func _reveal(control: Control) -> void:
+	if is_instance_valid(control) and control.is_inside_tree() and is_instance_valid(_scroll) and _scroll.is_visible_in_tree():
+		_scroll.ensure_control_visible(control)
 
 
 func _scroll_to_end() -> void:

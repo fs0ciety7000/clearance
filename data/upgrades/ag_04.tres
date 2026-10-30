@@ -19,6 +19,8 @@ last_evening = 16
 condition = SubResource("Resource_icew5")
 off_catalog = true
 offer_message_key = "msg_soute_drawer"
+offer_speaker_key = "spk_note"
+offer_voice = 6
 effects = Dictionary[StringName, Variant]({
 &"audit_penalty": 2,
 &"envelope_trace_every": 2

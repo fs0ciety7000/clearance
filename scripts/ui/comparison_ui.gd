@@ -1937,6 +1937,22 @@ func _describe_m13(result: Discrepancy) -> String:
 		if result.result == Discrepancy.Result.CONCORDANT:
 			return UiText.tf("conc_statement_detail", [said, doc_name, shown], "Déclaré : %s = %s : %s")
 		return UiText.tf("disc_statement_mismatch_detail", [said, doc_name, shown], "Déclaré : %s ≠ %s : %s")
+	if statement_ref != null and result.result == Discrepancy.Result.DISCORDANT:
+		# QA-064 : la puce concorde avec son document de référence, c'est l'autre
+		# document qui est faux (Code du contrat, R25) — discordance documentaire,
+		# écrite côté document, jamais « Déclaré : … ≠ … ».
+		var doc_ref: FieldRef = result.b if statement_ref == result.a else result.a
+		var stated: Statement = current_case.get_statement_by_ref(statement_ref)
+		var said_text: String = StatementChipView.chip_text(stated, false).to_upper() if stated != null else "—"
+		var where: String = "—"
+		var value: String = "—"
+		if doc_ref != null and doc_ref.is_document_field():
+			var doc_instance: DocumentInstance = current_case.get_document(doc_ref.document_id)
+			var doc_field: FieldDef = current_case.get_field_def(doc_ref)
+			where = "%s · %s" % [_sentence_case(UiText.document_title(doc_instance.type_def)) if doc_instance != null else "",
+					UiText.field_label(doc_field) if doc_field != null else String(doc_ref.field_id)]
+			value = UiText.value_text(doc_field, current_case.get_value(doc_ref))
+		return UiText.tf("disc_statement_doc_detail", [where, value, said_text], "%s : %s ≠ déclaré : %s")
 	if scan_ref == null:
 		return ""
 	var item: SearchItem = current_case.get_scan_item(scan_ref)

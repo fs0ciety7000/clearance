@@ -221,6 +221,7 @@ func _build_nav() -> void:
 	_tabs_scroll.gui_input.connect(_on_tabs_input)
 	_tabs_scroll.get_h_scroll_bar().value_changed.connect(func(_v: float) -> void: _update_nav_hints())
 	_tabs_scroll.resized.connect(_update_nav_hints.call_deferred)
+	_tabs_scroll.resized.connect(_on_tabs_resized)
 	nav.add_child(_tabs_scroll)
 	_tabs_row = HBoxContainer.new()
 	_tabs_row.add_theme_constant_override("separation", 0)
@@ -575,11 +576,12 @@ func _build_tabs() -> void:
 			if entry.is_new and (id == TAB_ALL or entry.category == id):
 				news += 1
 		var text: String = _tab_name(id)
+		var suffix: String = ""
 		var color: Color = Color.TRANSPARENT
 		if news > 0 and id != TAB_ALL:
-			text += " ·%d" % news
+			suffix = " ·%d" % news
 			color = Palette.STATE_AMBER
-		_add_tab_button(id, text, color, group)
+		_add_tab_button(id, text, color, group, suffix)
 	var refs: Array[StringName] = visible_reference_tabs()
 	if not refs.is_empty():
 		# Séparateur « BULLETINS » dans la rangée : les onglets de référence
@@ -605,36 +607,44 @@ func _build_tabs() -> void:
 		_ref_caption = caption
 	for tab: StringName in refs:
 		var text: String = RulebookReference.tab_title(tab)
+		var suffix: String = ""
 		var color: Color = Color.TRANSPARENT
 		if tab == RulebookReference.TAB_WANTED:
-			text += " ·%d" % wanted_notices.size()
+			suffix = " ·%d" % wanted_notices.size()
 			color = Palette.STATE_RED
 		elif tab == RulebookReference.TAB_REVOKED:
-			text = revoked_tab_title() + " ·%d" % revoked_entries.size()
+			text = revoked_tab_title()
+			suffix = " ·%d" % revoked_entries.size()
 			color = Palette.VOICE_COMMISSION
 		elif tab == RulebookReference.TAB_STOLEN:
-			text += " ·%d" % named_entries(&"stolen").size()
+			suffix = " ·%d" % named_entries(&"stolen").size()
 			color = Palette.STATE_RED
 		elif tab == RulebookReference.TAB_LEDGER:
-			text += " ·%d" % ledger_entries.size()
+			suffix = " ·%d" % ledger_entries.size()
 			color = Palette.STATE_GREEN if not ledger_entries.is_empty() else Palette.TEXT_SECONDARY
 		elif tab == RulebookReference.TAB_SUMMONS:
-			text += " ·%d" % summons_entries.size()
+			suffix = " ·%d" % summons_entries.size()
 			color = Palette.STATE_AMBER
 		elif RulebookReference.is_new(tab, day_number):
-			text += " ·" + UiText.t("rb_tab_new", "NEW")
+			suffix = " ·" + UiText.t("rb_tab_new", "NEW")
 			color = Palette.STATE_AMBER
-		var button: Button = _add_tab_button(reference_tab_id(tab), text, color, group)
+		var button: Button = _add_tab_button(reference_tab_id(tab), text, color, group, suffix)
 		button.name = "Tab_%s" % tab
+	_fit_tab_labels.call_deferred()
 
 
-func _add_tab_button(id: int, text: String, color: Color, group: ButtonGroup) -> Button:
+## `suffix` : compteur ou repère (« ·3 », « ·NOUV. ») gardé entier quand le
+## titre doit être raccourci (QA-071, `_fit_tab_labels`).
+func _add_tab_button(id: int, text: String, color: Color, group: ButtonGroup, suffix: String = "") -> Button:
 	var button: Button = Button.new()
 	button.theme_type_variation = &"ToggleTab"
 	button.toggle_mode = true
 	button.button_group = group
 	button.focus_mode = Control.FOCUS_NONE
-	button.text = text
+	button.text = text + suffix
+	button.tooltip_text = text + suffix
+	button.set_meta(&"tab_title", text)
+	button.set_meta(&"tab_suffix", suffix)
 	if color.a > 0.0:
 		button.add_theme_color_override(&"font_color", color)
 		button.set_meta(&"tab_color", color)
@@ -644,6 +654,48 @@ func _add_tab_button(id: int, text: String, color: Color, group: ButtonGroup) ->
 	_tab_buttons.append(button)
 	_tab_ids.append(id)
 	return button
+
+
+## Titre complet d'un onglet (menu « n / N ▾ », infobulle), même raccourci.
+static func tab_full_text(button: Button) -> String:
+	if button == null or not button.has_meta(&"tab_title"):
+		return button.text if button != null else ""
+	return str(button.get_meta(&"tab_title")) + str(button.get_meta(&"tab_suffix", ""))
+
+
+## QA-071 : un onglet ne dépasse jamais la largeur de la rangée visible (Deck,
+## texte 1,5 : « Contrebande ·NOUV. » était plus large qu'elle et coupé à
+## gauche sous « [ »). Le titre est raccourci par une ellipse, le compteur ou
+## le repère « NOUV. » restent entiers (jamais la couleur seule) ; le titre
+## complet est en infobulle et dans le menu « n / N ▾ ». Rend vrai si un
+## libellé a changé (la rangée se replace à l'image suivante).
+func _fit_tab_labels() -> bool:
+	if _tabs_scroll == null or not is_inside_tree():
+		return false
+	var width: float = _tabs_scroll.size.x
+	if width <= 0.0:
+		return false
+	var changed: bool = false
+	for button: Button in _tab_buttons:
+		if not is_instance_valid(button) or not button.has_meta(&"tab_title"):
+			continue
+		var title: String = button.get_meta(&"tab_title")
+		var suffix: String = button.get_meta(&"tab_suffix", "")
+		var text: String = title + suffix
+		button.text = text
+		var cut: int = title.length()
+		while button.get_combined_minimum_size().x > width and cut > 1:
+			cut -= 1
+			text = title.left(cut).strip_edges() + "…" + suffix
+			button.text = text
+		changed = changed or text != str(button.get_meta(&"tab_shown", title + suffix))
+		button.set_meta(&"tab_shown", text)
+	return changed
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_THEME_CHANGED and _tabs_scroll != null:
+		_fit_tab_labels.call_deferred()
 
 
 ## Molette sur la rangée d'onglets : défilement horizontal.
@@ -663,10 +715,23 @@ func _on_tabs_input(event: InputEvent) -> void:
 	_tabs_scroll.accept_event()
 
 
+## Rangée redimensionnée (le compteur « n / N ▾ » et la liste changent sa
+## largeur) : libellés ajustés, onglet courant replacé à l'image suivante.
+func _on_tabs_resized() -> void:
+	_fit_tab_labels()
+	if is_inside_tree() and not get_tree().process_frame.is_connected(_reveal_current_tab):
+		get_tree().process_frame.connect(_reveal_current_tab, CONNECT_ONE_SHOT)
+
+
 ## Onglet courant ramené dans la rangée visible.
 func _reveal_current_tab() -> void:
 	var index: int = _tab_ids.find(current_tab)
 	if index < 0 or not is_inside_tree() or _tabs_scroll == null:
+		return
+	if _fit_tab_labels():
+		# Libellé raccourci : positions recalculées à l'image suivante.
+		if not get_tree().process_frame.is_connected(_reveal_current_tab):
+			get_tree().process_frame.connect(_reveal_current_tab, CONNECT_ONE_SHOT)
 		return
 	var button: Button = _tab_buttons[index]
 	if not is_instance_valid(button):
@@ -689,6 +754,8 @@ func _reveal_current_tab() -> void:
 			and _ref_caption.position.x + width >= right:
 		# Premier bulletin : la légende « BULLETINS » reste visible.
 		scroll = minf(scroll, _ref_caption.position.x)
+	# Jamais un début de libellé coupé à gauche (QA-071).
+	scroll = minf(scroll, left)
 	_tabs_scroll.scroll_horizontal = roundi(scroll)
 	_update_nav_hints()
 
@@ -733,7 +800,7 @@ func _fill_tabs_menu() -> void:
 		if id <= TAB_REFERENCE_BASE and not in_refs:
 			in_refs = true
 			popup.add_separator(UiText.t("rb_bulletins", "BULLETINS"))
-		popup.add_radio_check_item(_tab_buttons[i].text, i)
+		popup.add_radio_check_item(tab_full_text(_tab_buttons[i]), i)
 		var index: int = popup.get_item_index(i)
 		popup.set_item_checked(index, id == current_tab)
 

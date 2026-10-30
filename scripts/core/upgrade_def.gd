@@ -46,6 +46,11 @@ const FLAG_SEARCH_ABUSE: StringName = &"fouille_abus"
 ## (`offer_message_key`) et s'affiche sous « HORS CATALOGUE ».
 @export var off_catalog: bool = false
 @export var offer_message_key: String = ""
+## QA-069 : locuteur (`spk_okonkwo`…) et voix (`BriefingContent.Voice`) du
+## message d'offre, remis une fois, au premier soir où l'offre est faite
+## (`offer_message_due`, drapeau `offer_seen_flag`).
+@export var offer_speaker_key: String = ""
+@export var offer_voice: int = 0
 ## Drapeaux posés à l'achat (`{drapeau: delta}`, AG-06 : `loyalty +1`).
 @export var purchase_flags: Dictionary[StringName, int] = {}
 ## Effets paramétrés lus par les systèmes (lot B / C) : clés `EFFECT_*`.
@@ -58,6 +63,23 @@ const EFFECT_ENVELOPE_TRACE_EVERY: StringName = &"envelope_trace_every"
 const EFFECT_SUSPICION_ON_FOUND: StringName = &"suspicion_on_found"
 ## AG-04 : score ajouté à l'audit quand le tiroir est trouvé.
 const EFFECT_AUDIT_PENALTY: StringName = &"audit_penalty"
+
+
+## QA-069 : suffixe du drapeau « message d'offre remis » (`upg_ag05_offer_seen`).
+const OFFER_SEEN_SUFFIX: String = "_offer_seen"
+
+
+## Drapeau posé à la clôture du soir où le message d'offre a été remis.
+func offer_seen_flag() -> StringName:
+	return StringName(FLAG_PREFIX + String(id) + OFFER_SEEN_SUFFIX)
+
+
+## QA-069 : le message d'offre (`offer_message_key`) est dû ce soir : offre
+## faite ce soir et message jamais remis (premier soir de l'offre ; pour AG-04,
+## le premier soir après la première enveloppe).
+func offer_message_due(evening_day: int, flags: Dictionary[StringName, Variant]) -> bool:
+	return not offer_message_key.is_empty() and is_offered(evening_day, flags) \
+			and not FlagCondition.is_flag_true(flags, offer_seen_flag())
 
 
 ## Drapeau de possession (`upg_ag01`).

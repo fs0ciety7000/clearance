@@ -139,7 +139,8 @@ func _on_checked(result: Discrepancy) -> void:
 	var on_statement: bool = (result.a != null and result.a.is_statement()) or (result.b != null and result.b.is_statement())
 	if not on_statement:
 		return
-	if result.confirmed:
+	if result.confirmed and result.reason_key == Discrepancy.REASON_STATEMENT_MISMATCH:
+		# QA-064 : une puce honnête contre un document faux n'est pas une déclaration épinglée.
 		fire(IntercomLineDef.TRIGGER_STATEMENT_PINNED)
 	elif result.reason_key == REASON_STATEMENT_VAGUE:
 		fire(IntercomLineDef.TRIGGER_STATEMENT_VAGUE)

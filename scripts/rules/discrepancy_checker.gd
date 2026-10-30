@@ -196,10 +196,29 @@ static func _check_statement(case: Case, statement_ref: FieldRef, other: FieldRe
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_RULE_INACTIVE)
 	match rule.compare(case, statement, other):
 		Discrepancy.Result.DISCORDANT:
+			if is_document_at_fault(case, statement, other, rule):
+				# QA-064 : la parole concorde avec son document de référence ;
+				# c'est cet autre document qui est faux (Code du contrat, R25) :
+				# discordance documentaire, jamais « déclaration contradictoire ».
+				return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_MISMATCH)
 			return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_STATEMENT_MISMATCH)
 		Discrepancy.Result.CONCORDANT:
 			return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
 	return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+
+
+## QA-064 (M13 §1.6 : un honnête ne produit jamais de puce discordante) :
+## une puce discordante avec un champ qui **n'est pas** son champ de référence
+## (`StatementsConsistentRule.primary_ref` : Permis, Carte ou laissez-passer)
+## alors qu'elle ne contredit pas cette référence (concordante, ou référence
+## absente) accuse le document, pas la parole. La paire reste DISCORDANTE et
+## documente la violation de ce document (elle partage son champ).
+static func is_document_at_fault(case: Case, statement: Statement, other: FieldRef,
+		rule: StatementsConsistentRule) -> bool:
+	var primary: FieldRef = rule.primary_ref(case, statement)
+	if primary != null and primary.equals(other):
+		return false
+	return primary == null or rule.compare(case, statement, primary) != Discrepancy.Result.DISCORDANT
 
 
 ## M13 (§2.5) : objet révélé ↔ entrée de l'onglet Contrebande (même catégorie,

@@ -77,6 +77,11 @@ const ACT_CARD_ENDINGS: Dictionary[String, StringName] = {
 const ENQUETE_EVENTS: Array[StringName] = [&"d22_q1", &"d26_q2", &"d28_q3", &"d29_deposition", &"d29_verdict"]
 ## Acte III : aides versées par lettre → libellé de revenu.
 const LETTER_INCOME_KEYS: Dictionary[StringName, String] = {&"d21_recall": "inc_recall", &"d23_fund": "inc_vitres_fund"}
+## M13 (QA-069, M13 §3.5) : messages remis au rapport de la nuit / à l'audit,
+## signés (locuteur, voix du briefing) : `{clé du texte: [locuteur, voix]}`.
+const SIGNED_MESSAGES: Dictionary[String, Array] = {
+	"msg_okonkwo_drawer_found": ["spk_okonkwo", BriefingContent.Voice.MENTOR],
+}
 ## Hauteur d'une ligne de dépense (rations : plus compactes, groupées).
 ## Compactes (QA-034) : libellé et note sur une ligne quand la largeur le
 ## permet (repli sinon) ; foyer complet + 4 rations tiennent sans défiler en
@@ -753,6 +758,8 @@ func _apply_choice_costs() -> void:
 func _event_accent(event: EveningEvent) -> Color:
 	if is_act_card(event):
 		return act_card_accent(event)
+	if offer_upgrade(event) != null:
+		return BriefingScreen.voice_color(offer_voice(event))
 	if EVENT_ACCENTS.has(event.id):
 		return Palette.token(EVENT_ACCENTS[event.id])
 	match event.kind:
@@ -802,6 +809,8 @@ func _show_step(index: int) -> void:
 		return
 	step = clampi(index, 0, events.size() - 1)
 	for child: Node in _events_box.get_children():
+		# Retiré tout de suite : la nouvelle carte garde son nom (« EventCard »).
+		_events_box.remove_child(child)
 		child.queue_free()
 	option_buttons.clear()
 	var event: EveningEvent = events[step]
@@ -820,8 +829,11 @@ func _show_step(index: int) -> void:
 	head.add_child(_step_dots(accent))
 	head.add_child(spacer())
 	var kind_key: String = ["ev_kind_letter", "ev_kind_choice", "ev_kind_audit"][event.kind]
+	var offer: UpgradeDef = offer_upgrade(event)
 	if is_act_card(event):
 		kind_key = "evt_d20_card_eyebrow"
+	elif offer != null:
+		kind_key = "ev_kind_offer"
 	elif event.def != null and event.def.audit_id == EndingService.AUDIT_DEPOSITION:
 		kind_key = "ev_kind_verdict"
 	head.add_child(eyebrow(UiText.t(kind_key, "LETTRE"), accent))
@@ -832,12 +844,14 @@ func _show_step(index: int) -> void:
 		speaker.add_child(UiIcon.make(UiIcon.Kind.SCALES, accent, DS.ICON_S))
 		speaker.add_child(eyebrow(UiText.t("spk_enquete", "ENQUÊTE · C. RAVEL"), accent))
 		box.add_child(speaker)
-	if not event.title_key.is_empty():
+	if offer != null:
+		_offer_letter(box, event, offer)
+	elif not event.title_key.is_empty():
 		var title: Label = label(UiText.t(event.title_key, String(event.id)), &"PanelTitle", accent if is_act_card(event) else DS.TEXT_PRIMARY)
 		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		title.custom_minimum_size.x = 120.0
 		box.add_child(title)
-	if not event.text_key.is_empty():
+	if offer == null and not event.text_key.is_empty():
 		var body: Label = wrapped(event_text(event), &"BodyLabel", DS.TEXT_PRIMARY)
 		body.name = "EventText"
 		box.add_child(body)
@@ -869,6 +883,107 @@ func _show_step(index: int) -> void:
 	nav.add_child(next_button)
 	_refresh_options()
 	_refresh_confirm()
+
+
+## M13 (QA-069) : amélioration dont `event` est la lettre d'offre
+## (`EveningEvent.upgrade_id`, lettres `offer_<id>` d'`EveningService`), null
+## sinon. Lecture défensive : un événement sans ce champ n'est pas une offre.
+func offer_upgrade(event: EveningEvent) -> UpgradeDef:
+	if event == null:
+		return null
+	var id: Variant = event.get(&"upgrade_id")
+	if not (id is StringName or id is String) or String(id).is_empty():
+		return null
+	if economy == null:
+		economy = DataCatalog.load_economy()
+	return economy.get_upgrade(StringName(id)) if economy != null else null
+
+
+## Voix du message d'offre (`EveningEvent.voice`, sinon `UpgradeDef.offer_voice`).
+func offer_voice(event: EveningEvent) -> BriefingContent.Voice:
+	var voice: Variant = event.get(&"voice") if event != null else null
+	if not voice is int or int(voice) < 0:
+		var upgrade: UpgradeDef = offer_upgrade(event)
+		voice = upgrade.offer_voice if upgrade != null else 0
+	var value: int = clampi(int(voice), 0, BriefingContent.Voice.size() - 1)
+	var result: BriefingContent.Voice = value as BriefingContent.Voice
+	return result
+
+
+## Lettre d'offre (QA-069, M13 §3.3 / §3.5) : signée comme un message du
+## briefing (icône et nom du locuteur, jamais la couleur seule), le nom de
+## l'amélioration, le message, puis le renvoi à l'Économat (prix) et, si la
+## ligne y est, « VOIR L'OFFRE » (souris, clavier, manette : le focus va à la
+## ligne de l'Économat).
+func _offer_letter(box: VBoxContainer, event: EveningEvent, upgrade: UpgradeDef) -> void:
+	var speaker_key: String = str(event.get(&"speaker_key")) if event.get(&"speaker_key") != null else ""
+	if speaker_key.is_empty():
+		speaker_key = upgrade.offer_speaker_key if not upgrade.offer_speaker_key.is_empty() else event.title_key
+	var voice: BriefingContent.Voice = offer_voice(event)
+	if not speaker_key.is_empty():
+		var speaker: Control = _speaker_row(speaker_key, voice)
+		box.add_child(speaker)
+	var title: Label = label(UiText.t(upgrade.name_key, String(upgrade.id)), &"PanelTitle", DS.TEXT_PRIMARY)
+	title.name = "OfferTitle"
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.custom_minimum_size.x = 120.0
+	box.add_child(title)
+	var body: Label = wrapped(event_text(event), &"BodyLabel", DS.TEXT_PRIMARY)
+	body.name = "EventText"
+	box.add_child(body)
+	var row: HBoxContainer = hbox(DS.SPACE_3)
+	row.name = "OfferShop"
+	box.add_child(row)
+	var where: PanelContainer = chip(UiText.tf("ev_offer_at_shop", [credits(upgrade.price)], "À L'ÉCONOMAT CE SOIR · %s"),
+			UiIcon.Kind.TOOL, DS.ACCENT_YELLOW)
+	where.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(where)
+	if shop != null and is_instance_valid(shop) and shop.get_row(upgrade.id) != null:
+		var go: Button = button(UiText.t("ev_offer_goto", "VOIR L'OFFRE"), &"ButtonGhost")
+		go.name = "OfferGoto"
+		go.tooltip_text = UiText.t(upgrade.name_key, String(upgrade.id))
+		go.pressed.connect(focus_offer.bind(upgrade.id))
+		row.add_child(go)
+
+
+## Focus sur la ligne de l'Économat d'une offre (lettre « VOIR L'OFFRE »).
+func focus_offer(upgrade_id: StringName) -> bool:
+	if shop == null or not is_instance_valid(shop):
+		return false
+	var row: Button = shop.get_row(upgrade_id)
+	if row == null or not row.is_visible_in_tree():
+		return false
+	row.grab_focus()
+	var node: Node = row.get_parent()
+	while node != null and not node is ScrollContainer:
+		node = node.get_parent()
+	if node != null:
+		(node as ScrollContainer).ensure_control_visible(row)
+	return true
+
+
+## Locuteur d'un message (icône et nom, couleur de sa voix, DS §7.10).
+func _speaker_row(speaker_key: String, voice: BriefingContent.Voice) -> HBoxContainer:
+	var accent: Color = BriefingScreen.voice_color(voice)
+	var speaker: HBoxContainer = hbox(DS.SPACE_2)
+	speaker.name = "Speaker"
+	speaker.add_child(UiIcon.make(BriefingScreen.voice_icon(voice), accent, DS.ICON_S))
+	speaker.add_child(eyebrow(UiText.t(speaker_key, speaker_key), accent))
+	return speaker
+
+
+## Message signé (QA-069 : Okonkwo après la confiscation du tiroir) ; null si
+## `key` n'est pas un message signé (`SIGNED_MESSAGES`).
+func _signed_message(key: String) -> Control:
+	if not SIGNED_MESSAGES.has(key):
+		return null
+	var spec: Array = SIGNED_MESSAGES[key]
+	var voice: BriefingContent.Voice = spec[1]
+	var box: VBoxContainer = vbox(DS.SPACE_1)
+	box.name = "Signed_%s" % key
+	box.add_child(_speaker_row(str(spec[0]), voice))
+	box.add_child(wrapped(UiText.t(key, key), &"BodyLabel", DS.TEXT_PRIMARY))
+	return box
 
 
 func _step_dots(accent: Color) -> Control:
@@ -922,7 +1037,15 @@ func _audit_result(event: EveningEvent) -> Control:
 		var amount: Label = label(credits(-cost), &"DataTitle", color)
 		amount.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(amount)
-	return card
+	# QA-069 (M13 §3.5) : tiroir confisqué — le mot d'Okonkwo suit le constat.
+	var drawer_key: String = str(outcome.get("drawer_message_key", "")) if bool(outcome.get("drawer_found", false)) else ""
+	var signed: Control = _signed_message(drawer_key) if not drawer_key.is_empty() else null
+	if signed == null:
+		return card
+	var stack: VBoxContainer = vbox(DS.SPACE_3)
+	stack.add_child(card)
+	stack.add_child(signed)
+	return stack
 
 
 ## Déposition (J29) : verdict de l'Enquête et sa conséquence (arrestation →
@@ -1464,6 +1587,12 @@ func _event_row(event: Dictionary) -> Control:
 	row.add_child(UiIcon.make(icon, color, DS.ICON_S))
 	var member: StringName = event["member"]
 	var key: String = event["key"]
+	var signed: Control = _signed_message(key)
+	if signed != null:
+		# QA-069 : message signé (locuteur nommé) dans le rapport de la nuit.
+		signed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(signed)
+		return row
 	var text: String = UiText.t(key, key)
 	if text.contains("%s"):
 		text = text % HouseholdView.member_name(member)

@@ -157,15 +157,17 @@ func get_unmotivated_search_count() -> int:
 
 
 ## M13 (I39) : déclarations contradictoires relevées (discordances épinglées
-## portant sur une puce du journal).
+## « déclaration » : `REASON_STATEMENT_MISMATCH`). Une puce honnête épinglée
+## contre un document faux (QA-064 : Code du contrat, R25) est une discordance
+## documentaire : elle n'est pas comptée.
 func get_statement_mismatch_count() -> int:
 	var count: int = 0
 	for result: CaseResult in results:
 		if result.verdict == null:
 			continue
 		for discrepancy: Discrepancy in result.verdict.flagged:
-			if discrepancy != null and discrepancy.confirmed and ((discrepancy.a != null and discrepancy.a.is_statement())
-					or (discrepancy.b != null and discrepancy.b.is_statement())):
+			if discrepancy != null and discrepancy.confirmed \
+					and discrepancy.reason_key == Discrepancy.REASON_STATEMENT_MISMATCH:
 				count += 1
 				break
 	return count

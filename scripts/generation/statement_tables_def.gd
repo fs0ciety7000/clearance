@@ -33,6 +33,9 @@ const TOPICS: Array[StringName] = [ID_PURPOSE, ID_STAY, ID_EMPLOYER, ID_ORIGIN, 
 @export var interval_above: int = 10
 ## Formules vagues (VN-1) : puce INCOMPARABLE.
 @export var vague_keys: PackedStringArray = []
+## QA-068 : formules vagues qui parlent du travail (« Le temps du contrat »,
+## « Ça dépend du travail ») : dites seulement avec le motif TRAVAIL.
+@export var vague_work_keys: PackedStringArray = []
 
 @export_group("Fragments")
 ## Motif (`Passenger.PURPOSE_*`) → clés de fragment (`stmt_purpose_work_1`…).
@@ -40,6 +43,10 @@ const TOPICS: Array[StringName] = [ID_PURPOSE, ID_STAY, ID_EMPLOYER, ID_ORIGIN, 
 ## Origine (`FactionDef.id`) → clé « Je suis de… » (`stmt_origin_drv` : `%s` = vaisseau).
 @export var origin_keys: Dictionary[StringName, String] = {}
 @export var employer_key: String = "stmt_employer"
+## QA-068 : article de l'employeur dit → fragment contracté (« le Bureau » →
+## `stmt_employer_au` « au Bureau », jamais « chez le Bureau ») ; l'argument
+## est le nom sans l'article.
+@export var employer_article_keys: Dictionary[String, String] = {}
 ## Relation de la personne visitée → clé (`stmt_host_son` : « mon fils, %s »).
 @export var host_keys: Dictionary[StringName, String] = {}
 ## Relations « de famille » (même nom de famille que le passager, AV-5).
@@ -68,8 +75,20 @@ const TOPICS: Array[StringName] = [ID_PURPOSE, ID_STAY, ID_EMPLOYER, ID_ORIGIN, 
 @export var visit_frames: PackedStringArray = []
 @export var correction_frames: PackedStringArray = []
 @export var stay_frames: PackedStringArray = []
+## QA-068 : cadres de la durée seule pour une réponse vague (« Quelques
+## jours. Pas un jour de plus. » est exclu).
+@export var stay_frames_vague: PackedStringArray = []
+## QA-068 : cadres qui ne se disent pas avec une durée vague (« pour {duree} »,
+## « {duree}, pas plus », « {duree}, le temps du chantier »…).
+@export var vague_unfit_frames: PackedStringArray = []
 ## Cadres d'origine **avec** provenance (`{origine}` et `{provenance}`) et sans.
 @export var origin_frames: PackedStringArray = []
+## QA-068 : cadres qui **opposent** provenance et origine (« … Mais {origine},
+## oui. ») : jamais quand la provenance est le lieu de l'origine
+## (`origin_places`).
+@export var origin_contrast_frames: PackedStringArray = []
+## Lieu de provenance (argument de `provenance_place_key`) de chaque origine.
+@export var origin_places: Dictionary[StringName, String] = {}
 @export var origin_frames_plain: PackedStringArray = []
 ## Cadres d'origine des Dérivants (`{origine}` = « Je suis du {vaisseau} »).
 @export var origin_frames_drv: PackedStringArray = []
@@ -160,6 +179,24 @@ func range_of(key: String, exact_days: int = -1) -> Vector2i:
 	if key == exact_key and exact_days > 0:
 		return Vector2i(exact_days, exact_days)
 	return Vector2i(-1, -1)
+
+
+## QA-068 : formules vagues qui se disent avec le motif `purpose`.
+func vague_keys_for(purpose: StringName) -> PackedStringArray:
+	var result: PackedStringArray = []
+	for key: String in vague_keys:
+		if purpose == Passenger.PURPOSE_WORK or not vague_work_keys.has(key):
+			result.append(key)
+	return result
+
+
+## QA-068 : fragment et argument d'un employeur dit (`[clé, nom]`) : « le
+## Bureau » → `["stmt_employer_au", "Bureau"]`, sinon `[employer_key, dit]`.
+func employer_fragment(said: String) -> Array:
+	for article: String in employer_article_keys:
+		if said.begins_with(article) and said.length() > article.length():
+			return [employer_article_keys[article], said.substr(article.length())]
+	return [employer_key, said]
 
 
 ## Vrai si la clé est une formule vague (VN-1).

@@ -138,7 +138,7 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		case.remove_visor()
 		var verdict: Verdict = Verdict.new(case.case_id, kind)
 		if kind != VerdictKind.Kind.APPROVE:
-			verdict.flagged = evidence_for(case, generated.key, builder.ctx)
+			verdict.flagged = evidence_for(case, generated.key, builder.ctx, played)
 		verdict.elapsed_sec = 30.0
 		# Interrogatoire (R08 : toujours un Tycho ; M13 : `ask_rate` pour les autres).
 		if bool(played["asked"]):
@@ -261,9 +261,33 @@ static func _ends_shift(day: DayDef, processed: int, flags: Dictionary[StringNam
 
 ## Discordances confirmées qui prouvent les violations d'un cas, telles qu'un
 ## agent les obtiendrait en comparant les champs désignés par chaque violation.
-static func evidence_for(case: Case, key: CaseKey, ctx: RuleContext) -> Array[Discrepancy]:
+## M13 (QA-067) : avec `played` (`M13Sim.play_case`), une violation de M13 que
+## le joueur simulé n'a pas vue (mensonge sans question, objet non révélé) ne
+## fournit sa preuve que si **aucune** autre violation vue ne documente le
+## refus (verdict imposé : le joueur a alors cherché) — la prime de relevé
+## n'est donc payée que pour une trouvaille réellement relevée.
+static func evidence_for(case: Case, key: CaseKey, ctx: RuleContext, played: Dictionary = {}) -> Array[Discrepancy]:
+	if not played.is_empty():
+		var seen: Array[Violation] = []
+		var unseen: Array[Violation] = []
+		for violation: Violation in key.expected_violations:
+			if M13Sim.is_observed(violation, played, case):
+				seen.append(violation)
+			else:
+				unseen.append(violation)
+		var observed: Array[Discrepancy] = _evidence(case, seen, ctx)
+		var self_evident: bool = false
+		for violation: Violation in seen:
+			self_evident = self_evident or ScoringService.is_self_evident(violation)
+		if not observed.is_empty() or unseen.is_empty() or self_evident:
+			return observed
+		return _evidence(case, unseen, ctx)
+	return _evidence(case, key.expected_violations, ctx)
+
+
+static func _evidence(case: Case, violations: Array[Violation], ctx: RuleContext) -> Array[Discrepancy]:
 	var found: Array[Discrepancy] = []
-	for violation: Violation in key.expected_violations:
+	for violation: Violation in violations:
 		var refs: Array[FieldRef] = violation.refs
 		if refs.size() < 2:
 			continue
@@ -322,6 +346,8 @@ static func _event_after_case(plan: StationEventPlan, builder: CaseBuilder, day:
 					else (plan.announce_minute >= 0 and minute >= plan.announce_minute)
 			if due and processed < day.passenger_count:
 				plan.state = StationEventPlan.State.ACTIVE
+				# M13 (EV-09, QA-066) : comme le DayController, profil qui vise quelqu'un.
+				builder.fit_alert_profile(plan)
 				builder.ctx.queue_changes(plan.changes(), plan.source())
 				var extra: int = plan.modifier(RuleChangeDef.MOD_EXTRA_PASSENGERS)
 				if extra > 0:

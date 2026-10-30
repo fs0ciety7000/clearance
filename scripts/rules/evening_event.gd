@@ -20,6 +20,12 @@ var default_option: StringName = &""
 var audit: Dictionary = {}
 ## Acte II : valeurs du gabarit de `text_key` (`%d`), ex. pages du registre.
 var text_args: Array = []
+## M13 (QA-069) : lettre d'offre d'une amélioration (`EveningService.offer_events`,
+## identifiant `offer_<ag0N>`) — amélioration offerte, locuteur (`title_key`
+## vaut aussi ce locuteur) et voix (`BriefingContent.Voice`) ; vide / -1 sinon.
+var upgrade_id: StringName = &""
+var speaker_key: String = ""
+var voice: int = -1
 
 
 func get_option(option_id: StringName) -> EveningOptionDef:
@@ -46,6 +52,11 @@ func option_for_intent(option_id: StringName) -> EveningOptionDef:
 		if option.label_key == wanted.label_key:
 			return option
 	return null
+
+
+## M13 (QA-069) : lettre d'offre d'une amélioration de l'Économat.
+func is_offer() -> bool:
+	return upgrade_id != &""
 
 
 func is_choice() -> bool:
