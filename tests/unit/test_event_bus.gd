@@ -73,6 +73,9 @@ const EXPECTED_SIGNALS: Dictionary = {
 	&"search_closed": 1,
 	&"inspection_busy": 3,
 	&"upgrade_purchased": 1,
+	# M14 lot A (ARCHITECTURE §12 ter.6) : file réelle, annonces d'ambiance.
+	&"queue_progressed": 3,
+	&"ambient_announced": 2,
 }
 
 

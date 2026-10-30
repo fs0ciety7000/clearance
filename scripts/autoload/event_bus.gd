@@ -182,3 +182,18 @@ signal inspection_busy(case_id: StringName, duration_sec: float, action: StringN
 ## M13 (B74) — Campaign / EveningService (achat confirmé le soir) → UI
 ## (colonne Économat, pastilles du guichet), audio.
 signal upgrade_purchased(upgrade_id: StringName)
+
+# --- M14 « Ambiance » (ARCHITECTURE §12 ter.6) ---------------------------------------
+
+## M14 (B86, D-187) — DayController (lot F : `start_day`, après chaque
+## `case_resolved`, quand EV-06 allonge la file) → booth (`QueueImpostors`),
+## `AudioDirector` (murmure ∝ file, P1 de l'intensité), `QueuePanel`.
+## `processed` : passagers traités ; `total` : passagers prévus (−1 en Garde,
+## file sans fin) ; `upcoming` : `QueueSilhouette` à partir du prochain appelé
+## (`upcoming[0]` = celui qui va à la vitre ou y est déjà), au plus
+## `QueueSilhouette.MAX_UPCOMING`. Aucune information d'anomalie.
+signal queue_progressed(processed: int, total: int, upcoming: Array[QueueSilhouette])
+## M14 (B85, D-189) — `AudioDirector` (annonce d'ambiance jouée, lot B) →
+## `ComparisonUI` (`SubtitleBar` : « [Haut-parleur] … » si l'option sous-titres
+## est active, lot D). `text_key` : `pa_*` ; jamais d'information de jeu.
+signal ambient_announced(text_key: String, duration_sec: float)

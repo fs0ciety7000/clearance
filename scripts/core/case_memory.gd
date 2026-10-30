@@ -16,6 +16,12 @@
 ## jamais sauvegardés ; une entrée recalculée (verdict inconnu) n'en donne
 ## aucun. `photo_appearance` : visage de la **photo** de la carte quand il
 ## diffère du visage réel (SC-03 → SC-84b), `photo_appearance_of`.
+## M14 (B93, D-185, D-191 ; ARCHITECTURE §12 ter.5) : `visor` = état de la visière
+## **au départ du guichet** (`down` jamais relevée, `up` relevée ou portée
+## relevée, `none` sans visière) ; `appearance` reste le visage sans visière.
+## `seen_appearance` rend le visage tel que la vitre l'a montré (portraits du
+## Dossier, figures des cinématiques). Entrée sans `visor` (sauvegarde 0.13) :
+## une coiffe `visor_up` mémorisée vaut `down` (anti-spoiler, D-131).
 class_name CaseMemory
 extends RefCounted
 
@@ -42,6 +48,8 @@ static func snapshot(day_number: int, case: Case, verdict: VerdictKind.Kind) -> 
 			entry[String(path)] = value
 	# Visage réel, visière relevée (la coiffe couvrante n'est pas l'identité).
 	entry["appearance"] = p.appearance.without_visor().serialize() if p.appearance != null else {}
+	# M14 (B93) : visière telle qu'au départ (relevée par le joueur ou non).
+	entry["visor"] = visor_state_of(p.appearance)
 	# M12 (B59) : visage de la photo de la carte s'il n'est pas celui du porteur.
 	var photo: PassengerAppearance = _id_photo(case)
 	if photo != null and p.appearance != null and not photo.equals(p.appearance.without_visor()) \
@@ -111,6 +119,55 @@ static func _id_photo(case: Case) -> PassengerAppearance:
 		if value is PortraitValue and (value as PortraitValue).appearance != null:
 			return (value as PortraitValue).appearance
 	return null
+
+
+# --- M14 : visière et visage vu (B93) -------------------------------------------
+
+const VISOR_DOWN: String = "down"
+const VISOR_UP: String = "up"
+const VISOR_NONE: String = "none"
+const VISOR_STATES: PackedStringArray = [VISOR_DOWN, VISOR_UP, VISOR_NONE]
+
+
+## État de visière d'une apparence présentée (`down`, `up`, `none`).
+static func visor_state_of(app: PassengerAppearance) -> String:
+	if app == null:
+		return VISOR_NONE
+	if app.is_face_covered():
+		return VISOR_DOWN
+	return VISOR_UP if app.get_trait(PassengerAppearance.SLOT_HEADWEAR) == PassengerAppearance.VISOR_UP else VISOR_NONE
+
+
+## État de visière d'une entrée ; sans champ `visor` (0.13), une coiffe
+## `visor_up` (visière retirée par `without_visor`) vaut `down`.
+static func visor_of(entry: Dictionary) -> String:
+	var stored: String = str(entry.get("visor", ""))
+	if VISOR_STATES.has(stored):
+		return stored
+	var app: PassengerAppearance = appearance_of(entry)
+	if app != null and app.get_trait(PassengerAppearance.SLOT_HEADWEAR) == PassengerAppearance.VISOR_UP:
+		return VISOR_DOWN
+	return VISOR_NONE
+
+
+## Vrai si le joueur a fait relever la visière (ou si elle était relevée).
+static func visor_lifted(entry: Dictionary) -> bool:
+	return visor_of(entry) == VISOR_UP
+
+
+## Visage tel que la vitre l'a montré au départ (visière remise si `down`),
+## null sans apparence.
+static func seen_appearance(entry: Dictionary) -> PassengerAppearance:
+	var app: PassengerAppearance = appearance_of(entry)
+	if app == null:
+		return null
+	var headwear: Dictionary[StringName, StringName] = {}
+	match visor_of(entry):
+		VISOR_DOWN:
+			headwear[PassengerAppearance.SLOT_HEADWEAR] = PassengerAppearance.VISOR_DOWN
+		VISOR_UP:
+			headwear[PassengerAppearance.SLOT_HEADWEAR] = PassengerAppearance.VISOR_UP
+	return app.derive(headwear) if not headwear.is_empty() else app
 
 
 ## Apparence mémorisée (null si absente).

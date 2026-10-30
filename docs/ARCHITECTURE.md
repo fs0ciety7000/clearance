@@ -4,6 +4,8 @@
 >
 > Documents liés : [`AGENTS.md`](../AGENTS.md) · [`DECISIONS.md`](../DECISIONS.md) · [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) · [`docs/UI_FLOW.md`](UI_FLOW.md) · [`docs/BOOTH_SCENE.md`](BOOTH_SCENE.md) (visuel du guichet, 3D Designer) · [`docs/ASSETS.md`](ASSETS.md) (rigs, clips, atlas, licences) · [`docs/AUDIO.md`](AUDIO.md) (Audio Designer) · [`docs/NARRATIVE.md`](NARRATIVE.md) (Scénariste)
 >
+> **Révision 3.6** (2026-10-31, M14 « Ambiance », lot A) : **§12 ter** (contrat d'interfaces M14 : formats musique et cinématiques, `CinematicService`, `QueueSilhouette`, profil v3, réglages, signaux, besoins des lots B → F) ; §7 (60 signaux) ; §8 bis.8 (`MusicDirector`). Décisions D-174 → D-192.
+>
 > **Révision 3.5** (2026-10-28, corrections techniques de la passe QA de l'Acte II — `docs/QA.md` §12) : **QA-030** cause racine et correctif (§13 R31, autoload `AudioMixBarrier` §4, barks sans nœud dans le thread de travail §8 bis.8) ; R28 et R30 résolus ; §5 (`DayDef.asylum_class_rate` / `focus_documents`, `EveningEventDef.economy_gauges_min`, noms réservés des personnages des deux actes).
 >
 > **Révision 3.4** (2026-10-28, passe documentaire après l'Acte II — M8 parties A et B, jeu J1–J20, **515 tests GUT**) : §3 (arborescence), §5 (classes et champs Acte II), §6 (21 familles, R23–R31), §7 (34 signaux, émetteurs / écouteurs réels), §7.2 (contrat UI M8 → **état réel**), §8 (enchaînement J10 pivot / J20), §10 (sauvegarde v4), §12 (515 tests), §13 (R19, R22, R28–R30), §14 (M8 livré), §15 (`build_data_act2.gd`, arguments de debug Acte II), §16.8 (smoke J15 / J20). Décisions : D-076 → D-082.
@@ -372,7 +374,7 @@ Données des règles Acte II (`tools/build_data.gd` + `build_data_act2.gd`) : R2
 
 ## 7. Catalogue des signaux `EventBus`
 
-Source : `scripts/autoload/event_bus.gd` — **58 signaux** (dont **8 en M13**, lot A, détail en §12.8 : `statement_given`, `search_requested`, `search_confirmation_required`, `search_opened`, `search_zone_scanned`, `search_closed`, `inspection_busy`, `upgrade_purchased` ; 50 jusqu'à M12), tous typés (liste exhaustive ci-dessous, vérifiée le 2026-10-29 ; 3 ajoutés en M8 : `quota_changed`, `revocations_published`, `scanner_suggested` ; 2 en M9 : `ledger_changed`, `summons_published` ; 4 en M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed` (lot A) et `rulebook_consulted` (lot C) ; **10 en M12** (lot A, détail en §11.2) : `rules_changed`, `station_event_started`, `station_event_ended`, `rule_list_published`, `garde_directive`, `garde_scored`, `garde_error`, `garde_tier_changed`, `garde_ended`, `epilogue_concluded`). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
+Source : `scripts/autoload/event_bus.gd` — **60 signaux** (dont **2 en M14**, lot A, détail en §12 ter.6 : `queue_progressed`, `ambient_announced` ; **8 en M13**, lot A, détail en §12.8 : `statement_given`, `search_requested`, `search_confirmation_required`, `search_opened`, `search_zone_scanned`, `search_closed`, `inspection_busy`, `upgrade_purchased` ; 50 jusqu'à M12), tous typés (liste exhaustive ci-dessous, vérifiée le 2026-10-29 ; 3 ajoutés en M8 : `quota_changed`, `revocations_published`, `scanner_suggested` ; 2 en M9 : `ledger_changed`, `summons_published` ; 4 en M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed` (lot A) et `rulebook_consulted` (lot C) ; **10 en M12** (lot A, détail en §11.2) : `rules_changed`, `station_event_started`, `station_event_ended`, `rule_list_published`, `garde_directive`, `garde_scored`, `garde_error`, `garde_tier_changed`, `garde_ended`, `epilogue_concluded`). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
 
 | Signal | Paramètres | Émetteurs → Écouteurs (état réel) |
 |---|---|---|
@@ -437,6 +439,9 @@ Source : `scripts/autoload/event_bus.gd` — **58 signaux** (dont **8 en M13**, 
 | `search_zone_scanned` | `case_id, zone, items: Array[SearchItem]` | InspectionSession → 🎯 liste d'objets (C), audio |
 | `inspection_busy` | `case_id, duration_sec: float, action` | InspectionSession → 🎯 UI (interface rendue après la durée) |
 | `upgrade_purchased` | `upgrade_id` | 🎯 soirée (lot B) → Économat, pastilles (C) |
+| **M14** (§12 ter.6) | | |
+| `queue_progressed` | `processed, total, upcoming: Array[QueueSilhouette]` | 🎯 DayController (lot F) → `QueueImpostors`, audio, `QueuePanel` |
+| `ambient_announced` | `text_key: String, duration_sec: float` | 🎯 AudioDirector (lot B) → sous-titre « [Haut-parleur] » |
 
 **Robustesse** : tous les signaux du booth portent `case_id` ; `DayController` ignore un signal d'un autre cas ou hors de l'état attendu ; `BoothDirector._emit_once()` n'émet chaque fait qu'une fois par cas, dans l'ordre `passenger_arrived → documents_presented → passenger_departed`. Seule exception à « un émetteur par fait » : le timeout `documents_presented` du `DayController`. `document_handed` a été supprimé au profit de `documents_presented(case_id)` (D-014).
 
@@ -678,6 +683,8 @@ Les pièces variables sont des `MeshInstance3D` **attachées aux os** (pas de me
 
 - Bus générés (`default_bus_layout.tres`, D-049) : `Master` → `Music`, `Ambience`, `SFX`, `SFX_World`, `Voice`, `UI` ; ducking par effets de bus ; `Settings.audio_mono`.
 - **`AudioDirector`** (nœud de `day.tscn`, pas un autoload) : seul écouteur audio de l'EventBus ; pools 2D (`VoicePool`), ambiance, musique par état, `AudioListener3D` côté agent ; ajoute un `PassengerAudio` (pas, souffle, voix 3D) à chaque acteur ; voix Tessar synthétisées à l'exécution (`TessarVoice`, thread de travail, cache — D-048 ; le thread ne reçoit qu'un `BarkJob` sans nœud, rendus attendus à `_exit_tree` et à la libération, aucun son ni bark hors de l'arbre — QA-025, QA-030). Il lit l'état public de `ComparisonUI` (signaux `hovered`, `toast_shown`, `departure_line_shown`, `passenger_line_shown`, `selection`, `tool_bar.stamps`) : couplage accepté, documenté ici.
+
+- 🎯 **M14** (§12 ter.2) : **`MusicDirector`** (nœud de scène, enfant d'`AudioDirector` dans `day.tscn`, une instance dans `main.tscn`) remplace `AudioDirector.set_music()` : un seul lecteur à `volume_db` fixe, `AudioStreamInteractive` de clips `AudioStreamSynchronized`, fondus par l'effet `Fade` du bus `Music` (D-176).
 
 ### 8 bis.9 Performance
 
@@ -1357,6 +1364,177 @@ Correctifs et reprises d'API après les lots A et B (Godot Architect + Gameplay 
 - Le plan de test et les rapports de playtest sont la propriété de QA (`docs/QA.md`).
 - **Hors GUT** : rendu, animation, feel, perf → playtests QA.
 - 🎯 Non couverts : golden files du générateur ; test de **non-mutation** des Resources partagées (R7) — le build exporté est couvert hors GUT par `tools/smoke_export.sh` (§16.8).
+
+---
+
+## 12 ter. M14 « Ambiance » — contrat d'interfaces (lot A)
+
+Source : `docs/M14.md` (conception, §7.1 B79 → B94, I42 → I48), décisions **D-174 → D-192**. Les questions ouvertes de M14 §8 sont tranchées **selon les recommandations** : moteur `AudioStreamSynchronized` dans `AudioStreamInteractive` sous réserve du prototype de stress D-083, repli prémixé ; `MusicDirector` **nœud de scène** ; musique **discrète par défaut** en inspection ; couches 32 kHz / thèmes 48 kHz q3 ; MO-1 et MO-2 réunis seulement dans F5 Charte et F10 ; annonces en Tessar synthétisé à l'exécution + sous-titres FR ; planches **hors ligne**, figures nommées à l'exécution (apparence de la partie, sinon silhouette) ; légendes nouvelles ; cinématique **avant** l'écran de fin (inchangé) ; cinématique aussi pour les fins anticipées, **aucune** pour F4/F5/F7/F8/F9 des actes I–II ; REVOIR au Dossier ; file = vrais passagers ; patrouille à l'arrêt pendant l'inspection ; graffiti évolutif ; portrait = **dernière** rencontre ; pas de cache disque ; MO-2 au titre après une fin vue ; TH-F7 = couches de l'Acte I ; option « Musique : Stable » ; monde D au Hall si l'outil S7 est prêt.
+
+Ce paragraphe est le **contrat** entre le lot A (Godot Architect : formats, sélection pure, file, profil, réglages, signaux) et les lots B (Audio Designer), C (3D Designer / Asset Lead), D (UI/UX + Design System), E (Scénariste + Game Designer), F (Gameplay Systems). Tout écart passe par l'Orchestrateur. **Sauvegarde v6 inchangée** (un champ facultatif de plus dans `case_memory`) ; **profil v3**.
+
+### 12 ter.1 Fichiers et formats (`scripts/core/`, lot A)
+
+| Classe (`class_name`) | Fichier | Rôle | Données / lu par |
+|---|---|---|---|
+| `MusicLayerDef` (Resource) | `music_layer_def.gd` | couche d'un ensemble : `id`, `role` (`ROLE_PAD`…`ROLE_VARIANT`), `stream`, `gain_db`, `enter_level`, `exit_level` (−1 = jamais), `exposed`, `melodic`, `keeps_on_power_down`, `group` ; `is_active_at(level)` | B (`sets/ms_0N.tres`) ; `MusicDirector` |
+| `MusicSetDef` (Resource) | `music_set_def.gd` | ensemble MS-01 → MS-07 : `id`, `tempo_bpm`, `beats_per_bar`, `bars`, `sample_rate`, `layers`, `thresholds` ([0,15 ; 0,35 ; 0,60 ; 0,80]), `hysteresis` (0,05), `max_level`, `rise_every_bars` (2), `fall_every_bars` (4), `layer_ramp_bars` (1), `enter_crossfade_bars` (2), `exposed_gain_db` ; **pur** : `seconds_per_bar()`, `samples_per_bar(rate)`, `loop_samples(rate)`, `is_sample_exact(rate)`, `bar_at(pos)`, `next_bar_time(pos)`, `layer_index(id)`, `active_layers(level, mask, groups)`, `level_for(value, current)` ; masques `MASK_EXPOSED`, `MASK_NO_MELODY`, `MASK_POWER_DOWN` | B ; `MusicDirector`, `MusicIntensity`, `test_music_sets` (M-06) |
+| `MusicSectionDef` (Resource) | `music_section_def.gd` | section d'un thème : `id` (`OPENING`, `A`, `B`, `TAIL`), `start_bar`, `bars`, `loop` | B |
+| `MusicThemeVariantDef` (Resource) | `music_theme_variant_def.gd` | variante de thème : `id`, `condition: FlagCondition`, `stream`, `tail_stream`, `section` | B |
+| `MusicThemeDef` (Resource) | `music_theme_def.gd` | thème TH-F… / TH-E… : `id`, `tempo_bpm`, `beats_per_bar`, `sample_rate` (48 kHz), `endings`, `ending_variants`, `worlds`, `stream` (ouverture → B), `tail_stream` (queue bouclable), `reduced_fx_stream`, `sections`, `variants`, `reuse_set_id` / `reuse_level` (TH-F7) ; `main_bars()`, `section(id)`, `variant_for(flags)`, `main_stream(flags, reduced_fx)`, `tail_for(flags)`, `matches_ending(ending, variant)` | B (`themes/th_*.tres`) |
+| `MusicLibraryDef` (Resource) | `music_library_def.gd` | `PATH` = `res://assets/audio/music/music_library.tres` : `sets`, `themes` ; `load_default()` (null tant que la musique n'est pas rendue) ; statiques `set_id_for_day(day, mode)`, `max_level_for(day, story_mode)` (N2 en Récit et au J31), `world_group(world)` ; `get_set`, `get_theme`, `theme_for_ending(ending, variant)` (variante nommée d'abord, sinon générique, sinon null), `theme_for_world(world)` ; constantes `SET_TITLE` (`ms_01`) … `SET_EPILOGUE` (`ms_07`), `GROUP_WARM`, `GROUP_CRISIS`, `GROUP_ENDING_SEEN`, `STORY_MAX_LEVEL` (2), `STABLE_LEVEL` (1) | B ; `MusicDirector` |
+| `PlateLayerDef` (Resource) | `plate_layer_def.gd` | couche `BG` / `MID` / `FIG` / `FX` : `kind`, `texture_path` (chemin, pour le préchargement en tâche de fond), `rect` (0..1 sur 2048×1152), `depth` (parallaxe), `fx_kind` (`rain`, `smoke`, `dust`, `air`, `fog`), `fx_density` ; groupe « Rendu hors ligne » : `figure_seed`, `pose`, `pose_frame`, `world_position`, `facing_deg`, `props` | E (composition), C (rendu), D (affichage) |
+| `PlateLabelDef` (Resource) | `plate_label_def.gd` | texte de la couche `HOLO` posé à l'exécution : `text_key`, `rect`, `style` (`holo_display`, `holo_small`, `clock`) | E ; D |
+| `FigureSlotDef` (Resource) | `figure_slot_def.gd` | figure nommée (`fg_figure`, `fg_wren`, `fg_figure31`) : `memory_cases: Array[ConditionalKey]` (clé = cas mémorisé, première condition vraie avec un visage), `pose`, `pose_frame`, `framing`, `lighting`, `render_size` (512×768), `rect`, `depth`, `silhouette_path`, `omit_plate_if_missing` (PL-E-FIG) | E ; C (`PlateFigureService`) |
+| `PlateDef` (Resource) | `plate_def.gd` | planche : `id`, `min_act` / `max_act` (rien de l'Acte III dans une fin anticipée), `condition`, `layers`, `figures`, `labels`, `caption_key` + `captions` (première vraie), `duration_sec` (0 = durée DS), `parallax_px` (≤ 12), `zoom_to` (≤ 1,04), `pan`, `holo_effect` (`glass_off_sequence` : PL-F9-1) ; groupe « Rendu hors ligne » : `set_id` (`s1`…`s8`), `set_variant`, `camera_position`, `camera_target`, `fov`, `lighting`, `dominant` (nom de jeton, jamais une couleur), `paint_tones` (8), `paint_radius_px` (4), `plate_time` ; `caption_for(flags)`, `is_eligible(act, flags)`, `all_caption_keys()` ; constantes `PARALLAX_MAX_PX`, `ZOOM_MAX`, `CAPTION_MAX_CHARS` (70) | E (`data/cinematics/plates/pl_*.tres`), C, D |
+| `CinematicDef` (Resource) | `cinematic_def.gd` | séquence CIN-… : `id`, `endings`, `ending_variants`, `acts`, `worlds` (J31), `theme_id`, `plates` (3–5 après filtrage), `title_card` ; `is_epilogue()`, `matches_ending(ending, variant, act)` | E |
+| `CinematicLibraryDef` (Resource) | `cinematic_library_def.gd` | `PATH` = `res://data/cinematics/cinematics.tres` : `version`, `cinematics` ; `load_default()`, `get_cinematic(id)` | E |
+| `CinematicService` (RefCounted, statique) | `cinematic_service.gd` | sélection **pure** : `select(ending, variant, flags, act, day = 0, library = null)`, `select_epilogue(world, library = null)`, `context_flags(flags, act, variant, day)` (pseudo-drapeaux `cin_act_<n>`, `cin_variant_<v>`, `cin_day_<n>`), `plates_for(def, flags, act, memory = {})`, `figure_appearance(slot, memory, flags)`, `caption_key(plate, flags)` ; `MIN_PLATES` 3, `MAX_PLATES` 5 | D (`CinematicScreen`), C (`PlateFigureService`), QA |
+| `QueueSilhouette` (RefCounted) | `queue_silhouette.gd` | passager à venir **sans information de jeu** : `index`, `palette_index` (0–11), `shape` (`bare`, `hood`, `cap`), `height_step` (−2..+2) — liste blanche `FIELDS` ; `from_appearance`, `shape_of`, `palette_index_of`, `upcoming(roster, next_index, total, limit)`, `visible_count(processed, total, places)`, `serialize()` ; `MAX_UPCOMING` = 10 | F (émission), C, B, D |
+| Ajouts | `day_def.gd` | groupe M14 : `music_tension` (0–3, P6), `music_floor` (−1 = aucun, P7) | F (`build_data_m14.gd`) ; B |
+| | `station_event_def.gd` | `music_weight` (0–1, P5 ; EV-05 = 0, cas particulier) | F ; B (via `StationEventPlan.event`) |
+| | `hall_announcement_def.gd` | `music_action` (`MUSIC_DROP`, `MUSIC_SILENCE`, `MUSIC_SWELL`, vide = aucun) | F ; B |
+| | `character_def.gd` | `portrait_cases` (liste blanche, vide = tous les `case_ids`) ; `allows_portrait(case_id)` | F ; profil |
+| | `case_memory.gd` | champ `visor` des entrées (§12 ter.5) ; `visor_state_of`, `visor_of`, `visor_lifted`, `seen_appearance` ; `VISOR_DOWN` / `VISOR_UP` / `VISOR_NONE` | profil, `CinematicService`, C |
+| | `profile_service.gd` | v3 (§12 ter.5) | D (Dossier, CinematicScreen) |
+| | `settings.gd`, `event_bus.gd`, `game_state.gd` | 3 réglages, 2 signaux, inscription des portraits | tous |
+
+**Chargement** : comme M12, les bibliothèques se chargent **par chemin** (`load_default()`, cache de `ResourceLoader`) ou se passent en paramètre (tests) ; elles ne dépendent pas de `DataCatalog`. Données absentes → `null` → comportement 0.13 (aucune musique nouvelle, pas de cinématique : écran de fin direct).
+
+### 12 ter.2 Musique (B81, B82, B83 ; D-176 → D-182)
+
+**Arborescence (lot B)** : `assets/audio/music/music_library.tres`, `sets/ms_01.tres` … `ms_07.tres`, `themes/th_f1.tres` … `th_ed.tres`, fichiers `mus_<set>_l<n>_loop.ogg`, `mus_<set>_<couche>_loop.ogg`, `mus_th_<fin>[_<variante>][_tail].ogg`, `manifest.json`.
+
+**Couches canoniques** (MS-02 → MS-05 ; `active_layers` reproduit M14 §2.5) :
+
+| Couche | `role` | `enter_level` | `exit_level` | `exposed` | `melodic` | `keeps_on_power_down` |
+|---|---|---|---|---|---|---|
+| L0 | `pad` | 0 | −1 | oui | non | oui |
+| L1 | `pulse` | 1 | −1 | non | non | non |
+| L2 | `rhythm` | 2 | −1 | non | non | non |
+| L3 | `motif` | 3 | 4 | oui | **oui** | non |
+| L4 | `tension` | 4 | −1 | non | non | non |
+
+MS-01 : `bed`, `rain`, `motif` (toutes `enter_level` 0, `max_level` 0) + couche MO-2 de groupe `ending_seen` (titre après une première fin vue, §8 n° 20). MS-06 : `bed` + `warm` (groupe `warm`) + `crisis` (groupe `crisis`), échangées à la mesure. MS-07 : deux couches communes + `world_a` … `world_d` (groupes `MusicLibraryDef.world_group(world)`).
+
+**`MusicDirector`** (lot B, `scripts/audio/music_director.gd` ; **nœud de scène**, pas d'autoload : enfant d'`AudioDirector` dans `day.tscn`, une instance dans `main.tscn` pour le titre, le Dossier et REVOIR). Interface attendue (le prototype B82 en fournit déjà la première moitié) :
+
+```gdscript
+signal level_changed(level: int)                       # tests, outils QA
+const LEVEL_EXPOSED: int = -1
+var mute_motif: bool                                   # Mode Inspection discret, chrono critique
+func play(clip: StringName, start_level := 0, fade_in_sec := 0.0) -> void
+func switch_clip(clip: StringName, start_level := 0) -> void   # à la mesure suivante, fondu de 2 mesures dans le flux
+func request_level(value: int) -> void                 # appliqué en début de mesure, +1 / 2 mesures, −1 / 4 mesures
+func force_level(value: int) -> void                   # outils QA
+func fade_to(db: float, seconds: float, stop_at_end := false) -> void   # effet `Fade` du bus Music
+func stop_music() -> void
+static func next_level(current: int, wanted: int, bars_since_change: int) -> int
+# Phase 2 (à brancher sur les formats de §12 ter.1) :
+func use_library(library: MusicLibraryDef) -> void     # clips construits depuis MusicSetDef / MusicThemeDef
+func set_groups(groups: Array[StringName]) -> void     # warm / crisis, world_x, ending_seen
+func set_mask(mask: int) -> void                       # MusicSetDef.MASK_* (exposé, sans mélodie, power down)
+func play_theme(theme: MusicThemeDef, flags: Dictionary[StringName, Variant], reduced_fx := false) -> void
+func skip_to_tail() -> void                            # cinématique passée : queue à la mesure suivante
+```
+
+Les couches visées viennent de `MusicSetDef.active_layers(level, mask, groups)` (la table codée `LEVEL_LAYERS` du prototype en est le cas particulier MS-02 → MS-05) ; les gains de `MusicLayerDef.gain_db` ; le calage de `seconds_per_bar()`. Plafond : `MusicLibraryDef.max_level_for(day, story_mode)` et `MusicSetDef.max_level`. Option Stable : niveau `STABLE_LEVEL` pendant le shift (`Settings.is_music_stable()`). Mode Inspection : `Settings.music_inspection_reduce` + `inspection_mode_changed` → −6 dB, passe-bas 3,5 kHz, `MASK_NO_MELODY`. `volume_music` à 0 → lecteur arrêté.
+
+**Bus (D-176, D-083)** : `Music` ── [Duck (Amplify)] [Muffle (LowPass, pause)] **[Fade (Amplify)]** (`AudioBuses.FX_FADE` = `"Fade"`, `default_bus_layout.tres` régénéré par `tools/build_audio.gd`, lot B). `Fade` est le **seul** gain animé de la musique ; aucun `volume_db` de lecteur n'est animé ; `AudioDirector.set_music()` et ses tweens disparaissent (lot B) ; `_exit_tree` arrête le lecteur et vide son flux (QA-039) ; `AudioMixBarrier` inchangé. Le lot A revoit le prototype de stress (M-17) avant la phase 2.
+
+**Intensité** (`MusicIntensity`, lot B, `scripts/audio/`, `RefCounted` pur) : `I = clamp(0,25·Q + 0,35·T + 0,15·D + 0,15·K + 0,20·E + τ, 0, 1)`, quantifiée par `MusicSetDef.level_for(I, niveau)` puis limitée par `MusicDirector.next_level`. Sources **publiques uniquement** (jamais `CaseKey`, jamais `Case.key`) :
+
+| Entrée | Signal | Champ |
+|---|---|---|
+| P1 file | `queue_progressed(processed, total, _)` | `Q = clamp((total − processed − 2) / 6, 0, 1)` ; Garde (`total = −1`) : ignorée |
+| P2 chrono | `day_started` (`DayDef.duration_sec`, `untimed`), `day_clock_ticked` | |
+| P3 discordances | `discrepancy_checked` (confirmées), remise à zéro à `case_resolved` | |
+| P4 quota | `quota_changed(used, maximum)` | |
+| P5 événement | `station_event_started` / `_ended` | `StationEventPlan.event.music_weight` |
+| P6, P7 | `day_started` | `DayDef.music_tension`, `DayDef.music_floor` |
+| Annonce | `hall_announced(text_key)` | `HallAnnouncementDef.music_action` de l'annonce de `DayDef.announcements` de même clé |
+
+### 12 ter.3 Cinématiques (B89 → B91 ; D-183 → D-186)
+
+**Données (lot E)** : `data/cinematics/cinematics.tres` (`CinematicLibraryDef`), `data/cinematics/plates/pl_<séquence>_<n>[_<variante>].tres` (`PlateDef`, partagées entre séquences) ; images (lot C) `assets/cinematics/bg/<id>.png`, `mid/`, `fig/` (silhouettes de repli des `FigureSlotDef`), `assets/cinematics/manifest.json`.
+
+**Sélection et résolution** (appelant : `DayScene`, lot D) :
+
+```gdscript
+var variant: StringName = EpilogueService.variant_of(ending, flags)
+var act: int = EpilogueService.act_of(flags)
+var def: CinematicDef = CinematicService.select(ending, variant, flags, act, day)   # null → EndScreen direct
+var ctx: Dictionary[StringName, Variant] = CinematicService.context_flags(flags, act, variant, day)
+var plates: Array[PlateDef] = CinematicService.plates_for(def, ctx, act, GameState.case_memory)
+# par planche : CinematicService.caption_key(plate, ctx) ; par figure :
+var face: PassengerAppearance = CinematicService.figure_appearance(slot, GameState.case_memory, ctx)  # null → slot.silhouette_path
+```
+
+- `figure_appearance` rend le visage **tel que vu** (`CaseMemory.seen_appearance` : visière remise si jamais relevée) ; ignore les entrées recalculées (`recalled`). Mémoire vide (REVOIR du Dossier, headless, tests) → silhouette. Au J31, `GameState.case_memory` contient la mémoire de la graine d'épilogue **et** les cas du J31 (`remember_case`).
+- **Flux** (I43, lot D) : `DayScene.show_end(ending)` → `select` → `CinematicScreen` → `finished(skipped: bool)` → `EndScreen` (inchangé). J31 : `epilogue_concluded(card)` → `select_epilogue(world)` → `CinematicScreen` → `EpilogueScreen`. Fin de démo, fins des actes I–II de F4/F5/F7/F8/F9 : `null`. Dossier › FINS › REVOIR : seulement si `ProfileService.has_seen_cinematic(profile, id)`, mémoire vide.
+- **Profil** : à `finished`, `ProfileService.record_cinematic_seen(dir, def.id)` ; invite « Maintenir pour passer » dès la première image si déjà vue, sinon après la première planche.
+- **Musique** : le thème (`MusicLibraryDef.theme_for_ending(ending, variant)` ou `def.theme_id`) démarre sur la carte de titre et **continue** sous l'`EndScreen` ; `finished(true)` → `MusicDirector.skip_to_tail()`.
+- **Rendu** : pendant la cinématique, la bande 3D passe en `UPDATE_DISABLED` (appel direct du lot D vers le booth, méthode fournie par C).
+- **Règles de données** (tests E / QA, `test_cinematics_data.gd`) : 3–5 planches après filtrage pour chaque fin et variante d'`EpilogueService` (13 clés + `f1_audit`, `f1_review`, `f6_j10`, `f6_j20`) ; légendes ≤ `PlateDef.CAPTION_MAX_CHARS`, présentes dans `fr.csv` ; textures présentes ; aucune planche `min_act` 3 dans une fin anticipée.
+
+### 12 ter.4 File réelle (B86 ; D-187)
+
+- **Source** : le roster d'apparences du jour (`CaseBuilder.roster`, `AppearanceRoster`, lecture seule), calculé au matin depuis la seule graine du jour, **avant** toute injection d'anomalie : la file ne dépend jamais de `CaseKey`, des documents, de l'origine ni du verdict. Visière baissée et capuche ont la **même** forme (`hood`). Les visières de présentation (`visor_down_rate`) ne passent pas par le roster : la silhouette ne les montre pas.
+- **Émission (lot F, `DayController`)** : `EventBus.queue_progressed.emit(processed, total, QueueSilhouette.upcoming(builder.roster, processed, total))` à `start_day` (après `day_started`), après chaque `case_resolved`, et quand EV-06 allonge la file (`CaseBuilder.extend_queue`). `processed` = cas traités ; `total` = `day.passenger_count` (−1 en Garde) ; `upcoming[0]` = le prochain appelé (ou celui déjà à la vitre).
+- **Lecture (lot C, `QueueImpostors`)** : silhouettes visibles = `QueueSilhouette.visible_count(processed, total, places)` = `min(restants − 1, places)` (la tête est à la vitre) ; teinte `GreyboxStyle.PALETTES[palette_index][0]` désaturée ; 3 maillages par `shape` ; débordement EV-06 sur `upcoming[places + 1 …]`. Lot B : murmure ∝ silhouettes visibles, P1.
+
+### 12 ter.5 Profil v3, mémoire des cas, réglages (B92, B93 ; D-191)
+
+**Mémoire des cas** : `CaseMemory.snapshot` écrit `visor` = état de la visière **au départ du guichet** (`down` jamais relevée, `up` relevée — c'est le `visor_lifted` de M14 §3.5 —, `none`) ; `appearance` reste le visage sans visière. Entrée 0.13 sans `visor` : une coiffe `visor_up` vaut `down` (anti-spoiler). `CaseMemory.seen_appearance(entry)` = visage tel que vu. Sauvegarde v6 inchangée.
+
+**Profil** (`ProfileService.VERSION = 3`) : champs v2 + `portraits {chr_id: {appearance, visor, case_id, day, act}}` (≤ 400 o chacun, `PORTRAIT_MAX_BYTES`) et `cinematics_seen` (ids).
+
+```gdscript
+static func record_portraits(dir, memory: Dictionary, day := 0, table: CharacterTableDef = null) -> bool
+static func portraits_from_memory(memory, day := 0, table = null) -> Dictionary   # dernière rencontre (jour, index), liste blanche
+static func record_portrait(dir, chr_id: String, entry: Dictionary) -> bool
+static func portrait_entry(case_id: String, memory_entry: Dictionary) -> Dictionary
+static func portrait_of(profile, chr_id: String) -> Dictionary          # vide = jamais vu → initiales
+static func portrait_appearance(entry: Dictionary) -> PassengerAppearance   # visière remise si `down`
+static func record_cinematic_seen(dir, cinematic_id: String) -> bool
+static func has_seen_cinematic(profile, cinematic_id: String) -> bool
+static func migrate_v2(raw, dir) -> Dictionary                          # profile.v2.bak
+```
+
+- **Écriture** : `GameState._record_profile` (après chaque sauvegarde du soir) et `GameState.end_campaign` appellent `record_portraits(dir, case_memory, jour joué)` : seuls les cas **du jour joué** sont inscrits, si bien qu'une ancienne partie reprise n'écrase pas une rencontre plus récente d'une autre partie (« dernière rencontre » en temps réel). Sessions épilogue et Garde : rien. Entrées recalculées ou sans visage : jamais.
+- **Migration** : v2 → v3 (`migrate_v2`) et v1 → v3 (`migrate_v1` puis la même reconstruction) : `portraits` reconstruits depuis la `case_memory` de `current.json` de chaque emplacement lisible, du plus ancien au plus récent (`saved_at`) ; copie `profile.v2.bak` (jamais écrasée) ; champs inconnus conservés.
+- **Dossier (lot D)** : `portrait_of` → `portrait_appearance` → `PortraitService` autonome (taille 128×160, paramètre `size` : lot C) ; entrée vide → initiales et `dos_portrait_hidden`.
+
+**Réglages** (`user://settings.cfg` ; `Settings` ne connaît que booléens et nombres) :
+
+| Clé | Défaut | Domaine | Aide |
+|---|---|---|---|
+| `music_inspection_reduce` | `true` | booléen | — |
+| `music_dynamics` | `0.0` | `MUSIC_DYNAMIC` 0 / `MUSIC_STABLE` 1 | `is_music_stable()` |
+| `cinematic_advance` | `0.0` | `CINEMATIC_AUTO` 0 / `CINEMATIC_MANUAL` 1 | `is_cinematic_manual()` |
+
+### 12 ter.6 Signaux EventBus (ajoutés en fin de fichier : 60 signaux)
+
+| Signal | Paramètres | Émetteur → écouteurs prévus |
+|---|---|---|
+| `queue_progressed` | `processed: int, total: int, upcoming: Array[QueueSilhouette]` | DayController (F) → `QueueImpostors` (C), `AudioDirector` / `MusicIntensity` (B), `QueuePanel` (D) |
+| `ambient_announced` | `text_key: String, duration_sec: float` | `AudioDirector` (B, annonce `pa_*` jouée) → `ComparisonUI` / `SubtitleBar` (D : « [Haut-parleur] … » si sous-titres) |
+
+Signaux locaux : `CinematicScreen.finished(skipped: bool)` (D), `MusicDirector.level_changed(level: int)` (B).
+
+### 12 ter.7 Besoins envers les autres lots
+
+- **B (Audio)** : prototype de stress D-083 (M-17) puis `MusicDirector` phase 2 sur `MusicLibraryDef` (§12 ter.2) ; `MusicIntensity` (entrées publiques seulement, test d'analyse des dépendances sans `CaseKey`) ; `music_library.tres`, ensembles et thèmes aux formats de §12 ter.1 (couches de longueur `loop_samples()` exacte, M-06) ; `PaScheduler` + émission de `ambient_announced` ; murmure branché sur `queue_progressed` ; lecture de `HallAnnouncementDef.music_action`.
+- **C (3D)** : `QueueImpostors` sur `queue_progressed` (3 maillages par `QueueSilhouette.shape`, `visible_count`, débordement, `reduce_motion`) ; `tools/build_plates.gd` lit `PlateDef` / `PlateLayerDef` (groupe « Rendu hors ligne ») ; `PlateFigureService` rend `CinematicService.figure_appearance` avec `FigureSlotDef` (pose, cadrage, `render_size`), repli `silhouette_path` ; `PortraitService.size` ; méthode du booth pour `UPDATE_DISABLED`.
+- **D (UI)** : `CinematicScreen` (`finished(skipped)`, `CinematicService`, `record_cinematic_seen`), enchaînements de `DayScene` (§12 ter.3), Options (3 réglages de §12 ter.5), Dossier (portraits, REVOIR), sous-titre `ambient_announced`.
+- **E (Scénariste + Game Designer)** : `cinematics.tres` et `pl_*.tres` (conditions par drapeaux et pseudo-drapeaux `cin_*`, `min_act` / `max_act`, `FigureSlotDef.memory_cases` : SC-82a / SC-82b selon `final3_dora`, Wren, SC-93 → SC-103), légendes `cin_*`, lignes `pa_*`.
+- **F (Gameplay Systems)** : émission de `queue_progressed` (§12 ter.4) ; valeurs `DayDef.music_tension` / `music_floor`, `StationEventDef.music_weight`, `HallAnnouncementDef.music_action`, `CharacterDef.portrait_cases` (sosies, usurpateurs, personnages seulement entendus : SC-84b, SC-13…) dans `tools/build_data_m14.gd`.
+
+### 12 ter.8 Tests du lot A
+
+`tests/unit/test_m14_formats.gd` (11 : calage des tempos à 32/48 kHz, table des niveaux, masques, groupes, hystérésis, bibliothèque et thèmes, variantes, sélection des cinématiques par fin / variante / acte, planches par acte et condition, légendes, figures vues ou silhouettes sur une **vraie** mémoire, plafonds DS, champs M14 neutres sur les vraies données), `test_m14_queue.gd` (6 : liste blanche des champs, formes, **déterminisme et insensibilité aux anomalies** sur 6 graines, correspondance au roster, bornes de la file, signal typé), `test_m14_profile.gd` (7 : visière mémorisée sur un vrai cas SC-04, migration v2 → v3 et v1 → v3 sur de **vraies** `case_memory` d'emplacements, dernière rencontre et liste blanche, taille ≤ 400 o, `cinematics_seen`, réglages M14). `test_event_bus` : 60 signaux ; `test_settings` : 22 réglages ; `test_m12_profile` : version lue sur `ProfileService.VERSION`.
+
+**Précisions par rapport à M14.md** : `upcoming` commence au prochain appelé (tête de file comprise) et compte au plus 10 entrées (6 places + 3 de débordement + la tête) ; `music_dynamics` et `cinematic_advance` sont numériques (0/1) ; le drapeau de visière est le champ `visor` de la mémoire des cas (pas de `Case.visor_lifted`) ; les portraits s'inscrivent à la sauvegarde du soir et à la fin (cas du jour joué) plutôt qu'à chaque `case_resolved`.
 
 ---
 

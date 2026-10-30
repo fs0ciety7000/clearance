@@ -71,6 +71,20 @@ const KEY_TUTORIAL: StringName = &"tutorial_j1"
 ## `tutorial_j1`.
 const KEY_TUTORIAL_M13_STATEMENTS: StringName = &"tutorial_m13_statements"
 const KEY_TUTORIAL_M13_SEARCH: StringName = &"tutorial_m13_search"
+## M14 (§2.11, B93, D-181) — « Musique discrète pendant l'inspection » : −6 dB,
+## passe-bas 3,5 kHz, mélodie (L3) coupée en Mode Inspection. **Active par défaut.**
+const KEY_MUSIC_INSPECTION_REDUCE: StringName = &"music_inspection_reduce"
+## M14 (§2.11, D-181) — « Musique : Dynamique / Stable » : 0 Dynamique (défaut),
+## 1 Stable (niveau figé à N1 pendant le shift). Réglage numérique (Settings
+## ne connaît que bool et float).
+const KEY_MUSIC_DYNAMICS: StringName = &"music_dynamics"
+const MUSIC_DYNAMIC: float = 0.0
+const MUSIC_STABLE: float = 1.0
+## M14 (§3.7, D-183, D-186) — « Cinématiques : avance automatique / manuelle » :
+## 0 Automatique (défaut), 1 Manuelle (aucune avance sans geste).
+const KEY_CINEMATIC_ADVANCE: StringName = &"cinematic_advance"
+const CINEMATIC_AUTO: float = 0.0
+const CINEMATIC_MANUAL: float = 1.0
 
 const FX_LEVELS: PackedFloat32Array = [1.0, 0.5, 0.0]
 const TEXT_SCALE_MIN: float = 0.9
@@ -98,6 +112,9 @@ const DEFAULTS: Dictionary = {
 	&"tutorial_j1": true,
 	&"tutorial_m13_statements": true,
 	&"tutorial_m13_search": true,
+	&"music_inspection_reduce": true,
+	&"music_dynamics": 0.0,
+	&"cinematic_advance": 0.0,
 }
 
 ## Réglage de volume → nom du bus audio (docs/AUDIO.md §2).
@@ -169,6 +186,16 @@ func _init() -> void:
 func _ready() -> void:
 	load_settings()
 	apply_all()
+
+
+## M14 : musique figée à N1 pendant le shift (« Musique : Stable »).
+func is_music_stable() -> bool:
+	return get_float(KEY_MUSIC_DYNAMICS) >= MUSIC_STABLE
+
+
+## M14 : cinématiques sans avance automatique.
+func is_cinematic_manual() -> bool:
+	return get_float(KEY_CINEMATIC_ADVANCE) >= CINEMATIC_MANUAL
 
 
 ## Liste des clés connues.
@@ -389,6 +416,8 @@ func _sanitize(key: StringName, value: Variant) -> Variant:
 		return clampf(roundf(number), 0.0, COLOR_VISION_MAX)
 	if key == KEY_PAD_GLYPHS:
 		return clampf(roundf(number), PAD_GLYPHS_AUTO, 1.0)
+	if key == KEY_MUSIC_DYNAMICS or key == KEY_CINEMATIC_ADVANCE:
+		return clampf(roundf(number), 0.0, 1.0)
 	return clampf(number, 0.0, 1.0) # volumes
 
 

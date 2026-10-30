@@ -21,14 +21,27 @@
 ## `act` déduit du jour, puis reconstruction depuis les emplacements terminés
 ## (variante, graine d'épilogue, `day_31.json`, `max_day_reached`,
 ## `last_campaign`) ; l'ancien fichier est copié en `profile.v1.bak`.
+## **v3 (M14, D-183, D-191 ; ARCHITECTURE §12 ter.5)** :
+## - `portraits` : `{chr_id: {appearance, visor, case_id, day, act}}`, visage
+##   de la **dernière rencontre** tel que vu à la vitre (`visor` : `down`,
+##   `up`, `none`), ≤ 400 o par personnage ; écrit à chaque sauvegarde du soir
+##   et à la fin pour les cas du jour joué (`record_portraits`) ;
+## - `cinematics_seen` : ids des cinématiques vues (`record_cinematic_seen`).
+## Migration v2 → v3 (`migrate_v2`) : `portraits` reconstruits depuis la
+## `case_memory` des emplacements (le plus ancien d'abord : la partie la plus
+## récente l'emporte), copie `profile.v2.bak`. Un profil v1 passe par
+## `migrate_v1` puis la même reconstruction (une seule réécriture).
 ## Jamais effacé par une fin ni par `SaveService.delete_slot`. Écriture
 ## atomique et lecture de secours de `SaveService`. Service statique pur.
 class_name ProfileService
 extends RefCounted
 
-const VERSION: int = 2
+const VERSION: int = 3
 const FILE_NAME: String = "profile.json"
 const V1_BACKUP_FILE: String = "profile.v1.bak"
+const V2_BACKUP_FILE: String = "profile.v2.bak"
+## Taille JSON visée d'un portrait (M14 §5.2) : ≤ 400 octets.
+const PORTRAIT_MAX_BYTES: int = 400
 ## Garde : meilleures gardes gardées, jours de graine du jour, graines libres.
 const TOP_RUNS: int = 10
 const DAILY_DAYS: int = 60
@@ -55,14 +68,20 @@ static func empty_profile() -> Dictionary:
 		"garde_seeds": [],
 		"garde_stats": {"runs": 0, "total_correct": 0, "longest_run": 0},
 		"last_campaign": {},
+		"portraits": {},
+		"cinematics_seen": [],
 	}
 
 
 ## Profil lu (migré, complété des champs manquants) ; vierge si absent ou illisible.
 static func load_profile(dir: String = SaveService.DEFAULT_DIR) -> Dictionary:
 	var raw: Dictionary = SaveService.read_json(profile_path(dir))
-	if not raw.is_empty() and SaveService.as_int(raw.get("version", 1), 1) < VERSION:
-		return migrate_v1(raw, dir)
+	if not raw.is_empty():
+		var version: int = SaveService.as_int(raw.get("version", 1), 1)
+		if version < 2:
+			return migrate_v1(raw, dir)
+		if version < VERSION:
+			return migrate_v2(raw, dir)
 	return sanitize(raw)
 
 
@@ -117,6 +136,8 @@ static func sanitize(raw: Dictionary) -> Dictionary:
 			"longest_run": SaveService.as_int(stats.get("longest_run", 0))}
 	if not profile.get("last_campaign") is Dictionary:
 		profile["last_campaign"] = {}
+	profile["portraits"] = _sanitize_portraits(profile.get("portraits", {}))
+	profile["cinematics_seen"] = _unique_strings(profile.get("cinematics_seen", []))
 	profile["version"] = VERSION
 	return profile
 
@@ -377,6 +398,150 @@ static func _date_number(text: String) -> int:
 	return floori(unix / 86400.0)
 
 
+# --- M14 : portraits du Dossier, cinématiques vues (v3) ----------------------------
+
+## Portrait d'un personnage (`{appearance, visor, case_id, day, act}`), vide si
+## le visage n'a jamais été vu.
+static func portrait_of(profile: Dictionary, chr_id: String) -> Dictionary:
+	var portraits: Dictionary = sanitize(profile)["portraits"]
+	return portraits.get(chr_id, {})
+
+
+## Visage d'un portrait tel que vu (visière remise si jamais relevée), null si vide.
+static func portrait_appearance(entry: Dictionary) -> PassengerAppearance:
+	return CaseMemory.seen_appearance(entry) if not entry.is_empty() else null
+
+
+## Entrée de portrait tirée d'une entrée de `case_memory` (vide si elle n'a
+## pas de visage ou si elle est recalculée, jamais vue).
+static func portrait_entry(case_id: String, memory_entry: Dictionary) -> Dictionary:
+	if memory_entry.get("recalled", false) or CaseMemory.appearance_of(memory_entry) == null:
+		return {}
+	var day: int = SaveService.as_int(memory_entry.get("day", 0))
+	return {"appearance": (memory_entry["appearance"] as Dictionary).duplicate(true),
+			"visor": CaseMemory.visor_of(memory_entry), "case_id": case_id, "day": day,
+			"act": act_of_day(day)}
+
+
+## Inscrit (remplace) le portrait d'un personnage. Renvoie vrai si écrit.
+static func record_portrait(dir: String, chr_id: String, entry: Dictionary) -> bool:
+	if chr_id.is_empty() or _sanitize_portrait(entry).is_empty():
+		return false
+	var profile: Dictionary = load_profile(dir)
+	var portraits: Dictionary = profile["portraits"]
+	var clean: Dictionary = _sanitize_portrait(entry)
+	if portraits.get(chr_id, {}) == clean:
+		return false
+	portraits[chr_id] = clean
+	return save_profile(profile, dir) == OK
+
+
+## Portraits du jour joué `day` (≤ 0 : toutes les entrées) tirés de
+## `memory` (`GameState.case_memory`) : pour chaque personnage
+## (`CharacterTableDef`, liste blanche `portrait_cases`), la rencontre la plus
+## tardive (jour, index) **remplace** la précédente (dernière rencontre,
+## D-191). Une seule écriture ; renvoie vrai si écrit.
+static func record_portraits(dir: String, memory: Dictionary, day: int = 0, table: CharacterTableDef = null) -> bool:
+	var found: Dictionary = portraits_from_memory(memory, day, table)
+	if found.is_empty():
+		return false
+	var profile: Dictionary = load_profile(dir)
+	var portraits: Dictionary = profile["portraits"]
+	var changed: bool = false
+	for chr_id: Variant in found:
+		if portraits.get(chr_id, {}) != found[chr_id]:
+			portraits[chr_id] = found[chr_id]
+			changed = true
+	return save_profile(profile, dir) == OK if changed else false
+
+
+## Portraits (`{chr_id: entrée}`) d'une mémoire de cas : dernière rencontre
+## par personnage (jour, puis index), cas autorisés seulement ; `day` > 0 :
+## seulement les cas de ce jour.
+static func portraits_from_memory(memory: Dictionary, day: int = 0, table: CharacterTableDef = null) -> Dictionary:
+	var result: Dictionary = {}
+	var chars: CharacterTableDef = table if table != null else CharacterTableDef.load_default()
+	if chars == null:
+		return result
+	var order: Dictionary = {}
+	var keys: Array = memory.keys()
+	keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+	for key: Variant in keys:
+		if not memory[key] is Dictionary:
+			continue
+		var raw: Dictionary = memory[key]
+		var case_id: String = str(key)
+		if day > 0 and SaveService.as_int(raw.get("day", 0)) != day:
+			continue
+		var character: CharacterDef = chars.character_of(StringName(case_id))
+		if character == null or not character.allows_portrait(StringName(case_id)):
+			continue
+		var entry: Dictionary = portrait_entry(case_id, raw)
+		if entry.is_empty():
+			continue
+		var rank: int = SaveService.as_int(raw.get("day", 0)) * 1000 + SaveService.as_int(raw.get("index", 0))
+		var chr_id: String = String(character.id)
+		if not order.has(chr_id) or rank >= int(order[chr_id]):
+			order[chr_id] = rank
+			result[chr_id] = entry
+	return result
+
+
+## Cinématique vue (`CIN-…` : `cin_f1`…). Renvoie vrai si écrit.
+static func record_cinematic_seen(dir: String, cinematic_id: String) -> bool:
+	if cinematic_id.is_empty():
+		return false
+	var profile: Dictionary = load_profile(dir)
+	var seen: Array = profile["cinematics_seen"]
+	if seen.has(cinematic_id):
+		return false
+	seen.append(cinematic_id)
+	return save_profile(profile, dir) == OK
+
+
+static func has_seen_cinematic(profile: Dictionary, cinematic_id: String) -> bool:
+	return (sanitize(profile)["cinematics_seen"] as Array).has(cinematic_id)
+
+
+## Profil v2 → v3 : `portraits` reconstruits depuis les emplacements, copie
+## `profile.v2.bak` (jamais écrasée). Champs inconnus conservés.
+static func migrate_v2(raw: Dictionary, dir: String = SaveService.DEFAULT_DIR) -> Dictionary:
+	var backup: String = SaveService.resolve_dir(dir).path_join(V2_BACKUP_FILE)
+	if not FileAccess.file_exists(backup):
+		SaveService.write_atomic(backup, JSON.stringify(raw, "\t", true))
+	var profile: Dictionary = sanitize(raw)
+	_rebuild_portraits(profile, dir)
+	profile["version"] = VERSION
+	save_profile(profile, dir)
+	return sanitize(profile)
+
+
+## Portraits reconstruits depuis la `case_memory` (`current.json`) de chaque
+## emplacement lisible, du plus ancien au plus récent (`saved_at`) : la partie
+## la plus récente l'emporte ; les portraits déjà présents sont gardés pour
+## les personnages absents des emplacements.
+static func _rebuild_portraits(profile: Dictionary, dir: String) -> void:
+	var table: CharacterTableDef = CharacterTableDef.load_default()
+	if table == null:
+		return
+	var metas: Array = []
+	for meta: Dictionary in SaveService.list_slots(dir):
+		if not meta.is_empty() and not SaveService.is_damaged(meta):
+			metas.append(meta)
+	metas.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return str(a.get("saved_at", "")) < str(b.get("saved_at", "")))
+	var portraits: Dictionary = profile["portraits"] if profile.get("portraits") is Dictionary else {}
+	for meta: Dictionary in metas:
+		var current: Dictionary = SaveService.load_current(SaveService.as_int(meta.get("slot", SaveService.NO_SLOT)), dir)
+		var memory: Variant = current.get("case_memory", {})
+		if not memory is Dictionary:
+			continue
+		var found: Dictionary = portraits_from_memory(memory, 0, table)
+		for chr_id: Variant in found:
+			portraits[chr_id] = found[chr_id]
+	profile["portraits"] = portraits
+
+
 # --- Migration v1 → v2 ---------------------------------------------------------------
 
 ## Profil v1 → v2 (B51) : `count = 1`, `act` déduit du jour, variante vide ;
@@ -434,6 +599,7 @@ static func migrate_v1(raw: Dictionary, dir: String = SaveService.DEFAULT_DIR) -
 					"day": day, "date": key, "campaign_seed": SaveService.as_int(current.get("campaign_seed", 0)),
 					"climate": String(EndingService.climate_of(flags)), "traces": [], "world": str(epi.get("world", ""))}
 	_infer_from_endings(profile, known_flags)
+	_rebuild_portraits(profile, dir)
 	profile["version"] = VERSION
 	save_profile(profile, dir)
 	return sanitize(profile)
@@ -513,6 +679,34 @@ static func _sanitize_epilogues(value: Variant) -> Dictionary:
 			"last_lines": lines,
 		}
 	return result
+
+
+static func _sanitize_portraits(value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if not value is Dictionary:
+		return result
+	var dict: Dictionary = value
+	for key: Variant in dict:
+		if str(key).is_empty() or not dict[key] is Dictionary:
+			continue
+		var clean: Dictionary = _sanitize_portrait(dict[key])
+		if not clean.is_empty():
+			result[str(key)] = clean
+	return result
+
+
+## Portrait aux types attendus ; vide sans apparence.
+static func _sanitize_portrait(entry: Dictionary) -> Dictionary:
+	var app: Variant = entry.get("appearance", {})
+	if not app is Dictionary or (app as Dictionary).is_empty():
+		return {}
+	var visor: String = str(entry.get("visor", CaseMemory.VISOR_NONE))
+	if not CaseMemory.VISOR_STATES.has(visor):
+		visor = CaseMemory.VISOR_DOWN
+	var day: int = SaveService.as_int(entry.get("day", 0))
+	return {"appearance": PassengerAppearance.deserialize(app).serialize(), "visor": visor,
+			"case_id": str(entry.get("case_id", "")), "day": day,
+			"act": clampi(SaveService.as_int(entry.get("act", act_of_day(day))), 1, 3)}
 
 
 static func _sanitize_runs(value: Variant) -> Array:

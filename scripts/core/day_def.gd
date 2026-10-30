@@ -171,6 +171,13 @@ extends Resource
 ## les données (`IntercomLineDef`).
 @export var intercom_lines: Array[IntercomLineDef] = []
 
+@export_group("M14")
+## M14 (§2.5 P6, B83, D-177) — tension narrative du jour, 0 → 3 (τ = 0 ;
+## +0,05 ; +0,10 ; +0,20 dans `MusicIntensity`, lot B). Données : lot F.
+@export_range(0, 3) var music_tension: int = 0
+## M14 (§2.5 P7) — niveau musical minimal du shift (N0 → N4) ; −1 = aucun.
+@export_range(-1, 4) var music_floor: int = -1
+
 const MODE_CAMPAIGN: StringName = &"campaign"
 const MODE_EPILOGUE: StringName = &"epilogue"
 const MODE_GARDE: StringName = &"garde"
