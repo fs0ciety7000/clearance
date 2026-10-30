@@ -167,7 +167,8 @@ func test_detain_is_locked_before_day_seven() -> void:
 func test_reference_tabs_follow_the_day() -> void:
 	_make_ui(9)
 	var tabs: Array[StringName] = ui.rulebook.visible_reference_tabs()
-	assert_eq(tabs, [&"origins", &"implants", &"symbols", &"seals"] as Array[StringName])
+	# M13 (J8+) : onglet Contrebande après les bulletins de l'Acte I.
+	assert_eq(tabs, [&"origins", &"implants", &"symbols", &"seals", &"contraband"] as Array[StringName])
 	for tab: StringName in tabs:
 		assert_true(ui.rulebook.show_reference_tab(tab), String(tab))
 		assert_eq(ui.rulebook.current_tab, RulebookPanel.reference_tab_id(tab))

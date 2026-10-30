@@ -13,6 +13,11 @@
 ## Acte II : tuile « ENTRÉES IMPUTÉES » (dépassements du quota), puces
 ## « IMPUTÉE » / « REFUS QUOTA » dans le registre du guichet.
 ## Acte III : tuile « FAMILLES DE TYCHO ADMISES » au J30 (`ss_pont`, F10).
+## M13 (lot C, I39) : ligne « Fouilles · n (sans motif · m) » et
+## « Déclarations contradictoires relevées · n » (`DaySummary.get_search_count`,
+## `get_unmotivated_search_count`, `get_statement_mismatch_count`) quand R43 ou
+## R44 est en vigueur ; puce FOUILLE / SANS MOTIF au registre ; citations
+## FOUILLE SANS MOTIF et FOUILLE OMISE expliquées comme des fautes de procédure.
 class_name ShiftSummaryScreen
 extends ScreenBase
 
@@ -41,6 +46,9 @@ func _build() -> void:
 	root_box().add_child(page)
 	page.add_child(_header())
 	page.add_child(_tiles())
+	var m13: Control = _m13_row()
+	if m13 != null:
+		page.add_child(m13)
 	var columns: HBoxContainer = hbox(DS.SPACE_8)
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(columns)
@@ -130,6 +138,40 @@ func _tiles() -> Control:
 	return row
 
 
+## M13 : fouilles et déclarations contradictoires du shift (icône + texte),
+## affichées les jours où R43 ou R44 est en vigueur (ou s'il y a eu des fouilles).
+func _m13_row() -> Control:
+	var searches: int = summary.get_search_count()
+	var unmotivated: int = summary.get_unmotivated_search_count()
+	var statements: int = summary.get_statement_mismatch_count()
+	var show_search: bool = searches > 0 or _day_has_rule(&"r_search_cause")
+	var show_statements: bool = statements > 0 or _day_has_rule(&"r_statements")
+	if not show_search and not show_statements:
+		return null
+	var row: HBoxContainer = hbox(DS.SPACE_4)
+	row.name = "M13Stats"
+	if show_search:
+		var search_chip: PanelContainer = chip(UiText.tf("ss_searches", [searches, unmotivated], "Fouilles · %d (sans motif · %d)"),
+				UiIcon.Kind.GATE, Palette.STATE_AMBER if unmotivated > 0 else Palette.TEXT_SECONDARY)
+		search_chip.name = "Searches"
+		row.add_child(search_chip)
+	if show_statements:
+		var statement_chip: PanelContainer = chip(UiText.tf("ss_statements", [statements], "Déclarations contradictoires relevées · %d"),
+				UiIcon.Kind.QUOTE, Palette.ACCENT_MAGENTA if statements > 0 else Palette.TEXT_SECONDARY)
+		statement_chip.name = "Statements"
+		row.add_child(statement_chip)
+	return row
+
+
+func _day_has_rule(rule_id: StringName) -> bool:
+	if day == null or day.rule_set == null:
+		return false
+	for rule: Rule in day.rule_set.rules:
+		if rule != null and rule.id == rule_id:
+			return true
+	return false
+
+
 ## Acte III : admissions comptées dans une jauge `admission_gauges` (J30 :
 ## ressortissants de Tycho admis en règle → `pont`) — un cas par admission.
 static func admission_count(p_summary: DaySummary, p_day: DayDef) -> int:
@@ -199,6 +241,11 @@ func _ledger_row(result: CaseResult) -> Control:
 		line.add_child(chip(UiText.tf("sum_item_bribe", [credits(result.bribe_credits, true)], "ENVELOPPE %s"), UiIcon.Kind.WARNING, Palette.STATE_AMBER))
 	if result.report_credits > 0:
 		line.add_child(chip(UiText.tf("sum_item_report", [credits(result.report_credits, true)], "SIGNALÉ %s"), UiIcon.Kind.LOGO, DS.ACCENT_YELLOW))
+	# M13 : passager passé au portique (motif ou non).
+	if result.verdict != null and result.verdict.search_done:
+		var unmotivated: bool = result.verdict.search_motive == &""
+		line.add_child(chip(UiText.t("sum_item_unmotivated", "FOUILLE SANS MOTIF") if unmotivated else UiText.t("sum_item_searched", "FOUILLE"),
+				UiIcon.Kind.GATE, Palette.STATE_AMBER if unmotivated else Palette.TEXT_SECONDARY))
 	var money: Label = label(credits(result.credits_delta, true), &"DocFieldValue",
 			DS.TEXT_PRIMARY if result.credits_delta > 0 else (Palette.STATE_RED if result.credits_delta < 0 else DS.TEXT_MUTED))
 	money.custom_minimum_size.x = 72.0
@@ -233,6 +280,10 @@ func _error_detail(result: CaseResult) -> String:
 			return UiText.t("sum_detail_innocent", "Dossier en règle : aucune violation à relever.")
 		ScoringService.CIT_FACE_UNCHECKED, ScoringService.CIT_INTERVIEW_SKIPPED:
 			return UiText.tf("sum_detail_procedure", [_rule_label(result.citation_rule_id)], "Procédure : %s")
+		ScoringService.CIT_UNWARRANTED_SEARCH, ScoringService.CIT_SEARCH_SKIPPED:
+			# M13 : faute de procédure (verdict juste ou non), règle et explication.
+			return UiText.tf("sum_detail_procedure", [_rule_label(result.citation_rule_id)], "Procédure : %s") + " — " \
+					+ UiText.t(result.citation_reason_key + "_desc", "")
 	return ""
 
 

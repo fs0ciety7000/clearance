@@ -25,6 +25,10 @@
 ## d'**événement de station** en tête (`set_event_notes`, icône + texte) ;
 ## **listes nommées** (`set_named_list` : onglet « Cartes volées ») ; onglet
 ## Révocations intitulé selon la liste en vigueur (« Liste du Conseil »).
+## M13 (lot C, I37) : onglet **Contrebande** (`ContrabandEntryView`,
+## sélectionnables : objet du portique ↔ entrée) ; **note de marge**
+## d'Okonkwo (AG-05, `set_margin_note`) au-dessus de la liste quand le Recueil
+## annoté ouvre la bonne page (`open_page_for`).
 class_name RulebookPanel
 extends PanelContainer
 
@@ -65,6 +69,12 @@ var ledger_entries: Array[LedgerEntry] = []
 var ledger_cards: Array[LedgerCardView] = []
 var summons_entries: Array[SummonsEntry] = []
 var summons_cards: Array[SummonsCardView] = []
+## M13 : entrées de l'onglet Contrebande affichées.
+var contraband_cards: Array[ContrabandEntryView] = []
+## M13 (AG-05) : note manuscrite d'Okonkwo affichée (vide sinon).
+var margin_note: String = ""
+var _margin_note_box: PanelContainer = null
+var _margin_note_label: Label = null
 ## Acte III (M1) : règles retirées ce jour (lignes barrées, en fin de liste).
 var retired_entries: Array[RulebookEntry] = []
 ## Acte III : quota suspendu (climat, Enquête) — note sous R23.
@@ -119,6 +129,7 @@ func _ready() -> void:
 	_build_header()
 	_build_events()
 	_build_nav()
+	_build_margin_note()
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -161,6 +172,36 @@ func _build_events() -> void:
 	_event_box.add_theme_constant_override("separation", DS.SPACE_1)
 	_event_box.visible = false
 	_content.add_child(_event_box)
+
+
+## M13 (AG-05) : note de marge d'Okonkwo (icône + guillemets, voix grise).
+func _build_margin_note() -> void:
+	_margin_note_box = PanelContainer.new()
+	_margin_note_box.name = "MarginNote"
+	_margin_note_box.add_theme_stylebox_override(&"panel", BriefingScreen._bar_box(DS.BG_ELEVATED, Palette.TEXT_SECONDARY))
+	_margin_note_box.visible = false
+	_content.add_child(_margin_note_box)
+	var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
+	_margin_note_box.add_child(row)
+	var icon: UiIcon = UiIcon.make(UiIcon.Kind.TOOL, Palette.TEXT_SECONDARY, DS.ICON_S)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(icon)
+	var column: VBoxContainer = ScreenBase.vbox(0)
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(column)
+	column.add_child(ScreenBase.label(UiText.t("rb_margin_note", "MARGE D'OKONKWO"), &"DocFieldLabel", Palette.TEXT_SECONDARY))
+	_margin_note_label = ScreenBase.wrapped("", &"BodySmall", DS.TEXT_PRIMARY)
+	_margin_note_label.name = "NoteText"
+	column.add_child(_margin_note_label)
+
+
+## M13 (AG-05) : affiche (ou retire, `text` vide) la note de marge.
+func set_margin_note(text: String) -> void:
+	margin_note = text
+	if _margin_note_box == null:
+		return
+	_margin_note_label.text = text
+	_margin_note_box.visible = not text.is_empty()
 
 
 ## Rangée de navigation (QA-032) : `[` · onglets défilants · `]` · menu · Tab.
@@ -745,6 +786,7 @@ func _show_tab(id: int) -> void:
 	revoked_cards.clear()
 	ledger_cards.clear()
 	summons_cards.clear()
+	contraband_cards.clear()
 	_scroll.tooltip_text = ""
 	if _reference_view != null:
 		_reference_view.queue_free()
@@ -805,6 +847,8 @@ func _list_items() -> Array[InspectableItem]:
 		items.append(card)
 	for card: SummonsCardView in summons_cards:
 		items.append(card)
+	for card: ContrabandEntryView in contraband_cards:
+		items.append(card)
 	return items
 
 
@@ -838,6 +882,14 @@ func _show_reference(tab: StringName, marks: Dictionary[String, Array]) -> void:
 			symbol.set_inspection_active(inspection_active)
 			_restore_marks(symbol, marks)
 			symbol_cards.append(symbol)
+		for node: Node in _reference_view.find_children("Contraband_*", "", true, false):
+			var entry: ContrabandEntryView = node as ContrabandEntryView
+			if entry == null:
+				continue
+			entry.picked.connect(_on_item_picked)
+			entry.set_inspection_active(inspection_active)
+			_restore_marks(entry, marks)
+			contraband_cards.append(entry)
 		return
 	# Consigne en infobulle : la place va aux avis (portrait lisible).
 	_scroll.tooltip_text = UiText.t("rb_wanted_intro", "Par le nom ou par le visage : mise en attente.")
@@ -1035,6 +1087,12 @@ func find_item(ref: FieldRef, reveal: bool = false) -> InspectableItem:
 			_show_tab(tab_id)
 			return find_item(ref, false)
 		return null
+	if reveal and ref.is_contraband_entry():
+		var contraband_id: int = reference_tab_id(RulebookReference.TAB_CONTRABAND)
+		if _tab_ids.has(contraband_id) and current_tab != contraband_id:
+			_show_tab(contraband_id)
+			return find_item(ref, false)
+		return null
 	if reveal and ref.is_symbol():
 		var symbols_id: int = reference_tab_id(RulebookReference.TAB_SYMBOLS)
 		if _tab_ids.has(symbols_id) and current_tab != symbols_id:
@@ -1062,6 +1120,14 @@ func show_reference_tab(tab: StringName) -> bool:
 		return false
 	_show_tab(id)
 	return true
+
+
+## M13 : entrée de l'onglet Contrebande affichée (null si l'onglet n'est pas ouvert).
+func get_contraband_card(category: StringName) -> ContrabandEntryView:
+	for card: ContrabandEntryView in contraband_cards:
+		if card.category == category:
+			return card
+	return null
 
 
 ## Entrée du bulletin des symboles affichée (null si l'onglet n'est pas ouvert).

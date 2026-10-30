@@ -26,6 +26,10 @@ const SEED: int = 20_871_315
 
 func before_each() -> void:
 	Settings.set_session_value(Settings.KEY_REDUCE_MOTION, true)
+	# M13 : pas de carte d'aide (J4+, J8+) : ces parcours testent le guichet nu
+	# (la carte d'aide a ses tests : `test_m13_ui.gd`).
+	Settings.set_session_value(Settings.KEY_TUTORIAL_M13_STATEMENTS, false)
+	Settings.set_session_value(Settings.KEY_TUTORIAL_M13_SEARCH, false)
 	_clear_slots()
 	TutorialOverlay.pending = false
 
@@ -37,6 +41,8 @@ func after_each() -> void:
 	_clear_slots()
 	Settings.clear_session_value(Settings.KEY_REDUCE_MOTION)
 	Settings.clear_session_value(Settings.KEY_HOLO_FLICKER)
+	Settings.clear_session_value(Settings.KEY_TUTORIAL_M13_STATEMENTS)
+	Settings.clear_session_value(Settings.KEY_TUTORIAL_M13_SEARCH)
 	Settings.set_value(Settings.KEY_TUTORIAL, true)
 	TutorialOverlay.pending = false
 	InputPrompts.simulate_device(InputPrompts.Device.KEYBOARD)

@@ -15,6 +15,11 @@
 ## `about_quota` (compteur ↔ R23), `about_curfew` (R29), `about_revoked`
 ## (onglet Révocations, R30), `about_contract` (code employeur, R25) — lus
 ## par `InspectionSession.find_confirmed`.
+## M13 (lot C, ARCHITECTURE §12.5) : sujets de base `cargo` (« Quelque chose à
+## déclarer ? », J8+) et `search` (demande de fouille, menu « Portique » : ne
+## compte pas comme question) ; confrontations par famille M13 :
+## `about_statement[:<doc>]` (déclaration contradictoire), `about_contraband`,
+## `about_weapon`, `about_concealed_implant` (implant trouvé au portique).
 class_name InterrogationTopics
 extends RefCounted
 
@@ -27,6 +32,13 @@ const ABOUT_ENVELOPE: StringName = &"about_envelope"
 ## M7 : réponse à la phrase de passe des Lucioles (code 4, `lucioles_trust ≥ 2`).
 const LUCIOLE_REPLY: StringName = &"luciole_reply"
 const BASE: Array[StringName] = [PURPOSE, STAY, ORIGIN]
+## M13 : « Avez-vous quelque chose à déclarer ? » et demande de fouille.
+const CARGO: StringName = &"cargo"
+const SEARCH: StringName = &"search"
+const ABOUT_STATEMENT: StringName = &"about_statement"
+const ABOUT_CONTRABAND: StringName = &"about_contraband"
+const ABOUT_WEAPON: StringName = &"about_weapon"
+const ABOUT_CONCEALED_IMPLANT: StringName = &"about_concealed_implant"
 const ABOUT_PREFIX: String = "about_"
 const DOC_SEPARATOR: String = ":"
 ## Acte II : sujets par famille.
@@ -48,6 +60,10 @@ const RULE_TOPICS: Dictionary[StringName, StringName] = {
 	&"r_sponsor": ABOUT_SPONSOR,
 	&"r_summons": ABOUT_SUMMONS,
 	&"r_tycho_lockout": ABOUT_LOCKOUT,
+	# M13 : déclarations (R43), objets interdits (R45), armes (R46).
+	&"r_statements": ABOUT_STATEMENT,
+	&"r_contraband": ABOUT_CONTRABAND,
+	&"r_weapons_detain": ABOUT_WEAPON,
 }
 
 
@@ -61,6 +77,21 @@ static func topic_for(result: Discrepancy) -> StringName:
 	var reason: String = result.reason_key.trim_prefix("disc_")
 	if reason == "revoked_match":
 		return ABOUT_REVOKED
+	# M13 : familles de la session (`InspectionSession.find_confirmed`).
+	var scan: bool = (result.a != null and result.a.is_scan()) or (result.b != null and result.b.is_scan())
+	match reason:
+		"contraband":
+			return ABOUT_CONTRABAND
+		"weapon":
+			return ABOUT_WEAPON
+		"implant_mismatch":
+			if scan:
+				return ABOUT_CONCEALED_IMPLANT
+		"statement_mismatch":
+			for ref: FieldRef in [result.a, result.b]:
+				if ref != null and ref.is_document_field():
+					return StringName(String(ABOUT_STATEMENT) + DOC_SEPARATOR + String(ref.document_id))
+			return ABOUT_STATEMENT
 	if reason == "rule_violated":
 		for ref: FieldRef in [result.a, result.b]:
 			if ref != null and ref.is_rule() and RULE_TOPICS.has(ref.field_id):

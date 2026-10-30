@@ -33,6 +33,11 @@
 ## il est recalculé avec le choix (`audit_preview`) et révélé (arrestation,
 ## blâme, rien à retenir) ; aides du soir versées par lettre (rappel des
 ## salaires, caisse des vitres) comptées dans les revenus.
+## M13 (lot C, I38) : **Économat du Hall** (`ShopView`) sous les dépenses à
+## partir du soir du J5 : offres (`ExpenseLine.upgrade_id`), jamais cochées,
+## un achat par soir, sans crédit, effet et prix narratif écrits, solde après
+## achat ; améliorations acquises rappelées ; la nuit nomme l'achat
+## (`EveningReport.upgrades_bought`, effet dès le shift suivant).
 class_name EveningScreen
 extends ScreenBase
 
@@ -124,6 +129,10 @@ var _events_label: Label = null
 var _events_row: HBoxContainer = null
 var _confirm_hint: Label = null
 var _base_costs: Dictionary[StringName, int] = {}
+## M13 : Économat (null sans offre ni amélioration acquise) et ses données.
+var shop: ShopView = null
+var economy: EconomyDef = null
+var shop_flags: Dictionary[StringName, Variant] = {}
 ## Acte II : revenus du soir (salaire d'Ilan), crédités avec la soirée.
 var incomes: Array[ExpenseLine] = []
 ## Acte II : boîte de confirmation d'une option qui termine la campagne.
@@ -311,11 +320,14 @@ func _budget() -> VBoxContainer:
 		if is_ration(line):
 			rations.append(line)
 			continue
+		if line.upgrade_id != &"":
+			continue
 		var row: Button = _expense_row(line)
 		_rows.append(row)
 		list.add_child(row)
 	if not rations.is_empty():
 		list.add_child(_rations_group(rations))
+	_build_shop(list)
 	var totals: PanelContainer = panel(&"ElevatedCard")
 	box.add_child(totals)
 	var totals_box: VBoxContainer = vbox(DS.SPACE_1)
@@ -336,6 +348,38 @@ func _budget() -> VBoxContainer:
 	return box
 
 
+## M13 : Économat du Hall sous les dépenses du foyer (même liste défilante).
+func _build_shop(list: VBoxContainer) -> void:
+	if economy == null:
+		economy = DataCatalog.load_economy()
+	if shop_flags.is_empty():
+		shop_flags = GameState.narrative_flags
+	var offers: Array[ExpenseLine] = []
+	for line: ExpenseLine in lines:
+		if line.upgrade_id != &"":
+			line.paid = false # jamais présélectionnée (D-150)
+			offers.append(line)
+	if not ShopView.has_content(offers, economy, shop_flags, day_number):
+		return
+	shop = ShopView.new()
+	shop.setup(offers, economy, shop_flags, day_number)
+	shop.line_toggled.connect(_on_shop_toggled)
+	list.add_child(shop)
+
+
+## Achats possibles ce soir (`EconomyDef.upgrades_per_evening`, 1 par défaut).
+func max_upgrades() -> int:
+	return economy.upgrades_per_evening if economy != null else 1
+
+
+func _on_shop_toggled(line: ExpenseLine, pressed: bool) -> void:
+	if pressed and not EveningService.can_toggle_on(lines, effective_balance(), line, max_upgrades()):
+		_refresh()
+		return
+	line.paid = pressed
+	_refresh()
+
+
 func _money_row(caption: String, value: String, color: Color, value_variation: StringName = &"DocFieldValue") -> HBoxContainer:
 	var row: HBoxContainer = hbox(DS.SPACE_3)
 	var text: Label = label(caption, &"BodySmall")
@@ -352,7 +396,10 @@ func _update_more_hint() -> void:
 		return
 	var view: Rect2 = _lines_scroll.get_global_rect().grow(1.0)
 	var below: int = 0
-	for row: Button in _rows:
+	var all_rows: Array[Button] = _rows.duplicate()
+	if shop != null and is_instance_valid(shop):
+		all_rows.append_array(shop.rows)
+	for row: Button in all_rows:
 		if is_instance_valid(row) and row.get_global_rect().end.y > view.end.y:
 			below += 1
 	_more_hint.text = UiText.plural("ev_more_lines", below, "▼ %d poste plus bas — faites défiler",
@@ -475,7 +522,10 @@ func _on_row_toggled(pressed: bool, row: Button) -> void:
 
 ## Coche une ligne par son identifiant (tests, raccourcis).
 func set_line_paid(id: StringName, paid: bool) -> bool:
-	for row: Button in _rows:
+	var all_rows: Array[Button] = _rows.duplicate()
+	if shop != null:
+		all_rows.append_array(shop.rows)
+	for row: Button in all_rows:
 		var line: ExpenseLine = row.get_meta(&"line")
 		if line.id == id:
 			row.button_pressed = paid
@@ -516,6 +566,9 @@ func _refresh() -> void:
 	_after_label.add_theme_color_override(&"font_color", Palette.STATE_RED if after < 0 else DS.ACCENT_YELLOW)
 	_after_hint.text = UiText.t("ev_debt_hint", "Dette : trois soirs de suite et l'Autorité de Transit vous réaffecte.") if after < 0 else ""
 	_after_hint.visible = after < 0
+	if shop != null and is_instance_valid(shop):
+		shop.refresh(func(line: ExpenseLine) -> bool:
+			return EveningService.can_toggle_on(lines, effective_balance(), line, max_upgrades()), after)
 	_refresh_options()
 	_refresh_confirm()
 
@@ -1363,6 +1416,13 @@ func show_report(report: EveningReport, ending: StringName) -> void:
 			Palette.STATE_RED if report.balance_after < 0 else DS.ACCENT_YELLOW))
 	for event: Dictionary in report.events:
 		box.add_child(_event_row(event))
+	# M13 : amélioration achetée ce soir — effet dès le shift suivant.
+	for upgrade_id: StringName in report.upgrades_bought:
+		var upgrade: UpgradeDef = economy.get_upgrade(upgrade_id) if economy != null else null
+		var bought: PanelContainer = chip(UiText.tf("shop_bought", [UiText.t(upgrade.name_key, String(upgrade_id)) if upgrade != null
+				else String(upgrade_id)], "ACQUIS · %s · effet dès demain"), UiIcon.Kind.TOOL, DS.ACCENT_YELLOW)
+		bought.name = "Bought_%s" % upgrade_id
+		box.add_child(bought)
 	var members: HBoxContainer = hbox(DS.SPACE_3)
 	box.add_child(members)
 	for member: Household.Member in report.household.members:

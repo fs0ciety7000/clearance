@@ -12,6 +12,8 @@
 ## M12 (lot C) : en Garde de nuit (`garde_mode`), « TERMINER LA GARDE » en deux
 ## temps (le score est enregistré) → `end_garde_requested` ; quitter vers le
 ## titre perd la garde (rien n'est enregistré).
+## M13 (lot C, I38) : améliorations du guichet possédées rappelées (nom +
+## effet), en campagne seulement (`refresh_upgrades`).
 class_name PauseMenu
 extends Control
 
@@ -43,6 +45,8 @@ var _menu_box: VBoxContainer = null
 var _panel: PanelContainer = null
 var _quit_button: Button = null
 var _quit_armed: bool = false
+## M13 : améliorations possédées (masqué s'il n'y en a pas).
+var upgrades_box: VBoxContainer = null
 var _applied_min_px: int = -1
 
 
@@ -95,6 +99,10 @@ func _ready() -> void:
 	keys.add_child(PromptGlyph.make(&"pause"))
 	head.add_child(keys)
 	_menu_box.add_child(ScreenBase.wrapped(UiText.t("pause_hint", "Le shift est suspendu : l'horloge et la file sont arrêtées."), &"BodySmall"))
+	upgrades_box = ScreenBase.vbox(DS.SPACE_1)
+	upgrades_box.name = "Upgrades"
+	upgrades_box.visible = false
+	_menu_box.add_child(upgrades_box)
 	_menu_box.add_child(ScreenBase.rule_line())
 	resume_button = ScreenBase.button(UiText.t("pause_resume", "REPRENDRE"), &"ButtonPrimary")
 	resume_button.pressed.connect(close)
@@ -134,6 +142,7 @@ func open() -> void:
 	is_open = true
 	visible = true
 	get_tree().paused = true
+	refresh_upgrades()
 	show_menu()
 
 
@@ -166,6 +175,31 @@ func show_menu() -> void:
 	_quit_button.theme_type_variation = &"ButtonTool"
 	_disarm_end_garde()
 	resume_button.grab_focus.call_deferred()
+
+
+## M13 : liste des améliorations possédées (campagne ; jamais en Garde).
+func refresh_upgrades() -> void:
+	if upgrades_box == null:
+		return
+	for child: Node in upgrades_box.get_children():
+		upgrades_box.remove_child(child)
+		child.queue_free()
+	var owned: Array[StringName] = [] as Array[StringName]
+	if not garde_mode and GameState.session_mode == GameState.SESSION_CAMPAIGN:
+		owned = GameState.owned_upgrades(ComparisonUI.UPGRADE_IDS)
+	upgrades_box.visible = not owned.is_empty()
+	if owned.is_empty():
+		return
+	upgrades_box.add_child(ScreenBase.eyebrow(UiText.t("pause_upgrades", "GUICHET 04 · AMÉLIORATIONS"), DS.ACCENT_YELLOW))
+	for upgrade_id: StringName in owned:
+		var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
+		row.name = "Upgrade_%s" % upgrade_id
+		row.add_child(UiIcon.make(UiIcon.Kind.TOOL, Palette.TEXT_SECONDARY, DS.ICON_S))
+		var text: Label = ScreenBase.wrapped("%s — %s" % [UiText.t("upg_%s_name" % upgrade_id, String(upgrade_id)),
+				UiText.t("upg_%s_desc" % upgrade_id, "")], &"BodySmall")
+		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(text)
+		upgrades_box.add_child(row)
 
 
 ## Récit → Dur (D-102) : confirmation, puis `GameState.set_difficulty(&"hard")`.

@@ -34,7 +34,9 @@ const COMPACT_KINDS: Array[FieldDef.FieldKind] = [
 	FieldDef.FieldKind.ID_CODE,
 ]
 ## Champs texte longs, toujours seuls sur leur ligne.
-const WIDE_FIELD_IDS: Array[StringName] = [&"employer", &"origin_sector", &"mrz", &"sponsor", &"summons"]
+## M13 : « Nom du répondant » (`sponsor_name`, nom imprimé en petit sous la
+## ligne Répondant, ACT3 §2.5) a sa propre ligne, comme le Répondant.
+const WIDE_FIELD_IDS: Array[StringName] = [&"employer", &"origin_sector", &"mrz", &"sponsor", &"summons", &"sponsor_name"]
 ## Carte à photo (M11, D-085 rév.) : lignes de champs **à côté** de la photo ;
 ## les suivantes passent **sous** la photo, sur toute la largeur — la carte
 ## perd la colonne vide sous le portrait et ses libellés ne se replient plus.
@@ -47,6 +49,10 @@ const HOLDER_PATH: StringName = &"family_name"
 ## lisible à la loupe (`DS.DOC_ZOOM`), discret à l'échelle 1.
 const MARK_LUCIOLE: StringName = &"luciole"
 const MARK_SIZE_PX: float = 5.0
+
+## M13 (AG-02, Lampe de Wood) : le modèle du sceau s'écrit en clair sous le
+## sceau de l'en-tête (lu au montage du document ; posé par la `ComparisonUI`).
+static var wood_lamp: bool = false
 
 var instance: DocumentInstance = null
 var fields: Array[DocFieldView] = []
@@ -303,8 +309,25 @@ func _build_header(def: DocumentTypeDef, show_serial: bool) -> Control:
 		var seal: UiIcon = UiIcon.make(UiIcon.seal_kind(instance.seal_id), _tint, DS.ICON_L + DS.SPACE_2)
 		seal.size_flags_horizontal = Control.SIZE_SHRINK_END
 		side.add_child(seal)
+		if wood_lamp:
+			var model: Label = Label.new()
+			model.name = "WoodLampCaption"
+			model.theme_type_variation = &"DataSmall"
+			model.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			model.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			model.add_theme_color_override(&"font_color", DS.TEXT_PRIMARY)
+			model.text = seal_model_text(instance.seal_id)
+			side.add_child(model)
 	_header = header
 	return header
+
+
+## AG-02 : modèle du sceau en clair (« UV · MODÈLE 2187 », « UV · ANCIEN
+## MODÈLE ») ; le nom du sceau seul s'il ne précise pas de modèle.
+static func seal_model_text(seal_id: StringName) -> String:
+	var full: String = UiText.t("val_" + String(seal_id), String(seal_id))
+	var model: String = full.get_slice(" · ", 1) if full.contains(" · ") else full
+	return UiText.tf("seal_uv", [model], "UV · %s")
 
 
 func _make_field(field: FieldDef, portrait_provider: Callable) -> DocFieldView:

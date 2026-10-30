@@ -209,3 +209,13 @@ const FACTION_CER := Color("#8DBB9A") # Cérès : sauge
 const FACTION_THR := Color("#C795C0") # Tharsis : mauve
 const FACTION_DRV := Color("#8FB3B5") # Dérive : gris d'eau
 const FACTION_NONE := Color("#8A97A8") # origine inconnue (= text.secondary)
+# ---------------------------------------------------------------------------
+# M13 « Gameplay » (DESIGN_SYSTEM 0.7) — journal à puces, portique, Économat
+# ---------------------------------------------------------------------------
+const JOURNAL_MAX_LINES := 8 # répliques gardées au journal de dialogue d'un cas (M13 §1.7)
+const JOURNAL_VIEW_H := 196 # hauteur visible du journal (bulle du passager, bande B) @1080p ; défile au-delà
+const STATEMENT_GLYPH := "»" # glyphe de déclaration devant une puce (jamais la couleur seule, D-107)
+const SEARCH_PANEL_WIDTH := 640 # panneau du portique (bande B, à la place de la File ; le visage reste libre)
+const SEARCH_SILHOUETTE_W := 120 # silhouette filaire des zones Z1–Z5
+const BUSY_REDUCED_STEP := 0.25 # « Réduire les animations » : la barre d'attente avance par quarts, sans balayage
+const HELP_CARD_WIDTH := 760 # carte d'aide M13 (déclarations J4, fouille J8), posée sur le plan de travail

@@ -104,11 +104,17 @@ func _ready() -> void:
 	row.add_child(back_button)
 
 
-## Section « PARTIE » : tutoriel du J1 ; « Passer en mode Dur » (pause, Récit).
+## Section « PARTIE » : tutoriel du J1, cartes d'aide M13 ; « Passer en mode
+## Dur » (pause, Récit).
 func _add_game_section() -> void:
 	_rows.add_child(ScreenBase.section(UiText.t("opt_game", "PARTIE"), UiIcon.Kind.LOGO, Palette.TEXT_SECONDARY))
 	_add_toggle(Settings.KEY_TUTORIAL, UiText.t("opt_tutorial", "Tutoriel du jour 1"),
 			UiText.t("opt_tutorial_hint", "Gestes guidés au premier jour d'une partie ; se désactive une fois terminé ou passé."))
+	# M13 : cartes d'aide du premier jour des déclarations (R43) et du portique (R44).
+	_add_toggle(Settings.KEY_TUTORIAL_M13_STATEMENTS, UiText.t("opt_help_statements", "Aide : déclarations"),
+			UiText.t("opt_help_statements_hint", "Carte d'aide au premier jour où les réponses orales se comparent (J4)."))
+	_add_toggle(Settings.KEY_TUTORIAL_M13_SEARCH, UiText.t("opt_help_search", "Aide : portique"),
+			UiText.t("opt_help_search_hint", "Carte d'aide au premier jour du portique de fouille (J8)."))
 	var row: HBoxContainer = _row(UiText.t("opt_hard_mode", "Mode Récit en cours"),
 			UiText.t("opt_hard_mode_hint", "Passer en Dur rétablit le chrono et les amendes. Irréversible pour cette partie."))
 	row.name = "HardModeRow"

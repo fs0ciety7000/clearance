@@ -20,6 +20,11 @@
 ## d'EV-07, `rule_list_published`) ; l'onglet Révocations prend l'intitulé de
 ## la liste lue par la règle en vigueur (`RevokedIdRule.list_title_key` :
 ## « Liste du Conseil » au J31 du monde B).
+## M13 (lot C, I37) : onglet **Contrebande** (`TAB_CONTRABAND`, J8 :
+## `ContrabandEntryView` sélectionnables CB-01 → CB-07, renvoi CB-08) ; ligne
+## « non visible — fouille » de l'onglet Implants (implants de localisation
+## dissimulée, `SearchCatalogDef.implant_zones`) quand R44 est en vigueur ;
+## ligne R47 (Ceinturiers, séjour > 7 jours) dans l'onglet Origines.
 class_name RulebookReference
 extends RefCounted
 
@@ -35,18 +40,23 @@ const TAB_LEDGER: StringName = &"ledger"
 const TAB_SUMMONS: StringName = &"summons"
 ## M12 : liste nommée « Cartes volées » (EV-07), ouverte tant qu'elle n'est pas vide.
 const TAB_STOLEN: StringName = &"stolen"
+## M13 : catégories d'objets interdits (R45 / R46), J8+.
+const TAB_CONTRABAND: StringName = &"contraband"
 const ORDER: Array[StringName] = [TAB_ORIGINS, TAB_IMPLANTS, TAB_SYMBOLS, TAB_SEALS, TAB_WANTED, TAB_EMPLOYERS, TAB_VESSELS,
-		TAB_REVOKED, TAB_LEDGER, TAB_SUMMONS, TAB_STOLEN]
+		TAB_REVOKED, TAB_LEDGER, TAB_SUMMONS, TAB_STOLEN, TAB_CONTRABAND]
 ## Onglets construits par le `RulebookPanel` (cartes sélectionnables).
 const DYNAMIC_TABS: Array[StringName] = [TAB_WANTED, TAB_REVOKED, TAB_LEDGER, TAB_SUMMONS, TAB_STOLEN]
 ## Règles qui portent les registres de l'Acte II (`data/rules/`).
 const RULE_CONTRACT: StringName = &"r_contract_consistent"
 const RULE_DRIFT: StringName = &"r_drift_pass"
 const RULE_FIRMWARE: StringName = &"r_nx_firmware"
+## M13 : portique (R44) et fouille des Ceinturiers (R47).
+const RULE_SEARCH_CAUSE: StringName = &"r_search_cause"
+const RULE_BELT_SEARCH: StringName = &"r_belt_search"
 ## Jour d'ouverture de chaque onglet (GDD §7) : pastille ambre « nouveau ».
 const INTRO_DAY: Dictionary[StringName, int] = {
 	TAB_ORIGINS: 4, TAB_IMPLANTS: 6, TAB_SYMBOLS: 7, TAB_SEALS: 9, TAB_WANTED: 10,
-	TAB_EMPLOYERS: 12, TAB_VESSELS: 13, TAB_REVOKED: 17, TAB_LEDGER: 24, TAB_SUMMONS: 26,
+	TAB_EMPLOYERS: 12, TAB_VESSELS: 13, TAB_REVOKED: 17, TAB_LEDGER: 24, TAB_SUMMONS: 26, TAB_CONTRABAND: 8,
 }
 ## Familles d'implants (LORE §8) : [code, légal si déclaré].
 const IMPLANT_FAMILIES: Array[Array] = [
@@ -84,6 +94,8 @@ static func tab_title(tab: StringName) -> String:
 			return UiText.t("rb_tab_summons", "Convocations")
 		TAB_STOLEN:
 			return UiText.t("rb_tab_stolen", "Cartes volées")
+		TAB_CONTRABAND:
+			return UiText.t("rb_tab_contraband", "Contrebande")
 	return String(tab)
 
 
@@ -114,9 +126,11 @@ static func catalog() -> DataCatalog:
 static func build(tab: StringName, rule_ids: Array[StringName] = []) -> Control:
 	match tab:
 		TAB_ORIGINS:
-			return _origins()
+			return _origins(rule_ids.has(RULE_BELT_SEARCH))
 		TAB_IMPLANTS:
-			return _implants(rule_ids.has(RULE_FIRMWARE))
+			return _implants(rule_ids.has(RULE_FIRMWARE), rule_ids.has(RULE_SEARCH_CAUSE))
+		TAB_CONTRABAND:
+			return _contraband()
 		TAB_SYMBOLS:
 			return _symbols()
 		TAB_SEALS:
@@ -246,9 +260,15 @@ static func _code(text: String, color: Color = DS.ACCENT_CYAN) -> PanelContainer
 	return cap
 
 
-static func _origins() -> Control:
+static func _origins(belt_search: bool = false) -> Control:
 	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
 	box.add_child(_intro(UiText.t("rb_origins_intro", "Le 1er chiffre du bloc ID (HG-N…) désigne l'origine du titulaire.")))
+	if belt_search:
+		# M13 (R47, J19) : fouille obligatoire des Ceinturiers, lisible sans défiler.
+		var belt: Label = ScreenBase.wrapped(UiText.t("rb_belt_search_line", "CER · séjour > 7 jours : fouille obligatoire (R47)"),
+				&"BodySmall", Palette.STATE_AMBER)
+		belt.name = "BeltSearchNote"
+		box.add_child(belt)
 	# §4.10 (D-068) : naissance « 00.00.AAAA » des Dérivants, comparée par
 	# année (R07). Sous l'intro : lisible sans défiler.
 	var drv_note: Label = ScreenBase.wrapped(UiText.t("rb_origins_drv_birth",
@@ -270,7 +290,7 @@ static func _origins() -> Control:
 	return box
 
 
-static func _implants(firmware: bool = false) -> Control:
+static func _implants(firmware: bool = false, hidden: bool = false) -> Control:
 	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
 	box.add_child(_intro(UiText.t("rb_implants_intro",
 			"Comparez le visage du passager à « Implants déclarés » de sa carte (Mode Inspection).")))
@@ -288,8 +308,51 @@ static func _implants(firmware: bool = false) -> Control:
 		var status: PanelContainer = ScreenBase.chip(
 				UiText.t("rb_implant_%s_status" % key, "LÉGAL SI DÉCLARÉ" if legal else "INTERDIT SANS DÉROGATION"),
 				UiIcon.Kind.CHECK if legal else UiIcon.Kind.DENIED, Palette.TEXT_SECONDARY if legal else Palette.STATE_RED)
-		box.add_child(_row(_code(code + "-", color), UiText.t("rb_implant_%s_title" % key, code),
-				UiText.t("rb_implant_%s_text" % key, ""), status, color if not legal else Palette.LINE_SUBTLE))
+		var row: PanelContainer = _row(_code(code + "-", color), UiText.t("rb_implant_%s_title" % key, code),
+				UiText.t("rb_implant_%s_text" % key, ""), status, color if not legal else Palette.LINE_SUBTLE)
+		box.add_child(row)
+		if hidden:
+			# M13 (§2.5) : implants de localisation dissimulée — jamais comparés au visage.
+			var codes: PackedStringArray = hidden_implant_codes(code)
+			if not codes.is_empty():
+				var note: PanelContainer = ScreenBase.chip("%s · %s" % [" ".join(codes), UiText.t("rb_implant_hidden", "non visible — fouille")],
+						UiIcon.Kind.GATE, Palette.TEXT_SECONDARY)
+				note.name = "Hidden_%s" % code
+				var column: VBoxContainer = row.get_child(0).get_child(row.get_child(0).get_child_count() - 1) as VBoxContainer
+				if column != null:
+					column.add_child(note)
+				else:
+					box.add_child(note)
+	return box
+
+
+## M13 : codes d'implants de la famille `family` (`NX`, `KIN`…) dont la
+## localisation est dissimulée (catalogue de fouille), triés.
+static func hidden_implant_codes(family: String) -> PackedStringArray:
+	var codes: PackedStringArray = []
+	var search: SearchCatalogDef = catalog().search_catalog
+	if search == null:
+		return codes
+	for implant_code: String in search.implant_zones:
+		if implant_code.begins_with(family + "-"):
+			codes.append(implant_code)
+	codes.sort()
+	return codes
+
+
+## M13 : onglet Contrebande — une entrée sélectionnable par catégorie
+## (`ContrabandEntryView`, nommée `Contraband_<catégorie>`, câblée par le
+## `RulebookPanel`).
+static func _contraband() -> Control:
+	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
+	box.name = "Contraband"
+	box.add_child(_intro(UiText.t("rb_contraband_intro",
+			"Objets trouvés au portique. Mode Inspection : comparez l'objet à sa catégorie. Scellé, étiquette : lisez la ligne de l'objet.")))
+	for i: int in ContrabandEntryView.ENTRIES.size():
+		var entry: Array = ContrabandEntryView.ENTRIES[i]
+		var view: ContrabandEntryView = ContrabandEntryView.new()
+		view.setup(entry[0], entry[1], i + 1)
+		box.add_child(view)
 	return box
 
 

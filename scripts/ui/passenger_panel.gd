@@ -1,13 +1,24 @@
 ## Bulle passager / intercom (DS §7.10, UI_FLOW §2.2 zone B gauche, §4.2) :
 ## locuteur, dernière réplique, LED d'intercom (équivalent visuel de la voix),
-## questions débloquées et menu « Interroger » numéroté (1–5).
+## questions débloquées et menu « Interroger » numéroté (1–9).
 ## Posée sur la vitre : voile ≥ 85 % derrière le texte (DS §5).
+## M13 (lot C, I35) : les répliques du cas s'inscrivent au **journal de
+## dialogue** (`DialogueJournal` : 8 répliques défilables, puces de
+## déclaration sélectionnables, onglet FOUILLE) ; la dernière réplique reste
+## lisible par `get_line()`. Indicateur d'attente (`BusyIndicator`) quand une
+## question ou le portique prend son temps (`inspection_busy`). Menu
+## d'interrogatoire défilant (sujets M13 : déclarer, portique, confrontations).
 class_name PassengerPanel
 extends PanelContainer
 
 signal question_chosen(topic: StringName)
 
-const MAX_QUESTIONS: int = 5
+## Touches 1–9 au clavier ; le menu défile au-delà de sa hauteur (Deck).
+const MAX_QUESTIONS: int = 9
+## Hauteur visible du menu de questions (bande B, @1080p).
+const MENU_VIEW_H: float = 264.0
+## Hauteur réservée à une carte « question débloquée » sous le journal.
+const UNLOCKED_CARD_H: float = 64.0
 
 var speaker: String = ""
 var speaking: bool = false:
@@ -22,7 +33,13 @@ var _intercom_label: Label = null
 var _line: Label = null
 var _hint: Label = null
 var _questions: VBoxContainer = null
+var _menu_scroll: ScrollContainer = null
 var _speak_timer: SceneTreeTimer = null
+## M13 : journal de dialogue du cas et indicateur d'attente.
+var journal: DialogueJournal = null
+var busy: BusyIndicator = null
+var menu_open: bool = false
+var _unlocked_count: int = 0
 ## Acte II : accent de la figure finale du J20 (liseré gauche + locuteur),
 ## transparent sinon.
 var accent: Color = Color.TRANSPARENT
@@ -55,17 +72,32 @@ func _ready() -> void:
 	_intercom_label.uppercase = true
 	_intercom_label.text = UiText.t("pp_intercom", "INTERCOM")
 	header.add_child(_intercom_label)
+	busy = BusyIndicator.new()
+	busy.name = "Busy"
+	box.add_child(busy)
+	# Dernière réplique (texte brut, `get_line()`) : affichée par le journal.
 	_line = Label.new()
 	_line.theme_type_variation = &"SubtitleText"
 	_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_line.visible = false
 	box.add_child(_line)
+	journal = DialogueJournal.new()
+	journal.name = "Journal"
+	box.add_child(journal)
 	_hint = Label.new()
 	_hint.theme_type_variation = &"BodySmall"
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_hint)
+	_menu_scroll = ScrollContainer.new()
+	_menu_scroll.name = "Questions"
+	_menu_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_menu_scroll.follow_focus = true
+	box.add_child(_menu_scroll)
 	_questions = VBoxContainer.new()
+	_questions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_questions.add_theme_constant_override("separation", DS.SPACE_2)
-	box.add_child(_questions)
+	_questions.minimum_size_changed.connect(_fit_menu)
+	_menu_scroll.add_child(_questions)
 
 
 func set_speaker(text: String, identified: bool) -> void:
@@ -87,9 +119,12 @@ func _draw() -> void:
 
 
 ## Dernière réplique (entre guillemets) ; allume la LED le temps de la lecture.
-func set_line(text: String, quoted: bool = true) -> void:
+## M13 : la réplique s'inscrit au journal (`to_journal`), sauf si l'appelant
+## l'y inscrit lui-même (réponse à puces) ; `caption` : question posée.
+func set_line(text: String, quoted: bool = true, to_journal: bool = true, caption: String = "") -> void:
 	_line.text = ("« %s »" % text) if quoted and not text.is_empty() else text
-	_line.visible = not text.is_empty()
+	if to_journal and not text.is_empty() and journal != null:
+		journal.add_line(text, caption)
 	speaking = not text.is_empty()
 	if speaking and is_inside_tree():
 		_speak_timer = get_tree().create_timer(UiText.subtitle_hold(text))
@@ -107,6 +142,8 @@ func get_hint() -> String:
 func set_hint(text: String) -> void:
 	_hint.text = text
 	_hint.visible = not text.is_empty()
+	if journal != null:
+		_fit_journal()
 
 
 func _on_speak_timeout(timer: SceneTreeTimer) -> void:
@@ -119,17 +156,34 @@ func _draw_led() -> void:
 	_led.draw_circle(_led.size * 0.5, _led.size.x * 0.5, color)
 
 
+## Didascalie au journal (indice visible, D-107 : jamais l'image seule).
+func add_tag(text: String) -> void:
+	if journal != null and not text.is_empty():
+		journal.add_line(text, "", true)
+
+
+## Oublie les répliques du cas (nouveau passager, guichet vide).
+func clear_journal() -> void:
+	if journal != null:
+		journal.clear()
+
+
 ## Cartes « question débloquée » (aperçu, menu fermé).
 func show_unlocked(cards: Array[Dictionary]) -> void:
 	_clear_questions()
+	menu_open = false
+	_unlocked_count = cards.size()
 	for card: Dictionary in cards:
 		_questions.add_child(_make_unlocked_card(card))
+	_fit_journal()
 
 
 ## Menu d'interrogatoire : `items` = [{topic, text, unlocked, asked}].
 func show_menu(items: Array[Dictionary]) -> void:
 	_clear_questions()
+	menu_open = true
 	_hint.visible = false
+	_fit_journal()
 	var title: Label = Label.new()
 	title.theme_type_variation = &"DocFieldLabel"
 	title.uppercase = true
@@ -166,6 +220,44 @@ func show_menu(items: Array[Dictionary]) -> void:
 
 func close_menu() -> void:
 	_clear_questions()
+	menu_open = false
+	_fit_journal()
+
+
+## Le journal cède la place au menu ouvert ; il garde sa hauteur maximale moins
+## les cartes « question débloquée » (la bulle reste dans la bande B).
+func _fit_journal() -> void:
+	if journal == null:
+		return
+	journal.suppressed = menu_open
+	journal.set_max_height(DS.JOURNAL_VIEW_H - UNLOCKED_CARD_H * _unlocked_count)
+	_fit_to_band.call_deferred()
+
+
+## La bulle ne déborde jamais de la bande B (Deck, texte 1,5) : le journal
+## rend la hauteur qui manque (il défile).
+func _fit_to_band() -> void:
+	if journal == null or not is_inside_tree() or not journal.visible:
+		return
+	var limit: float = ComparisonUI.BAND_BOTTOM - DS.SPACE_2 - position.y
+	var total: float = get_combined_minimum_size().y
+	if total <= limit:
+		return
+	var current: float = journal.get_scroll().custom_minimum_size.y
+	journal.set_max_height(maxf(current - (total - limit), DS.HIT_TARGET_MIN * 2.0))
+
+
+func _fit_menu() -> void:
+	if _menu_scroll == null:
+		return
+	_menu_scroll.custom_minimum_size.y = minf(_questions.get_combined_minimum_size().y, MENU_VIEW_H if menu_open else INF)
+
+
+## Question du menu ouvert (bouton n, 1-based), null sinon.
+func question_button(n: int) -> Button:
+	if not menu_open or n < 1 or n >= _questions.get_child_count():
+		return null
+	return _questions.get_child(n) as Button
 
 
 ## Index de la question `n` (1-based) du menu ouvert, ou vide.
