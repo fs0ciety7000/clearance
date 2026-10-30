@@ -91,12 +91,17 @@ res://assets/
   materials/         mat_chr_toon.tres, mat_face_dither.tres, mat_booth_glass.tres, mat_impostor.tres …
   shaders/           chr_toon.gdshader, chr_parts.gdshader, face_dither.gdshader(inc), booth_glass.gdshader, rain_sheet.gdshader,
                      impostor_silhouette.gdshader  (+ holo.gdshader du Design System)
+                     M14 : plate_paint.gdshader (peinture des planches), plate_holo.gdshader (couche HOLO à l'exécution)
+  cinematics/        (M14, phase 2) bg/<id>.png, mid/, fig/, lit/ (couches d'état) + manifest.json — planches importées
+                     en Lossy (WebP) 0,75 depuis art_src/plates/ (ARCHITECTURE §12 ter.3)
 res://data/appearance/  appearance_catalog.tres + slot_<slot>.tres   (AppearanceCatalog / AppearanceSlotDef / AppearanceOptionDef — 3D Designer + Lore Master, ARCHITECTURE §3)
 
 art_src/  (racine du dépôt, contient un fichier .gdignore : Godot l'ignore)
   blend/             *.blend sources (Git LFS recommandé)
   downloads/         archives brutes CC0 (optionnel, sinon re-téléchargeables)
   mixamo/            FBX bruts Mixamo — DANS .gitignore
+  plates/            (M14) sources 8 bits des planches rendues par tools/build_plates.gd : <planche>/<variante>/bg.png,
+                     mid.png, lit_nn.png (+ .webp de mesure) et manifest.json — à mettre DANS .gitignore (régénérables, 15 Mo)
   licenses/          captures/PDF des pages de licence, datés
 ```
 
@@ -250,6 +255,11 @@ Spécifiés dans BOOTH_SCENE §4.2, §6 et §11. Ils lisent `fx_intensity` (para
 ### 7.5 Décor définitif (M9) : `booth_decor`, `booth_emissive`, `booth_holo`
 Décrits dans BOOTH_SCENE §17.2 : un matériau PBR à `Texture2DArray` pour tout le statique éclairé (couche / mouillé / teinte / métal par sommet, reflets analytiques en émission), un matériau non éclairé pour néons, lettres cuites, écrans et ville, un matériau additif pour hologrammes et voiles.
 
+### 7.6 Planches de cinématique (M14, phase 1) : `plate_paint`, `plate_holo`
+Décrits dans BOOTH_SCENE §19.
+- **`plate_paint.gdshader`** (CanvasItem, hors ligne ; réutilisable en espace écran pour les figures de la phase 2) : Kuwahara 4 quadrants (`radius`), rampe de 8 tons (`ramp`, palette monde + dominante de la fin, chroma gardée `chroma_keep`, marches `band_soft`), encre `bg.void` sur contours de profondeur / normales (G-buffer) / alpha, hachures (`hatch_alpha`), grain ordonné 4×4 (≤ `DS.FX_NOISE_ALPHA_MAX`), papier. Aucune dépendance au temps.
+- **`plate_holo.gdshader`** (CanvasItem, additif, à l'exécution — lot D) : lueur de vitre / d'écran / d'hologramme, `power` (allumage), plafonds DS §5 tenus par les bornes des uniformes (scanlines ≤ 0,08 à ≤ 20 px/s, scintillement ≤ 0,06 à ≤ 2 Hz, sinus : pas de créneau), `flicker` (D-109) et `fx_intensity`, `plate_time` (temps figé). Jamais sous la légende ni sur un `Label`.
+
 ---
 
 ## 8. Réglages d'import Godot
@@ -279,11 +289,13 @@ Les fichiers `*.import` sont **versionnés** (ARCHITECTURE §3).
 - Enseignes : `TextMesh` (Chakra Petch Bold / SemiBold) cuits en triangles dans le maillage émissif — pas de `Label3D` (1 draw par étiquette).
 - Ordre : `fetch_assets.sh` → `build_booth.gd -- --textures` → `godot --headless --import` → `build_booth.gd`.
 
+**Réglages proposés M14** (planches, appliqués en phase 2 dans `assets/cinematics/`) : PNG 8 bits → importeur `texture`, *Compress* **Lossy** qualité **0,75** (WebP), mipmaps ✗, filtre linéaire, pas de *Fix Alpha Border* sur les couches `BG`. Mesuré en phase 1 (traitement A) : fond 47–92 Ko, planche complète 134–222 Ko (fond + couches) ; traitement B (grain + papier cuits) ×1,6 à ×2,5. En VRAM, Lossy = RGBA8 non compressé (9,4 Mo par fond 2048×1152). Option à évaluer si le budget de 32 Mo est serré : VRAM Compressed (BPTC / ASTC 4×4, ÷ 4) — à valider visuellement sur les aplats et l'encre.
+
 ---
 
 ## 9. Hygiène du dépôt
 
-- `art_src/` contient un `.gdignore` (Godot n'importe rien) ; `art_src/mixamo/` dans `.gitignore`.
+- `art_src/` contient un `.gdignore` (Godot n'importe rien) ; `art_src/mixamo/` dans `.gitignore`. **M14 (proposition à l'Orchestrateur)** : ajouter `art_src/plates/` au `.gitignore` (sources régénérables par `tools/build_plates.gd`, ≈ 15 Mo pour 2 planches × 2 traitements ; seuls les imports `assets/cinematics/` et les captures `docs/mockups/m14_plate_*` sont versionnés).
 - **Git LFS recommandé** pour `*.blend`, `*.glb`, `*.png` > 1 Mo, `*.exr`, `*.hdr` — **à décider** (impact CI / clones).
 - Aucun asset ne rentre dans `res://assets/` sans **ligne dans le registre** ci-dessous.
 - Crédits en jeu générés à partir de ce registre (colonne Licence ≠ CC0 → attribution obligatoire).
@@ -311,6 +323,7 @@ Les fichiers `*.import` sont **versionnés** (ARCHITECTURE §3).
 | AmbientCG **PaintedMetal016** (bandes de danger rouillées) | ambientcg.com/view?id=PaintedMetal016, 1K-JPG, 2026-10-28 | CC0 1.0 | AmbientCG | oui : 512 px, couche 3, teinte assombrie | idem |
 | AmbientCG **SheetMetal001** (tôle perforée, grille d'hygiaphone) | ambientcg.com/view?id=SheetMetal001, 1K-JPG, 2026-10-28 | CC0 1.0 | AmbientCG | oui : 512 px, couche 4, trous au noir (opacité) | idem |
 | Décor fusionné du guichet (5 maillages) | généré (`tools/build_booth.gd`) | CC0 (dérivé) / studio | studio + sources ci-dessus | — | `assets/models/booth/booth_static_near.res`, `booth_static_far.res`, `booth_emissive.res`, `booth_holo.res`, `booth_rain.res` |
+| Planches témoins M14 (PL-F9-1 « arc des douze vitres », PL-F10-3 « école de l'Anneau C ») ×2 traitements | généré (`tools/build_plates.gd`, 2026-10-30) ; **aucun nouveau téléchargement** : couches AmbientCG ci-dessus (Texture2DArray du guichet), silhouette Kenney dérivée (`imp_silhouette.res`), primitives Godot, shaders du studio | CC0 (dérivé) / studio | studio + sources ci-dessus | — | sources `art_src/plates/` (non versionnées, proposé) ; captures `docs/mockups/m14_plate_f9_1[_alt][_composed].png`, `m14_plate_f10_3[_alt][_composed].png` |
 
 ---
 

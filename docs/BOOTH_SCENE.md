@@ -603,3 +603,82 @@ Planche de 12 apparences couvrant toutes les coupes, coiffes (visière baissée/
 
 ### 18.7 Décision proposée
 Fusion des pièces d'apparence en un maillage skinné par acteur, construit à l'application et mis en cache, avec un matériau à attributs par sommet (proposition D-075, à consigner par l'Orchestrateur).
+
+---
+
+## 19. M14 — planches de cinématique, phase 1 (lot C, 2026-10-30, 3D Designer / Asset Lead)
+
+Version minimale de B89/B90 (M14 §3.6, D-184) et **deux planches témoins pour la validation de DA** (PL-F9-1, PL-F10-3), chacune en deux traitements picturaux. Rien n'est encore branché au jeu : pas de `PlateDef` lue, pas d'import dans `assets/cinematics/` (phase 2, après le choix du client).
+
+### 19.1 Outil et passes
+`tools/build_plates.gd` (SceneTree, xvfb + `opengl3`, comme `qa_capture.gd`) :
+```
+xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
+    --script res://tools/build_plates.gd -- [--only=PL-F9-1,PL-F10-3] [--variant=a|b|all] [--mockups] [--verify]
+```
+1. **Décor** construit par l'outil avec le format de sommets et les matériaux du guichet (D-073 : `booth_decor` + Texture2DArray AmbientCG, `booth_emissive`, `booth_holo`), silhouettes anonymes (`imp_silhouette.res`, primitives) ; temps figé (`wet_motion` 0, `fx_intensity` 0, `flicker` 0, silhouettes sans balancement).
+2. **Passes** dans une `SubViewport` 2048×1152 (`own_world_3d`, MSAA 4×, sans TAA ni FXAA, glow et brouillard de l'environnement du guichet) : couleur ; **G-buffer** (matériau de remplacement : normale de vue octaédrique + profondeur log, sans MSAA) ; **masque** (couches `MID`/`FIG` : blanc, reste noir) ; **identifiants** (zones d'état, ci-dessous). Les passes techniques écrivent des codes bruts (environnement plat, tonemap linéaire ; les codes < 48 sont déformés en sortie 8 bits, d'où `ID_BASE`).
+3. **Peinture** `plate_paint.gdshader` (ASSETS §7.6) en plein écran sur chaque couche ; les couches transparentes gardent leur alpha et reçoivent un liseré d'encre.
+4. **Export** : `art_src/plates/<planche>/<a|b>/bg.png`, `mid.png`, `lit_nn.png` (+ `.webp` Lossy 0,75 pour mesurer le poids) et `art_src/plates/manifest.json` (SHA-256 et MD5, tailles PNG/WebP, VRAM, rectangles en pixels et normalisés comme `PlateLayerDef.rect`, caméra, rampe, ancres `holo` et `labels`, adaptateur et version de Mesa, durée).
+5. `--mockups` : planche à plat 1920×1080 (recadrage central, toutes les vitres allumées) et **capture composée** telle qu'à l'écran (ci-dessous) dans `docs/mockups/`. `--verify` : deuxième rendu et comparaison des SHA-256.
+
+**Aucun texte cuit** : plaques de numéro et tableau vierges ; les textes sont des `Label` posés à l'exécution sur les ancres du manifeste (test `test_plate_shaders.gd` : ni `TextMesh` ni `Label3D` dans l'outil).
+
+### 19.2 Couches (grammaire M14 §3.3)
+| Couche | Contenu | Remarque |
+|---|---|---|
+| `BG` | fond opaque 2048×1152 ; pour PL-F9-1, **l'état éteint** | — |
+| `LIT_nn` (PL-F9-1) | 12 découpes de l'état **allumé** (vitre, cabine, lueur et reflet au sol), une par guichet, alpha = zone d'identifiant floutée (2 × flou en boîte, 18 px) | l'écran les éteint une à une (`modulate.a`) ; `reduce_motion` : jamais affichées. Demande au lot A : un `kind` d'état (`STATE`/`LIT`) et un index dans `PlateLayerDef` pour `holo_effect = glass_off_sequence` |
+| `MID` | avant-plan transparent recadré (`get_used_rect`) : barrières + deux personnes de dos (F9) ; pupitres, bancs ajoutés et enfants (F10) | les objets occultés par `MID` sont dans `MID` (pas de décalage d'occlusion à la parallaxe) |
+| ancres `HOLO` | rectangles des vitres (F9), du tableau (F10) | `plate_holo.gdshader` à l'exécution |
+| ancres `LABEL` | plaques « 01 » → « 12 » (police mono DS) | `PlateLabelDef` : le texte est un numéro littéral, pas une clé — à prévoir (style `holo_small`) |
+
+**Zones d'état** : maillages invisibles du groupe `plate_id` (vitre + lueur au sol) rendus en codes `ID_BASE + n × ID_STEP` ; les occultants s'y écrivent en noir. Les zones voisines se chevauchent près de la caméra : chacune a sa hauteur (+4 mm × n), sinon elles se disputent la profondeur et le rendu varie d'un passage à l'autre (constaté, corrigé).
+
+### 19.3 Décors des témoins
+- **BG-H12 (S1, variante « arc »)** : 12 façades de guichet sur un arc concave (rayon 13 m, pas 8,4°) vues du Hall depuis 3,6 m de haut (FOV 40°) ; piliers de béton mouillé, comptoirs en tôle rivetée, bandeaux, plaque de numéro jaune assourdie (marque Consortium), murs hauts en aplats à joints (les couches texturées vues de loin deviennent du bruit sous le Kuwahara), plafond bas à bandeaux rayonnants, Œil du Consortium en hologramme, agent·es en silhouette derrière les vitres (jamais de visage).
+- **BG-X1 (S8)** : lieu jamais modélisé construit **en volumes simples par l'outil** (salle 9 × 12 m, pupitres d'origine, bancs **ajoutés** dépareillés : caisses de fret + planche, rangée de sièges de navette à sangles jaunes, pupitre rose ; dessins punaisés sans texte ; baie sur l'autre rive de l'Anneau), même matériau et même peinture que le guichet. Enfants de dos en primitives (buste, épaules, nuque, coiffure ou capuche ; rim faible sur la tête : un anneau clair autour d'un disque sombre se lisait comme un visage). M14 §3.6 prévoyait du 2D dessiné pour S8 : la maquette en volumes coûte autant à écrire, donne gratuitement perspective, lumière et contours G-buffer, et garde une seule grammaire (proposition ci-dessous).
+
+### 19.4 Traitements picturaux soumis au client
+| | A « aplats encrés » (`m14_plate_*.png`) | B « lavis gravé » (`m14_plate_*_alt.png`) |
+|---|---|---|
+| Kuwahara | rayon 4 | rayon 6 |
+| Rampe 8 tons | marches franches, chroma 0,3 | marches adoucies (`band_soft` 0,45), chroma 0,5 |
+| Encre | 2 px, 92 % | 1–2 px, 60 % |
+| Texture | grain ordonné 0,04 | hachures dans les deux tons sombres (0,32) + grain 0,03 + papier 0,05 |
+| Lecture | graphique, contrasté, proche de la bande dessinée ; la nuit avale les murs | plus doux, plus lisible dans les ombres, plus « peint » |
+| Poids | plus léger (aplats) | ×1,6 à ×2,5 (grain et papier cuits) |
+
+Rampes : gris monde (DS + BOOTH §5) teintés par la dominante de la fin — F9 acier `world.steel`, F10 vert (`state.green`, décoratif) avec lumières tirées vers l'ambre monde (lampes de classe). Recommandation 3D : **A**, avec le papier de B appliqué à l'exécution par l'écran si le client veut la matière (il ne coûte alors rien sur disque).
+
+### 19.5 Captures composées (`*_composed.png`)
+Composition figée à l'instant t ≈ 1,7 s : zoom 1,02, `MID` décalé de (−8, −3) px (parallaxe ≤ 12 px), F9 : vitres 04 et 05 éteintes, 06 à 45 % (une toutes les 0,5 s), lueurs `plate_holo` (temps figé) et numéros en `Label` (JetBrains Mono, `text.primary` allumé / `text.secondary` éteint) ; légende de M14 §3.4 (clés `cin_f9_1`, `cin_f10_3` lues dans `fr.csv` si présentes, sinon texte de M14) en style `SubtitleText` × 1,25 (23 px) sur voile `DS.SCRIM` (`bg.void` 72 %), dans la zone sûre 16:10. Cet assemblage préfigure `CinematicScreen` (lot D) ; il n'en est pas l'implémentation.
+
+### 19.6 Mesures (xvfb, llvmpipe LLVM 20.1.2, Mesa 25.2.8, 4 cœurs ; manifeste)
+| Mesure | PL-F9-1 A | PL-F9-1 B | PL-F10-3 A | PL-F10-3 B | Cible M14 |
+|---|---|---|---|---|---|
+| Rendu complet (passes + peinture + captures) | 21,2 s | 28,7 s | 16,0 s | 21,9 s | 63 planches ≤ 15 min |
+| Fond WebP 0,75 | 46 Ko | 118 Ko | 90 Ko | 215 Ko | ≈ 150 Ko |
+| Planche entière WebP (fond + couches) | 222 Ko (dont 12 `LIT` 167 Ko, `MID` 9 Ko) | 345 Ko | 134 Ko (`MID` 44 Ko) | 269 Ko | total ≤ 12 Mo |
+| PNG source du fond | 0,40 Mo | 3,3 Mo | 0,44 Mo | 3,9 Mo | — |
+| VRAM (RGBA8, toutes couches) | 14,9 Mo (fond 9,4 + `LIT` 3,4 + `MID` 2,4) | idem | 13,7 Mo (fond 9,4 + `MID` 4,7) | idem | ≤ 32 Mo pour 2 planches |
+| Contraste de la légende (95ᵉ centile du fond sous le voile) | 16,5:1 | 16,8:1 | 16,1:1 | 16,1:1 | ≥ 7:1 |
+| Déterminisme | identique | identique | identique | identique | SHA-256 identiques |
+
+- **Déterminisme** : `--verify` (deux rendus dans le même processus) et deux exécutions séparées : **32/32 couches et 8/8 captures identiques** (MD5 et SHA-256).
+- **Projection** : 63 planches en A ≈ 63 × 16–21 s ≈ 17–22 min sur llvmpipe 4 cœurs (captures comprises) — au-dessus de la cible de 15 min (M14 §3.6 l'estimait à 6 min) ; un GPU réel la tient largement ; leviers : ne rendre le G-buffer qu'une fois par planche quand les groupes ne changent pas, reconstruction incrémentale par hachage de recette. Disque : ≈ 63 × 180 Ko ≈ 11 Mo en A (sous 12 Mo) ; **B dépasserait** (≈ 17 Mo) sauf grain et papier appliqués à l'exécution.
+- **VRAM** : courante + suivante ≈ 28–30 Mo en RGBA8 : sous le plafond mais serré. Leviers : `MID` recadré (fait), couches d'état libérées une fois éteintes, import VRAM Compressed (÷ 4) à valider visuellement.
+
+### 19.7 Reste pour la phase 2 (après validation)
+- Lire `PlateDef` / `PlateLayerDef` / `PlateLabelDef` (`data/cinematics/plates/*.tres`, lot E) au lieu des recettes en dur ; `dominant` par nom de jeton ; réglages du traitement retenu (un seul pour tout le jeu).
+- Décors S2 → S7 (quai, cabine Pétrel, Anneau B, recycleur, Tycho) et variantes de S1 ; S8 en volumes simples ; 46 fonds, ≈ 50 couches.
+- Import dans `assets/cinematics/{bg,mid,fig,lit}/` (Lossy 0,75), `manifest.json`, reconstruction incrémentale.
+- `PlateFigureService` (B90 : studio de `PortraitService` en 512×768, pose, peinture en espace écran avec `plate_paint`), silhouettes de repli `fig/`, `PortraitService.size`, méthode du booth pour `UPDATE_DISABLED`.
+- `tools/qa_plates_audit.gd` (M-16 : contraste ≥ 7:1 sous la légende sur toutes les planches, zone sûre, ≤ 70 caractères ; M-09, M-11, M-12) — la mesure du contraste de 19.5 en est le premier morceau ; captures 1280×800.
+
+### 19.8 Décisions proposées
+- (a) **Couches d'état** (`LIT`) découpées par passe d'identifiants pour les effets « une à une » (PL-F9-1, et plus tard les douze vitres allumées de PL-EB-3, les bornes jaunes) plutôt qu'un masque calculé à l'exécution ; besoin d'un `kind` dans `PlateLayerDef`.
+- (b) **S8 en maquette de volumes simples** construite par l'outil plutôt qu'en polygones 2D (même coût, même grammaire, contours G-buffer).
+- (c) **Grandes surfaces des décors de planches en aplats + joints en géométrie** (pas de couches texturées vues de loin).
+- (d) Traitement **A** recommandé ; matière de B (papier) éventuellement en surcouche d'exécution.
+- (e) `art_src/plates/` ignoré par git.
