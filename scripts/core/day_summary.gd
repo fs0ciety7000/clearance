@@ -136,3 +136,38 @@ func get_narrative_changes() -> Dictionary[StringName, Variant]:
 	for flag: StringName in unprocessed_changes:
 		changes[flag] = unprocessed_changes[flag]
 	return changes
+
+
+## M13 (I39) : fouilles faites aujourd'hui.
+func get_search_count() -> int:
+	var count: int = 0
+	for result: CaseResult in results:
+		if result.verdict != null and result.verdict.search_done:
+			count += 1
+	return count
+
+
+## M13 (I39) : fouilles faites sans motif (sanctionnées ou non).
+func get_unmotivated_search_count() -> int:
+	var count: int = 0
+	for result: CaseResult in results:
+		if result.verdict != null and result.verdict.search_done and result.verdict.search_motive == &"":
+			count += 1
+	return count
+
+
+## M13 (I39) : déclarations contradictoires relevées (discordances épinglées
+## « déclaration » : `REASON_STATEMENT_MISMATCH`). Une puce honnête épinglée
+## contre un document faux (QA-064 : Code du contrat, R25) est une discordance
+## documentaire : elle n'est pas comptée.
+func get_statement_mismatch_count() -> int:
+	var count: int = 0
+	for result: CaseResult in results:
+		if result.verdict == null:
+			continue
+		for discrepancy: Discrepancy in result.verdict.flagged:
+			if discrepancy != null and discrepancy.confirmed \
+					and discrepancy.reason_key == Discrepancy.REASON_STATEMENT_MISMATCH:
+				count += 1
+				break
+	return count

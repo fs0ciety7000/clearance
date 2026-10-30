@@ -786,7 +786,17 @@ func _on_interrogation_answered(_topic: StringName, line_key: String) -> void:
 		mood = TessarVoice.MOOD_NERVOUS
 	elif line_key == InspectionSession.LINE_GENERIC_SHRUG:
 		mood = TessarVoice.MOOD_SHRUG
-	bark(_current_case, line_key, UiText.t(line_key, line_key), mood)
+	bark(_current_case, line_key, answer_text(_current_case, line_key), mood)
+
+
+## Texte prononcé d'une réponse : un cadre de déclarations (`line_stmt_*`,
+## emplacements `{motif}`…) est composé avec les déclarations du cas
+## (`Statement.compose`, casse de phrase), jamais lu brut.
+static func answer_text(case: Case, line_key: String) -> String:
+	var text: String = UiText.t(line_key, line_key)
+	if case == null or case.statements.is_empty() or not text.contains("{"):
+		return text
+	return Statement.compose(text, case.statements, func(key: String) -> String: return UiText.t(key, key))
 
 
 func _on_passenger_departed(_case_id: StringName) -> void:

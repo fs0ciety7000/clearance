@@ -99,6 +99,15 @@ const SPONSOR_CARD_ID: StringName = &"sponsor_card"
 const ALT_ISSUER_RATE: float = 0.6
 const SALT_ISSUER: int = 15
 const SALT_SUBTLE: int = 17
+## M13 : flux des déclarations orales et de la fouille (n'altèrent aucun
+## tirage existant).
+const SALT_STATEMENTS: int = 18
+const SALT_SEARCH: int = 19
+## M13 : types combinables avec une seule autre anomalie au plus (§1.5, §2.7)
+## et arme seule (0 autre anomalie).
+const PAIR_ONLY_KINDS: Array[AnomalyType.Kind] = [AnomalyType.Kind.STATEMENT_MISMATCH, AnomalyType.Kind.CONTRABAND,
+		AnomalyType.Kind.CONCEALED_IMPLANT]
+const ALONE_KINDS: Array[AnomalyType.Kind] = [AnomalyType.Kind.CONCEALED_WEAPON]
 ## M12 : paramètre d'injection « anomalie subtile » (Garde, `DayDef.subtle_rate`).
 const SUBTLE_PARAM: StringName = &"subtle"
 ## M12 : fenêtre d'exercice d'une directive de Garde (passagers qui la suivent).
@@ -140,6 +149,8 @@ var summoned_numbers: Dictionary[int, String] = {}
 ## Acte III — ressortissants générés sans répondant : jamais en VISITE FAMILIALE.
 var _no_family: Array[int] = []
 var _clean_ids: Dictionary[int, String] = {}
+## M13 : noms présentés des passagers propres (nom imprimé du Répondant).
+var _clean_names: Dictionary[int, String] = {}
 var _active: Array[ScriptedCaseDef] = []
 var _active_ready: bool = false
 ## M12 : nombre de passagers déjà construits par `build` (le prochain est cet
@@ -456,8 +467,14 @@ func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kin
 	state.params = params
 	state.peek_citizen_id = peek_citizen_id
 	state.passenger_count = day.passenger_count
+	# M13 : déclarations et fouille imposées par un cas scénarisé.
+	state.scripted_statements = scripted != null and not scripted.statements.is_empty()
+	if scripted != null and not scripted.search_items.is_empty():
+		state.params = params.duplicate()
+		state.params[&"scripted_search"] = true
 	var anomalies: Array[Anomaly] = []
 	if exact:
+		state.planned_count = forced.size()
 		result.requested_anomalies = forced.size()
 		for kind: AnomalyType.Kind in forced:
 			var anomaly: Anomaly = _inject(kind, state)
@@ -472,6 +489,9 @@ func _build(index: int, scripted: ScriptedCaseDef, forced: Array[AnomalyType.Kin
 		anomalies = _inject_random(state, result)
 
 	_finalize_documents(state)
+	# M13 : déclarations orales (R43) et contenu de la fouille (R44 → R46), sur
+	# les documents finaux.
+	_finalize_m13(c, truth, state, scripted, rng, exact)
 	if scripted != null and not scripted.truth_overrides.is_empty():
 		var rejected: PackedStringArray = truth.apply_overrides(scripted.truth_overrides)
 		if not rejected.is_empty():
@@ -613,9 +633,18 @@ func _inject_random(state: InjectionState, result: GeneratedCase) -> Array[Anoma
 	if cap > 0:
 		count = mini(count, cap)
 	result.requested_anomalies = count
+	state.planned_count = count
 	var candidates: Array[AnomalyType.Kind] = get_drawable_kinds()
 	for excluded: Variant in _excluded_kinds.get(state.case.index, []):
 		candidates.erase(excluded)
+	# M13 : déclaration, contrebande et implant dissimulé avec une autre
+	# anomalie au plus ; arme seule.
+	if count >= 2:
+		for kind: AnomalyType.Kind in ALONE_KINDS:
+			candidates.erase(kind)
+	if count >= 3:
+		for kind: AnomalyType.Kind in PAIR_ONLY_KINDS:
+			candidates.erase(kind)
 	for n: int in count:
 		while not candidates.is_empty():
 			var weights: PackedFloat32Array = []
@@ -636,7 +665,10 @@ func _inject(kind: AnomalyType.Kind, state: InjectionState) -> Anomaly:
 		return null
 	if injector.is_face_anomaly() and state.face_anomaly:
 		return null
-	return injector.inject(state)
+	var anomaly: Anomaly = injector.inject(state)
+	if anomaly != null:
+		state.injected.append(kind)
+	return anomaly
 
 
 ## Invariants (ARCHITECTURE §6, §9.3) : chaque anomalie non cosmétique est
@@ -706,9 +738,11 @@ func _overrides_for(scripted: ScriptedCaseDef, with_sponsor: bool = true) -> Dic
 		var sponsor: ScriptedCaseDef = _find_in(get_active_scripted_cases(), scripted.sponsor_case_id)
 		if sponsor != null:
 			result[&"sponsor_id"] = peek_citizen_id(sponsor.at_index)
+			result[&"sponsor_name"] = peek_full_name(sponsor.at_index)
 	elif sponsored and scripted.sponsor_index >= 0:
 		# M12 (SC-95) : répondant généré plus tôt dans la file.
 		result[&"sponsor_id"] = peek_citizen_id(scripted.sponsor_index)
+		result[&"sponsor_name"] = peek_full_name(scripted.sponsor_index)
 	return result
 
 
@@ -930,6 +964,55 @@ func _has_rule(script: Script) -> bool:
 		if is_instance_of(rule, script):
 			return true
 	return false
+
+
+## M13 (docs/M13.md §1, §2 ; B65, B69) : déclarations orales si R43 est
+## active (un cas scénarisé sans `statements` garde ses réponses en prose,
+## sans puce) ; contenu de la fouille, indices et réponse à « Quelque chose à
+## déclarer ? » si le portique est en service (R44, J8+, hors coupure EV-05).
+func _finalize_m13(c: Case, truth: Passenger, state: InjectionState, scripted: ScriptedCaseDef, rng: SeededRng,
+		_exact: bool) -> void:
+	var rule: StatementsConsistentRule = StatementsConsistentRule.active_in(day.rule_set)
+	if rule != null and data.statement_tables != null:
+		if scripted != null:
+			if not scripted.statements.is_empty():
+				apply_scripted_statements(c, scripted)
+		else:
+			StatementGenerator.generate(c, data.statement_tables, rule, rng.fork(SALT_STATEMENTS), state.statement_lie)
+	if data.search_catalog == null or not SearchGenerator.search_enabled(day.rule_set):
+		return
+	var search_rng: SeededRng = rng.fork(SALT_SEARCH)
+	if scripted != null:
+		SearchGenerator.build_scripted(c, truth, data.search_catalog, scripted, search_rng, state.search_plan, day.day_number)
+		return
+	var card_field: StringName = AnomalyInjector.field_for(c, &"id_card", &"implants")
+	var card_free: bool = card_field != &"" and state.is_free(&"id_card", card_field)
+	SearchGenerator.build(c, truth, data.search_catalog, search_rng, state.search_plan, day.search_cue_noise_rate,
+			card_free, day.day_number, day.detain_enabled)
+
+
+## M13 : déclarations d'un cas scénarisé (`ScriptedCaseDef.statements`).
+static func apply_scripted_statements(c: Case, scripted: ScriptedCaseDef) -> void:
+	c.statements.clear()
+	for statement_id: Variant in scripted.statements:
+		var spec: Dictionary = scripted.statements[statement_id]
+		var id: StringName = StringName(str(statement_id))
+		var statement: Statement = null
+		if bool(spec.get("vague", false)):
+			statement = Statement.vague_answer(id, str(spec.get("key", "")))
+		else:
+			var value: Variant = spec.get("value", null)
+			if value is String and id != Statement.ID_EMPLOYER and id != Statement.ID_HOST:
+				value = StringName(value)
+			statement = Statement.make(id, value, str(spec.get("key", "")), spec.get("args", []))
+			if spec.has("truth_path"):
+				statement.truth_path = StringName(str(spec["truth_path"]))
+		if id == Statement.ID_PROVENANCE:
+			statement.truth_path = &""
+		statement.corrected_from = str(spec.get("corrected_from", ""))
+		c.statements.append(statement)
+	for question: Variant in scripted.statement_frames:
+		c.statement_frames[StringName(str(question))] = str(scripted.statement_frames[question])
 
 
 ## Bande MRZ recalculée sur les valeurs finales de la carte (après les
@@ -1196,7 +1279,7 @@ func _build_revocations() -> void:
 	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(day_seed, REVOKED_SALT))
 	var faction_ids: Array[StringName] = []
 	faction_ids.assign(data.factions.keys())
-	faction_ids.sort()
+	SeededRng.sort_names(faction_ids)
 	for n: int in day.revoked_decoys:
 		var faction: FactionDef = data.factions[faction_ids[rng.randi_range(0, faction_ids.size() - 1)]]
 		var entry: RevokedEntry = RevokedEntry.new()
@@ -1358,6 +1441,19 @@ func peek_citizen_id(index: int) -> String:
 	var citizen_id: String = generated.case.passenger_presented.citizen_id if generated != null else ""
 	_clean_ids[index] = citizen_id
 	return citizen_id
+
+
+## M13 (R43 s4) : « Prénom Nom » présenté par le passager propre d'un index
+## (nom imprimé du Répondant), vide si indisponible.
+func peek_full_name(index: int) -> String:
+	if index < 0 or index >= day.passenger_count:
+		return ""
+	if _clean_names.has(index):
+		return _clean_names[index]
+	var generated: GeneratedCase = build_clean(index)
+	var name: String = generated.case.passenger_presented.full_name() if generated != null else ""
+	_clean_names[index] = name
+	return name
 
 
 ## Répondant (index) prévu pour un protégé, −1 sinon.
@@ -1576,6 +1672,7 @@ func _post_generate_act3(truth: Passenger, faction: FactionDef, index: int) -> v
 	if wards.has(index):
 		truth.purpose = Passenger.PURPOSE_FAMILY_VISIT
 		truth.sponsor_id = peek_citizen_id(wards[index])
+		truth.sponsor_name = peek_full_name(wards[index])
 	elif _no_family.has(index) and truth.purpose == Passenger.PURPOSE_FAMILY_VISIT:
 		truth.purpose = _repick_purpose(faction, SeededRng.new(SeededRng.mix(case_seed, SALT_PLAN)))
 	if sponsor_indices.has(index) and not SponsorRule.ELIGIBLE_CLASSES.has(truth.citizen_class):
@@ -1640,7 +1737,7 @@ func _build_summons() -> void:
 		var rng: SeededRng = SeededRng.new(SeededRng.mix_string(day_seed, SUMMONS_DECOY_SALT))
 		var faction_ids: Array[StringName] = []
 		faction_ids.assign(data.factions.keys())
-		faction_ids.sort()
+		SeededRng.sort_names(faction_ids)
 		for n: int in day.summons_decoys:
 			var faction: FactionDef = data.factions[faction_ids[rng.randi_range(0, faction_ids.size() - 1)]]
 			var entry: SummonsEntry = SummonsEntry.new()
@@ -1764,6 +1861,9 @@ func on_rules_changed(diff: RuleDiff) -> void:
 			_event_retired.erase(rule_id)
 		else:
 			ids.append(rule_id)
+	# M13 (EV-09) : fouille autorisée pour un profil : 1 ou 2 porteurs dans la fenêtre.
+	if diff.overridden.has(SearchGenerator.SEARCH_RULE_ID):
+		_plan_search_alert(start)
 	for rule_id: StringName in ids:
 		var rule: Rule = day.rule_set.get_rule(rule_id)
 		if rule == null:
@@ -1778,6 +1878,200 @@ func on_rules_changed(diff: RuleDiff) -> void:
 	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.mix(day_seed, start), EXERCISE_SALT))
 	var carriers: Array[int] = _renew_garde_lists(start, fresh, rng)
 	_plan_exercise(fresh, start, carriers, rng)
+
+
+## M13 (EV-09, M13 §2.10) : « fouille autorisée » (surcharge
+## `search_authorized` de R44) pour une origine ou un motif ; 1 ou 2 passagers
+## générés du profil, dans les `ALERT_WINDOW` suivants, portent de la
+## contrebande (jamais un index scénarisé ni imposé).
+const ALERT_WINDOW: int = 5
+const ALERT_SALT: String = "contraband_alert"
+
+
+func _plan_search_alert(start: int) -> void:
+	var change: RuleChangeDef = _alert_change(day.rule_set.overrides)
+	if change == null or not day.rule_set.can_detect(AnomalyType.Kind.CONTRABAND):
+		return
+	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.mix(day_seed, start), ALERT_SALT))
+	var window: Array[int] = _alert_window(start, change)
+	var matching: Array[int] = _alert_matching(window, change)
+	var wanted: int = rng.randi_range(1, 2)
+	var carriers: int = mini(wanted, matching.size())
+	var picked: Array = rng.shuffled(matching)
+	for k: int in carriers:
+		var overrides: Dictionary = {}
+		if not change.purposes.is_empty():
+			overrides[&"purpose"] = change.purposes[rng.randi_range(0, change.purposes.size() - 1)]
+		_forced[int(picked[k])] = {"kinds": [AnomalyType.Kind.CONTRABAND], "params": {}, "overrides": overrides,
+				"rule_id": SearchGenerator.SEARCH_RULE_ID}
+	if carriers > 0:
+		return
+	# QA-066 : aucun passager du profil dans la fenêtre (Cérès absente du
+	# roster…) : l'alerte ne doit jamais viser personne. Comme l'exercice d'une
+	# directive de Garde (`_plant_exercise`), l'origine du profil est imposée à
+	# 1 ou 2 passagers libres de la fenêtre (roster compris : réserve de noms,
+	# bloc ID), vérifiés par une sonde (cas propre, contrebande injectée).
+	var free: Array = rng.shuffled(window)
+	var placed: int = 0
+	for index: int in free:
+		if placed >= wanted:
+			break
+		if _plant_alert_carrier(change, int(index), rng, true):
+			placed += 1
+
+
+## QA-066 : vrai si au moins un porteur du profil d'alerte `change` (surcharge
+## `search_authorized` de R44) peut être placé dans les `ALERT_WINDOW`
+## passagers à partir de `start` — passager de l'origine / du motif déjà dans
+## la fenêtre, ou passager libre à qui imposer le profil (sonde). Ne modifie
+## rien. Vrai aussi si la contrebande n'est pas détectable (rien à placer).
+func can_place_alert(change: RuleChangeDef, start: int) -> bool:
+	if change == null or not day.rule_set.can_detect(AnomalyType.Kind.CONTRABAND):
+		return true
+	var window: Array[int] = _alert_window(start, change)
+	if not _alert_matching(window, change).is_empty():
+		return true
+	var rng: SeededRng = SeededRng.new(SeededRng.mix_string(SeededRng.mix(day_seed, start), ALERT_SALT + "_probe"))
+	for index: int in window:
+		if _plant_alert_carrier(change, index, rng, false):
+			return true
+	return false
+
+
+## QA-066 : avant l'annonce d'EV-09 (DayController, simulateur), garde le
+## profil tiré s'il peut viser quelqu'un dans la fenêtre, sinon prend le
+## premier profil suivant (ordre des données, cyclique) qui le peut : l'alerte
+## annoncée (« fouille autorisée des ressortissants de X ») a toujours au
+## moins un porteur. Profil inchangé si aucun ne convient (ou sans profils).
+## `start` : premier passager de la fenêtre (défaut : le prochain construit,
+## celui auquel les changements mis en attente s'appliqueront).
+func fit_alert_profile(plan: StationEventPlan, start: int = -1) -> void:
+	if start < 0:
+		start = _built_count
+	if plan == null or plan.event == null or plan.event.override_profiles.is_empty() or plan.profile_index < 0:
+		return
+	var first: int = plan.profile_index
+	var count: int = plan.event.override_profiles.size()
+	for k: int in count:
+		plan.set_profile_index((first + k) % count)
+		if can_place_alert(_alert_change(plan.changes()), start):
+			return
+	plan.set_profile_index(first)
+
+
+## Surcharge « fouille autorisée » de R44 (EV-09) parmi `changes`, sinon null.
+static func _alert_change(changes: Array[RuleChangeDef]) -> RuleChangeDef:
+	var change: RuleChangeDef = null
+	for candidate: RuleChangeDef in changes:
+		if candidate != null and candidate.op == RuleChangeDef.Op.OVERRIDE \
+				and candidate.rule_id == SearchGenerator.SEARCH_RULE_ID and candidate.params.get(&"search_authorized", false) == true:
+			change = candidate
+	return change
+
+
+## Passagers de la fenêtre déjà du profil (origine ; motif possible pour leur origine).
+func _alert_matching(window: Array[int], change: RuleChangeDef) -> Array[int]:
+	var matching: Array[int] = []
+	for index: int in window:
+		var entry: AppearanceRoster.Entry = roster.get_entry(index)
+		if entry == null:
+			continue
+		if not change.faction_ids.is_empty() and not change.faction_ids.has(entry.faction_id):
+			continue
+		# Profil par motif (finition M13) : jamais un motif qui rendrait le
+		# passager interdit d'entrée par son origine (R19 Tharsis…).
+		if not change.purposes.is_empty() and not _purposes_allowed(entry.faction_id, change.purposes):
+			continue
+		matching.append(index)
+	return matching
+
+
+## Index libres de la fenêtre d'EV-09, hors répondants de l'Acte III (leur
+## identité est citée par leurs protégés) ; pour un profil **par motif**, hors
+## protégés aussi (leur motif VISITE FAMILIALE est fixé : un porteur « motif
+## TRANSIT » y deviendrait un visiteur, hors du profil — QA-066).
+func _alert_window(start: int, change: RuleChangeDef) -> Array[int]:
+	var result: Array[int] = []
+	var by_purpose: bool = change != null and not change.purposes.is_empty()
+	for index: int in _free_window(start, ALERT_WINDOW):
+		if sponsor_indices.has(index):
+			continue
+		if by_purpose and (linked_wards.has(index) or wards.has(index)):
+			continue
+		result.append(index)
+	return result
+
+
+## Origines possibles d'un porteur imposé d'EV-09 : celles du profil, sinon
+## (profil par motif) une origine ordinaire autorisée pour ce motif.
+const ALERT_FALLBACK_FACTIONS: Array[StringName] = [&"tyc", &"cer", &"ter", &"drv"]
+
+
+## QA-066 : passager `index` imposé porteur du profil de l'alerte (origine et
+## motif du profil, contrebande) ; faux si aucune option ne donne un cas propre.
+## `commit` faux : simple sonde, rien n'est gardé.
+func _plant_alert_carrier(change: RuleChangeDef, index: int, rng: SeededRng, commit: bool) -> bool:
+	var entry: AppearanceRoster.Entry = roster.get_entry(index)
+	if entry == null:
+		return false
+	var roster_faction: StringName = entry.faction_id
+	var had_id: bool = _clean_ids.has(index)
+	var clean_id: String = _clean_ids.get(index, "")
+	var found: bool = false
+	var factions: Array[StringName] = change.faction_ids.duplicate()
+	if factions.is_empty():
+		for faction_id: StringName in ALERT_FALLBACK_FACTIONS:
+			if data.factions.has(faction_id) and (change.purposes.is_empty() or _purposes_allowed(faction_id, change.purposes)):
+				factions.append(faction_id)
+	for faction_id: StringName in rng.shuffled(factions):
+		var overrides: Dictionary = {&"faction_id": faction_id}
+		if not change.purposes.is_empty():
+			overrides[&"purpose"] = change.purposes[rng.randi_range(0, change.purposes.size() - 1)]
+		var spec: Dictionary = {"kinds": [AnomalyType.Kind.CONTRABAND], "params": {}, "overrides": overrides,
+				"rule_id": SearchGenerator.SEARCH_RULE_ID}
+		_forced[index] = spec
+		entry.faction_id = faction_id
+		_probing = true
+		var probe: GeneratedCase = _build(index, null, _kinds_of(spec), {}, true)
+		_probing = false
+		var fits: bool = probe != null and probe.invariant_errors.is_empty() and probe.clean_violation_count == 0 \
+				and _has_anomaly(probe, AnomalyType.Kind.CONTRABAND) \
+				and probe.case.passenger_presented.faction_id == faction_id \
+				and (change.purposes.is_empty() or change.purposes.has(probe.case.passenger_presented.purpose))
+		if fits and commit:
+			_clean_ids.erase(index)
+			return true
+		_forced.erase(index)
+		if fits:
+			found = true
+			break
+	# Sonde ou échec : roster et cache du N° ID rétablis.
+	entry.faction_id = roster_faction
+	if had_id:
+		_clean_ids[index] = clean_id
+	else:
+		_clean_ids.erase(index)
+	return found
+
+
+static func _has_anomaly(generated: GeneratedCase, kind: AnomalyType.Kind) -> bool:
+	for anomaly: Anomaly in generated.key.anomalies:
+		if anomaly.type == kind:
+			return true
+	return false
+
+
+## Vrai si aucune `FactionBannedRule` active n'interdit l'origine `faction_id`
+## pour l'un des motifs `purposes` (motif non exempté).
+func _purposes_allowed(faction_id: StringName, purposes: Array[StringName]) -> bool:
+	for rule: Rule in day.rule_set.rules:
+		var banned: FactionBannedRule = rule as FactionBannedRule
+		if banned == null or not banned.banned_faction_ids.has(faction_id):
+			continue
+		for purpose: StringName in purposes:
+			if not banned.exempt_purposes.has(purpose):
+				return false
+	return true
 
 
 ## Index libres de la fenêtre `[start, start + size)` (ni scénarisés, ni imposés,
@@ -1829,7 +2123,7 @@ func _publish_named_list(rule: RevokedIdRule, start: int) -> void:
 func _decoy_entry(rng: SeededRng, id: StringName, reason_key: String) -> RevokedEntry:
 	var faction_ids: Array[StringName] = []
 	faction_ids.assign(data.factions.keys())
-	faction_ids.sort()
+	SeededRng.sort_names(faction_ids)
 	var faction: FactionDef = data.factions[faction_ids[rng.randi_range(0, faction_ids.size() - 1)]]
 	var entry: RevokedEntry = RevokedEntry.new()
 	entry.id = id
@@ -1914,7 +2208,7 @@ func _renew_garde_lists(start: int, fresh: Array[Rule], rng: SeededRng) -> Array
 func _decoy_notice(rng: SeededRng, id: StringName) -> WantedNotice:
 	var faction_ids: Array[StringName] = []
 	faction_ids.assign(day.faction_weights.keys())
-	faction_ids.sort()
+	SeededRng.sort_names(faction_ids)
 	var faction_id: StringName = faction_ids[rng.randi_range(0, faction_ids.size() - 1)] if not faction_ids.is_empty() else &"tyc"
 	var notice: WantedNotice = WantedNotice.new()
 	notice.id = id
@@ -1956,6 +2250,11 @@ func _plan_exercise(fresh: Array[Rule], start: int, carriers: Array[int], rng: S
 				kinds.append(kind)
 		# Avis et révocations : exercés par leurs porteurs.
 		if rule is WantedRule or (rule is RevokedIdRule and carriers.size() > 0):
+			continue
+		# M13 : R44 (fouille sur motif) n'a pas de passager « en infraction » ;
+		# l'unité s'exerce par R45 (contrebande).
+		if rule is ProcedureRule and (rule as ProcedureRule).procedure_id in [ProcedureRule.PROCEDURE_SEARCH_CAUSE,
+				ProcedureRule.PROCEDURE_BELT_SEARCH]:
 			continue
 		needs_case.append(rule)
 	var window: Array[int] = _free_window(start, EXERCISE_WINDOW)
@@ -2070,6 +2369,9 @@ func _exercise_options(rule: Rule, index: int, rng: SeededRng) -> Array[Dictiona
 			overrides[&"purpose"] = Passenger.PURPOSE_WORK
 	elif rule is BannedImplantsRule or rule is ImplantsDeclaredRule:
 		overrides[&"faction_id"] = roster_faction
+	elif rule is StatementsConsistentRule:
+		# M13 : une fausse déclaration se compare au permis (pas un Né-Halcyon).
+		overrides[&"faction_id"] = not_hal
 	var params: Dictionary = {}
 	if document_id != &"":
 		params[&"document_id"] = document_id

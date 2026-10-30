@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ContrabandRule" format=3 uid="uid://dobqdg8tqvla1"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/contraband_rule.gd" id="1_x62ns"]
+
+[resource]
+script = ExtResource("1_x62ns")
+item_kind = 2
+categories = Array[StringName]([&"blade", &"jammer"])
+anomaly_kind = 27
+reason_key = "viol_weapon"
+id = &"r_weapons_detain"
+title_key = "r_weapons_detain_title"
+rulebook_text_key = "r_weapons_detain_text"
+category = 4
+severity = 3

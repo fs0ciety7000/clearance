@@ -221,3 +221,16 @@ func test_freed_booth_actors_are_purged_without_error() -> void:
 	assert_eq(d.live_passenger_audio().size(), 0)
 	await wait_process_frames(2)
 	assert_false(d.is_voice_active())
+
+
+## Finition M13 : une réponse à cadre de déclarations est prononcée composée
+## (`Statement.compose`), jamais avec ses emplacements `{motif}` bruts.
+func test_statement_frame_is_spoken_composed() -> void:
+	var c: Case = Case.new()
+	c.statements = [Statement.make(Statement.ID_PURPOSE, Passenger.PURPOSE_TRADE, "stmt_purpose_trade_1"),
+			Statement.duration(5, 5, "stmt_dur_d5")] as Array[Statement]
+	var text: String = AudioDirector.answer_text(c, "line_stmt_frame_gen_2")
+	assert_false(text.contains("{"), text)
+	assert_eq(text, "Le commerce, pour cinq jours. C'est écrit sur le permis.")
+	assert_eq(AudioDirector.answer_text(null, "line_stmt_frame_gen_2"), UiText.t("line_stmt_frame_gen_2"), "sans cas : texte tel quel")
+	assert_eq(AudioDirector.answer_text(c, "line_generic_shrug"), UiText.t("line_generic_shrug"), "réplique ordinaire inchangée")

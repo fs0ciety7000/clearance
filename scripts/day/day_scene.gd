@@ -74,6 +74,17 @@
 ## (les N derniers jugés faux), `--undocumented-denials` (refus justes sans
 ## discordance épinglée : erreurs de procédure), `--station-event=<clé>`
 ## (bandeau seul, sans effet de règle).
+## M13 (lot C, ARCHITECTURE §12.10) : **cartes d'aide** au premier jour où R43
+## (déclarations) ou R44 (portique) est en vigueur (`Settings.m13_tutorials_due`
+## avec `DayController.statements_active()` / `search_available()`), posées à
+## la fermeture du briefing (`HelpCard`, passables, manette) ; la boîte « AUCUN
+## MOTIF ÉTABLI » et le portique vivent dans `ComparisonUI`. Captures :
+## `--m13-help` (carte due même si le réglage est à faux, rien n'est écrit) ;
+## avec `--screen=shift`, `--m13=journal|search|unwarranted|contraband` choisit
+## un passager du jour qui convient (déclaration contradictoire, indice et
+## contrebande, aucun motif) et joue le geste (question puis puce ↔ permis ;
+## portique et zones ; boîte « AUCUN MOTIF ÉTABLI » ; objet ↔ onglet
+## Contrebande) ; `--shop=<ag0N>` coche une offre de l'Économat (soirée).
 class_name DayScene
 extends Control
 
@@ -137,6 +148,8 @@ var garde_badges: Dictionary = {}
 var end_garde_dialog: ConfirmDialog = null
 ## Carte de conclusion du J31 (`Campaign.close_epilogue`), vide avant.
 var epilogue_card: Dictionary = {}
+## M13 : carte d'aide (déclarations, portique) affichée, null sinon.
+var help_card: HelpCard = null
 
 
 func _ready() -> void:
@@ -316,6 +329,8 @@ func _on_briefing_closed() -> void:
 	if _tutorial_requested:
 		_tutorial_requested = false
 		start_tutorial()
+		return
+	start_m13_help()
 
 
 ## Pose le tutoriel interactif du J1 (sous les écrans plein cadre et la pause).
@@ -332,6 +347,37 @@ func start_tutorial() -> TutorialOverlay:
 		for i: int in clampi(_arg("tutorial-step").to_int() - 1, 0, TutorialOverlay.STEPS.size() - 1):
 			tutorial.skip_step()
 	return tutorial
+
+
+## M13 : cartes d'aide dues ce jour (déclarations J4, portique J8), en campagne
+## seulement. Null s'il n'y en a pas.
+func start_m13_help() -> HelpCard:
+	if help_card != null and is_instance_valid(help_card):
+		return help_card
+	var comparison: ComparisonUI = ui as ComparisonUI
+	if comparison == null or session != GameState.SESSION_CAMPAIGN or _args.has("autoplay"):
+		return null
+	if _args.has("screen") and not _args.has("m13-help"):
+		return null # captures d'autres écrans : pas de carte par-dessus
+	var due: Array[StringName] = Settings.m13_tutorials_due(day_controller.statements_active(), day_controller.search_available())
+	if _args.has("m13-help") and due.is_empty():
+		# Capture : la carte du jour, même déjà lue (le réglage n'est pas réécrit).
+		if day_controller.statements_active():
+			due.append(Settings.KEY_TUTORIAL_M13_STATEMENTS)
+		if day_controller.search_available():
+			due.append(Settings.KEY_TUTORIAL_M13_SEARCH)
+	if due.is_empty():
+		return null
+	help_card = HelpCard.make(due)
+	help_card.persist = not _args.has("m13-help")
+	help_card.theme = comparison.theme
+	help_card.finished.connect(func() -> void:
+		help_card = null
+		if is_instance_valid(comparison):
+			comparison.focus_default.call_deferred())
+	add_child(help_card)
+	move_child(help_card, _overlay.get_index())
+	return help_card
 
 
 ## Mode Récit : « FERMER LE GUICHET » proposé une fois le quota atteint.
@@ -775,6 +821,8 @@ func _debug_screen(which: String) -> void:
 				briefing.close()
 			if _arg("rulebook-tab") == "ledger":
 				_debug_prefill_ledger()
+			if _args.has("m13"):
+				_debug_m13_pick_case(_arg("m13"))
 			EventBus.documents_presented.connect(_debug_shift.bind(which), CONNECT_ONE_SHOT)
 			EventBus.next_case_requested.emit.call_deferred()
 		"citation":
@@ -852,6 +900,8 @@ func _debug_shift(_case_id: StringName, which: String) -> void:
 					comparison.pick(mark.ref)
 					comparison.pick(FieldRef.symbol(DocumentView.MARK_LUCIOLE))
 					break
+	if _args.has("m13"):
+		_debug_m13(comparison, _arg("m13"))
 	if _args.has("confirm-scan"):
 		comparison.confirm_suggestion()
 	if _args.has("lights-out"):
@@ -929,6 +979,92 @@ func _debug_evening() -> void:
 			evening.request_choice(StringName(parts[0]), StringName(parts[1]))
 	if _args.has("step"):
 		evening.show_step(_arg("step").to_int())
+	if _args.has("shop") and evening.shop != null:
+		evening.set_line_paid(StringName(EveningService.UPGRADE_PREFIX + _arg("shop")), true)
+		if evening._lines_scroll != null:
+			evening._lines_scroll.ensure_control_visible.call_deferred(evening.shop)
+
+
+## Capture M13 : premier passager du jour qui convient au geste montré.
+func _debug_m13_pick_case(scenario: String) -> void:
+	var builder: CaseBuilder = day_controller.builder
+	if builder == null or day_controller.day == null:
+		return
+	for index: int in day_controller.day.passenger_count:
+		var generated: GeneratedCase = builder.build(index)
+		if generated == null or generated.scripted_id != &"":
+			continue
+		var kinds: Array[AnomalyType.Kind] = []
+		for anomaly: Anomaly in generated.key.anomalies:
+			kinds.append(anomaly.type)
+		var c: Case = generated.case
+		var ok: bool = false
+		match scenario:
+			"journal":
+				ok = kinds.has(AnomalyType.Kind.STATEMENT_MISMATCH) and c.statements.size() >= 2
+			"search", "contraband":
+				# Fouille : un indice suffit (motif MF-2) ; Contrebande : un objet interdit.
+				ok = not c.search_cues.is_empty() and (scenario == "search" or kinds.has(AnomalyType.Kind.CONTRABAND))
+			"unwarranted":
+				ok = c.search_cues.is_empty() and c.cargo_reply != Case.CARGO_EVASIVE \
+						and generated.key.expected_verdict == VerdictKind.Kind.APPROVE and c.search_layout != null
+		if ok:
+			day_controller.next_index = index
+			print("QA_M13 %s : passager %d" % [scenario, index + 1])
+			return
+	print("QA_M13 %s : aucun passager du jour ne convient" % scenario)
+
+
+## Capture M13 : le geste, joué par l'interface comme le ferait le joueur.
+func _debug_m13(comparison: ComparisonUI, scenario: String) -> void:
+	var c: Case = day_controller.current_case
+	if c == null:
+		return
+	match scenario:
+		"journal":
+			comparison.ask(InterrogationTopics.PURPOSE)
+			await get_tree().create_timer(3.4).timeout
+			comparison.set_inspection_active(true)
+			for chip: StatementChipView in comparison.passenger_panel.journal.chips():
+				if chip.struck:
+					continue
+				for view: DocumentView in comparison.workbench.views:
+					for item: InspectableItem in view.get_items():
+						if not item.comparable:
+							continue
+						var result: Discrepancy = DiscrepancyChecker.check(c, chip.ref, item.ref, inspection.ctx)
+						if result.result == Discrepancy.Result.DISCORDANT:
+							comparison.pick(chip.ref)
+							await get_tree().create_timer(0.5).timeout
+							comparison.pick(item.ref)
+							print("QA_M13 puce %s ↔ %s" % [chip.ref.key(), item.ref.key()])
+							return
+		"search", "contraband":
+			comparison.ask(InterrogationTopics.SEARCH)
+			await get_tree().create_timer(0.3).timeout
+			if comparison.search_dialog != null:
+				comparison.search_dialog.accept()
+			await get_tree().create_timer(2.4).timeout
+			var zone: StringName = SearchLayout.zone_of_cue(c.search_cues[0]) if not c.search_cues.is_empty() else SearchLayout.ZONE_LUGGAGE
+			for item: SearchItem in c.search_layout.items if c.search_layout != null else [] as Array[SearchItem]:
+				if item.is_forbidden():
+					zone = item.zone
+			comparison.search_panel.request_zone(zone)
+			await get_tree().create_timer(2.4).timeout
+			if scenario == "search":
+				# Fouille en cours : les zones restantes en file (TOUT SCANNER).
+				comparison.search_panel.request_all()
+				return
+			comparison.set_inspection_active(true)
+			for view: SearchItemView in comparison.search_panel.item_views:
+				if view.item.is_forbidden():
+					comparison.rulebook.show_reference_tab(RulebookReference.TAB_CONTRABAND)
+					comparison.pick(view.ref)
+					await get_tree().create_timer(0.5).timeout
+					comparison.pick(FieldRef.contraband_entry(view.item.category))
+					return
+		"unwarranted":
+			comparison.ask(InterrogationTopics.SEARCH)
 
 
 ## `--flags=lumika_learned,lucioles_trust:3` : drapeaux (vrai) ou jauges.

@@ -37,7 +37,8 @@ static func simulate(data: DataCatalog, day_number: int, day_seed: int, policy: 
 		if document and kind != VerdictKind.Kind.APPROVE and not undocumented_indices.has(i):
 			verdict.flagged = evidence_for(case, generated.key, builder.ctx)
 		verdict.elapsed_sec = 30.0
-		var result: CaseResult = ScoringService.score(verdict, generated.key, case.case_id, case, day, data.get_economy().detain_bonus)
+		var result: CaseResult = ScoringService.score(verdict, generated.key, case.case_id, case, day,
+				data.get_economy().detain_bonus, false, data.get_economy().finding_bonus)
 		result.passenger_label = case.passenger_presented.short_label() if case.passenger_presented != null else ""
 		builder.record_verdict(case, kind)
 		if result.has_citation():
@@ -70,6 +71,9 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		flags: Dictionary[StringName, Variant], memory: Dictionary, rng: SeededRng,
 		plan: StationEventPlan = null) -> DaySummary:
 	var day: DayDef = data.get_day(day_number)
+	if not profile.m13:
+		# M13 (`balance_sim --m13=off|compare`) : jour « 0.12 ».
+		day = M13Sim.strip(day)
 	if plan != null:
 		day = day.make_shift_copy()
 		day.free_citations_per_day += plan.free_citations_bonus
@@ -88,6 +92,12 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 	var quota: QuotaTracker = QuotaTracker.for_day(day, flags)
 	quota.sync(builder.ctx)
 	var timed: bool = _has_curfew(day)
+	# M13 : joueur simulé face aux déclarations et à la fouille (flux propre :
+	# les tirages des verdicts et des objets glissés sont inchangés), temps du shift.
+	var m13_rng: SeededRng = SeededRng.new(SeededRng.mix_string(day_seed, M13Sim.SALT))
+	var timing: InterrogationTiming = data.get_economy().get_interrogation_timing()
+	var clock: bool = profile.timed and not profile.story_mode and not day.untimed
+	var elapsed: float = 0.0
 	var i: int = 0
 	while i < day.passenger_count:
 		if timed:
@@ -100,6 +110,26 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		var case: Case = generated.case
 		var correct: bool = rng.chance(profile.accuracy)
 		var kind: VerdictKind.Kind = profile.verdict_for(case, generated.key, correct, day.detain_enabled)
+		var played: Dictionary = M13Sim.play_case(case, generated.key, profile, m13_rng, builder.ctx.rule_set, day_number,
+				flags, timing)
+		if correct and not profile.forces(case):
+			kind = M13Sim.adjust_verdict(kind, generated.key, played, case)
+		elif bool(played["found"]) and not profile.forces(case):
+			# L'objet interdit est sous les yeux du joueur : pas d'approbation par erreur.
+			kind = profile.verdict_for(case, generated.key, true, day.detain_enabled)
+		var case_seconds: float = profile.seconds_per_case * m13_rng.randf_range(0.8, 1.2) + float(played["seconds"])
+		if clock:
+			elapsed += case_seconds
+			if elapsed > day.duration_sec + builder.ctx.modifier(RuleChangeDef.MOD_EXTRA_SECONDS):
+				summary.time_expired = true
+				break
+		# Mesures de la simulation (`balance_sim --m13`), hors modèle de données.
+		_count(summary, "m13_seconds", case_seconds)
+		_count(summary, "m13_asked", 1.0 if bool(played["asked"]) else 0.0)
+		_count(summary, "m13_searches", 1.0 if bool(played["searched"]) else 0.0)
+		_count(summary, "m13_unwarranted", 1.0 if bool(played["searched"]) and played["motive"] == SearchLayout.MOTIVE_NONE else 0.0)
+		_count(summary, "m13_lies", 1.0 if M13Sim._lie_topic(generated.key) != &"" else 0.0)
+		_count(summary, "m13_lies_seen", 1.0 if bool(played["saw_lie"]) else 0.0)
 		var quota_full: bool = quota.before_verdict(case)
 		if quota_full and generated.key.expected_verdict == VerdictKind.Kind.APPROVE and not profile.forces(case):
 			# Quota atteint (D-077) : refus correct, ou entrée imputée (0 ₵).
@@ -108,12 +138,17 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 		case.remove_visor()
 		var verdict: Verdict = Verdict.new(case.case_id, kind)
 		if kind != VerdictKind.Kind.APPROVE:
-			verdict.flagged = evidence_for(case, generated.key, builder.ctx)
+			verdict.flagged = evidence_for(case, generated.key, builder.ctx, played)
 		verdict.elapsed_sec = 30.0
-		# Interrogatoire systématique (R08) : une question posée.
-		verdict.questions_asked = [TOPIC_PURPOSE]
+		# Interrogatoire (R08 : toujours un Tycho ; M13 : `ask_rate` pour les autres).
+		if bool(played["asked"]):
+			verdict.questions_asked = [TOPIC_PURPOSE]
+		# M13 : fouille (motif figé à la demande, zones scannées).
+		verdict.search_done = bool(played["searched"])
+		verdict.search_motive = played["motive"]
+		verdict.zones_scanned.assign(played["zones"])
 		var result: CaseResult = ScoringService.score(verdict, generated.key, case.case_id, case, day,
-				data.get_economy().detain_bonus, quota_full)
+				data.get_economy().detain_bonus, quota_full, data.get_economy().finding_bonus)
 		if plan != null:
 			_waive_if_comparator_down(result, builder.ctx, day, data.get_economy().detain_bonus)
 		result.quota_counted = quota.counts(case)
@@ -144,12 +179,21 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 				result.bribe_credits += item.credits_for(item.decision)
 		var scripted: ScriptedCaseDef = builder.get_scripted_case(i) if generated.scripted_id != &"" else null
 		result.scripted_id = generated.scripted_id
+		var search_changes: Dictionary[StringName, Variant] = {}
+		if scripted != null and verdict.search_done:
+			# M13 : drapeaux de fouille posés pendant le cas (avant les effets du verdict).
+			CaseConsequences.add_all(search_changes, flags, scripted.flags_on_search)
+			CaseConsequences.merge_into(flags, search_changes)
 		result.password_answered = profile.answer_password and case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE_PASSWORD) \
 				and FlagCondition.gauge_value(flags, CaseConsequences.FLAG_TRUST) >= CaseConsequences.PASSWORD_TRUST
 		result.narrative_changes = CaseConsequences.compute(scripted, case, result.verdict_kind,
 				not generated.key.expected_violations.is_empty(), result.password_answered, day_number, flags,
 				result.luciole_report, CaseConsequences.contexts_for(day, case, result), day.luciole_trust_on_breach,
 				day.admission_gauges)
+		for flag: StringName in search_changes:
+			if not result.narrative_changes.has(flag):
+				result.narrative_changes[flag] = search_changes[flag]
+		_m13_consequences(result, verdict, played, scripted, flags, data.get_economy())
 		CaseConsequences.merge_into(flags, result.narrative_changes)
 		if scripted != null:
 			memory[String(scripted.id)] = CaseMemory.snapshot(day_number, case, result.verdict_kind)
@@ -166,6 +210,28 @@ static func play_day(data: DataCatalog, day_number: int, day_seed: int, profile:
 			CaseConsequences.add_all(summary.unprocessed_changes, flags, scripted_left.flags_if_unprocessed)
 	CaseConsequences.merge_into(flags, summary.unprocessed_changes)
 	return summary
+
+
+## Compteur de simulation porté par le bilan (métadonnée, jamais sauvegardée).
+static func _count(summary: DaySummary, key: String, value: float) -> void:
+	summary.set_meta(key, float(summary.get_meta(key, 0.0)) + value)
+
+
+## M13 (comme `DayController._apply_search_consequences`) : fouille sans motif
+## → `fouille_abus +1` ; AG-03 + APPROUVÉ après une trouvaille interdite →
+## `suspicion +1` (les `flags_on_search` d'un cas scénarisé sont posés avant
+## les effets du verdict).
+static func _m13_consequences(result: CaseResult, verdict: Verdict, played: Dictionary, _scripted: ScriptedCaseDef,
+		flags: Dictionary[StringName, Variant], economy: EconomyDef) -> void:
+	if not verdict.search_done:
+		return
+	if verdict.search_motive == SearchLayout.MOTIVE_NONE:
+		CaseConsequences.add(result.narrative_changes, flags, UpgradeDef.FLAG_SEARCH_ABUSE, 1)
+	if verdict.kind == VerdictKind.Kind.APPROVE and bool(played["found"]) \
+			and UpgradeDef.owns(flags, UpgradeDef.ID_CALIBRATED_GATE):
+		var gate: UpgradeDef = economy.get_upgrade(UpgradeDef.ID_CALIBRATED_GATE)
+		var amount: int = int(gate.get_effect(UpgradeDef.EFFECT_SUSPICION_ON_FOUND, 1)) if gate != null else 1
+		CaseConsequences.add(result.narrative_changes, flags, CaseConsequences.FLAG_SUSPICION, amount)
 
 
 ## Acte II : heure de présentation simulée du cas `index` (minutes depuis
@@ -195,12 +261,39 @@ static func _ends_shift(day: DayDef, processed: int, flags: Dictionary[StringNam
 
 ## Discordances confirmées qui prouvent les violations d'un cas, telles qu'un
 ## agent les obtiendrait en comparant les champs désignés par chaque violation.
-static func evidence_for(case: Case, key: CaseKey, ctx: RuleContext) -> Array[Discrepancy]:
+## M13 (QA-067) : avec `played` (`M13Sim.play_case`), une violation de M13 que
+## le joueur simulé n'a pas vue (mensonge sans question, objet non révélé) ne
+## fournit sa preuve que si **aucune** autre violation vue ne documente le
+## refus (verdict imposé : le joueur a alors cherché) — la prime de relevé
+## n'est donc payée que pour une trouvaille réellement relevée.
+static func evidence_for(case: Case, key: CaseKey, ctx: RuleContext, played: Dictionary = {}) -> Array[Discrepancy]:
+	if not played.is_empty():
+		var seen: Array[Violation] = []
+		var unseen: Array[Violation] = []
+		for violation: Violation in key.expected_violations:
+			if M13Sim.is_observed(violation, played, case):
+				seen.append(violation)
+			else:
+				unseen.append(violation)
+		var observed: Array[Discrepancy] = _evidence(case, seen, ctx)
+		var self_evident: bool = false
+		for violation: Violation in seen:
+			self_evident = self_evident or ScoringService.is_self_evident(violation)
+		if not observed.is_empty() or unseen.is_empty() or self_evident:
+			return observed
+		return _evidence(case, unseen, ctx)
+	return _evidence(case, key.expected_violations, ctx)
+
+
+static func _evidence(case: Case, violations: Array[Violation], ctx: RuleContext) -> Array[Discrepancy]:
 	var found: Array[Discrepancy] = []
-	for violation: Violation in key.expected_violations:
+	for violation: Violation in violations:
 		var refs: Array[FieldRef] = violation.refs
 		if refs.size() < 2:
 			continue
+		# M13 : l'agent simulé pose la question (puce obtenue) et scanne la zone (objet révélé).
+		for ref: FieldRef in refs:
+			obtain(case, ref)
 		var result: Discrepancy = DiscrepancyChecker.check(case, refs[0], refs[1], ctx)
 		if not result.confirmed and refs.size() > 2:
 			result = DiscrepancyChecker.check(case, refs[0], refs[refs.size() - 1], ctx)
@@ -208,6 +301,19 @@ static func evidence_for(case: Case, key: CaseKey, ctx: RuleContext) -> Array[Di
 			found.append(result)
 	return found
 
+
+
+## M13 : rend une preuve observable comme le ferait l'agent — puce obtenue
+## (`Statement.given`, la question a été posée) ou objet révélé (zone scannée).
+static func obtain(case: Case, ref: FieldRef) -> void:
+	if case == null or ref == null:
+		return
+	if ref.is_statement():
+		var statement: Statement = case.get_statement_by_ref(ref)
+		if statement != null:
+			statement.given = true
+	elif ref.is_scan() and case.search_layout != null:
+		case.search_layout.scan(ref.get_scan_zone())
 
 
 # ---------------------------------------------------------------------------
@@ -240,6 +346,8 @@ static func _event_after_case(plan: StationEventPlan, builder: CaseBuilder, day:
 					else (plan.announce_minute >= 0 and minute >= plan.announce_minute)
 			if due and processed < day.passenger_count:
 				plan.state = StationEventPlan.State.ACTIVE
+				# M13 (EV-09, QA-066) : comme le DayController, profil qui vise quelqu'un.
+				builder.fit_alert_profile(plan)
 				builder.ctx.queue_changes(plan.changes(), plan.source())
 				var extra: int = plan.modifier(RuleChangeDef.MOD_EXTRA_PASSENGERS)
 				if extra > 0:

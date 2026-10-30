@@ -53,6 +53,12 @@ enum WindowKind {
 ## / `rulebook_key()`.
 @export var garde_title_key: String = ""
 @export var garde_rulebook_key: String = ""
+## M13 (EV-09, D-153) : profils tirés par plan (graine du jour, ou de la
+## directive en Garde) ; chacun redéfinit la **portée** des surcharges
+## (`OVERRIDE`) : `{"faction_ids": Array[StringName], "purposes":
+## Array[StringName], "label_key": String}` (`label_key` : argument `%s` de
+## l'annonce et de la ligne du Rulebook). Vide = portée des données.
+@export var override_profiles: Array[Dictionary] = []
 
 
 func is_class_b() -> bool:

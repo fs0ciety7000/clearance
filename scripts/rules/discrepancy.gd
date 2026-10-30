@@ -38,6 +38,19 @@ const REASON_SPONSOR_MATCH: String = "disc_sponsor_match"
 const REASON_SUMMONS_MATCH: String = "disc_summons_match"
 const REASON_SUMMONS_NAME: String = "disc_summons_name"
 const REASON_RETIRED: String = "disc_retired"
+## M13 (docs/M13.md §1.8, §2.5) : puce ↔ champ (déclaration contradictoire,
+## réponse imprécise, provenance, réponse en prose libre d'un cas scénarisé,
+## puce pas encore obtenue) ; objet de fouille ↔ règle ou onglet Contrebande
+## (objet interdit, arme, objet autorisé, contenu illisible).
+const REASON_STATEMENT_MISMATCH: String = "disc_statement_mismatch"
+const REASON_STATEMENT_VAGUE: String = "disc_statement_vague"
+const REASON_STATEMENT_FREE: String = "disc_statement_free"
+const REASON_STATEMENT_NOT_GIVEN: String = "disc_statement_not_given"
+const REASON_PROVENANCE: String = "disc_provenance"
+const REASON_CONTRABAND: String = "disc_contraband"
+const REASON_WEAPON: String = "disc_weapon"
+const REASON_ITEM_ALLOWED: String = "disc_item_allowed"
+const REASON_SCAN_UNREADABLE: String = "disc_scan_unreadable"
 
 var a: FieldRef = null
 var b: FieldRef = null

@@ -1,0 +1,249 @@
+[gd_resource type="Resource" script_class="SearchCatalogDef" format=3 uid="uid://c1y0nos5i61h4"]
+
+[ext_resource type="Script" path="res://scripts/generation/search_item_def.gd" id="1_i1buc"]
+[ext_resource type="Script" path="res://scripts/generation/search_catalog_def.gd" id="2_xnka0"]
+
+[sub_resource type="Resource" id="srch_resource_1"]
+script = ExtResource("1_i1buc")
+id = &"ol01"
+category = &"personal"
+attribute_keys = PackedStringArray()
+name_key = "item_ol01_name"
+desc_key = "item_ol01_desc"
+zones = PackedStringArray("z2", "z5")
+
+[sub_resource type="Resource" id="srch_resource_2"]
+script = ExtResource("1_i1buc")
+id = &"ol02"
+category = &"credits"
+attribute_keys = PackedStringArray()
+name_key = "item_ol02_name"
+desc_key = "item_ol02_desc"
+zones = PackedStringArray("z2", "z5")
+quantity = Vector2i(10, 100)
+
+[sub_resource type="Resource" id="srch_resource_3"]
+script = ExtResource("1_i1buc")
+id = &"ol03"
+category = &"medicine"
+attribute_keys = PackedStringArray()
+name_key = "item_ol03_name"
+desc_key = "item_ol03_desc"
+zones = PackedStringArray("z2", "z5")
+twin_id = &"cb03"
+
+[sub_resource type="Resource" id="srch_resource_4"]
+script = ExtResource("1_i1buc")
+id = &"ol04"
+category = &"oxygen"
+attribute_keys = PackedStringArray()
+name_key = "item_ol04_name"
+desc_key = "item_ol04_desc"
+zones = PackedStringArray("z2", "z5")
+twin_id = &"cb01"
+
+[sub_resource type="Resource" id="srch_resource_5"]
+script = ExtResource("1_i1buc")
+id = &"ol05"
+category = &"tools"
+attribute_keys = PackedStringArray()
+name_key = "item_ol05_name"
+desc_key = "item_ol05_desc"
+zones = PackedStringArray("z3", "z5")
+
+[sub_resource type="Resource" id="srch_resource_6"]
+script = ExtResource("1_i1buc")
+id = &"ol06"
+category = &"data"
+attribute_keys = PackedStringArray()
+name_key = "item_ol06_name"
+desc_key = "item_ol06_desc"
+zones = PackedStringArray("z1", "z5")
+twin_id = &"cb04"
+
+[sub_resource type="Resource" id="srch_resource_7"]
+script = ExtResource("1_i1buc")
+id = &"ol07"
+category = &"goods"
+attribute_keys = PackedStringArray()
+name_key = "item_ol07_name"
+desc_key = "item_ol07_desc"
+zones = PackedStringArray("z5")
+purpose = &"trade"
+
+[sub_resource type="Resource" id="srch_resource_8"]
+script = ExtResource("1_i1buc")
+id = &"ol08"
+category = &"food"
+attribute_keys = PackedStringArray()
+name_key = "item_ol08_name"
+desc_key = "item_ol08_desc"
+zones = PackedStringArray("z5")
+
+[sub_resource type="Resource" id="srch_resource_9"]
+script = ExtResource("1_i1buc")
+id = &"ol09"
+category = &"clothes"
+attribute_keys = PackedStringArray()
+name_key = "item_ol09_name"
+desc_key = "item_ol09_desc"
+zones = PackedStringArray("z5")
+
+[sub_resource type="Resource" id="srch_resource_10"]
+script = ExtResource("1_i1buc")
+id = &"ol10"
+kind = 4
+category = &"implant"
+attribute_keys = PackedStringArray()
+name_key = "item_ol10_name"
+desc_key = "item_ol10_desc"
+zones = PackedStringArray("z1", "z2", "z3", "z4")
+
+[sub_resource type="Resource" id="srch_resource_11"]
+script = ExtResource("1_i1buc")
+id = &"cb01"
+kind = 1
+category = &"oxygen"
+attribute_keys = PackedStringArray()
+name_key = "item_cb01_name"
+desc_key = "item_cb01_desc"
+zones = PackedStringArray("z2", "z5")
+quantity = Vector2i(2, 8)
+twin_id = &"ol04"
+rule_id = &"r_contraband"
+
+[sub_resource type="Resource" id="srch_resource_12"]
+script = ExtResource("1_i1buc")
+id = &"cb02"
+kind = 1
+category = &"stimulant"
+attribute_keys = PackedStringArray()
+name_key = "item_cb02_name"
+desc_key = "item_cb02_desc"
+zones = PackedStringArray("z2", "z5")
+quantity = Vector2i(6, 12)
+rule_id = &"r_contraband"
+
+[sub_resource type="Resource" id="srch_resource_13"]
+script = ExtResource("1_i1buc")
+id = &"cb03"
+kind = 1
+category = &"medicine"
+attribute_keys = PackedStringArray()
+name_key = "item_cb03_name"
+desc_key = "item_cb03_desc"
+zones = PackedStringArray("z2", "z5")
+quantity = Vector2i(6, 12)
+twin_id = &"ol03"
+rule_id = &"r_contraband"
+
+[sub_resource type="Resource" id="srch_resource_14"]
+script = ExtResource("1_i1buc")
+id = &"cb04"
+kind = 1
+category = &"data"
+attribute_keys = PackedStringArray()
+name_key = "item_cb04_name"
+desc_key = "item_cb04_desc"
+zones = PackedStringArray("z1", "z5")
+twin_id = &"ol06"
+rule_id = &"r_contraband"
+
+[sub_resource type="Resource" id="srch_resource_15"]
+script = ExtResource("1_i1buc")
+id = &"cb05"
+kind = 1
+category = &"seeds"
+attribute_keys = PackedStringArray()
+name_key = "item_cb05_name"
+desc_key = "item_cb05_desc"
+zones = PackedStringArray("z5", "z2")
+rule_id = &"r_contraband"
+
+[sub_resource type="Resource" id="srch_resource_16"]
+script = ExtResource("1_i1buc")
+id = &"cb06"
+kind = 2
+category = &"blade"
+attribute_keys = PackedStringArray()
+name_key = "item_cb06_name"
+desc_key = "item_cb06_desc"
+zones = PackedStringArray("z3", "z4", "z5")
+rule_id = &"r_weapons_detain"
+
+[sub_resource type="Resource" id="srch_resource_17"]
+script = ExtResource("1_i1buc")
+id = &"cb07"
+kind = 2
+category = &"jammer"
+attribute_keys = PackedStringArray()
+name_key = "item_cb07_name"
+desc_key = "item_cb07_desc"
+zones = PackedStringArray("z2", "z5")
+rule_id = &"r_weapons_detain"
+
+[sub_resource type="Resource" id="srch_resource_18"]
+script = ExtResource("1_i1buc")
+id = &"cb08"
+kind = 3
+category = &"print"
+attribute_keys = PackedStringArray()
+name_key = "item_cb08_name"
+desc_key = "item_cb08_desc"
+zones = PackedStringArray("z2", "z5")
+
+[resource]
+script = ExtResource("2_xnka0")
+items = Array[ExtResource("1_i1buc")]([SubResource("srch_resource_1"), SubResource("srch_resource_2"), SubResource("srch_resource_3"), SubResource("srch_resource_4"), SubResource("srch_resource_5"), SubResource("srch_resource_6"), SubResource("srch_resource_7"), SubResource("srch_resource_8"), SubResource("srch_resource_9"), SubResource("srch_resource_10"), SubResource("srch_resource_11"), SubResource("srch_resource_12"), SubResource("srch_resource_13"), SubResource("srch_resource_14"), SubResource("srch_resource_15"), SubResource("srch_resource_16"), SubResource("srch_resource_17"), SubResource("srch_resource_18")])
+cue_hit_rates = Dictionary[StringName, float]({
+&"bulge": 0.8,
+&"collar": 0.7,
+&"gait": 0.7,
+&"glove": 0.8,
+&"satchel": 0.8
+})
+cue_explanations = Dictionary[StringName, StringName]({
+&"bulge": &"ol04",
+&"collar": &"ol06",
+&"gait": &"ol10",
+&"glove": &"ol10",
+&"satchel": &"ol03"
+})
+cue_motive_keys = Dictionary[StringName, String]({
+&"bulge": "srch_cue_bulge",
+&"collar": "srch_cue_collar",
+&"gait": "srch_cue_gait",
+&"glove": "srch_cue_glove",
+&"satchel": "srch_cue_satchel"
+})
+implant_zones = Dictionary[String, StringName]({
+"DER-13": &"z3",
+"DER-6": &"z2",
+"KIN-11": &"z3",
+"KIN-17": &"z4",
+"MIL-15": &"z3",
+"MIL-2": &"z2",
+"NX-12": &"z1",
+"NX-18": &"z1",
+"NX-25": &"z1"
+})
+civil_concealed = Dictionary[StringName, PackedStringArray]({
+&"cer": PackedStringArray("KIN-11", "DER-6"),
+&"drv": PackedStringArray("DER-6"),
+&"hal": PackedStringArray("NX-18", "DER-13"),
+&"ter": PackedStringArray("DER-6"),
+&"thr": PackedStringArray("KIN-17", "NX-25"),
+&"tyc": PackedStringArray("NX-12", "KIN-11")
+})
+undeclared_civil = PackedStringArray("NX-25", "DER-6", "KIN-11", "DER-13", "KIN-17")
+undeclared_military = PackedStringArray("MIL-2", "MIL-15")
+unreadable_implants = PackedStringArray("DER-19")
+contraband_by_faction = Dictionary[StringName, PackedStringArray]({
+&"cer": PackedStringArray("cb01", "cb05"),
+&"drv": PackedStringArray("cb02", "cb05"),
+&"hal": PackedStringArray("cb04"),
+&"tyc": PackedStringArray("cb01", "cb03")
+})
+default_contraband = PackedStringArray("cb01", "cb02", "cb03", "cb04", "cb05")
+weapons = PackedStringArray("cb06", "cb07")
+evasive_innocent_rate = 0.04

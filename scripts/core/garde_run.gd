@@ -262,4 +262,4 @@ func _draw_event() -> StationEventPlan:
 	if candidates.is_empty():
 		return null
 	var chosen: StationEventDef = candidates[_events_rng.randi_range(0, candidates.size() - 1)]
-	return StationEventService.garde_plan(chosen, passengers)
+	return StationEventService.garde_plan(chosen, passengers, GardeService.stream_seed(run_seed, &"events"))

@@ -169,6 +169,23 @@ extends Resource
 @export var story_untreated_worsen_evenings: int = 3
 
 
+@export_group("M13")
+## M13 (D-144, D-145) — coûts en temps des questions et de la fouille ; null
+## = valeurs par défaut (`get_interrogation_timing`).
+@export var interrogation_timing: InterrogationTiming = null
+## M13 (D-150) — catalogue de l'Économat du Hall (`data/upgrades/ag_0N.tres`).
+@export var upgrades: Array[UpgradeDef] = []
+## Premier soir de l'Économat et nombre d'achats par soir.
+@export var shop_open_evening: int = 5
+@export var upgrades_per_evening: int = 1
+## M13 (D-168) — **prime de relevé** : ₵ ajoutés au salaire d'un REFUS ou
+## d'une DÉTENTION justes et documentés qui reposent sur une trouvaille de
+## M13 **épinglée par le joueur** (déclaration contradictoire, objet ou implant
+## révélé par la fouille, ayant servi de preuve :
+## `ScoringService.is_m13_finding_pinned`, QA-067). 0 = pas de prime.
+@export var finding_bonus: int = 0
+
+
 ## Seuil d'arrestation de la Revue du J17 selon le mode (D-113).
 func review_arrest_for(story: bool) -> int:
 	return story_review_arrest_score if story else review_arrest_score
@@ -245,3 +262,16 @@ func rent_for(day_number: int) -> int:
 
 func oxygen_due(day_number: int) -> bool:
 	return oxygen_every_n_days > 0 and day_number % oxygen_every_n_days == 0
+
+
+## M13 : coûts en temps (valeurs par défaut si les données n'en donnent pas).
+func get_interrogation_timing() -> InterrogationTiming:
+	return interrogation_timing if interrogation_timing != null else InterrogationTiming.new()
+
+
+## M13 : amélioration du catalogue (null si inconnue).
+func get_upgrade(upgrade_id: StringName) -> UpgradeDef:
+	for upgrade: UpgradeDef in upgrades:
+		if upgrade != null and upgrade.id == upgrade_id:
+			return upgrade
+	return null

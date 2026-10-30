@@ -48,11 +48,12 @@ func inject(state: InjectionState) -> Anomaly:
 	return null
 
 
-## N° d'un leurre de l'onglet (présent sous un autre nom), vide sinon.
+## N° d'un leurre de l'onglet (présent sous un autre nom), vide sinon. Un
+## leurre tiré au nom même du passager (homonyme) n'est pas un faux : exclu.
 static func _decoy_number(state: InjectionState) -> String:
 	var decoys: PackedStringArray = []
 	for entry: SummonsEntry in state.ctx.summons:
-		if entry.case_index < 0:
+		if entry.case_index < 0 and not SummonsRule.name_matches(state.case, entry):
 			decoys.append(entry.number)
 	return decoys[state.rng.randi_range(0, decoys.size() - 1)] if not decoys.is_empty() else ""
 

@@ -65,6 +65,12 @@ const PAD_GLYPHS_AUTO: float = -1.0
 ## d'une partie (`TutorialOverlay`) ; repasse à faux une fois le tutoriel
 ## terminé ou passé (réactivable dans Options pour le revoir).
 const KEY_TUTORIAL: StringName = &"tutorial_j1"
+## M13 (§6.5) — cartes d'aide au premier jour où R43 (déclarations) ou R44
+## (fouille) est active, pour qui n'a pas vu les introductions (partie 0.12
+## reprise) ; repassent à faux une fois vues (lot C), réactivables comme
+## `tutorial_j1`.
+const KEY_TUTORIAL_M13_STATEMENTS: StringName = &"tutorial_m13_statements"
+const KEY_TUTORIAL_M13_SEARCH: StringName = &"tutorial_m13_search"
 
 const FX_LEVELS: PackedFloat32Array = [1.0, 0.5, 0.0]
 const TEXT_SCALE_MIN: float = 0.9
@@ -90,6 +96,8 @@ const DEFAULTS: Dictionary = {
 	&"holo_flicker": true,
 	&"pad_glyphs": -1.0,
 	&"tutorial_j1": true,
+	&"tutorial_m13_statements": true,
+	&"tutorial_m13_search": true,
 }
 
 ## Réglage de volume → nom du bus audio (docs/AUDIO.md §2).
@@ -164,6 +172,17 @@ func _ready() -> void:
 
 
 ## Liste des clés connues.
+## M13 : cartes d'aide dues ce jour (`statements_active` : R43 active ;
+## `search_active` : R44 active), selon les réglages.
+func m13_tutorials_due(statements_active: bool, search_active: bool) -> Array[StringName]:
+	var due: Array[StringName] = []
+	if statements_active and get_bool(KEY_TUTORIAL_M13_STATEMENTS):
+		due.append(KEY_TUTORIAL_M13_STATEMENTS)
+	if search_active and get_bool(KEY_TUTORIAL_M13_SEARCH):
+		due.append(KEY_TUTORIAL_M13_SEARCH)
+	return due
+
+
 func get_keys() -> Array[StringName]:
 	var keys: Array[StringName] = []
 	for key: StringName in DEFAULTS:

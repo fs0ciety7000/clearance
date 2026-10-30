@@ -34,6 +34,13 @@ var characters: CharacterTableDef = null
 ## M12 : unités de Garde (U01 → U20) et événements (EV-01 → EV-08) par id.
 var garde_units: Dictionary[StringName, GardeUnitDef] = {}
 var events: Dictionary[StringName, StationEventDef] = {}
+## M13 (docs/M13.md ; B65, B69, B74) : tables des déclarations, catalogue de
+## la fouille, améliorations du guichet (par id) et paliers de R43 au-delà du
+## premier (`r_statements` s2 → s4, même identifiant : `"<id>@<palier>"`).
+var statement_tables: StatementTablesDef = null
+var search_catalog: SearchCatalogDef = null
+var upgrades: Dictionary[StringName, UpgradeDef] = {}
+var rule_tiers: Dictionary[String, Rule] = {}
 ## Chemins `.tres` chargés.
 var paths: PackedStringArray = []
 ## Problèmes de chargement (ressource illisible, type inconnu, doublon).
@@ -119,6 +126,14 @@ func _register(path: String) -> void:
 	elif res is RuleSet:
 		var rule_set: RuleSet = res
 		_add(rule_sets, rule_set.id, rule_set, path)
+	elif res is StatementsConsistentRule and (res as StatementsConsistentRule).tier > 1:
+		# M13 : palier de R43 (même identifiant que le palier 1).
+		var tiered: StatementsConsistentRule = res
+		var tier_key: String = "%s@%d" % [tiered.id, tiered.tier]
+		if rule_tiers.has(tier_key):
+			errors.append("%s : palier « %s » en double" % [path, tier_key])
+		else:
+			rule_tiers[tier_key] = tiered
 	elif res is Rule:
 		var rule: Rule = res
 		_add(rules, rule.id, rule, path)
@@ -160,6 +175,13 @@ func _register(path: String) -> void:
 	elif res is StationEventDef:
 		var event: StationEventDef = res
 		_add(events, event.id, event, path)
+	elif res is StatementTablesDef:
+		statement_tables = _unique(statement_tables, res, path) as StatementTablesDef
+	elif res is SearchCatalogDef:
+		search_catalog = _unique(search_catalog, res, path) as SearchCatalogDef
+	elif res is UpgradeDef:
+		var upgrade: UpgradeDef = res
+		_add(upgrades, upgrade.id, upgrade, path)
 	else:
 		errors.append("%s : type de ressource inattendu" % path)
 

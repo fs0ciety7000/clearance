@@ -52,6 +52,13 @@
 ## `start_epilogue`, sans économie ni chrono, B52) et `garde` (Garde de nuit :
 ## `start_garde`, `GardeRun`, file sans fin, directives tous les 5 passagers,
 ## fin à 3 erreurs ou `request_end_garde`, B57).
+## M13 (ARCHITECTURE §12) : la session reçoit les coûts en temps
+## (`EconomyDef.get_interrogation_timing`) et les améliorations possédées
+## (drapeaux du matin `upg_*`) ; au tampon, conséquences de la fouille :
+## jauge `fouille_abus` (fouille sans motif), relevé du PH-2 (AG-03 :
+## `suspicion +1` à l'approbation après une trouvaille interdite),
+## `ScriptedCaseDef.flags_on_search` (lot B). Requêtes `statements_active()`,
+## `search_available()` (cartes d'aide des tutoriels M13, lot C).
 class_name DayController
 extends Node
 
@@ -83,6 +90,8 @@ var timeouts_fired: int = 0
 var citations_today: int = 0
 ## Prime de détention (`EconomyDef.detain_bonus`).
 var detain_bonus: int = ScoringService.DEFAULT_DETAIN_BONUS
+## M13 (D-168) : prime de relevé (`EconomyDef.finding_bonus`).
+var finding_bonus: int = 0
 ## Cas scénarisé du cas courant (null sinon).
 var current_scripted: ScriptedCaseDef = null
 ## Confiance minimale des Lucioles pour répondre à la phrase de passe (GDD §4.7).
@@ -215,6 +224,7 @@ func _begin(source: DayDef, day_seed: int, flags: Array[StringName], memory: Dic
 	current_key = null
 	current_scripted = null
 	detain_bonus = data.get_economy().detain_bonus
+	finding_bonus = data.get_economy().finding_bonus
 	quota = QuotaTracker.for_day(day, builder.get_flag_values())
 	quota.sync(builder.ctx)
 	scanner_source = PartialScanner.source_for(builder.get_flag_values()) if mode == DayDef.MODE_CAMPAIGN else &""
@@ -323,6 +333,8 @@ func _on_next_case_requested() -> void:
 	_documents_presented = false
 	if inspection != null:
 		inspection.begin(current_case, builder.ctx)
+		inspection.configure(data.get_economy().get_interrogation_timing() if data != null else null,
+				builder.get_flag_values())
 		inspection.luciole_reply_allowed = current_case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE_PASSWORD) \
 				and FlagCondition.gauge_value(flag_values(), CaseConsequences.FLAG_TRUST) >= PASSWORD_TRUST
 	# Phase posée avant l'émission : un écouteur synchrone voit ARRIVING.
@@ -378,7 +390,7 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 		inspection.end(verdict)
 	var quota_full: bool = quota.before_verdict(current_case)
 	var result: CaseResult = ScoringService.score(verdict, current_key, current_case_id(), current_case, day, detain_bonus,
-			quota_full)
+			quota_full, finding_bonus)
 	_apply_shift_modifiers_before_citation(result)
 	result.quota_counted = quota.counts(current_case)
 	var was_full: bool = quota.is_full()
@@ -406,6 +418,7 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 	_resolve_items(result)
 	result.password_answered = inspection != null and inspection.luciole_replied
 	_apply_narrative(result)
+	_apply_search_consequences(result)
 	summary.add_result(result)
 	if apply_to_game_state and mode != DayDef.MODE_GARDE:
 		if not is_economy_disabled():
@@ -465,10 +478,70 @@ func flag_values() -> Dictionary[StringName, Variant]:
 func _apply_narrative(result: CaseResult) -> void:
 	if current_scripted != null:
 		result.scripted_id = current_scripted.id
+	# M13 : les `flags_on_search` sont posés pendant le cas, donc **avant** les
+	# effets du verdict (SC-106, SC-108 : `extra_effects` conditionnés à
+	# `sc10N_searched`) ; `flag_values()` n'est jamais modifié.
+	var flags: Dictionary[StringName, Variant] = flag_values()
+	var search_changes: Dictionary[StringName, Variant] = search_flag_changes(result.verdict, flags)
+	if not search_changes.is_empty():
+		flags = flags.duplicate()
+		CaseConsequences.merge_into(flags, search_changes)
 	result.narrative_changes = CaseConsequences.compute(current_scripted, current_case, result.verdict_kind,
-			not current_key.expected_violations.is_empty(), result.password_answered, day.day_number, flag_values(),
+			not current_key.expected_violations.is_empty(), result.password_answered, day.day_number, flags,
 			result.luciole_report, shift_contexts(current_case, result), day.luciole_trust_on_breach,
 			day.admission_gauges)
+	for flag: StringName in search_changes:
+		if not result.narrative_changes.has(flag):
+			result.narrative_changes[flag] = search_changes[flag]
+
+
+## M13 (B72) : `ScriptedCaseDef.flags_on_search` du cas courant si le verdict
+## porte une fouille (valeurs absolues calculées sur `flags`) ; vide sinon.
+func search_flag_changes(verdict: Verdict, flags: Dictionary[StringName, Variant]) -> Dictionary[StringName, Variant]:
+	var changes: Dictionary[StringName, Variant] = {}
+	if verdict != null and verdict.search_done and current_scripted != null:
+		CaseConsequences.add_all(changes, flags, current_scripted.flags_on_search)
+	return changes
+
+
+## M13 (B72, B74) : conséquences narratives de la fouille, ajoutées aux
+## changements du cas (valeurs absolues, comme `CaseConsequences`) ; les
+## `flags_on_search` sont posés plus tôt, par `_apply_narrative`.
+func _apply_search_consequences(result: CaseResult) -> void:
+	var verdict: Verdict = result.verdict
+	if verdict == null or current_case == null:
+		return
+	var flags: Dictionary[StringName, Variant] = flag_values()
+	if verdict.search_done and verdict.search_motive == SearchLayout.MOTIVE_NONE:
+		CaseConsequences.add(result.narrative_changes, flags, UpgradeDef.FLAG_SEARCH_ABUSE, 1)
+	if verdict.kind == VerdictKind.Kind.APPROVE and verdict.search_done \
+			and UpgradeDef.owns(builder.get_flag_values(), UpgradeDef.ID_CALIBRATED_GATE) \
+			and current_case.search_found_forbidden():
+		var gate: UpgradeDef = data.get_economy().get_upgrade(UpgradeDef.ID_CALIBRATED_GATE) if data != null else null
+		var amount: int = SaveService.as_int(gate.get_effect(UpgradeDef.EFFECT_SUSPICION_ON_FOUND, 1)) if gate != null else 1
+		CaseConsequences.add(result.narrative_changes, flags, CaseConsequences.FLAG_SUSPICION, amount)
+
+
+## M13 : R43 (déclarations conformes) active dans le shift.
+func statements_active() -> bool:
+	if day == null or day.rule_set == null:
+		return false
+	for rule: Rule in day.rule_set.rules:
+		var script: Script = rule.get_script() as Script if rule != null else null
+		if script != null and script.get_global_name() == &"StatementsConsistentRule":
+			return true
+	return false
+
+
+## M13 : R44 (fouille sur motif) active dans le shift (portique disponible).
+func search_available() -> bool:
+	if day == null or day.rule_set == null:
+		return false
+	for rule: Rule in day.rule_set.rules:
+		var procedure: ProcedureRule = rule as ProcedureRule
+		if procedure != null and procedure.procedure_id == ProcedureRule.PROCEDURE_SEARCH_CAUSE:
+			return true
+	return false
 
 
 ## Acte II : contexte du shift d'un verdict (`CaseEffectDef.context`).
@@ -721,6 +794,9 @@ func _update_station_events(processed: int) -> void:
 ## Annonce : changements en attente du passager suivant, effets du contrôleur.
 func _start_station_event(plan: StationEventPlan, queue_changes: bool = true) -> void:
 	plan.state = StationEventPlan.State.ACTIVE
+	# M13 (EV-09, QA-066) : profil annoncé qui vise au moins un passager de la fenêtre.
+	if builder.has_method(&"fit_alert_profile"):
+		builder.call(&"fit_alert_profile", plan)
 	if queue_changes:
 		builder.ctx.queue_changes(plan.changes(), plan.source())
 	var extra: int = plan.modifier(RuleChangeDef.MOD_EXTRA_PASSENGERS)

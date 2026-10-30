@@ -149,3 +149,36 @@ signal garde_tier_changed(tier: int)
 signal garde_ended(record: Dictionary)
 ## M12 (B52) — Campaign.close_epilogue → carte de conclusion du J31.
 signal epilogue_concluded(card: Dictionary)
+
+# --- M13 « Gameplay » (ARCHITECTURE §12.8) --------------------------------------
+
+## M13 (B64, B68) — InspectionSession (réponse à une question porteuse de
+## puces, juste après `interrogation_answered`) → journal de dialogue (puces
+## sélectionnables), intercom. `statements` : les puces de cette réponse
+## (`Statement.given` déjà vrai).
+signal statement_given(case_id: StringName, statements: Array[Statement])
+## M13 (B70) — UI → InspectionSession : `z1` … `z5` (scanner une zone),
+## `all` (TOUT SCANNER), `confirm` / `cancel` (confirmation « sans motif »),
+## `close` (refermer la silhouette).
+signal search_requested(zone: StringName)
+## M13 (B70) — InspectionSession → UI : la demande de fouille n'a **aucun
+## motif** ; afficher la confirmation (`ConfirmDialog`, focus sur ANNULER)
+## puis émettre `search_requested(&"confirm")` ou `(&"cancel")`.
+signal search_confirmation_required(case_id: StringName)
+## M13 (B70) — InspectionSession → UI (silhouette, bandeau MOTIF), booth (bras
+## levés, cadre), audio, intercom : le portique est engagé ; `motive` figé à la
+## demande (`SearchLayout.MOTIVE_*`, `&""` = fouille sans motif confirmée).
+signal search_opened(case_id: StringName, motive: StringName)
+## M13 (B70) — InspectionSession → UI (liste d'objets, « RAS » si vide), audio :
+## une zone a fini son scan (après sa durée).
+signal search_zone_scanned(case_id: StringName, zone: StringName, items: Array[SearchItem])
+## M13 (B70) — InspectionSession → UI (la File revient), booth, intercom.
+signal search_closed(case_id: StringName)
+## M13 (B68, B70) — InspectionSession → UI : l'interface est occupée `duration_sec`
+## secondes (horloge réelle : question 3 s, confrontation 4 s, activation et
+## zones du portique) ; `action` : `question`, `confront`, `repeat`,
+## `search_activation`, `search_zone`.
+signal inspection_busy(case_id: StringName, duration_sec: float, action: StringName)
+## M13 (B74) — Campaign / EveningService (achat confirmé le soir) → UI
+## (colonne Économat, pastilles du guichet), audio.
+signal upgrade_purchased(upgrade_id: StringName)

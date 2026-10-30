@@ -33,6 +33,10 @@ extends RefCounted
 const FLAG_LOYALTY: StringName = &"loyalty"
 const FLAG_TRUST: StringName = &"lucioles_trust"
 const FLAG_SUSPICION: StringName = &"suspicion"
+## M13 (AG-04) : enveloppes gardées depuis l'achat du tiroir à double fond.
+const FLAG_DRAWER_ENVELOPES: StringName = &"drawer_envelopes"
+## AG-04 : une enveloppe sur `n` laisse une trace (1ʳᵉ, 3ᵉ, 5ᵉ… pour n = 2).
+const DRAWER_TRACE_EVERY: int = 2
 const FLAG_PASSWORD: StringName = &"password_answered"
 ## Jour de l'audit : répondre à la phrase de passe y est vu par l'Inspecteur.
 const AUDIT_DAY: int = 9
@@ -64,7 +68,14 @@ static func compute(scripted: ScriptedCaseDef, case: Case, verdict: VerdictKind.
 				add_all(changes, flags, effect.flags)
 	if case != null:
 		for item: SlippedItem in case.slipped_items:
-			add_all(changes, flags, item.effects_for(verdict, item.final_decision()))
+			if item.kind == SlippedItem.Kind.ENVELOPE and not FlagCondition.is_flag_true(flags, UpgradeDef.FLAG_BRIBE_SEEN):
+				# M13 (AG-04) : la première enveloppe présentée, quel que soit son sort.
+				add(changes, flags, UpgradeDef.FLAG_BRIBE_SEEN, 0)
+			var effects: Dictionary = item.effects_for(verdict, item.final_decision())
+			if item.kind == SlippedItem.Kind.ENVELOPE and item.final_decision() == SlippedItem.Decision.KEEP \
+					and UpgradeDef.owns(flags, UpgradeDef.ID_DOUBLE_DRAWER):
+				effects = drawer_effects(effects, flags, changes)
+			add_all(changes, flags, effects)
 		if scripted == null and case.dialogue_tags.has(CaseBuilder.TAG_LUCIOLE):
 			if verdict == VerdictKind.Kind.APPROVE and had_violations and trust_on_breach:
 				add(changes, flags, FLAG_TRUST, 1)
@@ -135,3 +146,18 @@ static func add(changes: Dictionary[StringName, Variant], flags: Dictionary[Stri
 static func merge_into(flags: Dictionary[StringName, Variant], changes: Dictionary[StringName, Variant]) -> void:
 	for flag: StringName in changes:
 		flags[flag] = changes[flag]
+
+
+
+## M13 (AG-04, D-150) : enveloppe gardée avec le tiroir à double fond — seules
+## la 1ʳᵉ, la 3ᵉ, la 5ᵉ… (une sur `DRAWER_TRACE_EVERY`) gardent leur
+## `suspicion` ; le compte (`drawer_envelopes`) est ajouté à `changes`.
+static func drawer_effects(effects: Dictionary, flags: Dictionary[StringName, Variant],
+		changes: Dictionary[StringName, Variant]) -> Dictionary:
+	add(changes, flags, FLAG_DRAWER_ENVELOPES, 1)
+	var count: int = SaveService.as_int(changes[FLAG_DRAWER_ENVELOPES])
+	if (count - 1) % DRAWER_TRACE_EVERY == 0:
+		return effects
+	var hidden: Dictionary = effects.duplicate()
+	hidden.erase(FLAG_SUSPICION)
+	return hidden

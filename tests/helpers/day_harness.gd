@@ -101,9 +101,21 @@ func investigate_current() -> void:
 		return
 	if case.passenger_presented.appearance.is_face_covered():
 		EventBus.interrogation_requested.emit(InspectionSession.TOPIC_REMOVE_VISOR)
+	# M13 : R47 (fouille obligatoire) — le portique s'engage sur motif MF-5.
+	for rule: Rule in controller.builder.ctx.rule_set.rules:
+		var procedure: ProcedureRule = rule as ProcedureRule
+		if procedure != null and procedure.requires_search(case):
+			EventBus.interrogation_requested.emit(&"search")
 	for violation: Violation in controller.current_key.expected_violations:
 		if violation.refs.size() >= 2:
+			# M13 : la puce est obtenue (question posée) et l'objet révélé (zone scannée).
+			for ref: FieldRef in violation.refs:
+				DaySimulator.obtain(case, ref)
 			EventBus.discrepancy_check_requested.emit(violation.refs[0], violation.refs[1])
+			# Comme `DaySimulator.evidence_for` : la dernière référence si la
+			# paire des deux premières concorde (N° ID identiques sur deux documents).
+			if violation.refs.size() > 2:
+				EventBus.discrepancy_check_requested.emit(violation.refs[0], violation.refs[violation.refs.size() - 1])
 
 
 func _on_case_presented(case: Case) -> void:

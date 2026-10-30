@@ -11,6 +11,9 @@
 ##
 ## Opérations :
 ## - `ADD` : `rule` entre dans les règles actives (badge NOUVEAU si `mark_new`) ;
+##   avec `replaces` (M13, `replace()`), elle **remplace à sa place** la règle
+##   active de même identifiant (palier de R43 en Garde, U24) ; défaire la
+##   source rétablit la règle remplacée ;
 ## - `RETIRE` : `rule_id` sort des règles actives et reste au Rulebook en ligne
 ##   barrée (`note_key` : `sev_mrz_reader_rb`, `rb_retired_quais`…) ;
 ## - `FORGET` : la ligne barrée de `rule_id` disparaît du Rulebook ;
@@ -59,6 +62,9 @@ const MOD_EXTRA_SECONDS: StringName = &"extra_seconds"
 @export var note_key: String = ""
 ## `ADD` : badge « NOUVEAU » (remplace les badges précédents).
 @export var mark_new: bool = true
+## `ADD` (M13) : remplace la règle active de même identifiant au lieu d'être
+## ignoré (paliers d'une même règle, `StatementsConsistentRule.tier`).
+@export var replaces: bool = false
 ## `OVERRIDE` : paramètre → valeur (`max_age_days`, `exempt_purposes`…).
 @export var params: Dictionary[StringName, Variant] = {}
 ## `OVERRIDE` : portée (vide = tous).
@@ -77,6 +83,13 @@ static func add(p_rule: Rule, p_mark_new: bool = true) -> RuleChangeDef:
 	change.rule = p_rule
 	change.rule_id = p_rule.id if p_rule != null else &""
 	change.mark_new = p_mark_new
+	return change
+
+
+## M13 : ajout qui remplace un palier en vigueur (même identifiant), à sa place.
+static func replace(p_rule: Rule, p_mark_new: bool = true) -> RuleChangeDef:
+	var change: RuleChangeDef = add(p_rule, p_mark_new)
+	change.replaces = true
 	return change
 
 

@@ -109,3 +109,24 @@ extends Resource
 ## Visage = photo présentée par ce cas antérieur (`CaseMemory`, B59 : SC-84b,
 ## le vrai titulaire de la carte du J2) ; repli : visage du roster.
 @export var appearance_from_photo: StringName = &""
+
+@export_group("M13")
+## Déclarations orales imposées (docs/M13.md §1.3, §1.12 ; B75) :
+## `{id: {"value": …, "key": "stmt_…", "args": […], "vague": bool,
+## "corrected_from": "stmt_…"}}` (`Statement.ID_*` ; durée : `Vector2i(min, max)`).
+## Vide : réponses en prose libre (`<dialogue_id>_purpose`…), **aucune puce**.
+@export var statements: Dictionary = {}
+## Cadres de réponse imposés (`purpose` → `line_stmt_frame_*`), facultatifs.
+@export var statement_frames: Dictionary = {}
+## Contenu de la fouille imposé (M13 §2.10, J8+) : `[{"zone": "z3", "item":
+## "ol10", "implant": "KIN-11", "qty": 0}]` ; vide = fouille générée (objets
+## légitimes, **aucun indice**).
+@export var search_items: Array[Dictionary] = []
+## Indices visibles imposés (`SearchLayout.CUE_*`).
+@export var search_cues: Array[StringName] = []
+## Réponse à « Quelque chose à déclarer ? » (`Case.CARGO_*`) ; la réplique
+## dédiée `<dialogue_id>_cargo` la porte. Vide : réponse générée.
+@export var cargo_reply: StringName = &""
+## Drapeaux posés si une fouille est faite pendant le cas (`{drapeau: delta}`,
+## SC-105 `sc105_searched`), lus par le `DayController` (lot A).
+@export var flags_on_search: Dictionary[StringName, int] = {}

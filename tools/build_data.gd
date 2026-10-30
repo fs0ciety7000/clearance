@@ -37,11 +37,17 @@ const EPILOGUE_DIR: String = "res://data/epilogue"
 const GARDE_DIR: String = "res://data/garde"
 const EVENTS_DIR: String = "res://data/events"
 const DOSSIER_DIR: String = "res://data/dossier"
+## M13 (docs/M13.md) : déclarations, fouille, améliorations du guichet.
+const STATEMENTS_DIR: String = "res://data/statements"
+const SEARCH_DIR: String = "res://data/search"
+const UPGRADES_DIR: String = "res://data/upgrades"
+const CSV_PATH: String = "res://data/i18n/fr.csv"
 
 const K := AnomalyType.Kind
 const Act2 := preload("res://tools/build_data_act2.gd")
 const Act3 := preload("res://tools/build_data_act3.gd")
 const M12 := preload("res://tools/build_data_m12.gd")
+const M13 := preload("res://tools/build_data_m13.gd")
 const FK := FieldDef.FieldKind
 const CAT := Rule.RuleCategory
 
@@ -76,7 +82,7 @@ const RESERVED_HOUSEHOLD_NAMES: PackedStringArray = ["Ilan", "Noa", "Dora"]
 ## ne bloque pas l'exécution (appels « Nonexistent function », `_build()`
 ## interrompu sans bruit) : vérifiés avant toute écriture.
 const DATA_SCRIPTS: PackedStringArray = ["res://tools/build_data_act2.gd", "res://tools/build_data_act3.gd",
-		"res://tools/build_data_m12.gd"]
+		"res://tools/build_data_m12.gd", "res://tools/build_data_m13.gd"]
 
 ## Compte les erreurs moteur et de script (`push_error`, erreurs d'exécution)
 ## émises pendant la génération : toute erreur fait échouer le build.
@@ -98,6 +104,10 @@ var _failures: int = 0
 var _days: Array[DayDef] = []
 ## Vrai si `_build()` est allé à son terme (une erreur de script l'interrompt).
 var _completed: bool = false
+## M13 : paliers 2 → 4 de R43 (même identifiant que le palier 1) et
+## améliorations du guichet (sauvegardées avant le barème).
+var _m13_tiers: Array[StatementsConsistentRule] = []
+var _m13_upgrades: Array[UpgradeDef] = []
 
 
 func _init() -> void:
@@ -140,6 +150,7 @@ func _build() -> void:
 	_build_appearance_catalog()
 	var docs: Dictionary[StringName, DocumentTypeDef] = _build_documents()
 	var rules: Dictionary[StringName, Rule] = _build_rules()
+	_build_m13_data()
 	var sets: Array[RuleSet] = _build_rule_sets(rules)
 	_build_days(sets)
 	_build_days_m7(sets)
@@ -149,6 +160,7 @@ func _build() -> void:
 	for day: DayDef in act2_days:
 		_save_day(day)
 	var act3_sets: Array[RuleSet] = Act3.build_rule_sets(rules, sets[sets.size() - 1].get_rule_ids())
+	M13.revise_rule_sets(act3_sets, 21, rules, _m13_tiers)
 	for i: int in act3_sets.size():
 		_save(act3_sets[i], DAYS_DIR, "ruleset_day_%02d" % (i + 21))
 	for day: DayDef in Act3.build_days(act3_sets):
@@ -189,22 +201,68 @@ func _build_m12(rules: Dictionary[StringName, Rule]) -> void:
 	var garde_rules: RuleSet = M12.build_garde_rule_set(rules)
 	_save(garde_rules, GARDE_DIR, "ruleset_garde")
 	var units: Array[GardeUnitDef] = M12.build_garde_units(rules)
+	units.append_array(M13.build_garde_units(rules, _m13_tiers))
 	for unit: GardeUnitDef in units:
 		_save(unit, GARDE_DIR, "unit_%s" % unit.id)
 	var garde: GardeDef = M12.build_garde(garde_rules, units)
+	M13.configure_garde(garde)
 	var garde_counter: Array[int] = [0]
 	_tag_subresources(garde, "garde", garde_counter)
 	_save(garde, GARDE_DIR, "garde")
 	var events: Array[StationEventDef] = M12.build_events()
+	M13.extend_events(events)
 	for event: StationEventDef in events:
 		var event_counter: Array[int] = [0]
 		_tag_subresources(event, String(event.id), event_counter)
 		_save(event, EVENTS_DIR, String(event.id))
-	_save(M12.build_station_events(events), EVENTS_DIR, "station_events")
+	var station_events: StationEventsDef = M12.build_station_events(events)
+	M13.configure_station_events(station_events)
+	_save(station_events, EVENTS_DIR, "station_events")
 	var characters: CharacterTableDef = M12.build_characters()
 	var character_counter: Array[int] = [0]
 	_tag_subresources(characters, "chr", character_counter)
 	_save(characters, DOSSIER_DIR, "characters")
+
+
+# ---------------------------------------------------------------------------
+# M13 « Gameplay » (docs/M13.md, `tools/build_data_m13.gd`)
+# ---------------------------------------------------------------------------
+
+## Paliers 2 → 4 de R43 (`data/rules/rule_statements_sN.tres`), tables des
+## déclarations, catalogue de la fouille, améliorations AG-01 → AG-06.
+func _build_m13_data() -> void:
+	for dir: String in [STATEMENTS_DIR, SEARCH_DIR, UPGRADES_DIR]:
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
+	_m13_tiers = M13.build_rule_tiers()
+	for tier: StatementsConsistentRule in _m13_tiers:
+		_save(tier, RULES_DIR, "rule_statements_s%d" % tier.tier)
+	var texts: Dictionary[String, String] = _read_csv(CSV_PATH)
+	var tables: StatementTablesDef = M13.build_statement_tables(func(key: String) -> String: return texts.get(key, ""))
+	_save(tables, STATEMENTS_DIR, "statements")
+	var catalog: SearchCatalogDef = M13.build_search_catalog()
+	var counter: Array[int] = [0]
+	_tag_subresources(catalog, "srch", counter)
+	_save(catalog, SEARCH_DIR, "items")
+	_m13_upgrades = M13.build_upgrades()
+	for upgrade: UpgradeDef in _m13_upgrades:
+		_save(upgrade, UPGRADES_DIR, String(upgrade.id).replace("ag", "ag_"))
+
+
+## Textes FR (clé → texte) lus directement dans le CSV (le serveur de
+## traduction n'est pas chargé par un script `--script`).
+func _read_csv(path: String) -> Dictionary[String, String]:
+	var result: Dictionary[String, String] = {}
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		push_error("build_data: %s illisible" % path)
+		_failures += 1
+		return result
+	file.get_csv_line()
+	while not file.eof_reached():
+		var row: PackedStringArray = file.get_csv_line()
+		if row.size() >= 2:
+			result[row[0]] = row[1]
+	return result
 
 
 # ---------------------------------------------------------------------------
@@ -251,6 +309,7 @@ func _build_economy() -> void:
 	e.story_untreated_worsen_evenings = 3
 	Act2.configure_economy(e)
 	Act3.configure_economy(e)
+	M13.configure_economy(e, _m13_upgrades)
 	_save(e, ECONOMY_DIR, "economy")
 
 
@@ -525,6 +584,8 @@ func _build_documents() -> Dictionary[StringName, DocumentTypeDef]:
 		# Acte III (M2, M3) : répondant (R34) et convocation (R36), vides sinon.
 		_optional_field(&"sponsor", FK.ID_CODE, &"sponsor_id"),
 		_optional_field(&"summons", FK.ID_CODE, &"summons_id"),
+		# M13 (R43 s4) : nom du répondant imprimé sous son N° ID.
+		_optional_field(&"sponsor_name", FK.TEXT, &"sponsor_name"),
 	]
 	result[permit.id] = permit
 
@@ -796,10 +857,13 @@ func _build_rules() -> Dictionary[StringName, Rule]:
 	rules.append_array(Act3.build_rules())
 	# --- M12 : R38–R42, épilogue J31 (docs/M12.md §1.5–§1.8) ---
 	rules.append_array(M12.build_rules())
+	# --- M13 : R43 (palier 1), R44 → R47 (docs/M13.md §1.4, §2.6) ---
+	rules.append_array(M13.build_rules())
 	var result: Dictionary[StringName, Rule] = {}
 	for rule: Rule in rules:
 		result[rule.id] = rule
 	Act3.configure_existing_rules(result)
+	M13.configure_existing_rules(result)
 	for rule: Rule in rules:
 		_save(rule, RULES_DIR, "rule_%s" % String(rule.id).trim_prefix("r_"))
 	return result
@@ -861,6 +925,8 @@ func _build_rule_sets(rules: Dictionary[StringName, Rule]) -> Array[RuleSet]:
 		new_ids.assign(news[i])
 		cumulative.append_array(new_ids)
 		sets.append(_rule_set(StringName("rs_day%02d" % (i + 4)), rules, cumulative.duplicate(), new_ids))
+	# M13 : paliers de R43, R44 → R47 (docs/M13.md §1.4, §2.6).
+	M13.revise_rule_sets(sets, 1, rules, _m13_tiers)
 	for i: int in sets.size():
 		_save(sets[i], DAYS_DIR, "ruleset_day_%02d" % (i + 1))
 	return sets
@@ -1530,7 +1596,8 @@ func _reserve_character_names(pools: Dictionary[StringName, NamePool]) -> void:
 		for scripted: ScriptedCaseDef in day.scripted_cases:
 			for family_value: Variant in [scripted.passenger_overrides.get(&"family_name", ""),
 					scripted.truth_overrides.get(&"family_name", "")]:
-				if not str(family_value).is_empty():
+				# M13 §6.4 : figurants, nom complet réservé seulement.
+				if not str(family_value).is_empty() and not M13.FIGURANT_FAMILY_NAMES.has(str(family_value)):
 					character_families[str(family_value)] = true
 		for notice: WantedNoticeDef in day.wanted_notices:
 			if not notice.family_name.is_empty():
@@ -1581,6 +1648,8 @@ func _add_full_name(names: Dictionary[String, bool], given: Variant, family: Var
 func _save_day(day: DayDef) -> void:
 	for problem: String in M12.extend_day(day):
 		push_error("build_data: écho M12 — %s" % problem)
+	for problem: String in M13.extend_day(day):
+		push_error("build_data: M13 — %s" % problem)
 		_failures += 1
 	_days.append(day)
 	for scripted: ScriptedCaseDef in day.scripted_cases:

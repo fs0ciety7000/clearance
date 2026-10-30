@@ -31,6 +31,11 @@ const TRUTH_PATHS: Array[StringName] = [
 	&"employer_code", &"post", &"vessel", &"firmware_date",
 	# Acte III (docs/ACT3.md B39) : lignes optionnelles du permis.
 	&"sponsor_id", &"summons_id",
+	# M13 (B64, B69) : implants de localisation dissimulée (bras, jambes, torse, nuque).
+	&"concealed_implants",
+	# M13 (D-157) : nom du Répondant imprimé sur le permis
+	# (`Statement.PATH_SPONSOR_NAME`, R43 s4 — personne visitée).
+	&"sponsor_name",
 ]
 
 var id: StringName = &""
@@ -75,6 +80,16 @@ var firmware_date: int = 0
 var sponsor_id: String = ""
 ## Acte III — Convocation de l'Enquête du permis (R36) : `ENQ-NNNN` ; vide = aucune.
 var summons_id: String = ""
+## M13 — implants **dissimulés** (localisation cachée, `ImplantCatalog.location`,
+## lot B) : jamais visibles sur l'acteur ni comparés au visage ; révélés par
+## la fouille (`SearchLayout`). La carte déclare `implants ∪ dissimulés
+## déclarés`. Vides avant le J8.
+var concealed_implants: PackedStringArray = []
+## M13 (D-157, ARCHITECTURE §12.13) : nom et prénom du Répondant, imprimés en
+## petit sur la ligne Répondant du permis (ACT3 §2.5, champ facultatif
+## `sponsor_name`) ; vide sans répondant. Posé avec `sponsor_id` par le
+## générateur ; comparé à la personne visitée (R43 s4, `compare_to`).
+var sponsor_name: String = ""
 
 
 static func has_truth_path(path: StringName) -> bool:
@@ -117,6 +132,7 @@ func copy() -> Passenger:
 	for path: StringName in TRUTH_PATHS:
 		result.set(path, get(path))
 	result.implants = implants.duplicate()
+	result.concealed_implants = concealed_implants.duplicate()
 	result.appearance = appearance.copy() if appearance != null else null
 	return result
 

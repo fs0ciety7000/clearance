@@ -17,6 +17,9 @@ var member_id: StringName = &""
 ## Ration non payée → ESSOUFFLÉ·E (M2).
 var ration_of: StringName = &""
 var paid: bool = false
+## M13 (D-150) : achat de l'Économat (`UpgradeDef.id`, `ag01`…), vide sinon.
+## Jamais présélectionné ; un seul par soir (`EveningService.can_toggle_on`).
+var upgrade_id: StringName = &""
 
 
 func _init(p_id: StringName = &"", p_cost: int = 0, p_mandatory: bool = false) -> void:

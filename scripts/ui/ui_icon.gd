@@ -32,6 +32,10 @@ enum Kind {
 	REGISTER, ## Acte II : registre à lignes (Commission, révocations)
 	SCALES, ## Acte III : balance (Arbitrage, Enquête, convocations)
 	STRIKE, ## Acte III : ligne barrée (règle ou document retiré·e)
+	GATE, ## M13 : portique (cadre + ligne de balayage) — fouille holographique
+	QUOTE, ## M13 : guillemets de déclaration (journal à puces)
+	ITEM, ## M13 : objet trouvé à la fouille (caisse), neutre : n'indique jamais la légalité
+	TOOL, ## M13 : amélioration du guichet (clé), Économat
 }
 
 @export var kind: Kind = Kind.DIAMOND:
@@ -202,6 +206,25 @@ static func draw_icon(canvas: CanvasItem, p_kind: Kind, rect: Rect2, p_color: Co
 			for y: float in [-5.0, 0.0, 5.0]:
 				canvas.draw_line(c + Vector2(-7, y) * u, c + Vector2(7, y) * u, Color(p_color, 0.5), p_stroke)
 			canvas.draw_line(c + Vector2(-9, 3) * u, c + Vector2(9, -3) * u, p_color, p_stroke)
+		Kind.GATE:
+			# Arche du portique, silhouette stylisée, ligne de balayage.
+			canvas.draw_polyline([c + Vector2(-9, 10) * u, c + Vector2(-9, -8) * u, c + Vector2(-7, -10) * u,
+					c + Vector2(7, -10) * u, c + Vector2(9, -8) * u, c + Vector2(9, 10) * u], p_color, p_stroke, true)
+			canvas.draw_arc(c + Vector2(0, -4) * u, 2.2 * u, 0.0, TAU, 12, p_color, p_stroke, true)
+			canvas.draw_line(c + Vector2(0, -1.5) * u, c + Vector2(0, 6) * u, p_color, p_stroke)
+			canvas.draw_line(c + Vector2(-6, 1) * u, c + Vector2(6, 1) * u, Color(p_color, 0.6), p_stroke)
+		Kind.QUOTE:
+			for x: float in [-4.0, 3.0]:
+				canvas.draw_polyline([c + Vector2(x, -5) * u, c + Vector2(x + 4, 0) * u, c + Vector2(x, 5) * u], p_color, p_stroke * 1.3, true)
+		Kind.ITEM:
+			var crate: Rect2 = Rect2(c + Vector2(-8, -5) * u, Vector2(16, 13) * u)
+			canvas.draw_rect(crate, p_color, false, p_stroke)
+			canvas.draw_polyline([c + Vector2(-8, -5) * u, c + Vector2(-5, -9) * u, c + Vector2(5, -9) * u, c + Vector2(8, -5) * u],
+					p_color, p_stroke, true)
+			canvas.draw_line(c + Vector2(-3, 0) * u, c + Vector2(3, 0) * u, p_color, p_stroke)
+		Kind.TOOL:
+			canvas.draw_line(c + Vector2(-7, 7) * u, c + Vector2(2, -2) * u, p_color, p_stroke * 1.4)
+			canvas.draw_arc(c + Vector2(4.5, -4.5) * u, 4.0 * u, PI * 0.95, PI * 2.55, 16, p_color, p_stroke, true)
 
 
 ## Icône du sceau d'un document (`seal_id` des `.tres`).

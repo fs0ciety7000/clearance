@@ -1,28 +1,29 @@
 [gd_resource type="Resource" script_class="RuleSet" format=3 uid="uid://b2566fuc46p66"]
 
-[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_pb6go"]
-[ext_resource type="Resource" path="res://data/rules/rule_id_card_required.tres" id="2_dibfj"]
-[ext_resource type="Resource" path="res://data/rules/rule_id_card_valid.tres" id="3_5pflt"]
-[ext_resource type="Resource" path="res://data/rules/rule_portrait_match.tres" id="4_qtdqh"]
-[ext_resource type="Resource" path="res://data/rules/rule_permit_required.tres" id="5_nub0u"]
-[ext_resource type="Resource" path="res://data/rules/rule_permit_valid.tres" id="6_50b6v"]
-[ext_resource type="Resource" path="res://data/rules/rule_face_uncovered.tres" id="7_o55ir"]
-[ext_resource type="Resource" path="res://data/rules/rule_identity_fields_match.tres" id="8_ildqe"]
-[ext_resource type="Resource" path="res://data/rules/rule_tycho_interview.tres" id="9_lygds"]
-[ext_resource type="Resource" path="res://data/rules/rule_purpose_consistent.tres" id="10_vqvn1"]
-[ext_resource type="Resource" path="res://data/rules/rule_origin_block.tres" id="11_1d67b"]
-[ext_resource type="Resource" path="res://data/rules/rule_bioscan_required.tres" id="12_p4r6g"]
-[ext_resource type="Resource" path="res://data/rules/rule_bioscan_valid.tres" id="13_a42pq"]
-[ext_resource type="Resource" path="res://data/rules/rule_bioscan_issuer.tres" id="14_e3t4l"]
-[ext_resource type="Resource" path="res://data/rules/rule_bioscan_fit.tres" id="15_h7ag5"]
-[ext_resource type="Resource" path="res://data/rules/rule_implants_declared.tres" id="16_djsu2"]
-[ext_resource type="Resource" path="res://data/rules/rule_banned_implants.tres" id="17_mipp5"]
-[ext_resource type="Resource" path="res://data/rules/rule_identity_fraud_detain.tres" id="18_s5e5d"]
-[ext_resource type="Script" path="res://scripts/rules/rule_set.gd" id="19_q0crf"]
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_dibfj"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_required.tres" id="2_5pflt"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_valid.tres" id="3_qtdqh"]
+[ext_resource type="Resource" path="res://data/rules/rule_portrait_match.tres" id="4_nub0u"]
+[ext_resource type="Resource" path="res://data/rules/rule_permit_required.tres" id="5_50b6v"]
+[ext_resource type="Resource" path="res://data/rules/rule_permit_valid.tres" id="6_o55ir"]
+[ext_resource type="Resource" path="res://data/rules/rule_face_uncovered.tres" id="7_ildqe"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fields_match.tres" id="8_lygds"]
+[ext_resource type="Resource" path="res://data/rules/rule_tycho_interview.tres" id="9_vqvn1"]
+[ext_resource type="Resource" path="res://data/rules/rule_purpose_consistent.tres" id="10_1d67b"]
+[ext_resource type="Resource" path="res://data/rules/rule_statements.tres" id="11_p4r6g"]
+[ext_resource type="Resource" path="res://data/rules/rule_origin_block.tres" id="12_a42pq"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_required.tres" id="13_e3t4l"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_valid.tres" id="14_h7ag5"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_issuer.tres" id="15_djsu2"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_fit.tres" id="16_mipp5"]
+[ext_resource type="Resource" path="res://data/rules/rule_implants_declared.tres" id="17_s5e5d"]
+[ext_resource type="Resource" path="res://data/rules/rule_banned_implants.tres" id="18_q0crf"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fraud_detain.tres" id="19_kkubk"]
+[ext_resource type="Script" path="res://scripts/rules/rule_set.gd" id="20_wdn8u"]
 
 [resource]
-script = ExtResource("19_q0crf")
+script = ExtResource("20_wdn8u")
 id = &"rs_day07"
-rules = Array[ExtResource("1_pb6go")]([ExtResource("2_dibfj"), ExtResource("3_5pflt"), ExtResource("4_qtdqh"), ExtResource("5_nub0u"), ExtResource("6_50b6v"), ExtResource("7_o55ir"), ExtResource("8_ildqe"), ExtResource("9_lygds"), ExtResource("10_vqvn1"), ExtResource("11_1d67b"), ExtResource("12_p4r6g"), ExtResource("13_a42pq"), ExtResource("14_e3t4l"), ExtResource("15_h7ag5"), ExtResource("16_djsu2"), ExtResource("17_mipp5"), ExtResource("18_s5e5d")])
+rules = Array[ExtResource("1_dibfj")]([ExtResource("2_5pflt"), ExtResource("3_qtdqh"), ExtResource("4_nub0u"), ExtResource("5_50b6v"), ExtResource("6_o55ir"), ExtResource("7_ildqe"), ExtResource("8_lygds"), ExtResource("9_vqvn1"), ExtResource("10_1d67b"), ExtResource("11_p4r6g"), ExtResource("12_a42pq"), ExtResource("13_e3t4l"), ExtResource("14_h7ag5"), ExtResource("15_djsu2"), ExtResource("16_mipp5"), ExtResource("17_s5e5d"), ExtResource("18_q0crf"), ExtResource("19_kkubk")])
 new_rule_ids = Array[StringName]([&"r_identity_fraud_detain"])
 required_document_ids = Array[StringName]([&"id_card", &"entry_permit", &"bioscan"])

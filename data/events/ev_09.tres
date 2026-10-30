@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="StationEventDef" format=3 uid="uid://d3yi5vsgbj2ya"]
+
+[ext_resource type="Script" path="res://scripts/core/rule_change_def.gd" id="1_43bcy"]
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="2_iofr8"]
+
+[sub_resource type="Resource" id="ev_09_resource_1"]
+script = ExtResource("1_43bcy")
+op = 4
+rule_id = &"r_search_cause"
+params = Dictionary[StringName, Variant]({
+&"search_authorized": true
+})
+faction_ids = Array[StringName]([&"cer"])
+
+[sub_resource type="Resource" id="ev_09_resource_2"]
+script = ExtResource("1_43bcy")
+op = 4
+rule_id = &"r_search_cause"
+params = Dictionary[StringName, Variant]({
+&"search_authorized": true
+})
+faction_ids = Array[StringName]([&"cer"])
+
+[resource]
+script = ExtResource("2_iofr8")
+id = &"ev_09"
+key = &"contraband_alert"
+required_rule_id = &"r_search_cause"
+day_min = 8
+window_passengers = 5
+changes = Array[ExtResource("1_43bcy")]([SubResource("ev_09_resource_1")])
+announce_key = "sev_contraband_alert_announce"
+title_key = "sev_contraband_alert_title"
+rulebook_key = "sev_contraband_alert_rb"
+end_key = "sev_contraband_alert_end"
+garde_required_unit = &"u22"
+garde_changes = Array[ExtResource("1_43bcy")]([SubResource("ev_09_resource_2")])
+garde_announce_key = "sev_contraband_alert_announce_garde"
+override_profiles = Array[Dictionary]([{
+"faction_ids": [&"tyc"],
+"label_key": "sev_contraband_alert_tyc",
+"purposes": []
+}, {
+"faction_ids": [&"cer"],
+"label_key": "sev_contraband_alert_cer",
+"purposes": []
+}, {
+"faction_ids": [],
+"label_key": "sev_contraband_alert_trade",
+"purposes": [&"trade"]
+}, {
+"faction_ids": [],
+"label_key": "sev_contraband_alert_transit",
+"purposes": [&"transit"]
+}])

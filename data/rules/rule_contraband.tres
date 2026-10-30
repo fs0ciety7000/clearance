@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ContrabandRule" format=3 uid="uid://ccb48y8u46m6d"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/contraband_rule.gd" id="1_nvx74"]
+
+[resource]
+script = ExtResource("1_nvx74")
+categories = Array[StringName]([&"oxygen", &"stimulant", &"medicine", &"data", &"seeds"])
+id = &"r_contraband"
+title_key = "r_contraband_title"
+rulebook_text_key = "r_contraband_text"
+category = 4

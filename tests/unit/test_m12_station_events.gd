@@ -232,8 +232,10 @@ func test_comparator_down_waives_undocumented_denial_and_inspection_modifiers() 
 		EventBus.verdict_stamped.emit(Verdict.new(c.case_id, kind))
 		EventBus.case_resolved.disconnect(on_resolved)
 		EventBus.passenger_departed.emit(c.case_id)
-		if expected == VerdictKind.Kind.DENY and not results.is_empty() and results[0].procedure_missed == &"":
-			assert_false(results[0].has_citation(), "REFUS NON MOTIVÉ suspendu (EV-02)")
+		# Un cas scénarisé suspend les modificateurs (D-129, règle 3) : passagers générés seulement.
+		if expected == VerdictKind.Kind.DENY and not results.is_empty() and results[0].procedure_missed == &"" \
+				and dc.builder.get_scripted_case(c.index) == null:
+			assert_false(results[0].has_citation(), "REFUS NON MOTIVÉ suspendu (EV-02) : %s" % results[0].citation_reason_key)
 			assert_true(results[0].correct)
 			waived = true
 	assert_true(waived, "un refus juste non motivé a été rencontré")

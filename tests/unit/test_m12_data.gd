@@ -48,8 +48,9 @@ func test_catalog_holds_the_m12_data() -> void:
 	assert_not_null(data.garde)
 	assert_not_null(data.station_events)
 	assert_not_null(data.characters)
-	assert_eq(data.garde_units.size(), 20)
-	assert_eq(data.events.size(), 8)
+	# M13 : U21 → U24 (D-152) et EV-09 (D-153).
+	assert_eq(data.garde_units.size(), 24)
+	assert_eq(data.events.size(), 9)
 	assert_same(EpilogueService.load_def(), data.epilogue, "même ressource que le service")
 
 
@@ -245,18 +246,21 @@ func test_echo_indices_are_free() -> void:
 
 func test_garde_units_and_tiers() -> void:
 	var g: GardeDef = data.garde
-	assert_eq(g.units.size(), 20)
+	assert_eq(g.units.size(), 24, "U01 → U20 (M12) + U21 → U24 (M13)")
 	var tiers: Dictionary[int, int] = {}
 	for unit: GardeUnitDef in g.units:
 		tiers[unit.tier] = tiers.get(unit.tier, 0) + 1
 		assert_false(unit.rules.is_empty(), String(unit.id))
 		for rule: Rule in unit.rules:
-			assert_same(rule, data.rules[rule.id], "%s : règle partagée" % unit.id)
+			var shared: Rule = data.rules[rule.id]
+			if rule is StatementsConsistentRule and (rule as StatementsConsistentRule).tier > 1:
+				shared = data.rule_tiers["%s@%d" % [rule.id, (rule as StatementsConsistentRule).tier]]
+			assert_same(rule, shared, "%s : règle partagée" % unit.id)
 			assert_false(String(rule.id).begins_with("r_ep_"), "pas de règle de l'épilogue")
 			assert_false(rule.id in [&"r_air_quota", &"r_curfew", &"r_ter_closed"], "exclues (M12 §2.3)")
 		for prerequisite: StringName in unit.prerequisites:
 			assert_not_null(g.get_unit(prerequisite), "%s → %s" % [unit.id, prerequisite])
-	assert_eq(tiers, {1: 5, 2: 6, 3: 9} as Dictionary[int, int])
+	assert_eq(tiers, {1: 5, 2: 7, 3: 12} as Dictionary[int, int], "M13 : U21 au tier 2, U22 → U24 au tier 3")
 	assert_true(g.get_unit(&"u11").enables_detain)
 	assert_eq(g.get_unit(&"u15").renews_lists, PackedStringArray(["wanted"]))
 	assert_eq(g.get_unit(&"u20").renews_lists, PackedStringArray(["revoked"]))
@@ -274,7 +278,7 @@ func test_garde_units_and_tiers() -> void:
 
 func test_station_events() -> void:
 	var def: StationEventsDef = data.station_events
-	assert_eq(def.events.size(), 8)
+	assert_eq(def.events.size(), 9, "EV-01 → EV-08 (M12) + EV-09 (M13)")
 	assert_eq(def.eligible_days.size(), 18)
 	for excluded: int in [1, 2, 3, 9, 10, 11, 17, 20, 21, 24, 29, 30]:
 		assert_false(def.eligible_days.has(excluded), "J%d exclu" % excluded)
@@ -285,7 +289,7 @@ func test_station_events() -> void:
 		classes[event.id] = int(event.event_class)
 		assert_false(event.announce_key.is_empty() or event.title_key.is_empty(), String(event.id))
 	assert_eq(classes, {&"ev_01": 1, &"ev_02": 2, &"ev_03": 2, &"ev_04": 1, &"ev_05": 1, &"ev_06": 1, &"ev_07": 2,
-			&"ev_08": 1} as Dictionary[StringName, int])
+			&"ev_08": 1, &"ev_09": 1} as Dictionary[StringName, int])
 	assert_false((data.events[&"ev_06"] as StationEventDef).garde_allowed, "EV-06 hors Garde")
 	assert_eq((data.events[&"ev_07"] as StationEventDef).list_size, 3)
 

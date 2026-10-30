@@ -29,6 +29,32 @@ var presentation: StringName = &""
 ## prioritaires sur `<dialogue_id>_<suffixe>`. Lues par `scripted_key()`.
 var line_overrides: Dictionary[String, String] = {}
 
+# --- M13 « Gameplay » (ARCHITECTURE §12) -------------------------------------
+## Déclarations orales (D-139, `Statement`), générées avec le cas (lot B),
+## vides avant que R43 ne s'applique et pour un cas scénarisé sans
+## `statements` (réponses en prose, aucune puce). `Statement.given` est posé
+## par la session quand la réponse est émise.
+var statements: Array[Statement] = []
+## Cadre de réponse par question (`purpose`, `stay`, `origin` →
+## `line_stmt_frame_*`) ; une question sans cadre garde la réplique générique.
+## Un passager scénarisé garde sa réplique `<dialogue_id>_<sujet>` (prose) et
+## ses puces s'affichent à part (§12.2).
+var statement_frames: Dictionary[StringName, String] = {}
+## Contenu de la fouille (J8+, null avant) : caché jusqu'au scan (D-140).
+var search_layout: SearchLayout = null
+## Indices visibles (IV-1 → IV-5 : `SearchLayout.CUE_*`), doublés d'une
+## didascalie ; jamais une preuve, seulement un motif de fouille (MF-2).
+var search_cues: Array[StringName] = []
+## Réponse à « Avez-vous quelque chose à déclarer ? » (`CARGO_*`, J8+) et sa
+## réplique (`line_cargo_<type>_<n>`) ; `evasive` = motif MF-3 si la
+## question a été posée avant la demande de fouille.
+var cargo_reply: StringName = &""
+var cargo_line_key: String = ""
+
+const CARGO_NONE: StringName = &"none"
+const CARGO_GOODS: StringName = &"goods"
+const CARGO_EVASIVE: StringName = &"evasive"
+
 
 func get_item(item_id: StringName) -> SlippedItem:
 	for item: SlippedItem in slipped_items:
@@ -141,3 +167,77 @@ func find_refs_by_kind(kind: FieldDef.FieldKind) -> Array[FieldRef]:
 			if field.kind == kind:
 				refs.append(FieldRef.new(doc.get_document_id(), field.id))
 	return refs
+
+
+# --- M13 ----------------------------------------------------------------------
+
+## Déclaration `statement_id` du cas (null si absente).
+func get_statement(statement_id: StringName) -> Statement:
+	for statement: Statement in statements:
+		if statement.id == statement_id:
+			return statement
+	return null
+
+
+## Déclaration désignée par une puce `FieldRef.statement` (null sinon).
+func get_statement_by_ref(ref: FieldRef) -> Statement:
+	if ref == null or not ref.is_statement():
+		return null
+	return get_statement(ref.get_statement_id())
+
+
+## Vrai si la puce a été obtenue dans la session (réponse émise) : seule une
+## puce obtenue est résoluble au comparateur (lot B, `_is_resolvable`).
+func is_statement_given(statement_id: StringName) -> bool:
+	var statement: Statement = get_statement(statement_id)
+	return statement != null and statement.given
+
+
+## Déclarations émises par une question (`purpose`, `stay`, `origin`), dans
+## l'ordre de `Statement.IDS_BY_QUESTION`.
+func statements_for_question(question: StringName) -> Array[Statement]:
+	var result: Array[Statement] = []
+	for statement_id: StringName in Statement.ids_for_question(question):
+		var statement: Statement = get_statement(statement_id)
+		if statement != null:
+			result.append(statement)
+	return result
+
+
+## Objet de fouille désigné par une référence `FieldRef.scan` (null sinon,
+## ou si le cas n'a pas de fouille).
+func get_scan_item(ref: FieldRef) -> SearchItem:
+	return search_layout.get_item_by_ref(ref) if search_layout != null else null
+
+
+## Objet de fouille révélé (zone scannée) : seul un objet révélé est résoluble.
+func is_scan_item_revealed(ref: FieldRef) -> bool:
+	var item: SearchItem = get_scan_item(ref)
+	return item != null and item.revealed
+
+
+## Implants déclarés par la carte d'identité (champ `implants` du porteur,
+## valeur affichée : liste ou texte « A, B »), vides sans carte.
+func declared_implants() -> PackedStringArray:
+	var result: PackedStringArray = []
+	for ref: FieldRef in find_refs_by_truth_path(&"implants"):
+		var raw: Variant = get_value(ref)
+		if raw is PackedStringArray:
+			var list: PackedStringArray = raw
+			result.append_array(list)
+		elif raw is Array:
+			var array: Array = raw
+			for code: Variant in array:
+				result.append(str(code))
+		elif raw != null:
+			for code: String in str(raw).split(",", false):
+				if not code.strip_edges().is_empty():
+					result.append(code.strip_edges())
+		break
+	return result
+
+
+## La fouille a montré un objet interdit ou un implant non déclaré (AG-03,
+## réplique de fin de fouille). Faux sans fouille.
+func search_found_forbidden() -> bool:
+	return search_layout != null and search_layout.revealed_forbidden(declared_implants())

@@ -170,6 +170,7 @@ Les 7 codes de reconnaissance (LORE §7) **ne sont pas des discordances** : un p
 | REFUSÉ correct **non documenté** | ✗ (procédure) | **0 ₵** | REFUS NON MOTIVÉ |
 | DÉTENTION correcte documentée (ou signalement Luciole valide) | ✓ | **+5 ₵ + 5 ₵ prime de détention** | — |
 | REFUSÉ documenté au lieu de DÉTENTION | ✓ | +5 ₵ (pas de prime) | — |
+| M13 — REFUSÉ / DÉTENTION correct et documenté **d'une trouvaille de M13** (déclaration contradictoire épinglée, objet ou implant révélé par la fouille) | ✓ | **+2 ₵ prime de relevé** en plus (`finding_bonus`, D-168) | — |
 | DÉTENTION au lieu de REFUS | ✗ | 0 ₵ | DÉTENTION ABUSIVE |
 | Erreur de verdict (approuver un fraudeur, refuser un innocent) | ✗ | 0 ₵ | ENTRÉE IRRÉGULIÈRE / REFUS INJUSTIFIÉ |
 | Verdict correct mais procédure manquée (visière, interrogatoire TYC) | ✗ (procédure) | 0 ₵ | VISAGE NON CONTRÔLÉ / INTERROGATOIRE OMIS |

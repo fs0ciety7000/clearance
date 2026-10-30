@@ -13,6 +13,21 @@
 ##   + paire « marque luciole ↔ bulletin » confirmée = cas **correct**, aucune
 ##   citation (ni procédure), salaire + prime de détention, quelles que soient
 ##   les autres violations (`CaseResult.luciole_report`).
+## - **M13 — fouille** (D-146, D-148 ; ARCHITECTURE §12.9) : R44 (procédure
+##   `search_cause`) → FOUILLE SANS MOTIF (`cit_unwarranted_search`, gravité 1)
+##   si une fouille a été faite **sans motif** (`Verdict.search_motive` vide,
+##   figé à la demande) sur un passager **attendu APPROUVÉ** ; R47
+##   (`belt_search`) → FOUILLE OMISE (`cit_search_skipped`, gravité 1) sur un
+##   APPROUVÉ d'un passager visé sans fouille. Citations de procédure
+##   ordinaires : la plus grave l'emporte (REFUS INJUSTIFIÉ sur un innocent
+##   fouillé puis refusé).
+## - **M13 — prime de relevé** (D-168, QA-067) : `finding_bonus` (`EconomyDef`)
+##   s'ajoute au salaire d'un REFUS / d'une DÉTENTION **corrects** quand le
+##   joueur a **épinglé** la trouvaille elle-même : une discordance confirmée
+##   de `Verdict.flagged` dont la puce (R43) ou l'objet révélé (R45, R46,
+##   implant dissimulé) est une preuve d'une violation attendue
+##   (`is_m13_finding_pinned`). Un refus documenté par une autre anomalie du
+##   même passager ne la rapporte pas.
 ## - **Citation** : au plus une par cas, la plus grave (table `GRAVITY`).
 ## - **Crédits** : `credit_per_correct` si correct, + prime de détention ; 0
 ##   sinon. L'amende dépend du rang de la citation dans la journée
@@ -32,6 +47,9 @@ const CIT_FACE_UNCHECKED: String = "cit_face_unchecked"
 const CIT_INTERVIEW_SKIPPED: String = "cit_interview_skipped"
 const CIT_ABUSIVE_DETENTION: String = "cit_abusive_detention"
 const CIT_UNDOCUMENTED_DETENTION: String = "cit_undocumented_detention"
+## M13 (D-146, D-148).
+const CIT_UNWARRANTED_SEARCH: String = "cit_unwarranted_search"
+const CIT_SEARCH_SKIPPED: String = "cit_search_skipped"
 
 ## Gravité des citations (GDD §4.6) : la plus grave l'emporte.
 const GRAVITY: Dictionary[String, int] = {
@@ -42,6 +60,8 @@ const GRAVITY: Dictionary[String, int] = {
 	CIT_ABUSIVE_DETENTION: 2,
 	CIT_UNDOCUMENTED_DETENTION: 2,
 	CIT_INTERVIEW_SKIPPED: 1,
+	CIT_UNWARRANTED_SEARCH: 1,
+	CIT_SEARCH_SKIPPED: 1,
 }
 
 ## Prime de détention par défaut (GDD §5.1) si aucun `EconomyDef` n'est fourni.
@@ -56,7 +76,8 @@ const LUCIOLE_REPORT_CODE: int = 1
 ## la visière) et `day` (RuleSet, barème) sont facultatifs : sans eux, pas de
 ## contrôle de procédure et barème par défaut.
 static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Case = null,
-		day: DayDef = null, detain_bonus: int = DEFAULT_DETAIN_BONUS, quota_full: bool = false) -> CaseResult:
+		day: DayDef = null, detain_bonus: int = DEFAULT_DETAIN_BONUS, quota_full: bool = false,
+		finding_bonus: int = 0) -> CaseResult:
 	var result: CaseResult = CaseResult.new(case_id)
 	if verdict == null or key == null:
 		push_error("ScoringService.score: verdict ou clé manquant (%s)" % case_id)
@@ -120,7 +141,7 @@ static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Cas
 			var procedure: ProcedureRule = rule as ProcedureRule
 			if procedure == null or not procedure.applies_to(case):
 				continue
-			var missed: String = _procedure_citation(procedure, verdict, case)
+			var missed: String = _procedure_citation(procedure, verdict, case, key.expected_verdict)
 			if missed.is_empty():
 				continue
 			if citation.is_empty() or GRAVITY[missed] > GRAVITY[citation]:
@@ -135,6 +156,10 @@ static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Cas
 		result.wage = day.credit_per_correct if day != null else DEFAULT_CREDIT_PER_CORRECT
 		if verdict.kind == VerdictKind.Kind.DETAIN and key.expected_verdict == VerdictKind.Kind.DETAIN:
 			result.wage += detain_bonus
+		if finding_bonus > 0 and verdict.kind != VerdictKind.Kind.APPROVE and not result.quota_refusal \
+				and is_m13_finding_pinned(verdict.flagged, key.expected_violations):
+			# M13 (D-168, QA-067) : prime de relevé, pour la trouvaille épinglée.
+			result.wage += finding_bonus
 		if quota_full and verdict.kind == VerdictKind.Kind.APPROVE:
 			# D-077 : entrée imputée au guichet, le cas ne rapporte rien.
 			result.wage = 0
@@ -176,6 +201,34 @@ static func is_luciole_report(verdict: Verdict, case: Case) -> bool:
 	return false
 
 
+## M13 (D-168) : une violation attendue repose sur une déclaration (puce de
+## R43) ou sur un objet révélé par la fouille (R45, R46, implant dissimulé).
+static func is_m13_finding(violations: Array[Violation]) -> bool:
+	for violation: Violation in violations:
+		for ref: FieldRef in violation.refs:
+			if ref != null and (ref.is_statement() or ref.is_scan()):
+				return true
+	return false
+
+
+## M13 (QA-067) : une discordance confirmée épinglée porte sur une puce du
+## journal ou sur un objet révélé **et** ce côté est une preuve d'une violation
+## attendue (la trouvaille de M13 a servi de preuve). Une puce honnête
+## épinglée contre un document faux (QA-064) ne prouve aucune violation de
+## déclaration : elle ne compte pas.
+static func is_m13_finding_pinned(flagged: Array[Discrepancy], violations: Array[Violation]) -> bool:
+	for discrepancy: Discrepancy in flagged:
+		if discrepancy == null or not discrepancy.confirmed:
+			continue
+		for ref: FieldRef in [discrepancy.a, discrepancy.b]:
+			if ref == null or not (ref.is_statement() or ref.is_scan()):
+				continue
+			for violation: Violation in violations:
+				if violation != null and violation.has_ref(ref):
+					return true
+	return false
+
+
 static func is_correct(given: VerdictKind.Kind, expected: VerdictKind.Kind) -> bool:
 	if given == expected:
 		return true
@@ -204,7 +257,8 @@ static func is_self_evident(violation: Violation) -> bool:
 	return true
 
 
-static func _procedure_citation(procedure: ProcedureRule, verdict: Verdict, case: Case) -> String:
+static func _procedure_citation(procedure: ProcedureRule, verdict: Verdict, case: Case,
+		expected: VerdictKind.Kind = VerdictKind.Kind.APPROVE) -> String:
 	match procedure.procedure_id:
 		ProcedureRule.PROCEDURE_FACE_UNCOVERED:
 			var appearance: PassengerAppearance = case.passenger_presented.appearance if case.passenger_presented != null else null
@@ -213,7 +267,20 @@ static func _procedure_citation(procedure: ProcedureRule, verdict: Verdict, case
 		ProcedureRule.PROCEDURE_TYCHO_INTERVIEW:
 			if verdict.questions_asked.is_empty():
 				return CIT_INTERVIEW_SKIPPED
+		ProcedureRule.PROCEDURE_SEARCH_CAUSE:
+			if is_unwarranted_search(verdict, expected):
+				return CIT_UNWARRANTED_SEARCH
+		ProcedureRule.PROCEDURE_BELT_SEARCH:
+			if verdict.kind == VerdictKind.Kind.APPROVE and not verdict.search_done and procedure.requires_search(case):
+				return CIT_SEARCH_SKIPPED
 	return ""
+
+
+## M13 (R44) : fouille faite sans motif sur un passager attendu APPROUVÉ.
+## Fouiller sans motif un passager en infraction n'est pas sanctionné.
+static func is_unwarranted_search(verdict: Verdict, expected: VerdictKind.Kind) -> bool:
+	return verdict != null and verdict.search_done and verdict.search_motive == &"" \
+			and expected == VerdictKind.Kind.APPROVE
 
 
 static func _first_rule_id(violations: Array[Violation]) -> StringName:

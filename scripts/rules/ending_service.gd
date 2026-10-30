@@ -128,6 +128,8 @@ static func audit_score(flags: Dictionary[StringName, Variant]) -> int:
 ## `{score, result, result_key, cost, flags: {drapeau: delta}, ending}`.
 static func audit_outcome(flags: Dictionary[StringName, Variant], economy: EconomyDef) -> Dictionary:
 	var score: int = audit_score(flags)
+	var drawer: Dictionary = drawer_found(flags, economy, score, economy.audit_retention_score)
+	score += int(drawer.get("penalty", 0))
 	var outcome: Dictionary = {"score": score, "cost": 0, "flags": {}, "ending": &""}
 	if score >= economy.audit_arrest_score:
 		outcome["result"] = AUDIT_ARREST
@@ -146,7 +148,42 @@ static func audit_outcome(flags: Dictionary[StringName, Variant], economy: Econo
 		outcome["result"] = AUDIT_CLEAN
 		outcome["result_key"] = "evt_d09_audit_clean"
 		outcome["flags"] = {&"audit_clean": 0}
+	_merge_drawer(outcome, drawer)
 	return outcome
+
+
+## M13 (AG-04, D-150) : un audit dont le score atteint le seuil de **retenue**
+## (`threshold` : J9 ≥ 2, Revue ≥ 3, Déposition ≥ 4) ouvre le tiroir à double
+## fond : `penalty` (+2, `UpgradeDef.EFFECT_AUDIT_PENALTY`) au score, tiroir
+## confisqué (`upg_ag04_found`). `{}` si le tiroir n'est pas possédé ou reste fermé.
+static func drawer_found(flags: Dictionary[StringName, Variant], economy: EconomyDef, score: int, threshold: int) -> Dictionary:
+	if not UpgradeDef.owns(flags, UpgradeDef.ID_DOUBLE_DRAWER) or score < threshold:
+		return {}
+	var penalty: int = 2
+	var drawer: UpgradeDef = economy.get_upgrade(UpgradeDef.ID_DOUBLE_DRAWER) if economy != null else null
+	if drawer != null:
+		penalty = int(drawer.get_effect(UpgradeDef.EFFECT_AUDIT_PENALTY, 2))
+	return {"penalty": penalty, "flags": {UpgradeDef.FLAG_DRAWER_FOUND: 0}}
+
+
+## QA-069 (M13 §3.5) : message d'Okonkwo après la confiscation du tiroir.
+const DRAWER_FOUND_MESSAGE_KEY: String = "msg_okonkwo_drawer_found"
+const DRAWER_FOUND_SPEAKER_KEY: String = "spk_okonkwo"
+
+
+## Tiroir trouvé : drapeaux fusionnés, `drawer_found` et le message d'Okonkwo
+## (`drawer_message_key`, `drawer_speaker_key`), remis par
+## `EveningService.apply` (`EveningReport.events` / `event_texts`).
+static func _merge_drawer(outcome: Dictionary, drawer: Dictionary) -> void:
+	if drawer.is_empty():
+		return
+	var merged: Dictionary = (outcome["flags"] as Dictionary).duplicate()
+	for flag: Variant in drawer["flags"]:
+		merged[flag] = drawer["flags"][flag]
+	outcome["flags"] = merged
+	outcome["drawer_found"] = true
+	outcome["drawer_message_key"] = DRAWER_FOUND_MESSAGE_KEY
+	outcome["drawer_speaker_key"] = DRAWER_FOUND_SPEAKER_KEY
 
 
 static func is_double_game(flags: Dictionary[StringName, Variant]) -> bool:
@@ -176,6 +213,8 @@ static func is_story(flags: Dictionary[StringName, Variant]) -> bool:
 ## `purge_demoted`, `promotion_revoked`) ; sinon `purge_clean`.
 static func review_outcome(flags: Dictionary[StringName, Variant], economy: EconomyDef) -> Dictionary:
 	var score: int = review_score(flags)
+	var drawer: Dictionary = drawer_found(flags, economy, score, economy.review_demote_score)
+	score += int(drawer.get("penalty", 0))
 	var outcome: Dictionary = {"score": score, "cost": 0, "flags": {}, "ending": &""}
 	if score >= economy.review_arrest_for(is_story(flags)):
 		outcome["result"] = AUDIT_ARREST
@@ -191,6 +230,7 @@ static func review_outcome(flags: Dictionary[StringName, Variant], economy: Econ
 		outcome["result"] = AUDIT_CLEAN
 		outcome["result_key"] = "evt_d17_review_clean"
 		outcome["flags"] = {&"purge_clean": 0}
+	_merge_drawer(outcome, drawer)
 	return outcome
 
 
@@ -475,6 +515,8 @@ static func deposition_score(flags: Dictionary[StringName, Variant]) -> int:
 ## sinon `deposition_clean`.
 static func deposition_outcome(flags: Dictionary[StringName, Variant], economy: EconomyDef) -> Dictionary:
 	var score: int = deposition_score(flags)
+	var drawer: Dictionary = drawer_found(flags, economy, score, economy.deposition_blame_score)
+	score += int(drawer.get("penalty", 0))
 	var outcome: Dictionary = {"score": score, "cost": 0, "flags": {}, "ending": &""}
 	if score >= economy.deposition_arrest_for(is_story(flags)):
 		outcome["result"] = AUDIT_ARREST
@@ -490,6 +532,7 @@ static func deposition_outcome(flags: Dictionary[StringName, Variant], economy: 
 		outcome["result"] = AUDIT_CLEAN
 		outcome["result_key"] = "evt_d29_verdict_clean"
 		outcome["flags"] = {&"deposition_clean": 0}
+	_merge_drawer(outcome, drawer)
 	return outcome
 
 

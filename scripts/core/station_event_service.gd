@@ -211,12 +211,17 @@ static func place(event: StationEventDef, day: DayDef, rng: SeededRng) -> Statio
 			plan.start_index = plan.announce_after
 			plan.end_index = -1
 			plan.seconds = event.window_seconds
+	# M13 (EV-09) : profil tiré après la fenêtre (les autres événements ne
+	# consomment rien de plus).
+	plan.draw_profile(rng)
 	return plan
 
 
 ## Plan d'un événement de Garde annoncé après `processed` passagers
-## (`garde_window_passengers` passagers, à partir du suivant).
-static func garde_plan(event: StationEventDef, processed: int) -> StationEventPlan:
+## (`garde_window_passengers` passagers, à partir du suivant). M13 (EV-09) :
+## profil tiré de `profile_seed` (flux propre, sans toucher au flux des
+## événements).
+static func garde_plan(event: StationEventDef, processed: int, profile_seed: int = 0) -> StationEventPlan:
 	var plan: StationEventPlan = StationEventPlan.new()
 	plan.event = event
 	plan.garde = true
@@ -225,6 +230,7 @@ static func garde_plan(event: StationEventDef, processed: int) -> StationEventPl
 	plan.end_index = plan.start_index + maxi(event.garde_window_passengers, 1)
 	plan.list_label = event.list_label
 	plan.list_size = event.list_size
+	plan.draw_profile(SeededRng.new(SeededRng.mix_string(profile_seed, "profile_%d" % processed)))
 	return plan
 
 

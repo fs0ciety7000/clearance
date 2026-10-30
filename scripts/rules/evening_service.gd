@@ -291,11 +291,75 @@ static func total_spent(lines: Array[ExpenseLine]) -> int:
 
 
 ## Un poste facultatif ne peut être coché que si le solde reste ≥ 0
-## (la taxe d'air, elle, peut creuser la dette).
-static func can_toggle_on(lines: Array[ExpenseLine], balance: int, line: ExpenseLine) -> bool:
+## (la taxe d'air, elle, peut creuser la dette). M13 : un achat de l'Économat
+## au plus par soir (`max_upgrades`), jamais à découvert.
+static func can_toggle_on(lines: Array[ExpenseLine], balance: int, line: ExpenseLine, max_upgrades: int = 1) -> bool:
 	if line.mandatory or line.paid:
 		return true
+	if line.upgrade_id != &"" and upgrades_selected(lines) >= max_upgrades:
+		return false
 	return balance - total_spent(lines) - line.cost >= 0
+
+
+# ---------------------------------------------------------------------------
+# M13 : Économat du Hall (docs/M13.md §3 ; B74, D-150)
+# ---------------------------------------------------------------------------
+
+## Préfixe des postes d'achat (`upgrade_ag01`).
+const UPGRADE_PREFIX: String = "upgrade_"
+
+
+## Offres du soir du jour `day_number` (catalogue puis hors catalogue, ordre
+## des données) : postes **non cochés**, libellé `exp_upgrade_<id>`, note =
+## description de l'effet. Vide avant `shop_open_evening` (J5).
+static func shop_lines(economy: EconomyDef, day_number: int, flags: Dictionary[StringName, Variant]) -> Array[ExpenseLine]:
+	var lines: Array[ExpenseLine] = []
+	if economy == null or day_number < economy.shop_open_evening:
+		return lines
+	for off_catalog: bool in [false, true]:
+		for upgrade: UpgradeDef in economy.upgrades:
+			if upgrade == null or upgrade.off_catalog != off_catalog or not upgrade.is_offered(day_number, flags):
+				continue
+			var line: ExpenseLine = ExpenseLine.new(StringName(UPGRADE_PREFIX + String(upgrade.id)), upgrade.price)
+			line.upgrade_id = upgrade.id
+			line.label_key = upgrade.expense_key if not upgrade.expense_key.is_empty() else upgrade.name_key
+			line.note_key = upgrade.desc_key
+			lines.append(line)
+	return lines
+
+
+## Offres achetables ce soir avec le solde restant (`balance` = fonds du soir) :
+## offertes, un achat au plus, sans découvert.
+static func affordable_upgrades(lines: Array[ExpenseLine], balance: int, max_upgrades: int = 1) -> Array[ExpenseLine]:
+	var result: Array[ExpenseLine] = []
+	for line: ExpenseLine in lines:
+		if line.upgrade_id != &"" and not line.paid and can_toggle_on(lines, balance, line, max_upgrades):
+			result.append(line)
+	return result
+
+
+## Nombre d'achats cochés.
+static func upgrades_selected(lines: Array[ExpenseLine]) -> int:
+	var count: int = 0
+	for line: ExpenseLine in lines:
+		if line.upgrade_id != &"" and line.paid:
+			count += 1
+	return count
+
+
+## Achats cochés : drapeau de possession `upg_<id>` et drapeaux d'achat
+## (`purchase_flags`, AG-06 : `loyalty +1`), dans `report`.
+static func _apply_purchases(report: EveningReport, economy: EconomyDef, lines: Array[ExpenseLine],
+		flags: Dictionary[StringName, Variant]) -> void:
+	for line: ExpenseLine in lines:
+		if line.upgrade_id == &"" or not line.paid:
+			continue
+		var upgrade: UpgradeDef = economy.get_upgrade(line.upgrade_id) if economy != null else null
+		if upgrade == null:
+			continue
+		report.flag_changes[upgrade.owned_flag()] = true
+		CaseConsequences.add_all(report.flag_changes, flags, upgrade.purchase_flags)
+		report.upgrades_bought.append(upgrade.id)
 
 
 ## Applique la soirée : débit, évolution du foyer, fins anticipées.
@@ -324,6 +388,7 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 			loan_defaulted = true
 			report.flag_changes[FLAG_LOAN_DEFAULTED] = true
 	var household_effects: Array[StringName] = _apply_events(report, events, choices, flags, economy)
+	_apply_purchases(report, economy, lines, flags)
 	for income: ExpenseLine in income_lines(economy, day_number, household, flags):
 		report.gained += income.cost
 		report.income_lines.append(income)
@@ -456,9 +521,60 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 # M7 : événements du soir
 # ---------------------------------------------------------------------------
 
-## Événements du soir dont la condition est vraie, triés par `order`.
+## M13 (QA-069) : préfixe des lettres d'offre (`offer_ag05`) et leur rang
+## (après les événements des données).
+const OFFER_EVENT_PREFIX: String = "offer_"
+const OFFER_EVENT_ORDER: int = 900
+
+
+## QA-069 (M13 §3.3, §3.5) : messages d'offre dus ce soir (AG-04, AG-05,
+## AG-06 : `UpgradeDef.offer_message_due`), dans l'ordre du catalogue, au
+## format des messages du briefing : `{upgrade_id, speaker, text, voice, args}`.
+static func offer_messages(economy: EconomyDef, day_number: int, flags: Dictionary[StringName, Variant]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if economy == null or day_number < economy.shop_open_evening:
+		return result
+	for upgrade: UpgradeDef in economy.upgrades:
+		if upgrade != null and upgrade.offer_message_due(day_number, flags):
+			result.append({"upgrade_id": upgrade.id, "speaker": upgrade.offer_speaker_key, "text": upgrade.offer_message_key,
+					"voice": upgrade.offer_voice, "args": []})
+	return result
+
+
+## QA-069 : lettres d'offre du soir (canal « CE SOIR » des événements) : une
+## lettre `offer_<id>` par message dû (`offer_messages`), sans option ni
+## coût ; à l'application (`apply`), sa définition pose le drapeau
+## `UpgradeDef.offer_seen_flag` : le message n'est remis qu'une fois.
+static func offer_events(economy: EconomyDef, day_number: int, flags: Dictionary[StringName, Variant]) -> Array[EveningEvent]:
+	var events: Array[EveningEvent] = []
+	for message: Dictionary in offer_messages(economy, day_number, flags):
+		var upgrade_id: StringName = message["upgrade_id"]
+		var def: EveningEventDef = EveningEventDef.new()
+		def.id = StringName(OFFER_EVENT_PREFIX + String(upgrade_id))
+		def.kind = EveningEventDef.Kind.LETTER
+		def.order = OFFER_EVENT_ORDER
+		def.title_key = str(message["speaker"])
+		def.text_key = str(message["text"])
+		var upgrade: UpgradeDef = economy.get_upgrade(upgrade_id)
+		def.flags[upgrade.offer_seen_flag()] = 0
+		var event: EveningEvent = EveningEvent.new()
+		event.def = def
+		event.id = def.id
+		event.kind = def.kind
+		event.title_key = def.title_key
+		event.text_key = def.text_key
+		event.upgrade_id = upgrade_id
+		event.speaker_key = def.title_key
+		event.voice = int(message["voice"])
+		events.append(event)
+	return events
+
+
+## Événements du soir dont la condition est vraie, triés par `order`. M13
+## (QA-069) : avec `day_number` (≥ 0), suivis des lettres d'offre du soir
+## (`offer_events`).
 static func build_events(defs: Array[EveningEventDef], flags: Dictionary[StringName, Variant],
-		economy: EconomyDef) -> Array[EveningEvent]:
+		economy: EconomyDef, day_number: int = -1) -> Array[EveningEvent]:
 	var events: Array[EveningEvent] = []
 	var sorted: Array[EveningEventDef] = []
 	for def: EveningEventDef in defs:
@@ -488,6 +604,8 @@ static func build_events(defs: Array[EveningEventDef], flags: Dictionary[StringN
 		for gauge: String in def.text_gauges:
 			event.text_args.append(FlagCondition.gauge_value(flags, StringName(gauge)))
 		events.append(event)
+	if day_number >= 0:
+		events.append_array(offer_events(economy, day_number, flags))
 	return events
 
 
@@ -575,6 +693,11 @@ static func _apply_events(report: EveningReport, events: Array[EveningEvent], ch
 					report.ending = ending
 				report.add_event(str(outcome.get("result_key", "")),
 						EveningReport.Tone.BAD if ending != &"" or SaveService.as_int(outcome.get("cost", 0)) > 0 else EveningReport.Tone.INFO)
+				if bool(outcome.get("drawer_found", false)):
+					# QA-069 (M13 §3.5) : Okonkwo, après la confiscation du tiroir.
+					var drawer_key: String = str(outcome.get("drawer_message_key", EndingService.DRAWER_FOUND_MESSAGE_KEY))
+					report.event_texts.append(drawer_key)
+					report.add_event(drawer_key, EveningReport.Tone.WARNING)
 			EveningEventDef.Kind.LETTER:
 				report.event_texts.append(event.text_key)
 				report.event_texts.append_array(event.extra_keys)

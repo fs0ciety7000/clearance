@@ -43,8 +43,11 @@ var modifier_changes: Array[RuleChangeDef] = []
 var lists: Dictionary[StringName, Array] = {}
 ## Cas scénarisé en cours : surcharges et modificateurs ignorés (D-129, règle 3).
 var overlay_suspended: bool = false
-## Journal : `{source, change, effect}` (effet réel : `added`, `retired`…).
+## Journal : `{source, change, effect}` (effet réel : `added`, `retired`,
+## `replaced` + `previous` : règle remplacée…).
 var _journal: Array[Dictionary] = []
+## Règle remplacée par le dernier `_apply_one` (`replaced`), reportée au journal.
+var _last_replaced: Rule = null
 ## Règles déjà vues (rétablissement d'une règle oubliée).
 var _known: Dictionary[StringName, Rule] = {}
 ## Ordre d'origine des règles (rétablissement à sa place).
@@ -143,7 +146,10 @@ func apply_changes(changes: Array[RuleChangeDef], source: StringName = &"") -> R
 		if change == null:
 			continue
 		var effect: StringName = _apply_one(change, diff)
-		if effect != &"":
+		if effect == &"replaced":
+			_journal.append({"source": source, "change": change, "effect": effect, "previous": _last_replaced})
+			_last_replaced = null
+		elif effect != &"":
 			_journal.append({"source": source, "change": change, "effect": effect})
 	_finish(diff)
 	return diff
@@ -167,6 +173,11 @@ func revert_source(source: StringName) -> RuleDiff:
 				if _remove_active(change.rule_id) != null:
 					new_rule_ids.erase(change.rule_id)
 					diff.retired.append(change.rule_id)
+			&"replaced":
+				var previous: Rule = row.get("previous") as Rule
+				if previous != null and _swap_active(previous):
+					new_rule_ids.erase(change.rule_id)
+					diff.restored.append(change.rule_id)
 			&"retired", &"forgotten":
 				if _restore(change.rule_id):
 					diff.restored.append(change.rule_id)
@@ -230,8 +241,18 @@ func get_modifier(name: StringName) -> int:
 func _apply_one(change: RuleChangeDef, diff: RuleDiff) -> StringName:
 	match change.op:
 		RuleChangeDef.Op.ADD:
-			if change.rule == null or has_rule(change.rule.id):
+			if change.rule == null:
 				return &""
+			if has_rule(change.rule.id):
+				# M13 : palier qui remplace la règle en vigueur, à sa place.
+				var previous: Rule = get_rule(change.rule.id)
+				if not change.replaces or previous == change.rule or not _swap_active(change.rule):
+					return &""
+				_last_replaced = previous
+				if change.mark_new and not new_rule_ids.has(change.rule.id):
+					new_rule_ids.append(change.rule.id)
+				diff.added.append(change.rule.id)
+				return &"replaced"
 			_known[change.rule.id] = change.rule
 			_drop_retired(change.rule.id)
 			# Règle d'origine remplacée (SC-89a) : à sa place ; nouvelle : à la fin.
@@ -269,6 +290,17 @@ func _apply_one(change: RuleChangeDef, diff: RuleDiff) -> StringName:
 			diff.modifiers.append(change.modifier)
 			return &"modified"
 	return &""
+
+
+## Met `rule` à la place de la règle active de même identifiant ; faux si
+## aucune n'est active.
+func _swap_active(rule: Rule) -> bool:
+	for i: int in rules.size():
+		if rules[i] != null and rules[i].id == rule.id:
+			rules[i] = rule
+			_known[rule.id] = rule
+			return true
+	return false
 
 
 ## Retire une règle active (sans ligne barrée) ; null si absente.

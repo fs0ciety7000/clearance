@@ -11,7 +11,9 @@ const ALLOWED_PARAMS: Array[StringName] = [&"document_id", &"expired_days", &"tr
 		# Acte II : contrat, vaisseau, firmware, valeur injectée (imposée ou reprise d'un cas), poste.
 		&"contract_code", &"vessel", &"firmware_age_days", &"injected_value", &"injected_value_from_case", &"post",
 		# Acte III : date d'expiration imposée (R32), variante (répondant, convocation).
-		&"expiry", &"variant"]
+		&"expiry", &"variant",
+		# M13 : sujet d'une fausse déclaration (AV-1 → AV-5), objet de fouille imposé.
+		&"topic", &"item"]
 
 
 func test_catalog_loads_name_pools_and_appearance_catalog() -> void:

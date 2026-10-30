@@ -37,6 +37,10 @@ const EXPECTED_RULES: Dictionary[AnomalyType.Kind, Array] = {
 	K.SPONSOR_MISMATCH: [&"r_sponsor"],
 	K.FORGED_SUMMONS: [&"r_summons"],
 	K.SUSPENDED_CONTRACT: [&"r_tycho_lockout"],
+	# M13 (docs/M13.md §1.5, §2.7) ; CONCEALED_WEAPON : jour réel (DÉTENTION), `test_m13_generation`.
+	K.STATEMENT_MISMATCH: [&"r_statements"],
+	K.CONTRABAND: [&"r_contraband"],
+	K.CONCEALED_IMPLANT: [&"r_implants_declared"],
 }
 ## Verdict attendu par type (R17 et R18 sont de sévérité 3 : DÉTENTION).
 const DETAIN_KINDS: Array[AnomalyType.Kind] = [K.IMPOSTOR_LOOKALIKE, K.RELATIVE_DOCUMENTS]
@@ -44,10 +48,14 @@ const DETAIN_KINDS: Array[AnomalyType.Kind] = [K.IMPOSTOR_LOOKALIKE, K.RELATIVE_
 const NOTICE_ONLY: Array[AnomalyType.Kind] = [K.WANTED_PERSON, K.REVOKED_ID]
 ## Acte III : besoin d'une Main courante (R34, hors du jour « toutes règles »).
 const LEDGER_ONLY: Array[AnomalyType.Kind] = [K.SPONSOR_MISMATCH]
+## M13 : arme (R46) seulement les jours de DÉTENTION (le jour « toutes règles » n'en a pas).
+const DETAIN_ONLY: Array[AnomalyType.Kind] = [K.CONCEALED_WEAPON]
 ## Injectables seulement sur certains passagers (permis : pas les Nés-Halcyon ;
 ## origine interdite : THR) — refus d'injecter attendu sur les autres.
 const CONDITIONAL: Array[AnomalyType.Kind] = [K.PURPOSE_MISMATCH, K.BANNED_FACTION, K.CONTRACT_MISMATCH,
-		K.UNREGISTERED_VESSEL, K.SUSPENDED_CONTRACT]
+		K.UNREGISTERED_VESSEL, K.SUSPENDED_CONTRACT,
+		# M13 : fausse déclaration = permis exigé (pas un Né-Halcyon).
+		K.STATEMENT_MISMATCH]
 
 var _kinds: Array[AnomalyType.Kind] = []
 ## `[builder, generated, kind]` pour chaque graine (un type imposé par graine).
@@ -56,7 +64,7 @@ var _single: Array[Array] = []
 
 func before_all() -> void:
 	_kinds = InjectorRegistry.supported_kinds()
-	for kind: AnomalyType.Kind in NOTICE_ONLY + LEDGER_ONLY:
+	for kind: AnomalyType.Kind in NOTICE_ONLY + LEDGER_ONLY + DETAIN_ONLY:
 		_kinds.erase(kind)
 	var day: DayDef = Gen.full_day()
 	var builder: CaseBuilder = null

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDef" format=3 uid="uid://bypisehsohmc7"]
+
+[ext_resource type="Script" path="res://scripts/core/upgrade_def.gd" id="1_2nqxd"]
+
+[resource]
+script = ExtResource("1_2nqxd")
+id = &"ag01"
+name_key = "upg_ag01_name"
+desc_key = "upg_ag01_desc"
+price = 25
+expense_key = "exp_upgrade_ag01"

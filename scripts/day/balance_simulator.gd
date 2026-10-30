@@ -110,7 +110,7 @@ static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: f
 				credits += economy.report_bonus
 		var context: Dictionary[StringName, Variant] = EveningService.evening_context(flags, household, compliance,
 				economy.levy_for(day_number, credits), day_number, economy, credits, profile.story_mode)
-		var events: Array[EveningEvent] = EveningService.build_events(day.evening_events, context, economy)
+		var events: Array[EveningEvent] = EveningService.build_events(day.evening_events, context, economy, day_number)
 		var lines: Array[ExpenseLine] = EveningService.build_lines(economy, day_number, household, flags, credits)
 		var wanted_choices: Dictionary[StringName, StringName] = profile.choices_for(events)
 		EveningService.apply_line_costs(lines, events, wanted_choices)
@@ -121,6 +121,8 @@ static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: f
 			EveningService.default_selection(lines, credits)
 		else:
 			reasoned_selection(economy, lines, credits, household)
+		# M13 (D-150) : achat à l'Économat selon `upgrade_policy` (§4.4).
+		buy_upgrade(profile, economy, lines, credits, day_number, flags)
 		var choices: Dictionary[StringName, StringName] = EveningService.default_choices(events,
 				credits - EveningService.total_spent(lines))
 		for event: EveningEvent in events:
@@ -142,6 +144,16 @@ static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: f
 				and FlagCondition.is_flag_true(flags, EndingService.FLAG_ACT2):
 			flags[EndingService.FLAG_ACT3] = true
 		var row: Dictionary = _row(day_number, summary, report)
+		row["upgrades"] = report.upgrades_bought.duplicate()
+		row["processed_share"] = float(summary.get_processed_count()) / maxi(summary.planned_cases, 1)
+		for meta: String in ["m13_seconds", "m13_asked", "m13_searches", "m13_unwarranted", "m13_lies", "m13_lies_seen"]:
+			row[meta] = float(summary.get_meta(meta, 0.0))
+		row["processed"] = summary.get_processed_count()
+		var citation_keys: Dictionary[String, int] = {}
+		for result: CaseResult in summary.results:
+			if result.has_citation():
+				citation_keys[result.citation_reason_key] = citation_keys.get(result.citation_reason_key, 0) + 1
+		row["citation_keys"] = citation_keys
 		row["bribes"] = summary.get_bribe_total()
 		row["overruns"] = summary.get_overrun_count()
 		row["choices"] = report.choices.duplicate()
@@ -150,6 +162,68 @@ static func run_campaign_from(data: DataCatalog, campaign_seed: int, accuracy: f
 			row["flags"] = flags.duplicate()
 			break
 	return rows
+
+
+## M13 (§4.4) : préférence d'achat de la politique `smart` (AG-04 : mercenaires seulement).
+const UPGRADE_ORDER: Array[StringName] = [&"ag05", &"ag01", &"ag06", &"ag03", &"ag02"]
+## M13 §4.4 dit « solde après les postes essentiels > prix + 15 ₵ » ; mesuré
+## (`balance_sim --m13=compare`, 80 %) : trop d'achats (≈ 80 % des campagnes
+## pour chaque AG). Lot B : marge de 40 ₵ sans horizon (AG-03 55–64 %, AG-05
+## 17–20 %, solde du J29 −20 à −24 ₵). Finition M13 : 30 ₵ restants après
+## l'achat et plus d'achat après le soir du J22 (un achat tardif ne s'amortit
+## plus : M13 §4.4, ≤ 12 jours) — AG-01 68 %, AG-02 32 %, AG-03 48 %, AG-05
+## 32 %, AG-06 34 % (`default`, 80 %).
+const SMART_MARGIN: int = 30
+## Dernier soir d'achat `smart` (0 = tous).
+const SMART_LAST_EVENING: int = 22
+## Postes essentiels qui doivent être payés avant un achat `smart`.
+const ESSENTIAL_LINES: Array[StringName] = [&"rent", &"food", &"heating", &"oxygen"]
+
+
+## M13 : ajoute les offres de l'Économat aux postes et coche au plus un achat
+## (un par soir, sans découvert) selon la politique du profil : `smart` si le
+## solde, une fois les postes essentiels payés et l'achat fait, reste ≥
+## `SMART_MARGIN`, jusqu'au soir `SMART_LAST_EVENING` ;
+## `eager` dès que le solde le permet ; `list` dans l'ordre de `upgrade_list`.
+static func buy_upgrade(profile: SimProfile, economy: EconomyDef, lines: Array[ExpenseLine], credits: int,
+		day_number: int, flags: Dictionary[StringName, Variant]) -> void:
+	if not profile.m13 or profile.upgrade_policy == SimProfile.UPGRADES_NEVER:
+		return
+	var shop: Array[ExpenseLine] = EveningService.shop_lines(economy, day_number, flags)
+	if shop.is_empty():
+		return
+	lines.append_array(shop)
+	var order: Array[StringName] = UPGRADE_ORDER.duplicate()
+	if profile.is_mercenary():
+		order.append(UpgradeDef.ID_DOUBLE_DRAWER)
+	var margin: int = profile.smart_margin if profile.smart_margin >= 0 else SMART_MARGIN
+	var last_evening: int = profile.smart_last_evening if profile.smart_last_evening >= 0 else SMART_LAST_EVENING
+	if profile.upgrade_policy == SimProfile.UPGRADES_SMART and last_evening > 0 and day_number > last_evening:
+		return
+	match profile.upgrade_policy:
+		SimProfile.UPGRADES_EAGER:
+			margin = 0
+		SimProfile.UPGRADES_LIST:
+			order = profile.upgrade_list.duplicate()
+			margin = 0
+	if profile.upgrade_policy == SimProfile.UPGRADES_SMART:
+		for line: ExpenseLine in lines:
+			var essential: bool = ESSENTIAL_LINES.has(line.id) or line.member_id != &"" or line.ration_of != &""
+			if essential and not line.paid:
+				return
+	var remaining: int = credits - EveningService.total_spent(lines)
+	for upgrade_id: StringName in order:
+		if profile.avoid_upgrades.has(upgrade_id):
+			continue
+		# Finition M13 : le tiroir n'est acheté que par qui garde déjà les
+		# enveloppes (`mercenary3`, honnête jusqu'au J20, ne l'achète pas).
+		if upgrade_id == UpgradeDef.ID_DOUBLE_DRAWER and (profile.keep_bribes <= 0.0 or day_number + 1 < profile.bribes_from_day):
+			continue
+		for line: ExpenseLine in shop:
+			if line.upgrade_id == upgrade_id and remaining - line.cost >= margin \
+					and EveningService.can_toggle_on(lines, credits, line, economy.upgrades_per_evening):
+				line.paid = true
+				return
 
 
 ## M12 (B58) : calendrier des événements de station d'une campagne (jour →
@@ -409,6 +483,9 @@ static func _garde_evidence(case: Case, key: CaseKey, ctx: RuleContext) -> Array
 	var found: Array[Discrepancy] = []
 	for violation: Violation in key.expected_violations:
 		var refs: Array[FieldRef] = violation.refs
+		# M13 : question posée (puce obtenue), zone scannée (objet révélé).
+		for ref: FieldRef in refs:
+			DaySimulator.obtain(case, ref)
 		var done: bool = false
 		for i: int in refs.size():
 			for j: int in range(i + 1, refs.size()):
@@ -450,6 +527,8 @@ static func _has_evidence(case: Case, key: CaseKey, ctx: RuleContext) -> bool:
 		var refs: Array[FieldRef] = violation.refs
 		if refs.size() < 2:
 			continue
+		for ref: FieldRef in refs:
+			DaySimulator.obtain(case, ref)
 		var found: bool = false
 		for i: int in refs.size():
 			for j: int in range(i + 1, refs.size()):

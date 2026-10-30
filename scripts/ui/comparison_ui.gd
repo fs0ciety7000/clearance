@@ -35,6 +35,18 @@
 ## panne (EV-02, `RuleContext.modifier(MOD_COMPARATOR_DOWN)` lu par
 ## `rule_context_provider`) : ni CONCORDANCE ni DISCORDANCE, « CONSTAT DE
 ## L'AGENT ».
+## M13 (lot C, ARCHITECTURE §12 ; M13 §6.1 I35 → I41) : **journal de dialogue
+## à puces** (`statement_given` → `Statement.segments()` ; puces sélectionnables
+## dans le geste A → B, journal ↔ document, souris, clavier et manette ;
+## réplique figée sur DISCORDANCE ; didascalies d'indices) ; sujets `cargo`,
+## `search`, `about_statement`, `about_contraband`… au menu Interroger ;
+## **portique** (`SearchPanel` à la place de la File : bandeau MOTIF,
+## confirmation « AUCUN MOTIF ÉTABLI » focus ANNULER, 5 zones, TOUT SCANNER,
+## objets épinglables, onglet FOUILLE du journal) ; **attente** sur
+## `inspection_busy` (Interroger et portique suspendus, `BusyIndicator`) ;
+## effets visibles des améliorations (AG-02 modèle des sceaux, AG-05 Rulebook à
+## la bonne page avec une marge d'Okonkwo, AG-06 manifeste pendant la marche,
+## pastilles du guichet).
 class_name ComparisonUI
 extends Control
 
@@ -95,6 +107,14 @@ const LIGHTS_OUT_PANELS: float = 0.38
 ## Couleurs des sources du scanner partiel (ARCHITECTURE §7.2 : ambre / magenta).
 const SCANNER_ACV: StringName = &"acv"
 const SCANNER_LUCIOLE: StringName = &"luciole"
+## M13 : améliorations du guichet (ordre du catalogue, `UpgradeDef.ID_*`).
+const UPGRADE_IDS: Array[StringName] = [UpgradeDef.ID_HYGIAPHONE, UpgradeDef.ID_WOOD_LAMP, UpgradeDef.ID_CALIBRATED_GATE,
+		UpgradeDef.ID_DOUBLE_DRAWER, UpgradeDef.ID_ANNOTATED_BOOK, UpgradeDef.ID_QUEUE_MONITOR]
+## M13 (AG-05) : notes de marge d'Okonkwo (`okonkwo_note_<n>`) par famille de
+## champ (date, émetteur, durée, bloc ID / origine, implant ; autre).
+const MARGIN_NOTES: Dictionary[StringName, int] = {
+	&"date": 1, &"issuer": 2, &"stay": 3, &"origin": 4, &"implant": 5, &"other": 6,
+}
 
 ## Photo des documents : `func(appearance: PassengerAppearance) -> Texture2D`.
 var portrait_provider: Callable = Callable()
@@ -146,6 +166,8 @@ var station_events: Array[StationEventPlan] = []
 var named_lists: Dictionary[StringName, Array] = {}
 var fx_intensity: float = 1.0
 var reduce_motion: bool = false
+## M13 : améliorations possédées ce shift (drapeaux du matin, D-150).
+var upgrades: Array[StringName] = []
 
 # --- Nœuds ------------------------------------------------------------------------
 var top_bar: TopBar = null
@@ -165,6 +187,10 @@ var links: LinkLayer = null
 var pa_strip: PanelContainer = null
 ## M12 : bandeau ÉVÉNEMENT (haut de la bande B, au-dessus du haut-parleur).
 var event_banner: StationEventBanner = null
+## M13 : portique (à la place de la File pendant la fouille) et confirmation
+## « AUCUN MOTIF ÉTABLI » ouverte (null sinon).
+var search_panel: SearchPanel = null
+var search_dialog: ConfirmDialog = null
 var _pa_label: Label = null
 var _pa_serial: int = 0
 ## Acte II : pastilles « CONFIRMER » posées au milieu des liens suggérés.
@@ -186,6 +212,8 @@ var _answer_frame: int = -1
 var _answer_text: String = ""
 ## Passager qui quitte le guichet (réplique de départ), null sinon.
 var _departing_case: Case = null
+## M13 : question posée en dernier (légende de la réplique au journal).
+var _last_question: String = ""
 
 
 func _ready() -> void:
@@ -216,6 +244,8 @@ func default_focus_control() -> Control:
 		var question: Control = FocusGuard.first_focusable(passenger_panel)
 		if question != null:
 			return question
+	if search_panel != null and search_panel.is_open() and not inspection_active:
+		return search_panel.first_focus()
 	if inspection_active:
 		var field: Control = workbench.first_focusable_item()
 		if field != null:
@@ -384,7 +414,10 @@ func _build() -> void:
 	passenger_panel.size.x = SIDE_PANEL_WIDTH
 	add_child(BlurBackdrop.create(passenger_panel))
 	add_child(passenger_panel)
-	passenger_panel.question_chosen.connect(ask)
+	passenger_panel.question_chosen.connect(_on_question_chosen)
+	passenger_panel.journal.item_picked.connect(_on_item_picked)
+	passenger_panel.busy.reduce_motion = reduce_motion
+	passenger_panel.busy.finished.connect(_on_busy_finished)
 
 	queue_panel = QueuePanel.new()
 	queue_panel.name = "QueuePanel"
@@ -396,6 +429,22 @@ func _build() -> void:
 	queue_panel.offset_top = BAND_TOP + DS.SPACE_6
 	add_child(BlurBackdrop.create(queue_panel))
 	add_child(queue_panel)
+	search_panel = SearchPanel.new()
+	search_panel.name = "SearchPanel"
+	search_panel.anchor_left = 1.0
+	search_panel.anchor_right = 1.0
+	search_panel.offset_left = -(DS.SEARCH_PANEL_WIDTH + DS.SPACE_8)
+	search_panel.offset_right = -DS.SPACE_8
+	search_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	search_panel.offset_top = BAND_TOP + DS.SPACE_6
+	search_panel.reduce_motion = reduce_motion
+	search_panel.fx_intensity = fx_intensity
+	add_child(BlurBackdrop.create(search_panel))
+	add_child(search_panel)
+	search_panel.zone_requested.connect(func(zone: StringName) -> void: EventBus.search_requested.emit(zone))
+	search_panel.scan_all_requested.connect(func() -> void: EventBus.search_requested.emit(SearchLayout.ZONE_ALL))
+	search_panel.close_requested.connect(close_search)
+	search_panel.item_picked.connect(_on_item_picked)
 
 	_lights_veil = ColorRect.new()
 	_lights_veil.name = "LightsOutVeil"
@@ -527,6 +576,14 @@ func _connect_bus() -> void:
 	EventBus.station_event_ended.connect(_on_station_event_ended)
 	EventBus.rule_list_published.connect(_on_rule_list_published)
 	EventBus.difficulty_changed.connect(func(_d: StringName) -> void: set_story_mode(GameState.is_story_mode()))
+	# M13 (ARCHITECTURE §12.8).
+	EventBus.statement_given.connect(_on_statement_given)
+	EventBus.search_confirmation_required.connect(_on_search_confirmation_required)
+	EventBus.search_opened.connect(_on_search_opened)
+	EventBus.search_zone_scanned.connect(_on_search_zone_scanned)
+	EventBus.search_closed.connect(_on_search_closed)
+	EventBus.inspection_busy.connect(_on_inspection_busy)
+	EventBus.upgrade_purchased.connect(func(_id: StringName) -> void: _read_upgrades())
 
 
 # ---------------------------------------------------------------------------
@@ -561,6 +618,7 @@ func _on_day_started(p_day: DayDef, p_rulebook: Array[RulebookEntry]) -> void:
 	top_bar.set_credits(GameState.credits)
 	top_bar.set_story_mode(GameState.is_story_mode())
 	tool_bar.set_detain_available(detain_available)
+	_read_upgrades()
 	_refresh_station_events()
 	_refresh_all()
 
@@ -613,8 +671,15 @@ func _on_case_presented(case: Case) -> void:
 	slipped_items.clear()
 	suggestions.clear()
 	_refresh_suggestion_buttons()
+	passenger_panel.clear_journal()
+	_last_question = ""
 	var bark: String = arrival_text(case)
 	passenger_panel.set_line(bark)
+	# M13 (D-107) : indices visibles doublés d'une didascalie au journal.
+	for tag: String in cue_tags(case):
+		passenger_panel.add_tag(tag)
+	# AG-06 : manifeste du passager pendant sa marche (données présentées).
+	queue_panel.set_manifest(manifest_text(case) if upgrades.has(UpgradeDef.ID_QUEUE_MONITOR) else "")
 	passenger_panel.set_accent(final_figure_color(case))
 	subtitles.show_line(UiText.passenger_number(case), bark, arrival_tag(case))
 	workbench.set_empty_state(UiText.t("wb_empty_title", "EN ATTENTE DES DOCUMENTS"),
@@ -1183,6 +1248,10 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 					_pulse_item(item)
 			_flag_face(result)
 			_refresh_doc_flags()
+			# M13 : la réplique de la puce épinglée est figée jusqu'au verdict.
+			for ref: FieldRef in [result.a, result.b]:
+				if ref != null and ref.is_statement():
+					passenger_panel.journal.freeze(ref)
 			var topic: StringName = InterrogationTopics.topic_for(result)
 			if topic != &"" and not unlocked_topics.has(topic) and not asked_topics.has(topic):
 				unlocked_topics.append(topic)
@@ -1218,8 +1287,18 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 
 
 func _on_interrogation_answered(topic: StringName, line_key: String) -> void:
-	var text: String = passenger_text(UiText.t(line_key, line_key))
-	passenger_panel.set_line(text)
+	var raw: String = UiText.t(line_key, line_key)
+	var text: String = passenger_text(answer_text(raw))
+	passenger_panel.set_line(text, true, false)
+	# M13 : cadre composé → puces aux emplacements ; prose → texte (puces à part
+	# à réception de `statement_given`).
+	if current_case != null and has_statement_slots(raw) and not current_case.statements.is_empty():
+		passenger_panel.journal.add_statement_line(raw, current_case.statements, _last_question)
+	else:
+		passenger_panel.journal.add_line(text, _last_question)
+	_last_question = ""
+	# La question posée légende la réplique au journal : plus besoin du rappel.
+	passenger_panel.set_hint("")
 	subtitles.show_line(_speaker_name(), text)
 	_answer_frame = Engine.get_process_frames()
 	_answer_text = text
@@ -1364,10 +1443,13 @@ func _on_settings_changed(key: StringName, value: Variant) -> void:
 			workbench.set_fx_intensity(fx_intensity)
 			links.fx_intensity = fx_intensity
 			tool_bar.set_fx_intensity(fx_intensity)
+			search_panel.fx_intensity = fx_intensity
 		Settings.KEY_REDUCE_MOTION:
 			reduce_motion = value
 			workbench.reduce_motion = reduce_motion
 			links.reduce_motion = reduce_motion
+			search_panel.reduce_motion = reduce_motion
+			passenger_panel.busy.reduce_motion = reduce_motion
 		Settings.KEY_SUBTITLES:
 			subtitles.enabled = value
 		Settings.KEY_COLOR_VISION:
@@ -1402,6 +1484,8 @@ func set_inspection_active(enabled: bool) -> void:
 	workbench.set_inspection_active(enabled)
 	rulebook.set_inspection_active(enabled)
 	top_bar.quota_view.set_inspection_active(enabled)
+	passenger_panel.journal.set_inspection_active(enabled)
+	search_panel.set_inspection_active(enabled)
 	if enabled and rulebook.collapsed:
 		rulebook.set_collapsed(false)
 	links.inspection_active = enabled
@@ -1433,6 +1517,8 @@ func pick(ref: FieldRef) -> InspectionSelection.Action:
 		InspectionSelection.Action.SELECTED_A, InspectionSelection.Action.REPLACED_A:
 			_clear_selected_marks()
 			_select_a(ref)
+			if upgrades.has(UpgradeDef.ID_ANNOTATED_BOOK):
+				open_annotated_page(ref)
 		InspectionSelection.Action.DESELECTED:
 			_clear_selected_marks()
 		InspectionSelection.Action.REQUESTED:
@@ -1446,7 +1532,8 @@ func pick(ref: FieldRef) -> InspectionSelection.Action:
 				if item != null:
 					_pulse_item(item)
 	links.pending_a = selection.a
-	if action != InspectionSelection.Action.IGNORED and (ref.is_ledger() or ref.is_summons() or ref.is_revoked()):
+	if action != InspectionSelection.Action.IGNORED and (ref.is_ledger() or ref.is_summons() or ref.is_revoked()
+			or ref.is_contraband_entry()):
 		rulebook.scroll_to(ref)
 	_refresh_face()
 	return action
@@ -1462,6 +1549,8 @@ func cancel() -> bool:
 		_clear_selected_marks()
 		links.pending_a = null
 		_refresh_face()
+	elif search_panel.is_open():
+		close_search()
 	elif inspection_active:
 		set_inspection_active(false)
 	else:
@@ -1491,6 +1580,11 @@ func available_topics() -> Array[StringName]:
 		topics.append(InterrogationTopics.REMOVE_VISOR)
 	for topic: StringName in InterrogationTopics.BASE:
 		topics.append(topic)
+	# M13 : « Quelque chose à déclarer ? » (J8+) et le portique (R44 en vigueur).
+	if cargo_available():
+		topics.append(InterrogationTopics.CARGO)
+	if search_available() and not search_panel.is_open() and search_dialog == null:
+		topics.append(InterrogationTopics.SEARCH)
 	return topics
 
 
@@ -1512,17 +1606,18 @@ func toggle_question_menu() -> void:
 
 
 func open_question_menu() -> void:
-	if not _inspection_allowed():
+	if not _inspection_allowed() or is_busy():
 		return
 	question_menu_open = true
 	_menu_items.clear()
 	for topic: StringName in available_topics():
 		_menu_items.append({
 			"topic": topic,
-			"text": InterrogationTopics.question_text(topic, current_case),
+			"text": _menu_text(topic),
 			"unlocked": unlocked_topics.has(topic) or topic == InterrogationTopics.ABOUT_ENVELOPE,
 			"luciole": topic == InterrogationTopics.LUCIOLE_REPLY,
 			"asked": asked_topics.has(topic),
+			"search": topic == InterrogationTopics.SEARCH,
 		})
 	passenger_panel.show_menu(_menu_items)
 
@@ -1536,13 +1631,16 @@ func close_question_menu() -> void:
 func ask(topic: StringName) -> void:
 	if not _inspection_allowed() or topic == &"":
 		return
-	EventBus.interrogation_requested.emit(topic)
-	if not asked_topics.has(topic):
-		asked_topics.append(topic)
-	unlocked_topics.erase(topic)
 	var question: String = InterrogationTopics.question_text(topic, current_case)
+	_last_question = question
+	# Rappel de la question jusqu'à la réponse (qui la reprend en légende au journal).
 	passenger_panel.set_hint(UiText.t("speaker_agent", "AGENT") + " : « " + question + " »")
 	question_menu_open = false
+	# M13 : la demande de fouille n'est pas une question (R08, ARCHITECTURE §12.5).
+	if not asked_topics.has(topic) and topic != InterrogationTopics.SEARCH:
+		asked_topics.append(topic)
+	unlocked_topics.erase(topic)
+	EventBus.interrogation_requested.emit(topic)
 	_refresh_all()
 
 
@@ -1626,6 +1724,11 @@ func _end_case(animated: bool) -> void:
 	unlocked_topics.clear()
 	asked_topics.clear()
 	question_menu_open = false
+	# M13 : portique replié, attente levée, confirmation abandonnée.
+	_close_search_dialog()
+	search_panel.reset()
+	queue_panel.visible = true
+	passenger_panel.busy.stop()
 	links.clear()
 	links.face_state = 0
 	_clear_rulebook_marks()
@@ -1638,6 +1741,8 @@ func _end_case(animated: bool) -> void:
 	if phase == DayPhase.Kind.WAITING_CASE:
 		current_case = null
 		passenger_panel.set_line("")
+		passenger_panel.clear_journal()
+		queue_panel.set_manifest("")
 		workbench.set_empty_state(UiText.t("wb_empty_title", "EN ATTENTE DES DOCUMENTS"),
 				UiText.t("wb_empty_waiting", "Appelez le passager suivant à l'intercom."))
 
@@ -1652,7 +1757,8 @@ func _refresh_all() -> void:
 	var allowed: bool = _inspection_allowed()
 	tool_bar.set_stamps_locked(not allowed)
 	tool_bar.set_inspection_available(allowed)
-	tool_bar.set_interrogate_available(allowed)
+	# M13 : Interroger suspendu le temps d'une réponse ou d'un scan.
+	tool_bar.set_interrogate_available(allowed and not is_busy())
 	var extra: int = 1 if allowed and _face_covered() and not asked_topics.has(InterrogationTopics.REMOVE_VISOR) else 0
 	if allowed and current_case != null and current_case.has_envelope() and not asked_topics.has(InterrogationTopics.ABOUT_ENVELOPE):
 		extra += 1
@@ -1744,6 +1850,9 @@ func _status_text() -> String:
 					+ UiText.tf("st_discordance_one", [rule_part], " documentée%s · question débloquée.")
 		return _bb(UiText.tf("st_discordances_title", [count], "⚠ %d discordances"), Palette.ACCENT_MAGENTA) \
 				+ UiText.tf("st_discordances", [rule_part], " documentées%s · questions débloquées.")
+	if search_panel != null and search_panel.is_open() and not inspection_active:
+		return UiText.tf("st_search_fmt", [InputPrompts.text_for(&"ui_accept"), InputPrompts.text_for(&"cancel")],
+				"Portique — choisissez une zone (%s) ou TOUT SCANNER · %s : refermer.")
 	if inspection_active:
 		if selection.has_a():
 			return UiText.tf("st_pick_b_fmt", [InputPrompts.text_for(&"ui_cancel")],
@@ -1757,6 +1866,9 @@ func _status_text() -> String:
 
 
 func _describe_concordant(result: Discrepancy) -> String:
+	var m13: String = _describe_m13(result)
+	if not m13.is_empty():
+		return m13
 	match result.reason_key:
 		Discrepancy.REASON_PROROGATED:
 			# « PROROGÉ (R32) — Expiré le 28.03.2187 : prorogé jusqu'au 10.04 (R32). »
@@ -1800,6 +1912,69 @@ func _describe_concordant(result: Discrepancy) -> String:
 	var field: FieldDef = current_case.get_field_def(result.a)
 	var shown: String = UiText.value_text(field, current_case.get_value(result.a))
 	return UiText.tf("conc_detail", [UiText.field_label(field), shown, shown], "%s : %s = %s")
+
+
+## M13 : résultats des puces et des objets du portique, écrits avec les seules
+## valeurs visibles (« Déclaré : TROIS SEMAINES ≠ Permis d'entrée : 5 JOURS »,
+## « Objet interdit (Cartouche d'O₂) ») ; vide si le résultat n'en relève pas.
+func _describe_m13(result: Discrepancy) -> String:
+	var statement_ref: FieldRef = result.a if result.a != null and result.a.is_statement() else (
+			result.b if result.b != null and result.b.is_statement() else null)
+	var scan_ref: FieldRef = result.a if result.a != null and result.a.is_scan() else (
+			result.b if result.b != null and result.b.is_scan() else null)
+	if statement_ref != null and (result.reason_key == Discrepancy.REASON_STATEMENT_MISMATCH
+			or (result.result == Discrepancy.Result.CONCORDANT and result.reason_key == Discrepancy.REASON_CONCORDANT)):
+		var other: FieldRef = result.b if statement_ref == result.a else result.a
+		var statement: Statement = current_case.get_statement_by_ref(statement_ref)
+		var said: String = StatementChipView.chip_text(statement, false).to_upper() if statement != null else "—"
+		var doc_name: String = ""
+		var shown: String = "—"
+		if other != null and other.is_document_field():
+			var doc: DocumentInstance = current_case.get_document(other.document_id)
+			doc_name = _sentence_case(UiText.document_title(doc.type_def)) if doc != null else ""
+			var field: FieldDef = current_case.get_field_def(other)
+			shown = UiText.value_text(field, current_case.get_value(other))
+		if result.result == Discrepancy.Result.CONCORDANT:
+			return UiText.tf("conc_statement_detail", [said, doc_name, shown], "Déclaré : %s = %s : %s")
+		return UiText.tf("disc_statement_mismatch_detail", [said, doc_name, shown], "Déclaré : %s ≠ %s : %s")
+	if statement_ref != null and result.result == Discrepancy.Result.DISCORDANT:
+		# QA-064 : la puce concorde avec son document de référence, c'est l'autre
+		# document qui est faux (Code du contrat, R25) — discordance documentaire,
+		# écrite côté document, jamais « Déclaré : … ≠ … ».
+		var doc_ref: FieldRef = result.b if statement_ref == result.a else result.a
+		var stated: Statement = current_case.get_statement_by_ref(statement_ref)
+		var said_text: String = StatementChipView.chip_text(stated, false).to_upper() if stated != null else "—"
+		var where: String = "—"
+		var value: String = "—"
+		if doc_ref != null and doc_ref.is_document_field():
+			var doc_instance: DocumentInstance = current_case.get_document(doc_ref.document_id)
+			var doc_field: FieldDef = current_case.get_field_def(doc_ref)
+			where = "%s · %s" % [_sentence_case(UiText.document_title(doc_instance.type_def)) if doc_instance != null else "",
+					UiText.field_label(doc_field) if doc_field != null else String(doc_ref.field_id)]
+			value = UiText.value_text(doc_field, current_case.get_value(doc_ref))
+		return UiText.tf("disc_statement_doc_detail", [where, value, said_text], "%s : %s ≠ déclaré : %s")
+	if scan_ref == null:
+		return ""
+	var item: SearchItem = current_case.get_scan_item(scan_ref)
+	var item_name: String = SearchItemView.item_name(item)
+	match result.reason_key:
+		Discrepancy.REASON_CONTRABAND:
+			return UiText.tf("disc_contraband_detail", [item_name], "Objet interdit (%s)")
+		Discrepancy.REASON_WEAPON:
+			return UiText.tf("disc_weapon_detail", [item_name], "Arme : mise en attente (%s)")
+		Discrepancy.REASON_ITEM_ALLOWED:
+			return UiText.tf("disc_item_allowed_detail", [item_name], "Objet autorisé (%s)")
+		Discrepancy.REASON_IMPLANT_MISMATCH:
+			return UiText.tf("disc_implant_found_detail", [item.implant_code if item != null else "—"],
+					"Implant trouvé : %s · absent des implants déclarés")
+		Discrepancy.REASON_RULE_VIOLATED:
+			var number: int = _rule_number_of(result)
+			return UiText.tf("disc_item_rule_detail", [item_name, number], "%s : interdit par la règle %02d")
+		Discrepancy.REASON_CONCORDANT:
+			if item != null and item.is_implant():
+				return UiText.tf("conc_implant_found_detail", [item.implant_code], "Implant trouvé : %s · déclaré")
+			return UiText.tf("disc_item_allowed_detail", [item_name], "Objet autorisé (%s)")
+	return ""
 
 
 ## « PERMIS D'ENTRÉE » → « Permis d'entrée ».
@@ -1899,6 +2074,18 @@ func _find_item(ref: FieldRef) -> InspectableItem:
 		return null
 	if ref.is_quota_counter():
 		return top_bar.quota_view
+	# M13 : puce du journal ; objet du portique (silhouette ouverte, sinon
+	# onglet FOUILLE du journal).
+	if ref.is_statement():
+		return passenger_panel.journal.find_chip(ref)
+	if ref.is_scan():
+		var on_gate: InspectableItem = search_panel.find_item(ref) if search_panel.is_open() else null
+		if on_gate != null:
+			return on_gate
+		for view: SearchItemView in passenger_panel.journal.search_views:
+			if is_instance_valid(view) and view.ref.equals(ref):
+				return view
+		return null
 	if is_rulebook_ref(ref):
 		return rulebook.find_item(ref, true)
 	return workbench.find_item(ref)
@@ -1923,7 +2110,7 @@ func _rect_of(ref: FieldRef) -> Rect2:
 ## révocation, Main courante, convocation).
 static func is_rulebook_ref(ref: FieldRef) -> bool:
 	return ref.document_id == FieldRef.RULEBOOK_DOCUMENT_ID or ref.is_wanted() or ref.is_symbol() or ref.is_revoked() \
-			or ref.is_ledger() or ref.is_summons()
+			or ref.is_ledger() or ref.is_summons() or ref.is_contraband_entry()
 
 
 func _on_item_picked(item: InspectableItem) -> void:
@@ -1977,6 +2164,8 @@ func _clear_selected_marks() -> void:
 	var items: Array[InspectableItem] = workbench.get_items()
 	items.append_array(rulebook.get_items())
 	items.append(top_bar.quota_view)
+	items.append_array(passenger_panel.journal.get_items())
+	items.append_array(search_panel.get_items())
 	for item: InspectableItem in items:
 		if item.selected:
 			item.set_selected(false)
@@ -1998,6 +2187,9 @@ func describe(result: Discrepancy) -> String:
 		return UiText.t(result.reason_key, result.reason_key)
 	if result.result == Discrepancy.Result.CONCORDANT:
 		return _describe_concordant(result)
+	var m13: String = _describe_m13(result)
+	if not m13.is_empty():
+		return m13
 	match result.reason_key:
 		Discrepancy.REASON_EXPIRED:
 			var dated: FieldRef = result.b if result.a.is_today() else result.a
@@ -2053,6 +2245,323 @@ func describe(result: Discrepancy) -> String:
 				return UiText.tf("disc_summons_name_detail", [called.number, called.full_name().strip_edges().to_upper()],
 						"Convocation %s au nom de %s : ce n'est pas le porteur.")
 	return UiText.t(result.reason_key, result.reason_key)
+
+
+# ---------------------------------------------------------------------------
+# M13 : journal à puces, portique, attente, améliorations
+# ---------------------------------------------------------------------------
+
+## Vrai si le texte traduit d'une réplique contient des emplacements de
+## déclaration (`{motif}`, `{duree}`…) : un cadre `line_stmt_frame_*`.
+static func has_statement_slots(text: String) -> bool:
+	for segment: Dictionary in Statement.segments(text):
+		if segment.has("statement"):
+			return true
+	return false
+
+
+## Texte brut d'une réplique (sous-titre) : un cadre est composé avec les
+## fragments des déclarations du cas (`Statement.compose`).
+func answer_text(raw: String) -> String:
+	if current_case == null or current_case.statements.is_empty() or not has_statement_slots(raw):
+		return raw
+	return Statement.compose(raw, current_case.statements, func(key: String) -> String: return UiText.t(key, key))
+
+
+## Puces obtenues (`statement_given`) : une réplique en prose (scénarisée)
+## reçoit sa rangée de puces à part ; un cadre les porte déjà.
+func _on_statement_given(case_id: StringName, statements: Array[Statement]) -> void:
+	if current_case == null or case_id != current_case.case_id or statements.is_empty():
+		return
+	var journal: DialogueJournal = passenger_panel.journal
+	var last: Dictionary = journal.last_entry()
+	if last.is_empty():
+		journal.add_line(" ".join(statements.map(func(st: Statement) -> String: return StatementChipView.chip_text(st, false))))
+		last = journal.last_entry()
+		var chips: Array[StatementChipView] = last["chips"]
+		if chips.is_empty():
+			journal.attach_chip_row(last, statements)
+		return
+	var existing: Array[StatementChipView] = last["chips"]
+	if existing.is_empty():
+		journal.attach_chip_row(last, statements)
+	journal.set_inspection_active(inspection_active)
+
+
+## Didascalies des indices visibles du cas (`cue_<indice>[_m|_f]`).
+static func cue_tags(case: Case) -> PackedStringArray:
+	var tags: PackedStringArray = []
+	if case == null:
+		return tags
+	var sex: StringName = case.passenger_presented.sex if case.passenger_presented != null else &""
+	for cue: StringName in case.search_cues:
+		var key: String = SearchLayout.cue_line_key(cue, sex)
+		tags.append(UiText.t(key, "[%s]" % cue))
+	return tags
+
+
+## AG-06 : ligne de manifeste (données **présentées**, jamais la vérité) :
+## code d'origine, motif, nombre de documents.
+static func manifest_text(case: Case) -> String:
+	if case == null or case.passenger_presented == null:
+		return ""
+	var presented: Passenger = case.passenger_presented
+	var faction: FactionDef = RulebookReference.catalog().factions.get(presented.faction_id, null)
+	var code: String = faction.code if faction != null else String(presented.faction_id).to_upper()
+	var purpose: String = UiText.t("val_%s" % presented.purpose, String(presented.purpose)).to_upper()
+	return UiText.tf("qp_manifest", [code, purpose, case.documents.size()], "MANIFESTE · %s · %s · %d DOC.")
+
+
+## « Avez-vous quelque chose à déclarer ? » : à partir du J8 (M13 §1.4), ou
+## dès que le portique est en vigueur (Garde, U22).
+func cargo_available() -> bool:
+	if search_available():
+		return true
+	return day != null and day.mode != DayDef.MODE_GARDE and day.day_number >= 8
+
+
+## Portique disponible : R44 (`search_cause`) dans le RuleSet du shift (le
+## contexte courant si l'intégrateur le fournit : EV-05 la retire).
+func search_available() -> bool:
+	var rule_set: RuleSet = null
+	var provided: Variant = rule_context_provider.call() if rule_context_provider.is_valid() else null
+	if provided is RuleContext:
+		rule_set = (provided as RuleContext).rule_set
+	elif day != null:
+		rule_set = day.rule_set
+	if rule_set == null:
+		return false
+	for rule: Rule in rule_set.rules:
+		var procedure: ProcedureRule = rule as ProcedureRule
+		if procedure != null and procedure.procedure_id == ProcedureRule.PROCEDURE_SEARCH_CAUSE:
+			return true
+	return false
+
+
+## Texte d'une entrée du menu (le portique déjà employé se « rouvre »).
+func _menu_text(topic: StringName) -> String:
+	if topic == InterrogationTopics.SEARCH and search_panel != null and not search_panel.scanned_zones().is_empty():
+		return UiText.t("q_search_reopen", "Repassez dans le portique, s'il vous plaît.")
+	return InterrogationTopics.question_text(topic, current_case)
+
+
+## Question choisie au menu (clic, Ⓐ, touche 1–9) : refusée pendant une attente.
+func _on_question_chosen(topic: StringName) -> void:
+	if is_busy():
+		return
+	ask(topic)
+
+
+## Interface suspendue (`inspection_busy`) : Interroger et portique.
+func is_busy() -> bool:
+	return passenger_panel != null and passenger_panel.busy.is_busy()
+
+
+func _on_inspection_busy(case_id: StringName, duration_sec: float, action: StringName) -> void:
+	if current_case == null or case_id != current_case.case_id or verdict_sent:
+		return
+	passenger_panel.busy.start(duration_sec, action, busy_text(action))
+	search_panel.set_busy(true)
+	if question_menu_open:
+		close_question_menu()
+	_refresh_all()
+
+
+## Raison affichée de l'attente (« LE PASSAGER RÉPOND », « SCAN · TORSE »…).
+func busy_text(action: StringName) -> String:
+	match InspectionSession.busy_kind(action):
+		InspectionSession.BUSY_SEARCH_ACTIVATION:
+			return UiText.t("busy_search_activation", "Activation du portique")
+		InspectionSession.BUSY_SEARCH_ZONE:
+			var zone: StringName = InspectionSession.busy_zone(action)
+			if zone == &"":
+				zone = search_panel.scanning_zone()
+			return UiText.tf("busy_search_zone", [UiText.t("zone_%s" % zone, String(zone))], "Scan · %s") if zone != &"" \
+					else UiText.t("busy_search_scan", "Scan en cours")
+	return UiText.t("busy_answer", "Le passager répond")
+
+
+func _on_busy_finished() -> void:
+	search_panel.set_busy(false)
+	_refresh_all()
+	# Manette : le focus revient au portique s'il est ouvert (zone suivante).
+	if search_panel.is_open() and not inspection_active and InputPrompts.is_gamepad() and is_inside_tree():
+		var owner_control: Control = get_viewport().gui_get_focus_owner()
+		if owner_control == null or not owner_control.is_visible_in_tree() or (owner_control is Button and (owner_control as Button).disabled):
+			search_panel.first_focus().grab_focus.call_deferred()
+
+
+## Aucun motif établi : boîte modale (focus ANNULER, D-110) ; FOUILLER QUAND
+## MÊME → `search_requested(&"confirm")`, ANNULER → `(&"cancel")`.
+func _on_search_confirmation_required(case_id: StringName) -> void:
+	if current_case == null or case_id != current_case.case_id or search_dialog != null:
+		return
+	search_dialog = ConfirmDialog.make(UiText.t("srch_title", "PORTIQUE · FOUILLE"),
+			UiText.t("srch_motive_none", "AUCUN MOTIF ÉTABLI"),
+			UiText.t("srch_confirm_text", "Fouiller un passager en règle sans motif est une faute de procédure."),
+			UiText.t("srch_confirm_yes", "FOUILLER QUAND MÊME"), UiText.t("srch_confirm_no", "ANNULER"))
+	search_dialog.name = "SearchConfirmDialog"
+	search_dialog.theme = theme
+	search_dialog.confirmed.connect(func() -> void:
+		search_dialog = null
+		EventBus.search_requested.emit(InspectionSession.SEARCH_CONFIRM))
+	search_dialog.cancelled.connect(func() -> void:
+		search_dialog = null
+		EventBus.search_requested.emit(InspectionSession.SEARCH_CANCEL)
+		_refresh_all()
+		focus_default.call_deferred())
+	# Hors de l'interface (sinon elle ne la ferait pas taire, QA-057).
+	var host: Node = get_parent() if get_parent() != null else self
+	host.add_child(search_dialog)
+
+
+func _close_search_dialog() -> void:
+	if search_dialog != null and is_instance_valid(search_dialog) and not search_dialog.is_done():
+		search_dialog.cancel()
+	search_dialog = null
+
+
+## Texte du motif figé (bandeau MOTIF).
+func motive_text(motive: StringName) -> String:
+	var reason: String = ""
+	match motive:
+		SearchLayout.MOTIVE_NONE:
+			return UiText.t("srch_motive_none", "AUCUN MOTIF ÉTABLI")
+		SearchLayout.MOTIVE_DISCORD:
+			reason = UiText.tf("srch_motive_discord", [str(maxi(discrepancies.size(), 1))], "Discordance %s")
+		SearchLayout.MOTIVE_CUE:
+			var cue: StringName = current_case.search_cues[0] if current_case != null and not current_case.search_cues.is_empty() else &""
+			reason = UiText.tf("srch_motive_cue", [UiText.t("srch_cue_%s" % cue, String(cue))], "Indice : %s")
+		_:
+			reason = UiText.t("srch_motive_%s" % motive, String(motive))
+	return UiText.tf("srch_motive", [reason], "MOTIF : %s")
+
+
+func _on_search_opened(case_id: StringName, motive: StringName) -> void:
+	if current_case == null or case_id != current_case.case_id:
+		return
+	if question_menu_open:
+		close_question_menu()
+	search_panel.open(motive, motive_text(motive))
+	queue_panel.visible = false
+	_refresh_all()
+	if InputPrompts.is_gamepad() and not inspection_active and is_inside_tree():
+		search_panel.first_focus().grab_focus.call_deferred()
+
+
+func _on_search_zone_scanned(case_id: StringName, zone: StringName, items: Array[SearchItem]) -> void:
+	if current_case == null or case_id != current_case.case_id:
+		return
+	search_panel.mark_scanned(zone, items)
+	passenger_panel.journal.set_search_results(_revealed_items(), search_panel.scanned_zones())
+	_refresh_all()
+
+
+func _on_search_closed(case_id: StringName) -> void:
+	if current_case == null or case_id != current_case.case_id:
+		return
+	# Une sélection posée sur un objet du portique passe à l'onglet FOUILLE.
+	var keep_a: FieldRef = selection.a if selection.a != null and selection.a.is_scan() else null
+	search_panel.close()
+	queue_panel.visible = true
+	if not passenger_panel.journal.search_items().is_empty() or not search_panel.scanned_zones().is_empty():
+		passenger_panel.journal.show_tab(DialogueJournal.TAB_SEARCH)
+		_restore_scan_marks()
+		if keep_a != null:
+			_select_a(keep_a)
+	_refresh_all()
+	if InputPrompts.is_gamepad() and is_inside_tree():
+		focus_default.call_deferred()
+
+
+## Ferme la silhouette (FERMER, Ⓑ / Échap) : `search_requested(&"close")`.
+func close_search() -> void:
+	if not search_panel.is_open():
+		return
+	EventBus.search_requested.emit(InspectionSession.SEARCH_CLOSE)
+	# Sans session (tests de l'interface seule) : la silhouette se referme.
+	if search_panel.is_open() and current_case != null:
+		_on_search_closed(current_case.case_id)
+
+
+## Objets révélés du cas courant (zones scannées), dans l'ordre des zones.
+func _revealed_items() -> Array[SearchItem]:
+	var items: Array[SearchItem] = []
+	if current_case == null or current_case.search_layout == null:
+		return items
+	for zone: StringName in SearchLayout.ZONES:
+		for item: SearchItem in current_case.search_layout.items_in(zone):
+			if item.revealed:
+				items.append(item)
+	return items
+
+
+## Marques (discordances numérotées) des objets recréés dans l'onglet FOUILLE.
+func _restore_scan_marks() -> void:
+	for view: SearchItemView in passenger_panel.journal.search_views:
+		for i: int in discrepancies.size():
+			var d: Discrepancy = discrepancies[i]
+			if (d.a != null and d.a.equals(view.ref)) or (d.b != null and d.b.equals(view.ref)):
+				view.add_flag(i + 1)
+
+
+## Améliorations possédées ce shift (drapeaux du matin ; aucune en Garde ni à
+## l'épilogue) : pastilles du guichet, AG-02 (sceaux).
+func _read_upgrades() -> void:
+	upgrades.clear()
+	if day == null or day.mode == DayDef.MODE_GARDE or GameState.session_mode != GameState.SESSION_CAMPAIGN:
+		upgrades = [] as Array[StringName]
+	else:
+		upgrades = GameState.owned_upgrades(UPGRADE_IDS)
+	queue_panel.set_upgrades(upgrades)
+	DocumentView.wood_lamp = upgrades.has(UpgradeDef.ID_WOOD_LAMP)
+
+
+## AG-05 (Recueil annoté) : le Rulebook s'ouvre sur la première règle active
+## qui porte sur ce type de champ, avec une note de marge d'Okonkwo. Aucune
+## indication de conformité (la règle n'est pas évaluée).
+func open_annotated_page(ref: FieldRef) -> StringName:
+	if current_case == null or day == null or day.rule_set == null or ref == null or not ref.is_document_field():
+		return &""
+	var field: FieldDef = current_case.get_field_def(ref)
+	if field == null:
+		return &""
+	for entry: RulebookEntry in rulebook_entries:
+		var rule: Rule = null
+		for candidate: Rule in day.rule_set.rules:
+			if candidate != null and candidate.id == entry.rule_id:
+				rule = candidate
+		if rule == null:
+			continue
+		var paths: Dictionary[StringName, Array] = rule.get_referenced_truth_paths()
+		var hit: bool = false
+		for doc_id: StringName in paths:
+			if (doc_id == ref.document_id or doc_id == &"*") and paths[doc_id].has(field.truth_path):
+				hit = true
+		if not hit:
+			continue
+		if rulebook.collapsed:
+			rulebook.set_collapsed(false)
+		rulebook.focus_rule(entry.rule_id)
+		rulebook.set_margin_note(UiText.t("okonkwo_note_%d" % MARGIN_NOTES[margin_family(field)], ""))
+		return entry.rule_id
+	return &""
+
+
+## Famille d'un champ pour la note de marge (AG-05).
+static func margin_family(field: FieldDef) -> StringName:
+	var path: String = String(field.truth_path)
+	if path.contains("date") or path.contains("expiry") or path.contains("issue"):
+		return &"date"
+	if path.contains("issuer") or path.contains("seal"):
+		return &"issuer"
+	if path.contains("stay"):
+		return &"stay"
+	if path.contains("citizen") or path.contains("faction") or path.contains("origin"):
+		return &"origin"
+	if path.contains("implant"):
+		return &"implant"
+	return &"other"
 
 
 # ---------------------------------------------------------------------------
@@ -2179,7 +2688,7 @@ func _handle_question_keys(event: InputEvent) -> void:
 	if n >= 1 and n <= PassengerPanel.MAX_QUESTIONS:
 		var topic: StringName = passenger_panel.topic_at(n, _menu_items)
 		if topic != &"":
-			ask(topic)
+			_on_question_chosen(topic)
 			_handled()
 
 

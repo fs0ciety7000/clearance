@@ -182,6 +182,15 @@ func weighted_pick(items: Array, weights: PackedFloat32Array) -> Variant:
 	return items[index]
 
 
+## Trie des identifiants (`StringName`, `String`) par ordre alphabétique, en
+## place. Finition M13 : `Array.sort()` ordonne les `StringName` par adresse
+## interne, un ordre qui dépend de l'histoire du processus (une même graine
+## tirait d'autres leurres après d'autres générations) ; tout tirage indexé
+## dans une liste d'identifiants passe par ici.
+static func sort_names(names: Array) -> void:
+	names.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+
+
 ## Mélange de Fisher-Yates en place, déterministe.
 func shuffle(items: Array) -> void:
 	for i: int in range(items.size() - 1, 0, -1):

@@ -20,6 +20,12 @@
 ##   compteur QUOTA ↔ R23 (règle de contexte) ; Firmware NX ↔ date du jour
 ##   (DISCORDANCE à partir de 90 jours, R27) ; un document d'un tiers (SC-27)
 ##   n'est jamais comparé à ceux du porteur ;
+## - M13 (docs/M13.md §1.8, §2.2) : puce du journal ↔ champ de document de même
+##   donnée (R43 : palier et sujet actifs ; vague, provenance, prose libre ou
+##   puce non obtenue → INCOMPARABLE) ; objet révélé par la fouille ↔ R45 / R46
+##   (règle), ↔ entrée de l'onglet Contrebande, ↔ « Implants déclarés » (implant
+##   trouvé), imprimé ↔ bulletin des symboles ; un implant déclaré « non
+##   visible — fouille » n'est jamais comparé au visage (J8+) ;
 ## - tout le reste → INCOMPARABLE (aucune pénalité).
 class_name DiscrepancyChecker
 extends RefCounted
@@ -38,6 +44,9 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 	# M7 : bulletin « Symboles subversifs » ↔ marque d'un document.
 	if a.is_symbol() or b.is_symbol():
 		return _check_symbol(case, a if a.is_symbol() else b, b if a.is_symbol() else a, ctx, result)
+	# M13 : puce du journal de dialogue ↔ champ de document.
+	if a.is_statement() or b.is_statement():
+		return _check_statement(case, a if a.is_statement() else b, b if a.is_statement() else a, ctx, result)
 	if not _is_resolvable(case, a, ctx) or not _is_resolvable(case, b, ctx):
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_UNKNOWN_FIELD)
 
@@ -59,6 +68,14 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 				return result.set_result(verdict, Discrepancy.REASON_RULE_VIOLATED)
 			Discrepancy.Result.CONCORDANT:
 				return result.set_result(verdict, Discrepancy.REASON_CONCORDANT)
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+
+	# M13 : objet révélé par la fouille ↔ onglet Contrebande / implants déclarés.
+	if a.is_scan() or b.is_scan():
+		if a.is_scan() and b.is_scan():
+			return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+		return _check_scan(case, a if a.is_scan() else b, b if a.is_scan() else a, ctx, result)
+	if a.is_contraband_entry() or b.is_contraband_entry():
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 
 	# Date du jour ↔ date d'expiration.
@@ -98,8 +115,12 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 		var other_ref: FieldRef = b if a.is_passenger_face() else a
 		var other_field: FieldDef = case.get_field_def(other_ref)
 		if other_field != null and other_field.truth_path == &"implants":
-			var declared: Variant = FieldValue.normalize(ImplantsDeclaredRule.as_list(case.get_value(other_ref)))
-			var visible: Variant = FieldValue.normalize(case.passenger_presented.implants)
+			var declared: PackedStringArray = FieldValue.normalize(ImplantsDeclaredRule.as_list(case.get_value(other_ref)))
+			var visible: PackedStringArray = FieldValue.normalize(case.passenger_presented.implants)
+			# M13 (J8+) : un implant déclaré « non visible — fouille » n'est pas comparé au visage.
+			var implants_rule: ImplantsDeclaredRule = _implants_rule(ctx)
+			if implants_rule != null:
+				declared = implants_rule.face_declared(declared, visible, ctx)
 			if declared == visible:
 				return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
 			return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_IMPLANT_MISMATCH)
@@ -151,12 +172,95 @@ static func check(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext) -> Dis
 
 ## Onglet du Rulebook portant le bulletin des symboles (`DayDef.rulebook_tabs`).
 const SYMBOLS_TAB: String = "symbols"
+## M13 (CB-08) : symbole des imprimés trouvés à la fouille.
+const PRINT_SYMBOL: StringName = &"luciole"
+
+
+## M13 (§1.8) : puce ↔ autre référence. Seuls les champs de documents font foi.
+static func _check_statement(case: Case, statement_ref: FieldRef, other: FieldRef, ctx: RuleContext,
+		result: Discrepancy) -> Discrepancy:
+	var statement: Statement = case.get_statement_by_ref(statement_ref)
+	if statement == null:
+		# Cas scénarisé sans `statements` : réponse en prose, aucune puce.
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_STATEMENT_FREE)
+	if not statement.given:
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_STATEMENT_NOT_GIVEN)
+	if not other.is_document_field() or not case.has_field(other):
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+	if statement.vague:
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_STATEMENT_VAGUE)
+	if statement.id == Statement.ID_PROVENANCE:
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_PROVENANCE)
+	var rule: StatementsConsistentRule = StatementsConsistentRule.active_in(ctx.rule_set if ctx != null else null)
+	if rule == null or not rule.checks_topic(statement.id):
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_RULE_INACTIVE)
+	match rule.compare(case, statement, other):
+		Discrepancy.Result.DISCORDANT:
+			if is_document_at_fault(case, statement, other, rule):
+				# QA-064 : la parole concorde avec son document de référence ;
+				# c'est cet autre document qui est faux (Code du contrat, R25) :
+				# discordance documentaire, jamais « déclaration contradictoire ».
+				return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_MISMATCH)
+			return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_STATEMENT_MISMATCH)
+		Discrepancy.Result.CONCORDANT:
+			return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
+	return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+
+
+## QA-064 (M13 §1.6 : un honnête ne produit jamais de puce discordante) :
+## une puce discordante avec un champ qui **n'est pas** son champ de référence
+## (`StatementsConsistentRule.primary_ref` : Permis, Carte ou laissez-passer)
+## alors qu'elle ne contredit pas cette référence (concordante, ou référence
+## absente) accuse le document, pas la parole. La paire reste DISCORDANTE et
+## documente la violation de ce document (elle partage son champ).
+static func is_document_at_fault(case: Case, statement: Statement, other: FieldRef,
+		rule: StatementsConsistentRule) -> bool:
+	var primary: FieldRef = rule.primary_ref(case, statement)
+	if primary != null and primary.equals(other):
+		return false
+	return primary == null or rule.compare(case, statement, primary) != Discrepancy.Result.DISCORDANT
+
+
+## M13 (§2.5) : objet révélé ↔ entrée de l'onglet Contrebande (même catégorie,
+## objet interdit : DISCORDANT ; objet autorisé : CONCORDANT) ou ↔ « Implants
+## déclarés » (implant trouvé absent de la liste : DISCORDANT).
+static func _check_scan(case: Case, scan_ref: FieldRef, other: FieldRef, ctx: RuleContext,
+		result: Discrepancy) -> Discrepancy:
+	var item: SearchItem = case.get_scan_item(scan_ref)
+	if other.is_contraband_entry():
+		if item.is_forbidden() and item.category == other.field_id:
+			var reason: String = Discrepancy.REASON_WEAPON if item.kind == SearchItem.Kind.WEAPON \
+					else Discrepancy.REASON_CONTRABAND
+			return result.set_result(Discrepancy.Result.DISCORDANT, reason)
+		if item.kind == SearchItem.Kind.LEGIT:
+			return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_ITEM_ALLOWED)
+		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+	var field: FieldDef = case.get_field_def(other)
+	if item.is_implant() and field != null and field.truth_path == &"implants":
+		if item.unreadable and item.implant_code.is_empty():
+			return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_SCAN_UNREADABLE)
+		var listed: PackedStringArray = FieldValue.normalize(ImplantsDeclaredRule.as_list(case.get_value(other)))
+		var code: String = FieldValue.normalize(PackedStringArray([item.implant_code]))[0]
+		if listed.has(code):
+			return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
+		return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_IMPLANT_MISMATCH)
+	return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 
 
 ## Symbole ↔ marque : DISCORDANCE si le document porte la marque du symbole et
 ## que le bulletin est ouvert ce jour ; sinon INCOMPARABLE.
 static func _check_symbol(case: Case, symbol_ref: FieldRef, other: FieldRef, ctx: RuleContext,
 		result: Discrepancy) -> Discrepancy:
+	if other.is_scan():
+		# M13 (CB-08) : imprimé à la luciole trouvé à la fouille ↔ bulletin.
+		var item: SearchItem = case.get_scan_item(other)
+		if item == null or not item.revealed or item.kind != SearchItem.Kind.SUBVERSIVE:
+			return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+		if ctx == null or ctx.day_def == null or not ctx.day_def.rulebook_tabs.has(SYMBOLS_TAB):
+			return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_RULE_INACTIVE)
+		if symbol_ref.field_id != PRINT_SYMBOL:
+			return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
+		return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_SYMBOL_MATCH)
 	if other.is_symbol() or not other.is_mark():
 		return result.set_result(Discrepancy.Result.INCOMPARABLE, Discrepancy.REASON_INCOMPARABLE)
 	if ctx == null or ctx.day_def == null or not ctx.day_def.rulebook_tabs.has(SYMBOLS_TAB):
@@ -170,6 +274,13 @@ static func _check_symbol(case: Case, symbol_ref: FieldRef, other: FieldRef, ctx
 
 
 static func _is_resolvable(case: Case, ref: FieldRef, ctx: RuleContext) -> bool:
+	if ref.is_scan():
+		return case.is_scan_item_revealed(ref)
+	if ref.is_contraband_entry():
+		for rule: ContrabandRule in ContrabandRule.active_in(ctx.rule_set if ctx != null else null):
+			if rule.categories.has(ref.field_id):
+				return true
+		return false
 	if ref.is_revoked():
 		return RevokedIdRule.find_any_entry(ctx, ref.field_id) != null
 	if ref.is_quota_counter():
@@ -298,6 +409,15 @@ static func _check_mrz(case: Case, a: FieldRef, b: FieldRef, ctx: RuleContext, r
 	if Mrz.component_matches(doc.mrz, other_field.truth_path, case.get_value(other), code):
 		return result.set_result(Discrepancy.Result.CONCORDANT, Discrepancy.REASON_CONCORDANT)
 	return result.set_result(Discrepancy.Result.DISCORDANT, Discrepancy.REASON_MRZ_MISMATCH)
+
+
+static func _implants_rule(ctx: RuleContext) -> ImplantsDeclaredRule:
+	if ctx == null or ctx.rule_set == null:
+		return null
+	for rule: Rule in ctx.rule_set.rules:
+		if rule is ImplantsDeclaredRule:
+			return rule
+	return null
 
 
 static func _is_portrait(case: Case, ref: FieldRef) -> bool:

@@ -372,7 +372,7 @@ Données des règles Acte II (`tools/build_data.gd` + `build_data_act2.gd`) : R2
 
 ## 7. Catalogue des signaux `EventBus`
 
-Source : `scripts/autoload/event_bus.gd` — **50 signaux**, tous typés (liste exhaustive ci-dessous, vérifiée le 2026-10-29 ; 3 ajoutés en M8 : `quota_changed`, `revocations_published`, `scanner_suggested` ; 2 en M9 : `ledger_changed`, `summons_published` ; 4 en M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed` (lot A) et `rulebook_consulted` (lot C) ; **10 en M12** (lot A, détail en §11.2) : `rules_changed`, `station_event_started`, `station_event_ended`, `rule_list_published`, `garde_directive`, `garde_scored`, `garde_error`, `garde_tier_changed`, `garde_ended`, `epilogue_concluded`). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
+Source : `scripts/autoload/event_bus.gd` — **58 signaux** (dont **8 en M13**, lot A, détail en §12.8 : `statement_given`, `search_requested`, `search_confirmation_required`, `search_opened`, `search_zone_scanned`, `search_closed`, `inspection_busy`, `upgrade_purchased` ; 50 jusqu'à M12), tous typés (liste exhaustive ci-dessous, vérifiée le 2026-10-29 ; 3 ajoutés en M8 : `quota_changed`, `revocations_published`, `scanner_suggested` ; 2 en M9 : `ledger_changed`, `summons_published` ; 4 en M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed` (lot A) et `rulebook_consulted` (lot C) ; **10 en M12** (lot A, détail en §11.2) : `rules_changed`, `station_event_started`, `station_event_ended`, `rule_list_published`, `garde_directive`, `garde_scored`, `garde_error`, `garde_tier_changed`, `garde_ended`, `epilogue_concluded`). Convention : passé pour un fait, `*_requested` pour une intention de l'UI. Émetteurs / écouteurs **de production** relevés dans le code (les scènes de démo `comparison_ui_demo`, `passenger_demo`, `demo_booth_backdrop` émettent aussi la plupart des signaux pour simuler la logique).
 
 | Signal | Paramètres | Émetteurs → Écouteurs (état réel) |
 |---|---|---|
@@ -429,6 +429,14 @@ Source : `scripts/autoload/event_bus.gd` — **50 signaux**, tous typés (liste 
 | `garde_tier_changed` | `tier: int` | DayController (mode garde) → 🎯 HUD |
 | `garde_ended` | `record: Dictionary` | DayController (mode garde, avant `day_ended`) → 🎯 écran de fin de garde |
 | `epilogue_concluded` | `card: Dictionary` | Campaign.close_epilogue → 🎯 carte de conclusion du J31 |
+| **M13** (§12.8) | | |
+| `statement_given` | `case_id, statements: Array[Statement]` | InspectionSession → 🎯 journal à puces (lot C), OkonkwoIntercom |
+| `search_requested` | `zone: StringName` | 🎯 UI (lot C) → InspectionSession |
+| `search_confirmation_required` | `case_id` | InspectionSession → 🎯 confirmation « sans motif » (lot C) |
+| `search_opened` / `search_closed` | `case_id, motive` / `case_id` | InspectionSession → 🎯 silhouette, bandeau MOTIF (C), booth (D), audio ; OkonkwoIntercom |
+| `search_zone_scanned` | `case_id, zone, items: Array[SearchItem]` | InspectionSession → 🎯 liste d'objets (C), audio |
+| `inspection_busy` | `case_id, duration_sec: float, action` | InspectionSession → 🎯 UI (interface rendue après la durée) |
+| `upgrade_purchased` | `upgrade_id` | 🎯 soirée (lot B) → Économat, pastilles (C) |
 
 **Robustesse** : tous les signaux du booth portent `case_id` ; `DayController` ignore un signal d'un autre cas ou hors de l'état attendu ; `BoothDirector._emit_once()` n'émet chaque fait qu'une fois par cas, dans l'ordre `passenger_arrived → documents_presented → passenger_departed`. Seule exception à « un émetteur par fait » : le timeout `documents_presented` du `DayController`. `document_handed` a été supprimé au profit de `documents_presented(case_id)` (D-014).
 
@@ -1079,7 +1087,256 @@ static func photo_appearance_of(entry) -> PassengerAppearance                   
 
 ---
 
-## 12. Stratégie de test
+## 12. M13 « Gameplay » — contrat d'interfaces (lot A)
+
+Source : `docs/M13.md` (conception, §6.1 B64 → B78, I35 → I41), décisions D-139 → D-155 ; les questions ouvertes de M13 §7 sont tranchées **selon les recommandations** (R43 au J4 ; violation verbale même sans question ; FOUILLE SANS MOTIF = citation ordinaire ; motif affiché avant la fouille ; 5 zones ; pas de refus de fouille ; R47 au J19 ; compensation par `duration_sec` ; 3ᵉ avertissement aux J4 et J8 ; AG-04 gardée ; AG-03 transmet ; un achat par soir ; réponses scénarisées non épinglables sauf `statements` ; U21 → U24 ; EV-09 ; noms acceptés ; J31 inchangé ; pas de questions gratuites en Récit). Ce paragraphe est le **contrat** entre le lot A (Godot Architect : modèle, session, scoring des citations, sérialisation, signaux) et les lots B (Gameplay Systems : générateur, injecteurs, règles R43 → R47, comparateur, données, textes, simulation) et C (UI). Tout écart passe par l'Orchestrateur. **Sauvegarde v6 inchangée** (§12.10).
+
+### 12.1 Fichiers et formats
+
+| Classe (`class_name`) | Fichier (lot A) | Rôle | Rempli / lu par |
+|---|---|---|---|
+| `Statement` (RefCounted) | `scripts/core/statement.gd` | déclaration orale comparable (puce), §12.2 | générateur (B) → `Case.statements` ; session, comparateur et R43 (B), journal (C) |
+| `SearchItem` (RefCounted) | `scripts/core/search_item.gd` | objet révélé par la fouille, §12.3 | générateur (B, depuis `SearchItemDef`) ; session ; R45/R46/R15 et comparateur (B) ; liste d'objets (C) |
+| `SearchLayout` (RefCounted) | `scripts/core/search_layout.gd` | contenu de la fouille par zones Z1 → Z5 ; constantes de zones, d'indices et de motifs, §12.3 | idem |
+| `InterrogationTiming` (Resource) | `scripts/core/interrogation_timing.gd` | coûts en temps des questions et de la fouille, §12.4 | `EconomyDef.interrogation_timing` (données B, facultatif) ; session ; simulation (B) |
+| `UpgradeDef` (Resource) | `scripts/core/upgrade_def.gd` | amélioration AG-01 → AG-06, drapeaux `upg_*`, §12.6 | `data/upgrades/ag_0N.tres` + `EconomyDef.upgrades` (B) ; soirée (B), Économat (C) |
+| `IntercomLineDef` (Resource) | `scripts/core/intercom_line_def.gd` | réplique d'intercom pilotée par les données, §12.7 | `DayDef.intercom_lines` (B) ; `OkonkwoIntercom` |
+| `Case` (ajouts) | `scripts/core/case.gd` | `statements`, `statement_frames`, `search_layout`, `search_cues`, `cargo_reply`, `cargo_line_key` ; `get_statement[_by_ref]`, `is_statement_given`, `statements_for_question`, `get_scan_item`, `is_scan_item_revealed`, `declared_implants`, `search_found_forbidden` ; constantes `CARGO_NONE/GOODS/EVASIVE` | générateur (B) ; session ; comparateur (B) ; UI (C) |
+| `Passenger` (ajout) | `scripts/core/passenger.gd` | `concealed_implants: PackedStringArray` (nouveau `truth_path`, copié et sérialisé) | générateur (B) |
+| `Verdict` (ajouts) | `scripts/core/verdict.gd` | `search_done`, `search_motive` (`&""` = aucun), `zones_scanned` | session (au tampon) ; `ScoringService` |
+| `DayDef` (groupe M13) | `scripts/core/day_def.gd` | `statement_topic_weights` (B67), `search_cue_noise_rate` (B69), `search_directive_factions` / `search_directive_purposes` (MF-4 du briefing ; `*` = tous) + `search_directive_covers(case)`, `intercom_lines` | données (B) |
+| `EconomyDef` (groupe M13) | `scripts/core/economy_def.gd` | `interrogation_timing`, `upgrades`, `shop_open_evening` (5), `upgrades_per_evening` (1) ; `get_interrogation_timing()`, `get_upgrade(id)` | données (B) |
+| `DaySummary` (ajouts) | `scripts/core/day_summary.gd` | `get_search_count()`, `get_unmotivated_search_count()`, `get_statement_mismatch_count()` (bilan I39) | bilan (C) |
+| `FieldRef` (ajouts) | `scripts/documents/field_ref.gd` | pseudo-documents `__statement__`, `__scan__`, `__contraband__`, §12.2–12.3 | tous |
+
+Les formats de données du lot B déjà créés s'y branchent : `StatementTablesDef` (`data/statements/`), `SearchItemDef` / `SearchCatalogDef` (`data/search/`), `ProcedureRule.PROCEDURE_SEARCH_CAUSE` / `PROCEDURE_BELT_SEARCH`, `min_stay_days`, `requires_search(case)` (lot B, lus par la session et le `ScoringService`).
+
+### 12.2 Déclarations (B64, D-142, D-143)
+
+```gdscript
+# Statement (RefCounted)
+enum Match { CONCORDANT, DISCORDANT, INCOMPARABLE }
+const ID_PURPOSE := &"purpose", ID_STAY := &"stay", ID_EMPLOYER := &"employer", ID_ORIGIN := &"origin",
+	ID_PROVENANCE := &"provenance", ID_HOST := &"host"
+const IDS_BY_QUESTION := {purpose: [purpose, stay, employer, host], stay: [stay], origin: [origin, provenance]}
+const PATH_PURPOSE := &"purpose", PATH_STAY := &"stay_days", PATH_EMPLOYER := &"employer",
+	PATH_ORIGIN := &"faction_id", PATH_VESSEL := &"vessel", PATH_SPONSOR_NAME := &"sponsor_name"
+const PLACEHOLDERS := {"motif": purpose, "duree": stay, "employeur": employer, "hote": host, "origine": origin,
+	"provenance": provenance}; PLACEHOLDER_STRUCK := "duree_barree"
+var id, topic, truth_path: StringName; var value: Variant   # code | Vector2i(min, max) jours | nom canonique | faction_id
+var vague: bool; var phrase_key: String; var args: Array; var corrected_from: String; var corrected_args: Array
+var given: bool                                             # réponse émise dans la session
+static func make(id, value, phrase_key := "", args := []) -> Statement     # topic et truth_path par défaut
+static func duration(min_days, max_days, phrase_key := "", args := []) -> Statement
+static func vague_answer(id, phrase_key := "") -> Statement
+static func ids_for_question(question) -> Array[StringName]
+func get_ref() -> FieldRef                                 # FieldRef.statement(id)
+func is_comparable() -> bool                               # ni vague, ni provenance, champ et valeur connus
+func compare_to(document_value: Variant) -> Match          # §1.8 de M13, au niveau du modèle
+static func normalize_text(text) -> String                 # sans casse, sans diacritique, tirets → espaces
+func fragment_text(translate: Callable) -> String ; struck_text(translate) -> String
+static func format_fragment(text, args) -> String          # jetons {…} dans l'ordre, sinon %
+static func segments(frame_text) -> Array[Dictionary]      # [{text} | {statement: id, struck: bool, sentence_start: bool}]
+static func compose(frame_text, statements, translate) -> String   # texte brut (sous-titre, test ≤ 90 car.), casse de phrase
+func cased_fragment_text(translate, sentence_start, struck := false) -> String   # finition M13 (§12.13)
+static func apply_case(text, sentence_start) -> String ; is_sentence_start(prefix) -> bool
+func serialize() -> Dictionary ; copy() -> Statement
+```
+
+- **Comparaison au niveau du modèle** (`compare_to`, la seule source) : vague, provenance, valeur absente → INCOMPARABLE ; durée → DISCORDANT si la durée du document est **hors** de l'intervalle ; texte (motif, origine, employeur canonique, vaisseau, nom de la personne visitée) → égalité après `normalize_text`. Un passager **honnête** (valeurs lues sur ses papiers, intervalles qui contiennent la vraie durée, auto-correction dont la valeur finale est vraie, provenance libre) ne produit **jamais** de DISCORDANCE (test `test_m13_model`). L'appelant (lot B) choisit le champ (`truth_path`, permis, contrat, carte, laissez-passer, nom imprimé du répondant) et résout les tables (alias d'employeur → nom canonique **à la génération** ; code CT-XX → employeur par la table de R25).
+- **Pseudo-document** : `FieldRef.statement(id)` = `(__statement__, <id>)`, `is_statement()`, `get_statement_id()` ; exclu de `is_document_field()`. **Résoluble** (lot B, `DiscrepancyChecker._is_resolvable`) seulement si `case.is_statement_given(id)` (on ne compare pas une réponse non obtenue). Puce ↔ puce, puce ↔ règle, puce ↔ visage : INCOMPARABLE ; puce d'un sujet inactif ce jour : `disc_rule_inactive`.
+- **Cas** : `Case.statements` (générées avec le cas, graine du cas, jamais depuis `CaseKey`, vides avant R43 et pour un cas scénarisé sans `statements`) ; le générateur suit le calendrier de R43 (employeur J12+, origine J13+, personne visitée J24+) : la session émet **ce qui est dans le cas**. `Case.statement_frames[question]` = cadre composé (`line_stmt_frame_*`), facultatif.
+- **Émission** (session) : `purpose`, `stay`, `origin` → réplique = `<dialogue_id>_<sujet>` (scénarisée, prose) sinon `statement_frames[question]` s'il y a des déclarations, sinon la réplique générique d'avant M13 ; puis `Statement.given = true` et `statement_given(case_id, puces)` **après** `interrogation_answered`. Journal (C) : cadre → `Statement.segments()` (puces aux emplacements, valeur barrée via `struck`) ; réplique scénarisée → texte + rangée de puces à part.
+- **Violation** (R43, lot B : `StatementsConsistentRule`, paramètre `topics`) : références `FieldRef.statement(id)` + champ du document ; sévérité 2. Elle existe sans question (D-005) ; documentée seulement si la puce est épinglée (`Violation.is_documented_by`).
+
+### 12.3 Fouille : modèle (B64, B69)
+
+```gdscript
+# SearchLayout (RefCounted) — constantes partagées
+const ZONE_HEAD := &"z1", ZONE_TORSO := &"z2", ZONE_ARMS := &"z3", ZONE_LEGS := &"z4", ZONE_LUGGAGE := &"z5"
+const ZONES := [z1…z5]; ZONE_ALL := &"all"
+const CUE_SATCHEL := &"satchel", CUE_BULGE := &"bulge", CUE_GLOVE := &"glove", CUE_GAIT := &"gait", CUE_COLLAR := &"collar"
+const CUE_ZONES := {satchel: z5, bulge: z2, glove: z3, gait: z4, collar: z1}; GENDERED_CUES := [satchel]
+const MOTIVE_NONE := &"", MOTIVE_DISCORD := &"discord", MOTIVE_CUE := &"cue", MOTIVE_EVASIVE := &"evasive",
+	MOTIVE_DIRECTIVE := &"directive", MOTIVE_MANDATORY := &"mandatory"      # MF-1 → MF-5, textes srch_motive_<motif>
+var items: Array[SearchItem]; var scanned_zones: Array[StringName]        # état de session
+func add(zone, item) -> SearchItem          # pose zone, index, id "<zone>:<index>"
+func items_in(zone) ; get_item(zone, index) ; get_item_by_ref(ref) ; is_scanned(zone) ; scan(zone) -> Array[SearchItem]
+func revealed_items() ; implant_codes() -> PackedStringArray ; revealed_forbidden(declared: PackedStringArray) -> bool
+static func zone_of_cue(cue) -> StringName ; cue_line_key(cue, sex) -> String   # cue_satchel_f, cue_glove
+# SearchItem (RefCounted)
+enum Kind { LEGIT = 0, CONTRABAND = 1, WEAPON = 2, SUBVERSIVE = 3, IMPLANT = 4 }   # = SearchItemDef.Category
+var id, item_id, category, zone: StringName; var kind: Kind; var index: int
+var name_key, desc_key: String; var args: Array; var attribute_keys: PackedStringArray
+var implant_code: String; var unreadable: bool; var revealed: bool
+static func make(item_id, kind, category := &"") -> SearchItem ; implant(code, item_id := &"ol10") -> SearchItem
+func get_ref() -> FieldRef ; is_implant() ; is_forbidden()   # CONTRABAND ou WEAPON
+```
+
+- `Case.search_layout` : null avant le J8 ; à partir du J8, **tout** passager généré en porte un (objets légitimes, M13 §2.7), un cas scénarisé aussi sauf déclaration contraire (lot B). Caché jusqu'au scan ; jamais dans `CaseKey` : R45 / R46 (lot B) le lisent pour le verdict attendu (approuver un porteur = ENTRÉE IRRÉGULIÈRE, même sans fouille).
+- `Case.search_cues` (IV-1 → IV-5) : invariants du générateur (lot B) : tout porteur de `CONTRABAND`, `CONCEALED_IMPLANT`, `CONCEALED_WEAPON` en a au moins un (ou IV-6 : `cargo_reply = evasive`) ; innocents au taux `DayDef.search_cue_noise_rate`, avec une explication légitime dans la zone de l'indice. Didascalie : `SearchLayout.cue_line_key()` (lot C l'affiche au journal, D-107).
+- `Case.cargo_reply` (`none`, `goods`, `evasive`) et `cargo_line_key` (`line_cargo_<type>_<n>` ou réplique scénarisée `<dialogue_id>_cargo`, prioritaire).
+- **Pseudo-documents** : `FieldRef.scan(zone, index)` = `(__scan__, "<zone>:<index>")`, `is_scan()`, `get_scan_zone()`, `get_scan_index()` ; `FieldRef.contraband_entry(catégorie)` = `(__contraband__, <catégorie>)` (onglet Contrebande), `is_contraband_entry()`. Exclus de `is_document_field()`. Un objet n'est résoluble que **révélé** (`case.is_scan_item_revealed(ref)`).
+- **Implants dissimulés** : `Passenger.concealed_implants` (vérité) ; un implant dissimulé présent est un `SearchItem` `IMPLANT` (`implant_code`, `unreadable` pour un `DER-19`) ; `Case.declared_implants()` lit la carte (liste ou texte). La comparaison visage ↔ déclarés ne porte que sur les implants visibles (lot B, D-147).
+
+### 12.4 Coûts en temps (B68, D-144, D-145)
+
+`InterrogationTiming` (défauts = M13 §1.10 et §2.3) : `question_sec` 3 / `question_sec_upgraded` 2 (AG-01), `confront_sec` 4 / 3, `repeat_sec` 2, `correction_extra_sec` 1, `other_sec` 3 / 2 (visière, enveloppe, phrase de passe), `compare_sec` 0,25 (information), `search_activation_sec` 2 / 1 (AG-03), `search_zone_sec` 2 / 1, `search_all_sec` 10 / 5 (TOUT SCANNER : M13 §2.3 donne une fouille complète de 12 s → 6 s ; §3.2 annonce 4 s pour AG-03 : **écart signalé au Game Designer**, la donnée tranche). Méthodes : `question_cost(hygiaphone, repeated, corrected)`, `confront_cost(hygiaphone, repeated)`, `other_cost`, `activation_cost(calibrated)`, `zone_cost(calibrated)`, `zone_cost_in_full_scan(calibrated)`, `full_search_cost(calibrated)` (simulation, lot B).
+
+- **Horloge réelle** : l'horloge du shift tourne. Pour les questions, le coût est **indicatif** : la session émet `inspection_busy(case_id, durée, action)` et l'UI rend la main après la durée ; la logique n'ignore pas une question pendant ce temps (tests, bots). Pour la fouille, la durée est **logique** : l'objet n'est révélé qu'après l'activation puis la durée de la zone (`InspectionSession.advance`).
+- La session reçoit les coûts et les améliorations au début de chaque cas : `InspectionSession.configure(timing, flags)` (appelé par le `DayController` avec `EconomyDef.get_interrogation_timing()` et `CaseBuilder.get_flag_values()` : `upg_ag01` → `hygiaphone`, `upg_ag03` → `calibrated_gate`). Effet « dès le shift suivant » : les drapeaux sont ceux du matin.
+
+### 12.5 Session d'inspection (B68, B70)
+
+Sujets (`interrogation_requested(topic)`) — constantes d'`InspectionSession` :
+
+| Sujet | Effet | Coût (`inspection_busy`) |
+|---|---|---|
+| `purpose`, `stay`, `origin` | réplique (§12.2) + `statement_given` si le cas a des déclarations pour la question | `question` 3 s (+1 s si auto-correction) |
+| `cargo` (`TOPIC_CARGO`, J8+ côté UI) | `<dialogue_id>_cargo` sinon `Case.cargo_line_key` sinon `line_cargo_none_1` ; mémorise la question (MF-3) | `question` 3 s |
+| question de base **répétée** | même réponse, `statement_given` réémis, réaction ANGRY | `repeat` 2 s |
+| `about_<raison>[:<doc>]`, `confront` | confrontation existante ; **réelle répétée** (même sujet, réponse déjà obtenue) → même réplique + ANGRY, `repeat` 2 s ; non constatée → indignation + ANGRY ; familles M13 : `about_statement[:<doc>]` (famille `statement`, `line_about_statement_<n>` / `_outrage_<n>`, réplique scénarisée `<dialogue_id>_about_<raison>` puis `<dialogue_id>_about_<famille>`, ex. `sc104_strand_about_statement`), `about_contraband` (`line_about_contraband_<n>`), `about_weapon` (`line_about_weapon_generic`), `about_concealed_implant` (implant trouvé, `line_about_concealed_implant_<n>`) ; le document filtre (`DOC_FAMILIES`) ; aucune réponse ne retire une discordance | `confront` 4 s (répétée : `repeat`) |
+| `search` (`TOPIC_SEARCH`) | demande de fouille (ci-dessous) ; **ne compte pas** comme question pour R08 | — |
+| autres (`remove_visor`, `about_envelope`, `luciole_reply`) | inchangés | `question` 3 s |
+
+Familles : `family_of()` reconnaît `disc_statement_mismatch` → `statement`, `disc_contraband` → `contraband`, `disc_weapon` → `weapon`, `disc_implant_mismatch` avec un objet du portique → `concealed_implant`, et les règles du lot B par nom de classe (`StatementsConsistentRule` → `statement`, `ContrabandRule` → `contraband` ou `weapon` si sévérité 3). Raisons attendues du comparateur (lot B, `Discrepancy`) : `disc_statement_mismatch`, `disc_statement_vague`, `disc_provenance`, `disc_contraband`, `disc_weapon`, `disc_item_allowed`, `disc_scan_unreadable`.
+
+**Fouille** (machine d'état `SearchState` : `IDLE → [AWAITING_CONFIRM] → ACTIVATING → OPEN → CLOSED`) :
+
+1. `interrogation_requested(&"search")` : si R44 n'est pas active (`search_available()` : une `ProcedureRule` `search_cause` dans le RuleSet du shift ; EV-05 la retire) → `line_generic_shrug`. Sinon le **motif est calculé et figé** (`compute_search_motive()`, statique `search_motive_for(case, ctx, confirmed, asked)`), dans l'ordre : MF-1 une discordance confirmée de la session (`discord`) ; MF-2 un indice du cas (`cue`) ; MF-3 `cargo` posée avant et réponse évasive (`evasive`) ; MF-4 surcharge `search_authorized = true` de R44 pour ce passager (EV-09 : `RuleChangeDef` `OVERRIDE` sur l'id de R44, portée origine / motif, lot B) ou `DayDef.search_directive_covers(case)` (briefing) (`directive`) ; MF-5 une `ProcedureRule.requires_search(case)` active (R47, `mandatory`). Jamais `CaseKey` ; un code Luciole 2–7 n'est pas un motif.
+2. Motif présent → fouille engagée : `search_done = true`, réplique d'entrée (`<dialogue_id>_search`, sinon `line_search_comply_<n>` / `line_search_protest_<n>` tirée de la graine du cas, jamais de la vérité), `search_opened(case_id, motif)`, `inspection_busy(…, activation, search_activation)`. Aucun motif → `search_confirmation_required(case_id)` (état `AWAITING_CONFIRM`) ; l'UI affiche la confirmation puis émet `search_requested(&"confirm")` (fouille engagée avec le motif vide : `search_opened(case_id, &"")`) ou `search_requested(&"cancel")` (retour à `IDLE`, rien n'est compté). Afficher le motif ne coûte rien.
+3. `search_requested(zone)` (`z1` … `z5`) ou `(&"all")` pendant `ACTIVATING` / `OPEN` : zones mises en file (une zone déjà scannée ou en file est ignorée) ; chacune est scannée après sa durée (`zone_cost`, ou `zone_cost_in_full_scan` pour TOUT SCANNER) : `SearchLayout.scan`, `search_zone_scanned(case_id, zone, objets)` (vide = « RAS »), `inspection_busy(…, search_zone)` au début de chaque zone. Première trouvaille interdite (`Case.search_found_forbidden`) : `<dialogue_id>_search_found` s'il existe + réaction NERVOUS.
+4. `search_requested(&"close")` : file vidée, `search_closed(case_id)` ; si au moins une zone a été scannée sans trouvaille interdite : `<dialogue_id>_search_clean` sinon `line_search_clean_<n>`. Une nouvelle demande `search` rouvre la silhouette (même motif, nouvelle activation, sans nouvelle réplique). Le tampon referme une fouille ouverte (`search_closed`).
+5. Au tampon : `Verdict.search_done`, `search_motive` (figé à la première demande), `zones_scanned`.
+
+### 12.6 Améliorations du guichet (B74, D-150)
+
+```gdscript
+# UpgradeDef (Resource) — data/upgrades/ag_0N.tres
+const FLAG_PREFIX := "upg_", ID_HYGIAPHONE := &"ag01", ID_WOOD_LAMP := &"ag02", ID_CALIBRATED_GATE := &"ag03",
+	ID_DOUBLE_DRAWER := &"ag04", ID_ANNOTATED_BOOK := &"ag05", ID_QUEUE_MONITOR := &"ag06"
+const FLAG_DRAWER_FOUND := &"upg_ag04_found", FLAG_SEARCH_ABUSE := &"fouille_abus"
+const EFFECT_ENVELOPE_TRACE_EVERY := &"envelope_trace_every", EFFECT_SUSPICION_ON_FOUND := &"suspicion_on_found",
+	EFFECT_AUDIT_PENALTY := &"audit_penalty"
+@export var id, name_key, desc_key, note_key, price, expense_key, first_evening (5), last_evening (29),
+	condition: FlagCondition, off_catalog, offer_message_key, purchase_flags: Dictionary[StringName, int],
+	effects: Dictionary[StringName, Variant]
+func owned_flag() -> StringName ; static flag_of(id) ; static owns(flags, id) -> bool   # AG-04 : faux si confisquée
+func is_owned(flags) ; is_offered(evening_day, flags) ; is_new(evening_day) ; can_buy(evening_day, flags, balance) ; get_effect(key, default)
+# GameState (ajouts) : has_upgrade(id) -> bool ; owned_upgrades(ids) -> Array[StringName]
+```
+
+- Possession = drapeau `upg_<id>` (delta 0), jauge `fouille_abus`, `upg_ag04_found` : **dans le dictionnaire de drapeaux** déjà sauvegardé.
+- **Lot B** (soirée) : `EveningService.shop_lines()` (offres du soir : `is_offered`, badge `is_new`, hors catalogue), un achat par soir (`EconomyDef.upgrades_per_evening`), pas de découvert (`can_buy` sur le solde après les postes cochés), `default_choices` sans achat, ligne de dépense `exp_upgrade_<id>`, `purchase_flags` appliqués, émission de `upgrade_purchased(id)` à la clôture du soir ; AG-04 dans les enveloppes et les audits (J9, J17, J29), AG-05 (Rulebook) et AG-06 (File) côté C.
+- **Lot A** (fait) : AG-01 et AG-03 dans les coûts (§12.4) ; relevé du PH-2 (§12.9).
+
+### 12.7 Intercom piloté par les données (B68)
+
+`IntercomLineDef` : `speaker_key` (`spk_okonkwo`, `spk_sato`), `text_key`, `trigger`, `trigger_arg`, `condition: FlagCondition`, `once` (vrai). Déclencheurs : `shift_open` ; `statement_given` (argument : id de déclaration, ex. `employer` pour Sato au J12) ; `statement_pinned` (discordance confirmée sur une puce) ; `statement_vague` (`disc_statement_vague`) ; `search_opened` (argument : motif, `none` = sans motif) ; `search_clean` / `search_found` (à `search_closed`, au moins une zone scannée) ; `case_resolved` (argument `<scripted_id>` ou `<scripted_id>:<approve|deny|detain>`, ex. `sc_104:approve` → `okonkwo_j4_statement_missed`) ; `citation` (argument : clé `cit_*`). `OkonkwoIntercom` lit `DayDef.intercom_lines` à `day_started`, garde le tutoriel du J1 codé, évalue les conditions sur les drapeaux du `GameState` (ou `flags` si `use_game_state` est faux) et émet `spoke(speaker_key, text_key)` ; `fire(trigger, arg) -> int` est public (tests, scène).
+
+### 12.8 Signaux EventBus (ajoutés en fin de fichier : 58 signaux)
+
+| Signal | Paramètres | Émetteur → écouteurs prévus |
+|---|---|---|
+| `statement_given` | `case_id: StringName, statements: Array[Statement]` | InspectionSession (après `interrogation_answered`) → journal de dialogue (C), OkonkwoIntercom |
+| `search_requested` | `zone: StringName` (`z1`…`z5`, `all`, `confirm`, `cancel`, `close`) | UI (C), bots → InspectionSession |
+| `search_confirmation_required` | `case_id: StringName` | InspectionSession → `ConfirmDialog` « AUCUN MOTIF ÉTABLI » (C) |
+| `search_opened` | `case_id: StringName, motive: StringName` | InspectionSession → silhouette et bandeau MOTIF (C), booth (bras levés, cadre ; D), audio, OkonkwoIntercom |
+| `search_zone_scanned` | `case_id: StringName, zone: StringName, items: Array[SearchItem]` | InspectionSession → liste d'objets, onglet FOUILLE du journal (C), audio (« RAS » / « trouvaille ») |
+| `search_closed` | `case_id: StringName` | InspectionSession → la File revient (C), booth, OkonkwoIntercom |
+| `inspection_busy` | `case_id: StringName, duration_sec: float, action: StringName` | InspectionSession → UI (interface rendue après la durée ; `question`, `confront`, `repeat`, `search_activation`, `search_zone:<zone>` — finition M13 : la zone scannée est dans l'action, `InspectionSession.busy_kind(action)` / `busy_zone(action)` la décomposent) |
+| `upgrade_purchased` | `upgrade_id: StringName` | Campaign / EveningService (B) → Économat, pastilles du guichet (C), audio |
+
+### 12.9 Scoring et conséquences (B72)
+
+- `ScoringService.CIT_UNWARRANTED_SEARCH` (`cit_unwarranted_search`, FOUILLE SANS MOTIF) et `CIT_SEARCH_SKIPPED` (`cit_search_skipped`, FOUILLE OMISE), gravité **1** (comme INTERROGATOIRE OMIS), contrôlées par la boucle des procédures (règle présente dans le RuleSet du jour) : `search_cause` → `is_unwarranted_search(verdict, attendu)` (fouille faite, motif vide, attendu APPROUVÉ ; aucune sanction si le passager était en infraction) ; `belt_search` → APPROUVÉ sans fouille d'un passager visé (`requires_search`). Au plus une citation par cas, la plus grave (REFUS INJUSTIFIÉ 3 l'emporte). Cas à 0 ₵, compté dans les avertissements ; Récit : 0 ₵ ; Garde : une erreur (D-152).
+- **Conséquences** (`DayController._apply_search_consequences`, après `CaseConsequences.compute`, valeurs absolues) : fouille sans motif → `fouille_abus +1` (que le passager soit en règle ou non) ; AG-03 possédée + APPROUVÉ + fouille + trouvaille interdite visible (`Case.search_found_forbidden` : objet R45/R46 révélé ou implant révélé absent de la carte) → `suspicion +get_effect(suspicion_on_found, 1)` ; cas scénarisé avec fouille → `ScriptedCaseDef.flags_on_search` (lot B, `Dictionary[StringName, int]`, SC-105 `sc105_searched`), **posés avant** `CaseConsequences.compute` par `_apply_narrative` (`DayController.search_flag_changes`, finition M13 §12.13) pour que les `extra_effects` conditionnés à `sc10N_searched` (SC-106, SC-108) s'appliquent.
+- Requêtes du `DayController` : `statements_active()` (une `StatementsConsistentRule` dans le RuleSet du shift), `search_available()` (R44).
+
+### 12.10 Sauvegarde, tutoriels, sérialisation
+
+- **Sauvegarde v6 inchangée** (M13 §6.5) : améliorations, `upg_ag04_found`, `fouille_abus`, `sc10N_*` sont des drapeaux ; déclarations et fouille vivent dans le cas, régénéré chaque jour (pas de sauvegarde en cours de shift). Aucune migration.
+- **Tutoriels** : `Settings.KEY_TUTORIAL_M13_STATEMENTS` (`tutorial_m13_statements`) et `KEY_TUTORIAL_M13_SEARCH` (`tutorial_m13_search`), vrais par défaut ; `Settings.m13_tutorials_due(statements_active, search_active) -> Array[StringName]`. Lot C : carte d'aide au premier jour où `DayController.statements_active()` / `search_available()` est vrai, puis réglage à faux (comme `tutorial_j1`).
+- **`CaseSerializer`** format **2** (`VERSION`, clé `version` de `to_json`) : `statements`, `statement_frames`, `search_layout`, `search_cues`, `cargo_reply`, `cargo_line_key` ; `concealed_implants` dans le passager. L'état de session (`given`, `revealed`) n'est pas sérialisé.
+
+### 12.11 Besoins envers les lots B et C
+
+- **B** : `StatementGenerator` (→ `Case.statements`, `statement_frames` ; déterministe ; aucune déclaration tirée de `CaseKey` ; `Statement.compare_to` = vérité du comparateur et de R43) ; injecteur 24 (une seule fausse déclaration, AV-2 disjoint) ; `DiscrepancyChecker` : branches puce ↔ champ, objet ↔ règle / onglet, implant trouvé ↔ carte, `_is_resolvable` (puce `given`, objet `revealed`) ; R43 (`StatementsConsistentRule`), R44 / R47 en `ProcedureRule` (`search_cause`, `belt_search`, `min_stay_days` 7, `applies_to_faction_ids [cer]`), R45 / R46 (`ContrabandRule`) ; `SearchGenerator` (→ `search_layout`, `search_cues`, `cargo_reply`, `cargo_line_key`, `Passenger.concealed_implants`) ; EV-09 = `OVERRIDE` de R44 `{search_authorized: true}` à portée origine / motif ; EV-05 = `RETIRE` de R44 ; `DayDef` M13 et `intercom_lines` ; `UpgradeDef` × 6 et `EconomyDef.upgrades` / `interrogation_timing` ; `ScriptedCaseDef.statements`, `search_layout`, `search_cues`, `flags_on_search` ; textes (`fr.csv`) ; simulation (`InterrogationTiming` pour le modèle de temps).
+- **C** : journal à puces (I35, `statement_given`, `Statement.segments`), fouille (I36 : menu `search`, `search_confirmation_required`, `search_opened` / `search_zone_scanned` / `search_closed`, `search_requested`), blocage d'interface sur `inspection_busy`, sujets `cargo`, `about_statement`, `about_contraband` dans `InterrogationTopics`, Économat (I38), indicateurs (I39 : `DaySummary.get_search_count()`…), cartes d'aide (§12.10).
+
+### 12.12 Tests du lot A
+
+`tests/unit/test_m13_model.gd` (17 : déclarations comparables, zéro discordance chez un honnête au niveau du modèle, composition des cadres, `FieldRef`, fouille et objets, améliorations, intercom, sérialisation et déterminisme), `test_m13_session.gd` (12 : émission des puces, coûts, question répétée, motif MF-1 → MF-5 figé à la demande, confirmation sans motif, durées des zones et AG-03, réouverture, confrontations M13), `test_m13_scoring.gd` (6 : FOUILLE SANS MOTIF, FOUILLE OMISE, gravité, conséquences `fouille_abus` / PH-2 / `flags_on_search` via le `DayController`) ; `test_event_bus` : 58 signaux ; `test_settings` : 19 réglages.
+
+### 12.13 Finitions M13 (logique et équilibrage)
+
+Correctifs et reprises d'API après les lots A et B (Godot Architect + Gameplay Systems) ; aucun changement de sauvegarde (v6), de signaux ni de comportement hors M13 sauf mention.
+
+| Sujet | Avant | Maintenant | Tests |
+|---|---|---|---|
+| `flags_on_search` | posés par `_apply_search_consequences`, **après** `CaseConsequences.compute` : les `extra_effects` de SC-106 (APPROUVER après fouille → `suspicion +1`) et SC-108 (REFUSER après fouille → `lucioles_trust −1`) ne se déclenchaient jamais | `DayController._apply_narrative` calcule `search_flag_changes(verdict, flags)` et les fusionne dans une **copie** des drapeaux passée à `compute` ; le `DaySimulator` fait de même (et garde les drapeaux dans `narrative_changes`) | `test_m13_scoring` : `test_flags_on_search_precede_verdict_effects` |
+| Casse des déclarations | fragment inséré tel quel (« Le commerce, pour Cinq jours ») | `Statement.cased_fragment_text(translate, sentence_start, struck)` : majuscule en début de phrase (texte vide, après `.`/`!`/`?`, éventuellement suivi de `›`/`»`/`"`), minuscule sinon (après `…`, `:` ou `,`) ; la casse porte sur le **gabarit** traduit, jamais sur les arguments (noms propres), ni sur un sigle ou un gabarit qui commence par `%s`/`{…}`. `segments()` ajoute `sentence_start` à chaque puce (**lot C** : texte d'une puce = `cased_fragment_text(…, segment.sentence_start, segment.struck)`) | `test_m13_model` : `test_fragment_case_follows_the_sentence` ; `test_m13_generation` (10 000 réponses : début de phrase en majuscule, « , pour » en minuscule) |
+| `bribe_seen` | jamais posé : AG-04 jamais proposée | `CaseConsequences.compute` pose `UpgradeDef.FLAG_BRIBE_SEEN` à la **première enveloppe présentée** (gardée, rendue ou signalée ; une seule fois) ; effets des enveloppes inchangés | `test_m13_data` : `test_first_envelope_sets_bribe_seen_and_offers_the_drawer` |
+| `Passenger.sponsor_name` | « contournement local » du lot B | champ de vérité ordinaire (`TRUTH_PATHS`, copié, sérialisé par `CaseSerializer`), posé avec `sponsor_id` par le générateur, lu par R43 s4 via `Statement.PATH_SPONSOR_NAME` (D-157) : rien à reprendre | existants |
+| Palier de R43 en Garde (U24) | retrait + oubli + ajout (le défaire d'une source aurait rétabli le mauvais palier) | `RuleChangeDef.replace(rule)` (`ADD` avec `replaces = true`) : remplace **à sa place** la règle active de même identifiant, badge NOUVEAU, sans ligne barrée ; journal `replaced` + `previous` ; `revert_source` rétablit le palier remplacé ; un `ADD` ordinaire d'un identifiant actif reste ignoré | `test_m13_data` : `test_garde_tier_replaces_r43_in_place` |
+| EV-09 | profil figé (Cérès) | `StationEventDef.override_profiles` (Tycho, Cérès, motif COMMERCE, motif TRANSIT : `{faction_ids, purposes, label_key}`) ; `StationEventPlan.draw_profile(rng)` tiré **après** la fenêtre par `StationEventService.place` (graine du jour : les autres événements ne consomment rien de plus) ou par `garde_plan(event, processed, profile_seed)` (flux `events` de la graine de Garde, salé par passager, sans toucher au flux des tirages) ; `changes()` rend des **copies** des surcharges à la portée du profil (mêmes copies à chaque appel) ; `profile()`, `profile_label_key()`. **Lot C** : l'argument `%s` de `sev_contraband_alert_announce(_garde)` et de `sev_contraband_alert_rb` est `UiText.t(plan.profile_label_key())` | `test_m13_data` : `test_alert_profile_is_drawn_per_seed` |
+| `inspection_busy` d'une zone | action `search_zone` (zone lue dans le panneau) | action `search_zone:<zone>` (`busy_zone_action`), décomposée par `busy_kind` / `busy_zone` ; `ComparisonUI.busy_text` les utilise (retombe sur la zone du panneau sinon) | `test_m13_session` |
+| Voix d'une réponse à cadre | `AudioDirector` lisait le cadre brut (`{motif}`) | `AudioDirector.answer_text(case, line_key)` : cadre composé par `Statement.compose` | `test_audio_director` : `test_statement_frame_is_spoken_composed` |
+| EV-09 par motif et R19 | un porteur forcé « motif COMMERCE / TRANSIT » pouvait être un Tharsien (R19) : aucun cas propre (`test_m12_balance`, Garde) | `CaseBuilder._purposes_allowed` : un profil par motif ne choisit jamais un passager dont l'origine est interdite pour ce motif | `test_m12_balance` (10 000 passagers de Garde) |
+| Prime de relevé (D-168) | — | `EconomyDef.finding_bonus` (groupe M13, **2 ₵**, posé par `build_data_m13.configure_economy`) ; `ScoringService.score(…, quota_full, finding_bonus = 0)` l'ajoute au salaire d'un REFUS / d'une DÉTENTION **corrects** (donc documentés) hors refus « quota atteint » quand `ScoringService.is_m13_finding(expected_violations)` (une référence `FieldRef.is_statement()` ou `is_scan()`) ; passé par le `DayController` (`finding_bonus`, lu au début du shift) et le `DaySimulator` ; rien en Garde (économie coupée), rien sur un jour « 0.12 » (aucune violation de M13) ; EV-02 ne la rend pas (refus non motivé repêché) | `test_m13_balance` : `test_finding_bonus_pays_documented_m13_findings_only` |
+| Compensation de temps (D-168) | +15 / +20 / +10 s | **+15 s (J4–J7), +10 s (J8–J20), +5 s (J21–J30)** : `M13Sim.EXTRA_SECONDS_*`, lues par `build_data_m13` ; AG-01 → AG-03 à **25 ₵** | `test_m13_data` (durées, prix) |
+| Fuite d'état entre générations | `Array.sort()` sur des `StringName` ordonne par **adresse interne** : l'ordre des origines (leurres de Convocations, de Révocations, avis) dépendait de l'histoire du processus ; un leurre de Convocation pouvait porter le nom du passager (1 `FORGED_SUMMONS` non détectée sur ~18 700 au J30) | `SeededRng.sort_names()` (ordre alphabétique) pour toute liste d'identifiants dans laquelle on tire ; `ForgedSummonsInjector` n'utilise jamais un leurre homonyme du passager. Règle : **jamais `Array.sort()` sur des `StringName`** (les `sort()` restants trient des entiers ou des `String`) | `test_m13_generation` : `test_successive_generations_in_one_process_are_identical` ; `gen_stats` J30, 40 campagnes : 0 invariant violé |
+| EV-05 × R47 (QA-063, D-172) | la coupure retirait R44 seule : R47 restait active sans portique (FOUILLE OMISE inévitable ou REFUS INJUSTIFIÉ) | `build_data_m13.extend_events` : EV-05 retire **R44 et R47** (campagne et Garde ; `sev_blackout_rb_belt_search`) ; retirer une règle absente (R47 avant le J19) ne fait rien ; `revert_source` les rétablit | `test_qa_m13` : `test_qa063_*` (pendant, construits pendant, après) |
+| Puce honnête ↔ document faux (QA-064) | puce employeur ↔ Code du contrat d'un contrat faux (R25) : `disc_statement_mismatch`, compté « déclaration contradictoire », `about_statement` | `DiscrepancyChecker.is_document_at_fault` : une puce discordante avec un champ **autre** que sa référence (`StatementsConsistentRule.primary_ref`) qu'elle ne contredit pas → `disc_mismatch` (documentaire ; documente R25) ; `DaySummary.get_statement_mismatch_count` et l'intercom (`TRIGGER_STATEMENT_PINNED`) ne comptent que `disc_statement_mismatch` | `test_qa064_*` |
+| EV-09 sans porteur (QA-066) | porteurs pris parmi les passagers déjà du profil : 14 alertes sur 77 ne visaient personne | `CaseBuilder._plan_search_alert` : sinon profil **imposé** à 1–2 passagers libres (sonde `_plant_alert_carrier` : cas propre, contrebande, origine et motif du profil ; hors répondants, hors protégés pour un profil par motif) ; `CaseBuilder.can_place_alert(change, start)` et **`fit_alert_profile(plan, start = prochain index)`**, appelé par `DayController._start_station_event` et le `DaySimulator` **avant l'annonce** : profil suivant (cyclique) si le tiré ne peut viser personne ; `StationEventPlan.set_profile_index` | `test_qa066_*` (300 campagnes : 0 / 77 sans porteur, porteurs du profil) |
+| Prime de relevé (QA-067) | `is_m13_finding(expected_violations)` : payée sur un refus documenté par une autre anomalie | `ScoringService.is_m13_finding_pinned(verdict.flagged, expected_violations)` : une discordance confirmée épinglée dont le côté puce / objet révélé est une preuve d'une violation attendue ; `DaySimulator.evidence_for(case, key, ctx, played)` n'épingle une trouvaille de M13 que si le joueur simulé l'a vue (`M13Sim.is_observed`), sauf verdict imposé sans autre preuve | `test_qa067_*`, `test_m13_balance` |
+| Réponses composées (QA-068) | « pour je ne sais pas encore », « Quelques jours. Pas un jour de plus. », « chez le Bureau »… | `StatementTablesDef` : `vague_work_keys`, `vague_unfit_frames`, `stay_frames_vague`, `origin_contrast_frames` + `origin_places`, `employer_article_keys` (`employer_fragment`) ; `StatementGenerator` filtre en conséquence | `test_qa068_*` ; `tools/qa_statements_audit.gd` (`TOURNURE`, `--campaigns=N`) |
+| Messages d'offre et de confiscation (QA-069) | `offer_message_key` jamais lu ; `msg_okonkwo_drawer_found` jamais posé | `UpgradeDef.offer_speaker_key` / `offer_voice` / `offer_seen_flag()` / `offer_message_due()` ; `EveningService.offer_messages(economy, day, flags)` (format des messages du briefing + `upgrade_id`) et `offer_events(…)` : lettres `offer_ag0N` ajoutées par `build_events(defs, flags, economy, day_number)` (`Campaign.prepare_events`, `BalanceSimulator`), qui posent `upg_ag0N_offer_seen` à l'application ; `EveningEvent.upgrade_id` / `speaker_key` / `voice` / `is_offer()` ; tiroir trouvé : `outcome.drawer_message_key` / `drawer_speaker_key` et `EveningReport` (`event_texts`, `events`, ton WARNING) | `test_qa069_*` |
+
+**Simulation** (`tools/balance_sim.gd`, `BalanceSimulator`) : `--from=K` (graines K → K + N − 1, lots d'une même mesure) ; ligne `M13RAW {…}` (comptes bruts, agrégeables) ; `--smart=marge[,dernier_soir]`. Compensation de temps : source unique `M13Sim.extra_seconds(jour)` (lue par `build_data_m13.gd` et par `M13Sim.strip`).
+
+**Équilibrage des finitions** (`balance_sim --m13=compare --upgrades=smart`, 80 %, graine 1, **200 graines** en lots `--from` de 50 ; remplacé par la passe économique D-168 ci-dessous) :
+
+| Préréglage | Écart max 0.12 → 0.13 (lot B → finition) | Détail (finition) |
+|---|---|---|
+| `curieux` | 4 → **1,0** | F7 81,5 → 80,5 ; F1 Déposition 12 → 11,5 |
+| `default` | — → **4,0** | F7 83,5 → 79,5 ; F1 Déposition 12 → 14 ; F3 3,5 → 5,5 |
+| `luciole` | 4 → **5,5** | F5 65,5 → 60 ; F1 Revue 8 → 12, Déposition 18,5 → 21 |
+| `drift` | à remesurer → **9,0** | F6 39,5 → 30,5 ; F7 44,5 → 48 ; F3 3 → 6,5 (identique sans aucun achat : 8,5) |
+| `passeur` | 7 → **13,0** (deux moitiés de 100 graines : 8 et 18) | F7 60,5 → 47,5 ; F10 11 → 17 ; F1 Revue 3 → 8 |
+
+- **Bruit** : l'écart-type d'une différence de parts sur 100 graines est de 5 à 7 points (les deux moitiés de `passeur` donnent 8 et 18) ; le seuil de 3 points de D-151 n'est mesurable qu'au-delà de 500 graines par préréglage. Les compensations essayées (+10/+10/+5, +15/+25/+5, +15/+20/+10, +15/+25/+25 s) restent dans ce bruit pour les fins ; elles se séparent nettement sur la file traitée.
+- **Causes structurelles** (mesurées, pas du bruit) : (1) **argent** — même sans achat, M13 retire 7 à 10 ₵ au soir du J20 et du J29 (citations des mensonges et objets manqués) : `drift` achète moins souvent ses laissez-passer (F6), F3 monte de 2 à 3 points ; (2) **suspicion** — les effets restaurés de SC-106 (APPROUVER après fouille), le relevé du PH-2 (AG-03) et les dépassements de quota des profils `overrun` (`passeur`, `luciole`) quand la file traitée dépasse la 0.12 ; (3) **récit** — `passeur` passe plus souvent par le réseau des répondants (SC-81b) : F10 +6.
+- **Compensation retenue** : +15 s (J4–J7), +20 s (J8–J20), +10 s (J21–J30) (`M13Sim.extra_seconds`) : file traitée entre −2 et +2 points de la 0.12 chaque jour (avec +25 s : +2 à +3 à l'Acte II, +4 à +6 à l'Acte III).
+- **Achats** (`smart` : 30 ₵ restants après l'achat, aucun achat après le soir du J22) : `default` AG-01 74 %, AG-02 32 %, AG-03 51 %, AG-05 34 %, AG-06 34 % (lot B : 76 / 48 / 64 / 20 / 52 %) ; soldes J10 −10, J20 −24, J29 −12 ₵ ; soirs sacrifiés +4,6 points.
+- **AG-04** (`--upgrades=eager`, 100 graines ; le tiroir n'est acheté que par un profil qui garde déjà les enveloppes) : achat 86 % (`mercenary`), 84 % (`mercenary2`), 0 % (`mercenary3`, honnête jusqu'au J20 ; 62 % avant la règle). F1 total : `mercenary` 100 → 100, `mercenary2` 100 → 98 (mais Revue 45 → 86 et Déposition 55 → 12 : le tiroir trouvé à la Revue, +2, avance l'arrestation), `mercenary3` 80 → 88 (Déposition 79 → 86 : relevés du PH-2, acheté à 96 % en `eager`).
+
+**Passe économique D-168** (Game Designer ; détail, essais et causes : docs/M13.md §4.7 ; décisions proposées D-169 → D-171). Leviers : **prime de relevé 2 ₵** (`finding_bonus`), compensation **+15 / +10 / +5 s**, **AG-01 → AG-03 à 25 ₵**. Mesure : chaque bras joué par `BalanceSimulator.run_campaign` avec le profil de `balance_sim --m13=compare` (identique graine par graine), `upgrades=smart`, graine 1, 500 graines par préréglage, 1 000 pour les quatre premiers ; F1 compté par cause.
+
+| Préréglage (80 %) | Graines | Finitions (même protocole) | **D-168** | Détail D-168 (0.12 → 0.13) |
+|---|---|---|---|---|
+| `passeur` | 1 000 | 12,0 | **9,0** | F7 58,7 → 49,7 ; F1 Déposition 15,8 → 22,1 ; F10 13,5 → 15,2 |
+| `luciole` | 1 000 | 5,8 | **3,0** (F1 réunies 3,6) | F1 Déposition 16,6 → 19,6 ; F5 68,5 → 66,4 |
+| `drift` | 1 000 | 3,4 (500) | **2,8** | F7 44,1 → 41,3 ; F1 Déposition 11,4 → 13,5 ; F6 36,4 → 37,6 |
+| `default` | 1 000 | 3,4 (500) | **2,4** | F1 Déposition 10,9 → 13,3 ; F7 83,0 → 81,1 |
+| `curieux` | 500 | 4,0 | **2,0** | F1 Déposition 10,2 → 12,2 |
+| `solidaire` | 500 | 3,2 | **2,2** | F9 79,8 → 77,6 |
+| `loyal` | 500 | 1,0 | **0,6** | — |
+
+- **65 %** (500 graines) : 1,4 à 3,4 (`passeur` 5,0 → 3,4) ; `loyal` **3,3** à 1 000 graines (0,2 avant : survie au J30 7,9 → 11,2 %, la prime aide les joueurs faibles). **95 %** : ≤ 2,8, sauf `passeur` 20,0 → **17,2** (F10 : file du J30 et achats complets, déjà là avant). **Récit** (80 %) : ≤ 1,2.
+- **Économie** (`default`, 80 %) : soldes −8 / −19 / −6 ₵ aux J10 / J20 / J29 (finitions −11 / −19 / −6) ; achats AG-01 75 %, AG-02 29 %, AG-03 45 %, AG-05 42 %, AG-06 44 % ; soirs sacrifiés +0,6 point. À 95 % : J29 +48 à +79 ₵ (finitions +44 à +59).
+- **Bruit** : écart-type de l'écart d'une part de fin ≈ √(2p(1−p)/N), 3,2 points à 500 graines et 2,2 à 1 000 pour p = 0,5.
+- **Causes** : dépassements de quota (+1 à +1,5 par campagne chez les profils `overrun` : file plus longue qu'en 0.12, menteurs non vus approuvés, SC-109 compté au J19) et argent (achats et citations à l'Acte II). Relevé du PH-2 et effet de SC-106 : jamais déclenchés par le joueur simulé (un objet révélé impose le verdict juste).
+
+**Re-mesure après QA-067** (prime pour la trouvaille épinglée seulement ; détail : docs/M13.md §4.7) : 80 %, 1 000 graines — `passeur` **8,9**, `luciole` **3,1**, `drift` **3,5** (2,8 à 1 200), `default` **3,5** (3,6 à 2 000) ; `loyal` 65 % **2,8**. Part propre de QA-067 sur `default` (mêmes graines 0–399) : 0,5 → 1,5 point, solde J29 −4 ₵. Prime à 3 ₵ essayée : AG-01 / AG-03 achetés au-delà des cibles de §4.4 ; **aucun réglage changé** (écart de `default` / `drift` à arbitrer, Orchestrateur).
+
+
+---
+
+## 12 bis. Stratégie de test
+
+> Numérotation : ce paragraphe était le §12 jusqu'à la 0.12 ; les renvois « ARCHITECTURE §12 » des en-têtes de tests antérieurs à M13 le désignent.
+
 
 - **Outil** : GUT 9.7.1, versionné dans `addons/gut/`. **515 tests** (après M8 parties A et B, tous verts) : **40 suites unitaires (392) + 17 suites d'intégration (123)**. Historique : 414 (M7) → 445 (passe QA) → 457 (M9 décor) → 460 (M10 personnages) → 498 (M8 A) → 515 (M8 B). Dont les suites `test_qa_*` (non-régression des bugs QA : `pending("QA-xxx")` tant qu'un bug est ouvert). Crochet `pre_run_script` (`tests/helpers/gut_pre_run.gd`) : préférences isolées dans `user://test_settings/` (jamais le `settings.cfg` du joueur).
 - **Commande** (README) : `godot --headless --import` puis `godot --headless -s addons/gut/gut_cmdln.gd -gconfig=.gutconfig.json -gexit` (`.gutconfig.json` : `tests/unit/` + `tests/integration/`, préfixe `test_`).

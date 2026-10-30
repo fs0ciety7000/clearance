@@ -294,6 +294,8 @@ const EXPECTED: Dictionary[StringName, VerdictKind.Kind] = {
 	&"sc_76": VK.DENY, &"sc_77": VK.APPROVE, &"sc_78": VK.APPROVE, &"sc_79": VK.APPROVE, &"sc_80": VK.DENY,
 	&"sc_81": VK.APPROVE, &"sc_81b_lindgren": VK.APPROVE, &"sc_81b_sato": VK.APPROVE, &"sc_81b_valentin": VK.APPROVE,
 	&"sc_81b_kerr": VK.APPROVE, &"sc_81b_beaumont": VK.APPROVE, &"sc_82a": VK.DETAIN, &"sc_82b": VK.DETAIN,
+	# M13 (docs/M13.md §5.3) : SC-110 (AV-5, répondant acheté), SC-111 (CB-07, R46).
+	&"sc_110": VK.DENY, &"sc_111": VK.DETAIN,
 }
 
 

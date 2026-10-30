@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="GardeUnitDef" format=3 uid="uid://do0l27j0pqlp3"]
+
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_aoa5a"]
+[ext_resource type="Resource" path="res://data/rules/rule_search_cause.tres" id="2_hortj"]
+[ext_resource type="Resource" path="res://data/rules/rule_contraband.tres" id="3_lt47f"]
+[ext_resource type="Script" path="res://scripts/core/garde_unit_def.gd" id="4_n6c1y"]
+
+[resource]
+script = ExtResource("4_n6c1y")
+id = &"u22"
+title_key = "garde_unit_u22"
+rules = Array[ExtResource("1_aoa5a")]([ExtResource("2_hortj"), ExtResource("3_lt47f")])
+tier = 3
+rulebook_tabs = PackedStringArray("contraband")
+renews_lists = PackedStringArray()

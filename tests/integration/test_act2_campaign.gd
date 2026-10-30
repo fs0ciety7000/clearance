@@ -126,12 +126,20 @@ func _assert_ended(ending: StringName) -> void:
 
 
 func test_conscientious_agent_plays_thirty_days() -> void:
-	var ending: StringName = await _play_campaign(func(_c: Case, key: CaseKey) -> VerdictKind.Kind:
+	# Agent consciencieux : verdict attendu ; quota atteint, un passager en règle
+	# compté au quota est refusé (refus juste, D-077) plutôt qu'imputé (M13 : les
+	# tirages des jours changent, les entrées imputées font monter la suspicion).
+	var ending: StringName = await _play_campaign(func(c: Case, key: CaseKey) -> VerdictKind.Kind:
+		var quota: QuotaTracker = h.controller.quota
+		if key.expected_verdict == VerdictKind.Kind.APPROVE and quota.is_active() and quota.is_full() and quota.counts(c):
+			return VerdictKind.Kind.DENY
 		return key.expected_verdict)
 	_assert_ended(ending)
 	assert_true(Campaign.is_act3(), "pivot du J20 franchi")
 	assert_eq(GameState.day_history.size(), 30, "jusqu'au J30 (fin %s)" % ending)
-	assert_ne(ending, EndingService.F1_ARRESTED, "aucun soupçon : pas d'arrestation")
+	assert_ne(ending, EndingService.F1_ARRESTED, "aucun soupçon : pas d'arrestation (suspicion %s, aveux %s, enquête %s)" % [
+			GameState.narrative_flags.get(&"suspicion", 0), GameState.narrative_flags.get(&"aveux", 0),
+			GameState.narrative_flags.get(&"enquete_cible", false)])
 	assert_true(_announcements.has("hall_j17_review"))
 
 

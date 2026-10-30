@@ -1,0 +1,220 @@
+[gd_resource type="Resource" script_class="StatementTablesDef" format=3 uid="uid://c10d0bdc0taq3"]
+
+[ext_resource type="Script" path="res://scripts/generation/statement_tables_def.gd" id="1_xs6l0"]
+
+[resource]
+script = ExtResource("1_xs6l0")
+duration_keys = PackedStringArray("stmt_dur_w1", "stmt_dur_d10", "stmt_dur_w2", "stmt_dur_w3", "stmt_dur_m1", "stmt_dur_w6", "stmt_dur_m2", "stmt_dur_m3", "stmt_dur_m6", "stmt_dur_y1", "stmt_dur_y3")
+duration_ranges = Array[Vector2i]([Vector2i(6, 8), Vector2i(9, 11), Vector2i(12, 16), Vector2i(18, 24), Vector2i(26, 34), Vector2i(38, 46), Vector2i(55, 65), Vector2i(80, 100), Vector2i(170, 190), Vector2i(350, 380), Vector2i(1050, 1150)])
+exact_duration_keys = Dictionary[int, String]({
+1: "stmt_dur_d1",
+2: "stmt_dur_d2",
+3: "stmt_dur_d3",
+4: "stmt_dur_d4",
+5: "stmt_dur_d5"
+})
+vague_keys = PackedStringArray("stmt_dur_vague_1", "stmt_dur_vague_2", "stmt_dur_vague_3", "stmt_dur_vague_4", "stmt_dur_vague_5")
+vague_work_keys = PackedStringArray("stmt_dur_vague_2", "stmt_dur_vague_5")
+purpose_keys = Dictionary[StringName, PackedStringArray]({
+&"diplomatic": PackedStringArray("stmt_purpose_diplomatic_1", "stmt_purpose_diplomatic_2"),
+&"family_visit": PackedStringArray("stmt_purpose_family_visit_1", "stmt_purpose_family_visit_2"),
+&"return": PackedStringArray("stmt_purpose_return_1", "stmt_purpose_return_2"),
+&"trade": PackedStringArray("stmt_purpose_trade_1", "stmt_purpose_trade_2"),
+&"transit": PackedStringArray("stmt_purpose_transit_1", "stmt_purpose_transit_2"),
+&"work": PackedStringArray("stmt_purpose_work_1", "stmt_purpose_work_2")
+})
+origin_keys = Dictionary[StringName, String]({
+&"cer": "stmt_origin_cer",
+&"drv": "stmt_origin_drv",
+&"hal": "stmt_origin_hal",
+&"ter": "stmt_origin_ter",
+&"thr": "stmt_origin_thr",
+&"tyc": "stmt_origin_tyc"
+})
+employer_article_keys = Dictionary[String, String]({
+"le ": "stmt_employer_au",
+"les ": "stmt_employer_aux"
+})
+host_keys = Dictionary[StringName, String]({
+&"brother": "stmt_host_brother",
+&"daughter": "stmt_host_daughter",
+&"friend": "stmt_host_friend",
+&"mother": "stmt_host_mother",
+&"sister": "stmt_host_sister",
+&"son": "stmt_host_son"
+})
+family_relations = PackedStringArray("sister", "brother", "son", "daughter", "mother")
+provenance_places = PackedStringArray("Tycho", "Cérès", "la Terre", "l\'Anneau B")
+employer_aliases = Dictionary[String, String]({
+"Aurel": "Banque Aurel",
+"Ceres-Verte": "Hydroponie Ceres-Verte",
+"Kessler-Ashe": "Kessler-Ashe Orbital",
+"Meridian": "Meridian Biosystèmes",
+"Ondine": "Ondine Synaptique",
+"Valcourt-Hsu": "Valcourt-Hsu Logistique",
+"la Délégation": "Délégation tharsienne",
+"le Bureau": "Bureau de Continuité"
+})
+vague_employers = PackedStringArray("les serres", "la station")
+lore_employers = PackedStringArray("Kessler-Ashe Orbital", "Valcourt-Hsu Logistique", "Ondine Synaptique", "Meridian Biosystèmes", "Hydroponie Ceres-Verte", "Banque Aurel")
+frames = Dictionary[StringName, PackedStringArray]({
+&"cer": PackedStringArray("line_stmt_frame_cer_1", "line_stmt_frame_cer_2"),
+&"drv": PackedStringArray("line_stmt_frame_drv_1", "line_stmt_frame_drv_2"),
+&"gen": PackedStringArray("line_stmt_frame_gen_1", "line_stmt_frame_gen_2", "line_stmt_frame_gen_3", "line_stmt_frame_gen_4"),
+&"hal": PackedStringArray("line_stmt_frame_hal_1", "line_stmt_frame_hal_2"),
+&"ter": PackedStringArray("line_stmt_frame_ter_1", "line_stmt_frame_ter_2", "line_stmt_frame_ter_3"),
+&"thr": PackedStringArray("line_stmt_frame_thr_1", "line_stmt_frame_thr_2"),
+&"tyc": PackedStringArray("line_stmt_frame_tyc_1", "line_stmt_frame_tyc_2", "line_stmt_frame_tyc_3")
+})
+work_frames = PackedStringArray("line_stmt_frame_work_1", "line_stmt_frame_work_2")
+visit_frames = PackedStringArray("line_stmt_frame_visit_1", "line_stmt_frame_visit_2")
+correction_frames = PackedStringArray("line_stmt_frame_correct_1", "line_stmt_frame_correct_2")
+stay_frames = PackedStringArray("line_stmt_stay_1", "line_stmt_stay_2", "line_stmt_stay_3")
+stay_frames_vague = PackedStringArray("line_stmt_stay_3", "line_stmt_stay_4")
+vague_unfit_frames = PackedStringArray("line_stmt_frame_gen_2", "line_stmt_frame_gen_3", "line_stmt_frame_work_2", "line_stmt_frame_visit_2")
+origin_frames = PackedStringArray("line_stmt_origin_1", "line_stmt_origin_3")
+origin_contrast_frames = PackedStringArray("line_stmt_origin_3")
+origin_places = Dictionary[StringName, String]({
+&"cer": "Cérès",
+&"ter": "la Terre",
+&"tyc": "Tycho"
+})
+origin_frames_plain = PackedStringArray("line_stmt_origin_2")
+origin_frames_drv = PackedStringArray("line_stmt_origin_drv_1", "line_stmt_origin_drv_2")
+origin_frames_tessar = PackedStringArray("line_stmt_origin_tessar_1")
+text_lengths = Dictionary[String, int]({
+"line_stmt_frame_cer_1": 25,
+"line_stmt_frame_cer_2": 33,
+"line_stmt_frame_correct_1": 10,
+"line_stmt_frame_correct_2": 25,
+"line_stmt_frame_drv_1": 36,
+"line_stmt_frame_drv_2": 27,
+"line_stmt_frame_gen_1": 3,
+"line_stmt_frame_gen_2": 35,
+"line_stmt_frame_gen_3": 21,
+"line_stmt_frame_gen_4": 21,
+"line_stmt_frame_hal_1": 29,
+"line_stmt_frame_hal_2": 15,
+"line_stmt_frame_ter_1": 37,
+"line_stmt_frame_ter_2": 19,
+"line_stmt_frame_ter_3": 28,
+"line_stmt_frame_thr_1": 26,
+"line_stmt_frame_thr_2": 34,
+"line_stmt_frame_tyc_1": 26,
+"line_stmt_frame_tyc_2": 48,
+"line_stmt_frame_tyc_3": 26,
+"line_stmt_frame_visit_1": 6,
+"line_stmt_frame_visit_2": 15,
+"line_stmt_frame_work_1": 5,
+"line_stmt_frame_work_2": 26,
+"line_stmt_origin_1": 3,
+"line_stmt_origin_2": 19,
+"line_stmt_origin_3": 13,
+"line_stmt_origin_drv_1": 31,
+"line_stmt_origin_drv_2": 37,
+"line_stmt_origin_tessar_1": 0,
+"line_stmt_stay_1": 29,
+"line_stmt_stay_2": 22,
+"line_stmt_stay_3": 7,
+"line_stmt_stay_4": 33,
+"stmt_dur_d1": 7,
+"stmt_dur_d10": 9,
+"stmt_dur_d2": 10,
+"stmt_dur_d3": 11,
+"stmt_dur_d4": 12,
+"stmt_dur_d5": 10,
+"stmt_dur_m1": 7,
+"stmt_dur_m2": 9,
+"stmt_dur_m3": 10,
+"stmt_dur_m6": 8,
+"stmt_dur_n": 8,
+"stmt_dur_vague_1": 14,
+"stmt_dur_vague_2": 19,
+"stmt_dur_vague_3": 21,
+"stmt_dur_vague_4": 35,
+"stmt_dur_vague_5": 20,
+"stmt_dur_w1": 11,
+"stmt_dur_w2": 13,
+"stmt_dur_w3": 14,
+"stmt_dur_w6": 12,
+"stmt_dur_y1": 5,
+"stmt_dur_y3": 9,
+"stmt_employer": 7,
+"stmt_employer_au": 5,
+"stmt_employer_aux": 6,
+"stmt_host_brother": 13,
+"stmt_host_daughter": 12,
+"stmt_host_friend": 30,
+"stmt_host_mother": 11,
+"stmt_host_sister": 11,
+"stmt_host_son": 12,
+"stmt_origin_cer": 16,
+"stmt_origin_drv": 13,
+"stmt_origin_hal": 25,
+"stmt_origin_ter": 19,
+"stmt_origin_thr": 18,
+"stmt_origin_tyc": 16,
+"stmt_prov_place": 14,
+"stmt_prov_shuttle": 25,
+"stmt_prov_tessar": 15,
+"stmt_purpose_diplomatic_1": 22,
+"stmt_purpose_diplomatic_2": 15,
+"stmt_purpose_family_visit_1": 15,
+"stmt_purpose_family_visit_2": 20,
+"stmt_purpose_return_1": 18,
+"stmt_purpose_return_2": 16,
+"stmt_purpose_trade_1": 11,
+"stmt_purpose_trade_2": 23,
+"stmt_purpose_transit_1": 21,
+"stmt_purpose_transit_2": 18,
+"stmt_purpose_work_1": 10,
+"stmt_purpose_work_2": 19
+})
+frame_tokens = Dictionary[String, PackedStringArray]({
+"line_stmt_frame_cer_1": PackedStringArray("motif", "duree"),
+"line_stmt_frame_cer_2": PackedStringArray("motif", "duree"),
+"line_stmt_frame_correct_1": PackedStringArray("motif", "duree_barree", "duree"),
+"line_stmt_frame_correct_2": PackedStringArray("motif", "duree_barree", "duree"),
+"line_stmt_frame_drv_1": PackedStringArray("motif", "duree"),
+"line_stmt_frame_drv_2": PackedStringArray("motif", "duree"),
+"line_stmt_frame_gen_1": PackedStringArray("motif", "duree"),
+"line_stmt_frame_gen_2": PackedStringArray("motif", "duree"),
+"line_stmt_frame_gen_3": PackedStringArray("motif", "duree"),
+"line_stmt_frame_gen_4": PackedStringArray("motif", "duree"),
+"line_stmt_frame_hal_1": PackedStringArray("motif", "duree"),
+"line_stmt_frame_hal_2": PackedStringArray("motif", "duree"),
+"line_stmt_frame_ter_1": PackedStringArray("motif", "duree"),
+"line_stmt_frame_ter_2": PackedStringArray("motif", "duree"),
+"line_stmt_frame_ter_3": PackedStringArray("motif", "duree"),
+"line_stmt_frame_thr_1": PackedStringArray("motif", "duree"),
+"line_stmt_frame_thr_2": PackedStringArray("motif", "duree"),
+"line_stmt_frame_tyc_1": PackedStringArray("motif", "duree"),
+"line_stmt_frame_tyc_2": PackedStringArray("motif", "duree"),
+"line_stmt_frame_tyc_3": PackedStringArray("motif", "duree"),
+"line_stmt_frame_visit_1": PackedStringArray("motif", "hote", "duree"),
+"line_stmt_frame_visit_2": PackedStringArray("hote", "motif", "duree"),
+"line_stmt_frame_work_1": PackedStringArray("motif", "employeur", "duree"),
+"line_stmt_frame_work_2": PackedStringArray("motif", "employeur", "duree"),
+"line_stmt_origin_1": PackedStringArray("origine", "provenance"),
+"line_stmt_origin_2": PackedStringArray("origine"),
+"line_stmt_origin_3": PackedStringArray("provenance", "origine"),
+"line_stmt_origin_drv_1": PackedStringArray("origine"),
+"line_stmt_origin_drv_2": PackedStringArray("origine"),
+"line_stmt_origin_tessar_1": PackedStringArray("provenance"),
+"line_stmt_stay_1": PackedStringArray("duree"),
+"line_stmt_stay_2": PackedStringArray("duree"),
+"line_stmt_stay_3": PackedStringArray("duree"),
+"line_stmt_stay_4": PackedStringArray("duree")
+})
+lie_purposes = Dictionary[StringName, PackedStringArray]({
+&"cer": PackedStringArray("trade", "transit"),
+&"drv": PackedStringArray("transit", "trade"),
+&"hal": PackedStringArray("return", "work", "trade"),
+&"ter": PackedStringArray("work", "family_visit"),
+&"thr": PackedStringArray("trade", "diplomatic"),
+&"tyc": PackedStringArray("work", "family_visit", "return")
+})
+tessar_rates = Dictionary[StringName, float]({
+&"drv": 0.2,
+&"tyc": 0.1
+})
