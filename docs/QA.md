@@ -6,6 +6,7 @@
 > **Passe Acte III du 29.10.2026** (M9 A/B `26eb154`, sauvegarde v5, 573 tests) : voir [§13](#13-passe-qa-acte-iii-j20j30) — bugs QA-032 à QA-040.
 > **Passe M11 « Confort » du 29.10.2026** (`4bbda95`, sauvegarde v6, 638 tests) : voir [§14](#14-passe-qa-m11-confort) — bugs QA-041 à QA-049, 655 tests (8 `pending`).
 > **Passe M12 « Rejouabilité » du 29.10.2026** (`c729f93`, profil v2, 770 tests) : voir [§15](#15-passe-qa-m12-rejouabilité) — bugs QA-050 à QA-062, 783 tests (10 `pending`).
+> **Passe M13 « Gameplay » du 30.10.2026** (`a9ddc0c`, sauvegarde v6, 882 tests) : voir [§16](#16-passe-qa-m13-gameplay) — bugs QA-063 à QA-071, 893 tests (8 `pending`).
 > Ce document liste les bugs trouvés ; **QA ne corrige pas le code de jeu** : chaque bug nomme le fichier suspecté et l'agent propriétaire (AGENTS.md).
 
 ## Sommaire
@@ -25,6 +26,7 @@
 13. [Passe QA Acte III (J20–J30)](#13-passe-qa-acte-iii-j20j30)
 14. [Passe QA M11 « Confort »](#14-passe-qa-m11-confort)
 15. [Passe QA M12 « Rejouabilité »](#15-passe-qa-m12-rejouabilité)
+16. [Passe QA M13 « Gameplay »](#16-passe-qa-m13-gameplay)
 
 ---
 
@@ -1146,5 +1148,220 @@ XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path 
 #   Dossier : --qa-scene=res://scenes/main/main.tscn --demo-profile[=early] --title=dossier|dossier-people
 # Données, exports
 godot --headless --script res://tools/build_data.gd && md5sum data/*/*.tres
+bash tools/export_all.sh linux && bash tools/smoke_export.sh
+```
+
+---
+
+## 16. Passe QA M13 « Gameplay »
+
+> Passe du 30.10.2026 sur `claude/laughing-bell-8ayudz` après `a9ddc0c` (M13 intégré : déclarations et R43, journal à puces, fouille holographique R44–R47, contrebande et implants cachés, AG-01 → AG-06, prime de relevé, SC-104 → SC-111, Garde v2, EV-09, cartes d'aide). Godot 4.7.2, GUT 9.7.1. **QA ne corrige pas le code de jeu** : bugs QA-063 à QA-071 ci-dessous, chacun avec son propriétaire suggéré.
+
+### 16.1 Méthode et couverture
+
+| Volet | Outil | Résultat |
+|---|---|---|
+| Suite existante | GUT, unit et integration lancés séparément (> 10 min ensemble) | **882 / 882** à l'arrivée (unit 576 en 225 s, integration 306 en 546 s) ; après la passe **893 tests : 885 verts + 8 `pending`**, 0 échec (§16.8) |
+| Interrogatoire en vraie scène | **`tests/qa_drivers/qa_m13_booth.gd`** (nouveau) : `day.tscn` (booth 3D, vraie `ComparisonUI`, vraie `InspectionSession`), agent « oracle » qui pose la question de motif par l'action `interrogate` + Ⓐ (origine en plus au palier s3+), puis compare **chaque puce du journal à chaque champ comparable par de vrais clics souris** (`Viewport.push_input`), fouille par le menu (motif lu, TOUT SCANNER, objets épinglés à l'onglet Contrebande ou à la carte), épingle les autres violations par paires puis tamponne (maintien) | 20 journées réelles jouées (§16.2) : J4, J8, J9, J12, J13, J16, J19, J22, J24 (graine 3), J19 (graines 30, 43), J23 (6), J25 (12), J8 (7 : EV-05 ; 14 et 24 : EV-09) ; variantes « menteurs non interrogés », « fouille sans motif », « aucune fouille », AG-01 + AG-03 ; **0 faux positif** sur ≈ 650 comparaisons puce ↔ champ (hors QA-064) |
+| Manette seule (vraie scène) | même pilote, `--qa-pad-chip` : graphe de focus **mesuré par de vrais appuis** (`InputEventJoypadButton` croix, `InputEventJoypadMotion` LT / stick droit) puis chemin rejoué, Ⓐ | puce atteinte en 3 appuis (↑ ↑ ←), champ du permis en 5–6 (↓ ↓ → ↑ →), comparaison faite ; portique et boîte : tests GUT existants + captures |
+| Faux positifs (hors scène) | **`tests/qa_drivers/qa_m13_scan.gd`** (nouveau) : 50 historiques de drapeaux synthétiques × J1 → J30 ; chaque puce de **chaque** cas (générés et scénarisés) comparée à **chaque** champ de document ; verdicts scénarisés 0.12 (`M13Sim.strip`) ↔ 0.13 | 4 743 cas scénarisés, 55 164 puces : 0 discordance chez un honnête sans autre anomalie, 0 sur un cas scénarisé ; 248 « déclarations » discordantes chez des passagers en infraction pour une autre anomalie (QA-064) ; aucun verdict scénarisé SC-01 → SC-103 changé (seul SC-89b diffère, avec des drapeaux contradictoires `sc18_note_kept` + `sc18_note_reported` : artefact du balayage, pas du jeu) |
+| Répliques | `tools/qa_statements_audit.gd` ; **`tests/qa_drivers/qa_m13_lines.gd`** (nouveau : 3 293 réponses composées réellement générées, relues) | 241 répliques scénarisées, 0 contradiction ; ≤ 90 caractères partout ; casse correcte ; tournures fautives (QA-068) |
+| Événements | **`tests/qa_drivers/qa_m13_events_find.gd`** (calendrier EV-05 / EV-09 sur 59 campagnes) puis vraie scène | EV-05 au J8 (graine 7) et au J25 (graine 12) : portique retiré, aucun indice ni anomalie de fouille après la coupure ; EV-09 au J8 (graine 14) : **aucun passager du profil** dans la fenêtre (QA-066) ; EV-05 × R47 (QA-063) |
+| Améliorations | vraie scène (`--flags=upg_ag0N`), captures de l'Économat (`--screen=evening --shop=ag0N`), lecture des données et du code | effets AG-01 / AG-02 / AG-03 / AG-05 / AG-06 visibles et mesurés ; refus expliqués ; messages d'offre jamais affichés (QA-069) ; prime de relevé (QA-067) |
+| Garde v2 | `tests/qa_drivers/qa_m12_garde.gd` (garde longue K2Q-9TX, 110 passagers) | U21 (75ᵉ), U22 (80ᵉ), U23 (90ᵉ, après U22 et U11) tirées ; 0 erreur de l'oracle, 0 `ERROR` ; records `garde_version` 2 |
+| Sauvegardes 0.12 → 0.13 | **vraies sauvegardes 0.12.0** (`git archive f6d5f35`, importé, campagne réelle graine 5) versées en `tests/fixtures/qa_save_v6_012_j03.json`, `_j07.json`, `_j09.json` ; reprises par `qa_campaign --qa-load` | J3 → J18, J7 → J21, J9 → J23 joués en 0.13 sans erreur (§16.6) |
+| Campagnes complètes | `tools/qa_campaign.gd` (tronçons de 9 min repris sur la sauvegarde réelle) | voir §16.7 |
+| Équilibrage | `balance_sim --m13=compare` (100 graines, `default` et `passeur`, 80 %) ; `gen_stats` (40 campagnes) | §16.8 |
+| Visuel, accessibilité | ≈ 20 captures réelles OpenGL 3 sous xvfb (1080p, Deck 1280×800, texte 1,5, `--qa-pad`, vision des couleurs 1–3, `--reduce-motion`) ; versées en `docs/mockups/m13_qa_*.png` | §16.5 |
+
+**Vrai `user://saves` jamais touché** : vide avant et après la passe, `settings.cfg` du joueur inchangé (md5 `9d0188…`) ; tous les outils sous `XDG_DATA_HOME` temporaire (scratchpad) ; aucun `override.cfg`.
+
+### 16.2 Interrogatoire (R43, journal, puces)
+
+Pilote `qa_m13_booth.gd`, graine 3 sauf mention ; « puces » = comparaisons puce ↔ champ faites **à la souris** (puce puis champ) ; CONC / INCOMP / DISC = CONCORDANT / INCOMPARABLE / DISCORDANCE.
+
+| Jour (palier) | Puces comparées | Discordances | Constat |
+|---|---|---|---|
+| J4 (s1 : motif, durée) | motif 7 CONC ; durée 3 CONC, 3 INCOMP (« Ça dépend du travail », « Aussi longtemps qu'on voudra de moi », « Le temps du contrat » : `disc_statement_vague`) | 1 : SC-104 Strand, « Trois semaines » ↔ 5 jours | refus documenté, **7 ₵** (5 + prime 2) ; carte d'aide « déclarations » à la fermeture du briefing |
+| J4, menteurs **non interrogés** (`--qa-liars=skip`) | — | — | SC-104 approuvé → **ENTRÉE IRRÉGULIÈRE** ✅ (D-005) |
+| J12 (s2 : + employeur) | employeur 21 CONC (alias « chez Ondine », « chez Valcourt-Hsu » → nom canonique) | 1 : SC-107 Priya Nair (courtier) | refus juste ; aucune puce employeur hors TRAVAIL |
+| J13 (s3 : + origine) | origine 12 CONC (« Je suis de… » ; provenance jamais comparée) | 1 : durée (menteur généré) | refus documenté **7 ₵** ; question d'origine posée en plus (2 × 3 s) |
+| J19, J23 (s3) | origine 11 + 10 CONC | 1 + 1 : origine (AV-4) | refus documentés 7 ₵ |
+| J19, graine 43 | employeur ↔ **Code du contrat** : 2 DISC chez des passagers **honnêtes** dont le contrat est faux (R25) | 2 | **QA-064** : affiché « DÉCLARATION », compté « déclaration contradictoire » au bilan, `about_statement` débloquée |
+| J24 (s4 : + personne visitée) | personne visitée 1 DISC (SC-110 Sabine Moreno-Lind, « mon fils, Tomás Moreno-Lind » ≠ répondant) ; employeur 1 DISC (généré) | 2 | refus justes ; J25 (graine 12) : personne visitée 1 CONC |
+
+- **Zéro faux positif** sur un honnête, en scène (≈ 650 comparaisons sur 20 journées), et hors scène sur 55 164 puces (balayage) : réponses vagues, provenance, auto-corrections (la valeur barrée n'est pas une puce), hésitations, alias d'employeur, durées arrondies (« Trois semaines » ↔ 20 j). Les seules discordances d'honnêtes viennent d'un **autre document faux** (QA-064 : contrat ; le refus reste juste et documenté, mais l'étiquette accuse la parole du passager).
+- **Cas scénarisés** : aucune puce discordante hors du mensonge déclaré (`test_scripted_chips_are_never_discordant_outside_their_lie`) ; SC-01 → SC-103 en prose : 0 contradiction (`qa_statements_audit`) ; verdicts SC-01 → SC-103 identiques 0.12 / 0.13 sur 50 historiques.
+- **Coûts** (`inspection_busy`) : question 3 s ; +1 s avec auto-correction (4 s) ; AG-01 : 2 s. Pendant l'attente, menu Interroger et portique grisés, tampons et inspection libres (D-158).
+- **Casse** : aucune phrase ne commence par une minuscule (3 293 réponses composées) ; `‹Ha.› 8 jours.` commence par un chiffre (format `%d jours` assumé par M13 §1.6). Tournures fautives : **QA-068**.
+- **Audio** des réponses composées : couvert par `test_statement_frame_is_spoken_composed` (vert) ; pas d'écoute humaine dans cette passe (conteneur sans sortie audio).
+
+### 16.3 Fouille (R44 → R47)
+
+| Vérification | Résultat |
+|---|---|
+| Déblocage | portique et onglet Contrebande au J8 (cartes d'aide « déclarations » puis « portique » au premier jour joué) ; menu « Placez-vous dans le portique… » seulement si R44 est en vigueur |
+| Motif affiché, figé | MF-1 « Discordance n » (J13 #14 : durée épinglée avant), MF-2 « INDICE : BOSSE SOUS LA VESTE » (capture), MF-5 « FOUILLE OBLIGATOIRE (R47) » (Kerr J19, J22 #8, J23 #2 et #9, J24 #12) ; MF-4 : voir EV-09 ci-dessous |
+| Boîte « AUCUN MOTIF ÉTABLI » | J8 #2 (Brandt, en règle) : focus **ANNULER** (capture Deck manette texte 1,5), FOUILLER QUAND MÊME → **FOUILLE SANS MOTIF** (`cit_unwarranted_search`, 0 ₵), bilan « sans motif · 1 » ; ANNULER : rien n'est compté (GUT) |
+| Durées | activation 2 s + 5 × 2 s = **12 s** (TOUT SCANNER) ; AG-03 : 1 s + 5 × 1 s = 6 s. *Écart documentaire connu* : M13 §3.2 annonce « TOUT SCANNER 10 s → 4 s », les données (`search_all_sec` 5) font foi (ARCHITECTURE §12.4) — à aligner dans M13 (Game Designer) |
+| TOUT SCANNER pendant l'activation | bouton grisé pendant les 2 s d'activation (D-158) : il faut attendre la fin de l'activation, alors que la session accepte la mise en file (ARCHITECTURE §12.5). Conforme à D-158, noté pour l'UX |
+| Objets épinglables | objet ↔ entrée de l'onglet Contrebande : CB-01, CB-02, CB-03, CB-05, CB-06, CB-07 DISCORDANCE ; implant trouvé ↔ « Implants déclarés » : MIL-2 et DER-13 non déclarés DISCORDANCE, KIN-11 / KIN-17 déclarés CONCORDANT (SC-105 Mbeki, J13, J22) |
+| Armes, implants militaires | CB-06 (J13), CB-07 (SC-111 Whitmore, J22), MIL-2 (J8) → **DÉTENTION** documentée, **12 ₵** (5 + 5 + prime 2) |
+| R47 au J19 | Kerr (SC-109) : motif « obligatoire », fouille complète, APPROUVÉ juste ; sans fouille (`--qa-no-search`) : **FOUILLE OMISE** (`cit_search_skipped`) ✅ |
+| EV-05 | graine 7 J8 (coupure dès #11), graine 12 J25 (dès #5) : entrée « portique » retirée, aucun indice ni anomalie de fouille après la coupure (vraie scène + `test_blackout_window_has_no_search_anomaly_nor_cue`) ; **R47 reste en vigueur** : QA-063 |
+| EV-09 | graine 14 J8, profil Cérès, fenêtre #10–#14 : Tycho, Tharsis, Tycho, Tharsis, Tycho — **aucun porteur ni passager du profil** (QA-066) ; graine 24 J8 (profil COMMERCE) : 2 porteurs du profil dans la fenêtre (#13 Dérivant, #14 Terrien), tous deux avec un indice — le bandeau dit « INDICE » (MF-2 passe avant MF-4) ; MF-4 « DIRECTIVE DU JOUR » ne s'affiche que pour un passager du profil **sans** indice (GUT `test_search_motive_order_mf1_to_mf5`) |
+| Lucioles, objets glissés | SC-108 Ilse (J16) : CB-03 trouvé, refus → `sc108_searched`, `lucioles_trust −1` (effet de SC-108 restauré par les finitions) ✅ ; objets glissés : inchangés (campagnes) |
+| Détention, `inspection_busy` | le tampon referme la fouille ; pendant une zone, seules les entrées Interroger / portique sont suspendues (D-158) ; lecture, Mode Inspection, onglet FOUILLE du journal et tampons restent utilisables |
+
+### 16.4 Améliorations (AG-01 → AG-06) et prime de relevé
+
+| Amélioration | Vu en jeu | Efficace |
+|---|---|---|
+| AG-01 Hygiaphone | pastille « AG-01 » au panneau File | questions 3 → **2 s** (`inspection_busy`, J19) |
+| AG-02 Lampe de Wood | « UV · MODÈLE 2187 », « UV · HEXAGONE SOLAIRE »… sous le sceau de chaque document (capture J12) | lecture du modèle sans zoom ; aucune conformité affichée |
+| AG-03 PH-2 | pastille | activation 2 → 1 s, zone 2 → 1 s ; relevé (`suspicion +1` après approbation d'un porteur révélé) : GUT seulement (`test_day_controller_search_consequences`) |
+| AG-04 Tiroir | proposé hors catalogue **dès le soir du J5** quand une enveloppe a été vue (partie 0.12 reprise : offert J5, J6, J7, J8, J10) | audits J9 / J17 / J29 : GUT (`test_double_drawer_envelopes_and_audits`) ; message de confiscation jamais affiché (QA-069) |
+| AG-05 Recueil | soirs J6 → J8 seulement, « NOUVEAU » (capture J6) ; Rulebook ouvert à la bonne règle avec la marge d'Okonkwo (GUT) | message d'Okonkwo jamais affiché (QA-069) |
+| AG-06 Moniteur | « MANIFESTE · TYC · TRAVAIL · 4 DOC. » au panneau File (capture J12) ; offert à partir du soir du J11, « NOUVEAU » | `loyalty +1` à l'achat : GUT |
+
+- **Un achat par soir**, jamais présélectionné, « Un achat par soir : décochez l'autre d'abord », « Fonds insuffisants » (captures J6, J11) ; « Solde après achat » recalculé. L'achat concurrence le foyer : au soir du J6, cocher le Recueil (10 ₵) rend le bio-scan de Noa (25 ₵) « Fonds insuffisants » — voulu (M13 §3.1), mais rien ne le signale au moment de cocher (le soin est dans « CE SOIR », l'Économat dans les dépenses).
+- **Prime de relevé** (2 ₵) observée sur : refus R43 (SC-104, J13, J19, J23), refus R45 (J8, J9, J16, J19, J22), détentions R46 / MIL (12 ₵) ; **jamais** sur un refus R25 documenté par la puce employeur (J19, graine 43 : 5 ₵), ni sur une approbation. Versée aussi **sans** trouvaille de M13 quand le menteur porte une autre anomalie : **QA-067**.
+
+### 16.5 Manette seule et accessibilité
+
+| Élément | Manette | Deck 1280×800, texte 1,5 | Vision des couleurs | Réduire les animations |
+|---|---|---|---|---|
+| Journal à puces | vraie scène : puce en 3 appuis de croix, champ du permis en 5–6, Ⓐ / Ⓐ (§16.1) | lisible ; **ponctuation seule en tête de ligne**, numéro de discordance posé sur le texte de la puce, étiquette « FIGÉE » coupée en haut (QA-070) — [`m13_qa_journal_deck_text150.png`](mockups/m13_qa_journal_deck_text150.png) | puces : glyphe « » » + pointillé ; discordance hachurée et numérotée en protan et tritan — [`m13_qa_journal_protan.png`](mockups/m13_qa_journal_protan.png), [`_tritan`](mockups/m13_qa_journal_tritan.png) | — |
+| Portique | focus sur la première zone libre, croix entre zones / TOUT SCANNER / FERMER, Ⓑ referme (GUT `test_gate_is_driven_by_pad_and_closed_by_back`) ; invite « choisissez une zone (A) ou TOUT SCANNER · B : refermer » — [`m13_qa_search_deck_pad.png`](mockups/m13_qa_search_deck_pad.png) | zones et objets étiquetés en texte ; liste d'objets défilante | objets épinglés : hachures + numéro (deutan) — [`m13_qa_contraband_deutan.png`](mockups/m13_qa_contraband_deutan.png) | balayage coupé, barre d'attente par quarts — [`m13_qa_search_reduce_motion.png`](mockups/m13_qa_search_reduce_motion.png) |
+| Boîte « AUCUN MOTIF ÉTABLI » | focus **ANNULER**, Ⓑ annule, guichet muet derrière — [`m13_qa_unwarranted_deck_pad_text150.png`](mockups/m13_qa_unwarranted_deck_pad_text150.png) | tient en texte 1,5 | bouton FOUILLER rouge + libellé | — |
+| Onglet Contrebande | LB / RB jusqu'à l'onglet ; entrées focalisables | **libellé « Contrebande · NOUV. » coupé sous l'invite [** (QA-071) — [`m13_qa_contraband_deck_text150.png`](mockups/m13_qa_contraband_deck_text150.png) | REFUS · R45 en texte | — |
+| Économat | rangées focalisables, Ⓑ n'achète pas (GUT) | refus écrits (« Fonds insuffisants », « Un achat par soir… »), prix narratifs — [`m13_qa_shop_j11_deck_text150.png`](mockups/m13_qa_shop_j11_deck_text150.png), [`m13_qa_shop_j6_ag05.png`](mockups/m13_qa_shop_j6_ag05.png) | ⚠ + texte | — |
+| Cartes d'aide | focus SUIVANT / COMPRIS, invites Ⓐ / LT / Y / croix — [`m13_qa_help_deck_pad_text150.png`](mockups/m13_qa_help_deck_pad_text150.png) | « 1 / 2 », tient en texte 1,5 | — | — |
+| Améliorations au guichet | pastilles AG-0n, manifeste, « UV · modèle » — [`m13_qa_booth_upgrades_j12.png`](mockups/m13_qa_booth_upgrades_j12.png) | — | texte | — |
+
+### 16.6 Garde v2, Récit, sauvegardes 0.12 → 0.13, J31
+
+- **Garde v2** (vraie scène, garde longue K2Q-9TX, 110 passagers, oracle) : U21 (R43 s1) tirée au 75ᵉ passager, U22 (R44 + R45) au 80ᵉ, U23 (R46) au 90ᵉ, après U22 et U11 ; 0 erreur, 0 `ERROR`, records et graines `garde_version` 2 dans `profile.json`. U24 (R43 s2 + s3, « remplacé en place ») non tirée en 110 passagers : couverte par `test_garde_tier_replaces_r43_in_place` (vert).
+- **Récit** : campagne réelle complète (§16.7) ; FOUILLE SANS MOTIF / FOUILLE OMISE à 0 ₵ : GUT existants.
+- **Sauvegardes 0.12.0 réelles** (v6, écrites par la 0.12.0 compilée depuis `f6d5f35`) : avant J4 (`qa_save_v6_012_j03.json`), avant J8 (`_j07`), après J8 (`_j09` : J8 joué sans portique en 0.12). Reprises par `qa_campaign --qa-load` : J3 → J18, J7 → J21, J9 → J23 en 0.13, **0 `SCRIPT ERROR`, 0 `QA_ISSUE`** hors « solde aberrant » attendu (+3 000 ₵), sauvegarde relue = `GameState` chaque soir ; Économat ouvert au soir du J5 (AG-01, AG-04 hors catalogue puisqu'une enveloppe a été vue au J4 en 0.13) ; R43 au J4, portique au J8 ou au J9 pour la partie reprise après le J8. Aucune migration nécessaire (v6 inchangée, M13 §6.5) — confirmé.
+- **J31** : règles R43 → R47 absentes des quatre mondes (`test_r43_tiers_follow_the_calendar`, vert) ; `data/epilogue/day_31_*.tres` régénérés par M13 avec le même contenu (seuls les identifiants de sous-ressources changent) ; épilogue non rejoué en scène dans cette passe.
+
+### 16.7 Campagnes réelles J1 → J30 (`qa_campaign`, `day.tscn`, bot `--autoplay`, ×10, `--qa-reload`)
+
+Deux tronçons de 9 min par campagne (le second reprend la vraie sauvegarde `current.json` du premier). Le bot ne pose que la question de motif et ne fouille jamais : il mesure la stabilité, pas l'usage de M13.
+
+| Graine | Profil (soirées) | Mode | Départ | Jours | Fin | Solde | Conformité | Problèmes |
+|---|---|---|---|---|---|---|---|---|
+| 3 | loyal | Dur | J1 (+3 000 ₵) | J1 → J30 (17 + 13) | **F7** Le guichet rouvre | 380 ₵ | 58 % | aucun |
+| 11 | passeur | Dur | J1 (+3 000 ₵) | J1 → J30 (18 + 12) | **F7** | 111 ₵ | 55 % | aucun |
+| 7 | drift | **Récit** | J1 (+3 000 ₵) | J1 → J30 (17 + 13) | **F6** Dérive | 946 ₵ | 60 % | aucun |
+
+0 `QA_ISSUE` hors « solde aberrant » attendu, 0 `SCRIPT ERROR`, 0 `WARNING` ; sauvegarde relue = `GameState` chaque soir ; Économat proposé chaque soir à partir du J5 (AG-01 : 25 soirs, AG-02 / AG-03 : 21 soirs, J9 → J29), **jamais coché par défaut** (aucun achat du bot). Plus les trois reprises de sauvegardes 0.12 (§16.6) : 54 jours de plus, mêmes résultats.
+
+### 16.8 Régression et équilibrage
+
+**Régression** :
+- **GUT après la passe** : unit **576 / 576** (203 s) ; integration **317 tests : 309 verts + 8 `pending`** (QA-063 → QA-070), 0 échec, 0 `SCRIPT ERROR` (549 s — près de la limite de 10 min : à scinder si la suite grossit) ; total **893 tests, 885 verts, 8 `pending`**.
+- **`build_data`** : relancé, **0 fichier** de `data/` modifié (md5 identiques, 193 ressources écrites) : déterministe.
+- **`export_all.sh linux`** : 47 s, `build/dist/CLEARANCE-0.12.0-linux.tar.gz` (38,8 Mo ; nom de version : QA-065) ; **`smoke_export.sh`** : titre, J1 / J4 / J7 / J10 / J15 / J20 / J25 / J30, Garde, deux J31 : **OK** (3 min). Le smoke ne passe ni par le J8 (portique), ni par le J19 (R47), ni par le J24 (palier s4) : à ajouter.
+- Campagnes réelles, reprises 0.12, Garde : §16.6, §16.7.
+
+**Équilibrage.** **`balance_sim --m13=compare --upgrades=smart --profiles=0.8 --seed=1 --seeds=100`** (100 graines : écart-type d'une différence de parts ≈ 4 à 7 points, M13 §4.7) :
+
+| Préréglage | Écart max (100 graines) | §4.7 (1 000 graines) | Détail | Lecture |
+|---|---|---|---|---|
+| `default` | 7,0 | 2,4 | F1 Déposition 17 → 10, F3 4 → 8, F7 77 → 81 ; soldes J10 / J20 / J29 −9 / −20 / −15 ₵ ; achats AG-01 73 %, AG-02 29 %, AG-03 43 %, AG-05 35 %, AG-06 37 % ; questions 11,8 / jour, fouilles 1,5 / jour (0 sans motif), fausses déclarations 0,62 / jour relevées à 64 % | dans le bruit à 100 graines ; achats et soldes cohérents avec §4.7 (75 / 29 / 45 / 42 / 44 % ; −8 / −19 / −6 ₵) |
+| `passeur` | 5,0 | 9,0 | F10 11 → 16, F7 56 → 53, F1 Déposition 17 → 19 | même sens que §4.7 (F7 → F1 / F10), D-170 |
+
+La prime de relevé mesurée par la simulation inclut les cas de QA-067 (prime sans trouvaille) : la correction de QA-067 retirera un peu d'argent aux profils qui refusent sur une autre anomalie (à re-mesurer, Game Designer).
+
+**`gen_stats --campaigns=40 --seed=1`** (J1 → J30) : **invariants OK** ; M13 sur l'ensemble : fausses déclarations 4,2 %, anomalies de fouille 5,8 %, armes 0,03 / jour, indices des innocents 10,6 %, P(porteur | indice) 36,8 %, évasives des innocents 3,5 % — dans les cibles de §4.1. Par jour (n = 480 à 680 passagers, ± 1 à 2 points) : J4 9,7 % de fausses déclarations (cible 8–11 ✅), J12 7,3 % et J13 8,3 % (7–9 ✅), J24 8,3 % (7–9 ✅) ; J8 fouille 9,0 % (7–10 ✅) mais **P(porteur | indice) 51 %** (cible 30–45) ; **J19 fouille 6,2 %** (cible 8–10) et indices des innocents 13,3 % (10–12) ; J24 P(porteur | indice) 27 % (30–45). Écarts à confirmer sur 200 campagnes avant d'en faire des bugs (Game Designer, `search_cue_noise_rate` du J8 et poids du J19).
+
+### 16.9 Liste des bugs (M13)
+
+Statut : 🔴 ouvert. QA-063 à QA-070 ont chacun un test `pending` dans `tests/integration/test_qa_m13.gd` (§16.10) ; QA-071 est documenté par une capture.
+
+| ID | Sév. | Titre | Reproduction | Propriétaire suggéré | Preuve |
+|---|---|---|---|---|---|
+| QA-063 | **Majeur** | **Coupure EV-05 : R47 reste en vigueur sans portique** — EV-05 retire R44 (`RuleChangeDef.retire(R44)` seul, `build_data_m13.gd`) : plus d'entrée « portique », mais `r_belt_search` reste dans le RuleSet. Au J19+, un Ceinturier au séjour > 7 jours **en règle** qui se présente après la coupure ne peut être que **cité FOUILLE OMISE** (APPROUVÉ, `ScoringService._procedure_citation` ne regarde pas si la fouille était possible) ou **refusé à tort** (REFUS INJUSTIFIÉ, gravité 3). EV-05 tombe aux J19–J28 dans ≈ 1 campagne sur 5 (12 graines sur 59 : 30, 43 au J19 ; 6, 21, 24, 31, 41 aux J22–J23 ; 10, 12 au J25 ; 26, 7, 40 aux J26–J28) | J19 réel, EV-05 appliqué (`ev_05.changes`), Ceinturier 14 j en règle, APPROUVÉ sans fouille → `cit_search_skipped` ; vraie scène graine 12 J25 : « R47 visé, portique HORS SERVICE » (#6) | Gameplay Systems (EV-05 : suspendre aussi R47, `sev_blackout_rb_search` pour les deux) ou Godot Architect (`ScoringService` : `belt_search` seulement si `search_cause` est active) ; Game Designer (choix) | `test_qa063_*` |
+| QA-064 | Mineur | **« DÉCLARATION » discordante chez un passager qui n'a pas menti** — puce employeur ↔ **Code du contrat** quand le contrat est faux (R25) : `disc_statement_mismatch`, bandeau « DÉCLARATION · Dit : … ≠ … », confrontation « Ce que vous dites ne correspond pas à votre contrat » débloquée, bilan « Déclarations contradictoires relevées · n » (`DaySummary.get_statement_mismatch_count`) ; le refus reste juste et documenté (la paire partage le Code), sans prime. Contredit M13 §1.6 (« un honnête ne produit jamais de puce discordante »). 248 cas sur 55 164 puces (balayage) ; vraie scène : 2 au J19 (graine 43) | J19 graine 43 #3 (Valcourt-Hsu, contrat « CT-… » d'un autre code) et #12 ; `qa_m13_scan.gd` | Gameplay Systems (`DiscrepancyChecker._check_statement` : hors champ de référence, raison documentaire et non `statement_mismatch`, ou comparer au Code seulement si permis et contrat concordent) + UI/UX (bilan) | `test_qa064_*` |
+| QA-065 | Cosmétique | **Version non montée** : `config/version = "0.12.0"` (export `CLEARANCE-0.12.0-linux`, `game_version` des sauvegardes) alors que M13 = 0.13.0 | `export_all.sh linux` | Orchestrateur (à la livraison) | `test_qa065_*` |
+| QA-066 | Mineur | **EV-09 « Alerte des quais » sans aucun porteur du profil** — pour un profil d'origine (Tycho, Cérès), `CaseBuilder._plan_search_alert` choisit les porteurs parmi les passagers **déjà** de cette origine dans la fenêtre ; s'il n'y en a pas, l'alerte (« fouille autorisée des ressortissants de Cérès pour les cinq prochains passagers ») est annoncée et ne vise personne : **14 alertes sur 77** (300 campagnes). M13 §2.10 promet « 1 ou 2 porteurs du profil dans la fenêtre » | vraie scène graine 14 J8, fenêtre #10–#14 : Tycho, Tharsis, Tycho, Tharsis, Tycho | Gameplay Systems (profil tiré parmi ceux présents dans la fenêtre, ou origine imposée à 1–2 passagers générés comme pour les profils par motif) | `test_qa066_*` |
+| QA-067 | Mineur (économie) | **Prime de relevé versée sans trouvaille de M13** — `ScoringService.is_m13_finding` ne lit que les violations **attendues** : un menteur (AV) ou un porteur qui a aussi une autre anomalie, refusé sur cette autre anomalie **sans question ni fouille**, rapporte les 2 ₵. D-169 et M13 §4.4 : prime pour « une déclaration **épinglée** ou un objet/implant **révélé** ». Fausse aussi la mesure de D-168 (la simulation paie la même prime) | cas réel J4–J14, `r_identity_fields_match` + `r_statements`, refus documenté par l'identité seule : salaire 7 ₵ au lieu de 5 | Godot Architect (`ScoringService` : exiger une discordance confirmée sur `FieldRef.statement` / `scan` parmi `verdict.flagged`) + Game Designer (re-mesure `passeur`, `drift`) | `test_qa067_*` |
+| QA-068 | Cosmétique (texte) | **Réponses composées mal tournées** (36 sur 2 119 phrases uniques) : « Vendre ce que j'apporte, pour **je ne sais pas encore**. C'est écrit sur le permis. », « Affaires d'État, pour **ça dépend du travail**. » ; réponse vague suivie d'une affirmation précise (« Quelques jours. **Pas un jour de plus.** », « Ça dépend du travail. **C'est ce qu'on m'a accordé.** ») ; « J'arrive de Tycho. **Mais** je suis de Tycho, oui. » ; « Le temps du contrat, le temps du chantier. » ; « Je viens travailler **chez le Bureau** ». Aussi « Voir ma famille. Ça dépend du travail. » | `qa_m13_lines.gd` (3 293 réponses) | Scénariste (cadres compatibles avec les durées vagues ; formule « au Bureau ») + Gameplay Systems (`StatementGenerator` : pas de `gen_2` / `stay_1` / `stay_2` / `work_2` avec une durée vague ; `origin_3` seulement si provenance ≠ origine) | `test_qa068_*` |
+| QA-069 | Mineur (narratif) | **Messages d'offre et de confiscation jamais affichés** — `UpgradeDef.offer_message_key` (`msg_soute_drawer`, `msg_okonkwo_book`, `msg_vh_monitor`) n'est lu par aucun script ; `msg_okonkwo_drawer_found` n'est posé nulle part. Le Recueil d'Okonkwo (« de la main à la main », « pour ma tasse ») et le tiroir de la Soute apparaissent comme de simples lignes de l'Économat ; la confiscation du tiroir n'a aucun retour d'Okonkwo (M13 §3.3, §3.5) | soirée J6 (capture) ; relecture des sources | UI/UX (`EveningScreen` : message dans « CE SOIR » au premier soir de l'offre) + Gameplay Systems (message après `upg_ag04_found`) + Scénariste | `test_qa069_*`, [`m13_qa_shop_j6_ag05.png`](mockups/m13_qa_shop_j6_ag05.png) |
+| QA-070 | Cosmétique (lisibilité Deck) | **Journal : ponctuation détachée des puces** — `DialogueJournal._add_words` fait de « , » / « . » qui suivent une puce des `Label` séparés : au Deck en texte 1,5, « , normalement. » ouvre la ligne suivante ; en 1080p, espace visible avant le point (« passer . ») ; le numéro de discordance ① est posé sur la fin du texte de la puce (« Deux jou① ») ; l'étiquette « FIGÉE · DISCORDANCE » est coupée par le haut du journal (défilement) | `--day=13 --seed=3 --screen=shift --m13=journal --qa-size=1280x800 --qa-set=text_scale:1.5` | UI/UX Expert (`dialogue_journal.gd`, `statement_chip_view.gd`) | `test_qa070_*`, [`m13_qa_journal_deck_text150.png`](mockups/m13_qa_journal_deck_text150.png), [`m13_qa_journal_protan.png`](mockups/m13_qa_journal_protan.png) |
+| QA-071 | Cosmétique | **Rulebook au Deck, texte 1,5 : onglet « Contrebande · NOUV. » coupé** à gauche sous l'invite « [ » (le « C » disparaît) | `--day=8 --seed=3 --screen=shift --m13=contraband --qa-size=1280x800 --qa-set=text_scale:1.5` | UI/UX Expert (`rulebook_panel.gd` : largeur de l'onglet / ellipse) | [`m13_qa_contraband_deck_text150.png`](mockups/m13_qa_contraband_deck_text150.png) |
+
+Total M13 : **0 bloquant, 1 majeur, 4 mineurs (dont 1 économie, 1 narratif), 4 cosmétiques** (QA-063 à QA-071, 9 bugs). Aucun bug des passes précédentes réapparu (QA-057 : la boîte « AUCUN MOTIF » est une `ConfirmDialog` modale, focus ANNULER, guichet muet derrière).
+
+### 16.10 Tests ajoutés (`tests/integration/test_qa_m13.gd`, 11 tests) et outils
+
+| Test | État |
+|---|---|
+| `test_qa063_blackout_does_not_cite_a_belt_search_that_cannot_be_done` | ⏸ `pending` QA-063 |
+| `test_qa064_honest_chip_is_never_a_statement_mismatch` | ⏸ `pending` QA-064 |
+| `test_qa065_version_is_0_13` | ⏸ `pending` QA-065 |
+| `test_scripted_chips_are_never_discordant_outside_their_lie` | ✅ passe (SC-104 → SC-111, 3 campagnes, chaque puce ↔ chaque champ) |
+| `test_blackout_window_has_no_search_anomaly_nor_cue` | ✅ passe (EV-05 appliqué en cours de jour, 30 jours) |
+| `test_qa066_every_contraband_alert_has_a_carrier_of_its_profile` | ⏸ `pending` QA-066 (14 / 77 alertes sur 300 campagnes) |
+| `test_qa067_finding_bonus_needs_the_m13_finding_itself` | ⏸ `pending` QA-067 |
+| `test_qa068_composed_answers_read_well` | ⏸ `pending` QA-068 |
+| `test_qa069_offer_and_drawer_messages_are_wired` | ⏸ `pending` QA-069 |
+| `test_qa070_punctuation_never_starts_a_journal_line` | ⏸ `pending` QA-070 (contrôle structurel : ponctuation séparable d'une puce) |
+| `test_real_0_12_saves_resume_with_m13` | ✅ passe (3 vraies sauvegardes 0.12.0, valides, sans amélioration, jour suivant construit avec déclarations / fouille) |
+
+Fixtures : `tests/fixtures/qa_save_v6_012_j03.json`, `_j07.json`, `_j09.json` — **sauvegardes réelles écrites par la 0.12.0** (`git archive f6d5f35`, campagne réelle graine 5, profil `default`).
+
+Pilotes et outils (hors GUT, `tests/qa_drivers/`) :
+- `qa_m13_booth.gd` — jour réel joué par l'oracle à la souris (et `--qa-pad-chip` : manette, graphe de focus mesuré) ; options `--qa-liars=skip`, `--qa-unwarranted=N`, `--qa-cancel-unwarranted`, `--qa-no-search`, `--flags=upg_ag0N` ; sorties `QA_CHIP`, `QA_FP`, `QA_SEARCH`, `QA_MOTIVE`, `QA_R47`, `QA_SCRIPTED`, `QA_RESOLVED`, `QA_ISSUE`.
+- `qa_m13_scan.gd` — faux positifs et verdicts scénarisés 0.12 / 0.13 sur N historiques de drapeaux (`--histories=50 --seeds=1 [--only-day=N]`).
+- `qa_m13_lines.gd` — réponses composées réellement générées (relecture typographique).
+- `qa_m13_events_find.gd` — calendrier EV-05 / EV-09 par graine.
+
+### 16.11 Recommandations priorisées
+
+1. **QA-063** avant tout playtest de l'Acte III (une citation inévitable ou un refus injuste, ≈ 1 campagne sur 5).
+2. **QA-067** puis re-mesure de D-168 (la prime finance une partie de l'équilibrage économique).
+3. **QA-064** (étiquette, bilan et confrontation qui accusent un honnête) et **QA-066** (alerte sans objet).
+4. **QA-069** (trois offres d'amélioration sans leur message, confiscation muette), **QA-068** (Scénariste).
+5. **QA-070**, **QA-071** (lisibilité Deck en texte 1,5), **QA-065** à la livraison 0.13.0.
+6. QA (suite) : ajouter J8, J19 et J24 à `smoke_export.sh` (portique, R47, palier s4 absents du smoke) ; playtest humain des cibles M13 §4.2 (questions posées, mensonges trouvés, fouilles avec motif) ; garde longue jusqu'à U24 ; `gen_stats` sur 200 campagnes pour J8 / J19 (§16.8) ; aligner M13 §3.2 (TOUT SCANNER AG-03 : 4 s annoncés, 6 s en données).
+
+### 16.12 Rejouer la passe M13
+
+```bash
+# GUT (unit puis integration : > 10 min ensemble)
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig= -gdir=res://tests/unit/ -gprefix=test_ -gsuffix=.gd \
+    -gpre_run_script=res://tests/helpers/gut_pre_run.gd -gexit
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig= -gdir=res://tests/integration/ -gprefix=test_ -gsuffix=.gd \
+    -gpre_run_script=res://tests/helpers/gut_pre_run.gd -gexit
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig= -gtest=res://tests/integration/test_qa_m13.gd \
+    -gpre_run_script=res://tests/helpers/gut_pre_run.gd -gexit
+# Jour réel joué par l'oracle (souris) ; variantes
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- \
+    --qa-node=res://tests/qa_drivers/qa_m13_booth.gd --seed=3 --day=4 [--qa-liars=skip] [--qa-pad-chip]
+#   --day=8 --qa-unwarranted=2 [--qa-cancel-unwarranted] ; --day=19 --qa-no-search (FOUILLE OMISE) ;
+#   --day=19 --flags=upg_ag01,upg_ag03 ; --seed=43 --day=19 (QA-064) ; --seed=14 --day=8 (QA-066) ; --seed=12 --day=25 (QA-063)
+# Balayages hors scène
+godot --headless --script res://tests/qa_drivers/qa_m13_scan.gd -- --histories=50 --seeds=1      # ≈ 7 min
+godot --headless --script res://tests/qa_drivers/qa_m13_lines.gd -- --groups=400
+godot --headless --script res://tools/qa_statements_audit.gd
+godot --headless --script res://tests/qa_drivers/qa_m13_events_find.gd
+# Sauvegardes 0.12 reprises, campagnes complètes (tronçons de 9 min repris sur slot_1/current.json)
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --autoplay \
+    --qa-load=$PWD/tests/fixtures/qa_save_v6_012_j07.json --qa-profile=default --qa-speed=10 --qa-reload
+X=$(mktemp -d); XDG_DATA_HOME=$X timeout 560 godot --headless --script res://tools/qa_boot.gd -- --autoplay \
+    --qa-seed=7 --qa-profile=drift --qa-credits=3000 --qa-story --qa-speed=10 --qa-reload
+# Captures (xvfb, OpenGL 3)
+XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
+    --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1280x800 --qa-wait=22 \
+    --qa-out=/tmp/j.png --day=13 --seed=3 --screen=shift --m13=journal --qa-set=text_scale:1.5
+#   --m13=search|unwarranted|contraband (--day=8 --seed=3), --qa-pad, --qa-set=color_vision:N, --reduce-motion ;
+#   --day=8 --m13-help --qa-close-briefing ; --screen=evening --shop=ag0N (--day=6|11)
+# Équilibrage, données, exports
+godot --headless --script res://tools/balance_sim.gd -- --m13=compare --upgrades=smart --profiles=0.8 --presets=default --seeds=100 --seed=1
+godot --headless --script res://tools/gen_stats.gd -- --campaigns=40 --seed=1
+godot --headless --script res://tools/build_data.gd && git status --short data/      # aucun fichier modifié
 bash tools/export_all.sh linux && bash tools/smoke_export.sh
 ```
