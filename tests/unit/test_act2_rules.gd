@@ -380,6 +380,8 @@ const EXPECTED: Dictionary[StringName, VerdictKind.Kind] = {
 	&"sc_42": VK.APPROVE, &"sc_43": VK.APPROVE, &"sc_44": VK.APPROVE, &"sc_45": VK.DENY, &"sc_46": VK.APPROVE,
 	&"sc_47": VK.DENY, &"sc_48": VK.APPROVE, &"sc_49a": VK.APPROVE, &"sc_49b": VK.APPROVE, &"sc_50a": VK.DETAIN,
 	&"sc_50b": VK.DETAIN,
+	# M13 (docs/M13.md §5.3) : SC-107 (AV-3), SC-108 (CB-03), SC-109 (R47, propre).
+	&"sc_107": VK.DENY, &"sc_108": VK.DENY, &"sc_109": VK.APPROVE,
 }
 
 

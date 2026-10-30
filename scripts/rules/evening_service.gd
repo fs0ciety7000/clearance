@@ -291,11 +291,75 @@ static func total_spent(lines: Array[ExpenseLine]) -> int:
 
 
 ## Un poste facultatif ne peut être coché que si le solde reste ≥ 0
-## (la taxe d'air, elle, peut creuser la dette).
-static func can_toggle_on(lines: Array[ExpenseLine], balance: int, line: ExpenseLine) -> bool:
+## (la taxe d'air, elle, peut creuser la dette). M13 : un achat de l'Économat
+## au plus par soir (`max_upgrades`), jamais à découvert.
+static func can_toggle_on(lines: Array[ExpenseLine], balance: int, line: ExpenseLine, max_upgrades: int = 1) -> bool:
 	if line.mandatory or line.paid:
 		return true
+	if line.upgrade_id != &"" and upgrades_selected(lines) >= max_upgrades:
+		return false
 	return balance - total_spent(lines) - line.cost >= 0
+
+
+# ---------------------------------------------------------------------------
+# M13 : Économat du Hall (docs/M13.md §3 ; B74, D-150)
+# ---------------------------------------------------------------------------
+
+## Préfixe des postes d'achat (`upgrade_ag01`).
+const UPGRADE_PREFIX: String = "upgrade_"
+
+
+## Offres du soir du jour `day_number` (catalogue puis hors catalogue, ordre
+## des données) : postes **non cochés**, libellé `exp_upgrade_<id>`, note =
+## description de l'effet. Vide avant `shop_open_evening` (J5).
+static func shop_lines(economy: EconomyDef, day_number: int, flags: Dictionary[StringName, Variant]) -> Array[ExpenseLine]:
+	var lines: Array[ExpenseLine] = []
+	if economy == null or day_number < economy.shop_open_evening:
+		return lines
+	for off_catalog: bool in [false, true]:
+		for upgrade: UpgradeDef in economy.upgrades:
+			if upgrade == null or upgrade.off_catalog != off_catalog or not upgrade.is_offered(day_number, flags):
+				continue
+			var line: ExpenseLine = ExpenseLine.new(StringName(UPGRADE_PREFIX + String(upgrade.id)), upgrade.price)
+			line.upgrade_id = upgrade.id
+			line.label_key = upgrade.expense_key if not upgrade.expense_key.is_empty() else upgrade.name_key
+			line.note_key = upgrade.desc_key
+			lines.append(line)
+	return lines
+
+
+## Offres achetables ce soir avec le solde restant (`balance` = fonds du soir) :
+## offertes, un achat au plus, sans découvert.
+static func affordable_upgrades(lines: Array[ExpenseLine], balance: int, max_upgrades: int = 1) -> Array[ExpenseLine]:
+	var result: Array[ExpenseLine] = []
+	for line: ExpenseLine in lines:
+		if line.upgrade_id != &"" and not line.paid and can_toggle_on(lines, balance, line, max_upgrades):
+			result.append(line)
+	return result
+
+
+## Nombre d'achats cochés.
+static func upgrades_selected(lines: Array[ExpenseLine]) -> int:
+	var count: int = 0
+	for line: ExpenseLine in lines:
+		if line.upgrade_id != &"" and line.paid:
+			count += 1
+	return count
+
+
+## Achats cochés : drapeau de possession `upg_<id>` et drapeaux d'achat
+## (`purchase_flags`, AG-06 : `loyalty +1`), dans `report`.
+static func _apply_purchases(report: EveningReport, economy: EconomyDef, lines: Array[ExpenseLine],
+		flags: Dictionary[StringName, Variant]) -> void:
+	for line: ExpenseLine in lines:
+		if line.upgrade_id == &"" or not line.paid:
+			continue
+		var upgrade: UpgradeDef = economy.get_upgrade(line.upgrade_id) if economy != null else null
+		if upgrade == null:
+			continue
+		report.flag_changes[upgrade.owned_flag()] = true
+		CaseConsequences.add_all(report.flag_changes, flags, upgrade.purchase_flags)
+		report.upgrades_bought.append(upgrade.id)
 
 
 ## Applique la soirée : débit, évolution du foyer, fins anticipées.
@@ -324,6 +388,7 @@ static func apply(economy: EconomyDef, day_number: int, household: Household,
 			loan_defaulted = true
 			report.flag_changes[FLAG_LOAN_DEFAULTED] = true
 	var household_effects: Array[StringName] = _apply_events(report, events, choices, flags, economy)
+	_apply_purchases(report, economy, lines, flags)
 	for income: ExpenseLine in income_lines(economy, day_number, household, flags):
 		report.gained += income.cost
 		report.income_lines.append(income)

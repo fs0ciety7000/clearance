@@ -10,6 +10,11 @@
 ## - `mark(document_id, mark_id)` = `(<document_id>, mark:<mark_id>)` : une marque
 ##   au coin d'un document (`DocumentInstance.marks`, ex. la luciole du code 1).
 ##   Paire marque ↔ symbole = preuve d'un signalement (NARRATIVE §4.9).
+## - M13 : `statement(id)` = `(__statement__, <id>)` : une puce du journal de
+##   dialogue (déclaration orale, `Statement`) ; `scan(zone, n)` =
+##   `(__scan__, "<zone>:<n>")` : un objet révélé par la fouille (`SearchItem`) ;
+##   `contraband_entry(id)` = `(__contraband__, <catégorie>)` : une entrée de
+##   l'onglet Contrebande du Rulebook.
 ## GDScript n'admet pas de constante objet : `FieldRef.PASSENGER_FACE` du
 ## document d'architecture devient la fabrique `FieldRef.passenger_face()`.
 class_name FieldRef
@@ -35,6 +40,14 @@ const QUOTA_FIELD_ID: StringName = &"quota"
 const LEDGER_DOCUMENT_ID: StringName = &"__ledger__"
 ## Acte III — onglet « Convocations » de l'Enquête (R36) : `(__summons__, <entry_id>)`.
 const SUMMONS_DOCUMENT_ID: StringName = &"__summons__"
+
+## M13 — puce du journal de dialogue (déclaration orale) : `(__statement__, <id>)`.
+const STATEMENT_DOCUMENT_ID: StringName = &"__statement__"
+## M13 — objet révélé par la fouille : `(__scan__, "<zone>:<index>")`.
+const SCAN_DOCUMENT_ID: StringName = &"__scan__"
+const SCAN_SEPARATOR: String = ":"
+## M13 — entrée de l'onglet Contrebande (R45 / R46) : `(__contraband__, <catégorie>)`.
+const CONTRABAND_DOCUMENT_ID: StringName = &"__contraband__"
 
 var document_id: StringName = &""
 var field_id: StringName = &""
@@ -92,6 +105,50 @@ static func summons(entry_id: StringName) -> FieldRef:
 	return FieldRef.new(SUMMONS_DOCUMENT_ID, entry_id)
 
 
+## M13 — puce `statement_id` du journal de dialogue (`Statement.id`).
+static func statement(statement_id: StringName) -> FieldRef:
+	return FieldRef.new(STATEMENT_DOCUMENT_ID, statement_id)
+
+
+## M13 — objet `index` de la zone `zone` révélé par la fouille.
+static func scan(zone: StringName, index: int) -> FieldRef:
+	return FieldRef.new(SCAN_DOCUMENT_ID, StringName("%s%s%d" % [zone, SCAN_SEPARATOR, index]))
+
+
+## M13 — entrée de l'onglet Contrebande (catégorie du catalogue de fouille).
+static func contraband_entry(category_id: StringName) -> FieldRef:
+	return FieldRef.new(CONTRABAND_DOCUMENT_ID, category_id)
+
+
+func is_statement() -> bool:
+	return document_id == STATEMENT_DOCUMENT_ID
+
+
+## Identifiant de la déclaration (`purpose`, `stay`…), vide sinon.
+func get_statement_id() -> StringName:
+	return field_id if is_statement() else &""
+
+
+func is_scan() -> bool:
+	return document_id == SCAN_DOCUMENT_ID
+
+
+## Zone d'un objet de fouille (`z3`), vide sinon.
+func get_scan_zone() -> StringName:
+	return StringName(String(field_id).get_slice(SCAN_SEPARATOR, 0)) if is_scan() else &""
+
+
+## Rang d'un objet dans sa zone, -1 sinon.
+func get_scan_index() -> int:
+	if not is_scan() or not String(field_id).contains(SCAN_SEPARATOR):
+		return -1
+	return String(field_id).get_slice(SCAN_SEPARATOR, 1).to_int()
+
+
+func is_contraband_entry() -> bool:
+	return document_id == CONTRABAND_DOCUMENT_ID
+
+
 func is_ledger() -> bool:
 	return document_id == LEDGER_DOCUMENT_ID
 
@@ -143,7 +200,9 @@ func is_document_field() -> bool:
 	return document_id != PASSENGER_DOCUMENT_ID and document_id != RULEBOOK_DOCUMENT_ID \
 			and document_id != WANTED_DOCUMENT_ID and document_id != REVOKED_DOCUMENT_ID \
 			and document_id != COUNTER_DOCUMENT_ID and document_id != SYMBOLS_DOCUMENT_ID \
-			and document_id != LEDGER_DOCUMENT_ID and document_id != SUMMONS_DOCUMENT_ID and document_id != &""
+			and document_id != LEDGER_DOCUMENT_ID and document_id != SUMMONS_DOCUMENT_ID \
+			and document_id != STATEMENT_DOCUMENT_ID and document_id != SCAN_DOCUMENT_ID \
+			and document_id != CONTRABAND_DOCUMENT_ID and document_id != &""
 
 
 func equals(other: FieldRef) -> bool:

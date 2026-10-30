@@ -153,6 +153,24 @@ extends Resource
 ## lue par le générateur, lot B).
 @export_range(0.0, 1.0) var subtle_rate: float = 0.0
 
+@export_group("M13")
+## M13 (B67) — poids des variantes de `STATEMENT_MISMATCH` (AV-1 → AV-5) :
+## sujet (`purpose`, `stay`, `employer`, `origin`, `host`) → poids relatif,
+## conditionnel (employeur : motif TRAVAIL ; personne visitée : répondant
+## valide). Lu par l'injecteur (lot B).
+@export var statement_topic_weights: Dictionary[StringName, float] = {}
+## M13 (B69) — part des innocents qui présentent un indice de fouille
+## (IV-1 → IV-5), avec une explication légitime dans la zone (0,10 à 0,12).
+@export_range(0.0, 1.0) var search_cue_noise_rate: float = 0.0
+## M13 (MF-4) — directive de fouille du briefing (« fouille autorisée : … ») :
+## origines (`FactionDef.id`) et motifs couverts ; `*` = tous. EV-09 passe par
+## une surcharge de R44 (`search_authorized`, §12.5).
+@export var search_directive_factions: Array[StringName] = []
+@export var search_directive_purposes: Array[StringName] = []
+## M13 (B68) — répliques d'intercom du shift (Okonkwo, Sato), pilotées par
+## les données (`IntercomLineDef`).
+@export var intercom_lines: Array[IntercomLineDef] = []
+
 const MODE_CAMPAIGN: StringName = &"campaign"
 const MODE_EPILOGUE: StringName = &"epilogue"
 const MODE_GARDE: StringName = &"garde"
@@ -195,6 +213,17 @@ func scripted_indices() -> PackedInt32Array:
 				indices.append(index)
 	indices.sort()
 	return indices
+
+
+## M13 (MF-4) : la directive du briefing couvre ce passager (origine ou motif
+## présentés).
+func search_directive_covers(case: Case) -> bool:
+	if case == null or case.passenger_presented == null:
+		return false
+	var faction: StringName = case.passenger_presented.faction_id
+	var purpose: StringName = case.passenger_presented.purpose
+	return search_directive_factions.has(&"*") or search_directive_factions.has(faction) \
+			or search_directive_purposes.has(&"*") or search_directive_purposes.has(purpose)
 
 
 ## Cas scénarisé prévu à cet index, ou null.

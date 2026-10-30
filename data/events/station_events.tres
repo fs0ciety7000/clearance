@@ -1,19 +1,21 @@
 [gd_resource type="Resource" script_class="StationEventsDef" format=3 uid="uid://n0ok8m8dpxdf"]
 
-[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="1_q248s"]
-[ext_resource type="Resource" path="res://data/events/ev_01.tres" id="2_2vxcq"]
-[ext_resource type="Resource" path="res://data/events/ev_02.tres" id="3_gpnsv"]
-[ext_resource type="Resource" path="res://data/events/ev_03.tres" id="4_yyep6"]
-[ext_resource type="Resource" path="res://data/events/ev_04.tres" id="5_yva45"]
-[ext_resource type="Resource" path="res://data/events/ev_05.tres" id="6_faqrk"]
-[ext_resource type="Resource" path="res://data/events/ev_06.tres" id="7_yc0qv"]
-[ext_resource type="Resource" path="res://data/events/ev_07.tres" id="8_j6fmc"]
-[ext_resource type="Resource" path="res://data/events/ev_08.tres" id="9_uqw7l"]
-[ext_resource type="Script" path="res://scripts/core/station_events_def.gd" id="10_p6tsn"]
+[ext_resource type="Script" path="res://scripts/core/station_event_def.gd" id="1_2vxcq"]
+[ext_resource type="Resource" path="res://data/events/ev_01.tres" id="2_gpnsv"]
+[ext_resource type="Resource" path="res://data/events/ev_02.tres" id="3_yyep6"]
+[ext_resource type="Resource" path="res://data/events/ev_03.tres" id="4_yva45"]
+[ext_resource type="Resource" path="res://data/events/ev_04.tres" id="5_faqrk"]
+[ext_resource type="Resource" path="res://data/events/ev_05.tres" id="6_yc0qv"]
+[ext_resource type="Resource" path="res://data/events/ev_06.tres" id="7_j6fmc"]
+[ext_resource type="Resource" path="res://data/events/ev_07.tres" id="8_uqw7l"]
+[ext_resource type="Resource" path="res://data/events/ev_08.tres" id="9_p6tsn"]
+[ext_resource type="Resource" path="res://data/events/ev_09.tres" id="10_ej6co"]
+[ext_resource type="Script" path="res://scripts/core/station_events_def.gd" id="11_yh21d"]
 
 [resource]
-script = ExtResource("10_p6tsn")
-events = Array[ExtResource("1_q248s")]([ExtResource("2_2vxcq"), ExtResource("3_gpnsv"), ExtResource("4_yyep6"), ExtResource("5_yva45"), ExtResource("6_faqrk"), ExtResource("7_yc0qv"), ExtResource("8_j6fmc"), ExtResource("9_uqw7l")])
+script = ExtResource("11_yh21d")
+version = 2
+events = Array[ExtResource("1_2vxcq")]([ExtResource("2_gpnsv"), ExtResource("3_yyep6"), ExtResource("4_yva45"), ExtResource("5_faqrk"), ExtResource("6_yc0qv"), ExtResource("7_j6fmc"), ExtResource("8_uqw7l"), ExtResource("9_p6tsn"), ExtResource("10_ej6co")])
 eligible_days = Dictionary[int, int]({
 4: 1,
 5: 1,

@@ -35,6 +35,9 @@ var flag_changes: Dictionary[StringName, Variant] = {}
 var event_texts: PackedStringArray = []
 ## Acte II : revenus récurrents crédités ce soir (`EveningService.income_lines`).
 var income_lines: Array[ExpenseLine] = []
+## M13 (D-150) : améliorations achetées ce soir (`UpgradeDef.id`), à annoncer
+## par `EventBus.upgrade_purchased` à la clôture.
+var upgrades_bought: Array[StringName] = []
 
 
 func add_event(key: String, tone: Tone, member: StringName = &"") -> void:

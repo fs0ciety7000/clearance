@@ -64,6 +64,15 @@ const EXPECTED_SIGNALS: Dictionary = {
 	&"garde_tier_changed": 1,
 	&"garde_ended": 1,
 	&"epilogue_concluded": 1,
+	# M13 lot A (ARCHITECTURE §12.8) : déclarations, fouille, améliorations.
+	&"statement_given": 2,
+	&"search_requested": 1,
+	&"search_confirmation_required": 1,
+	&"search_opened": 2,
+	&"search_zone_scanned": 3,
+	&"search_closed": 1,
+	&"inspection_busy": 3,
+	&"upgrade_purchased": 1,
 }
 
 

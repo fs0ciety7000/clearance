@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="UpgradeDef" format=3 uid="uid://71nf5btna2pm"]
+
+[ext_resource type="Script" path="res://scripts/core/upgrade_def.gd" id="1_fwr6l"]
+
+[resource]
+script = ExtResource("1_fwr6l")
+id = &"ag03"
+name_key = "upg_ag03_name"
+desc_key = "upg_ag03_desc"
+note_key = "upg_ag03_note"
+price = 20
+expense_key = "exp_upgrade_ag03"
+first_evening = 9
+effects = Dictionary[StringName, Variant]({
+&"suspicion_on_found": 1
+})

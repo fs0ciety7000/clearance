@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="UpgradeDef" format=3 uid="uid://cypgfc62274k"]
+
+[ext_resource type="Script" path="res://scripts/core/upgrade_def.gd" id="1_nklak"]
+
+[resource]
+script = ExtResource("1_nklak")
+id = &"ag06"
+name_key = "upg_ag06_name"
+desc_key = "upg_ag06_desc"
+note_key = "upg_ag06_note"
+price = 35
+expense_key = "exp_upgrade_ag06"
+first_evening = 11
+offer_message_key = "msg_vh_monitor"
+purchase_flags = Dictionary[StringName, int]({
+&"loyalty": 1
+})

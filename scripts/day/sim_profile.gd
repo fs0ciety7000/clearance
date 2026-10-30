@@ -26,9 +26,24 @@ extends RefCounted
 ## M11 (D-102) : `story_mode` (mode Récit : amendes à 0 ₵, citations comptées ;
 ## la file est toujours traitée en entier) — `SimProfile.story(preset)` ou
 ## préfixe `story_` (`story_luciole`…) dans `preset` / `balance_sim --presets=`.
+## M13 (docs/M13.md §4.5) : `presse` (interroge peu, ne fouille jamais),
+## `curieux` (interroge toujours, fouille complète sur indice), `zele` (fouille
+## tout le monde : coût de FOUILLE SANS MOTIF), `economiste` (achète à
+## l'Économat dès que possible).
 const PRESETS: Array[StringName] = [&"default", &"loyal", &"luciole", &"mercenary", &"drift", &"negligent", &"evicted",
 		&"drift10", &"archiviste", &"solidaire", &"overrun", &"mercenary2", &"passeur", &"temoin", &"accusateur",
-		&"mercenary3"]
+		&"mercenary3", &"presse", &"curieux", &"zele", &"economiste"]
+## M13 : politiques de fouille et d'achat.
+const SEARCH_NEVER: StringName = &"never"
+const SEARCH_CUE: StringName = &"cue"
+const SEARCH_CUE_DISCORD: StringName = &"cue_discord"
+const SEARCH_ALWAYS: StringName = &"always"
+const ZONES_TARGETED: StringName = &"targeted"
+const ZONES_FULL: StringName = &"full"
+const UPGRADES_NEVER: StringName = &"never"
+const UPGRADES_SMART: StringName = &"smart"
+const UPGRADES_EAGER: StringName = &"eager"
+const UPGRADES_LIST: StringName = &"list"
 
 const VK := VerdictKind.Kind
 const SD := SlippedItem.Decision
@@ -70,6 +85,36 @@ var garde_decay: bool = false
 ## (`StationEventService.schedule`) appliqué par le `DaySimulator`
 ## (`balance_sim --events=on|compare`).
 var station_events: bool = false
+
+## M13 (docs/M13.md §4.5) : probabilité de poser la question de motif (hors
+## Tycho, toujours interrogés : R08) ; 3 s, 2 s avec AG-01.
+var ask_rate: float = 0.85
+## Probabilité de relever une fausse déclaration **si** la question est
+## posée ; < 0 = `accuracy`.
+var statement_catch: float = -1.0
+## Quand fouiller : `never`, `cue` (indice remarqué), `cue_discord` (indice ou
+## discordance), `always` (tout le monde : FOUILLE SANS MOTIF sur les innocents).
+var search_policy: StringName = SEARCH_CUE
+## Zones : `targeted` (zone de l'indice, puis une autre à 50 %) ou `full` (TOUT SCANNER).
+var search_zones: StringName = ZONES_TARGETED
+## Probabilité de remarquer un indice visible (IV-1 → IV-5).
+var cue_spot: float = 0.8
+## Achats du soir : `never`, `smart` (§4.4), `eager`, `list` (`upgrade_list`).
+var upgrade_policy: StringName = UPGRADES_SMART
+var upgrade_list: Array[StringName] = []
+## Améliorations jamais achetées par ce profil (`luciole` : ni le PH-2 qui
+## transmet ses relevés, ni le moniteur de Valcourt-Hsu).
+var avoid_upgrades: Array[StringName] = []
+## Faux : campagne « 0.12 » (règles R43 → R47, anomalies, cas SC-104 → SC-111,
+## compensation de temps et avertissements de M13 retirés, aucun achat) —
+## `balance_sim --m13=off|compare`.
+var m13: bool = true
+## Modèle de temps (`balance_sim --m13=compare`, `--timed`) : chaque cas
+## coûte `seconds_per_case` (± 20 %) + questions et fouille ; la file s'arrête
+## quand la durée du shift est épuisée (Dur seulement : le Récit traite tout).
+var timed: bool = false
+var seconds_per_case: float = 48.0
+
 const GARDE_DECAY_START: float = 0.95
 const GARDE_DECAY_PER_TIER: float = 0.04
 const GARDE_DECAY_PER_UNIT: float = 0.005
@@ -113,6 +158,7 @@ static func preset(preset_name: StringName, p_accuracy: float = 0.95) -> SimProf
 					&"sc53_anouk": VK.APPROVE, &"sc66_lev": VK.APPROVE, &"sc59_beaumont": VK.APPROVE,
 					&"sc71_kasimir": VK.DENY, &"sc82_dora": VK.APPROVE, &"sc82_mira": VK.APPROVE}
 			p.items = {&"sc18_sefa": SD.KEEP, &"sc65_yara": SD.KEEP}
+			p.avoid_upgrades = [&"ag03", &"ag06"]
 			p.choices = {&"d05_heat": &"accept", &"d08_neighbor": &"help", &"d09_ilan": &"support",
 					&"d09_okonkwo": &"warn", &"d12_job": &"refuse", &"d13_scanner": &"install", &"d16_call": &"go",
 					&"d16_unplug": &"unplug",
@@ -179,6 +225,19 @@ static func preset(preset_name: StringName, p_accuracy: float = 0.95) -> SimProf
 			p.spending = &"rent_only"
 		&"evicted":
 			p.spending = &"none"
+		# M13 (docs/M13.md §4.5).
+		&"presse":
+			p.ask_rate = 0.3
+			p.search_policy = SEARCH_NEVER
+		&"curieux":
+			p.ask_rate = 1.0
+			p.search_policy = SEARCH_CUE
+			p.search_zones = ZONES_FULL
+		&"zele":
+			p.search_policy = SEARCH_ALWAYS
+			p.search_zones = ZONES_FULL
+		&"economiste":
+			p.upgrade_policy = UPGRADES_EAGER
 	return p
 
 
@@ -246,6 +305,16 @@ func option_for(event: EveningEvent) -> EveningOptionDef:
 static func day_of(case: Case) -> int:
 	var text: String = String(case.case_id)
 	return text.substr(1, 2).to_int() if text.begins_with("d") and text.length() >= 3 else 0
+
+
+## M13 : probabilité de relever une fausse déclaration une fois la question posée.
+func statement_catch_rate() -> float:
+	return statement_catch if statement_catch >= 0.0 else accuracy
+
+
+## M13 : AG-04 n'est jamais acheté par la politique `smart`, sauf mercenaire.
+func is_mercenary() -> bool:
+	return String(name).trim_prefix(STORY_PREFIX).begins_with("mercenary")
 
 
 ## M12 : profil de Garde à précision dégressive (`balance_sim --garde --decay`).

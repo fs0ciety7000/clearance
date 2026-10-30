@@ -16,9 +16,11 @@ const DAY_SCENE: PackedScene = preload("res://scenes/main/day.tscn")
 const MAIN_SCENE: PackedScene = preload("res://scenes/main/main.tscn")
 const FIXTURES: String = "res://tests/fixtures/"
 const GARDE_CODE: String = "K2Q-9TX"
-## QA-050 : graine n = 156 de `balance_sim --seed=1` (`SeededRng.mix(1, 156)`).
+## QA-050 : graine n = 156 de `balance_sim --seed=1` (`SeededRng.mix(1, 156)`) ;
+## M13 (EV-09, `events_version` 2 : tirage stratifié renouvelé) : la première
+## graine de la même série avec EV-08 au J19 est n = 22.
 const QA050_SEED_BASE: int = 1
-const QA050_SEED_INDEX: int = 156
+const QA050_SEED_INDEX: int = 22
 ## QA-050 : 13:02, dans la fenêtre d'EV-08 (13:00 → 14:00).
 const QA050_MINUTE: int = 782
 
@@ -141,7 +143,7 @@ func test_qa050_ev08_revoked_carrier_keeps_its_listed_identity() -> void:
 	var data: DataCatalog = DataCatalog.load_from()
 	var campaign_seed: int = SeededRng.mix(QA050_SEED_BASE, QA050_SEED_INDEX)
 	var schedule: Dictionary = BalanceSimulator.event_schedule(data, campaign_seed)
-	assert_true(schedule.has(19), "graine 156 : un événement au J19")
+	assert_true(schedule.has(19), "graine %d : un événement au J19" % QA050_SEED_INDEX)
 	if not schedule.has(19):
 		return
 	var plan: StationEventPlan = schedule[19]

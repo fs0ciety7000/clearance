@@ -22,7 +22,9 @@ func test_all_resources_load_without_error() -> void:
 func test_expected_content_counts() -> void:
 	assert_eq(_catalog.documents.size(), 9, "Carte, Permis, Bio-scan, Dérogation MIL (M7) + Contrat, Laissez-passer, Asile, Ticket (Acte II) + Carte de répondant (M12, R39)")
 	assert_eq(_catalog.factions.keys().size(), 6, "origines : TYC, HAL, TER + CER, THR, DRV (M7)")
-	assert_eq(_catalog.rules.size(), 42, "R01–R22 (GDD §7) + R23–R31 (docs/ACT2.md) + R32–R37 (docs/ACT3.md) + R38–R42 (docs/M12.md)")
+	assert_eq(_catalog.rules.size(), 47, "R01–R22 (GDD §7) + R23–R31 (docs/ACT2.md) + R32–R37 (docs/ACT3.md) + R38–R42 (docs/M12.md) + R43–R47 (docs/M13.md)")
+	# M13 : paliers s2 → s4 de R43 (même identifiant), rangés à part.
+	assert_eq(_catalog.rule_tiers.keys().size(), 3, "R43 s2, s3, s4")
 	assert_eq(_catalog.days.keys().size(), 30)
 	for document_id: StringName in [&"id_card", &"entry_permit", &"bioscan", &"mil_waiver", &"work_contract", &"drift_pass",
 			&"asylum", &"queue_ticket", &"sponsor_card"]:
@@ -124,6 +126,9 @@ func test_rule_sets() -> void:
 			ids.append(rule.id)
 			assert_true(_catalog.rules.has(rule.id), "%s : %s hors de data/rules" % [label, rule.id])
 			var shared: Rule = _catalog.rules.get(rule.id)
+			if rule is StatementsConsistentRule and (rule as StatementsConsistentRule).tier > 1:
+				# M13 : palier de R43 (`data/rules/rule_statements_sN.tres`).
+				shared = _catalog.rule_tiers.get("%s@%d" % [rule.id, (rule as StatementsConsistentRule).tier])
 			assert_same(shared, rule, "%s : %s doit être la ressource partagée" % [label, rule.id])
 		for new_id: StringName in rule_set.new_rule_ids:
 			assert_true(ids.has(new_id), "%s : NOUVEAU %s absent du RuleSet" % [label, new_id])
@@ -180,7 +185,8 @@ func test_days_follow_gdd_progression() -> void:
 		counts.append(_catalog.get_day(n).rule_set.get_rule_ids().size())
 		for rule_id: StringName in _catalog.get_day(n - 1).rule_set.get_rule_ids():
 			assert_true(_catalog.get_day(n).rule_set.has_rule(rule_id), "J%d garde %s" % [n, rule_id])
-	assert_eq(counts, [10, 14, 16, 17, 19, 21, 22] as Array[int])
+	# M13 : R43 au J4 (+1), R44 → R46 au J8 (+3).
+	assert_eq(counts, [11, 15, 17, 18, 23, 25, 26] as Array[int])
 	assert_eq(_catalog.get_day(5).rule_set.required_document_ids, [&"id_card", &"entry_permit", &"bioscan"] as Array[StringName])
 	# Acte II (docs/ACT2.md §2.1) : R23 → R31 de J11 à J18, respirations J19 et J20.
 	var act2: Array[int] = []
@@ -188,7 +194,8 @@ func test_days_follow_gdd_progression() -> void:
 		act2.append(_catalog.get_day(n).rule_set.get_rule_ids().size())
 		for rule_id: StringName in _catalog.get_day(n - 1).rule_set.get_rule_ids():
 			assert_true(_catalog.get_day(n).rule_set.has_rule(rule_id), "J%d garde %s" % [n, rule_id])
-	assert_eq(act2, [23, 25, 26, 27, 28, 29, 30, 31, 31, 31] as Array[int])
+	# M13 : R43, R44 → R46 (+4) ; R47 au J19 (+1).
+	assert_eq(act2, [27, 29, 30, 31, 32, 33, 34, 35, 36, 36] as Array[int])
 	var quotas: Array[int] = []
 	for n: int in range(1, 21):
 		var day: DayDef = _catalog.get_day(n)
@@ -212,7 +219,8 @@ func test_act3_rule_progression() -> void:
 		counts.append(day.rule_set.get_rule_ids().size())
 		assert_eq(day.has_evening, n < 30, "J%d : soirée jusqu'au J29" % n)
 		assert_true(day.detain_enabled, "J%d" % n)
-	assert_eq(counts, [31, 32, 28, 29, 30, 31, 31, 32, 32, 32] as Array[int])
+	# M13 : R43, R44 → R47 (+5).
+	assert_eq(counts, [36, 37, 33, 34, 35, 36, 36, 37, 37, 37] as Array[int])
 	assert_false(_catalog.get_day(21).rule_set.has_rule(&"r_curfew"), "couvre-feu levé au J21")
 	assert_true(_catalog.get_day(21).rule_set.has_rule(&"r_prorogation"))
 	assert_true(_catalog.get_day(22).rule_set.has_rule(&"r_bioscan_valid"))

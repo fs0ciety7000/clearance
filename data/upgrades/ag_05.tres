@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="UpgradeDef" format=3 uid="uid://dcs2kogs4jxmy"]
+
+[ext_resource type="Script" path="res://scripts/core/upgrade_def.gd" id="1_22e7u"]
+
+[resource]
+script = ExtResource("1_22e7u")
+id = &"ag05"
+name_key = "upg_ag05_name"
+desc_key = "upg_ag05_desc"
+price = 10
+expense_key = "exp_upgrade_ag05"
+first_evening = 6
+last_evening = 8
+off_catalog = true
+offer_message_key = "msg_okonkwo_book"
+purchase_flags = Dictionary[StringName, int]({
+&"okonkwo_book": 0
+})

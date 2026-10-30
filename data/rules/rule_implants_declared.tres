@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_b1bg1")
 escalated_prefixes = PackedStringArray("MIL-")
+concealable_codes = PackedStringArray("DER-13", "DER-6", "KIN-11", "KIN-17", "MIL-15", "MIL-2", "NX-12", "NX-18", "NX-25")
 id = &"r_implants_declared"
 title_key = "r_implants_declared_title"
 rulebook_text_key = "r_implants_declared_text"

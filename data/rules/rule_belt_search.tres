@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ProcedureRule" format=3 uid="uid://7fr5dtucmek5"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/procedure_rule.gd" id="1_mxo0n"]
+
+[resource]
+script = ExtResource("1_mxo0n")
+procedure_id = &"belt_search"
+applies_to_faction_ids = Array[StringName]([&"cer"])
+min_stay_days = 7
+id = &"r_belt_search"
+title_key = "r_belt_search_title"
+rulebook_text_key = "r_belt_search_text"
+category = 4
+severity = 1

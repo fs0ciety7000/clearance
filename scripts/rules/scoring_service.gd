@@ -13,6 +13,14 @@
 ##   + paire « marque luciole ↔ bulletin » confirmée = cas **correct**, aucune
 ##   citation (ni procédure), salaire + prime de détention, quelles que soient
 ##   les autres violations (`CaseResult.luciole_report`).
+## - **M13 — fouille** (D-146, D-148 ; ARCHITECTURE §12.9) : R44 (procédure
+##   `search_cause`) → FOUILLE SANS MOTIF (`cit_unwarranted_search`, gravité 1)
+##   si une fouille a été faite **sans motif** (`Verdict.search_motive` vide,
+##   figé à la demande) sur un passager **attendu APPROUVÉ** ; R47
+##   (`belt_search`) → FOUILLE OMISE (`cit_search_skipped`, gravité 1) sur un
+##   APPROUVÉ d'un passager visé sans fouille. Citations de procédure
+##   ordinaires : la plus grave l'emporte (REFUS INJUSTIFIÉ sur un innocent
+##   fouillé puis refusé).
 ## - **Citation** : au plus une par cas, la plus grave (table `GRAVITY`).
 ## - **Crédits** : `credit_per_correct` si correct, + prime de détention ; 0
 ##   sinon. L'amende dépend du rang de la citation dans la journée
@@ -32,6 +40,9 @@ const CIT_FACE_UNCHECKED: String = "cit_face_unchecked"
 const CIT_INTERVIEW_SKIPPED: String = "cit_interview_skipped"
 const CIT_ABUSIVE_DETENTION: String = "cit_abusive_detention"
 const CIT_UNDOCUMENTED_DETENTION: String = "cit_undocumented_detention"
+## M13 (D-146, D-148).
+const CIT_UNWARRANTED_SEARCH: String = "cit_unwarranted_search"
+const CIT_SEARCH_SKIPPED: String = "cit_search_skipped"
 
 ## Gravité des citations (GDD §4.6) : la plus grave l'emporte.
 const GRAVITY: Dictionary[String, int] = {
@@ -42,6 +53,8 @@ const GRAVITY: Dictionary[String, int] = {
 	CIT_ABUSIVE_DETENTION: 2,
 	CIT_UNDOCUMENTED_DETENTION: 2,
 	CIT_INTERVIEW_SKIPPED: 1,
+	CIT_UNWARRANTED_SEARCH: 1,
+	CIT_SEARCH_SKIPPED: 1,
 }
 
 ## Prime de détention par défaut (GDD §5.1) si aucun `EconomyDef` n'est fourni.
@@ -120,7 +133,7 @@ static func score(verdict: Verdict, key: CaseKey, case_id: StringName, case: Cas
 			var procedure: ProcedureRule = rule as ProcedureRule
 			if procedure == null or not procedure.applies_to(case):
 				continue
-			var missed: String = _procedure_citation(procedure, verdict, case)
+			var missed: String = _procedure_citation(procedure, verdict, case, key.expected_verdict)
 			if missed.is_empty():
 				continue
 			if citation.is_empty() or GRAVITY[missed] > GRAVITY[citation]:
@@ -204,7 +217,8 @@ static func is_self_evident(violation: Violation) -> bool:
 	return true
 
 
-static func _procedure_citation(procedure: ProcedureRule, verdict: Verdict, case: Case) -> String:
+static func _procedure_citation(procedure: ProcedureRule, verdict: Verdict, case: Case,
+		expected: VerdictKind.Kind = VerdictKind.Kind.APPROVE) -> String:
 	match procedure.procedure_id:
 		ProcedureRule.PROCEDURE_FACE_UNCOVERED:
 			var appearance: PassengerAppearance = case.passenger_presented.appearance if case.passenger_presented != null else null
@@ -213,7 +227,20 @@ static func _procedure_citation(procedure: ProcedureRule, verdict: Verdict, case
 		ProcedureRule.PROCEDURE_TYCHO_INTERVIEW:
 			if verdict.questions_asked.is_empty():
 				return CIT_INTERVIEW_SKIPPED
+		ProcedureRule.PROCEDURE_SEARCH_CAUSE:
+			if is_unwarranted_search(verdict, expected):
+				return CIT_UNWARRANTED_SEARCH
+		ProcedureRule.PROCEDURE_BELT_SEARCH:
+			if verdict.kind == VerdictKind.Kind.APPROVE and not verdict.search_done and procedure.requires_search(case):
+				return CIT_SEARCH_SKIPPED
 	return ""
+
+
+## M13 (R44) : fouille faite sans motif sur un passager attendu APPROUVÉ.
+## Fouiller sans motif un passager en infraction n'est pas sanctionné.
+static func is_unwarranted_search(verdict: Verdict, expected: VerdictKind.Kind) -> bool:
+	return verdict != null and verdict.search_done and verdict.search_motive == &"" \
+			and expected == VerdictKind.Kind.APPROVE
 
 
 static func _first_rule_id(violations: Array[Violation]) -> StringName:

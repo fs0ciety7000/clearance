@@ -10,4 +10,4 @@ given_names_m = PackedStringArray("Rahul", "Mateus", "Kwame", "Tariq", "Emeka", 
 given_names_x = PackedStringArray()
 family_names = PackedStringArray("Diallo", "Ramanathan", "Haddad", "Okonkwo", "Silva", "Mensah", "Rahman", "Benali", "Gutiérrez", "Abara", "Nair", "Mahmoud", "Tembo", "Quispe", "Ferhat", "Owusu", "Bello", "Chaudhry", "Kamau", "Sarr", "Mwangi", "Touré")
 reserved_names = PackedStringArray("Benali", "Diallo", "Haddad", "Mensah", "Okonkwo", "Silva", "Tembo")
-reserved_full_names = PackedStringArray()
+reserved_full_names = PackedStringArray("Priya Nair")

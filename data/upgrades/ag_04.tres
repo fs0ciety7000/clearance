@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="UpgradeDef" format=3 uid="uid://dgifesrhk31mq"]
+
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="1_slhb4"]
+[ext_resource type="Script" path="res://scripts/core/upgrade_def.gd" id="2_cf6sv"]
+
+[sub_resource type="Resource" id="Resource_icew5"]
+script = ExtResource("1_slhb4")
+all_of = Array[StringName]([&"bribe_seen"])
+
+[resource]
+script = ExtResource("2_cf6sv")
+id = &"ag04"
+name_key = "upg_ag04_name"
+desc_key = "upg_ag04_desc"
+note_key = "upg_ag04_note"
+price = 15
+expense_key = "exp_upgrade_ag04"
+last_evening = 16
+condition = SubResource("Resource_icew5")
+off_catalog = true
+offer_message_key = "msg_soute_drawer"
+effects = Dictionary[StringName, Variant]({
+&"audit_penalty": 2,
+&"envelope_trace_every": 2
+})

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="StatementsConsistentRule" format=3 uid="uid://d1l2h5wfrlilr"]
+
+[ext_resource type="Script" path="res://scripts/rules/families/statements_consistent_rule.gd" id="1_e44mx"]
+
+[resource]
+script = ExtResource("1_e44mx")
+topics = Array[StringName]([&"purpose", &"stay", &"employer", &"origin"])
+tier = 3
+employer_codes = Dictionary[String, String]({
+"Autorité de Transit": "AT",
+"Banque Aurel": "BA",
+"Bureau de Continuité": "BC",
+"Commission de Rééquilibrage": "CR",
+"Dispensaire de Tycho": "DT",
+"Délégation tharsienne": "DL",
+"Hydroponie Ceres-Verte": "CV",
+"Kessler-Ashe Orbital": "KA",
+"Meridian Biosystèmes": "MB",
+"Ondine Synaptique": "ON",
+"Prospection indépendante": "PI",
+"Valcourt-Hsu Logistique": "VH",
+"Équipage indépendant": "EQ"
+})
+id = &"r_statements"
+title_key = "r_statements_title"
+rulebook_text_key = "r_statements_text_s3"
+category = 3

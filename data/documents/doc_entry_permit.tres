@@ -117,11 +117,19 @@ truth_path = &"summons_id"
 display_order = 13
 optional = true
 
+[sub_resource type="Resource" id="field_sponsor_name"]
+script = ExtResource("1_uvmcm")
+id = &"sponsor_name"
+label_key = "field_sponsor_name"
+truth_path = &"sponsor_name"
+display_order = 14
+optional = true
+
 [resource]
 script = ExtResource("2_ltxl4")
 id = &"entry_permit"
 title_key = "doc_entry_permit_title"
-fields = Array[ExtResource("1_uvmcm")]([SubResource("field_serial"), SubResource("field_family_name"), SubResource("field_given_name"), SubResource("field_birth_date"), SubResource("field_citizen_id"), SubResource("field_purpose"), SubResource("field_stay_days"), SubResource("field_employer"), SubResource("field_issue_date"), SubResource("field_expiry_date"), SubResource("field_issuer"), SubResource("field_seal"), SubResource("field_sponsor"), SubResource("field_summons")])
+fields = Array[ExtResource("1_uvmcm")]([SubResource("field_serial"), SubResource("field_family_name"), SubResource("field_given_name"), SubResource("field_birth_date"), SubResource("field_citizen_id"), SubResource("field_purpose"), SubResource("field_stay_days"), SubResource("field_employer"), SubResource("field_issue_date"), SubResource("field_expiry_date"), SubResource("field_issuer"), SubResource("field_seal"), SubResource("field_sponsor"), SubResource("field_summons"), SubResource("field_sponsor_name")])
 validity_days = Vector2i(14, 180)
 holo_tint_token = &"ACCENT_CYAN"
 issuer_id = &"autorite_transit"

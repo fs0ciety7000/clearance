@@ -18,6 +18,13 @@
 ## depuis un état synthétique de ce climat (solde selon la précision).
 ## M11 : `--story` joue chaque préréglage en mode Récit (D-102 : amendes à
 ## 0 ₵) ; équivalent à `--presets=story_<nom>` (`SimProfile.STORY_PREFIX`).
+## M13 (docs/M13.md §4.3–§4.5) : `--m13=off` joue la campagne « 0.12 » (R43 →
+## R47, anomalies et cas de M13, compensation de temps retirés) ;
+## `--m13=compare` joue chaque graine avec et sans M13 (modèle de temps actif)
+## et imprime l'écart des fins, de la file traitée, du temps par cas, des
+## soldes et les achats ; `--upgrades=never|smart|eager` (politique d'achat),
+## `--timed` (modèle de temps sans comparaison) ; préréglages `presse`,
+## `curieux`, `zele`, `economiste`.
 ## M12 (docs/M12.md §6) : `--garde` joue des gardes de nuit (bots constants de
 ## `--profiles=`, `--decay` : bot dégressif) sur `--seeds` codes libres tirés
 ## de `--seed`, `--daily=N` : N graines du jour consécutives (UTC) ; médiane,
@@ -53,6 +60,11 @@ var _decay: bool = false
 var _daily: int = 0
 ## M12 : événements de station en campagne (`--events=on|off|compare`).
 var _events: String = "on"
+## M13 (docs/M13.md §4.5) : `--m13=on|off|compare`, `--upgrades=never|smart|eager`,
+## `--timed` (modèle de temps : part de la file traitée).
+var _m13: String = "on"
+var _upgrades: String = ""
+var _timed: bool = false
 
 ## État synthétique du J21 par climat : drapeaux et jauges (docs/ACT3.md §1.3).
 const CLIMATES: Dictionary[String, Dictionary] = {
@@ -90,6 +102,17 @@ func _init() -> void:
 	var start: int = Time.get_ticks_msec()
 	if _garde:
 		_run_garde(data)
+		print("Durée : %d ms" % (Time.get_ticks_msec() - start))
+		quit(0)
+		return
+	if _m13 == "compare":
+		if _story:
+			for i: int in _presets.size():
+				if not String(_presets[i]).begins_with(SimProfile.STORY_PREFIX):
+					_presets[i] = StringName(SimProfile.STORY_PREFIX + String(_presets[i]))
+		for preset: StringName in _presets:
+			for accuracy: float in _profiles:
+				_compare_m13(data, accuracy, preset)
 		print("Durée : %d ms" % (Time.get_ticks_msec() - start))
 		quit(0)
 		return
@@ -147,6 +170,12 @@ func _parse_args() -> void:
 			_daily = maxi(arg.trim_prefix("--daily=").to_int(), 0)
 		elif arg.begins_with("--events="):
 			_events = arg.trim_prefix("--events=")
+		elif arg.begins_with("--m13="):
+			_m13 = arg.trim_prefix("--m13=")
+		elif arg.begins_with("--upgrades="):
+			_upgrades = arg.trim_prefix("--upgrades=")
+		elif arg == "--timed":
+			_timed = true
 		elif arg == "--spending=default":
 			_spending = BalanceSimulator.Spending.DEFAULT
 
@@ -180,7 +209,7 @@ func _run_profile(data: DataCatalog, accuracy: float, preset: StringName = &"def
 	for n: int in _seeds:
 		var rows: Array[Dictionary] = []
 		if _climate.is_empty():
-			var profile: SimProfile = SimProfile.preset(preset, accuracy)
+			var profile: SimProfile = _profile(preset, accuracy)
 			profile.station_events = _events == "on"
 			rows = BalanceSimulator.run_campaign(data, SeededRng.mix(_seed, n), accuracy, _spending, last, profile)
 		else:
@@ -377,6 +406,151 @@ func _compare_events(data: DataCatalog, accuracy: float, preset: StringName) -> 
 	print("événements par campagne : moyenne %.2f · 3 à 6 : %.1f %% · types %s" % [_mean(per_campaign),
 			100.0 * in_range / maxi(per_campaign.size(), 1), types])
 	print("revenu un jour d'événement : écart moyen %.2f ₵ (sur %d jours)" % [delta_sum / maxi(delta_days, 1), delta_days])
+
+
+# ---------------------------------------------------------------------------
+# M13 : `--m13=compare` (docs/M13.md §4.3–§4.5, D-151)
+# ---------------------------------------------------------------------------
+
+## Profil d'un préréglage avec les options M13 de la ligne de commande.
+func _profile(preset: StringName, accuracy: float, m13: bool = true) -> SimProfile:
+	var profile: SimProfile = SimProfile.preset(preset, accuracy)
+	profile.m13 = m13 and _m13 != "off"
+	profile.timed = _timed or _m13 == "compare"
+	if not _upgrades.is_empty():
+		profile.upgrade_policy = StringName(_upgrades)
+	return profile
+
+
+func _compare_m13(data: DataCatalog, accuracy: float, preset: StringName) -> void:
+	var last: int = _days if _days >= 1 else data.get_last_day_number()
+	var endings: Array[Dictionary] = [{}, {}]
+	var share: Array[Array] = [[], []]
+	var seconds: Array[float] = [0.0, 0.0]
+	var processed: Array[int] = [0, 0]
+	var balances: Array[Dictionary] = [{}, {}]
+	var reached: Array[Dictionary] = [{}, {}]
+	var sacrificed: Array[int] = [0, 0]
+	var evenings: Array[int] = [0, 0]
+	var bought: Dictionary[String, int] = {}
+	var citations: Array[Dictionary] = [{}, {}]
+	var searches: float = 0.0
+	var unwarranted: float = 0.0
+	var lies: float = 0.0
+	var lies_seen: float = 0.0
+	var asked: float = 0.0
+	var day_count: int = 0
+	var early_day_sum: Array[int] = [0, 0]
+	var early_count: Array[int] = [0, 0]
+	for i: int in last:
+		share[0].append(0.0)
+		share[1].append(0.0)
+	for n: int in _seeds:
+		var campaign_seed: int = SeededRng.mix(_seed, n)
+		for arm: int in 2:
+			var profile: SimProfile = _profile(preset, accuracy, arm == 1)
+			profile.station_events = _events != "off"
+			var rows: Array[Dictionary] = BalanceSimulator.run_campaign(data, campaign_seed, accuracy, _spending, last, profile)
+			var tail: Dictionary = rows[rows.size() - 1]
+			var ending: String = str(tail["ending"]) if str(tail["ending"]) != "" else "—"
+			if ending == String(EndingService.F1_ARRESTED):
+				# Cause de l'arrestation : audit du J9, Revue du J17, Déposition du J29, double jeu.
+				var tail_flags: Dictionary = tail.get("flags", {})
+				var cause: String = "jeu"
+				for flag: StringName in [EndingService.FLAG_AUDIT_ARRESTED, EndingService.FLAG_REVIEW_ARRESTED,
+						EndingService.FLAG_DEPOSITION_ARRESTED]:
+					if tail_flags.has(flag):
+						cause = String(flag)
+				ending = "%s(%s)" % [ending, cause]
+			endings[arm][ending] = int(endings[arm].get(ending, 0)) + 1
+			if int(tail["day"]) < last and not tail.get("final", false):
+				early_day_sum[arm] += int(tail["day"])
+				early_count[arm] += 1
+			var seen_upgrades: Dictionary[String, bool] = {}
+			for row: Dictionary in rows:
+				var day_index: int = int(row["day"]) - 1
+				share[arm][day_index] += float(row.get("processed_share", 1.0))
+				reached[arm][-(day_index + 1)] = int(reached[arm].get(-(day_index + 1), 0)) + 1
+				seconds[arm] += float(row.get("m13_seconds", 0.0))
+				processed[arm] += int(row.get("processed", 0))
+				for checkpoint: int in [10, 20, 29]:
+					if int(row["day"]) == checkpoint:
+						balances[arm][checkpoint] = int(balances[arm].get(checkpoint, 0)) + int(row["balance_after"])
+						reached[arm][checkpoint] = int(reached[arm].get(checkpoint, 0)) + 1
+				var unpaid: Dictionary = row.get("unpaid", {})
+				var any_unpaid: bool = false
+				for id: Variant in unpaid:
+					any_unpaid = any_unpaid or int(unpaid[id]) > 0
+				if row.has("unpaid"):
+					evenings[arm] += 1
+					sacrificed[arm] += 1 if any_unpaid else 0
+				var keys: Dictionary = row.get("citation_keys", {})
+				for key: Variant in keys:
+					citations[arm][str(key)] = int(citations[arm].get(str(key), 0)) + int(keys[key])
+				if arm == 1:
+					for upgrade: Variant in row.get("upgrades", []):
+						seen_upgrades[str(upgrade)] = true
+					searches += float(row.get("m13_searches", 0.0))
+					unwarranted += float(row.get("m13_unwarranted", 0.0))
+					lies += float(row.get("m13_lies", 0.0))
+					lies_seen += float(row.get("m13_lies_seen", 0.0))
+					asked += float(row.get("m13_asked", 0.0))
+					day_count += 1
+			for upgrade: String in seen_upgrades:
+				bought[upgrade] = bought.get(upgrade, 0) + 1
+	print("")
+	print("== M13 · profil %d %% · %s (0.12 → 0.13, %d graines) ==" % [roundi(accuracy * 100.0), preset, _seeds])
+	var names: Array[String] = []
+	for arm: int in 2:
+		for key: Variant in endings[arm]:
+			if not names.has(str(key)):
+				names.append(str(key))
+	names.sort()
+	var worst: float = 0.0
+	var parts: PackedStringArray = []
+	for ending_name: String in names:
+		var before: float = 100.0 * int(endings[0].get(ending_name, 0)) / _seeds
+		var after: float = 100.0 * int(endings[1].get(ending_name, 0)) / _seeds
+		worst = maxf(worst, absf(after - before))
+		parts.append("%s %.1f → %.1f" % [ending_name, before, after])
+	print("fins : " + " · ".join(parts))
+	print("écart maximal : %.1f point(s) (D-151 : ≤ 3)" % worst)
+	var worst_share: float = 0.0
+	var worst_day: int = 0
+	var share_parts: PackedStringArray = []
+	for i: int in last:
+		var a: float = share[0][i] / maxi(int(reached[0].get(-(i + 1), 0)), 1)
+		var b: float = share[1][i] / maxi(int(reached[1].get(-(i + 1), 0)), 1)
+		if b - a < worst_share:
+			worst_share = b - a
+			worst_day = i + 1
+		if i + 1 in [4, 5, 8, 9, 12, 13, 19, 24]:
+			share_parts.append("J%d %.1f → %.1f" % [i + 1, 100.0 * a, 100.0 * b])
+	print("file traitée (moyenne des jours joués, %%) : %s · pire écart %.1f point(s) au J%d (cible ≥ −3)" % [
+			" · ".join(share_parts), 100.0 * worst_share, worst_day])
+	print("temps par cas : %.1f s → %.1f s" % [seconds[0] / maxi(processed[0], 1), seconds[1] / maxi(processed[1], 1)])
+	var balance_parts: PackedStringArray = []
+	for checkpoint: int in [10, 20, 29]:
+		var a_bal: float = float(balances[0].get(checkpoint, 0)) / maxi(int(reached[0].get(checkpoint, 0)), 1)
+		var b_bal: float = float(balances[1].get(checkpoint, 0)) / maxi(int(reached[1].get(checkpoint, 0)), 1)
+		balance_parts.append("J%d %.1f → %.1f (%+.1f)" % [checkpoint, a_bal, b_bal, b_bal - a_bal])
+	print("solde du soir : " + " · ".join(balance_parts))
+	print("soirs avec ≥ 1 poste sacrifié : %.1f %% → %.1f %%" % [100.0 * sacrificed[0] / maxi(evenings[0], 1),
+			100.0 * sacrificed[1] / maxi(evenings[1], 1)])
+	print("fin anticipée, jour moyen : %.1f → %.1f" % [float(early_day_sum[0]) / maxi(early_count[0], 1),
+			float(early_day_sum[1]) / maxi(early_count[1], 1)])
+	var buy_parts: PackedStringArray = []
+	for upgrade_id: String in ["ag01", "ag02", "ag03", "ag04", "ag05", "ag06"]:
+		buy_parts.append("%s %.0f %%" % [upgrade_id, 100.0 * bought.get(upgrade_id, 0) / _seeds])
+	print("achats (part des campagnes) : " + " · ".join(buy_parts))
+	print("par jour joué (0.13) : questions %.1f · fouilles %.2f (sans motif %.2f) · fausses déclarations %.2f, relevées %.0f %%" % [
+			asked / maxi(day_count, 1), searches / maxi(day_count, 1), unwarranted / maxi(day_count, 1),
+			lies / maxi(day_count, 1), 100.0 * lies_seen / maxf(lies, 1.0)])
+	var citation_parts: PackedStringArray = []
+	for key: String in ["cit_irregular_entry", "cit_undocumented_denial", "cit_unwarranted_search", "cit_search_skipped",
+			"cit_interview_skipped"]:
+		citation_parts.append("%s %d → %d" % [key, int(citations[0].get(key, 0)), int(citations[1].get(key, 0))])
+	print("citations (total) : " + " · ".join(citation_parts))
 
 
 static func _percentile(values: Array[int], q: float) -> float:

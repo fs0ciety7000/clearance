@@ -1,25 +1,26 @@
 [gd_resource type="Resource" script_class="RuleSet" format=3 uid="uid://bokqfato5d5fl"]
 
-[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_p3rb3"]
-[ext_resource type="Resource" path="res://data/rules/rule_id_card_required.tres" id="2_me6gg"]
-[ext_resource type="Resource" path="res://data/rules/rule_id_card_valid.tres" id="3_3t57q"]
-[ext_resource type="Resource" path="res://data/rules/rule_portrait_match.tres" id="4_q7gts"]
-[ext_resource type="Resource" path="res://data/rules/rule_permit_required.tres" id="5_fvcfh"]
-[ext_resource type="Resource" path="res://data/rules/rule_permit_valid.tres" id="6_pgq1r"]
-[ext_resource type="Resource" path="res://data/rules/rule_face_uncovered.tres" id="7_hh7qg"]
-[ext_resource type="Resource" path="res://data/rules/rule_identity_fields_match.tres" id="8_2kisf"]
-[ext_resource type="Resource" path="res://data/rules/rule_tycho_interview.tres" id="9_hfu54"]
-[ext_resource type="Resource" path="res://data/rules/rule_purpose_consistent.tres" id="10_1xaes"]
-[ext_resource type="Resource" path="res://data/rules/rule_origin_block.tres" id="11_8ill2"]
-[ext_resource type="Resource" path="res://data/rules/rule_bioscan_required.tres" id="12_g2aqa"]
-[ext_resource type="Resource" path="res://data/rules/rule_bioscan_valid.tres" id="13_3gc7u"]
-[ext_resource type="Resource" path="res://data/rules/rule_bioscan_issuer.tres" id="14_tm1bm"]
-[ext_resource type="Resource" path="res://data/rules/rule_bioscan_fit.tres" id="15_6akjh"]
-[ext_resource type="Script" path="res://scripts/rules/rule_set.gd" id="16_kqmhe"]
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="1_me6gg"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_required.tres" id="2_3t57q"]
+[ext_resource type="Resource" path="res://data/rules/rule_id_card_valid.tres" id="3_q7gts"]
+[ext_resource type="Resource" path="res://data/rules/rule_portrait_match.tres" id="4_fvcfh"]
+[ext_resource type="Resource" path="res://data/rules/rule_permit_required.tres" id="5_pgq1r"]
+[ext_resource type="Resource" path="res://data/rules/rule_permit_valid.tres" id="6_hh7qg"]
+[ext_resource type="Resource" path="res://data/rules/rule_face_uncovered.tres" id="7_2kisf"]
+[ext_resource type="Resource" path="res://data/rules/rule_identity_fields_match.tres" id="8_hfu54"]
+[ext_resource type="Resource" path="res://data/rules/rule_tycho_interview.tres" id="9_1xaes"]
+[ext_resource type="Resource" path="res://data/rules/rule_purpose_consistent.tres" id="10_8ill2"]
+[ext_resource type="Resource" path="res://data/rules/rule_statements.tres" id="11_g2aqa"]
+[ext_resource type="Resource" path="res://data/rules/rule_origin_block.tres" id="12_3gc7u"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_required.tres" id="13_tm1bm"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_valid.tres" id="14_6akjh"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_issuer.tres" id="15_kqmhe"]
+[ext_resource type="Resource" path="res://data/rules/rule_bioscan_fit.tres" id="16_7j3pn"]
+[ext_resource type="Script" path="res://scripts/rules/rule_set.gd" id="17_jvlgq"]
 
 [resource]
-script = ExtResource("16_kqmhe")
+script = ExtResource("17_jvlgq")
 id = &"rs_day05"
-rules = Array[ExtResource("1_p3rb3")]([ExtResource("2_me6gg"), ExtResource("3_3t57q"), ExtResource("4_q7gts"), ExtResource("5_fvcfh"), ExtResource("6_pgq1r"), ExtResource("7_hh7qg"), ExtResource("8_2kisf"), ExtResource("9_hfu54"), ExtResource("10_1xaes"), ExtResource("11_8ill2"), ExtResource("12_g2aqa"), ExtResource("13_3gc7u"), ExtResource("14_tm1bm"), ExtResource("15_6akjh")])
+rules = Array[ExtResource("1_me6gg")]([ExtResource("2_3t57q"), ExtResource("3_q7gts"), ExtResource("4_fvcfh"), ExtResource("5_pgq1r"), ExtResource("6_hh7qg"), ExtResource("7_2kisf"), ExtResource("8_hfu54"), ExtResource("9_1xaes"), ExtResource("10_8ill2"), ExtResource("11_g2aqa"), ExtResource("12_3gc7u"), ExtResource("13_tm1bm"), ExtResource("14_6akjh"), ExtResource("15_kqmhe"), ExtResource("16_7j3pn")])
 new_rule_ids = Array[StringName]([&"r_bioscan_required", &"r_bioscan_valid", &"r_bioscan_issuer", &"r_bioscan_fit"])
 required_document_ids = Array[StringName]([&"id_card", &"entry_permit", &"bioscan"])

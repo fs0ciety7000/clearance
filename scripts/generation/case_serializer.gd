@@ -1,12 +1,22 @@
 ## Sérialisation stable d'un cas et de sa clé (tests de déterminisme, golden
 ## files, outil de stats). Pure ; les dictionnaires produits sont comparables
 ## par `JSON.stringify` (clés triées).
+## M13 (format 2, ARCHITECTURE §12.10) : `version`, déclarations orales
+## (`statements`, `statement_frames`), fouille (`search_layout`,
+## `search_cues`, `cargo_reply`, `cargo_line_key`) ; `concealed_implants`
+## suit `Passenger.TRUTH_PATHS`. L'état de session (`Statement.given`,
+## objets révélés) n'est pas sérialisé : le cas sérialisé est celui de la
+## construction.
 class_name CaseSerializer
 extends RefCounted
 
+## Version du format (1 : jusqu'à la 0.12 ; 2 : M13).
+const VERSION: int = 2
+
 
 static func to_json(generated: GeneratedCase) -> String:
-	return JSON.stringify({"case": serialize_case(generated.case), "key": serialize_key(generated.key)}, "", true)
+	return JSON.stringify({"version": VERSION, "case": serialize_case(generated.case), "key": serialize_key(generated.key)},
+			"", true)
 
 
 static func serialize_case(c: Case) -> Dictionary:
@@ -31,7 +41,28 @@ static func serialize_case(c: Case) -> Dictionary:
 		"luciole_codes": Array(c.luciole_codes),
 		"presentation": String(c.presentation),
 		"slipped_items": items,
+		# M13
+		"statements": serialize_statements(c.statements),
+		"statement_frames": _string_dict(c.statement_frames),
+		"search_layout": c.search_layout.serialize() if c.search_layout != null else null,
+		"search_cues": c.search_cues.map(func(cue: StringName) -> String: return String(cue)),
+		"cargo_reply": String(c.cargo_reply),
+		"cargo_line_key": c.cargo_line_key,
 	}
+
+
+static func serialize_statements(statements: Array[Statement]) -> Array:
+	var result: Array = []
+	for statement: Statement in statements:
+		result.append(statement.serialize())
+	return result
+
+
+static func _string_dict(source: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for key: Variant in source:
+		result[str(key)] = str(source[key])
+	return result
 
 
 static func serialize_key(key: CaseKey) -> Dictionary:

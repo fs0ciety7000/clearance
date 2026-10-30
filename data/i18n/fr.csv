@@ -604,7 +604,7 @@ spk_lucioles,SANS SIGNATURE · ENCRE MAGENTA
 spk_inspector,INSPECTEUR RAVEL · INSPECTION DES AGENTS
 spk_dora,DORA · BLOC PÉTREL
 day04_directive_title,Directive n° 04 — Interrogatoire et motifs
-day04_intro,"Délégation n° 04 : la cellule d'audition des quais ferme. Le Guichet 04 interroge tout ressortissant de Tycho avant le tampon, contrôle motif et durée du séjour, et vérifie le bloc d'origine du N° ID (onglet Codes d'origine). Les Ceinturiers se présentent désormais au guichet."
+day04_intro,"Délégation n° 04 : la cellule d'audition des quais ferme. Le Guichet 04 interroge tout ressortissant de Tycho avant le tampon, contrôle motif et durée à l'oral comme sur le permis, et vérifie le bloc d'origine du N° ID (onglet Codes d'origine). Les Ceinturiers se présentent désormais au guichet."
 day04_slogan,Chaque souffle se mérite.
 msg_cons_day04,Rappel : toute gratification offerte au personnel de vitre doit être refusée. Une enveloppe ouverte est une vitre brisée.
 msg_okonkwo_day04,"Les licenciés de Tycho débarquent par la Transit-7. Pose-leur au moins une question, sinon c'est une citation. Parle-leur comme à un voisin, pas comme à un suspect. Ça va plus vite… comme on dit."
@@ -638,7 +638,7 @@ msg_okonkwo_day07,"Ils nous donnent un troisième tampon. Moi, je ne m'en servir
 msg_luc_day07,"Quelqu'un vous dira qu'il pleut, même ici. Répondez que la pluie ne tombe que vers le bas. Il saura."
 msg_ilan_day07,"Noa a un mot de l'école dans son cartable. Je te le garde pour ce soir. Ce n'est pas grave. Enfin, je crois."
 day08_directive_title,Directive n° 08 — Mesures d'urgence
-day08_intro,"Attentat cette nuit au quai 2 (03:12, onze morts). Les ressortissants de Tharsis sont interdits d'entrée, sauf mission diplomatique. Le porteur de papiers d'autrui est mis en attente. Les Dérivants se présentent au guichet (naissance « 00.00.AAAA » tolérée : seule l'année compte). Ajustement sectoriel des loyers."
+day08_intro,"Attentat cette nuit au quai 2 (03:12, onze morts). Les ressortissants de Tharsis sont interdits d'entrée, sauf mission diplomatique. Le porteur de papiers d'autrui est mis en attente. La Garde installe un portique à chaque vitre : fouille sur motif, objets interdits à l'onglet Contrebande, armes mises en attente. Les Dérivants se présentent au guichet (naissance « 00.00.AAAA » tolérée). Ajustement sectoriel des loyers."
 day08_slogan,L'ordre est l'air que nous respirons.
 msg_cons_day08_oath,"Serment de vigilance, à lire à voix haute avant l'ouverture : « Je ne laisse passer que ce qui est exact. » Le réseau Tharsis-Luciole sera démantelé."
 msg_cons_day08_veteran,"Un vétéran tharsien porteur d'un implant MIL-9, entré le 18.03 par le Guichet 04, est recherché pour audition."
@@ -691,7 +691,7 @@ sc07_valcourt_exit_approve,"Vous irez loin. Pas très loin, mais loin."
 sc08_dmitri_arrival,‹Oru ka.› Bonjour. On m'a dit que vous écoutiez.
 sc08_dmitri_present,‹Tal ka nesu.› Le permis date d'avant. D'avant tout.
 sc08_dmitri_purpose,Travailler. N'importe quoi. Kessler-Ashe m'a « réaffecté » lundi.
-sc08_dmitri_stay,"Le temps de trouver un employeur. Un mois, si l'air tient."
+sc08_dmitri_stay,"Le temps de trouver un employeur. Ce que dit le permis, si l'air tient."
 sc08_dmitri_origin,"Tycho, puits 14. Vingt-deux ans de poussière dans cette main-là."
 sc08_dmitri_about_rule_violated,"Sans employeur, oui. Ils ont barré la ligne au quai. Je n'ai rien barré, moi."
 sc08_dmitri_exit_deny,"Je reprendrai la Transit-7. Elle, au moins, ne me refuse pas."
@@ -1173,7 +1173,7 @@ sc23_lindgren_exit_deny,"Refusé ? Il me faudra un formulaire pour contester. Le
 sc24_dmitri_arrival,‹Oru ka.› Vous vous souvenez ? La main de métal. Vendredi dernier.
 sc24_dmitri_present,"‹Tal ka nesu.› Cette fois, il y a un employeur. Le même qu'avant."
 sc24_dmitri_purpose,Recycleurs de l'Anneau C. Ils ont renvoyé ceux de la nuit. Je les remplace.
-sc24_dmitri_stay,"Le temps du contrat. Trois mois, si personne ne rouvre une vanne."
+sc24_dmitri_stay,"Le temps du contrat. Plus, si personne ne rouvre une vanne."
 sc24_dmitri_origin,"Tycho, puits 14. Vous le savez déjà. Vous écoutez, vous."
 sc24_dmitri_confront,"Tout est tamponné. Même ma honte, si vous voulez la voir."
 sc24_dmitri_exit_approve,‹Shen tavi.› Je ferai le travail. Je ne dirai pas que je l'aime.
@@ -1275,7 +1275,7 @@ sc35_okonkwo_veilleur_exit_approve,"Merci, collègue. Dimanche, rentre tôt. Fer
 sc35_okonkwo_veilleur_exit_deny,"Une autre vitre, alors. Il en reste onze. Et Sato au 03, le pauvre."
 sc35_okonkwo_quai_arrival,"Bonjour, collègue ! Oui, c'est moi. La voix avait meilleure mine."
 sc35_okonkwo_quai_present,‹Tal ka nesu.› Contrat de manutention. Il a expiré hier. Moi pas.
-sc35_okonkwo_quai_purpose,Rentrer au Bloc Cormoran. Dormir. Recharger des caisses demain.
+sc35_okonkwo_quai_purpose,"Le travail, au quai. Ce soir, le Bloc Cormoran. Dormir. Recharger des caisses demain."
 sc35_okonkwo_quai_origin,"Les quais. Là-bas, personne ne demande de papiers aux caisses."
 sc35_okonkwo_quai_about_expired,"Hier, oui. Ils oublient de renouveler les réaffectés. On ne coûte rien."
 sc35_okonkwo_quai_confront,"Applique la règle, va. Même ma réaffectation a expiré… comme on dit."
@@ -1341,7 +1341,7 @@ sc42_beaumont_exit_deny,"Refuser une Commissaire en règle ? Audacieux, et faux.
 sc43_mateus_arrival,Bonjour. La dame au drone me regarde. Elle regarde tout le monde comme ça ?
 sc43_mateus_present,"‹Tal ka nesu.› Recycleur. Métier en pénurie. Pour une fois, je suis rare."
 sc43_mateus_purpose,"Réparer les recycleurs de l'Anneau D. Ouverts ou fermés, je répare."
-sc43_mateus_stay,Trois mois. Le contrat le dit. Le contrat dit beaucoup de choses.
+sc43_mateus_stay,Ce que le contrat dit. Le contrat dit beaucoup de choses.
 sc43_mateus_origin,"La Terre. Ma mère réparait des pompes à eau. Moi, des pompes à air."
 sc43_mateus_confront,"Tout est en règle. Je l'ai vérifié trois fois. Pourquoi elle sourit, la dame ?"
 sc43_mateus_exit_approve,"Merci. Elle a l'air déçue, la dame. Bonne journée quand même."
@@ -1444,7 +1444,7 @@ msg_ilan_day11,Ils ont posé un compteur sur notre recycleur. Il clignote quand 
 msg_dora_day11_arrested,Ilan n'est pas rentré·e. La Garde dit « Anneau B ». Noa garde sa couchette chaude.
 msg_ilan_day11_hiding,"Un mot sous la porte, de l'écriture d'Ilan : « Je vais bien. Ne cherche pas. Embrasse-les. »"
 day12_directive_title,Directive n° 12 — Contrat de travail
-day12_intro,"Délégation n° 12 : le bureau des contrats des quais ferme. Motif TRAVAIL : Contrat de travail obligatoire, au nom du porteur, non expiré. Le code du contrat (CT-XX) correspond à l'employeur du permis (onglet Codes employeurs)."
+day12_intro,"Délégation n° 12 : le bureau des contrats des quais ferme. Motif TRAVAIL : Contrat de travail obligatoire, au nom du porteur, non expiré. Le code du contrat (CT-XX) correspond à l'employeur du permis (onglet Codes employeurs). L'employeur déclaré à l'oral concorde avec le contrat."
 day12_slogan,Le travail est l'air que l'on mérite.
 msg_sato_day12,"Aurelio Sato, Guichet 03 ! Je remplace votre ancien voisin. J'ai lu tout le règlement cette nuit. Deux fois. Une question ? J'ai la réponse."
 msg_echo_sc25_turned_away,Brève : une ressortissante de Tycho et son fils ont dormi contre la vitre du Guichet 04. Le personnel d'entretien a été prié de ne pas les réveiller.
@@ -1452,7 +1452,7 @@ msg_comm_overrun,Le Guichet 04 a dépassé son quota hier. L'air correspondant a
 msg_okonkwo_day12_quai,Quai 6. Je décharge des caisses de compteurs. Un par cabine. Le tien est déjà posé… comme on dit.
 msg_ilan_day12,Noa demande pourquoi le compteur clignote quand Dora raconte Tycho. Je lui ai dit que l'air aime les histoires.
 day13_directive_title,Directive n° 13 — Laissez-passer de dérive
-day13_intro,Délégation n° 13 : les Dérivants présentent un Laissez-passer de dérive. Le vaisseau porté au laissez-passer est leur nom de famille et doit figurer au Registre des cargos (nouvel onglet). Les cargos démantelés en sont retirés.
+day13_intro,Délégation n° 13 : les Dérivants présentent un Laissez-passer de dérive. Le vaisseau porté au laissez-passer est leur nom de famille et doit figurer au Registre des cargos (nouvel onglet). Les cargos démantelés en sont retirés. Origine déclarée à l'oral (« je suis de… ») : contrôlée. Provenance : libre.
 day13_slogan,Un document exact est un citoyen en sécurité.
 msg_echo_sc26_refused_again,"Brève : une mère de Tycho, refoulée deux jours de suite au Guichet 04, a été réaffectée vers Tycho par la Transit-7."
 msg_echo_sc27_rats_down,Brève : Hydroponie Ceres-Verte signale une baisse de 40 % des rongeurs dans les serres de l'Anneau D.
@@ -1501,7 +1501,7 @@ msg_sato_day18_spared,"Je dors dans un placard à balais de l'Anneau C. Il est t
 msg_luc_day18,"La femme au drone teste la peur, pas la règle. Ne lui donnez pas la vôtre."
 msg_ilan_day18,"Dora a écrit une lettre. Elle ne veut pas dire à qui. Elle a mis son badge de mineuse dessus, comme un timbre."
 day19_directive_title,Directive n° 19 — Rééquilibrage final
-day19_intro,Quota : 3 entrées par guichet. Le personnel est informé que toute cessation concertée du travail sera considérée comme un sabotage respiratoire.
+day19_intro,"Quota : 3 entrées par guichet. Les Ceinturiers ravitaillent les grévistes : ressortissants de Cérès au séjour de plus de 7 jours, fouille obligatoire avant admission. Toute cessation concertée du travail sera considérée comme un sabotage respiratoire."
 day19_slogan,"Vigilance aujourd'hui, Continuité demain."
 msg_comm_day19_obeyed,Le Guichet 04 a compris qu'un ordre est une règle qui parle. Votre promotion sera signée dimanche.
 msg_comm_day19_defied,Le Guichet 04 préfère les règles aux personnes. C'est noté. Les personnes aussi notent.
@@ -1964,7 +1964,7 @@ sc53_anouk_arrival_vitres,Le recycleur s'est arrêté quand vos vitres se sont �
 sc53_anouk_arrival_registre,J'ai entendu les noms à la radio du recycleur. Mon grand-père en était.
 sc53_anouk_arrival,"Il y avait une clé, dimanche. Elle n'a rien ouvert. On me cherche quand même."
 sc53_anouk_present,"‹Tal ka nesu.› Tout est vrai. Même ma tête, sur votre affiche."
-sc53_anouk_purpose,"Rentrer à l'Anneau C. Dormir. Ce soir, l'Arbitre amnistie. On me l'a promis."
+sc53_anouk_purpose,"Le travail, puis l'Anneau C. Ce soir, l'Arbitre amnistie. On me l'a promis."
 sc53_anouk_origin,Tycho. Puits 14. Ils le ferment ce matin. Je n'ai plus rien à y faire.
 sc53_anouk_about_wanted,"Oui, c'est moi. L'amnistie, c'est ce soir. Vous ne pouvez pas attendre ce soir ?"
 sc53_anouk_confront,"Mettez-moi en attente, si c'est la règle. Ce soir, ils me relâchent. Peut-être."
@@ -2299,7 +2299,7 @@ msg_sato_day23,"Greffe de l'Enquête, Sato. Je note tout, officiellement. J'ai d
 msg_sato_day23_refused,Vous m'avez refusé malgré ma réintégration. On m'a réintégré à un autre guichet. Je l'ai noté. Sans rancune. Avec précision.
 msg_ilan_day23,"Plus de compteur, plus de poste. On m'a fait deux offres ce matin. Je t'en parle ce soir. Aucune ne sent bon."
 day24_directive_title,Directive n° 24 — Répondants
-day24_intro,"Ressortissants au motif VISITE FAMILIALE : Répondant obligatoire. Né·e-Halcyon de classe C-1 à C-3, admis·e le jour même à votre guichet (onglet Main courante). Un agent ne se porte pas répondant à sa propre vitre."
+day24_intro,"Ressortissants au motif VISITE FAMILIALE : Répondant obligatoire. Né·e-Halcyon de classe C-1 à C-3, admis·e le jour même à votre guichet (onglet Main courante). La personne visitée est le répondant : un répondant ne se loue pas. Un agent ne se porte pas répondant à sa propre vitre."
 day24_slogan,Chaque citoyen répond de quelqu'un.
 msg_luc_day24,"La liste de vos admis du matin ouvre la porte de l'après-midi. Lisez-la comme une liste de passage. Nous, c'est ce que nous faisons."
 msg_echo_sc58_crate,Brève : une commis de Meridian a été refusée pour un certificat qui n'est plus exigé. Le Bureau rappelle que les règles retirées sont retirées.
@@ -3620,3 +3620,405 @@ epi_f6d_close_noa,"Noa dit ‹vanu› à chaque hublot. Ici, il y en a peu. Elle
 sev_exemption_title_garde,EXEMPTION TRANSIT
 sev_exemption_announce_garde,"Clinique Meridian saturée : pour les cinq prochains passagers, motif TRANSIT dispensé de bio-scan. Les autres motifs restent soumis à R11."
 sev_exemption_rb_garde,TRANSIT SANS BIO-SCAN (passagers restants : %d)
+r_statements_title,Déclarations conformes
+r_statements_text_s1,Interrogatoire : le motif et la durée déclarés à l'oral concordent avec le Permis d'entrée. Déclaration contradictoire : refus.
+r_statements_text_s2,Interrogatoire : le motif et la durée déclarés à l'oral concordent avec le Permis d'entrée. Motif TRAVAIL : l'employeur déclaré concorde avec le Contrat de travail. Déclaration contradictoire : refus.
+r_statements_text_s3,Interrogatoire : le motif et la durée déclarés à l'oral concordent avec le Permis d'entrée. Motif TRAVAIL : l'employeur déclaré concorde avec le Contrat de travail. L'origine déclarée (« je suis de… ») concorde avec la Carte d'identité ; la provenance (« j'arrive de… ») n'est pas contrôlée. Déclaration contradictoire : refus.
+r_statements_text_s4,Interrogatoire : le motif et la durée déclarés à l'oral concordent avec le Permis d'entrée. Motif TRAVAIL : l'employeur déclaré concorde avec le Contrat de travail. L'origine déclarée (« je suis de… ») concorde avec la Carte d'identité ; la provenance n'est pas contrôlée. VISITE FAMILIALE : la personne visitée est le Répondant inscrit au permis. Déclaration contradictoire : refus.
+r_search_cause_title,Fouille sur motif
+r_search_cause_text,"Le portique s'emploie sur motif (discordance, indice, réponse évasive, directive). Fouille sans motif d'un passager en règle : faute de procédure."
+r_contraband_title,Objets interdits
+r_contraband_text,"Objets interdits (onglet Contrebande) : O₂ et médicaments hors circuit Meridian, stimulants, données non scellées, semences : refus."
+r_weapons_detain_title,Armes
+r_weapons_detain_text,"Armes (lames, émetteurs) : mise en attente."
+r_belt_search_title,Fouille des Ceinturiers
+r_belt_search_text,Ressortissants de Cérès dont le séjour dépasse 7 jours : fouille obligatoire avant admission.
+rb_tab_contraband,Contrebande
+rb_implant_hidden,non visible — fouille
+rb_cb_01,O₂ hors circuit : cartouche sans scellé Meridian · refus
+rb_cb_02,Stimulants « veille » : tubes sans étiquette · refus
+rb_cb_03,Médicaments hors circuit Meridian : sans étiquette · refus
+rb_cb_04,Données non scellées : puce sans scellé Ondine · refus
+rb_cb_05,Semences et boutures vivantes · refus
+rb_cb_06,Lames · mise en attente
+rb_cb_07,Émetteurs de brouillage · mise en attente
+rb_cb_08,Imprimés au symbole luciole : voir Symboles subversifs
+rb_belt_search_line,CER · séjour > 7 jours : fouille obligatoire (R47)
+disc_statement_mismatch,Déclaration contradictoire.
+disc_statement_mismatch_detail,Déclaré : %s ≠ %s : %s
+disc_statement_vague,Réponse imprécise : non comparable
+disc_statement_free,Réponse libre : non comparable
+disc_statement_not_given,Posez d'abord la question.
+disc_provenance,Provenance : non contrôlée
+disc_contraband,Objet interdit.
+disc_contraband_detail,Objet interdit (%s)
+disc_weapon,Arme : mise en attente
+disc_item_allowed,Objet autorisé
+disc_scan_unreadable,Contenu non lisible : blindage.
+q_cargo,Avez-vous quelque chose à déclarer ?
+q_search,"Placez-vous dans le portique, s'il vous plaît."
+q_about_statement,Ce que vous dites ne correspond pas à votre {doc}.
+q_about_contraband,Cet objet est interdit.
+stmt_purpose_work_1,Le travail
+stmt_purpose_work_2,Je viens travailler
+stmt_purpose_family_visit_1,Voir ma famille
+stmt_purpose_family_visit_2,Une visite familiale
+stmt_purpose_return_1,Je rentre chez moi
+stmt_purpose_return_2,"Le retour, enfin"
+stmt_purpose_trade_1,Le commerce
+stmt_purpose_trade_2,Vendre ce que j'apporte
+stmt_purpose_transit_1,Je ne fais que passer
+stmt_purpose_transit_2,Une correspondance
+stmt_purpose_diplomatic_1,Une mission officielle
+stmt_purpose_diplomatic_2,Affaires d'État
+stmt_employer,chez %s
+stmt_host_sister,"ma sœur, %s"
+stmt_host_brother,"mon frère, %s"
+stmt_host_son,"mon fils, %s"
+stmt_host_daughter,"ma fille, %s"
+stmt_host_mother,"ma mère, %s"
+stmt_host_friend,"chez %s, qui se porte garant·e"
+stmt_origin_tyc,Je suis de Tycho
+stmt_origin_hal,"Je suis d'ici, de Halcyon"
+stmt_origin_ter,Je suis de la Terre
+stmt_origin_cer,Je suis de Cérès
+stmt_origin_thr,Je suis de Tharsis
+stmt_origin_drv,Je suis du %s
+stmt_prov_shuttle,J'arrive par la Transit-7
+stmt_prov_place,J'arrive de %s
+stmt_prov_tessar,‹Ka vira Tiko.›
+stmt_prov_tessar_sub,J'arrive de la colonie Tycho.
+stmt_place_tyc,Tycho
+stmt_place_cer,Cérès
+stmt_place_ter,la Terre
+stmt_place_ring_b,l'Anneau B
+stmt_place_dock5,du quai 5
+stmt_dur_d1,Un jour
+stmt_dur_d2,Deux jours
+stmt_dur_d3,Trois jours
+stmt_dur_d4,Quatre jours
+stmt_dur_d5,Cinq jours
+stmt_dur_n,%d jours
+stmt_dur_w1,Une semaine
+stmt_dur_d10,Dix jours
+stmt_dur_w2,Deux semaines
+stmt_dur_w3,Trois semaines
+stmt_dur_m1,Un mois
+stmt_dur_w6,Six semaines
+stmt_dur_m2,Deux mois
+stmt_dur_m3,Trois mois
+stmt_dur_m6,Six mois
+stmt_dur_y1,Un an
+stmt_dur_y3,Trois ans
+stmt_dur_vague_1,Quelques jours
+stmt_dur_vague_2,Le temps du contrat
+stmt_dur_vague_3,Je ne sais pas encore
+stmt_dur_vague_4,Aussi longtemps qu'on voudra de moi
+stmt_dur_vague_5,Ça dépend du travail
+line_stmt_frame_gen_1,{motif}. {duree}.
+line_stmt_frame_gen_2,"{motif}, pour {duree}. C'est écrit sur le permis."
+line_stmt_frame_gen_3,"Euh… {motif}. {duree}, normalement."
+line_stmt_frame_gen_4,{motif}. {duree}. Je peux y aller ?
+line_stmt_frame_tyc_1,"{motif}. {duree}, si les puits tiennent."
+line_stmt_frame_tyc_2,"‹Esh ta.› {motif}. {duree}. On ne demande pas plus, chez nous."
+line_stmt_frame_tyc_3,{motif}. {duree}. La poussière attendra.
+line_stmt_frame_hal_1,"{motif}. {duree}. Faites vite, voulez-vous."
+line_stmt_frame_hal_2,"{motif}, évidemment. {duree}."
+line_stmt_frame_ter_1,{motif}. {duree}. On a fait un long voyage pour ça.
+line_stmt_frame_ter_2,‹Ravel ka ota.› {motif}. {duree}.
+line_stmt_frame_ter_3,{motif}… {duree}. Si on veut bien de nous.
+line_stmt_frame_cer_1,"{motif}. {duree}. Et je repars, promis."
+line_stmt_frame_cer_2,"{motif}, {duree}. Le temps, c'est du carburant."
+line_stmt_frame_thr_1,{motif}. {duree}. Je connais les règles.
+line_stmt_frame_thr_2,{motif}. {duree}. Comme l'indiquent mes papiers.
+line_stmt_frame_drv_1,‹Oru ka.› {motif}. {duree}. Le cargo n'attend pas.
+line_stmt_frame_drv_2,"{motif}. {duree}. Après, le vide reprend."
+line_stmt_frame_work_1,"{motif}, {employeur}. {duree}."
+line_stmt_frame_work_2,"{motif} {employeur}. {duree}, le temps du chantier."
+line_stmt_frame_visit_1,{motif} : {hote}. {duree}.
+line_stmt_frame_visit_2,"{hote}. {motif}. {duree}, pas plus."
+line_stmt_frame_correct_1,"{motif}. {duree_barree}… non, {duree}."
+line_stmt_frame_correct_2,"{motif}… {duree_barree}. Enfin, {duree}. Je confonds."
+line_stmt_stay_1,{duree}. C'est ce qu'on m'a accordé.
+line_stmt_stay_2,{duree}. Pas un jour de plus.
+line_stmt_stay_3,‹Ha.› {duree}.
+line_stmt_origin_1,{origine}. {provenance}.
+line_stmt_origin_2,"{origine}. Ça se voit, non ?"
+line_stmt_origin_3,"{provenance}. Mais {origine}, oui."
+line_stmt_origin_drv_1,{origine}. Ma mère y est née. Moi aussi.
+line_stmt_origin_drv_2,"{origine}. Un cargo. Pas de port, pas de pays."
+line_stmt_origin_tessar_1,{provenance}
+line_about_statement_1,Je me suis mal exprimé·e. C'est la fatigue.
+line_about_statement_2,"Le permis dit ça ? On m'a dit autre chose, au quai."
+line_about_statement_3,"‹Esh ta, esh ta.› J'ai dit ce que je pensais. Pas ce qui est écrit."
+line_about_statement_4,D'accord. J'ai menti. Le vrai motif ne passe jamais.
+line_about_statement_5,Vous allez me refuser pour un mot ? Un seul mot ?
+line_about_statement_6,"‹Somi, sa tiru ka.› Je redis ce que vous voulez entendre."
+line_about_statement_outrage_1,Je n'ai rien dit de tel. Relisez.
+line_about_statement_outrage_2,Vous cherchez une faute. Vous la trouverez toujours.
+line_cargo_none_1,Rien. Mes papiers et moi.
+line_cargo_none_2,Des vêtements. Une photo. C'est tout.
+line_cargo_none_3,‹Nai.› Rien à déclarer.
+line_cargo_none_4,"Mes médicaments. Ils sont étiquetés, regardez."
+line_cargo_goods_1,Des filtres. Pour la vente. Le permis le dit.
+line_cargo_goods_2,De la toile. Six rouleaux. Ça ne tient pas dans une poche.
+line_cargo_goods_3,"Mes outils. Clé, multimètre. Je travaille avec."
+line_cargo_evasive_1,Des affaires. Personnelles.
+line_cargo_evasive_2,Ce que tout le monde porte. Pourquoi ?
+line_cargo_evasive_3,"Rien qui vous regarde. Rien d'interdit, je veux dire."
+line_cargo_evasive_4,‹Hanu pe.› Déclarer quoi ?
+line_cargo_evasive_5,C'est pour quelqu'un. Je ne sais pas ce que c'est.
+line_search_comply_1,"Allez-y. Je n'ai rien à cacher. Enfin, rien d'interdit."
+line_search_comply_2,[lève les bras] Comme au quai. Comme partout.
+line_search_comply_3,‹Ha.› Faites. Je connais la machine.
+line_search_comply_4,"Le portique ? D'accord. Il fait froid, dedans ?"
+line_search_comply_5,"Vous aussi, on vous passe dedans, le soir ?"
+line_search_comply_6,[soupir] Les bras en l'air. Je sais.
+line_search_protest_1,"Pourquoi moi ? Les autres, vous ne les fouillez pas."
+line_search_protest_2,‹Kumo ri sava sa?› Je n'ai rien fait.
+line_search_protest_3,"Vous avez un motif, au moins ? Dites-le à voix haute."
+line_search_protest_4,Devant tout le Hall. Merci. Vraiment.
+line_search_clean_1,Vous avez fini ? Vous avez vu ma vie. Elle tient dans un sac.
+line_search_clean_2,"Rien. Je vous l'avais dit. Ça ne compte pas, ce que je dis ?"
+line_search_clean_3,‹Esh ta.› Pardon d'être en règle.
+line_search_clean_4,Ma fille a vu ça. Elle s'en souviendra plus longtemps que vous.
+line_search_clean_5,Vous rangerez ? Non. Évidemment.
+line_about_contraband_1,Ça ? On me l'a confié. Je ne sais pas ce que c'est.
+line_about_contraband_2,C'est pour des gens qui n'ont pas les moyens de Meridian.
+line_about_contraband_3,Tout le monde en porte. Vous fouillez les autres ?
+line_about_contraband_4,"D'accord. Gardez-le. Laissez-moi passer, moi."
+line_about_contraband_outrage_1,C'est autorisé. Lisez votre propre liste.
+line_about_weapon_generic,Un outil. Pour le travail. Vous ne connaissez pas ce travail.
+line_about_concealed_implant_1,Je l'ai depuis l'accident. Personne ne l'a jamais regardé.
+line_about_concealed_implant_2,"Sous la manche, c'est encore à moi, non ?"
+line_scan_unreadable,CONTENU NON LISIBLE · BLINDAGE
+cue_satchel_m,[serre sa sacoche contre lui]
+cue_satchel_f,[serre sa sacoche contre elle]
+cue_bulge,[une bosse sous la veste]
+cue_glove,"[un seul gant, à la main gauche]"
+cue_gait,"[démarche raide, une jambe qui traîne]"
+cue_collar,[col relevé sur la nuque]
+item_ol01_name,Effets personnels
+item_ol01_desc,"photo, lettre, jouet d'enfant"
+item_ol02_name,Crédits
+item_ol02_desc,%d ₵ en jetons
+item_ol03_name,Médicaments
+item_ol03_desc,étiquetés Meridian · ordonnance jointe
+item_ol04_name,Cartouche d'O₂
+item_ol04_desc,scellée Meridian · prescrite
+item_ol05_name,Outils de métier
+item_ol05_desc,"clé de recycleur, multimètre, gants de sas"
+item_ol06_name,Puce mémoire
+item_ol06_desc,scellé Ondine intact
+item_ol07_name,Marchandise
+item_ol07_desc,"filtres, toile, échantillons de minerai"
+item_ol08_name,Nourriture
+item_ol08_desc,"rations, thé de Tycho"
+item_ol09_name,Vêtements
+item_ol09_desc,"linge de rechange, couverture"
+item_ol10_name,Implant
+item_ol10_desc,%s · sous la peau
+item_cb01_name,Cartouche d'O₂
+item_cb01_desc,%d · sans scellé
+item_cb02_name,Tubes gris
+item_cb02_desc,%d · sans étiquette
+item_cb03_name,Antiviraux
+item_cb03_desc,%d doses · sans étiquette
+item_cb04_name,Puce mémoire NX
+item_cb04_desc,sans scellé Ondine
+item_cb05_name,Semences
+item_cb05_desc,sachet · Ceinture
+item_cb06_name,Lame de quai
+item_cb06_desc,22 cm
+item_cb07_name,Émetteur portatif
+item_cb07_desc,bande Hall
+item_cb08_name,Feuillets
+item_cb08_desc,symbole luciole
+item_badge_miner_name,Badge de mineuse
+item_badge_miner_desc,Puits 14 · Tycho
+srch_title,PORTIQUE · FOUILLE
+srch_motive,MOTIF : %s
+srch_motive_none,AUCUN MOTIF ÉTABLI
+srch_confirm_text,Fouiller un passager en règle sans motif est une faute de procédure.
+srch_confirm_yes,FOUILLER QUAND MÊME
+srch_confirm_no,ANNULER
+srch_scan_all,TOUT SCANNER
+srch_nothing,RAS
+srch_motive_discord,Discordance %s
+srch_motive_cue,Indice : %s
+srch_motive_evasive,Réponse évasive
+srch_motive_directive,Directive du jour
+srch_motive_mandatory,Fouille obligatoire (R47)
+srch_cue_satchel,serre sa sacoche
+srch_cue_bulge,bosse sous la veste
+srch_cue_glove,un seul gant
+srch_cue_gait,démarche raide
+srch_cue_collar,col relevé
+zone_z1,TÊTE ET NUQUE
+zone_z2,TORSE
+zone_z3,BRAS ET MAINS
+zone_z4,JAMBES
+zone_z5,BAGAGE
+cit_unwarranted_search,Fouille sans motif
+cit_search_skipped,Fouille omise
+cit_unwarranted_search_desc,Passager en règle passé au portique sans motif établi.
+cit_search_skipped_desc,Ceinturier au séjour de plus de 7 jours admis sans fouille (R47).
+ss_searches,Fouilles · %d (sans motif · %d)
+ss_statements,Déclarations contradictoires relevées · %d
+shop_title,ÉCONOMAT DU HALL
+shop_offcatalog,HORS CATALOGUE
+shop_owned,ACQUIS
+shop_new,NOUVEAU
+shop_one_per_evening,Un achat par soir. L'Économat ne fait pas crédit.
+shop_intro,"Le Bureau vend des outils aux agents. Il les vend cher, sur ton salaire. Il récupère son argent… comme on dit. Regarde quand même."
+upg_ag01_name,Hygiaphone neuf
+upg_ag01_desc,Les réponses arrivent plus vite. Les questions coûtent une seconde de moins.
+upg_ag02_name,Lampe de Wood
+upg_ag02_desc,Le modèle des sceaux s'affiche en clair. Le micro-texte se lit sans zoom.
+upg_ag03_name,Portique calibré PH-2
+upg_ag03_desc,Activation et zones scannées deux fois plus vite.
+upg_ag03_note,Les relevés du PH-2 sont transmis à la Garde de Continuité.
+upg_ag04_name,Tiroir à double fond
+upg_ag04_desc,Une enveloppe sur deux ne laisse pas de trace.
+upg_ag04_note,Un inspecteur qui cherche finit par trouver.
+upg_ag05_name,Recueil annoté d'Okonkwo
+upg_ag05_desc,Le Rulebook s'ouvre à la bonne page. Les marges parlent.
+upg_ag06_name,Moniteur de file
+upg_ag06_desc,Le manifeste du passager suivant s'affiche pendant sa marche.
+upg_ag06_note,Valcourt-Hsu remercie le Guichet 04 de sa contribution à la fluidité.
+exp_upgrade_ag01,Économat · Hygiaphone neuf
+exp_upgrade_ag02,Économat · Lampe de Wood
+exp_upgrade_ag03,Économat · Portique calibré PH-2
+exp_upgrade_ag04,Soute · Tiroir à double fond
+exp_upgrade_ag05,Okonkwo · Recueil annoté
+exp_upgrade_ag06,Économat · Moniteur de file
+msg_soute_drawer,Un menuisier de la Soute fait des tiroirs pour les vitres. Le fond est plus près qu'on ne croit. Quinze crédits. On ne vous a rien dit.
+msg_okonkwo_book,"Mon recueil du règlement, annoté depuis 2179. Je te le laisse pour dix crédits, le prix de ma tasse. Les marges valent plus que les pages."
+msg_okonkwo_drawer_found,"Ravel a trouvé ton tiroir. Moi, je ne l'aurais pas cherché. Lui, il ne cherche que ça."
+msg_vh_monitor,"Valcourt-Hsu Logistique propose aux guichets un moniteur de file : le manifeste de la Transit-7, passager par passager. Fluidité, vigilance, Continuité."
+okonkwo_note_1,« Regarde la date avant le visage. Le visage ment mieux. »
+okonkwo_note_2,"« Meridian, pas Meridiane. Toujours. »"
+okonkwo_note_3,« Un permis court pour un C-4. Compte les jours. »
+okonkwo_note_4,"« Le bloc d'abord, l'origine ensuite. »"
+okonkwo_note_5,« Un implant qu'on cache n'est pas toujours une arme. »
+okonkwo_note_6,"« La règle, juste assez… comme on dit. »"
+okonkwo_j4_statement,"Écoute ce qu'ils disent, pas seulement comment. Ce qu'ils disent, c'est un papier de plus."
+okonkwo_j4_statement_pinned,Tu l'as pris·e par sa propre bouche. Le seul papier qu'ils écrivent eux-mêmes… comme on dit.
+okonkwo_j4_statement_vague,"« Quelques jours », ce n'est pas un mensonge. C'est quelqu'un qui ne sait pas. Laisse."
+okonkwo_j4_statement_missed,"Le Ceinturier, trois semaines pour cinq jours. Il te l'a dit en face. Tu n'as pas demandé."
+msg_cons_day08_portique,Portique PH-1 : chaque vitre voit désormais sous les vestes. Il s'emploie sur motif. Le Consortium voit. Le Consortium protège.
+msg_luc_day08_search,Le portique voit ce qu'on porte. Il ne voit pas pour qui on le porte. Regardez aussi ça.
+okonkwo_j8_search_first,"Ils nous donnent des yeux qui traversent les vestes. Avant de regarder dedans, demande-toi pourquoi."
+okonkwo_j8_search_clean,"Rien. Il t'a laissé faire. Ici, ils laissent toujours faire. Retiens-le."
+okonkwo_j8_search_nomotive,"Sans motif ? Moi, je n'ouvre pas une veste sans raison. Même quand ils me le demandent."
+hh_dora_search,"À Tycho, on nous fouillait à la sortie du puits. On cachait l'hélium dans nos bottes. Pas moi. Presque pas."
+msg_hall_day09_portique,Brève : le portique du Guichet 07 a relevé quatre objets interdits hier. Le Bureau félicite le Guichet 07.
+msg_okonkwo_day09_zeal,"Tu as passé des gens au portique sans raison, hier. Ravel le sait. Lui, il aime ça. Moi, non."
+msg_ilan_day09_portique,"Au quai, ils fouillent les dockers à la sortie, maintenant. Le voisin du 12 est rentré sans sa veste."
+sato_j12_employer,"Collègue ! Officieusement : demandez l'employeur. Les gens oublient pour qui ils travaillent. Les contrats, jamais."
+evt_d17_review_search_zeal,"La Commission note votre zèle au portique. Elle n'y voit pas d'inconvénient. Le Bureau, si : c'est lui qui paie les plaintes."
+hh_dora_air_refused,"Au Bloc, on dit qu'une Ceinturière vendait de l'air ce matin. Ils l'ont renvoyée. Les cartouches aussi."
+hh_air_cartridge,"Une cartouche d'O₂ devant la porte, sans scellé, sans mot. Dora a dormi d'une traite."
+hh_soute_medicine_cheap,"La Soute a des antiviraux, ce soir. Moins cher que Meridian. Personne ne demande d'ordonnance."
+msg_luc_day17_ilse,La toux a baissé dans les coursives du bas. Merci pour la sacoche. Il pleut moins fort.
+msg_echo_sc111_detained,"Brève : une cadre de Valcourt-Hsu mise en attente au Guichet 04 a été relâchée dans l'heure, sur intervention de sa direction."
+msg_echo_sc107_nair_passed,"Brève : une contractuelle gravitaire de Kessler-Ashe, affectée au Puits 14 « par erreur d'aiguillage », demande son rapatriement. La demande est classée."
+hall_j27_cameras,"Panne des caméras du Hall, 14:02 à 14:06. L'Arbitrage remercie les guichets de leur calme."
+sev_contraband_alert_title,ALERTE DES QUAIS · FOUILLE AUTORISÉE
+sev_contraband_alert_announce,Avis des quais : cartouches d'O₂ non scellées signalées sur la Transit-7. Fouille autorisée des ressortissants de %s pour les cinq prochains passagers.
+sev_contraband_alert_announce_garde,Avis des quais : cartouches d'O₂ non scellées signalées. Fouille autorisée des ressortissants de %s pour les cinq prochains passagers.
+sev_contraband_alert_rb,FOUILLE AUTORISÉE · %s (%d passagers)
+sev_contraband_alert_end,Fin de l'alerte des quais. Fouille sur motif seulement.
+sev_contraband_alert_tyc,Tycho
+sev_contraband_alert_cer,Cérès
+sev_contraband_alert_trade,motif COMMERCE
+sev_contraband_alert_transit,motif TRANSIT
+sev_blackout_rb_search,R44 SUSPENDUE · PORTIQUE HORS TENSION
+garde_unit_u21,Déclarations : motif et durée
+garde_unit_u22,"Portique : fouille sur motif, objets interdits"
+garde_unit_u23,Armes : mise en attente
+garde_unit_u24,Déclarations : employeur et origine
+sc104_strand_arrival,‹Oru ka.› Premier jour des Ceinturiers chez vous ? On m'a dit de sourire.
+sc104_strand_present,"‹Tal ka nesu.› Tout est tamponné. Deux fois, même, au quai."
+sc104_strand_purpose,"Commerce. Trois semaines, le temps de tout vendre. Des filtres."
+sc104_strand_stay,"Trois semaines. Cinq jours, c'est pour les gens pressés."
+sc104_strand_origin,"Cérès. Trois semaines de vol, trois semaines ici. C'est l'équilibre."
+sc104_strand_about_statement,Le permis dit cinq ? Le courtier a dû se tromper. Ou moi.
+sc104_strand_exit_deny,"Cinq jours, alors. La prochaine fois, je dirai cinq."
+sc104_strand_exit_approve,Merci. Trois semaines. Je vous enverrai une carte postale de la file.
+sc105_mbeki_arrival,"Bonjour. On dit qu'il y a une machine, maintenant. Pour regarder dedans."
+sc105_mbeki_present,"‹Tal ka nesu.› Tycho, Puits 14. Le bras aussi est déclaré."
+sc105_mbeki_purpose,"Le travail. Un mois, chez Kessler-Ashe. Les sas, comme d'habitude."
+sc105_mbeki_origin,Tycho. Vingt ans de poussière. Le bras en a pris plus que moi.
+sc105_mbeki_cargo,"Ma clé, mon badge, ma main. Le reste, je l'ai laissé au Puits."
+sc105_mbeki_search,"[retire son gant] Allez-y. Au Puits, on nous fouillait à chaque sortie."
+sc105_mbeki_search_clean,Vous voyez ? Un bras de levage. Il soulève. Il ne cache rien.
+sc105_mbeki_exit_approve,Merci. Gardez la machine pour ceux qui ont des poches.
+sc105_mbeki_exit_deny,Refusée ? Le bras est sur la carte. Il est sur la carte…
+sc106_zuri_arrival,"Bonjour, la vitre. Il fait froid dans votre Hall. Plus que dans la Ceinture."
+sc106_zuri_present,"‹Tal ka nesu.› Quatre jours. Je vends, je repars."
+sc106_zuri_purpose,"Le commerce. Quatre jours. Des tissus chauds, pour vos coursives."
+sc106_zuri_cargo,"Mon manteau. Il est épais, c'est tout. Vous avez froid aussi, non ?"
+sc106_zuri_search,Le portique ? Allez-y. Je n'ai rien qui ne respire pas.
+sc106_zuri_search_found,Six souffles. Pour le Bloc Pétrel. Ils paient mieux que vos Anneaux.
+sc106_zuri_about_contraband,"Scellé ou pas, c'est le même air. Meridian le vend dix fois plus cher."
+sc106_zuri_exit_deny,"Ils respireront moins, ce soir, au Bloc. Votre règle respire très bien."
+sc106_zuri_exit_approve,Je laisserai une cartouche devant votre porte. On sait où vivent les vitres.
+sc106_zuri_exit_detain,Pour de l'air ? Vous mettez les gens en attente pour de l'air ?
+sc107_nair_arrival,"Bonjour. C'est ici qu'on entre ? Le courtier a dit : la vitre 04, elle est juste."
+sc107_nair_present,‹Tal ka nesu.› Un contrat. Trois mois d'essai. Je sais planter.
+sc107_nair_purpose,"Le travail, chez Ceres-Verte. Les serres. Trois mois, pour commencer."
+sc107_nair_origin,La Terre. Zone sèche 9. Ma mère a payé le courtier avec la maison.
+sc107_nair_about_statement,Kessler-Ashe ? Non. C'est écrit « serres » sur la brochure. Regardez.
+sc107_nair_exit_deny,"Alors je rentre. Le courtier aussi a un contrat. Avec qui, je me demande."
+sc107_nair_exit_approve,"Merci. Les serres, enfin. Vous me direz si elles sont jolies."
+sc62_tariq_nair,Une fille de la Zone 9 est repartie. Même courtier que moi. Vous l'avez sauvée.
+sc108_note,« Elle porte ce qui manque en bas. Ne regardez pas dans sa sacoche. — L. »
+sc108_note_label,Mot glissé sous le permis
+sc108_ilse_arrival,"Bonjour. La file est longue, aujourd'hui. Les quintes aussi."
+sc108_ilse_present,‹Tal ka nesu.› Visite familiale. Trois jours. Ma sœur tousse.
+sc108_ilse_purpose,"Voir ma sœur, au Bloc Cormoran. Trois jours. Elle tousse depuis lundi."
+sc108_ilse_cargo,Des affaires pour elle. Personnelles.
+sc108_ilse_search,Vous avez lu le mot ? Alors vous savez. Faites ce que vous devez.
+sc108_ilse_search_found,Des antiviraux. Sans étiquette. Meridian ne descend pas sous l'Anneau C.
+sc108_ilse_exit_deny,"Ils tousseront une semaine de plus. Vous, vous dormirez. C'est déjà ça."
+sc108_ilse_exit_approve,"‹Shen tavi.› Il pleuvra moins fort, en bas, ce soir."
+sc108_ilse_exit_detain,"Pour des médicaments ? Notez bien l'heure. Quelqu'un tousse, en ce moment."
+sc109_kerr_arrival,"Encore moi. Le vieux Ren Kerr. Pas les deux autres. Eux, ils sont en retard."
+sc109_kerr_present,"‹Tal ka nesu.› Quatorze jours. Les filtres se vendent mal, cette semaine."
+sc109_kerr_purpose,"Le commerce. Deux semaines. Des filtres, comme les deux autres, en mieux."
+sc109_kerr_search,"Fouillez. À Cérès, au quai, dans la file : je suis propre partout."
+sc109_kerr_search_clean,Des filtres. Toujours des filtres. Vous en voulez un ? Pour le Hall.
+sc109_kerr_exit_approve,"Merci. Si un Ren Kerr se plaint, ce n'est pas moi."
+sc109_kerr_exit_deny,Refusé ? Alors c'est un des deux autres qui vendra. Bravo.
+sc110_sabine_arrival,Bonjour. Mon répondant est passé avant moi. On m'a dit que ça suffisait.
+sc110_sabine_present,‹Tal ka nesu.› Visite familiale. Le répondant est en bas de la feuille.
+sc110_sabine_purpose,"Voir mon fils, Tomás Moreno-Lind. Bloc Pétrel. Une semaine."
+sc110_sabine_origin,Je suis de Tycho. Mes deux enfants sont partis. Je viens voir celui qui reste.
+sc110_sabine_about_statement,La personne en bas de la feuille ? Je ne la connais pas. Je l'ai payée.
+sc110_sabine_exit_deny,Dites à Tomás que sa mère a essayé. Il habite à côté de chez vous.
+sc110_sabine_exit_approve,‹Ravel ka ota.› Mon fils m'attend. Merci de ne pas avoir compté.
+sc65_yara_arrival_mother_refused,"Ma mère a acheté un répondant. Vous l'avez vu. Vous voyez tout, à cette vitre."
+sc65_yara_arrival_mother_passed,Ma mère est passée hier. Par votre vitre. Tomás a pleuré. Lui ne pleure jamais.
+sc111_whitmore_arrival,"Bonjour. Faites vite, voulez-vous ? J'ai une réunion à l'Anneau F."
+sc111_whitmore_present,"Ma carte. Le reste ne vous regarde pas, mais faites votre petit travail."
+sc111_whitmore_purpose,Je rentre. Valcourt-Hsu. J'habite ici depuis plus longtemps que vous.
+sc111_whitmore_cargo,Des dossiers. Confidentiels. Votre portique n'a pas l'habilitation.
+sc111_whitmore_search,Vous fouillez une C-2 ? Voilà qui ira dans votre dossier. Ou dans le mien.
+sc111_whitmore_search_found,Un relais de communication. Pour la réunion. Vous ne connaissez pas ce modèle.
+sc111_whitmore_about_contraband,Un émetteur ? Appelez ça comme vous voulez. Appelez aussi ma direction.
+sc111_whitmore_exit_detain,Mise en attente ? Vous verrez combien de temps. Moins longtemps que vous.
+sc111_whitmore_exit_deny,Refusée. Par un guichet. Je raconterai ça au dîner.
+sc111_whitmore_exit_approve,"Merci. Vous irez loin. Pas dans le Hall, j'espère pour vous."
+sc35_okonkwo_book,"Tu as encore mon recueil ? Lis les marges. Les pages, n'importe qui les lit."
+sc75_okonkwo_book,"Mon recueil t'a servi ? Moi, il ne m'a jamais servi. C'est pour ça que je l'ai écrit."
+sc92_okonkwo_book,"Tu as gardé mon recueil, un an. La borne, elle, n'a pas de marges."
+viol_statement_purpose,Motif déclaré à l'oral ≠ motif du permis.
+viol_statement_stay,Durée déclarée à l'oral ≠ durée du permis.
+viol_statement_employer,Employeur déclaré à l'oral ≠ employeur du contrat.
+viol_statement_origin,Origine déclarée à l'oral ≠ origine de la carte.
+viol_statement_host,Personne visitée ≠ répondant du permis.
+viol_contraband,Objet interdit trouvé à la fouille.
+viol_weapon,Arme trouvée à la fouille : mise en attente.
+viol_implant_concealed,Implant dissimulé absent des implants déclarés.
+field_sponsor_name,Nom du répondant

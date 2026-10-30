@@ -35,6 +35,15 @@ enum Kind {
 	SPONSOR_MISMATCH = 21,
 	FORGED_SUMMONS = 22,
 	SUSPENDED_CONTRACT = 23,
+	# M13 (docs/M13.md §1.5, §2.7 ; D-149) — ajoutés en fin d'enum (D-033).
+	## Déclaration orale contradictoire (variantes AV-1 → AV-5 en paramètre `topic`).
+	STATEMENT_MISMATCH = 24,
+	## Objet interdit CB-01 → CB-05 dans une zone de fouille (R45).
+	CONTRABAND = 25,
+	## Implant de localisation dissimulée non déclaré (R15, trouvé à la fouille).
+	CONCEALED_IMPLANT = 26,
+	## Arme CB-06 / CB-07 (R46, DÉTENTION).
+	CONCEALED_WEAPON = 27,
 }
 
 

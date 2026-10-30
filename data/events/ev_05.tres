@@ -18,18 +18,30 @@ amount = 1
 [sub_resource type="Resource" id="ev_05_resource_3"]
 script = ExtResource("1_btlni")
 op = 1
+rule_id = &"r_search_cause"
+note_key = "sev_blackout_rb_search"
+
+[sub_resource type="Resource" id="ev_05_resource_4"]
+script = ExtResource("1_btlni")
+op = 1
 rule_id = &"r_seals_valid"
 note_key = "sev_blackout_title"
+
+[sub_resource type="Resource" id="ev_05_resource_5"]
+script = ExtResource("1_btlni")
+op = 1
+rule_id = &"r_search_cause"
+note_key = "sev_blackout_rb_search"
 
 [resource]
 script = ExtResource("2_bpm60")
 id = &"ev_05"
 key = &"blackout"
 window_kind = 3
-changes = Array[ExtResource("1_btlni")]([SubResource("ev_05_resource_1"), SubResource("ev_05_resource_2")])
+changes = Array[ExtResource("1_btlni")]([SubResource("ev_05_resource_1"), SubResource("ev_05_resource_2"), SubResource("ev_05_resource_3")])
 announce_key = "sev_blackout_announce"
 title_key = "sev_blackout_title"
 rulebook_key = "sev_blackout_title"
 end_key = "sev_blackout_end"
 garde_window_passengers = 2
-garde_changes = Array[ExtResource("1_btlni")]([SubResource("ev_05_resource_3")])
+garde_changes = Array[ExtResource("1_btlni")]([SubResource("ev_05_resource_4"), SubResource("ev_05_resource_5")])

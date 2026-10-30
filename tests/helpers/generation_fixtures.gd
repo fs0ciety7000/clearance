@@ -65,7 +65,7 @@ static func index_for(builder: CaseBuilder, kind: AnomalyType.Kind, start: int) 
 		var i: int = (start + offset) % count
 		var faction: StringName = builder.roster.get_entry(i).faction_id
 		match kind:
-			AnomalyType.Kind.PURPOSE_MISMATCH, AnomalyType.Kind.FORGED_SUMMONS:
+			AnomalyType.Kind.PURPOSE_MISMATCH, AnomalyType.Kind.FORGED_SUMMONS, AnomalyType.Kind.STATEMENT_MISMATCH:
 				if faction != &"hal":
 					return i
 			# Acte III (R35) : ressortissant de Tycho sous contrat de travail.

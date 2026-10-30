@@ -27,6 +27,18 @@ var face_anomaly: bool = false
 var peek_citizen_id: Callable = Callable()
 ## Nombre de passagers du jour (index valides).
 var passenger_count: int = 0
+## M13 (B67) : mensonge choisi par `STATEMENT_MISMATCH` — `{topic, statement}`
+## (`Statement` fausse), appliqué par le `StatementGenerator` après l'injection.
+var statement_lie: Dictionary = {}
+## M13 (B73) : objets de fouille à placer par le `SearchGenerator` après
+## l'injection — `{item: SearchItemDef, implant: String, zone, cue, anomaly}`.
+var search_plan: Array[Dictionary] = []
+## M13 : types déjà injectés dans ce cas (règles de combinaison, §1.5, §2.7).
+var injected: Array[AnomalyType.Kind] = []
+## M13 : nombre d'anomalies visées pour ce cas (tirage ou liste imposée).
+var planned_count: int = 0
+## M13 : déclarations imposées par un cas scénarisé (le mensonge est déjà écrit).
+var scripted_statements: bool = false
 
 
 ## Acte III : N° ID du passager propre d'un autre index (vide si indisponible).
@@ -34,6 +46,20 @@ func citizen_id_at(index: int) -> String:
 	if not peek_citizen_id.is_valid() or index < 0 or index >= passenger_count:
 		return ""
 	return str(peek_citizen_id.call(index))
+
+
+## M13 : tables des déclarations et catalogue de fouille (données).
+func get_statement_tables() -> StatementTablesDef:
+	return data.statement_tables if data != null else null
+
+
+func get_search_catalog() -> SearchCatalogDef:
+	return data.search_catalog if data != null else null
+
+
+## M13 : la fouille est en service (R44 active : portique sous tension, J8+).
+func search_enabled() -> bool:
+	return get_rule_set() != null and SearchGenerator.search_enabled(get_rule_set())
 
 
 func get_rule_set() -> RuleSet:

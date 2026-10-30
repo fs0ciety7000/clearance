@@ -9,6 +9,9 @@
 ##   godot --headless --script res://tools/build_data.gd   # si les données ont changé
 ##   godot --headless --script res://tools/gen_stats.gd -- --campaigns=200 --seed=1
 ##   godot --headless --script res://tools/gen_stats.gd -- --campaigns=40 --days=21-30   # Acte III seul
+## M13 (docs/M13.md §4.1) : par jour, passagers **générés** porteurs d'une
+## fausse déclaration, d'une anomalie de fouille (25–27), armes, innocents
+## avec indice, P(porteur | indice), réponses évasives des innocents.
 extends SceneTree
 
 var _campaigns: int = 200
@@ -66,6 +69,16 @@ func _run_day(data: DataCatalog, day: DayDef) -> int:
 	var close_pairs: int = 0
 	var exact_dupes: int = 0
 	var distance_sum: int = 0
+	# M13 (§4.1) : passagers générés seulement.
+	var generated_count: int = 0
+	var lies: int = 0
+	var search_carriers: int = 0
+	var weapons: int = 0
+	var innocents: int = 0
+	var innocent_cues: int = 0
+	var cued: int = 0
+	var cued_carriers: int = 0
+	var evasive_innocents: int = 0
 	var catalog: AppearanceCatalog = data.appearance_catalog
 	var slots: Array[StringName] = catalog.get_slot_ids()
 	for campaign: int in _campaigns:
@@ -96,6 +109,21 @@ func _run_day(data: DataCatalog, day: DayDef) -> int:
 			noise += int(generated.photo_noise)
 			retries += generated.clean_attempts - 1
 			invariant_errors += generated.invariant_errors.size()
+			if generated.scripted_id == &"":
+				generated_count += 1
+				var m13_kinds: Array[AnomalyType.Kind] = generated.get_anomaly_kinds()
+				lies += int(m13_kinds.has(AnomalyType.Kind.STATEMENT_MISMATCH))
+				weapons += int(m13_kinds.has(AnomalyType.Kind.CONCEALED_WEAPON))
+				var carrier: bool = m13_kinds.has(AnomalyType.Kind.CONTRABAND) or m13_kinds.has(AnomalyType.Kind.CONCEALED_IMPLANT) \
+						or m13_kinds.has(AnomalyType.Kind.CONCEALED_WEAPON)
+				search_carriers += int(carrier)
+				var has_cue: bool = not generated.case.search_cues.is_empty()
+				cued += int(has_cue)
+				cued_carriers += int(has_cue and carrier)
+				if not carrier and generated.case.search_layout != null:
+					innocents += 1
+					innocent_cues += int(has_cue)
+					evasive_innocents += int(generated.case.cargo_reply == Case.CARGO_EVASIVE)
 
 	print("\n=== J%d (%d passagers × %d campagnes = %d cas) ===" % [day.day_number, day.passenger_count, _campaigns, cases])
 	var hist: PackedStringArray = []
@@ -127,6 +155,9 @@ func _run_day(data: DataCatalog, day: DayDef) -> int:
 	print("Apparences     : replis %s · paires < min_distance (fenêtre %d) %d/%d (%s) · doublons exacts %d · distance moyenne %.2f/%d"
 			% [_pct(fallbacks, cases), catalog.window_size, close_pairs, pairs, _pct(close_pairs, pairs), exact_dupes,
 			float(distance_sum) / maxf(pairs, 1.0), slots.size()])
+	print("M13 (générés)  : fausses déclarations %s · fouille (25–27) %s · armes %.2f/jour · indices des innocents %s · P(porteur | indice) %s · évasives des innocents %s"
+			% [_pct(lies, generated_count), _pct(search_carriers, generated_count), float(weapons) / _campaigns,
+			_pct(innocent_cues, innocents), _pct(cued_carriers, cued), _pct(evasive_innocents, innocents)])
 	print("Invariants     : %s" % ("OK" if invariant_errors == 0 else "%d ERREUR(S)" % invariant_errors))
 	return invariant_errors
 

@@ -33,6 +33,21 @@
 ## Acte II : répliques conditionnelles (`Case.line_overrides`, prioritaires),
 ## familles `quota` (paire Compteur ↔ R23), `curfew`, `revoked`, `contract`
 ## (`line_about_<famille>_generic`, docs/ACT2.md §4.0, §7.2).
+## M13 (ARCHITECTURE §12.5) : **déclarations** — une question porteuse de
+## puces (`purpose`, `stay`, `origin`) répond par le cadre du cas
+## (`Case.statement_frames`) ou la réplique scénarisée, marque ses
+## déclarations obtenues (`Statement.given`) et émet `statement_given` ;
+## `cargo` (« Quelque chose à déclarer ? ») ; confrontations `about_statement`,
+## `about_contraband`, `about_weapon`, `about_concealed_implant` ; question de
+## base ou confrontation réelle répétée → même réponse + ANGRY. **Coûts en temps** en données
+## (`InterrogationTiming`, AG-01) annoncés par `inspection_busy` (indicatif :
+## la logique n'ignore pas une question pendant ce temps ; l'UI se bloque).
+## **Fouille** (`search`, J8+, R44 active) : motif MF-1 → MF-5 calculé et
+## **figé à la demande** (`compute_search_motive`, jamais `CaseKey`),
+## confirmation si aucun motif (`search_confirmation_required`), activation
+## puis zones scannées après leur durée (`advance`), `search_opened`,
+## `search_zone_scanned`, `search_closed` ; le verdict reçoit `search_done`,
+## `search_motive`, `zones_scanned`. Le passager ne refuse jamais (D-145).
 ## Ne connaît pas la clé de réponse ; le DayController la garde.
 class_name InspectionSession
 extends Node
@@ -49,6 +64,32 @@ const TOPIC_LUCIOLE_REPLY: StringName = &"luciole_reply"
 const LINE_ABOUT_ENVELOPE: String = "line_about_envelope_generic"
 const LINE_LUCIOLE_REPLY: String = "line_luciole_reply_generic"
 const LINE_EXIT_DETAIN: String = "line_exit_detain_generic"
+## M13 (ARCHITECTURE §12.5).
+const TOPIC_CARGO: StringName = &"cargo"
+const TOPIC_SEARCH: StringName = &"search"
+const TOPIC_ABOUT_STATEMENT: StringName = &"about_statement"
+const TOPIC_ABOUT_CONTRABAND: StringName = &"about_contraband"
+## Questions de base (coût `question_sec`, ANGRY si répétées).
+const BASE_TOPICS: Array[StringName] = [TOPIC_PURPOSE, TOPIC_STAY, TOPIC_ORIGIN, TOPIC_CARGO]
+const LINE_CARGO_DEFAULT: String = "line_cargo_none_1"
+const LINE_SEARCH_COMPLY_PREFIX: String = "line_search_comply_"
+const LINE_SEARCH_PROTEST_PREFIX: String = "line_search_protest_"
+const LINE_SEARCH_CLEAN_PREFIX: String = "line_search_clean_"
+## Demandes de `search_requested` autres que les zones.
+const SEARCH_CONFIRM: StringName = &"confirm"
+const SEARCH_CANCEL: StringName = &"cancel"
+const SEARCH_CLOSE: StringName = &"close"
+## Actions de `inspection_busy`.
+const BUSY_QUESTION: StringName = &"question"
+const BUSY_CONFRONT: StringName = &"confront"
+const BUSY_REPEAT: StringName = &"repeat"
+const BUSY_SEARCH_ACTIVATION: StringName = &"search_activation"
+const BUSY_SEARCH_ZONE: StringName = &"search_zone"
+## Paramètre de surcharge de R44 posé par EV-09 (« fouille autorisée », MF-4).
+const PARAM_SEARCH_AUTHORIZED: StringName = &"search_authorized"
+
+## État de la fouille dans la session.
+enum SearchState { IDLE, AWAITING_CONFIRM, ACTIVATING, OPEN, CLOSED }
 const ABOUT_PREFIX: String = "about_"
 const DOC_SEPARATOR: String = ":"
 ## Au-delà, la réponse « séjour » est longue.
@@ -89,15 +130,26 @@ const FAMILY_CONTRACT: String = "contract"
 const FAMILY_SPONSOR: String = "sponsor"
 const FAMILY_SUMMONS: String = "summons"
 const FAMILY_LOCKOUT: String = "lockout"
+## M13 : déclaration contradictoire (variantes `line_about_statement_<n>` et
+## `_outrage_<n>`), objet interdit, arme (`line_about_weapon_generic`),
+## implant dissimulé trouvé (`line_about_concealed_implant_<n>`).
+const FAMILY_STATEMENT: String = "statement"
+const FAMILY_CONTRABAND: String = "contraband"
+const FAMILY_WEAPON: String = "weapon"
+const FAMILY_CONCEALED_IMPLANT: String = "concealed_implant"
+## Familles M13 à variantes (hors `FAMILIES`, testées par le lot B avec les textes).
+const M13_FAMILIES: Array[String] = [FAMILY_STATEMENT, FAMILY_CONTRABAND, FAMILY_CONCEALED_IMPLANT]
 const FAMILIES: Array[String] = [FAMILY_FACE, FAMILY_ID_NUMBER, FAMILY_NAME, FAMILY_BIRTH, FAMILY_VALIDITY,
 		FAMILY_MISSING, FAMILY_ISSUER, FAMILY_ORIGIN, FAMILY_HEALTH, FAMILY_OTHER]
 ## M7 : familles à réplique unique (`line_about_<famille>_generic`, NARRATIVE
 ## §7.3) ; l'indignation (non constatée) reprend la famille « autre ».
 const GENERIC_FAMILIES: Array[String] = [FAMILY_IMPLANT, FAMILY_WANTED, FAMILY_QUOTA, FAMILY_CURFEW,
-		FAMILY_REVOKED, FAMILY_CONTRACT, FAMILY_SPONSOR, FAMILY_SUMMONS, FAMILY_LOCKOUT]
+		FAMILY_REVOKED, FAMILY_CONTRACT, FAMILY_SPONSOR, FAMILY_SUMMONS, FAMILY_LOCKOUT, FAMILY_WEAPON]
 ## Familles débloquant un sujet `about_<famille>` sans document.
 const RULE_FAMILIES: Array[String] = [FAMILY_QUOTA, FAMILY_CURFEW, FAMILY_REVOKED, FAMILY_CONTRACT, FAMILY_SPONSOR,
 		FAMILY_SUMMONS, FAMILY_LOCKOUT]
+## M13 : familles débloquant `about_<famille>[:<doc>]` (le document filtre).
+const DOC_FAMILIES: Array[String] = [FAMILY_STATEMENT, FAMILY_CONTRABAND, FAMILY_WEAPON, FAMILY_CONCEALED_IMPLANT]
 ## `truth_path` d'un champ → famille de réplique.
 const TRUTH_PATH_FAMILIES: Dictionary[StringName, String] = {
 	&"appearance": FAMILY_FACE,
@@ -137,12 +189,38 @@ var luciole_reply_allowed: bool = false
 ## M7 : le joueur a répondu à la phrase de passe pendant ce cas.
 var luciole_replied: bool = false
 
+# --- M13 ----------------------------------------------------------------------
+## Coûts en temps (posés par le DayController : `EconomyDef.get_interrogation_timing()`).
+var timing: InterrogationTiming = InterrogationTiming.new()
+## AG-01 Hygiaphone neuf (questions plus courtes) ; AG-03 Portique calibré PH-2.
+var hygiaphone: bool = false
+var calibrated_gate: bool = false
+## Temps d'interface occupée restant (indicatif, `inspection_busy`).
+var busy_remaining_sec: float = 0.0
+var search_state: SearchState = SearchState.IDLE
+## Une fouille a été engagée dans ce cas (motif présent ou confirmé).
+var search_done: bool = false
+## Motif figé à la première demande (`SearchLayout.MOTIVE_*`, `&""` = aucun).
+var search_motive: StringName = &""
+## Zones scannées (ordre du scan).
+var zones_scanned: Array[StringName] = []
+## La réplique de trouvaille a été dite (une fois par cas).
+var search_found_said: bool = false
+## Réponses des confrontations réelles déjà obtenues (sujet → réplique).
+var _real_answers: Dictionary[StringName, String] = {}
+var _activation_left: float = 0.0
+var _zone_queue: Array[StringName] = []
+var _zone_costs: Array[float] = []
+var _current_zone: StringName = &""
+var _zone_left: float = 0.0
+
 
 func _ready() -> void:
 	EventBus.documents_presented.connect(_on_documents_presented)
 	EventBus.discrepancy_check_requested.connect(_on_discrepancy_check_requested)
 	EventBus.interrogation_requested.connect(_on_interrogation_requested)
 	EventBus.inspection_mode_changed.connect(_on_inspection_mode_changed)
+	EventBus.search_requested.connect(_on_search_requested)
 
 
 ## Démarre l'inspection d'un nouveau cas (appelé par le DayController).
@@ -156,6 +234,25 @@ func begin(p_case: Case, p_ctx: RuleContext) -> void:
 	questions_asked.clear()
 	luciole_reply_allowed = false
 	luciole_replied = false
+	busy_remaining_sec = 0.0
+	search_state = SearchState.IDLE
+	search_done = false
+	search_motive = &""
+	zones_scanned.clear()
+	search_found_said = false
+	_real_answers.clear()
+	_activation_left = 0.0
+	_zone_queue.clear()
+	_zone_costs.clear()
+	_current_zone = &""
+	_zone_left = 0.0
+
+
+## M13 : coûts en temps et améliorations possédées (drapeaux du matin `upg_*`).
+func configure(p_timing: InterrogationTiming, flags: Dictionary[StringName, Variant]) -> void:
+	timing = p_timing if p_timing != null else InterrogationTiming.new()
+	hygiaphone = UpgradeDef.owns(flags, UpgradeDef.ID_HYGIAPHONE)
+	calibrated_gate = UpgradeDef.owns(flags, UpgradeDef.ID_CALIBRATED_GATE)
 
 
 ## Termine la session au tampon : complète le verdict (preuves, questions,
@@ -168,7 +265,13 @@ func end(verdict: Verdict) -> void:
 			verdict.questions_asked = questions_asked.duplicate()
 		if verdict.elapsed_sec <= 0.0:
 			verdict.elapsed_sec = elapsed_sec
+		if search_done:
+			verdict.search_done = true
+			verdict.search_motive = search_motive
+			verdict.zones_scanned = zones_scanned.duplicate()
 		EventBus.passenger_reaction_triggered.emit(reaction_for_verdict(verdict.kind))
+	if search_state == SearchState.ACTIVATING or search_state == SearchState.OPEN:
+		_close_search(false)
 	active = false
 
 
@@ -179,6 +282,10 @@ func _process(delta: float) -> void:
 func advance(delta: float) -> void:
 	if active and documents_presented:
 		elapsed_sec += delta
+	if not active:
+		return
+	busy_remaining_sec = maxf(busy_remaining_sec - delta, 0.0)
+	_advance_search(delta)
 
 
 static func reaction_for_verdict(kind: VerdictKind.Kind) -> PassengerReaction.Kind:
@@ -214,8 +321,17 @@ func _on_discrepancy_check_requested(a: FieldRef, b: FieldRef) -> void:
 func _on_interrogation_requested(topic: StringName) -> void:
 	if not active or case == null or not documents_presented:
 		return
-	if not questions_asked.has(topic):
+	if topic == TOPIC_SEARCH:
+		_request_search()
+		return
+	var repeated: bool = questions_asked.has(topic)
+	if not repeated:
 		questions_asked.append(topic)
+	if repeated and BASE_TOPICS.has(topic):
+		# M13 §1.10 : question répétée — même réponse, ANGRY, 2 s.
+		_answer_base(topic, true)
+		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.ANGRY)
+		return
 	match topic:
 		TOPIC_REMOVE_VISOR:
 			# Le cas est muté avant la réponse : le booth relit l'apparence.
@@ -227,15 +343,9 @@ func _on_interrogation_requested(topic: StringName) -> void:
 				EventBus.interrogation_answered.emit(topic, LINE_CONFRONT_ANGRY)
 				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.ANGRY)
 			else:
-				EventBus.interrogation_answered.emit(topic, scripted_line("confront", LINE_CONFRONT_NERVOUS))
-				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
-		TOPIC_PURPOSE:
-			EventBus.interrogation_answered.emit(topic, scripted_line("purpose", LINE_PURPOSE_PREFIX + String(case.passenger_presented.purpose)))
-		TOPIC_STAY:
-			var short: bool = case.passenger_presented.stay_days <= SHORT_STAY_DAYS
-			EventBus.interrogation_answered.emit(topic, scripted_line("stay", LINE_STAY_SHORT if short else LINE_STAY_LONG))
-		TOPIC_ORIGIN:
-			EventBus.interrogation_answered.emit(topic, scripted_line("origin", LINE_ORIGIN_PREFIX + String(case.passenger_presented.faction_id)))
+				_answer_confrontation(topic, scripted_line("confront", LINE_CONFRONT_NERVOUS))
+		TOPIC_PURPOSE, TOPIC_STAY, TOPIC_ORIGIN, TOPIC_CARGO:
+			_answer_base(topic, false)
 		TOPIC_ABOUT_ENVELOPE:
 			if case.has_envelope():
 				EventBus.interrogation_answered.emit(topic, scripted_line("about_envelope", LINE_ABOUT_ENVELOPE))
@@ -254,9 +364,265 @@ func _on_interrogation_requested(topic: StringName) -> void:
 		_:
 			if String(topic).begins_with(ABOUT_PREFIX):
 				_confront_about(topic)
+				return
 			else:
 				EventBus.interrogation_answered.emit(topic, LINE_GENERIC_SHRUG)
 				EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.SHRUG)
+	if topic == TOPIC_CONFRONT:
+		if confirmed.is_empty():
+			_busy(timing.confront_cost(hygiaphone), BUSY_CONFRONT)
+	elif not BASE_TOPICS.has(topic):
+		_busy(timing.other_cost(hygiaphone), BUSY_QUESTION)
+
+
+## M13 : confrontation **réelle** (discordance constatée) — réplique + NERVOUS
+## la première fois ; ensuite même réplique + ANGRY (question répétée, 2 s).
+func _answer_confrontation(topic: StringName, line: String) -> void:
+	if _real_answers.has(topic):
+		EventBus.interrogation_answered.emit(topic, _real_answers[topic])
+		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.ANGRY)
+		_busy(timing.confront_cost(hygiaphone, true), BUSY_REPEAT)
+		return
+	_real_answers[topic] = line
+	EventBus.interrogation_answered.emit(topic, line)
+	EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
+	_busy(timing.confront_cost(hygiaphone), BUSY_CONFRONT)
+
+
+## Question de base : réplique (scénarisée, cadre de déclarations, ou
+## générique), puces obtenues (`statement_given`), coût en temps.
+func _answer_base(topic: StringName, repeated: bool) -> void:
+	var line: String = ""
+	match topic:
+		TOPIC_PURPOSE:
+			line = LINE_PURPOSE_PREFIX + String(case.passenger_presented.purpose)
+		TOPIC_STAY:
+			var short: bool = case.passenger_presented.stay_days <= SHORT_STAY_DAYS
+			line = LINE_STAY_SHORT if short else LINE_STAY_LONG
+		TOPIC_ORIGIN:
+			line = LINE_ORIGIN_PREFIX + String(case.passenger_presented.faction_id)
+		TOPIC_CARGO:
+			line = case.cargo_line_key if not case.cargo_line_key.is_empty() else LINE_CARGO_DEFAULT
+	var given: Array[Statement] = case.statements_for_question(topic)
+	if not given.is_empty() and case.statement_frames.has(topic):
+		line = case.statement_frames[topic]
+	EventBus.interrogation_answered.emit(topic, scripted_line(String(topic), line))
+	var corrected: bool = false
+	for statement: Statement in given:
+		statement.given = true
+		corrected = corrected or statement.is_corrected()
+	if not given.is_empty():
+		EventBus.statement_given.emit(case.case_id, given)
+	_busy(timing.question_cost(hygiaphone, repeated, corrected), BUSY_REPEAT if repeated else BUSY_QUESTION)
+
+
+## Annonce une interface occupée (`inspection_busy`, indicatif).
+func _busy(duration: float, action: StringName) -> void:
+	if duration <= 0.0 or case == null:
+		return
+	busy_remaining_sec = maxf(busy_remaining_sec, duration)
+	EventBus.inspection_busy.emit(case.case_id, duration, action)
+
+
+# --- Fouille (M13, B70) ---------------------------------------------------------
+
+## Vrai si la fouille est disponible pour ce passager : R44 (procédure
+## `search_cause`) active dans le RuleSet du shift (J8+ ; retirée par EV-05).
+func search_available() -> bool:
+	return _search_rule() != null
+
+
+func _search_rule() -> ProcedureRule:
+	if ctx == null or ctx.rule_set == null:
+		return null
+	for rule: Rule in ctx.rule_set.rules:
+		var procedure: ProcedureRule = rule as ProcedureRule
+		if procedure != null and procedure.procedure_id == ProcedureRule.PROCEDURE_SEARCH_CAUSE:
+			return procedure
+	return null
+
+
+## Motif de fouille **visible** à cet instant (MF-1 → MF-5, premier trouvé),
+## `&""` sans motif. Ne lit jamais `CaseKey` : discordances confirmées de la
+## session, indices du cas, réponse évasive obtenue, directive (EV-09 :
+## surcharge `search_authorized` de R44 ; briefing : `DayDef`), R47.
+func compute_search_motive() -> StringName:
+	if case == null:
+		return SearchLayout.MOTIVE_NONE
+	return search_motive_for(case, ctx, confirmed, questions_asked)
+
+
+static func search_motive_for(p_case: Case, p_ctx: RuleContext, p_confirmed: Array[Discrepancy],
+		asked: Array[StringName]) -> StringName:
+	if p_case == null:
+		return SearchLayout.MOTIVE_NONE
+	for d: Discrepancy in p_confirmed:
+		if d != null and d.confirmed:
+			return SearchLayout.MOTIVE_DISCORD
+	if not p_case.search_cues.is_empty():
+		return SearchLayout.MOTIVE_CUE
+	if asked.has(TOPIC_CARGO) and p_case.cargo_reply == Case.CARGO_EVASIVE:
+		return SearchLayout.MOTIVE_EVASIVE
+	if p_ctx != null and p_ctx.rule_set != null:
+		for rule: Rule in p_ctx.rule_set.rules:
+			var procedure: ProcedureRule = rule as ProcedureRule
+			if procedure == null:
+				continue
+			if procedure.procedure_id == ProcedureRule.PROCEDURE_SEARCH_CAUSE \
+					and p_ctx.param(procedure.id, PARAM_SEARCH_AUTHORIZED, false, p_case) == true:
+				return SearchLayout.MOTIVE_DIRECTIVE
+		if p_ctx.day_def != null and p_ctx.day_def.search_directive_covers(p_case):
+			return SearchLayout.MOTIVE_DIRECTIVE
+		for rule: Rule in p_ctx.rule_set.rules:
+			var procedure: ProcedureRule = rule as ProcedureRule
+			if procedure != null and procedure.requires_search(p_case):
+				return SearchLayout.MOTIVE_MANDATORY
+	return SearchLayout.MOTIVE_NONE
+
+
+func _request_search() -> void:
+	if not search_available():
+		EventBus.interrogation_answered.emit(TOPIC_SEARCH, LINE_GENERIC_SHRUG)
+		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.SHRUG)
+		return
+	match search_state:
+		SearchState.ACTIVATING, SearchState.OPEN, SearchState.AWAITING_CONFIRM:
+			return
+		SearchState.CLOSED:
+			# Réouverture : même motif, nouvelle activation.
+			_open_search(false)
+			return
+	search_motive = compute_search_motive()
+	if search_motive == SearchLayout.MOTIVE_NONE:
+		search_state = SearchState.AWAITING_CONFIRM
+		EventBus.search_confirmation_required.emit(case.case_id)
+		return
+	_open_search(true)
+
+
+func _open_search(first: bool) -> void:
+	search_done = true
+	search_state = SearchState.ACTIVATING
+	_activation_left = timing.activation_cost(calibrated_gate)
+	if first:
+		EventBus.interrogation_answered.emit(TOPIC_SEARCH, scripted_line("search", _search_open_line()))
+	EventBus.search_opened.emit(case.case_id, search_motive)
+	_busy(_activation_left, BUSY_SEARCH_ACTIVATION)
+	if _activation_left <= 0.0:
+		search_state = SearchState.OPEN
+
+
+func _on_search_requested(request: StringName) -> void:
+	if not active or case == null or not documents_presented:
+		return
+	match request:
+		SEARCH_CONFIRM:
+			if search_state == SearchState.AWAITING_CONFIRM:
+				_open_search(true)
+		SEARCH_CANCEL:
+			if search_state == SearchState.AWAITING_CONFIRM:
+				search_state = SearchState.IDLE
+				search_motive = SearchLayout.MOTIVE_NONE
+		SEARCH_CLOSE:
+			if search_state == SearchState.ACTIVATING or search_state == SearchState.OPEN:
+				_close_search(true)
+		SearchLayout.ZONE_ALL:
+			if search_state == SearchState.ACTIVATING or search_state == SearchState.OPEN:
+				for zone: StringName in SearchLayout.ZONES:
+					_queue_zone(zone, timing.zone_cost_in_full_scan(calibrated_gate))
+		_:
+			if SearchLayout.ZONES.has(request) and (search_state == SearchState.ACTIVATING or search_state == SearchState.OPEN):
+				_queue_zone(request, timing.zone_cost(calibrated_gate))
+
+
+func _queue_zone(zone: StringName, cost: float) -> void:
+	if zones_scanned.has(zone) or _zone_queue.has(zone) or _current_zone == zone:
+		return
+	_zone_queue.append(zone)
+	_zone_costs.append(cost)
+
+
+## Avance la fouille : activation, puis zones en file, chacune après sa durée.
+func _advance_search(delta: float) -> void:
+	var left: float = delta
+	if search_state == SearchState.ACTIVATING:
+		_activation_left -= left
+		if _activation_left > 0.0:
+			return
+		left = -_activation_left
+		_activation_left = 0.0
+		search_state = SearchState.OPEN
+	if search_state != SearchState.OPEN:
+		return
+	while true:
+		if _current_zone == &"":
+			if _zone_queue.is_empty():
+				return
+			_current_zone = _zone_queue.pop_front()
+			_zone_left = _zone_costs.pop_front()
+			_busy(_zone_left, BUSY_SEARCH_ZONE)
+		if _zone_left > left:
+			_zone_left -= left
+			return
+		left -= _zone_left
+		_finish_zone()
+
+
+func _finish_zone() -> void:
+	var zone: StringName = _current_zone
+	_current_zone = &""
+	_zone_left = 0.0
+	var found: Array[SearchItem] = []
+	if case.search_layout != null:
+		found = case.search_layout.scan(zone)
+	if not zones_scanned.has(zone):
+		zones_scanned.append(zone)
+	EventBus.search_zone_scanned.emit(case.case_id, zone, found)
+	if not search_found_said and case.search_found_forbidden():
+		search_found_said = true
+		var line: String = scripted_line("search_found", "")
+		if not line.is_empty():
+			EventBus.interrogation_answered.emit(TOPIC_SEARCH, line)
+		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
+
+
+## Referme la silhouette. `speak` : réplique de fin d'une fouille sans
+## trouvaille interdite (`<dialogue_id>_search_clean` ou `line_search_clean_<n>`).
+func _close_search(speak: bool) -> void:
+	_zone_queue.clear()
+	_zone_costs.clear()
+	_current_zone = &""
+	_zone_left = 0.0
+	_activation_left = 0.0
+	search_state = SearchState.CLOSED
+	if speak and not zones_scanned.is_empty() and not case.search_found_forbidden():
+		var line: String = scripted_line("search_clean", _variant_line(LINE_SEARCH_CLEAN_PREFIX, "clean"))
+		if not line.is_empty():
+			EventBus.interrogation_answered.emit(TOPIC_SEARCH, line)
+	EventBus.search_closed.emit(case.case_id)
+
+
+## Réplique d'entrée au portique : coopérative ou protestataire, tirée de la
+## graine du cas (jamais de la vérité).
+func _search_open_line() -> String:
+	var keys: Array[String] = []
+	for prefix: String in [LINE_SEARCH_COMPLY_PREFIX, LINE_SEARCH_PROTEST_PREFIX]:
+		var n: int = 1
+		while n <= MAX_VARIANTS and UiText.has(prefix + str(n)):
+			keys.append(prefix + str(n))
+			n += 1
+	if keys.is_empty():
+		return LINE_SEARCH_COMPLY_PREFIX + "1"
+	return keys[posmod(hash("%d|search" % case.case_seed), keys.size())]
+
+
+func _variant_line(prefix: String, salt: String) -> String:
+	var count: int = 0
+	while count < MAX_VARIANTS and UiText.has(prefix + str(count + 1)):
+		count += 1
+	if count == 0:
+		return ""
+	return prefix + str(posmod(hash("%d|%s" % [case.case_seed, salt]), count) + 1)
 
 
 ## `about_<raison>[:<doc>]` : confrontation à une discordance précise. Réelle
@@ -270,14 +636,15 @@ func _confront_about(topic: StringName) -> void:
 	if found != null:
 		var family: String = family_of(found, case, ctx)
 		var line: String = scripted_line("about_" + reason, "")
-		if line.is_empty() and GENERIC_FAMILIES.has(family):
-			# Acte II : réplique dédiée par famille (`sc25_elena_about_quota`…).
+		if line.is_empty() and (GENERIC_FAMILIES.has(family) or DOC_FAMILIES.has(family)):
+			# Acte II : réplique dédiée par famille (`sc25_elena_about_quota`…) ;
+			# M13 : `sc104_strand_about_statement`, `sc106_zuri_about_contraband`.
 			line = scripted_line("about_" + family, "")
-		EventBus.interrogation_answered.emit(topic, line if not line.is_empty() else about_line(family, true))
-		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.NERVOUS)
+		_answer_confrontation(topic, line if not line.is_empty() else about_line(family, true))
 	else:
 		EventBus.interrogation_answered.emit(topic, about_line(family_of_reason(reason), false))
 		EventBus.passenger_reaction_triggered.emit(PassengerReaction.Kind.ANGRY)
+		_busy(timing.confront_cost(hygiaphone), BUSY_CONFRONT)
 
 
 ## Réplique d'une famille de discordance : `line_about_<famille>_<n>` (réelle)
@@ -314,6 +681,9 @@ static func family_of(d: Discrepancy, p_case: Case, p_ctx: RuleContext) -> Strin
 		"expired":
 			return FAMILY_VALIDITY
 		"implant_mismatch":
+			# M13 : implant trouvé à la fouille (objet du portique).
+			if (d.a != null and d.a.is_scan()) or (d.b != null and d.b.is_scan()):
+				return FAMILY_CONCEALED_IMPLANT
 			return FAMILY_IMPLANT
 		"wanted_match":
 			return FAMILY_WANTED
@@ -323,6 +693,12 @@ static func family_of(d: Discrepancy, p_case: Case, p_ctx: RuleContext) -> Strin
 			return FAMILY_BIRTH
 		"mrz_mismatch":
 			return FAMILY_ID_NUMBER
+		"statement_mismatch":
+			return FAMILY_STATEMENT
+		"contraband":
+			return FAMILY_CONTRABAND
+		"weapon":
+			return FAMILY_WEAPON
 		"rule_violated":
 			var rule_ref: FieldRef = d.a if d.a != null and d.a.is_rule() else d.b
 			var other: FieldRef = d.b if rule_ref == d.a else d.a
@@ -345,6 +721,14 @@ static func family_of(d: Discrepancy, p_case: Case, p_ctx: RuleContext) -> Strin
 				var drift_field: FieldDef = p_case.get_field_def(other) if p_case != null else null
 				if drift_field != null and drift_field.truth_path == DriftPassRule.VESSEL_PATH:
 					return FAMILY_OTHER
+			# M13 (lot B) : familles nouvelles, lues par nom de classe.
+			match _rule_class(rule):
+				&"StatementsConsistentRule":
+					return FAMILY_STATEMENT
+				&"ContrabandRule":
+					return FAMILY_WEAPON if rule.severity >= 3 else FAMILY_CONTRABAND
+			if (other != null and other.is_statement()):
+				return FAMILY_STATEMENT
 			if rule is RequireDocumentRule:
 				return FAMILY_MISSING
 			if rule is IssuerAllowedRule:
@@ -395,6 +779,14 @@ static func family_of_reason(reason: String) -> String:
 			return FAMILY_SUMMONS
 		"lockout":
 			return FAMILY_LOCKOUT
+		"statement", "statement_mismatch":
+			return FAMILY_STATEMENT
+		"contraband":
+			return FAMILY_CONTRABAND
+		"weapon":
+			return FAMILY_WEAPON
+		"concealed_implant":
+			return FAMILY_CONCEALED_IMPLANT
 	return FAMILY_OTHER
 
 
@@ -452,7 +844,22 @@ func find_confirmed(reason: String, doc: StringName = &"") -> Discrepancy:
 		for d: Discrepancy in confirmed:
 			if family_of(d, case, ctx) == reason:
 				return d
+	# M13 : `about_statement[:<doc>]`, `about_contraband`, `about_weapon`,
+	# `about_concealed_implant` (le document, s'il est donné, filtre).
+	if DOC_FAMILIES.has(reason):
+		for d: Discrepancy in confirmed:
+			if family_of(d, case, ctx) != reason:
+				continue
+			if doc == &"" or (d.a != null and d.a.document_id == doc) or (d.b != null and d.b.document_id == doc):
+				return d
 	return null
+
+
+## Nom de classe global du script d'une règle (familles du lot B citées sans
+## dépendance de compilation).
+static func _rule_class(rule: Rule) -> StringName:
+	var script: Script = rule.get_script() as Script if rule != null else null
+	return script.get_global_name() if script != null else &""
 
 
 func _already_confirmed(result: Discrepancy) -> bool:

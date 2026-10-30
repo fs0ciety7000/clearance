@@ -160,6 +160,21 @@ func add_to_flag(flag: StringName, delta: int) -> int:
 	return value
 
 
+## M13 (D-150) : amélioration du guichet possédée (drapeau `upg_<id>`, AG-04
+## perdue si confisquée). Sauvegarde v6 inchangée : tout est dans les drapeaux.
+func has_upgrade(upgrade_id: StringName) -> bool:
+	return UpgradeDef.owns(narrative_flags, upgrade_id)
+
+
+## M13 : améliorations possédées, dans l'ordre du catalogue `ids`.
+func owned_upgrades(ids: Array[StringName]) -> Array[StringName]:
+	var owned: Array[StringName] = []
+	for upgrade_id: StringName in ids:
+		if has_upgrade(upgrade_id):
+			owned.append(upgrade_id)
+	return owned
+
+
 ## M7 : mémorise un passager scénarisé traité (`CaseMemory.snapshot`).
 func remember_case(scripted_id: StringName, entry: Dictionary) -> void:
 	case_memory[String(scripted_id)] = entry.duplicate(true)

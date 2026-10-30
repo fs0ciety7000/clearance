@@ -1,28 +1,29 @@
 [gd_resource type="Resource" script_class="DayDef" format=3 uid="uid://oyfrb21u025q"]
 
-[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_gugfx"]
-[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_d406b"]
-[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="3_odfr8"]
-[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="4_abetb"]
-[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="5_4v81u"]
-[ext_resource type="Script" path="res://scripts/core/evening_option_def.gd" id="6_jf0kk"]
-[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="7_srdro"]
-[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="8_6ie7y"]
-[ext_resource type="Resource" path="res://data/days/ruleset_day_24.tres" id="9_qaa7y"]
-[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="10_8e0p7"]
-[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="11_lf2gc"]
-[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="12_xlexa"]
-[ext_resource type="Script" path="res://scripts/core/summons_def.gd" id="13_o2flj"]
-[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="14_k7j2s"]
+[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_d406b"]
+[ext_resource type="Script" path="res://scripts/core/briefing_message_def.gd" id="2_odfr8"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="3_abetb"]
+[ext_resource type="Script" path="res://scripts/core/evening_event_def.gd" id="4_4v81u"]
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="5_jf0kk"]
+[ext_resource type="Script" path="res://scripts/core/evening_option_def.gd" id="6_srdro"]
+[ext_resource type="Script" path="res://scripts/core/case_effect_def.gd" id="7_6ie7y"]
+[ext_resource type="Script" path="res://scripts/core/intercom_line_def.gd" id="8_qaa7y"]
+[ext_resource type="Script" path="res://scripts/core/revocation_def.gd" id="9_8e0p7"]
+[ext_resource type="Resource" path="res://data/days/ruleset_day_24.tres" id="10_lf2gc"]
+[ext_resource type="Script" path="res://scripts/core/day_def.gd" id="11_xlexa"]
+[ext_resource type="Script" path="res://scripts/generation/scripted_case_def.gd" id="12_o2flj"]
+[ext_resource type="Script" path="res://scripts/rules/rule.gd" id="13_k7j2s"]
+[ext_resource type="Script" path="res://scripts/core/summons_def.gd" id="14_c276f"]
+[ext_resource type="Script" path="res://scripts/core/wanted_notice_def.gd" id="15_k11dd"]
 
 [sub_resource type="Resource" id="d24_resource_13"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 gauges_min = Dictionary[StringName, int]({
 &"lucioles_trust": 2
 })
 
 [sub_resource type="Resource" id="d24_resource_12"]
-script = ExtResource("2_d406b")
+script = ExtResource("2_odfr8")
 speaker_key = "spk_lucioles"
 text_key = "msg_luc_day24"
 voice = 3
@@ -30,22 +31,22 @@ condition = SubResource("d24_resource_13")
 priority = 1
 
 [sub_resource type="Resource" id="d24_resource_15"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 all_of = Array[StringName]([&"sc58_ophelie_refused"])
 
 [sub_resource type="Resource" id="d24_resource_14"]
-script = ExtResource("2_d406b")
+script = ExtResource("2_odfr8")
 speaker_key = "spk_hall"
 text_key = "msg_echo_sc58_crate"
 condition = SubResource("d24_resource_15")
 priority = 2
 
 [sub_resource type="Resource" id="d24_resource_17"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 all_of = Array[StringName]([&"sc56_okafor_passed"])
 
 [sub_resource type="Resource" id="d24_resource_16"]
-script = ExtResource("2_d406b")
+script = ExtResource("2_odfr8")
 speaker_key = "spk_okafor"
 text_key = "msg_okafor_day24"
 voice = 2
@@ -53,7 +54,7 @@ condition = SubResource("d24_resource_17")
 priority = 1
 
 [sub_resource type="Resource" id="d24_resource_18"]
-script = ExtResource("2_d406b")
+script = ExtResource("2_odfr8")
 speaker_key = "spk_ilan"
 text_key = "msg_ilan_day24"
 voice = 2
@@ -61,26 +62,26 @@ group = &"ilan"
 family_slot = true
 
 [sub_resource type="Resource" id="d24_resource_25"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 all_of = Array[StringName]([&"climate_vanne"])
 
 [sub_resource type="Resource" id="d24_resource_26"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 all_of = Array[StringName]([&"final2_passed"])
 
 [sub_resource type="Resource" id="d24_resource_24"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 any_of = Array[Resource]([SubResource("d24_resource_25"), SubResource("d24_resource_26")])
 
 [sub_resource type="Resource" id="d24_resource_23"]
-script = ExtResource("7_srdro")
+script = ExtResource("7_6ie7y")
 condition = SubResource("d24_resource_24")
 flags = Dictionary[StringName, int]({
 &"suspicion": 1
 })
 
 [sub_resource type="Resource" id="d24_resource_22"]
-script = ExtResource("6_jf0kk")
+script = ExtResource("6_srdro")
 id = &"truth"
 label_key = "evt_d24_noa_opt_truth"
 result_key = "evt_d24_noa_res_truth"
@@ -89,10 +90,10 @@ flags = Dictionary[StringName, int]({
 &"verite": 1
 })
 default_rank = 1
-conditional_flags = Array[ExtResource("7_srdro")]([SubResource("d24_resource_23")])
+conditional_flags = Array[ExtResource("7_6ie7y")]([SubResource("d24_resource_23")])
 
 [sub_resource type="Resource" id="d24_resource_27"]
-script = ExtResource("6_jf0kk")
+script = ExtResource("6_srdro")
 id = &"coach"
 label_key = "evt_d24_noa_opt_coach"
 result_key = "evt_d24_noa_res_coach"
@@ -102,13 +103,13 @@ flags = Dictionary[StringName, int]({
 default_rank = 2
 
 [sub_resource type="Resource" id="d24_resource_29"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 gauges_min = Dictionary[StringName, int]({
 &"balance": 10
 })
 
 [sub_resource type="Resource" id="d24_resource_28"]
-script = ExtResource("6_jf0kk")
+script = ExtResource("6_srdro")
 id = &"keep"
 label_key = "evt_d24_noa_opt_keep"
 result_key = "evt_d24_noa_res_keep"
@@ -119,13 +120,13 @@ flags = Dictionary[StringName, int]({
 condition = SubResource("d24_resource_29")
 
 [sub_resource type="Resource" id="d24_resource_31"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 gauges_max = Dictionary[StringName, int]({
 &"balance": 9
 })
 
 [sub_resource type="Resource" id="d24_resource_30"]
-script = ExtResource("6_jf0kk")
+script = ExtResource("6_srdro")
 id = &"keep_broke"
 label_key = "evt_d24_noa_opt_keep"
 result_key = "evt_d24_noa_res_keep"
@@ -136,31 +137,31 @@ flags = Dictionary[StringName, int]({
 condition = SubResource("d24_resource_31")
 
 [sub_resource type="Resource" id="d24_resource_21"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 all_of = Array[StringName]([&"sc56_okafor_refused"])
 
 [sub_resource type="Resource" id="d24_resource_20"]
-script = ExtResource("5_4v81u")
+script = ExtResource("5_jf0kk")
 key = "evt_d24_noa_text_cold"
 condition = SubResource("d24_resource_21")
 
 [sub_resource type="Resource" id="d24_resource_19"]
-script = ExtResource("4_abetb")
+script = ExtResource("4_4v81u")
 id = &"d24_noa"
 title_key = "evt_d24_noa_title"
 text_key = "evt_d24_noa_text"
-text_variants = Array[ExtResource("5_4v81u")]([SubResource("d24_resource_20")])
-options = Array[ExtResource("6_jf0kk")]([SubResource("d24_resource_22"), SubResource("d24_resource_27"), SubResource("d24_resource_28"), SubResource("d24_resource_30")])
+text_variants = Array[ExtResource("5_jf0kk")]([SubResource("d24_resource_20")])
+options = Array[ExtResource("6_srdro")]([SubResource("d24_resource_22"), SubResource("d24_resource_27"), SubResource("d24_resource_28"), SubResource("d24_resource_30")])
 text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d24_resource_33"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 gauges_min = Dictionary[StringName, int]({
 &"lucioles_trust": 2
 })
 
 [sub_resource type="Resource" id="d24_resource_32"]
-script = ExtResource("4_abetb")
+script = ExtResource("4_4v81u")
 id = &"d24_luc"
 kind = 0
 order = 1
@@ -169,18 +170,18 @@ text_key = "evt_d24_luc"
 text_gauges = PackedStringArray()
 
 [sub_resource type="Resource" id="d24_resource_34"]
-script = ExtResource("8_6ie7y")
+script = ExtResource("9_8e0p7")
 id = &"revoked_generated"
 at_index = 14
 
 [sub_resource type="Resource" id="d24_resource_35"]
-script = ExtResource("8_6ie7y")
+script = ExtResource("9_8e0p7")
 id = &"revoked_reinstated"
 at_index = 7
 reinstated_on = 31868
 
 [sub_resource type="Resource" id="scripted_sc_60"]
-script = ExtResource("11_lf2gc")
+script = ExtResource("12_o2flj")
 id = &"sc_60"
 at_index = 1
 passenger_overrides = {
@@ -201,37 +202,37 @@ luciole_codes = PackedInt32Array()
 extra_tags = Array[StringName]([&"prop_cat_crate"])
 
 [sub_resource type="Resource" id="d24_resource_2"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 all_of = Array[StringName]([&"sc06_reunited"])
 
 [sub_resource type="Resource" id="d24_resource_1"]
-script = ExtResource("5_4v81u")
+script = ExtResource("5_jf0kk")
 key = "sc61_amara_arrival_reunited"
 condition = SubResource("d24_resource_2")
 replaces = "arrival"
 
 [sub_resource type="Resource" id="d24_resource_4"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 all_of = Array[StringName]([&"sc06_refused_again"])
 
 [sub_resource type="Resource" id="d24_resource_3"]
-script = ExtResource("5_4v81u")
+script = ExtResource("5_jf0kk")
 key = "sc61_amara_arrival_refused"
 condition = SubResource("d24_resource_4")
 replaces = "arrival"
 
 [sub_resource type="Resource" id="d24_resource_6"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 all_of = Array[StringName]([&"sc02_mercy"])
 
 [sub_resource type="Resource" id="d24_resource_5"]
-script = ExtResource("5_4v81u")
+script = ExtResource("5_jf0kk")
 key = "sc61_amara_arrival_mercy"
 condition = SubResource("d24_resource_6")
 replaces = "arrival"
 
 [sub_resource type="Resource" id="scripted_sc_61"]
-script = ExtResource("11_lf2gc")
+script = ExtResource("12_o2flj")
 id = &"sc_61"
 at_index = 2
 passenger_overrides = {
@@ -250,21 +251,21 @@ flags_on_deny = Dictionary[StringName, int]({
 appearance_from_case = &"sc_02"
 identity_from_case = &"sc_02"
 luciole_codes = PackedInt32Array()
-line_variants = Array[ExtResource("5_4v81u")]([SubResource("d24_resource_1"), SubResource("d24_resource_3"), SubResource("d24_resource_5")])
+line_variants = Array[ExtResource("5_jf0kk")]([SubResource("d24_resource_1"), SubResource("d24_resource_3"), SubResource("d24_resource_5")])
 sponsor_case_id = &"sc_60"
 
 [sub_resource type="Resource" id="d24_resource_8"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 all_of = Array[StringName]([&"sc28_tariq_passed"])
 
 [sub_resource type="Resource" id="d24_resource_7"]
-script = ExtResource("5_4v81u")
+script = ExtResource("5_jf0kk")
 key = "sc62_tariq_arrival_passed"
 condition = SubResource("d24_resource_8")
 replaces = "arrival"
 
 [sub_resource type="Resource" id="scripted_sc_62"]
-script = ExtResource("11_lf2gc")
+script = ExtResource("12_o2flj")
 id = &"sc_62"
 at_index = 9
 passenger_overrides = {
@@ -287,31 +288,80 @@ flags_on_deny = Dictionary[StringName, int]({
 appearance_from_case = &"sc_28"
 identity_from_case = &"sc_28"
 luciole_codes = PackedInt32Array()
-line_variants = Array[ExtResource("5_4v81u")]([SubResource("d24_resource_7")])
+line_variants = Array[ExtResource("5_jf0kk")]([SubResource("d24_resource_7")])
+
+[sub_resource type="Resource" id="scripted_sc_110"]
+script = ExtResource("12_o2flj")
+id = &"sc_110"
+at_index = 4
+passenger_overrides = {
+&"birth_date": 10805,
+&"citizen_class": &"C-3",
+&"faction_id": &"tyc",
+&"family_name": "Moreno-Lind",
+&"given_name": "Sabine",
+&"implants": PackedStringArray(),
+&"purpose": &"family_visit",
+&"sex": &"F",
+&"stay_days": 7
+}
+forced_anomalies = Array[int]([24])
+injection_params = {
+&"topic": "host"
+}
+dialogue_id = &"sc110_sabine"
+flags_on_approve = Dictionary[StringName, int]({
+&"sc110_sabine_passed": 0
+})
+flags_on_deny = Dictionary[StringName, int]({
+&"sc110_sabine_refused": 0
+})
+luciole_codes = PackedInt32Array()
+sponsor_index = 3
+statements = {
+"host": {
+"args": ["Tomás Moreno-Lind"],
+"key": "stmt_host_son",
+"value": "Tomás Moreno-Lind"
+},
+"purpose": {
+"args": [],
+"key": "stmt_purpose_family_visit_1",
+"value": "family_visit"
+},
+"stay": {
+"args": [],
+"key": "stmt_dur_w1",
+"value": Vector2i(6, 8)
+}
+}
+statement_frames = {
+"purpose": "line_stmt_frame_visit_1"
+}
 
 [sub_resource type="Resource" id="d24_resource_9"]
-script = ExtResource("14_k7j2s")
+script = ExtResource("15_k11dd")
 id = &"wanted_generated"
 at_index = 12
 reason_key = "wanted_generated_reason"
 
 [sub_resource type="Resource" id="d24_resource_11"]
-script = ExtResource("3_odfr8")
+script = ExtResource("3_abetb")
 all_of = Array[StringName]([&"vanne2_brulants"])
 
 [sub_resource type="Resource" id="d24_resource_10"]
-script = ExtResource("14_k7j2s")
+script = ExtResource("15_k11dd")
 id = &"wanted_generated_brulants"
 at_index = 6
 reason_key = "wanted_generated_reason"
 condition = SubResource("d24_resource_11")
 
 [resource]
-script = ExtResource("10_8e0p7")
+script = ExtResource("11_xlexa")
 day_number = 24
 game_date = 31870
-rule_set = ExtResource("9_qaa7y")
-duration_sec = 735.0
+rule_set = ExtResource("10_lf2gc")
+duration_sec = 760.0
 passenger_count = 16
 anomaly_count_weights = PackedFloat32Array(0.413, 0.254, 0.266, 0.067)
 anomaly_count_targets = PackedFloat32Array(0.4, 0.38, 0.17, 0.05)
@@ -334,9 +384,13 @@ anomaly_weights = Dictionary[int, float]({
 17: 0.05,
 18: 0.2,
 19: 0.04,
-21: 0.18
+21: 0.18,
+24: 0.12,
+25: 0.04,
+26: 0.025,
+27: 0.015
 })
-scripted_cases = Array[ExtResource("11_lf2gc")]([SubResource("scripted_sc_60"), SubResource("scripted_sc_61"), SubResource("scripted_sc_62")])
+scripted_cases = Array[ExtResource("12_o2flj")]([SubResource("scripted_sc_60"), SubResource("scripted_sc_61"), SubResource("scripted_sc_62"), SubResource("scripted_sc_110")])
 intro_text_key = "day24_intro"
 faction_weights = Dictionary[StringName, float]({
 &"cer": 0.14,
@@ -353,12 +407,12 @@ luciole_rate = 0.08
 free_citations_per_day = 3
 detain_enabled = true
 bribe_amounts = Vector2i(20, 30)
-wanted_notices = Array[ExtResource("14_k7j2s")]([SubResource("d24_resource_9"), SubResource("d24_resource_10")])
-briefing_messages = Array[ExtResource("2_d406b")]([SubResource("d24_resource_12"), SubResource("d24_resource_14"), SubResource("d24_resource_16"), SubResource("d24_resource_18")])
-evening_events = Array[ExtResource("4_abetb")]([SubResource("d24_resource_19"), SubResource("d24_resource_32")])
-rulebook_tabs = PackedStringArray("origins", "implants", "symbols", "seals", "wanted", "employers", "vessels", "revoked", "ledger")
+wanted_notices = Array[ExtResource("15_k11dd")]([SubResource("d24_resource_9"), SubResource("d24_resource_10")])
+briefing_messages = Array[ExtResource("2_odfr8")]([SubResource("d24_resource_12"), SubResource("d24_resource_14"), SubResource("d24_resource_16"), SubResource("d24_resource_18")])
+evening_events = Array[ExtResource("4_4v81u")]([SubResource("d24_resource_19"), SubResource("d24_resource_32")])
+rulebook_tabs = PackedStringArray("origins", "implants", "symbols", "seals", "wanted", "employers", "vessels", "revoked", "ledger", "contraband")
 luciole_trust_on_breach = false
-revocations = Array[ExtResource("8_6ie7y")]([SubResource("d24_resource_34"), SubResource("d24_resource_35")])
+revocations = Array[ExtResource("9_8e0p7")]([SubResource("d24_resource_34"), SubResource("d24_resource_35")])
 revoked_decoys = 4
 focus_documents = Array[StringName]([&"asylum"])
 retired_documents = Array[StringName]([&"queue_ticket", &"bioscan"])
@@ -367,3 +421,11 @@ reinstated_decoy_rate = 0.5
 luciole_rate_bonus = Dictionary[StringName, float]({
 &"climate_vanne": 0.02
 })
+statement_topic_weights = Dictionary[StringName, float]({
+&"employer": 0.15,
+&"host": 0.4,
+&"origin": 0.15,
+&"purpose": 0.15,
+&"stay": 0.15
+})
+search_cue_noise_rate = 0.1

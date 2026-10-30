@@ -97,6 +97,8 @@ static func prepare_evening(data: DataCatalog, events: Array[EveningEvent] = [],
 			GameState.narrative_flags, GameState.credits)
 	EveningService.apply_line_costs(lines, events, choices)
 	EveningService.default_selection(lines, GameState.credits)
+	# M13 (D-150) : offres de l'Économat, jamais cochées par défaut (`upgrade_id`).
+	lines.append_array(EveningService.shop_lines(data.get_economy(), GameState.current_day, GameState.narrative_flags))
 	return lines
 
 
@@ -127,6 +129,9 @@ static func close_evening(data: DataCatalog, summary: DaySummary, report: Evenin
 	GameState.household = report.household
 	for flag: StringName in report.flag_changes:
 		GameState.set_flag(flag, report.flag_changes[flag])
+	# M13 (D-150) : améliorations achetées ce soir (Économat, pastilles, audio).
+	for upgrade_id: StringName in report.upgrades_bought:
+		EventBus.upgrade_purchased.emit(upgrade_id)
 	# Acte II : entrées imputées aujourd'hui → briefing de la Commission demain.
 	var overruns: int = summary.get_overrun_count() if summary != null else 0
 	if overruns > 0 or GameState.has_flag(FLAG_OVERRUN_YESTERDAY):

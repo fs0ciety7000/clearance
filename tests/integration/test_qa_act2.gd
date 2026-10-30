@@ -385,13 +385,24 @@ func test_quit_halcyon_confirmation_is_modal() -> void:
 ## révocation de Sato, un Kerr au J13). Depuis le correctif, le nom de famille
 ## de **chaque** personnage scénarisé des deux actes est réservé : aucun
 ## passager généré ne le porte, quel que soit le jour.
+## M13 §6.4 : figurants dont seul le nom complet est réservé (Whitmore et
+## Moreno-Lind restent des noms de famille de personnages).
+const M13_FIGURANTS: PackedStringArray = ["Strand", "Mbeki", "Oduya", "Nair", "Ivanova"]
+
+
 func test_act_two_character_surnames_are_not_drawn_for_generated_passengers() -> void:
 	var families: Dictionary[String, bool] = {}
+	# M13 §6.4 : figurants de M13 — nom complet réservé, nom de famille tirable.
+	var full_names: Dictionary[String, bool] = {}
 	for day: DayDef in data.days.values():
 		for scripted: ScriptedCaseDef in day.scripted_cases:
 			for value: Variant in [scripted.passenger_overrides.get(&"family_name", ""),
 					scripted.truth_overrides.get(&"family_name", "")]:
-				if not str(value).is_empty():
+				if str(value).is_empty():
+					continue
+				if M13_FIGURANTS.has(str(value)):
+					full_names["%s %s" % [scripted.passenger_overrides.get(&"given_name", ""), value]] = true
+				else:
 					families[str(value)] = true
 	for family: String in ["Navarro", "Kerr", "Sato", "Lindgren", "Beaumont", "Okonkwo"]:
 		assert_true(families.has(family), "personnage %s" % family)
@@ -406,7 +417,7 @@ func test_act_two_character_surnames_are_not_drawn_for_generated_passengers() ->
 					continue
 				var p: Passenger = builder.build(i).case.passenger_presented
 				generated += 1
-				if families.has(p.family_name):
+				if families.has(p.family_name) or full_names.has(p.full_name()):
 					hits.append("graine %d J%d #%d %s %s" % [campaign, n, i, p.given_name, p.family_name])
 	assert_gt(generated, 1000, "passagers générés")
 	assert_eq(hits, PackedStringArray(), "QA-022 : passagers générés homonymes d'un personnage")
