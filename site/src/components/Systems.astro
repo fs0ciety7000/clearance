@@ -29,7 +29,7 @@ const [plate, ...amb] = d.ambience;
       {d.booth.map((b) => (
         <article class="card" data-reveal>
           <div class="shot" style={focus[b.key]}>
-            <Picture src={shot(b.key)} alt={b.alt} widths={[640, 960, 1440]} sizes="(max-width: 900px) 92vw, 46vw" {...pic} />
+            <Picture src={shot(b.key, Astro.props.lang)} alt={b.alt} widths={[640, 960, 1440]} sizes="(max-width: 900px) 92vw, 46vw" {...pic} />
           </div>
           <div class="body">
             <p class="k mono">{b.kicker}</p>
@@ -42,7 +42,7 @@ const [plate, ...amb] = d.ambience;
 
     <h3 class="sub" data-reveal>{d.ambienceTitle}</h3>
     <article class="plate frame" data-reveal>
-      <Picture src={shot(plate.key)} alt={plate.alt} widths={[800, 1280, 1920]} sizes="(max-width: 1440px) 94vw, 1360px" {...pic} />
+      <Picture src={shot(plate.key, Astro.props.lang)} alt={plate.alt} widths={[800, 1280, 1920]} sizes="(max-width: 1440px) 94vw, 1360px" {...pic} />
       <div class="plate-txt">
         <p class="k mono">{plate.kicker}</p>
         <h4>{plate.title}</h4>
@@ -53,7 +53,7 @@ const [plate, ...amb] = d.ambience;
       {amb.map((a) => (
         <article class="card" data-reveal>
           <div class="shot wide" style={focus[a.key]}>
-            <Picture src={shot(a.key)} alt={a.alt} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 32vw" {...pic} />
+            <Picture src={shot(a.key, Astro.props.lang)} alt={a.alt} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 32vw" {...pic} />
           </div>
           <div class="body">
             <p class="k mono">{a.kicker}</p>
@@ -78,7 +78,7 @@ const [plate, ...amb] = d.ambience;
 
     <div class="comfort">
       <div class="c-shot frame" data-reveal>
-        <Picture src={shot('m11_a11y_options')} alt={d.comfortAlt} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 44vw" {...pic} />
+        <Picture src={shot('m11_a11y_options', Astro.props.lang)} alt={d.comfortAlt} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 44vw" {...pic} />
       </div>
       <div data-reveal style="--d:.1s">
         <h3 class="sub tight">{d.comfortTitle}</h3>

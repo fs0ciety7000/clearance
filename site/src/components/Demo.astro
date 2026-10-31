@@ -36,7 +36,7 @@ const d = t(Astro.props.lang).demo;
         {WEB_DEMO && (
           <div class="web" id="jouer">
             <a class="web-shot frame" href={WEB_DEMO_URL} aria-label={`${d.web.cta} — ${d.web.title}`}>
-              <Picture src={shot('m9_booth_j1')} alt={d.web.alt} formats={['avif', 'webp']} fallbackFormat="webp" widths={[480, 800, 1200]} sizes="(max-width: 900px) 92vw, 40vw" loading="lazy" decoding="async" />
+              <Picture src={shot('m9_booth_j1', Astro.props.lang)} alt={d.web.alt} formats={['avif', 'webp']} fallbackFormat="webp" widths={[480, 800, 1200]} sizes="(max-width: 900px) 92vw, 40vw" loading="lazy" decoding="async" />
               <span class="play" aria-hidden="true"><Icon name="play" size={30} /></span>
             </a>
             <p class="k mono">{d.web.kicker}</p>

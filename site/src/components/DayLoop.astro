@@ -26,7 +26,7 @@ const pic = { formats: ['avif', 'webp'] as ('avif' | 'webp')[], widths: [640, 96
             <h3>{s.title}</h3>
             <p>{s.text}</p>
             <div class="inline-shot frame">
-              <Picture fallbackFormat="webp" src={shot(keys[i])} alt={s.alt} sizes="(max-width: 900px) 92vw, 1px" {...pic} />
+              <Picture fallbackFormat="webp" src={shot(keys[i], Astro.props.lang)} alt={s.alt} sizes="(max-width: 900px) 92vw, 1px" {...pic} />
             </div>
           </li>
         ))}
@@ -35,7 +35,7 @@ const pic = { formats: ['avif', 'webp'] as ('avif' | 'webp')[], widths: [640, 96
         <div class="screen frame">
           {keys.map((k, i) => (
             <div class={i === 0 ? 'layer on' : 'layer'} data-layer={i}>
-              <Picture fallbackFormat="webp" src={shot(k)} alt="" sizes="(max-width: 900px) 1px, 58vw" {...pic} />
+              <Picture fallbackFormat="webp" src={shot(k, Astro.props.lang)} alt="" sizes="(max-width: 900px) 1px, 58vw" {...pic} />
             </div>
           ))}
           <div class="screen-bar mono"><span data-stage-label>01 / 04</span><span>HALCYON GATE — GUICHET 04</span></div>

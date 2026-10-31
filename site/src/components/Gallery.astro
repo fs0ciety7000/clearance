@@ -8,7 +8,7 @@ const d = t(Astro.props.lang).gallery;
 const keys = Object.keys(d.items);
 // 12 vignettes en rangées de 12 colonnes : 7/5 · 4/4/4 · 5/7 · 6/6 · 4/4/4
 const spans = ['s7', 's5', 's4', 's4', 's4', 's5', 's7', 's6', 's6', 's4', 's4', 's4'];
-const full = await Promise.all(keys.map((k) => getImage({ src: shot(k), format: 'webp', width: Math.min(1920, shot(k).width), quality: 82 })));
+const full = await Promise.all(keys.map((k) => getImage({ src: shot(k, Astro.props.lang), format: 'webp', width: Math.min(1920, shot(k, Astro.props.lang).width), quality: 82 })));
 ---
 <section class="section gal" id="galerie" aria-labelledby="gal-title">
   <div class="wrap">
@@ -20,7 +20,7 @@ const full = await Promise.all(keys.map((k) => getImage({ src: shot(k), format: 
       {keys.map((k, i) => (
         <li class={spans[i]} data-reveal style={`--d:${(i % 3) * 80}ms`}>
           <button type="button" class="thumb" data-open={i} data-full={full[i].src} data-w={full[i].attributes.width} data-h={full[i].attributes.height} aria-label={`${d.open} : ${d.items[k]}`}>
-            <Picture fallbackFormat="webp" src={shot(k)} alt={d.items[k]} formats={['avif', 'webp']} widths={[480, 800, 1200]} sizes={spans[i] === 's12' ? '(max-width: 900px) 92vw, 1360px' : '(max-width: 900px) 92vw, 50vw'} loading="lazy" decoding="async" />
+            <Picture fallbackFormat="webp" src={shot(k, Astro.props.lang)} alt={d.items[k]} formats={['avif', 'webp']} widths={[480, 800, 1200]} sizes={spans[i] === 's12' ? '(max-width: 900px) 92vw, 1360px' : '(max-width: 900px) 92vw, 50vw'} loading="lazy" decoding="async" />
             <span class="cap"><span class="mono">{String(i + 1).padStart(2, '0')}</span>{d.items[k]}<Icon name="plus" size={16} /></span>
           </button>
         </li>

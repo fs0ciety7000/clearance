@@ -292,7 +292,7 @@ const fr = {
     },
     logTitle: 'Journal des versions',
     log: [
-      { v: '0.15.0', n: 'Monde', x: 'Version anglaise complète, démo J1–J5, version Web à l’étude.' },
+      { v: '0.15.0', n: 'Monde', x: 'Version anglaise complète, démo J1–J5, version Web de la démo (navigateur, sur ordinateur).' },
       { v: '0.14.0', n: 'Ambiance', x: 'Musique dynamique, cinématiques illustrées, hall vivant, portraits du Dossier.' },
       { v: '0.13.0', n: 'Gameplay', x: 'Interrogatoire à contradictions, fouille holographique, Économat du soir.' },
       { v: '0.12.0', n: 'Rejouabilité', x: 'Épilogue J31, Garde de nuit, événements de station, Dossier de l’agent.' },
@@ -375,7 +375,7 @@ const fr = {
     web: {
       q: 'Peut-on jouer dans le navigateur ?',
       yes: 'Oui : la démo se lance depuis la section Démo de ce site, sans installation. Un ordinateur de bureau et un navigateur récent sont recommandés.',
-      no: 'Une version Web de la démo est à l’étude. Si elle tient nos exigences de performance et de son, elle sera jouable directement sur ce site.',
+      no: 'La démo existe en version Web (navigateur récent, sur ordinateur), mais elle n’est pas encore en ligne sur ce site. En attendant, elle se télécharge pour Windows, macOS et Linux.',
     },
   },
   final: {

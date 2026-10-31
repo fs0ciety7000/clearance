@@ -8,7 +8,7 @@ interface Props { lang: Lang }
 const all = t(Astro.props.lang);
 const d = all.press;
 const pressKeys = ['m9_booth_j1', 'm13_journal', 'm13_search', 'm12_garde_shift', 'm7_envelope', 'm8_symbol_report', 'm14_plate_f9_1', 'm9_booth_j1_deck'];
-const pngs = await Promise.all(pressKeys.map((k) => getImage({ src: shot(k), format: 'png', width: shot(k).width })));
+const pngs = await Promise.all(pressKeys.map((k) => getImage({ src: shot(k, Astro.props.lang), format: 'png', width: shot(k, Astro.props.lang).width })));
 const files: Record<string, string> = { 'logo-svg': '/press/clearance-icon.svg', 'logo-png': logoPng };
 const names: Record<string, string> = { 'logo-svg': 'clearance-icon.svg', 'logo-png': 'clearance-icon-1024.png' };
 ---
@@ -26,7 +26,7 @@ const names: Record<string, string> = { 'logo-svg': 'clearance-icon.svg', 'logo-
         <h3>{d.assetsTitle}</h3>
         <ul class="assets">
           {d.assets.map((a) => <li><a href={files[a.key]} download={names[a.key]}><Icon name="file" size={18} /><span>{a.label}</span><small class="mono">{a.meta}</small><Icon name="download" size={16} /></a></li>)}
-          {pressKeys.map((k, i) => <li><a href={pngs[i].src} download={`clearance-${k}.png`}><Icon name="file" size={18} /><span>{d.shotsLabel} · {all.gallery.items[k]}</span><small class="mono">{pngs[i].attributes.width} × {pngs[i].attributes.height}</small><Icon name="download" size={16} /></a></li>)}
+          {pressKeys.map((k, i) => <li><a href={pngs[i].src} download={`clearance-${k}${Astro.props.lang === "en" ? "-en" : ""}.png`}><Icon name="file" size={18} /><span>{d.shotsLabel} · {all.gallery.items[k]}</span><small class="mono">{pngs[i].attributes.width} × {pngs[i].attributes.height}</small><Icon name="download" size={16} /></a></li>)}
         </ul>
       </div>
       <div class="texts" data-reveal style="--d:.1s">

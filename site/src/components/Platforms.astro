@@ -39,7 +39,7 @@ const allReleases = DOWNLOAD_URL.replace(/\/latest\/?$/, '');
     <div class="split">
       <div class="left" data-reveal style="--y:40px">
         <div class="deck frame">
-          <Picture fallbackFormat="webp" src={shot('m9_booth_j1_deck')} alt={d.deckAlt} formats={['avif', 'webp']} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 50vw" loading="lazy" decoding="async" />
+          <Picture fallbackFormat="webp" src={shot('m9_booth_j1_deck', Astro.props.lang)} alt={d.deckAlt} formats={['avif', 'webp']} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 50vw" loading="lazy" decoding="async" />
         </div>
         <ul class="os">
           {d.notes.map((n) => <li><Icon name="tri" size={16} /><span><b>{n.os}</b> — {n.text}</span></li>)}
