@@ -1,0 +1,866 @@
+{
+ "id": "ms07",
+ "def_id": "ms_07",
+ "kind": "set",
+ "title": "MS-07 · Épilogue J31 — quintes ouvertes, 60 BPM, une couche par monde",
+ "doc": "docs/M14.md §2.2, §2.7 : deux couches communes sans tierce (nappe de quintes Dsus2 / Asus2 / Esus4, pulsation douce) qui vont avec les quatre mondes ; couches de groupe world_a (bornes : MO-1 en bips carrés, la mineur), world_b (la majeur : quintes ouvertes, souffle, MO-1 adouci au sinus), world_c (ré dorien : boîte à musique MO-3, MO-1 en mineur, voix de haut-parleur lointaine), world_d (ré dorien : pincé MO-2 en jingle, poussière, lampe de mine). J31 plafonné à N2 : N2 = N1 (pas de couche de rythme). Thèmes de monde TH-EA → TH-ED = mêmes couches à −18 LUFS (aucun fichier de plus).",
+ "tempo": 60,
+ "beats_per_bar": 4,
+ "bars": 16,
+ "tail_bars": 2,
+ "sample_rate": 32000,
+ "seed": 2007,
+ "chords": [
+  {
+   "bar": 0,
+   "bars": 4,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "A3",
+    "E4",
+    "A4"
+   ]
+  },
+  {
+   "bar": 4,
+   "bars": 4,
+   "bass": "A1",
+   "notes": [
+    "A3",
+    "E4",
+    "B4"
+   ]
+  },
+  {
+   "bar": 8,
+   "bars": 4,
+   "bass": "E2",
+   "notes": [
+    "E3",
+    "A3",
+    "B3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 12,
+   "bars": 4,
+   "bass": "D2",
+   "notes": [
+    "A2",
+    "D3",
+    "A3",
+    "E4"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-1b": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "C#6"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "A5"
+   },
+   {
+    "step": 8,
+    "len": 8,
+    "note": "E6"
+   }
+  ],
+  "MO-1d": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "F5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "D5"
+   },
+   {
+    "step": 8,
+    "len": 8,
+    "note": "A5"
+   }
+  ],
+  "MO-1": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "E5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "C5"
+   },
+   {
+    "step": 8,
+    "len": 8,
+    "note": "G5"
+   }
+  ],
+  "MO-2": [
+   {
+    "step": 0,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 2,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 4,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 7,
+    "len": 1,
+    "note": "E5"
+   }
+  ],
+  "MO-3": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "D5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "F5"
+   },
+   {
+    "step": 8,
+    "len": 4,
+    "note": "E5"
+   },
+   {
+    "step": 12,
+    "len": 12,
+    "note": "A5"
+   }
+  ]
+ },
+ "instruments": {
+  "pad": {
+   "type": "pad",
+   "voices": 3,
+   "detune_cents": 9,
+   "cutoff": 760,
+   "q": 0.7,
+   "attack": 2.6,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 3.2,
+   "vib_hz": 0.21,
+   "vib_depth": 0.0012,
+   "level": 0.3
+  },
+  "pulse": {
+   "type": "pluck",
+   "damping": 0.03,
+   "brightness": 0.15,
+   "length": 1.0,
+   "level": 0.5
+  },
+  "beep": {
+   "type": "tone",
+   "wave": "square",
+   "attack": 0.003,
+   "decay": 0.08,
+   "sustain": 0.6,
+   "release": 0.05,
+   "level": 0.14,
+   "cutoff": 2200
+  },
+  "kiosk": {
+   "type": "tone",
+   "wave": "square",
+   "attack": 0.002,
+   "decay": 0.05,
+   "sustain": 0.0,
+   "release": 0.04,
+   "level": 0.1,
+   "width": 0.25,
+   "cutoff": 1800
+  },
+  "sine": {
+   "type": "tone",
+   "wave": "sine",
+   "attack": 0.01,
+   "decay": 1.2,
+   "sustain": 0.0,
+   "release": 1.0,
+   "level": 0.22
+  },
+  "third": {
+   "type": "pad",
+   "voices": 2,
+   "detune_cents": 9,
+   "cutoff": 1000,
+   "q": 0.7,
+   "attack": 2.4,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 3.0,
+   "vib_hz": 0.21,
+   "vib_depth": 0.0012,
+   "level": 0.16
+  },
+  "breath": {
+   "type": "tone",
+   "wave": "air",
+   "attack": 2.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.0,
+   "level": 0.03,
+   "cutoff": 2600
+  },
+  "box": {
+   "type": "musicbox",
+   "partial": 3.0,
+   "decay": 0.9,
+   "length": 2.0,
+   "level": 0.26
+  },
+  "pa_voice": {
+   "type": "choir",
+   "voices": 1,
+   "detune_cents": 4,
+   "vib_hz": 5.5,
+   "vib_depth": 0.002,
+   "formants": [
+    [
+     600,
+     6,
+     1.0
+    ],
+    [
+     1000,
+     8,
+     0.6
+    ]
+   ],
+   "breath": 0.02,
+   "attack": 0.05,
+   "decay": 0.2,
+   "sustain": 0.7,
+   "release": 0.2,
+   "level": 0.12
+  },
+  "radio": {
+   "type": "pluck",
+   "damping": 0.006,
+   "brightness": 0.45,
+   "length": 1.4,
+   "level": 0.32,
+   "band": [
+    450,
+    2600
+   ],
+   "bits": 11
+  },
+  "dust": {
+   "type": "tone",
+   "wave": "air",
+   "attack": 2.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.0,
+   "level": 0.025,
+   "cutoff": 4200
+  },
+  "lamp": {
+   "type": "tone",
+   "wave": "sine",
+   "attack": 2.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.0,
+   "level": 0.05
+  },
+  "floor": {
+   "type": "tone",
+   "wave": "sine",
+   "attack": 1.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 1.5,
+   "level": 0.1
+  }
+ },
+ "mix": {
+  "eq": [
+   {
+    "freq": 1400,
+    "q": 1.0,
+    "gain_db": -6
+   },
+   {
+    "freq": 2800,
+    "q": 1.0,
+    "gain_db": -6
+   }
+  ],
+  "reverb": {
+   "rt60": 3.2,
+   "size": 1.5,
+   "damp_hz": 4200,
+   "predelay": 0.03
+  },
+  "width": 0.55
+ },
+ "level_plan": [
+  {
+   "label": "N0 nappe",
+   "layers": [
+    "l0"
+   ],
+   "solve": "l0",
+   "target": -31.5
+  },
+  {
+   "label": "N0 A",
+   "layers": [
+    "l0",
+    "world_a"
+   ],
+   "solve": "world_a",
+   "target": -30.0
+  },
+  {
+   "label": "N0 B",
+   "layers": [
+    "l0",
+    "world_b"
+   ],
+   "solve": "world_b",
+   "target": -30.0
+  },
+  {
+   "label": "N0 C",
+   "layers": [
+    "l0",
+    "world_c"
+   ],
+   "solve": "world_c",
+   "target": -30.0
+  },
+  {
+   "label": "N0 D",
+   "layers": [
+    "l0",
+    "world_d"
+   ],
+   "solve": "world_d",
+   "target": -30.0
+  },
+  {
+   "label": "N1 A",
+   "layers": [
+    "l0",
+    "world_a",
+    "l1"
+   ],
+   "solve": "l1",
+   "target": -28.0
+  }
+ ],
+ "exposed_layers": [
+  "l0",
+  "world_a"
+ ],
+ "world_themes": [
+  {
+   "def_id": "th_ea",
+   "world": "a",
+   "layers": [
+    "l0",
+    "l1",
+    "world_a"
+   ]
+  },
+  {
+   "def_id": "th_eb",
+   "world": "b",
+   "layers": [
+    "l0",
+    "l1",
+    "world_b"
+   ]
+  },
+  {
+   "def_id": "th_ec",
+   "world": "c",
+   "layers": [
+    "l0",
+    "l1",
+    "world_c"
+   ]
+  },
+  {
+   "def_id": "th_ed",
+   "world": "d",
+   "layers": [
+    "l0",
+    "l1",
+    "world_d"
+   ]
+  }
+ ],
+ "stems": [
+  {
+   "id": "l0",
+   "name": "nappe de quintes",
+   "layer": {
+    "role": "pad",
+    "enter_level": 0,
+    "exit_level": -1,
+    "exposed": true,
+    "melodic": false,
+    "power_down": true
+   },
+   "width": 0.45,
+   "tracks": [
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.4,
+     "chords": {
+      "octave": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "l1",
+   "name": "pulsation douce",
+   "layer": {
+    "role": "pulse",
+    "enter_level": 1,
+    "exit_level": -1,
+    "exposed": false,
+    "melodic": false,
+    "power_down": false
+   },
+   "tracks": [
+    {
+     "instrument": "floor",
+     "gain_db": -24,
+     "send": 0.3,
+     "chords": {
+      "octave": 0,
+      "only": [
+       0
+      ]
+     }
+    },
+    {
+     "instrument": "pulse",
+     "gain_db": 0,
+     "send": 0.15,
+     "pattern": {
+      "bars": 1,
+      "steps": [
+       {
+        "step": 0,
+        "len": 2,
+        "note": "bass",
+        "vel": 0.9,
+        "oct": 1
+       },
+       {
+        "step": 8,
+        "len": 2,
+        "note": "bass",
+        "vel": 0.6,
+        "oct": 1
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "world_a",
+   "name": "monde A · bornes",
+   "layer": {
+    "role": "variant",
+    "enter_level": 0,
+    "exit_level": -1,
+    "exposed": true,
+    "melodic": true,
+    "power_down": false,
+    "group": "world_a"
+   },
+   "tracks": [
+    {
+     "instrument": "floor",
+     "gain_db": -20,
+     "send": 0.3,
+     "chords": {
+      "octave": 1,
+      "only": [
+       0
+      ]
+     }
+    },
+    {
+     "instrument": "beep",
+     "gain_db": 0,
+     "send": 0.2,
+     "pan": -0.1,
+     "events": [
+      {
+       "motif": "MO-1",
+       "bar": 2,
+       "step": 0
+      },
+      {
+       "motif": "MO-1",
+       "bar": 10,
+       "step": 0,
+       "vel": 0.85
+      }
+     ]
+    },
+    {
+     "instrument": "kiosk",
+     "gain_db": 0,
+     "send": 0.25,
+     "pan": 0.3,
+     "pattern": {
+      "bars": 4,
+      "steps": [
+       {
+        "step": 32,
+        "len": 1,
+        "note": "A5",
+        "vel": 0.6
+       },
+       {
+        "step": 33,
+        "len": 1,
+        "note": "C6",
+        "vel": 0.5
+       },
+       {
+        "step": 48,
+        "len": 1,
+        "note": "E5",
+        "vel": 0.5,
+        "prob": 0.7
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "world_b",
+   "name": "monde B · air commun",
+   "layer": {
+    "role": "variant",
+    "enter_level": 0,
+    "exit_level": -1,
+    "exposed": true,
+    "melodic": true,
+    "power_down": false,
+    "group": "world_b"
+   },
+   "tracks": [
+    {
+     "instrument": "third",
+     "gain_db": 0,
+     "send": 0.4,
+     "events": [
+      {
+       "step": 0,
+       "len": 64,
+       "vel": 1.0,
+       "notes": [
+        "C#4",
+        "E4"
+       ],
+       "bar": 0
+      },
+      {
+       "step": 0,
+       "len": 64,
+       "vel": 1.0,
+       "notes": [
+        "C#4",
+        "E4"
+       ],
+       "bar": 4
+      },
+      {
+       "step": 0,
+       "len": 64,
+       "vel": 1.0,
+       "notes": [
+        "C#4",
+        "G#4"
+       ],
+       "bar": 8
+      },
+      {
+       "step": 0,
+       "len": 64,
+       "vel": 1.0,
+       "notes": [
+        "C#4",
+        "F#4"
+       ],
+       "bar": 12
+      }
+     ]
+    },
+    {
+     "instrument": "breath",
+     "gain_db": 0,
+     "send": 0.1,
+     "events": [
+      {
+       "step": 0,
+       "len": 128,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 0
+      },
+      {
+       "step": 0,
+       "len": 128,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 8
+      }
+     ]
+    },
+    {
+     "instrument": "sine",
+     "gain_db": 0,
+     "send": 0.45,
+     "pan": 0.15,
+     "events": [
+      {
+       "motif": "MO-1b",
+       "bar": 2,
+       "step": 0
+      },
+      {
+       "motif": "MO-1b",
+       "bar": 10,
+       "step": 0,
+       "vel": 0.85
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "world_c",
+   "name": "monde C · mémoire",
+   "layer": {
+    "role": "variant",
+    "enter_level": 0,
+    "exit_level": -1,
+    "exposed": true,
+    "melodic": true,
+    "power_down": false,
+    "group": "world_c"
+   },
+   "width": 0.3,
+   "tracks": [
+    {
+     "instrument": "floor",
+     "gain_db": -20,
+     "send": 0.3,
+     "chords": {
+      "octave": 1,
+      "only": [
+       0
+      ]
+     }
+    },
+    {
+     "instrument": "box",
+     "gain_db": 0,
+     "send": 0.4,
+     "pan": 0.15,
+     "events": [
+      {
+       "motif": "MO-3",
+       "bar": 0,
+       "step": 0
+      },
+      {
+       "motif": "MO-3",
+       "bar": 8,
+       "step": 0,
+       "vel": 0.85
+      }
+     ]
+    },
+    {
+     "instrument": "sine",
+     "gain_db": -2,
+     "send": 0.5,
+     "pan": -0.2,
+     "events": [
+      {
+       "motif": "MO-1d",
+       "bar": 4,
+       "step": 0
+      },
+      {
+       "motif": "MO-1d",
+       "bar": 12,
+       "step": 0,
+       "vel": 0.8
+      }
+     ]
+    },
+    {
+     "instrument": "pa_voice",
+     "gain_db": -6,
+     "send": 0.6,
+     "pan": 0.4,
+     "events": [
+      {
+       "step": 0,
+       "len": 3,
+       "note": "A3",
+       "vel": 0.7,
+       "bar": 6
+      },
+      {
+       "step": 4,
+       "len": 2,
+       "note": "C4",
+       "vel": 0.6,
+       "bar": 6
+      },
+      {
+       "step": 7,
+       "len": 4,
+       "note": "A3",
+       "vel": 0.6,
+       "bar": 6
+      },
+      {
+       "step": 2,
+       "len": 3,
+       "note": "G3",
+       "vel": 0.6,
+       "bar": 14
+      },
+      {
+       "step": 6,
+       "len": 5,
+       "note": "A3",
+       "vel": 0.6,
+       "bar": 14
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "world_d",
+   "name": "monde D · l'autre côté",
+   "layer": {
+    "role": "variant",
+    "enter_level": 0,
+    "exit_level": -1,
+    "exposed": true,
+    "melodic": true,
+    "power_down": false,
+    "group": "world_d"
+   },
+   "tracks": [
+    {
+     "instrument": "radio",
+     "gain_db": 0,
+     "send": 0.25,
+     "pan": 0.2,
+     "events": [
+      {
+       "motif": "MO-2",
+       "bar": 6,
+       "step": 4,
+       "transpose": 5
+      },
+      {
+       "motif": "MO-2",
+       "bar": 14,
+       "step": 4,
+       "transpose": 5,
+       "vel": 0.85
+      }
+     ]
+    },
+    {
+     "instrument": "dust",
+     "gain_db": 0,
+     "send": 0.05,
+     "events": [
+      {
+       "step": 0,
+       "len": 128,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 0
+      },
+      {
+       "step": 0,
+       "len": 128,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 8
+      }
+     ]
+    },
+    {
+     "instrument": "lamp",
+     "gain_db": 0,
+     "send": 0.0,
+     "events": [
+      {
+       "step": 0,
+       "len": 128,
+       "vel": 1.0,
+       "notes": [
+        "A2",
+        "A3"
+       ],
+       "bar": 0
+      },
+      {
+       "step": 0,
+       "len": 128,
+       "vel": 1.0,
+       "notes": [
+        "A2",
+        "A3"
+       ],
+       "bar": 8
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

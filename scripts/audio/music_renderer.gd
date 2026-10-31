@@ -35,6 +35,11 @@ var bar_n: int = 0
 var step_n: int = 0
 ## Erreurs de partition (vide = valide).
 var errors: PackedStringArray = []
+## Variante rendue (thèmes, docs/AUDIO.md §13.4) : une piste marquée
+## `"variant": "x"` (ou une liste) ne sonne que dans la variante `x` ; une
+## piste marquée `"not_variant": ["x"]` est retirée de la variante `x`.
+## Vide = le thème de base.
+var variant: String = ""
 
 var _chords: Array = []
 var _motifs: Dictionary = {}
@@ -135,7 +140,8 @@ func track_notes(stem_id: String, track_index: int, track: Dictionary, from_bar:
 				var at_bar: int = start_bar + rep * bars
 				var notes: Array = chord.get("notes", [])
 				for k: int in notes.size():
-					if not only.is_empty() and not only.has(k):
+					# JSON : les indices de `only` sont des flottants (0.0 ≠ 0 pour `has`).
+					if not only.is_empty() and not (only.has(k) or only.has(float(k))):
 						continue
 					var midi: int = note_to_midi(str(notes[k])) + 12 * octave
 					out.append(PackedFloat32Array([(at_bar - from_bar) * bar_n, length_bars * bar_n, midi, vel, pan]))
@@ -253,6 +259,8 @@ func render_stem(stem_id: String, from_bar: int = 0, length_bars: int = -1, loop
 	var tracks: Array = stem.get("tracks", [])
 	for t: int in tracks.size():
 		var track: Dictionary = tracks[t]
+		if not track_in_variant(track, variant):
+			continue
 		var lr: Array[PackedFloat32Array] = _render_track(stem_id, t, track, from_bar, to_bar, total)
 		var g: float = db_to_linear(float(track.get("gain_db", 0.0)))
 		var send: float = float(track.get("send", 0.0))
@@ -284,6 +292,17 @@ func render_stem(stem_id: String, from_bar: int = 0, length_bars: int = -1, loop
 	for ch: int in 2:
 		out[ch] = AudioDsp.dc_block(out[ch], rate)
 	return [_fold(out[0], length, tail, loop), _fold(out[1], length, tail, loop)]
+
+
+## Vrai si la piste sonne dans la variante `v` (vide = thème de base).
+static func track_in_variant(track: Dictionary, v: String) -> bool:
+	if track.has("variant"):
+		var only: Array = _as_list(track["variant"])
+		if not only.has(v):
+			return false
+	if track.has("not_variant") and _as_list(track["not_variant"]).has(v):
+		return false
+	return true
 
 
 func _eq_for(stem: Dictionary) -> Array:
@@ -625,6 +644,20 @@ func _tone(inst: Dictionary, hz: float, dur: int, rng: RandomNumberGenerator) ->
 		"saw":
 			buf = AudioDsp.svf(AudioDsp.blep_saw(n, hz, rate, rng.randf()), AudioDsp.Svf.LOWPASS,
 					PackedFloat32Array([float(inst.get("cutoff", 1500.0))]), 0.7, rate)
+		"square":
+			# Bip de borne (monde A) : impulsion à bande limitée, filtrée.
+			buf = AudioDsp.svf(AudioDsp.blep_pulse(n, hz, rate, float(inst.get("width", 0.5)), rng.randf()),
+					AudioDsp.Svf.LOWPASS, PackedFloat32Array([float(inst.get("cutoff", 2500.0))]), 0.7, rate)
+		"thump":
+			# Coup sourd (porte, coup grave de F5B) : sinus qui chute, filtré ≤ cutoff.
+			buf = AudioDsp.silence(n)
+			var ph: float = 0.0
+			var drop: float = float(inst.get("drop", 0.5))
+			for i: int in n:
+				var u: float = float(i) / rate
+				ph += TAU * hz * (1.0 + drop * exp(-u / 0.05)) / rate
+				buf[i] = sin(ph)
+			buf = AudioDsp.svf(buf, AudioDsp.Svf.LOWPASS, PackedFloat32Array([float(inst.get("cutoff", 200.0))]), 0.7, rate)
 		_:
 			buf = AudioDsp.sine(n, hz, rate, rng.randf() * TAU)
 	return _apply_env(AudioDsp.gain(buf, float(inst.get("level", 0.3))), _adsr(inst, n, dur))

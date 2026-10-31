@@ -1,12 +1,35 @@
 [gd_resource type="Resource" script_class="MusicLibraryDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/music_library_def.gd" id="1_58op6"]
-[ext_resource type="Script" path="res://scripts/core/music_set_def.gd" id="2_jjxxk"]
-[ext_resource type="Resource" path="res://assets/audio/music/sets/ms_02.tres" id="3_m125w"]
-[ext_resource type="Script" path="res://scripts/core/music_theme_def.gd" id="4_tpi44"]
-[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f9.tres" id="5_scatu"]
+[ext_resource type="Script" path="res://scripts/core/music_library_def.gd" id="1_thhjo"]
+[ext_resource type="Script" path="res://scripts/core/music_set_def.gd" id="2_v851a"]
+[ext_resource type="Resource" path="res://assets/audio/music/sets/ms_01.tres" id="3_nog63"]
+[ext_resource type="Resource" path="res://assets/audio/music/sets/ms_02.tres" id="4_qdpwg"]
+[ext_resource type="Resource" path="res://assets/audio/music/sets/ms_03.tres" id="5_m3ksr"]
+[ext_resource type="Resource" path="res://assets/audio/music/sets/ms_04.tres" id="6_t1v8i"]
+[ext_resource type="Resource" path="res://assets/audio/music/sets/ms_05.tres" id="7_qf8v8"]
+[ext_resource type="Resource" path="res://assets/audio/music/sets/ms_06.tres" id="8_uouk6"]
+[ext_resource type="Resource" path="res://assets/audio/music/sets/ms_07.tres" id="9_x3fx6"]
+[ext_resource type="Script" path="res://scripts/core/music_theme_def.gd" id="10_28vbn"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_ea.tres" id="11_02cyg"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_eb.tres" id="12_qqjt8"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_ec.tres" id="13_r0bul"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_ed.tres" id="14_q4swa"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f1.tres" id="15_t4ros"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f10.tres" id="16_4210f"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f2.tres" id="17_mlwku"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f3.tres" id="18_rbq4x"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f4.tres" id="19_qgca0"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f5b.tres" id="20_or8i1"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f5c.tres" id="21_ghr2t"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f5s.tres" id="22_ajhpl"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f6.tres" id="23_qq2ex"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f6d.tres" id="24_w5d2i"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f6t.tres" id="25_6vw7b"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f7.tres" id="26_kudsa"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f8.tres" id="27_q8tru"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f9.tres" id="28_uv3ek"]
 
 [resource]
-script = ExtResource("1_58op6")
-sets = Array[ExtResource("2_jjxxk")]([ExtResource("3_m125w")])
-themes = Array[ExtResource("4_tpi44")]([ExtResource("5_scatu")])
+script = ExtResource("1_thhjo")
+sets = Array[ExtResource("2_v851a")]([ExtResource("3_nog63"), ExtResource("4_qdpwg"), ExtResource("5_m3ksr"), ExtResource("6_t1v8i"), ExtResource("7_qf8v8"), ExtResource("8_uouk6"), ExtResource("9_x3fx6")])
+themes = Array[ExtResource("10_28vbn")]([ExtResource("11_02cyg"), ExtResource("12_qqjt8"), ExtResource("13_r0bul"), ExtResource("14_q4swa"), ExtResource("15_t4ros"), ExtResource("16_4210f"), ExtResource("17_mlwku"), ExtResource("18_rbq4x"), ExtResource("19_qgca0"), ExtResource("20_or8i1"), ExtResource("21_ghr2t"), ExtResource("22_ajhpl"), ExtResource("23_qq2ex"), ExtResource("24_w5d2i"), ExtResource("25_6vw7b"), ExtResource("26_kudsa"), ExtResource("27_q8tru"), ExtResource("28_uv3ek")])

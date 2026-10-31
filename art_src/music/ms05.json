@@ -1,0 +1,701 @@
+{
+ "id": "ms05",
+ "def_id": "ms_05",
+ "kind": "set",
+ "title": "MS-05 · Garde de nuit — mi phrygien, 96 BPM",
+ "doc": "docs/M14.md §2.2–§2.5 : nocturne, plus rythmé, jamais héroïque ; L3 = MO-1 en ostinato rapide (mi–do–sol en doubles croches). Intensité de la Garde : I = 0,30 + 0,12·palier + 0,10·erreurs (MusicIntensity).",
+ "tempo": 96,
+ "beats_per_bar": 4,
+ "bars": 16,
+ "tail_bars": 2,
+ "sample_rate": 32000,
+ "seed": 2005,
+ "chords": [
+  {
+   "bar": 0,
+   "bars": 2,
+   "bass": "E1",
+   "notes": [
+    "E3",
+    "G3",
+    "B3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 2,
+   "bars": 2,
+   "bass": "F1",
+   "notes": [
+    "F3",
+    "A3",
+    "C4",
+    "E4"
+   ]
+  },
+  {
+   "bar": 4,
+   "bars": 2,
+   "bass": "E1",
+   "notes": [
+    "E3",
+    "G3",
+    "B3",
+    "D4"
+   ]
+  },
+  {
+   "bar": 6,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 8,
+   "bars": 2,
+   "bass": "E1",
+   "notes": [
+    "E3",
+    "B3",
+    "E4",
+    "G4"
+   ]
+  },
+  {
+   "bar": 10,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G3",
+    "B3",
+    "D4",
+    "F4"
+   ]
+  },
+  {
+   "bar": 12,
+   "bars": 2,
+   "bass": "F1",
+   "notes": [
+    "F3",
+    "A3",
+    "C4",
+    "E4"
+   ]
+  },
+  {
+   "bar": 14,
+   "bars": 2,
+   "bass": "E1",
+   "notes": [
+    "E3",
+    "A3",
+    "B3",
+    "E4"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-1": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "E5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "C5"
+   },
+   {
+    "step": 8,
+    "len": 8,
+    "note": "G5"
+   }
+  ],
+  "MO-2": [
+   {
+    "step": 0,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 2,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 4,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 7,
+    "len": 1,
+    "note": "E5"
+   }
+  ],
+  "MO-3": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "D5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "F5"
+   },
+   {
+    "step": 8,
+    "len": 4,
+    "note": "E5"
+   },
+   {
+    "step": 12,
+    "len": 12,
+    "note": "A5"
+   }
+  ]
+ },
+ "instruments": {
+  "pad": {
+   "type": "pad",
+   "voices": 3,
+   "detune_cents": 9,
+   "cutoff": 740,
+   "q": 0.7,
+   "attack": 1.0,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 1.8,
+   "vib_hz": 0.21,
+   "vib_depth": 0.0012,
+   "level": 0.3
+  },
+  "bass": {
+   "type": "bass",
+   "cutoff": 210,
+   "cutoff_peak": 480,
+   "filter_decay": 0.06,
+   "q": 0.9,
+   "attack": 0.004,
+   "decay": 0.1,
+   "sustain": 0.35,
+   "release": 0.07,
+   "sub": 0.75,
+   "level": 0.6
+  },
+  "tick": {
+   "type": "tick",
+   "cutoff": 7600,
+   "q": 0.8,
+   "attack": 0.0005,
+   "decay": 0.011,
+   "length": 0.06,
+   "level": 0.3
+  },
+  "brush": {
+   "type": "brush",
+   "cutoff": 8200,
+   "q": 1.4,
+   "attack": 0.035,
+   "decay": 0.07,
+   "length": 0.22,
+   "level": 0.22
+  },
+  "arp": {
+   "type": "arp",
+   "width": 0.3,
+   "cutoff": 1000,
+   "attack": 0.004,
+   "decay": 0.12,
+   "sustain": 0.0,
+   "release": 0.15,
+   "level": 0.2
+  },
+  "minor2": {
+   "type": "pad",
+   "voices": 2,
+   "detune_cents": 5,
+   "cutoff": 1100,
+   "q": 0.8,
+   "attack": 2.0,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 2.0,
+   "vib_hz": 5.0,
+   "vib_depth": 0.0025,
+   "level": 0.2
+  },
+  "swell": {
+   "type": "noise_swell",
+   "cutoff_start": 320,
+   "cutoff_end": 1800,
+   "q": 1.4,
+   "attack": 0.6,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 0.9,
+   "swell": 0.85,
+   "level": 0.5
+  },
+  "hiss": {
+   "type": "tone",
+   "wave": "hiss",
+   "cutoff": 6500,
+   "attack": 0.5,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 0.5,
+   "level": 0.05
+  }
+ },
+ "mix": {
+  "eq": [
+   {
+    "freq": 1400,
+    "q": 1.0,
+    "gain_db": -9
+   },
+   {
+    "freq": 2800,
+    "q": 1.0,
+    "gain_db": -9
+   }
+  ],
+  "reverb": {
+   "rt60": 2.8,
+   "size": 1.3,
+   "damp_hz": 4500,
+   "predelay": 0.025
+  },
+  "width": 0.55
+ },
+ "stems": [
+  {
+   "id": "l0",
+   "name": "nappe nocturne",
+   "tracks": [
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.35,
+     "chords": {
+      "octave": 0
+     }
+    }
+   ],
+   "layer": {
+    "role": "pad",
+    "enter_level": 0,
+    "exit_level": -1,
+    "exposed": true,
+    "melodic": false,
+    "power_down": true
+   }
+  },
+  {
+   "id": "l1",
+   "name": "basse en croches",
+   "tracks": [
+    {
+     "instrument": "bass",
+     "gain_db": 0,
+     "send": 0.05,
+     "pattern": {
+      "bars": 1,
+      "steps": [
+       {
+        "step": 0,
+        "len": 1,
+        "note": "bass",
+        "vel": 1.0
+       },
+       {
+        "step": 2,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.5
+       },
+       {
+        "step": 4,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.7,
+        "oct": 1
+       },
+       {
+        "step": 6,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.5
+       },
+       {
+        "step": 8,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.9
+       },
+       {
+        "step": 10,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.5
+       },
+       {
+        "step": 12,
+        "len": 1,
+        "note": "F2",
+        "vel": 0.7
+       },
+       {
+        "step": 14,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.55
+       }
+      ]
+     }
+    }
+   ],
+   "layer": {
+    "role": "pulse",
+    "enter_level": 1,
+    "exit_level": -1,
+    "exposed": false,
+    "melodic": false,
+    "power_down": false
+   }
+  },
+  {
+   "id": "l2",
+   "name": "rythme",
+   "tracks": [
+    {
+     "instrument": "tick",
+     "gain_db": 0,
+     "send": 0.15,
+     "pan": 0.25,
+     "humanize_ms": 3,
+     "pattern": {
+      "bars": 1,
+      "steps": [
+       {
+        "step": 0,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 1
+       },
+       {
+        "step": 1,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 0.6
+       },
+       {
+        "step": 2,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.6,
+        "prob": 1
+       },
+       {
+        "step": 3,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 0.6
+       },
+       {
+        "step": 4,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 1
+       },
+       {
+        "step": 5,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 0.6
+       },
+       {
+        "step": 6,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.6,
+        "prob": 1
+       },
+       {
+        "step": 7,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 0.6
+       },
+       {
+        "step": 8,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 1
+       },
+       {
+        "step": 9,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 0.6
+       },
+       {
+        "step": 10,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.6,
+        "prob": 1
+       },
+       {
+        "step": 11,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 0.6
+       },
+       {
+        "step": 12,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 1
+       },
+       {
+        "step": 13,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 0.6
+       },
+       {
+        "step": 14,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.6,
+        "prob": 1
+       },
+       {
+        "step": 15,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.3,
+        "prob": 0.6
+       }
+      ]
+     }
+    },
+    {
+     "instrument": "brush",
+     "gain_db": -2,
+     "send": 0.2,
+     "pan": -0.2,
+     "humanize_ms": 3,
+     "pattern": {
+      "bars": 1,
+      "steps": [
+       {
+        "step": 4,
+        "len": 2,
+        "note": "C5",
+        "vel": 0.8
+       },
+       {
+        "step": 12,
+        "len": 2,
+        "note": "C5",
+        "vel": 0.9
+       }
+      ]
+     }
+    },
+    {
+     "instrument": "hiss",
+     "gain_db": -14,
+     "send": 0.0,
+     "pattern": {
+      "bars": 4,
+      "steps": [
+       {
+        "step": 0,
+        "len": 64,
+        "note": "C4",
+        "vel": 1.0
+       }
+      ]
+     }
+    }
+   ],
+   "layer": {
+    "role": "rhythm",
+    "enter_level": 2,
+    "exit_level": -1,
+    "exposed": false,
+    "melodic": false,
+    "power_down": false
+   }
+  },
+  {
+   "id": "l3",
+   "name": "MO-1 ostinato",
+   "eq": [
+    {
+     "freq": 1400,
+     "q": 1.0,
+     "gain_db": -12
+    },
+    {
+     "freq": 2000,
+     "q": 1.2,
+     "gain_db": -8
+    },
+    {
+     "freq": 2800,
+     "q": 1.0,
+     "gain_db": -12
+    }
+   ],
+   "tracks": [
+    {
+     "instrument": "arp",
+     "gain_db": 0,
+     "send": 0.3,
+     "pan": 0.1,
+     "pattern": {
+      "bars": 1,
+      "steps": [
+       {
+        "step": 0,
+        "len": 1,
+        "note": "E5",
+        "vel": 0.9,
+        "oct": -1
+       },
+       {
+        "step": 1,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.6,
+        "oct": -1
+       },
+       {
+        "step": 2,
+        "len": 2,
+        "note": "G5",
+        "vel": 0.75,
+        "oct": -1
+       },
+       {
+        "step": 8,
+        "len": 1,
+        "note": "E5",
+        "vel": 0.8,
+        "oct": -1
+       },
+       {
+        "step": 9,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.55,
+        "oct": -1
+       },
+       {
+        "step": 10,
+        "len": 2,
+        "note": "G5",
+        "vel": 0.7,
+        "oct": -1
+       }
+      ]
+     }
+    }
+   ],
+   "layer": {
+    "role": "motif",
+    "enter_level": 3,
+    "exit_level": 4,
+    "exposed": true,
+    "melodic": true,
+    "power_down": false
+   }
+  },
+  {
+   "id": "l4",
+   "name": "tension",
+   "eq": [
+    {
+     "freq": 1400,
+     "q": 1.0,
+     "gain_db": -12
+    },
+    {
+     "freq": 2800,
+     "q": 1.0,
+     "gain_db": -12
+    }
+   ],
+   "width": 0.35,
+   "tracks": [
+    {
+     "instrument": "minor2",
+     "gain_db": 0,
+     "send": 0.35,
+     "pattern": {
+      "bars": 4,
+      "steps": [
+       {
+        "step": 0,
+        "len": 64,
+        "vel": 1.0,
+        "notes": [
+         "E4",
+         "F4"
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "instrument": "swell",
+     "gain_db": 0,
+     "send": 0.25,
+     "pattern": {
+      "bars": 4,
+      "steps": [
+       {
+        "step": 0,
+        "len": 60,
+        "note": "E3",
+        "vel": 1.0
+       }
+      ]
+     }
+    }
+   ],
+   "layer": {
+    "role": "tension",
+    "enter_level": 4,
+    "exit_level": -1,
+    "exposed": false,
+    "melodic": false,
+    "power_down": false
+   }
+  }
+ ]
+}

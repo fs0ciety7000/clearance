@@ -237,3 +237,67 @@ func test_library_mask_and_skip_to_tail() -> void:
 	d.skip_to_tail()
 	assert_eq(d.get_current_clip(), &"th_f9_tail", "cinématique passée : queue")
 	assert_eq(d.player.volume_db, 0.0)
+
+
+# --- Phase 2 : gain des thèmes, fin → thème, volume à 0 ----------------------------
+
+func test_theme_gain_lives_in_the_stream() -> void:
+	var d: MusicDirector = _make()
+	d.configure_theme(&"th_g", _tone(330.0), 75.0, 4, _tone(440.0), -4.5)
+	var main: AudioStreamSynchronized = d._clips[&"th_g"]["stream"] as AudioStreamSynchronized
+	var tail: AudioStreamSynchronized = d._clips[&"th_g_tail"]["stream"] as AudioStreamSynchronized
+	assert_not_null(main, "thème enveloppé dans le flux")
+	assert_almost_eq(main.get_sync_stream_volume(0), -4.5, 0.001, "gain d'exécution du thème")
+	assert_almost_eq(tail.get_sync_stream_volume(0), -4.5, 0.001, "même gain pour la queue")
+	d.play(&"th_g")
+	assert_eq(d.player.volume_db, 0.0)
+	var theme: MusicThemeDef = MusicThemeDef.new()
+	theme.set_meta(&"gain_db", -3.3)
+	assert_almost_eq(MusicDirector.theme_gain_db(theme), -3.3, 0.001, "métadonnée gain_db")
+
+
+func test_end_theme_starts_after_the_bus_fade() -> void:
+	var d: MusicDirector = _make()
+	d.configure_set(&"ms_test", _layers(), 80.0)
+	d.play(&"ms_test", 1)
+	var theme: MusicThemeDef = MusicThemeDef.new()
+	theme.id = &"th_end"
+	theme.tempo_bpm = 75.0
+	theme.stream = _tone(330.0)
+	theme.tail_stream = _tone(440.0)
+	d.play_theme_after_fade(theme, {}, false, 2.0)
+	assert_true(d.has_pending_theme(), "fondu de sortie d'abord")
+	assert_eq(d.get_current_clip(), &"ms_test")
+	d._update_fade(1.0)
+	assert_lt(MusicDirector.get_fade_db(), -1.0, "le bus Fade descend")
+	d._update_fade(1.1)
+	assert_false(d.has_pending_theme())
+	assert_eq(d.get_current_clip(), &"th_end", "puis le thème depuis le début")
+	assert_eq(MusicDirector.get_fade_db(), 0.0, "Fade rouvert")
+	assert_eq(d.player.volume_db, 0.0)
+	d.play_theme_after_fade(theme, {}, false, 0.0, true)
+	assert_eq(d.get_current_clip(), &"th_end_tail", "TH-F7 : la queue directement")
+
+
+func test_zero_music_volume_stops_the_player() -> void:
+	var d: MusicDirector = _make()
+	d.configure_set(&"ms_test", _layers(), 80.0)
+	d.play(&"ms_test", 2)
+	d.set_suspended(true)
+	assert_false(d.is_playing(), "volume 0 : lecteur arrêté (CPU nul)")
+	d.switch_clip(&"ms_test", 3)
+	d.set_suspended(false)
+	assert_true(d.is_playing(), "repris au retour du volume")
+	assert_eq(d.get_current_clip(), &"ms_test")
+	assert_eq(d.level, 3)
+
+
+func test_bar_signal_ticks_once_per_bar() -> void:
+	var d: MusicDirector = _make()
+	d.configure_set(&"ms_test", _layers(), 80.0)
+	d.play(&"ms_test", 0)
+	watch_signals(d)
+	d._clock_usec = int(BAR_SEC * 2.5 * 1_000_000.0)
+	d._last_usec = Time.get_ticks_usec()
+	d._process(0.0)
+	assert_signal_emit_count(d, "bar_passed", 2, "une émission par mesure")

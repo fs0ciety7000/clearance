@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="MusicThemeDef" format=3]
+
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f5b_rfx.ogg" id="1_tgeds"]
+[ext_resource type="Script" path="res://scripts/core/music_theme_def.gd" id="2_mjkah"]
+[ext_resource type="Script" path="res://scripts/core/music_section_def.gd" id="3_y6m2x"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f5b.ogg" id="4_lf8ox"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f5b_tail_loop.ogg" id="5_ykthn"]
+[ext_resource type="Script" path="res://scripts/core/music_theme_variant_def.gd" id="6_xdek3"]
+
+[sub_resource type="Resource" id="section_opening"]
+script = ExtResource("3_y6m2x")
+
+[sub_resource type="Resource" id="section_a"]
+script = ExtResource("3_y6m2x")
+id = &"a"
+start_bar = 2
+bars = 6
+
+[sub_resource type="Resource" id="section_b"]
+script = ExtResource("3_y6m2x")
+id = &"b"
+start_bar = 8
+bars = 6
+
+[sub_resource type="Resource" id="section_tail"]
+script = ExtResource("3_y6m2x")
+id = &"tail"
+start_bar = 14
+bars = 8
+loop = true
+
+[resource]
+script = ExtResource("2_mjkah")
+id = &"th_f5b"
+tempo_bpm = 75.0
+endings = Array[StringName]([&"f5_air"])
+ending_variants = Array[StringName]([&"b"])
+stream = ExtResource("4_lf8ox")
+tail_stream = ExtResource("5_ykthn")
+reduced_fx_stream = ExtResource("1_tgeds")
+sections = Array[ExtResource("3_y6m2x")]([SubResource("section_opening"), SubResource("section_a"), SubResource("section_b"), SubResource("section_tail")])
+metadata/gain_db = -2.65

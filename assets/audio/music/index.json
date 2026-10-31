@@ -1,0 +1,207 @@
+{
+	"format": 1,
+	"sets": {
+		"ms_01": "res://assets/audio/music/sets/ms_01.tres",
+		"ms_02": "res://assets/audio/music/sets/ms_02.tres",
+		"ms_03": "res://assets/audio/music/sets/ms_03.tres",
+		"ms_04": "res://assets/audio/music/sets/ms_04.tres",
+		"ms_05": "res://assets/audio/music/sets/ms_05.tres",
+		"ms_06": "res://assets/audio/music/sets/ms_06.tres",
+		"ms_07": "res://assets/audio/music/sets/ms_07.tres"
+	},
+	"themes": {
+		"th_ea": {
+			"ending_variants": [],
+			"endings": [],
+			"gain_db": 0.0,
+			"path": "res://assets/audio/music/themes/th_ea.tres",
+			"reuse_set_id": "",
+			"worlds": [
+				"a"
+			]
+		},
+		"th_eb": {
+			"ending_variants": [],
+			"endings": [],
+			"gain_db": 0.0,
+			"path": "res://assets/audio/music/themes/th_eb.tres",
+			"reuse_set_id": "",
+			"worlds": [
+				"b"
+			]
+		},
+		"th_ec": {
+			"ending_variants": [],
+			"endings": [],
+			"gain_db": 0.0,
+			"path": "res://assets/audio/music/themes/th_ec.tres",
+			"reuse_set_id": "",
+			"worlds": [
+				"c"
+			]
+		},
+		"th_ed": {
+			"ending_variants": [],
+			"endings": [],
+			"gain_db": 0.0,
+			"path": "res://assets/audio/music/themes/th_ed.tres",
+			"reuse_set_id": "",
+			"worlds": [
+				"d"
+			]
+		},
+		"th_f1": {
+			"ending_variants": [],
+			"endings": [
+				"f1_arrested"
+			],
+			"gain_db": -4.37,
+			"path": "res://assets/audio/music/themes/th_f1.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f10": {
+			"ending_variants": [],
+			"endings": [
+				"f10_pont"
+			],
+			"gain_db": -5.03,
+			"path": "res://assets/audio/music/themes/th_f10.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f2": {
+			"ending_variants": [],
+			"endings": [
+				"f2_reassigned"
+			],
+			"gain_db": -4.96,
+			"path": "res://assets/audio/music/themes/th_f2.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f3": {
+			"ending_variants": [],
+			"endings": [
+				"f3_family_lost"
+			],
+			"gain_db": -3.79,
+			"path": "res://assets/audio/music/themes/th_f3.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f4": {
+			"ending_variants": [],
+			"endings": [
+				"f4_glory"
+			],
+			"gain_db": -2.13,
+			"path": "res://assets/audio/music/themes/th_f4.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f5b": {
+			"ending_variants": [
+				"b"
+			],
+			"endings": [
+				"f5_air"
+			],
+			"gain_db": -2.65,
+			"path": "res://assets/audio/music/themes/th_f5b.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f5c": {
+			"ending_variants": [
+				"c"
+			],
+			"endings": [
+				"f5_air"
+			],
+			"gain_db": -4.79,
+			"path": "res://assets/audio/music/themes/th_f5c.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f5s": {
+			"ending_variants": [
+				"s"
+			],
+			"endings": [
+				"f5_air"
+			],
+			"gain_db": -4.79,
+			"path": "res://assets/audio/music/themes/th_f5s.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f6": {
+			"ending_variants": [
+				"j10",
+				"j20"
+			],
+			"endings": [
+				"f6_drift"
+			],
+			"gain_db": -4.97,
+			"path": "res://assets/audio/music/themes/th_f6.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f6d": {
+			"ending_variants": [
+				"d"
+			],
+			"endings": [
+				"f6_drift"
+			],
+			"gain_db": -4.97,
+			"path": "res://assets/audio/music/themes/th_f6d.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f6t": {
+			"ending_variants": [
+				"t"
+			],
+			"endings": [
+				"f6_drift"
+			],
+			"gain_db": -4.97,
+			"path": "res://assets/audio/music/themes/th_f6t.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f7": {
+			"ending_variants": [],
+			"endings": [
+				"f7_reopens"
+			],
+			"gain_db": -5.23,
+			"path": "res://assets/audio/music/themes/th_f7.tres",
+			"reuse_set_id": "ms_02",
+			"worlds": []
+		},
+		"th_f8": {
+			"ending_variants": [],
+			"endings": [
+				"f8_registre"
+			],
+			"gain_db": -4.18,
+			"path": "res://assets/audio/music/themes/th_f8.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		},
+		"th_f9": {
+			"ending_variants": [],
+			"endings": [
+				"f9_strike"
+			],
+			"gain_db": -2.95,
+			"path": "res://assets/audio/music/themes/th_f9.tres",
+			"reuse_set_id": "",
+			"worlds": []
+		}
+	}
+}

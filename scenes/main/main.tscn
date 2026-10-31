@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/main/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/audio/title_music.gd" id="2_title_music"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -69,3 +70,6 @@ layout_mode = 2
 theme_type_variation = &"CaptionLabel"
 text = "Prototype M1 — Fondations"
 horizontal_alignment = 1
+
+[node name="TitleMusic" type="Node" parent="."]
+script = ExtResource("2_title_music")

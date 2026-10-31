@@ -26,9 +26,8 @@
 ##   `volume_db` est réécrit à chaque image (le schéma que D-176 abandonne) ;
 ## - `--qa-no-barrier` : met `AudioMixBarrier` en pause (le correctif D-083
 ##   retiré) : montre que le protocole sait faire planter Godot 4.7.2.
-## Couches : `--qa-layers=legacy` (les 5 boucles `mus_*` de 24 s à 80 BPM,
-## même tempo que MS-02) ou `ms02` (les couches rendues par
-## `tools/build_music.gd`, défaut si présentes).
+## Couches : `--qa-layers=ms03` (les 5 couches de MS-03 ; les boucles M6
+## `mus_*` de la phase 1 n'existent plus) ou `ms02` (défaut si présentes).
 ##
 ## Sortie : `QA_STRESS …` tous les 25 rechargements, `QA_STRESS_DONE …` puis
 ## sortie par `AudioMixBarrier.quit_after_silence()` (les fuites éventuelles
@@ -36,12 +35,14 @@
 extends Node
 
 const DAY_SCENE: String = "res://scenes/main/day.tscn"
+## Couches de repli (`--qa-layers=ms03`) : MS-03 (les boucles M6 `mus_*` ont
+## été supprimées en phase 2).
 const LEGACY_LAYERS: Array[String] = [
-	"res://assets/audio/music/mus_shift_calm_loop.ogg",
-	"res://assets/audio/music/mus_debrief_loop.ogg",
-	"res://assets/audio/music/mus_shift_tension_loop.ogg",
-	"res://assets/audio/music/mus_briefing_loop.ogg",
-	"res://assets/audio/music/mus_debrief_minor_loop.ogg",
+	"res://assets/audio/music/ms03/mus_ms03_l0_loop.ogg",
+	"res://assets/audio/music/ms03/mus_ms03_l1_loop.ogg",
+	"res://assets/audio/music/ms03/mus_ms03_l2_loop.ogg",
+	"res://assets/audio/music/ms03/mus_ms03_l3_loop.ogg",
+	"res://assets/audio/music/ms03/mus_ms03_l4_loop.ogg",
 ]
 const MS02_DIR: String = "res://assets/audio/music/ms02"
 const CLIP_A: StringName = &"ms02"
@@ -143,7 +144,7 @@ func _load_layers(kind: String) -> void:
 	else:
 		for path: String in LEGACY_LAYERS:
 			_layers.append(load(path) as AudioStream)
-		_layer_source = "legacy"
+		_layer_source = "ms03"
 
 
 func _next_interval() -> int:

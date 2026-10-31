@@ -398,7 +398,9 @@
       ],
       "from_bar": 8,
       "to_bar": 22
-     }
+     },
+     "variant": "inactive",
+     "doc": "Piste muette dans la démo validée par le client (D-198) : les indices `only` n'étaient pas lus (corrigé en phase 2) ; gardée inactive pour ne pas changer TH-F9."
     },
     {
      "instrument": "drone",

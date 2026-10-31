@@ -83,10 +83,20 @@ func _initialize() -> void:
 # Ensembles, thèmes, démos
 # ---------------------------------------------------------------------------
 
+## Ensembles sans lecture critique (titre, soirée) : M-08 non jugé.
+const NO_READING_SETS: Array[String] = ["ms01", "ms06"]
+
+
 func _audit_set(score_id: String, entry: Dictionary) -> void:
 	var files: Dictionary = entry["files"]
 	var names: Array = files.keys()
 	names.sort()
+	var stems: Array = entry.get("stems", [])
+	if not stems.is_empty():
+		# Ordre des couches = ordre de la partition (gains du manifeste).
+		names = []
+		for stem_id: Variant in stems:
+			names.append("mus_%s_%s_loop" % [score_id, str(stem_id)])
 	var rate: int = int(entry["sample_rate"])
 	var expected: int = int(entry["bars"]) * int(entry["bar_samples"])
 	var decoded: Array = []
@@ -97,26 +107,41 @@ func _audit_set(score_id: String, entry: Dictionary) -> void:
 		decoded.append(lr)
 		set_peak_tp = maxf(set_peak_tp, float(info.get("true_peak_dbtp", -INF)))
 	_check("M-02", score_id, "crête de l'ensemble %.2f dBTP (−1 ±0,5)" % set_peak_tp, set_peak_tp <= -1.0 and set_peak_tp >= -1.5)
-	# M-03 : niveaux N0 → N4 sur la somme des couches décodées.
+	# M-03 : paliers du plan de niveaux (N0 → N4 de M14 §2.5 ; titre, soirée,
+	# mondes du J31 : plan de la partition) sur la somme des couches décodées.
 	var levels: Dictionary = entry.get("levels", {})
 	var gains: Array = levels.get("layer_gains_db", [])
-	var targets: Array = levels.get("targets_lufs", [])
+	var steps: Array = levels.get("steps", [])
+	if steps.is_empty():
+		var targets: Array = levels.get("targets_lufs", [])
+		for level: int in mini(MusicDirector.LEVEL_COUNT, targets.size()):
+			var ids: Array = []
+			var mask: PackedByteArray = MusicDirector.layers_for_level(level)
+			for i: int in mask.size():
+				if mask[i] == 1:
+					ids.append("l%d" % i)
+			steps.append({"label": "N%d" % level, "layers": ids, "target_lufs": targets[level]})
 	var previous: float = -INF
+	var previous_layers: Array = []
 	var n4_mix: Array[PackedFloat32Array] = []
 	var music_band: Array[float] = []
-	for level: int in mini(MusicDirector.LEVEL_COUNT, targets.size()):
-		var mix: Array[PackedFloat32Array] = _level_mix(decoded, gains, level)
+	for k: int in steps.size():
+		var step: Dictionary = steps[k]
+		var layers: Array = step.get("layers", [])
+		var mix: Array[PackedFloat32Array] = _layers_mix(decoded, gains, stems, layers)
 		var lufs: float = AudioLoudness.integrated(mix[0], mix[1], rate)
-		var tol: float = 2.0 if level == 0 else 1.0
-		var target: float = float(targets[level])
-		_check("M-03", score_id, "N%d : %.2f LUFS (cible %.1f ±%.0f)" % [level, lufs, target, tol],
+		var tol: float = 2.0 if k == 0 else 1.0
+		var target: float = float(step.get("target_lufs", -30.0))
+		_check("M-03", score_id, "%s : %.2f LUFS (cible %.1f ±%.0f)" % [step.get("label", ""), lufs, target, tol],
 				absf(lufs - target) <= tol)
-		_check("M-03", score_id, "N%d > N%d (monotone)" % [level, level - 1] if level > 0 else "N0 premier palier",
-				lufs > previous)
+		var superset: bool = k > 0 and previous_layers.all(func(x: Variant) -> bool: return layers.has(x))
+		if superset or k == 0:
+			_check("M-03", score_id, "%s > palier précédent (monotone)" % step.get("label", "") if k > 0 else "premier palier",
+					lufs > previous)
 		previous = lufs
+		previous_layers = layers
 		music_band.append(_band_peak_db(mix[0], mix[1], rate, 3.0))
-		if level == MusicDirector.LEVEL_COUNT - 1:
-			n4_mix = mix
+		n4_mix = mix
 	if not n4_mix.is_empty():
 		var wav_path: String = _tmp.path_join("%s_n4.wav" % score_id)
 		AudioDsp.to_wav(n4_mix[0], rate, n4_mix[1]).save_to_wav(wav_path)
@@ -125,7 +150,10 @@ func _audit_set(score_id: String, entry: Dictionary) -> void:
 		_check("M-03", score_id, "N4 recoupé par ffmpeg : %.2f LUFS (outil : %.2f)" % [float(ff.get("lufs", -INF)), mine],
 				absf(float(ff.get("lufs", -INF)) - mine) <= 0.3)
 		DirAccess.remove_absolute(wav_path)
-	_audit_ui_margin(score_id, music_band)
+	if NO_READING_SETS.has(score_id):
+		_info("M-08", score_id, "ensemble sans lecture (titre, soirée) : non jugé")
+	else:
+		_audit_ui_margin(score_id, music_band)
 
 
 func _audit_theme(score_id: String, entry: Dictionary) -> void:
@@ -133,12 +161,14 @@ func _audit_theme(score_id: String, entry: Dictionary) -> void:
 	var rate: int = int(entry["sample_rate"])
 	var bar_n: int = int(entry["bar_samples"])
 	var runtime_gain: float = float(entry.get("runtime_gain_db", 0.0))
+	var main_bars: int = int(entry.get("tail_from_bar", entry["bars"])) + int(entry.get("main_tail_bars", 0))
+	var tail_only: bool = bool(entry.get("tail_only", false))
 	for name: String in files:
 		var info: Dictionary = files[name]
 		var loop: bool = bool(info.get("loop", false))
-		var bars: int = int(entry["tail_bars"]) if loop else int(entry["bars"])
+		var bars: int = int(entry["tail_bars"]) if loop else main_bars
 		var lr: Array[PackedFloat32Array] = _audit_file(score_id, name, info, rate, bars * bar_n, loop, entry)
-		if not loop:
+		if not loop or tail_only:
 			var lufs: float = AudioLoudness.integrated(lr[0], lr[1], rate) + runtime_gain
 			_check("M-04", name, "%.2f LUFS au gain d'exécution %+.2f dB (cible −18 ±1)" % [lufs, runtime_gain],
 					absf(lufs + 18.0) <= 1.0)
@@ -387,8 +417,22 @@ func _audit_ui_margin(score_id: String, music_band_db: Array[float]) -> void:
 # Outils
 # ---------------------------------------------------------------------------
 
+## Somme des couches `layers` (ids de couche ; ordre `stems`) aux gains du
+## manifeste et au bus Music par défaut.
+func _layers_mix(decoded: Array, gains: Array, stems: Array, layers: Array) -> Array[PackedFloat32Array]:
+	var mask: PackedByteArray = PackedByteArray()
+	mask.resize(decoded.size())
+	for i: int in decoded.size():
+		var stem_id: String = str(stems[i]) if i < stems.size() else "l%d" % i
+		mask[i] = 1 if layers.has(stem_id) else 0
+	return _mask_mix(decoded, gains, mask)
+
+
 func _level_mix(decoded: Array, gains: Array, level: int) -> Array[PackedFloat32Array]:
-	var mask: PackedByteArray = MusicDirector.layers_for_level(level)
+	return _mask_mix(decoded, gains, MusicDirector.layers_for_level(level))
+
+
+func _mask_mix(decoded: Array, gains: Array, mask: PackedByteArray) -> Array[PackedFloat32Array]:
 	var first: Array[PackedFloat32Array] = decoded[0]
 	var n: int = first[0].size()
 	var l: PackedFloat32Array = AudioDsp.silence(n)

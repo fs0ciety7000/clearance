@@ -15,5 +15,5 @@ dest_files=["res://.godot/imported/mus_th_f9.ogg-1fb74e0356ea4c5fa0ad012c7ab1773
 loop=false
 loop_offset=0
 bpm=75.0
-beat_count=88
+beat_count=64
 bar_beats=4

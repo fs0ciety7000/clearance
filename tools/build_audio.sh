@@ -10,7 +10,7 @@
 #      art_src/music/*.json, rendu incrémental, manifest.json), import, puis
 #      --defs (MusicSetDef / MusicThemeDef / music_library.tres).
 # Dépendances : godot 4.7, ffmpeg (libvorbis). Usage :
-#   bash tools/build_audio.sh [--only=ui,booth,…]      (« music » : anciennes boucles + musique M14)
+#   bash tools/build_audio.sh [--only=ui,booth,…]      (« beds » : lits d'ambiance par acte ; « music » : musique M14)
 #   bash tools/build_audio.sh --only=music:ms02        (une partition M14 seulement ; « music:all » : toutes)
 #   options transmises à build_music : --force (tout rendre), --demos (démos docs/mockups/)
 set -e
@@ -45,7 +45,7 @@ if [ -n "$ONLY" ]; then
     case "$p" in
       music:all) MUSIC=1 ;;
       music:*) MUSIC=1; MUSIC_IDS="${MUSIC_IDS:+$MUSIC_IDS,}${p#music:}" ;;
-      music) MUSIC=1; groups+=("$p") ;;
+      music) MUSIC=1 ;;
       *) groups+=("$p") ;;
     esac
   done
@@ -62,7 +62,6 @@ for f in "$WORK"/loops/*.wav; do
   name="$(basename "${f%.wav}")"
   case "$name" in
     amb_*) dest="$ROOT/assets/audio/ambience/$name.ogg"; q=4 ;;
-    mus_*) dest="$ROOT/assets/audio/music/$name.ogg"; q=5 ;;
     *) continue ;;
   esac
   serial=$(( $(printf '%s' "$name" | cksum | cut -d' ' -f1) % 2147483647 ))
@@ -77,11 +76,8 @@ fi
 for imp in "$ROOT"/assets/audio/*/*_loop.wav.import "$ROOT"/assets/audio/*/*/*_loop.wav.import; do
   if [ -f "$imp" ]; then sed -i 's/^edit\/loop_mode=.*/edit\/loop_mode=2/' "$imp"; fi
 done
-for imp in "$ROOT"/assets/audio/ambience/*_loop.ogg.import "$ROOT"/assets/audio/music/*_loop.ogg.import; do
+for imp in "$ROOT"/assets/audio/ambience/*_loop.ogg.import; do
   if [ -f "$imp" ]; then sed -i 's/^loop=.*/loop=true/' "$imp"; fi
-done
-for imp in "$ROOT"/assets/audio/music/*_loop.ogg.import; do
-  if [ -f "$imp" ]; then sed -i 's/^bpm=.*/bpm=80/; s/^beat_count=.*/beat_count=32/' "$imp"; fi
 done
 "$GODOT" --headless --path "$ROOT" --import >/dev/null 2>&1 || true
 

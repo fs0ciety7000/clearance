@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MusicThemeDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/music_theme_def.gd" id="1_yl5rc"]
+[ext_resource type="Script" path="res://scripts/core/music_section_def.gd" id="2_f7wxk"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f1.ogg" id="3_bs58r"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f1_tail_loop.ogg" id="4_4a5rn"]
+[ext_resource type="Script" path="res://scripts/core/music_theme_variant_def.gd" id="5_sss1l"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="6_l0tnm"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f1_okonkwo_warned.ogg" id="7_o7d1j"]
+
+[sub_resource type="Resource" id="section_opening"]
+script = ExtResource("2_f7wxk")
+
+[sub_resource type="Resource" id="section_a"]
+script = ExtResource("2_f7wxk")
+id = &"a"
+start_bar = 2
+bars = 4
+
+[sub_resource type="Resource" id="section_b"]
+script = ExtResource("2_f7wxk")
+id = &"b"
+start_bar = 6
+bars = 4
+
+[sub_resource type="Resource" id="section_tail"]
+script = ExtResource("2_f7wxk")
+id = &"tail"
+start_bar = 10
+bars = 8
+loop = true
+
+[sub_resource type="Resource" id="condition_okonkwo_warned"]
+script = ExtResource("6_l0tnm")
+all_of = Array[StringName]([&"okonkwo_warned"])
+
+[sub_resource type="Resource" id="variant_okonkwo_warned"]
+script = ExtResource("5_sss1l")
+id = &"okonkwo_warned"
+condition = SubResource("condition_okonkwo_warned")
+stream = ExtResource("7_o7d1j")
+
+[resource]
+script = ExtResource("1_yl5rc")
+id = &"th_f1"
+endings = Array[StringName]([&"f1_arrested"])
+stream = ExtResource("3_bs58r")
+tail_stream = ExtResource("4_4a5rn")
+sections = Array[ExtResource("2_f7wxk")]([SubResource("section_opening"), SubResource("section_a"), SubResource("section_b"), SubResource("section_tail")])
+variants = Array[ExtResource("5_sss1l")]([SubResource("variant_okonkwo_warned")])
+metadata/gain_db = -4.37

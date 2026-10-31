@@ -136,24 +136,109 @@ func test_ui_voice_limit() -> void:
 
 func test_music_states_and_ambience() -> void:
 	var day: DayDef = DayDef.new()
+	day.day_number = 1
 	day.duration_sec = 100.0
+	day.passenger_count = 8
 	var rulebook: Array[RulebookEntry] = []
 	EventBus.day_started.emit(day, rulebook)
-	assert_eq(director.music_cue, &"mus.briefing")
 	for cue: StringName in AudioDirector.AMBIENCE_LOOPS:
 		assert_true(director.ambience_players[cue].playing, "boucle %s" % cue)
 		assert_eq(director.ambience_players[cue].bus, AudioBuses.AMBIENCE)
+	# M14 : un seul lecteur de musique (MusicDirector), plus de `set_music`.
+	assert_false(&"set_music" in director, "AudioDirector.set_music() retiré (D-176)")
+	assert_not_null(director.music, "MusicDirector enfant")
+	assert_eq(director.music.get_parent(), director)
+	var players: int = 0
+	for child: Node in director.get_children() + director.music.get_children():
+		if child is AudioStreamPlayer and (child as AudioStreamPlayer).bus == AudioBuses.MUSIC:
+			players += 1
+	assert_eq(players, 1, "un seul lecteur sur le bus Music")
+	if director.day_set == null:
+		pending("musique M14 pas encore rendue")
+		return
+	assert_eq(director.day_set.id, &"ms_02", "J1 : Acte I")
+	assert_eq(director.music_state, &"briefing")
+	assert_eq(director.music.get_current_clip(), &"ms_02")
+	assert_eq(director.music.level, MusicDirector.LEVEL_EXPOSED, "briefing « exposé »")
 	EventBus.day_phase_changed.emit(DayPhase.Kind.INTRO, &"")
 	EventBus.day_phase_changed.emit(DayPhase.Kind.WAITING_CASE, &"")
-	assert_eq(director.music_cue, &"mus.shift_calm")
-	EventBus.day_clock_ticked.emit(30.0)
-	assert_eq(director.music_cue, &"mus.shift_calm", "au-dessus de 25 %")
-	EventBus.day_clock_ticked.emit(24.0)
-	assert_eq(director.music_cue, &"mus.shift_tension")
-	assert_eq(director.music_players[director._music_index].bus, AudioBuses.MUSIC)
+	assert_eq(director.music_state, &"shift")
+	assert_eq(director.music.target_level, 0, "shift : N0 à la mesure suivante")
+	EventBus.day_clock_ticked.emit(10.0)
+	assert_almost_eq(director.intensity.elapsed_ratio, 0.9, 0.001, "P2 : chrono")
+	var d: Discrepancy = Discrepancy.new()
+	d.result = Discrepancy.Result.DISCORDANT
+	EventBus.discrepancy_checked.emit(d)
+	assert_eq(director.intensity.discrepancies, 1, "P3 : discordance constatée")
+	EventBus.quota_changed.emit(9, 10)
+	assert_eq(director.intensity.quota_used, 9, "P4 : quota")
+	for i: int in 40:
+		director._update_intensity(0.25)
+	assert_gt(director.music.target_level, 1, "la pression monte")
+	assert_eq(director.music.player.volume_db, 0.0, "jamais de volume_db de lecteur animé")
 	var summary: DaySummary = DaySummary.new()
 	EventBus.day_ended.emit(summary)
-	assert_true(director.music_cue == &"mus.debrief" or director.music_cue == &"mus.debrief_minor")
+	assert_eq(director.music_state, &"evening")
+	assert_eq(director.music.get_current_clip(), &"ms_06", "bilan et soirée : MS-06")
+	assert_true(director.music.groups.has(AudioDirector.GROUP_WARM) or director.music.groups.has(AudioDirector.GROUP_CRISIS))
+
+
+func test_inspection_power_down_and_queue_murmur() -> void:
+	var day: DayDef = DayDef.new()
+	day.day_number = 12
+	day.duration_sec = 300.0
+	day.passenger_count = 8
+	var rulebook: Array[RulebookEntry] = []
+	EventBus.day_started.emit(day, rulebook)
+	assert_eq(AudioDirector.station_bed_cue(day), &"amb.station_bed_a2", "Acte II : lit a2")
+	assert_eq(director.ambience_players[&"amb.station_bed"].stream, AudioCueBank.stream_of(&"amb.station_bed_a2"))
+	EventBus.day_phase_changed.emit(DayPhase.Kind.WAITING_CASE, &"")
+	var was: bool = Settings.get_bool(Settings.KEY_MUSIC_INSPECTION_REDUCE)
+	Settings.set_value(Settings.KEY_MUSIC_INSPECTION_REDUCE, true, false)
+	EventBus.inspection_mode_changed.emit(true)
+	assert_true(director.intensity.inspection_reduce, "Inspection discrète")
+	director._update_pause()
+	assert_almost_eq(director.music_muffle(), AudioDirector.INSPECTION_CUTOFF_HZ, 0.1, "passe-bas 3,5 kHz")
+	for i: int in 30:
+		director._update_ducks(0.05)
+	assert_almost_eq(director.duck_db(AudioBuses.MUSIC), AudioDirector.INSPECTION_DUCK_DB, 0.05, "−6 dB")
+	EventBus.inspection_mode_changed.emit(false)
+	Settings.set_value(Settings.KEY_MUSIC_INSPECTION_REDUCE, was, false)
+	var plan: StationEventPlan = StationEventPlan.new()
+	plan.event = StationEventDef.new()
+	plan.event.id = AudioDirector.EVENT_POWER_CUT
+	EventBus.station_event_started.emit(plan)
+	assert_true(director.intensity.power_down, "EV-05 : power down")
+	director._update_pause()
+	assert_almost_eq(director.music_muffle(), AudioDirector.POWER_DOWN_CUTOFF_HZ, 0.1, "passe-bas 400 Hz")
+	EventBus.station_event_ended.emit(plan)
+	assert_false(director.intensity.power_down)
+	var none: Array[QueueSilhouette] = []
+	EventBus.queue_progressed.emit(0, 8, none)
+	assert_eq(director.intensity.queue_remaining, 8, "P1 : file")
+	var full: float = director.murmur_db()
+	EventBus.queue_progressed.emit(7, 8, none)
+	assert_eq(director.intensity.queue_remaining, 1)
+	assert_almost_eq(director.murmur_db(), full + AudioDirector.MURMUR_MIN_DB, 0.01, "file vide : murmure −6 dB")
+
+
+func test_ambient_announcement_is_rendered_and_subtitled() -> void:
+	watch_signals(EventBus)
+	var day: DayDef = DayDef.new()
+	day.day_number = 3
+	var rulebook: Array[RulebookEntry] = []
+	EventBus.day_started.emit(day, rulebook)
+	var key: String = "hall_j7_okonkwo_citation" # toute clé traduite : le texte vient de fr.csv
+	director.announce_ambient(key)
+	assert_signal_emitted(EventBus, "ambient_announced")
+	var params: Array = get_signal_parameters(EventBus, "ambient_announced")
+	assert_eq(params[0], key)
+	assert_gte(float(params[1]), 2.5, "durée de sous-titre")
+	assert_true(director.pa_player.playing, "voix synthétisée jouée")
+	assert_eq(director.pa_player.bus, AudioBuses.AMBIENCE)
+	assert_eq(director.history[-1][0], &"amb.pa_ambient")
+	director.announce_ambient("pa_cle_absente_xyz")
+	assert_eq(get_signal_emit_count(EventBus, "ambient_announced"), 1, "clé non traduite : rien")
 
 
 func test_timer_warning_once_and_critical_ticks_per_second() -> void:

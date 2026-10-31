@@ -1,0 +1,471 @@
+{
+ "id": "thf6",
+ "def_id": "th_f6",
+ "kind": "theme",
+ "title": "TH-F6 · À la dérive / Partir — ré dorien, 64 BPM ; variantes TH-F6D (Dérive) et TH-F6T (Tycho)",
+ "doc": "docs/M14.md §2.7 : pincé (Karplus-Strong) « rouille et thé », grincement de coque ; MO-3 au pincé. `d` → TH-F6D : houle de bruit lent et MO-2 d'une seule note en B. `t` → TH-F6T : bourdon de lampe de mine, B résolu en ré majeur (le foyer se retrouve). Variantes sans queue propre (celle de TH-F6). Ouverture 2 + A 4 + B 4 (30 s) puis queue 8 (30 s).",
+ "tempo": 64,
+ "beats_per_bar": 4,
+ "bars": 18,
+ "tail_bars": 2,
+ "sample_rate": 48000,
+ "seed": 9006,
+ "sections": [
+  {
+   "id": "opening",
+   "from_bar": 0,
+   "bars": 2
+  },
+  {
+   "id": "a",
+   "from_bar": 2,
+   "bars": 4
+  },
+  {
+   "id": "b",
+   "from_bar": 6,
+   "bars": 4
+  },
+  {
+   "id": "tail",
+   "from_bar": 10,
+   "bars": 8,
+   "loop": true
+  }
+ ],
+ "chords": [
+  {
+   "bar": 0,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 2,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "D3",
+    "F3",
+    "B3"
+   ]
+  },
+  {
+   "bar": 4,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 6,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "E3",
+    "G3",
+    "C4"
+   ]
+  },
+  {
+   "bar": 8,
+   "bars": 2,
+   "bass": "C2",
+   "notes": [
+    "C3",
+    "G3",
+    "C4",
+    "E4"
+   ]
+  },
+  {
+   "bar": 10,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "D3",
+    "F3",
+    "B3"
+   ]
+  },
+  {
+   "bar": 12,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 14,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "E3",
+    "G3",
+    "C4"
+   ]
+  },
+  {
+   "bar": 16,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-3": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "D5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "F5"
+   },
+   {
+    "step": 8,
+    "len": 4,
+    "note": "E5"
+   },
+   {
+    "step": 12,
+    "len": 12,
+    "note": "A5"
+   }
+  ]
+ },
+ "instruments": {
+  "pluck": {
+   "type": "pluck",
+   "damping": 0.008,
+   "brightness": 0.35,
+   "length": 1.6,
+   "level": 0.3
+  },
+  "mo": {
+   "type": "pluck",
+   "damping": 0.004,
+   "brightness": 0.45,
+   "length": 2.0,
+   "level": 0.38
+  },
+  "creak": {
+   "type": "brush",
+   "cutoff": 420,
+   "q": 6.0,
+   "attack": 0.15,
+   "decay": 0.6,
+   "length": 1.0,
+   "level": 0.3
+  },
+  "pad": {
+   "type": "pad",
+   "voices": 2,
+   "detune_cents": 9,
+   "cutoff": 600,
+   "q": 0.7,
+   "attack": 2.0,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 2.5,
+   "vib_hz": 0.21,
+   "vib_depth": 0.0012,
+   "level": 0.2
+  },
+  "swell": {
+   "type": "noise_swell",
+   "cutoff_start": 180,
+   "cutoff_end": 700,
+   "q": 1.4,
+   "attack": 2.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.0,
+   "swell": 0.6,
+   "level": 0.25
+  },
+  "lamp": {
+   "type": "tone",
+   "wave": "sine",
+   "attack": 2.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.5,
+   "level": 0.06
+  }
+ },
+ "mix": {
+  "eq": [],
+  "reverb": {
+   "rt60": 2.6,
+   "size": 1.2,
+   "damp_hz": 3800,
+   "predelay": 0.02
+  },
+  "width": 0.5
+ },
+ "stems": [
+  {
+   "id": "strings",
+   "tracks": [
+    {
+     "instrument": "pluck",
+     "gain_db": 0,
+     "send": 0.35,
+     "pattern": {
+      "bars": 1,
+      "steps": [
+       {
+        "step": 0,
+        "len": 2,
+        "note": "chord:0",
+        "vel": 0.8
+       },
+       {
+        "step": 3,
+        "len": 2,
+        "note": "chord:2",
+        "vel": 0.5
+       },
+       {
+        "step": 6,
+        "len": 2,
+        "note": "chord:1",
+        "vel": 0.6
+       },
+       {
+        "step": 10,
+        "len": 2,
+        "note": "chord:3",
+        "vel": 0.5
+       },
+       {
+        "step": 12,
+        "len": 2,
+        "note": "chord:2",
+        "vel": 0.55
+       }
+      ],
+      "from_bar": 2
+     }
+    },
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.3,
+     "not_variant": "t",
+     "chords": {
+      "octave": 0
+     }
+    },
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.3,
+     "variant": "t",
+     "chords": {
+      "octave": 0,
+      "to_bar": 8
+     }
+    },
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.3,
+     "variant": "t",
+     "events": [
+      {
+       "step": 0,
+       "len": 32,
+       "vel": 0.9,
+       "notes": [
+        "D3",
+        "F#3",
+        "A3",
+        "E4"
+       ],
+       "bar": 8
+      }
+     ]
+    },
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.3,
+     "variant": "t",
+     "chords": {
+      "octave": 0,
+      "from_bar": 10
+     }
+    }
+   ]
+  },
+  {
+   "id": "hull",
+   "tracks": [
+    {
+     "instrument": "creak",
+     "gain_db": 0,
+     "send": 0.4,
+     "pan": -0.4,
+     "events": [
+      {
+       "step": 4,
+       "len": 6,
+       "note": "C3",
+       "vel": 0.8,
+       "bar": 1
+      },
+      {
+       "step": 10,
+       "len": 6,
+       "note": "C3",
+       "vel": 0.6,
+       "bar": 5
+      },
+      {
+       "step": 2,
+       "len": 6,
+       "note": "C3",
+       "vel": 0.6,
+       "bar": 13
+      }
+     ]
+    },
+    {
+     "instrument": "swell",
+     "gain_db": 0,
+     "send": 0.3,
+     "variant": "d",
+     "events": [
+      {
+       "step": 0,
+       "len": 32,
+       "note": "C3",
+       "vel": 1.0,
+       "bar": 6
+      },
+      {
+       "step": 0,
+       "len": 32,
+       "note": "C3",
+       "vel": 1.0,
+       "bar": 8
+      }
+     ]
+    },
+    {
+     "instrument": "lamp",
+     "gain_db": 0,
+     "send": 0.1,
+     "variant": "t",
+     "events": [
+      {
+       "step": 0,
+       "len": 64,
+       "vel": 1.0,
+       "notes": [
+        "A2",
+        "A3"
+       ],
+       "bar": 6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mo3",
+   "tracks": [
+    {
+     "instrument": "mo",
+     "gain_db": 0,
+     "send": 0.4,
+     "pan": 0.15,
+     "events": [
+      {
+       "motif": "MO-3",
+       "bar": 2,
+       "step": 0
+      },
+      {
+       "motif": "MO-3",
+       "bar": 6,
+       "step": 0,
+       "vel": 0.85
+      },
+      {
+       "motif": "MO-3",
+       "bar": 12,
+       "step": 0,
+       "vel": 0.7
+      }
+     ]
+    },
+    {
+     "instrument": "mo",
+     "gain_db": -2,
+     "send": 0.5,
+     "variant": "d",
+     "pan": -0.2,
+     "events": [
+      {
+       "step": 8,
+       "len": 2,
+       "note": "A4",
+       "vel": 0.6,
+       "bar": 9
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "endings": [
+  "f6_drift"
+ ],
+ "ending_variants": [
+  "j10",
+  "j20"
+ ],
+ "variants": [
+  {
+   "id": "d",
+   "def_id": "th_f6d",
+   "ending_variants": [
+    "d"
+   ]
+  },
+  {
+   "id": "t",
+   "def_id": "th_f6t",
+   "ending_variants": [
+    "t"
+   ]
+  }
+ ]
+}

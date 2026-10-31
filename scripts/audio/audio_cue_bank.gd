@@ -59,16 +59,15 @@ const CUES: Dictionary[StringName, Array] = {
 	&"amb.rain_glass": [&"Ambience", "ambience/amb_rain_glass_loop.ogg", 1, P2, -8.0, 1.0, 1],
 	&"amb.neon_hum": [&"Ambience", "ambience/amb_neon_hum_loop.ogg", 1, P3, -20.0, 1.0, 1],
 	&"amb.station_bed": [&"Ambience", "ambience/amb_station_bed_loop.ogg", 1, P2, -8.0, 1.0, 1],
+	# M14 (§4.5, VH-9) : lit de station par acte ou par monde (même niveau).
+	&"amb.station_bed_a2": [&"Ambience", "ambience/amb_station_bed_a2_loop.ogg", 1, P2, -8.0, 1.0, 1],
+	&"amb.station_bed_a3": [&"Ambience", "ambience/amb_station_bed_a3_loop.ogg", 1, P2, -8.0, 1.0, 1],
+	&"amb.station_bed_d": [&"Ambience", "ambience/amb_station_bed_d_loop.ogg", 1, P2, -8.0, 1.0, 1],
 	&"amb.queue_murmur": [&"Ambience", "ambience/amb_queue_murmur_loop.ogg", 1, P3, -6.0, 1.0, 1],
 	&"amb.rain_drop_heavy": [&"Ambience", "ambience/amb_rain_drop_heavy_%02d.wav", 4, P3, -20.0, 1.1, 2],
 	&"amb.queue_advance": [&"Ambience", "ambience/amb_queue_advance_%02d.wav", 4, P3, -14.0, 1.05, 1],
 	&"amb.pa_announce": [&"Ambience", "voice/pa/vo_pa_announce_%02d.wav", 3, P3, -12.0, 1.0, 1],
 	# Musique (états)
-	&"mus.briefing": [&"Music", "music/mus_briefing_loop.ogg", 1, P2, -6.0, 1.0, 1],
-	&"mus.shift_calm": [&"Music", "music/mus_shift_calm_loop.ogg", 1, P2, -14.0, 1.0, 1],
-	&"mus.shift_tension": [&"Music", "music/mus_shift_tension_loop.ogg", 1, P2, -12.0, 1.0, 1],
-	&"mus.debrief": [&"Music", "music/mus_debrief_loop.ogg", 1, P2, -6.0, 1.0, 1],
-	&"mus.debrief_minor": [&"Music", "music/mus_debrief_minor_loop.ogg", 1, P2, -6.0, 1.0, 1],
 }
 
 static var _streams: Dictionary[StringName, AudioStream] = {}

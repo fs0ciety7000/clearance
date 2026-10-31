@@ -1,0 +1,397 @@
+{
+ "id": "thf5b",
+ "def_id": "th_f5b",
+ "kind": "theme",
+ "title": "TH-F5B · Brûlants — ré mineur, 75 BPM",
+ "doc": "docs/M14.md §2.7, §2.11 : coup grave filtré (≤ 200 Hz, attaque 30 ms, pas de transitoire brutal), percussion sourde ; MO-2 distordu (réduction de bits). Variante `rfx` (Effets visuels réduits, reduced_fx_stream) : coup grave −6 dB et MO-2 sans réduction de bits. Ouverture 2 + A 6 + B 6 (38,4 s) puis queue 8 (25,6 s).",
+ "tempo": 75,
+ "beats_per_bar": 4,
+ "bars": 22,
+ "tail_bars": 2,
+ "sample_rate": 48000,
+ "seed": 9055,
+ "sections": [
+  {
+   "id": "opening",
+   "from_bar": 0,
+   "bars": 2
+  },
+  {
+   "id": "a",
+   "from_bar": 2,
+   "bars": 6
+  },
+  {
+   "id": "b",
+   "from_bar": 8,
+   "bars": 6
+  },
+  {
+   "id": "tail",
+   "from_bar": 14,
+   "bars": 8,
+   "loop": true
+  }
+ ],
+ "chords": [
+  {
+   "bar": 0,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 2,
+   "bars": 2,
+   "bass": "Bb1",
+   "notes": [
+    "Bb2",
+    "D3",
+    "F3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 4,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "Bb2",
+    "D3",
+    "F3"
+   ]
+  },
+  {
+   "bar": 6,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "D3",
+    "E3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 8,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 10,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "Bb2",
+    "D3",
+    "F3"
+   ]
+  },
+  {
+   "bar": 12,
+   "bars": 2,
+   "bass": "Bb1",
+   "notes": [
+    "Bb2",
+    "D3",
+    "F3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 14,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "D3",
+    "E3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 16,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 18,
+   "bars": 2,
+   "bass": "Bb1",
+   "notes": [
+    "Bb2",
+    "D3",
+    "F3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 20,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "Bb2",
+    "D3",
+    "F3"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-2": [
+   {
+    "step": 0,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 2,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 4,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 7,
+    "len": 1,
+    "note": "E5"
+   }
+  ]
+ },
+ "instruments": {
+  "pad": {
+   "type": "pad",
+   "voices": 3,
+   "detune_cents": 9,
+   "cutoff": 600,
+   "q": 0.7,
+   "attack": 1.6,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 2.4,
+   "vib_hz": 0.21,
+   "vib_depth": 0.0012,
+   "level": 0.28
+  },
+  "hit": {
+   "type": "tone",
+   "wave": "thump",
+   "attack": 0.03,
+   "decay": 0.6,
+   "sustain": 0.0,
+   "release": 0.5,
+   "level": 0.8,
+   "cutoff": 200,
+   "drop": 0.4
+  },
+  "muffle": {
+   "type": "brush",
+   "cutoff": 320,
+   "q": 1.2,
+   "attack": 0.01,
+   "decay": 0.12,
+   "length": 0.3,
+   "level": 0.4
+  },
+  "crushed": {
+   "type": "pluck",
+   "damping": 0.005,
+   "brightness": 0.6,
+   "length": 1.4,
+   "level": 0.3,
+   "bits": 6,
+   "hold": 3
+  },
+  "clean": {
+   "type": "pluck",
+   "damping": 0.005,
+   "brightness": 0.5,
+   "length": 1.4,
+   "level": 0.3
+  }
+ },
+ "mix": {
+  "eq": [],
+  "reverb": {
+   "rt60": 2.8,
+   "size": 1.4,
+   "damp_hz": 3500,
+   "predelay": 0.03
+  },
+  "width": 0.5
+ },
+ "stems": [
+  {
+   "id": "pad",
+   "tracks": [
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.4,
+     "chords": {
+      "octave": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "perc",
+   "tracks": [
+    {
+     "instrument": "hit",
+     "gain_db": 0,
+     "send": 0.3,
+     "not_variant": "rfx",
+     "pattern": {
+      "bars": 2,
+      "steps": [
+       {
+        "step": 0,
+        "len": 4,
+        "note": "G1",
+        "vel": 1.0
+       }
+      ],
+      "from_bar": 2
+     }
+    },
+    {
+     "instrument": "hit",
+     "gain_db": -6,
+     "send": 0.3,
+     "variant": "rfx",
+     "pattern": {
+      "bars": 2,
+      "steps": [
+       {
+        "step": 0,
+        "len": 4,
+        "note": "G1",
+        "vel": 1.0
+       }
+      ],
+      "from_bar": 2
+     }
+    },
+    {
+     "instrument": "muffle",
+     "gain_db": 0,
+     "send": 0.2,
+     "pattern": {
+      "bars": 1,
+      "steps": [
+       {
+        "step": 6,
+        "len": 2,
+        "note": "C4",
+        "vel": 0.6
+       },
+       {
+        "step": 10,
+        "len": 2,
+        "note": "C4",
+        "vel": 0.7
+       }
+      ],
+      "from_bar": 2
+     }
+    }
+   ]
+  },
+  {
+   "id": "mo2",
+   "tracks": [
+    {
+     "instrument": "crushed",
+     "gain_db": 0,
+     "send": 0.3,
+     "not_variant": "rfx",
+     "pan": 0.15,
+     "events": [
+      {
+       "motif": "MO-2",
+       "bar": 4,
+       "step": 4,
+       "transpose": 5
+      },
+      {
+       "motif": "MO-2",
+       "bar": 10,
+       "step": 4,
+       "transpose": 5
+      },
+      {
+       "motif": "MO-2",
+       "bar": 16,
+       "step": 4,
+       "transpose": 5,
+       "vel": 0.8
+      }
+     ]
+    },
+    {
+     "instrument": "clean",
+     "gain_db": 0,
+     "send": 0.3,
+     "variant": "rfx",
+     "pan": 0.15,
+     "events": [
+      {
+       "motif": "MO-2",
+       "bar": 4,
+       "step": 4,
+       "transpose": 5
+      },
+      {
+       "motif": "MO-2",
+       "bar": 10,
+       "step": 4,
+       "transpose": 5
+      },
+      {
+       "motif": "MO-2",
+       "bar": 16,
+       "step": 4,
+       "transpose": 5,
+       "vel": 0.8
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "endings": [
+  "f5_air"
+ ],
+ "ending_variants": [
+  "b"
+ ],
+ "variants": [
+  {
+   "id": "rfx",
+   "reduced_fx": true
+  }
+ ]
+}

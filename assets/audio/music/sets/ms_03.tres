@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="MusicSetDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/music_layer_def.gd" id="1_wfw67"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms03/mus_ms03_l0_loop.ogg" id="2_4ywtb"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms03/mus_ms03_l1_loop.ogg" id="3_bf02i"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms03/mus_ms03_l2_loop.ogg" id="4_1j0a1"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms03/mus_ms03_l3_loop.ogg" id="5_w3xsa"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms03/mus_ms03_l4_loop.ogg" id="6_m4178"]
+[ext_resource type="Script" path="res://scripts/core/music_set_def.gd" id="7_xgsha"]
+
+[sub_resource type="Resource" id="layer_l0"]
+script = ExtResource("1_wfw67")
+id = &"l0"
+stream = ExtResource("2_4ywtb")
+gain_db = -16.37
+exposed = true
+keeps_on_power_down = true
+
+[sub_resource type="Resource" id="layer_l1"]
+script = ExtResource("1_wfw67")
+id = &"l1"
+role = &"pulse"
+stream = ExtResource("3_bf02i")
+gain_db = -5.15
+enter_level = 1
+
+[sub_resource type="Resource" id="layer_l2"]
+script = ExtResource("1_wfw67")
+id = &"l2"
+role = &"rhythm"
+stream = ExtResource("4_1j0a1")
+gain_db = 6.26
+enter_level = 2
+
+[sub_resource type="Resource" id="layer_l3"]
+script = ExtResource("1_wfw67")
+id = &"l3"
+role = &"motif"
+stream = ExtResource("5_w3xsa")
+gain_db = 0.9
+enter_level = 3
+exit_level = 4
+exposed = true
+melodic = true
+
+[sub_resource type="Resource" id="layer_l4"]
+script = ExtResource("1_wfw67")
+id = &"l4"
+role = &"tension"
+stream = ExtResource("6_m4178")
+gain_db = -6.69
+enter_level = 4
+
+[resource]
+script = ExtResource("7_xgsha")
+id = &"ms_03"
+tempo_bpm = 75.0
+layers = Array[ExtResource("1_wfw67")]([SubResource("layer_l0"), SubResource("layer_l1"), SubResource("layer_l2"), SubResource("layer_l3"), SubResource("layer_l4")])
+thresholds = PackedFloat32Array(0.15, 0.35, 0.6, 0.8)
+exposed_gain_db = 7.12

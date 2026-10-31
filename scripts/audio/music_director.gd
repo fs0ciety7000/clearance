@@ -29,6 +29,8 @@ extends Node
 
 ## Niveau appliqué (tests, outils QA).
 signal level_changed(level: int)
+## Début d'une mesure du clip en cours (intensité : décomptes à la mesure).
+signal bar_passed(index: int)
 
 const LEVEL_COUNT: int = 5
 const LAYER_COUNT: int = 5
@@ -85,6 +87,11 @@ var _fade_to_db: float = 0.0
 var _fade_left: float = 0.0
 var _fade_total: float = 0.0
 var _stop_after_fade: bool = false
+## Thème à jouer à la fin du fondu de sortie en cours (`play_theme_after_fade`).
+var _pending_theme: Dictionary = {}
+## Lecteur arrêté par `volume_music` à 0 (CPU nul, docs/M14.md §2.11) :
+## [clip, niveau] repris au retour du volume.
+var _suspended: Array = []
 
 
 func _ready() -> void:
@@ -102,6 +109,7 @@ func _exit_tree() -> void:
 	if player != null:
 		player.stop()
 		player.stream = null
+	_pending_theme = {}
 	_set_fade_db(0.0)
 
 
@@ -140,26 +148,52 @@ func configure_from_def(set_def: MusicSetDef) -> void:
 
 ## Déclare un thème (clip d'un seul flux, sans couches) ; `tail` : queue
 ## bouclée enchaînée automatiquement à la fin de `stream` (clip `<clip>_tail`).
+## `gain_db` (gain d'exécution du thème, −18 LUFS : `MusicThemeDef`) est
+## appliqué **dans le flux** : chaque clip est un `AudioStreamSynchronized`
+## d'une seule couche à ce volume (jamais le `volume_db` du lecteur).
 func configure_theme(clip: StringName, stream: AudioStream, bpm: float, bar_beats: int = 4,
-		tail: AudioStream = null) -> void:
+		tail: AudioStream = null, gain_db: float = 0.0) -> void:
 	if not _clips.has(clip):
 		_clip_order.append(clip)
-	_clips[clip] = {"stream": stream, "sync": null, "bpm": bpm, "bar_beats": bar_beats,
-		"gains": PackedFloat32Array(), "layers": 0, "next": StringName(String(clip) + "_tail") if tail != null else &""}
+	_clips[clip] = {"stream": _gained(stream, gain_db), "source": stream, "sync": null, "bpm": bpm,
+		"bar_beats": bar_beats, "gains": PackedFloat32Array(), "layers": 0,
+		"next": StringName(String(clip) + "_tail") if tail != null else &""}
 	if tail != null:
 		var tail_clip: StringName = StringName(String(clip) + "_tail")
 		if not _clips.has(tail_clip):
 			_clip_order.append(tail_clip)
-		_clips[tail_clip] = {"stream": tail, "sync": null, "bpm": bpm, "bar_beats": bar_beats,
-			"gains": PackedFloat32Array(), "layers": 0, "next": &""}
+		_clips[tail_clip] = {"stream": _gained(tail, gain_db), "source": tail, "sync": null, "bpm": bpm,
+			"bar_beats": bar_beats, "gains": PackedFloat32Array(), "layers": 0, "next": &""}
 	interactive = null
+
+
+## Flux d'une couche à `gain_db` (enveloppe `AudioStreamSynchronized`).
+static func _gained(stream: AudioStream, gain_db: float) -> AudioStream:
+	if stream == null:
+		return null
+	var sync: AudioStreamSynchronized = AudioStreamSynchronized.new()
+	sync.stream_count = 1
+	sync.set_sync_stream(0, stream)
+	sync.set_sync_stream_volume(0, gain_db)
+	return sync
+
+
+## Gain d'exécution d'un thème (−18 LUFS) : champ `gain_db` s'il existe
+## (proposé au lot A, D-197), sinon la métadonnée `gain_db` écrite par
+## `tools/build_music.gd --defs`.
+static func theme_gain_db(theme: Resource) -> float:
+	if theme == null:
+		return 0.0
+	if &"gain_db" in theme:
+		return float(theme.get(&"gain_db"))
+	return float(theme.get_meta(&"gain_db", 0.0))
 
 
 ## Thème depuis ses données (`MusicThemeDef`) ; clip = `id`.
 func configure_theme_def(theme: MusicThemeDef, flags: Dictionary[StringName, Variant] = {},
 		reduced_fx: bool = false) -> void:
 	configure_theme(theme.id, theme.main_stream(flags, reduced_fx), theme.tempo_bpm, theme.beats_per_bar,
-			theme.tail_for(flags))
+			theme.tail_for(flags), theme_gain_db(theme))
 
 
 ## Déclare tous les ensembles et thèmes d'une bibliothèque
@@ -198,7 +232,7 @@ func set_mask(mask: int) -> void:
 ## de la musique (fondu croisé dans le flux), sinon tout de suite.
 func play_theme(theme: MusicThemeDef, flags: Dictionary[StringName, Variant] = {}, reduced_fx: bool = false) -> void:
 	var stream: AudioStream = theme.main_stream(flags, reduced_fx)
-	if not _clips.has(theme.id) or _clips[theme.id]["stream"] != stream:
+	if not _clips.has(theme.id) or _clips[theme.id].get("source", null) != stream:
 		configure_theme_def(theme, flags, reduced_fx)
 		play(theme.id)
 		return
@@ -215,6 +249,58 @@ func skip_to_tail() -> void:
 		switch_clip(tail)
 
 
+## Fin → cinématique (docs/M14.md §2.6) : fondu de sortie de `fade_sec` par
+## l'effet `Fade`, puis le thème depuis son début (flux reconstruit : le
+## lecteur est arrêté pendant le silence) ; sans musique en cours, tout de
+## suite. `tail_first` : la queue directement (TH-F7 sous l'écran de fin).
+func play_theme_after_fade(theme: MusicThemeDef, flags: Dictionary[StringName, Variant] = {},
+		reduced_fx: bool = false, fade_sec: float = 2.0, tail_first: bool = false) -> void:
+	if theme == null:
+		return
+	_pending_theme = {"theme": theme, "flags": flags, "reduced_fx": reduced_fx, "tail_first": tail_first}
+	if not is_playing() or fade_sec <= 0.0:
+		_start_pending_theme()
+		return
+	fade_to(SILENT_DB, fade_sec)
+
+
+func _start_pending_theme() -> void:
+	var pending: Dictionary = _pending_theme
+	_pending_theme = {}
+	var theme: MusicThemeDef = pending.get("theme", null)
+	if theme == null or not is_inside_tree():
+		return
+	configure_theme_def(theme, pending["flags"], pending["reduced_fx"])
+	var clip: StringName = theme.id
+	if bool(pending.get("tail_first", false)) and _clips.has(StringName(String(theme.id) + "_tail")):
+		clip = StringName(String(theme.id) + "_tail")
+	play(clip)
+
+
+func has_pending_theme() -> bool:
+	return not _pending_theme.is_empty()
+
+
+## `volume_music` à 0 : lecteur arrêté (CPU nul) ; repris au retour du volume
+## sur le même clip (docs/M14.md §2.11).
+func set_suspended(value: bool) -> void:
+	if value == is_suspended():
+		return
+	if value:
+		_suspended = [_current_clip, level]
+		if player != null:
+			player.stop()
+	else:
+		var back: Array = _suspended
+		_suspended = []
+		if StringName(back[0]) != &"":
+			play(StringName(back[0]), int(back[1]))
+
+
+func is_suspended() -> bool:
+	return not _suspended.is_empty()
+
+
 func has_clip(clip: StringName) -> bool:
 	return _clips.has(clip)
 
@@ -227,6 +313,10 @@ func get_current_clip() -> StringName:
 ## optionnel par l'effet `Fade`).
 func play(clip: StringName, start_level: int = 0, fade_in_sec: float = 0.0) -> void:
 	if not _clips.has(clip) or not is_inside_tree():
+		return
+	if is_suspended():
+		_suspended = [clip, start_level]
+		_current_clip = &""
 		return
 	if interactive == null:
 		_build_interactive()
@@ -253,6 +343,9 @@ func play(clip: StringName, start_level: int = 0, fade_in_sec: float = 0.0) -> v
 ## Passe à un autre clip à la mesure suivante (fondu croisé de 2 mesures dans
 ## le flux) ; les couches du nouvel ensemble démarrent au niveau `start_level`.
 func switch_clip(clip: StringName, start_level: int = 0) -> void:
+	if is_suspended() and _clips.has(clip):
+		_suspended = [clip, start_level]
+		return
 	if not _clips.has(clip) or not player.playing or clip == _current_clip:
 		return
 	var playback: AudioStreamPlaybackInteractive = player.get_stream_playback() as AudioStreamPlaybackInteractive
@@ -357,6 +450,7 @@ func _process(_delta: float) -> void:
 
 
 func _on_bar() -> void:
+	bar_passed.emit(_bar_index)
 	var next: int = next_level(level, target_level, _bars_since_change)
 	if next != level:
 		level = next
@@ -486,6 +580,10 @@ func _update_fade(dt: float) -> void:
 
 
 func _finish_fade() -> void:
+	if not _pending_theme.is_empty():
+		_start_pending_theme()
+		_set_fade_db(0.0)
+		return
 	if _stop_after_fade:
 		_stop_after_fade = false
 		stop_music()

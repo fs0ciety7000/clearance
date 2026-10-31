@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="MusicThemeDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/music_theme_def.gd" id="1_e7pv8"]
+[ext_resource type="Script" path="res://scripts/core/music_section_def.gd" id="2_6fr1f"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms07/mus_ms07_l0_loop.ogg" id="3_mgg1p"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms07/mus_ms07_l1_loop.ogg" id="4_xnmmi"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms07/mus_ms07_world_a_loop.ogg" id="5_04mtj"]
+[ext_resource type="Script" path="res://scripts/core/music_theme_variant_def.gd" id="6_ehg20"]
+
+[sub_resource type="Resource" id="section_a"]
+script = ExtResource("2_6fr1f")
+id = &"a"
+bars = 16
+loop = true
+
+[sub_resource type="AudioStreamSynchronized" id="layers"]
+stream_count = 3
+stream_0/stream = ExtResource("3_mgg1p")
+stream_0/volume = -9.13
+stream_1/stream = ExtResource("4_xnmmi")
+stream_1/volume = 15.11
+stream_2/stream = ExtResource("5_04mtj")
+stream_2/volume = 6.09
+
+[resource]
+script = ExtResource("1_e7pv8")
+id = &"th_ea"
+sample_rate = 32000
+worlds = Array[StringName]([&"a"])
+stream = SubResource("layers")
+sections = Array[ExtResource("2_6fr1f")]([SubResource("section_a")])
+metadata/gain_db = 0.0

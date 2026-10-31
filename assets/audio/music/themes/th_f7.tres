@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="MusicThemeDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/music_theme_def.gd" id="1_njqyn"]
+[ext_resource type="Script" path="res://scripts/core/music_section_def.gd" id="2_oq0b7"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms02/mus_ms02_l0_loop.ogg" id="3_ddqt6"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms02/mus_ms02_l1_loop.ogg" id="4_6tey2"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f7_tail_loop.ogg" id="5_u634k"]
+[ext_resource type="Script" path="res://scripts/core/music_theme_variant_def.gd" id="6_37une"]
+
+[sub_resource type="Resource" id="section_tail"]
+script = ExtResource("2_oq0b7")
+id = &"tail"
+bars = 8
+loop = true
+
+[sub_resource type="AudioStreamSynchronized" id="layers"]
+stream_count = 2
+stream_0/stream = ExtResource("3_ddqt6")
+stream_0/volume = -1.89
+stream_1/stream = ExtResource("4_6tey2")
+stream_1/volume = 8.61
+
+[resource]
+script = ExtResource("1_njqyn")
+id = &"th_f7"
+tempo_bpm = 80.0
+endings = Array[StringName]([&"f7_reopens"])
+stream = SubResource("layers")
+tail_stream = ExtResource("5_u634k")
+sections = Array[ExtResource("2_oq0b7")]([SubResource("section_tail")])
+reuse_set_id = &"ms_02"
+metadata/gain_db = -5.23

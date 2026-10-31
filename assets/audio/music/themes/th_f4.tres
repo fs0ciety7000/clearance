@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="MusicThemeDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/music_theme_def.gd" id="1_gy1vq"]
+[ext_resource type="Script" path="res://scripts/core/music_section_def.gd" id="2_buhb1"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f4.ogg" id="3_lxytx"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f4_tail_loop.ogg" id="4_bfv63"]
+[ext_resource type="Script" path="res://scripts/core/music_theme_variant_def.gd" id="5_d3352"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="6_k345i"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f4_dora.ogg" id="7_i7kw1"]
+
+[sub_resource type="Resource" id="section_opening"]
+script = ExtResource("2_buhb1")
+
+[sub_resource type="Resource" id="section_a"]
+script = ExtResource("2_buhb1")
+id = &"a"
+start_bar = 2
+bars = 6
+
+[sub_resource type="Resource" id="section_b"]
+script = ExtResource("2_buhb1")
+id = &"b"
+start_bar = 8
+bars = 6
+
+[sub_resource type="Resource" id="section_tail"]
+script = ExtResource("2_buhb1")
+id = &"tail"
+start_bar = 14
+bars = 8
+loop = true
+
+[sub_resource type="Resource" id="condition_dora"]
+script = ExtResource("6_k345i")
+all_of = Array[StringName]([&"final3_dora"])
+
+[sub_resource type="Resource" id="variant_dora"]
+script = ExtResource("5_d3352")
+id = &"dora"
+condition = SubResource("condition_dora")
+stream = ExtResource("7_i7kw1")
+
+[resource]
+script = ExtResource("1_gy1vq")
+id = &"th_f4"
+tempo_bpm = 80.0
+endings = Array[StringName]([&"f4_glory"])
+stream = ExtResource("3_lxytx")
+tail_stream = ExtResource("4_bfv63")
+sections = Array[ExtResource("2_buhb1")]([SubResource("section_opening"), SubResource("section_a"), SubResource("section_b"), SubResource("section_tail")])
+variants = Array[ExtResource("5_d3352")]([SubResource("variant_dora")])
+metadata/gain_db = -2.13

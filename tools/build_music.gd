@@ -29,7 +29,7 @@
 ##   [--work=<dossier WAV>] [--defs] ; ou `bash tools/build_audio.sh --only=music`.
 extends SceneTree
 
-const TOOL_VERSION: String = "m14-1"
+const TOOL_VERSION: String = "m14-3"
 const SRC_DIR: String = "res://art_src/music"
 const OUT_DIR: String = "res://assets/audio/music"
 const MANIFEST_PATH: String = "res://assets/audio/music/manifest.json"
@@ -44,8 +44,22 @@ const LEVEL_TARGETS: Array[float] = [-30.0, -28.0, -26.5, -25.0, -24.0]
 const EXPOSED_TARGET: float = -20.0
 ## Volume du bus Music aux réglages par défaut (`Settings.volume_music` 0,8).
 const MUSIC_BUS_LINEAR: float = 0.8
-const VORBIS_QUALITY: int = 3
+## Qualité Vorbis : couches des ensembles (32 kHz) et thèmes (48 kHz). Les
+## couches visent ≈ 56 kb/s (docs/M14.md §2.8) : q1 à 32 kHz (q3 donnait
+## 71 kb/s mesurés) ; les thèmes ≈ 96 kb/s : q2 à 48 kHz. Plafond 24 Mo.
+const SET_QUALITY: int = 1
+const THEME_QUALITY: int = 2
+const PAD_QUALITY: int = 3
+## Qualité maximale essayée pour une boucle dont la jointure claque.
+const MAX_LOOP_QUALITY: int = 8
 const DEMO_QUALITY: int = 5
+## Gain d'exécution des cinématiques et de l'écran de fin (−18 LUFS intégré,
+## sans le bus Music : docs/M14.md §2.10).
+const THEME_TARGET: float = -18.0
+## Mesures de la queue jouées à la suite de B dans `stream` (la boucle
+## `tail_stream` reprend à la mesure suivante : docs/AUDIO.md §13.4).
+const MAIN_TAIL_BARS: int = 2
+const INDEX_PATH: String = "res://assets/audio/music/index.json"
 
 var _only: PackedStringArray = []
 var _force: bool = false
@@ -123,6 +137,8 @@ func _build_score(path: String) -> void:
 	if not renderer.errors.is_empty():
 		_fail("\n".join(renderer.errors))
 		return
+	if not result.has("demo") and entry.has("demo"):
+		result["demo"] = entry["demo"] # démo de validation gardée (rendue seulement avec --demos)
 	result["score_hash"] = score_hash
 	result["source"] = path.trim_prefix("res://")
 	result["render_sec"] = snappedf((Time.get_ticks_msec() - t0) / 1000.0, 0.1)
@@ -132,11 +148,13 @@ func _build_score(path: String) -> void:
 	print("build_music: %s rendu en %.1f s" % [renderer.id, result["render_sec"]])
 
 
-## Ensemble : couches L0…L4 en boucles exactes, gain commun, gains de niveaux.
+## Ensemble : une boucle exacte par couche (`mus_<id>_<couche>_loop`), gain
+## commun, gains des niveaux (plan de la partition ou N0 → N4 de M14 §2.5).
 func _build_set(r: MusicRenderer, score: Dictionary) -> Dictionary:
 	var layers: Array = []
 	var peak: float = 0.0
-	for stem_id: String in r.stem_ids():
+	var ids: PackedStringArray = r.stem_ids()
+	for stem_id: String in ids:
 		var lr: Array[PackedFloat32Array] = r.render_stem(stem_id)
 		layers.append(lr)
 		peak = maxf(peak, maxf(AudioDsp.peak(lr[0]), AudioDsp.peak(lr[1])))
@@ -144,12 +162,17 @@ func _build_set(r: MusicRenderer, score: Dictionary) -> Dictionary:
 			linear_to_db(maxf(AudioDsp.peak(lr[0]), AudioDsp.peak(lr[1])))])
 	var dir: String = "%s/%s" % [OUT_DIR, r.id]
 	var names: PackedStringArray = []
-	for i: int in layers.size():
-		names.append("mus_%s_l%d_loop" % [r.id, i])
+	for stem_id: String in ids:
+		names.append(layer_file_name(r.id, stem_id))
 	var common_db: float = PEAK_DB - linear_to_db(maxf(peak, 0.000001))
+	var quality: int = int(score.get("quality", SET_QUALITY))
+	var stems: Array = score.get("stems", [])
 	var files: Dictionary = {}
 	for attempt: int in 4:
-		files = _write_group(r, layers, names, dir, common_db, true)
+		files = {}
+		for i: int in layers.size():
+			files.merge(_write_group(r, [layers[i]], PackedStringArray([names[i]]), dir, common_db, true, -1,
+					stem_quality(stems[i] if i < stems.size() else {}, quality)))
 		var worst: float = -INF
 		for name: String in files:
 			worst = maxf(worst, float(files[name].get("true_peak_dbtp", -INF)))
@@ -157,16 +180,46 @@ func _build_set(r: MusicRenderer, score: Dictionary) -> Dictionary:
 			break
 		common_db -= worst - TRUE_PEAK_MAX + 0.1
 		print("  true peak %.2f dBTP > %.1f : gain commun abaissé à %.2f dB" % [worst, TRUE_PEAK_MAX, common_db])
-	var levels: Dictionary = _solve_levels(r, layers, db_to_linear(common_db))
+	var levels: Dictionary = _solve_levels(r, score, layers, db_to_linear(common_db))
 	var out: Dictionary = {"kind": "set", "tempo": r.tempo, "beats_per_bar": r.beats_per_bar, "bars": r.bars,
 		"sample_rate": r.rate, "bar_samples": r.bar_n, "common_gain_db": snappedf(common_db, 0.01), "files": files,
-		"levels": levels, "tool_version": TOOL_VERSION}
+		"stems": Array(ids), "quality": quality, "levels": levels, "tool_version": TOOL_VERSION}
 	if _demos and score.has("demo"):
 		out["demo"] = _set_demo(r, score, layers, db_to_linear(common_db), levels)
 	return out
 
 
-## Thème : `main` (d'un seul tenant) et `tail` (boucle repliée).
+## Qualité Vorbis d'une couche : `quality` de la couche, sinon `PAD_QUALITY`
+## pour la nappe toujours présente (rôles `pad` et `bed` : à q1, le codage de la
+## jointure d'une nappe dense crée un clic mesurable, M-05), sinon `fallback`.
+static func stem_quality(stem: Dictionary, fallback: int) -> int:
+	if stem.has("quality"):
+		return int(stem["quality"])
+	var role: String = str(stem.get("layer", {}).get("role", "pad" if str(stem.get("id", "")) == "l0" else ""))
+	return PAD_QUALITY if role == "pad" or role == "bed" else fallback
+
+
+## Nom de fichier d'une couche (`mus_ms02_l0_loop`, `mus_ms01_bed_loop`).
+static func layer_file_name(score_id: String, stem_id: String) -> String:
+	return "mus_%s_%s_loop" % [score_id, stem_id]
+
+
+## Sorties d'un thème : la base puis chaque variante de la partition
+## (`variants[]` : `flag` → `MusicThemeVariantDef` ; `def_id` → thème à part
+## sélectionné par variante de fin ; `reduced_fx` → `reduced_fx_stream`).
+static func theme_outputs(score: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = [{"id": "", "own_tail": true}]
+	for v: Dictionary in score.get("variants", []):
+		out.append(v)
+	return out
+
+
+## Thème : pour la base et chaque variante, `stream` = ouverture → B suivis
+## des `MAIN_TAIL_BARS` premières mesures de la queue, d'un seul tenant ;
+## `tail_stream` = la queue repliée en boucle, **commençant à sa mesure
+## `MAIN_TAIL_BARS`** (rotation d'une boucle : sans couture) — la fin de
+## `stream` enchaîne donc sur `tail_stream` sans couture. `tail_only` (TH-F7) :
+## la queue seule. Un gain commun à toutes les sorties (rapports gardés).
 func _build_theme(r: MusicRenderer, score: Dictionary) -> Dictionary:
 	var sections: Array = score.get("sections", [])
 	var tail_from: int = r.bars
@@ -175,33 +228,55 @@ func _build_theme(r: MusicRenderer, score: Dictionary) -> Dictionary:
 		if bool(s.get("loop", false)):
 			tail_from = int(s.get("from_bar", 0))
 			tail_bars = int(s.get("bars", 0))
-	var mains: Array = []
-	var tails: Array = []
+	var tail_only: bool = bool(score.get("tail_only", false))
+	var lead: int = mini(int(score.get("main_tail_bars", MAIN_TAIL_BARS)), tail_bars)
+	var base: String = theme_file_base(r.id)
+	var outputs: Array[Dictionary] = theme_outputs(score)
+	var mixes: Array = []
 	var peak: float = 0.0
-	for stem_id: String in r.stem_ids():
-		var m: Array[PackedFloat32Array] = r.render_stem(stem_id, 0, r.bars, false)
-		mains.append(m)
-		peak = maxf(peak, maxf(AudioDsp.peak(m[0]), AudioDsp.peak(m[1])))
-		if tail_bars > 0:
-			var t: Array[PackedFloat32Array] = r.render_stem(stem_id, tail_from, tail_bars, true)
-			tails.append(t)
-			peak = maxf(peak, maxf(AudioDsp.peak(t[0]), AudioDsp.peak(t[1])))
-	var main_mix: Array[PackedFloat32Array] = _sum(mains)
-	var tail_mix: Array[PackedFloat32Array] = []
-	if tail_bars > 0:
-		tail_mix = _sum(tails)
-	peak = maxf(AudioDsp.peak(main_mix[0]), AudioDsp.peak(main_mix[1]))
-	if tail_bars > 0:
-		peak = maxf(peak, maxf(AudioDsp.peak(tail_mix[0]), AudioDsp.peak(tail_mix[1])))
-	var base: String = "mus_th_%s" % r.id.trim_prefix("th")
+	for o: Dictionary in outputs:
+		r.variant = str(o.get("id", ""))
+		var main_mix: Array[PackedFloat32Array] = []
+		if not tail_only:
+			var mains: Array = []
+			for stem_id: String in r.stem_ids():
+				mains.append(r.render_stem(stem_id, 0, tail_from + lead, false))
+			main_mix = _sum(mains)
+			peak = maxf(peak, maxf(AudioDsp.peak(main_mix[0]), AudioDsp.peak(main_mix[1])))
+		var tail_mix: Array[PackedFloat32Array] = []
+		if tail_bars > 0 and bool(o.get("own_tail", false)):
+			var tails: Array = []
+			for stem_id: String in r.stem_ids():
+				tails.append(r.render_stem(stem_id, tail_from, tail_bars, true))
+			tail_mix = _rotate(_sum(tails), lead * r.bar_n)
+			peak = maxf(peak, maxf(AudioDsp.peak(tail_mix[0]), AudioDsp.peak(tail_mix[1])))
+		mixes.append([main_mix, tail_mix])
+	r.variant = ""
 	var dir: String = "%s/themes" % OUT_DIR
+	var quality: int = int(score.get("quality", THEME_QUALITY))
 	var common_db: float = PEAK_DB - linear_to_db(maxf(peak, 0.000001))
 	var files: Dictionary = {}
 	for attempt: int in 4:
-		files = _write_group(r, [main_mix], PackedStringArray([base]), dir, common_db, false)
-		if tail_bars > 0:
-			files.merge(_write_group(r, [tail_mix], PackedStringArray([base + "_tail_loop"]), dir, common_db, true,
-					tail_bars))
+		files = {}
+		for k: int in outputs.size():
+			var suffix: String = "" if str(outputs[k].get("id", "")).is_empty() else "_" + str(outputs[k]["id"])
+			var main_mix: Array[PackedFloat32Array] = mixes[k][0]
+			var tail_mix: Array[PackedFloat32Array] = mixes[k][1]
+			if not main_mix.is_empty():
+				var mf: Dictionary = _write_group(r, [main_mix], PackedStringArray([base + suffix]), dir, common_db, false,
+						-1, quality)
+				for name: String in mf:
+					mf[name]["role"] = "main"
+					mf[name]["variant"] = str(outputs[k].get("id", ""))
+				files.merge(mf)
+			if not tail_mix.is_empty():
+				# Queue bouclée : q3 (jointure de boucle mieux codée, M-05).
+				var tf: Dictionary = _write_group(r, [tail_mix], PackedStringArray([base + suffix + "_tail_loop"]), dir,
+						common_db, true, tail_bars, maxi(quality, PAD_QUALITY))
+				for name: String in tf:
+					tf[name]["role"] = "tail"
+					tf[name]["variant"] = str(outputs[k].get("id", ""))
+				files.merge(tf)
 		var worst: float = -INF
 		for name: String in files:
 			worst = maxf(worst, float(files[name].get("true_peak_dbtp", -INF)))
@@ -209,14 +284,37 @@ func _build_theme(r: MusicRenderer, score: Dictionary) -> Dictionary:
 			break
 		common_db -= worst - TRUE_PEAK_MAX + 0.1
 	var g: float = db_to_linear(common_db)
-	var lufs: float = AudioLoudness.integrated(AudioDsp.gain(main_mix[0], g), AudioDsp.gain(main_mix[1], g), r.rate)
+	# Gain d'exécution (−18 LUFS) mesuré sur la base : `stream`, sinon la queue.
+	var ref: Array[PackedFloat32Array] = mixes[0][0] if not (mixes[0][0] as Array).is_empty() else mixes[0][1]
+	var lufs: float = AudioLoudness.integrated(AudioDsp.gain(ref[0], g), AudioDsp.gain(ref[1], g), r.rate)
 	var out: Dictionary = {"kind": "theme", "tempo": r.tempo, "beats_per_bar": r.beats_per_bar, "bars": r.bars,
-		"tail_from_bar": tail_from, "tail_bars": tail_bars, "sample_rate": r.rate, "bar_samples": r.bar_n,
+		"tail_from_bar": tail_from, "tail_bars": tail_bars, "main_tail_bars": lead, "tail_only": tail_only,
+		"sample_rate": r.rate, "bar_samples": r.bar_n, "quality": quality,
 		"common_gain_db": snappedf(common_db, 0.01), "files": files, "tool_version": TOOL_VERSION,
-		# Gain à l'exécution (MusicThemeDef) pour −18 LUFS intégré (docs/M14.md §2.10).
-		"runtime_gain_db": snappedf(-18.0 - lufs, 0.01)}
+		# Gain à l'exécution (MusicThemeDef `gain_db`) pour −18 LUFS intégré (docs/M14.md §2.10).
+		"runtime_gain_db": snappedf(THEME_TARGET - lufs, 0.01)}
 	if _demos and score.has("demo"):
-		out["demo"] = _theme_demo(r, score, main_mix, tail_mix, g)
+		var tail_demo: Array[PackedFloat32Array] = mixes[0][1]
+		out["demo"] = _theme_demo(r, score, mixes[0][0], tail_demo, g)
+	return out
+
+
+## Préfixe des fichiers d'un thème (`thf9` → `mus_th_f9`).
+static func theme_file_base(score_id: String) -> String:
+	return "mus_th_%s" % score_id.trim_prefix("th")
+
+
+## Boucle stéréo tournée de `offset` échantillons (reste sans couture).
+static func _rotate(lr: Array[PackedFloat32Array], offset: int) -> Array[PackedFloat32Array]:
+	if offset <= 0 or lr.is_empty():
+		return lr
+	var out: Array[PackedFloat32Array] = []
+	for ch: PackedFloat32Array in lr:
+		var n: int = ch.size()
+		var o: int = posmod(offset, n)
+		var rot: PackedFloat32Array = ch.slice(o)
+		rot.append_array(ch.slice(0, o))
+		out.append(rot)
 	return out
 
 
@@ -234,10 +332,19 @@ static func _sum(parts: Array) -> Array[PackedFloat32Array]:
 	return [l, rr]
 
 
+## Rangs M-05 de la jointure d'une boucle encodée : (clic, erreur de codage).
+func _junction_ranks(ogg_path: String, ref: Array[PackedFloat32Array], rate: int) -> Vector2:
+	var dec: Array[PackedFloat32Array] = FfmpegAudio.decode(ogg_path, _work)
+	var coding: float = 0.0
+	for ch: int in 2:
+		coding = maxf(coding, FfmpegAudio.junction_error_rank(dec[ch], ref[ch], rate))
+	return Vector2(FfmpegAudio.junction_click_rank(dec, rate), coding)
+
+
 ## Écrit WAV + OGG + `.import` d'un groupe de fichiers au même gain, puis les
 ## mesure (OGG décodé par ffmpeg).
 func _write_group(r: MusicRenderer, parts: Array, names: PackedStringArray, dir: String, gain_db: float,
-		loop: bool, loop_bars: int = -1) -> Dictionary:
+		loop: bool, loop_bars: int = -1, quality: int = THEME_QUALITY) -> Dictionary:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	var out: Dictionary = {}
 	var g: float = db_to_linear(gain_db)
@@ -251,8 +358,23 @@ func _write_group(r: MusicRenderer, parts: Array, names: PackedStringArray, dir:
 		if wav.save_to_wav(wav_path) != OK:
 			_fail("écriture %s impossible" % wav_path)
 			continue
-		if not _encode(wav_path, ogg_path, VORBIS_QUALITY, name):
+		if not _encode(wav_path, ogg_path, quality, name):
 			continue
+		# Boucle : si le codage de la jointure crée un clic (M-05), la qualité
+		# monte d'un cran jusqu'à ce qu'il disparaisse (déterministe).
+		var used_quality: int = quality
+		var click: float = 0.0
+		var coding: float = 0.0
+		if loop:
+			var ref: Array[PackedFloat32Array] = FfmpegAudio.decode(wav_path, _work)
+			var ranks: Vector2 = _junction_ranks(ogg_path, ref, r.rate)
+			while (ranks.x > 1.0 or ranks.y > 1.0) and used_quality < MAX_LOOP_QUALITY:
+				used_quality += 1
+				if not _encode(wav_path, ogg_path, used_quality, name):
+					break
+				ranks = _junction_ranks(ogg_path, ref, r.rate)
+			click = ranks.x
+			coding = ranks.y
 		var bars: int = loop_bars if loop_bars > 0 else lr[0].size() / r.bar_n
 		_write_import(ogg_path, loop, r.tempo, bars * r.beats_per_bar, r.beats_per_bar)
 		var m: Dictionary = measure(ogg_path)
@@ -262,6 +384,10 @@ func _write_group(r: MusicRenderer, parts: Array, names: PackedStringArray, dir:
 		m["ogg_bytes"] = FileAccess.get_file_as_bytes(ogg_path).size()
 		m["path"] = ogg_res.trim_prefix("res://")
 		m["loop"] = loop
+		m["quality"] = used_quality
+		if loop:
+			m["junction_click_rank"] = snappedf(click, 0.001)
+			m["junction_coding_rank"] = snappedf(coding, 0.001)
 		out[name] = m
 		print("  %s : %d éch., %.1f LUFS, %.2f dBTP, %d o" % [name, lr[0].size(), m.get("lufs", -INF),
 			m.get("true_peak_dbtp", -INF), m["ogg_bytes"]])
@@ -272,10 +398,26 @@ func _write_group(r: MusicRenderer, parts: Array, names: PackedStringArray, dir:
 # Niveaux N0 → N4 : gains des couches (sommation exacte par énergies croisées)
 # ---------------------------------------------------------------------------
 
+## Plan de niveaux par défaut (MS-02 → MS-05, docs/M14.md §2.5) : chaque
+## étape ajoute une couche (N4 : L4 à la place de L3), réglée pour la cible.
+const DEFAULT_LEVEL_PLAN: Array[Dictionary] = [
+	{"label": "N0", "layers": ["l0"], "solve": "l0", "target": -30.0},
+	{"label": "N1", "layers": ["l0", "l1"], "solve": "l1", "target": -28.0},
+	{"label": "N2", "layers": ["l0", "l1", "l2"], "solve": "l2", "target": -26.5},
+	{"label": "N3", "layers": ["l0", "l1", "l2", "l3"], "solve": "l3", "target": -25.0},
+	{"label": "N4", "layers": ["l0", "l1", "l2", "l4"], "solve": "l4", "target": -24.0},
+]
+
+
 ## Gains (dB, appliqués aux fichiers normalisés, bus Music par défaut inclus)
-## qui donnent `LEVEL_TARGETS` ; calcul exact sur les énergies pondérées K
-## croisées des couches par sous-bloc de 100 ms.
-func _solve_levels(r: MusicRenderer, layers: Array, g: float) -> Dictionary:
+## qui donnent les cibles du plan de niveaux (`level_plan` de la partition,
+## sinon `DEFAULT_LEVEL_PLAN`) ; calcul exact sur les énergies pondérées K
+## croisées des couches par sous-bloc de 100 ms. Le gain « exposé » amène les
+## couches `exposed` à −20 LUFS ; `world_themes` (MS-07) donne, par monde, le
+## gain qui amène [couches communes + monde] à −18 LUFS sans le bus (thèmes
+## de monde TH-EA → TH-ED).
+func _solve_levels(r: MusicRenderer, score: Dictionary, layers: Array, g: float) -> Dictionary:
+	var ids: PackedStringArray = r.stem_ids()
 	var count: int = layers.size()
 	var kw: Array = []
 	for lr: Array[PackedFloat32Array] in layers:
@@ -302,14 +444,12 @@ func _solve_levels(r: MusicRenderer, layers: Array, g: float) -> Dictionary:
 			cross[i * 16 + j] = e
 	var gains: PackedFloat32Array = PackedFloat32Array()
 	gains.resize(count)
-	var masks: Array[PackedByteArray] = []
-	for level: int in MusicDirector.LEVEL_COUNT:
-		masks.append(MusicDirector.layers_for_level(level))
-	var lufs_of: Callable = func(mask: PackedByteArray, gdb: PackedFloat32Array) -> float:
+	gains.fill(-80.0)
+	var lufs_of: Callable = func(on: PackedInt32Array, gdb: PackedFloat32Array) -> float:
 		var lin: PackedFloat64Array = PackedFloat64Array()
 		lin.resize(count)
-		for i: int in count:
-			lin[i] = db_to_linear(gdb[i]) if i < mask.size() and mask[i] == 1 else 0.0
+		for i: int in on:
+			lin[i] = db_to_linear(gdb[i])
 		var energy: PackedFloat64Array = PackedFloat64Array()
 		energy.resize(blocks)
 		for i: int in count:
@@ -321,33 +461,60 @@ func _solve_levels(r: MusicRenderer, layers: Array, g: float) -> Dictionary:
 				for blk: int in blocks:
 					energy[blk] += e[blk] * w
 		return AudioLoudness.integrated_from_sub_blocks(energy, r.rate)
-	# Chaque niveau ajoute une couche (N4 : L4 à la place de L3) : on règle la
-	# couche ajoutée par dichotomie, les précédentes fixées.
-	var added: PackedInt32Array = PackedInt32Array([0, 1, 2, 3, 4])
-	for level: int in mini(MusicDirector.LEVEL_COUNT, count):
-		var layer: int = added[level]
+	var index_of: Callable = func(list: Array) -> PackedInt32Array:
+		var out: PackedInt32Array = PackedInt32Array()
+		for stem_id: Variant in list:
+			var k: int = ids.find(str(stem_id))
+			if k >= 0:
+				out.append(k)
+		return out
+	var plan: Array = score.get("level_plan", DEFAULT_LEVEL_PLAN)
+	var steps: Array = []
+	for step: Dictionary in plan:
+		var on: PackedInt32Array = index_of.call(step.get("layers", []))
+		var layer: int = ids.find(str(step.get("solve", "")))
+		var target: float = float(step.get("target", -30.0))
+		if layer < 0 or not on.has(layer):
+			_fail("%s : plan de niveaux invalide (%s)" % [r.id, step])
+			continue
 		var lo: float = -60.0
-		var hi: float = 24.0
+		var hi: float = 36.0
 		for it: int in 40:
 			var mid: float = (lo + hi) * 0.5
 			gains[layer] = mid
-			if lufs_of.call(masks[level], gains) < LEVEL_TARGETS[level]:
+			if lufs_of.call(on, gains) < target:
 				lo = mid
 			else:
 				hi = mid
 		gains[layer] = (lo + hi) * 0.5
-	var measured: Array[float] = []
-	for level: int in mini(MusicDirector.LEVEL_COUNT, count):
-		measured.append(snappedf(lufs_of.call(masks[level], gains), 0.01))
-	var exposed: float = lufs_of.call(MusicDirector.layers_for_level(MusicDirector.LEVEL_EXPOSED), gains)
+	for step: Dictionary in plan:
+		var on: PackedInt32Array = index_of.call(step.get("layers", []))
+		steps.append({"label": str(step.get("label", "")), "layers": step.get("layers", []),
+			"target_lufs": float(step.get("target", -30.0)), "lufs": snappedf(lufs_of.call(on, gains), 0.01)})
+	var exposed_ids: Array = score.get("exposed_layers", ["l0", "l3"])
+	var exposed: float = lufs_of.call(index_of.call(exposed_ids), gains)
 	var gain_list: Array[float] = []
 	for v: float in gains:
 		gain_list.append(snappedf(v, 0.01))
-	print("  niveaux N0→N4 : gains %s dB → %s LUFS ; exposé %.1f LUFS" % [gain_list, measured, exposed])
-	return {"layer_gains_db": gain_list, "level_lufs": measured, "targets_lufs": LEVEL_TARGETS,
-		"music_bus_db": snappedf(linear_to_db(MUSIC_BUS_LINEAR), 0.01),
-		"exposed_lufs": snappedf(exposed, 0.01), "exposed_offset_db": snappedf(EXPOSED_TARGET - exposed, 0.01),
+	var measured: Array[float] = []
+	for st: Dictionary in steps:
+		measured.append(float(st["lufs"]))
+	print("  niveaux : gains %s dB → %s LUFS ; exposé %.1f LUFS" % [gain_list, measured, exposed])
+	var out: Dictionary = {"layer_gains_db": gain_list, "level_lufs": measured, "steps": steps,
+		"targets_lufs": LEVEL_TARGETS, "music_bus_db": snappedf(linear_to_db(MUSIC_BUS_LINEAR), 0.01),
+		"exposed_layers": exposed_ids, "exposed_lufs": snappedf(exposed, 0.01),
+		"exposed_offset_db": snappedf(EXPOSED_TARGET - exposed, 0.01),
 		"method": "BS.1770 (pondération K, portes −70/−10), énergies croisées des couches, bus Music à 0,8"}
+	var worlds: Dictionary = {}
+	for w: Dictionary in score.get("world_themes", []):
+		var on: PackedInt32Array = index_of.call(w.get("layers", []))
+		var with_bus: float = lufs_of.call(on, gains)
+		worlds[str(w.get("def_id", ""))] = {"world": str(w.get("world", "")), "layers": w.get("layers", []),
+			"lufs_with_bus": snappedf(with_bus, 0.01),
+			"offset_db": snappedf(THEME_TARGET - (with_bus - linear_to_db(MUSIC_BUS_LINEAR)), 0.01)}
+	if not worlds.is_empty():
+		out["world_themes"] = worlds
+	return out
 
 
 # ---------------------------------------------------------------------------
@@ -577,32 +744,66 @@ const DEFAULT_LAYERS: Array[Dictionary] = [
 
 func _write_defs() -> void:
 	var library: MusicLibraryDef = MusicLibraryDef.new()
+	var index: Dictionary = {"format": 1, "sets": {}, "themes": {}}
 	var scores: Dictionary = _manifest.get("scores", {})
 	var ids: Array = scores.keys()
 	ids.sort()
+	var scores_by_id: Dictionary = {}
+	var set_defs: Dictionary = {}
 	for score_id: String in ids:
 		var entry: Dictionary = scores[score_id]
 		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://" + str(entry.get("source", ""))))
 		if not parsed is Dictionary:
 			_fail("%s : partition introuvable" % score_id)
 			continue
-		var score: Dictionary = parsed
+		scores_by_id[score_id] = parsed
+	# 1. Ensembles.
+	for score_id: String in ids:
+		if not scores_by_id.has(score_id) or str(scores[score_id].get("kind", "")) != "set":
+			continue
+		var score: Dictionary = scores_by_id[score_id]
 		var def_id: StringName = StringName(str(score.get("def_id", score_id)))
-		if str(entry.get("kind", "")) == "set":
-			var set_def: MusicSetDef = _set_def(def_id, score, entry)
-			if set_def != null:
-				var set_path: String = "%s/sets/%s.tres" % [OUT_DIR, def_id]
-				_save_res(set_def, set_path)
-				# Relu depuis le disque : la bibliothèque référence le fichier.
-				library.sets.append(ResourceLoader.load(set_path, "", ResourceLoader.CACHE_MODE_REPLACE) as MusicSetDef)
-		else:
-			var theme: MusicThemeDef = _theme_def(def_id, score, entry)
-			if theme != null:
-				var theme_path: String = "%s/themes/%s.tres" % [OUT_DIR, def_id]
-				_save_res(theme, theme_path)
-				library.themes.append(ResourceLoader.load(theme_path, "", ResourceLoader.CACHE_MODE_REPLACE) as MusicThemeDef)
+		var set_def: MusicSetDef = _set_def(def_id, score, scores[score_id])
+		if set_def == null:
+			continue
+		var set_path: String = "%s/sets/%s.tres" % [OUT_DIR, def_id]
+		_save_res(set_def, set_path)
+		# Relu depuis le disque : la bibliothèque référence le fichier.
+		var loaded: MusicSetDef = ResourceLoader.load(set_path, "", ResourceLoader.CACHE_MODE_REPLACE) as MusicSetDef
+		library.sets.append(loaded)
+		set_defs[def_id] = loaded
+		index["sets"][String(def_id)] = set_path
+		# Thèmes de monde (MS-07 → TH-EA … TH-ED) : couches de l'ensemble.
+		var worlds: Dictionary = scores[score_id].get("levels", {}).get("world_themes", {})
+		var world_ids: Array = worlds.keys()
+		world_ids.sort()
+		for wid: String in world_ids:
+			var w: Dictionary = worlds[wid]
+			var theme: MusicThemeDef = _layers_theme(StringName(wid), loaded, w.get("layers", []), float(w["offset_db"]))
+			theme.worlds.append(StringName(str(w["world"])))
+			_add_theme(library, index, theme)
+	# 2. Thèmes de fin (et leurs variantes à part).
+	for score_id: String in ids:
+		if not scores_by_id.has(score_id) or str(scores[score_id].get("kind", "")) != "theme":
+			continue
+		for theme: MusicThemeDef in _theme_defs(scores_by_id[score_id], scores[score_id], set_defs):
+			_add_theme(library, index, theme)
 	_save_res(library, MusicLibraryDef.PATH)
+	var f: FileAccess = FileAccess.open(INDEX_PATH, FileAccess.WRITE)
+	f.store_string(JSON.stringify(index, "\t", true) + "\n")
 	print("build_music --defs : %d ensemble(s), %d thème(s)" % [library.sets.size(), library.themes.size()])
+
+
+func _add_theme(library: MusicLibraryDef, index: Dictionary, theme: MusicThemeDef) -> void:
+	var theme_path: String = "%s/themes/%s.tres" % [OUT_DIR, theme.id]
+	_save_res(theme, theme_path)
+	library.themes.append(ResourceLoader.load(theme_path, "", ResourceLoader.CACHE_MODE_REPLACE) as MusicThemeDef)
+	# Index léger (aucun flux chargé) : sélection d'un thème sans charger le
+	# catalogue entier (RAM ≤ 6 Mo, docs/M14.md §2.12).
+	index["themes"][String(theme.id)] = {"path": theme_path, "endings": Array(theme.endings).map(func(e: StringName) -> String: return String(e)),
+		"ending_variants": Array(theme.ending_variants).map(func(e: StringName) -> String: return String(e)),
+		"worlds": Array(theme.worlds).map(func(e: StringName) -> String: return String(e)),
+		"gain_db": float(theme.get_meta(&"gain_db", 0.0)), "reuse_set_id": String(theme.reuse_set_id)}
 
 
 func _set_def(def_id: StringName, score: Dictionary, entry: Dictionary) -> MusicSetDef:
@@ -612,13 +813,13 @@ func _set_def(def_id: StringName, score: Dictionary, entry: Dictionary) -> Music
 	s.beats_per_bar = int(entry["beats_per_bar"])
 	s.bars = int(entry["bars"])
 	s.sample_rate = int(entry["sample_rate"])
+	s.max_level = int(score.get("max_level", MusicSetDef.LEVEL_MAX))
 	var levels: Dictionary = entry.get("levels", {})
 	var gains: Array = levels.get("layer_gains_db", [])
 	s.exposed_gain_db = float(levels.get("exposed_offset_db", 0.0))
 	var stems: Array = score.get("stems", [])
 	var files: Dictionary = entry.get("files", {})
-	var names: Array = files.keys()
-	names.sort()
+	var score_id: String = str(score.get("id", ""))
 	for i: int in stems.size():
 		var stem: Dictionary = stems[i]
 		var meta: Dictionary = DEFAULT_LAYERS[mini(i, DEFAULT_LAYERS.size() - 1)].duplicate()
@@ -634,25 +835,125 @@ func _set_def(def_id: StringName, score: Dictionary, entry: Dictionary) -> Music
 		layer.keeps_on_power_down = bool(meta["power_down"])
 		layer.group = StringName(str(meta.get("group", "")))
 		layer.gain_db = float(gains[i]) if i < gains.size() else 0.0
-		if i < names.size():
-			var path: String = "res://" + str(files[names[i]]["path"])
+		var name: String = layer_file_name(score_id, String(layer.id))
+		if files.has(name):
+			var path: String = "res://" + str(files[name]["path"])
 			layer.stream = load(path) as AudioStream
 			if layer.stream == null:
 				_fail("%s : %s non importé (lancer godot --import avant --defs)" % [def_id, path])
+		else:
+			_fail("%s : couche %s non rendue" % [def_id, layer.id])
 		s.layers.append(layer)
 	return s
 
 
-func _theme_def(def_id: StringName, score: Dictionary, entry: Dictionary) -> MusicThemeDef:
+## Thème fait des couches d'un ensemble (mondes de MS-07, TH-F7) : un
+## `AudioStreamSynchronized` qui référence les OGG de l'ensemble (0 octet de
+## plus), volumes = gains des couches + `offset_db` (−18 LUFS sans le bus).
+func _layers_theme(theme_id: StringName, set_def: MusicSetDef, layer_ids: Array, offset_db: float) -> MusicThemeDef:
+	var t: MusicThemeDef = MusicThemeDef.new()
+	t.id = theme_id
+	t.tempo_bpm = set_def.tempo_bpm
+	t.beats_per_bar = set_def.beats_per_bar
+	t.sample_rate = set_def.sample_rate
+	var sync: AudioStreamSynchronized = AudioStreamSynchronized.new()
+	sync.resource_scene_unique_id = "layers"
+	sync.stream_count = layer_ids.size()
+	for k: int in layer_ids.size():
+		var layer: MusicLayerDef = set_def.layers[set_def.layer_index(StringName(str(layer_ids[k])))]
+		sync.set_sync_stream(k, layer.stream)
+		sync.set_sync_stream_volume(k, snappedf(layer.gain_db + offset_db, 0.01))
+	t.stream = sync
+	var section: MusicSectionDef = MusicSectionDef.new()
+	section.id = MusicSectionDef.A
+	section.resource_scene_unique_id = "section_a"
+	section.bars = set_def.bars
+	section.loop = true
+	t.sections.append(section)
+	t.set_meta(&"gain_db", 0.0)
+	return t
+
+
+## Thèmes d'une partition : la base (+ variantes à drapeau, + flux « effets
+## réduits ») et une définition à part par variante qui porte un `def_id`.
+func _theme_defs(score: Dictionary, entry: Dictionary, set_defs: Dictionary) -> Array[MusicThemeDef]:
+	var files: Dictionary = entry.get("files", {})
+	var score_id: String = str(score.get("id", ""))
+	var base_name: String = theme_file_base(score_id)
+	var stream_of: Callable = func(name: String) -> AudioStream:
+		if not files.has(name):
+			return null
+		var path: String = "res://" + str(files[name]["path"])
+		var stream: AudioStream = load(path) as AudioStream
+		if stream == null:
+			_fail("%s : %s non importé (lancer godot --import avant --defs)" % [score_id, path])
+		return stream
+	var gain: float = float(entry.get("runtime_gain_db", 0.0))
+	var base: MusicThemeDef = _theme_shell(StringName(str(score.get("def_id", score_id))), score, entry,
+			score.get("endings", []), score.get("ending_variants", []))
+	base.tail_stream = stream_of.call(base_name + "_tail_loop")
+	base.set_meta(&"gain_db", gain)
+	if bool(score.get("tail_only", false)):
+		# TH-F7 : sous les planches, les couches de l'ensemble repris au niveau
+		# `reuse_level` ; la sortie (queue) sous l'écran de fin.
+		var reuse: Dictionary = score.get("reuse", {})
+		base.reuse_set_id = StringName(str(reuse.get("set", "")))
+		base.reuse_level = int(reuse.get("level", 1))
+		var set_def: MusicSetDef = set_defs.get(base.reuse_set_id, null)
+		if set_def == null:
+			_fail("%s : ensemble repris %s introuvable" % [score_id, base.reuse_set_id])
+		else:
+			var reuse_entry: Dictionary = _manifest["scores"].get(str(reuse.get("score", "")), {})
+			var levels: Array = reuse_entry.get("levels", {}).get("steps", [])
+			var with_bus: float = -28.0
+			for st: Dictionary in levels:
+				if str(st.get("label", "")) == "N%d" % base.reuse_level:
+					with_bus = float(st["lufs"])
+			# −18 LUFS sans le bus, moins le gain du thème (appliqué au clip).
+			var offset: float = THEME_TARGET - (with_bus - linear_to_db(MUSIC_BUS_LINEAR)) - gain
+			base.stream = _layers_theme(base.id, set_def, reuse.get("layers", ["l0", "l1"]), offset).stream
+	else:
+		base.stream = stream_of.call(base_name)
+	var out: Array[MusicThemeDef] = [base]
+	for v: Dictionary in score.get("variants", []):
+		var vid: String = str(v.get("id", ""))
+		var main: AudioStream = stream_of.call(base_name + "_" + vid)
+		var tail: AudioStream = stream_of.call(base_name + "_" + vid + "_tail_loop")
+		if bool(v.get("reduced_fx", false)):
+			base.reduced_fx_stream = main
+		elif v.has("def_id"):
+			var t: MusicThemeDef = _theme_shell(StringName(str(v["def_id"])), score, entry,
+					v.get("endings", score.get("endings", [])), v.get("ending_variants", []))
+			t.stream = main
+			t.tail_stream = tail if tail != null else base.tail_stream
+			t.set_meta(&"gain_db", gain)
+			out.append(t)
+		else:
+			var variant: MusicThemeVariantDef = MusicThemeVariantDef.new()
+			variant.id = StringName(vid)
+			variant.resource_scene_unique_id = "variant_%s" % vid
+			variant.section = StringName(str(v.get("section", "b")))
+			var cond: FlagCondition = FlagCondition.new()
+			cond.resource_scene_unique_id = "condition_%s" % vid
+			cond.all_of = [StringName(str(v.get("flag", vid)))]
+			variant.condition = cond
+			variant.stream = main
+			variant.tail_stream = tail
+			base.variants.append(variant)
+	return out
+
+
+func _theme_shell(def_id: StringName, score: Dictionary, entry: Dictionary, endings: Array,
+		variants: Array) -> MusicThemeDef:
 	var t: MusicThemeDef = MusicThemeDef.new()
 	t.id = def_id
 	t.tempo_bpm = float(entry["tempo"])
 	t.beats_per_bar = int(entry["beats_per_bar"])
 	t.sample_rate = int(entry["sample_rate"])
-	for e: String in score.get("endings", []):
-		t.endings.append(StringName(e))
-	for v: String in score.get("ending_variants", []):
-		t.ending_variants.append(StringName(v))
+	for e: Variant in endings:
+		t.endings.append(StringName(str(e)))
+	for v: Variant in variants:
+		t.ending_variants.append(StringName(str(v)))
 	for sec: Dictionary in score.get("sections", []):
 		var section: MusicSectionDef = MusicSectionDef.new()
 		section.id = StringName(str(sec.get("id", "")))
@@ -661,16 +962,6 @@ func _theme_def(def_id: StringName, score: Dictionary, entry: Dictionary) -> Mus
 		section.bars = int(sec.get("bars", 0))
 		section.loop = bool(sec.get("loop", false))
 		t.sections.append(section)
-	var files: Dictionary = entry.get("files", {})
-	for name: String in files:
-		var path: String = "res://" + str(files[name]["path"])
-		var stream: AudioStream = load(path) as AudioStream
-		if stream == null:
-			_fail("%s : %s non importé (lancer godot --import avant --defs)" % [def_id, path])
-		elif bool(files[name].get("loop", false)):
-			t.tail_stream = stream
-		else:
-			t.stream = stream
 	return t
 
 
