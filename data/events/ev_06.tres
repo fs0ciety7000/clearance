@@ -24,3 +24,4 @@ changes = Array[ExtResource("1_ryxit")]([SubResource("ev_06_resource_1"), SubRes
 announce_key = "sev_crowd_announce"
 title_key = "sev_crowd_title"
 garde_allowed = false
+music_weight = 0.3

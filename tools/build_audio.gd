@@ -37,7 +37,7 @@ func _initialize() -> void:
 		quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(loops_dir)
-	for sub: String in ["sfx/passenger", "sfx/booth", "sfx/station", "ui", "voice/pa", "ambience", "music"]:
+	for sub: String in ["sfx/passenger", "sfx/booth", "sfx/station", "ui", "voice/pa", "ambience"]:
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT + "/" + sub))
 	var t0: int = Time.get_ticks_msec()
 	if _want("bus"):
@@ -56,8 +56,8 @@ func _initialize() -> void:
 		_build_pa()
 	if _want("ambience"):
 		_build_ambience()
-	if _want("music"):
-		_build_music()
+	if _want("ambience") or _want("beds"):
+		_build_act_beds()
 	print("build_audio: %d fichiers en %.1f s" % [written, (Time.get_ticks_msec() - t0) / 1000.0])
 	quit()
 
@@ -127,9 +127,13 @@ func n_of(seconds: float, rate: int = SR) -> int:
 func _build_bus_layout() -> void:
 	AudioBuses.configure_server()
 	var layout: AudioBusLayout = AudioServer.generate_bus_layout()
+	# L'uid du fichier existant est gardé (diff minimal, références stables).
+	var uid: int = ResourceLoader.get_resource_uid(AudioBuses.DEFAULT_LAYOUT_PATH)
 	var err: Error = ResourceSaver.save(layout, AudioBuses.DEFAULT_LAYOUT_PATH)
 	if err != OK:
 		push_error("build_audio: default_bus_layout.tres non écrit (%s)" % error_string(err))
+	elif uid != ResourceUID.INVALID_ID:
+		ResourceSaver.set_uid(AudioBuses.DEFAULT_LAYOUT_PATH, uid)
 	written += 1
 
 
@@ -600,100 +604,84 @@ func _build_ambience() -> void:
 
 
 # ---------------------------------------------------------------------------
-# Musique (boucles stéréo 24 kHz → OGG) — 80 BPM, mesure 3 s
+# Lits d'ambiance par acte (M14 §4.5, VH-9, B88) : le lit de station M6 (même
+# graine, mêmes échantillons) + une couche propre à l'acte ou au monde.
+# Les anciennes boucles musicales M6 (`mus_*`) sont remplacées par la musique
+# dynamique M14 (tools/build_music.gd, docs/AUDIO.md §13).
 # ---------------------------------------------------------------------------
 
-const BEAT: float = 0.75
-const BAR: float = 3.0
-const BARS: int = 8
-
-const NOTE: Dictionary[String, float] = {
-	"E2": 82.41, "F2": 87.31, "G2": 98.0, "A2": 110.0, "B2": 123.47, "C3": 130.81, "D3": 146.83, "E3": 164.81,
-	"F3": 174.61, "G3": 196.0, "A3": 220.0, "B3": 246.94, "C4": 261.63, "D4": 293.66, "E4": 329.63, "F4": 349.23,
-	"G4": 392.0, "A4": 440.0, "C5": 523.25, "E5": 659.26, "G5": 784.0, "Eb5": 622.25,
-}
-
-
-func _build_music() -> void:
-	var am: Array[String] = ["A2", "E3", "A3", "C4"]
-	var f: Array[String] = ["F2", "C3", "F3", "A3"]
-	var c: Array[String] = ["C3", "G3", "C4", "E4"]
-	var g: Array[String] = ["G2", "D3", "G3", "B3"]
-	var em: Array[String] = ["E2", "B2", "E3", "G3"]
-	var dm: Array[String] = ["D3", "A3", "D4", "F4"]
-	var e_maj: Array[String] = ["E2", "B2", "E3", "G4"]
-	_music_track("mus_briefing_loop", [am, f, c, g], 1400.0, 0.9, 0.0, 0.0, true, -8.0)
-	_music_track("mus_shift_calm_loop", [am, am, f, em], 750.0, 0.55, 0.35, 0.0, false, -8.0)
-	_music_track("mus_shift_tension_loop", [am, f, am, em], 1500.0, 0.6, 0.6, 0.35, false, -7.0)
-	_music_track("mus_debrief_loop", [f, c, g, c], 1600.0, 1.0, 0.0, 0.0, true, -8.0)
-	_music_track("mus_debrief_minor_loop", [am, dm, am, e_maj], 1100.0, 1.0, 0.0, 0.0, false, -8.0)
-
-
-## Boucle de 8 mesures : nappe (2 mesures par accord), basse pulsée en
-## croches (`bass`), arpège + charleston (`tension`), motif Consortium.
-func _music_track(name: String, chords: Array, cutoff: float, pad_gain: float, bass: float, tension: float,
-		motif: bool, peak_db: float) -> void:
+func _station_bed() -> Array[PackedFloat32Array]:
 	var sr: int = LOOP_SR
-	var length: int = AudioDsp.samples(BAR * BARS, sr)
-	var tail: int = AudioDsp.samples(3.0, sr)
-	var out: Array[PackedFloat32Array] = [AudioDsp.silence(length + tail), AudioDsp.silence(length + tail)]
-	var rng: RandomNumberGenerator = rng_for(name)
-	var chord_sec: float = BAR * BARS / chords.size()
-	for ci: int in chords.size():
-		var notes: Array = chords[ci]
-		var start: int = AudioDsp.samples(ci * chord_sec, sr)
-		for ch: int in 2:
-			var pad: PackedFloat32Array = AudioDsp.silence(AudioDsp.samples(chord_sec + 2.0, sr))
-			for note: String in notes:
-				var hz: float = NOTE[note]
-				var detune: float = 1.0 + (0.003 if ch == 0 else -0.003)
-				var osc: PackedFloat32Array = AudioDsp.saw(hz * detune, chord_sec + 2.0, sr, rng.randf())
-				osc = AudioDsp.mix_into(osc, AudioDsp.saw(hz / detune * 1.001, chord_sec + 2.0, sr, rng.randf()), 0, 0.8)
-				pad = AudioDsp.mix_into(pad, osc, 0, 0.25)
-			pad = AudioDsp.one_pole(AudioDsp.one_pole(pad, cutoff, sr), cutoff * 1.5, sr)
-			pad = AudioDsp.mul(pad, AudioDsp.env_ahr(pad.size(), 1.2, 1.6, sr))
-			out[ch] = AudioDsp.mix_into(out[ch], pad, start, pad_gain)
-		if bass > 0.0:
-			var bass_hz: float = NOTE[notes[0]]
-			var eighths: int = int(chord_sec / (BEAT * 0.5))
-			for e: int in eighths:
-				var nb: int = AudioDsp.samples(0.3, sr)
-				var tone: PackedFloat32Array = AudioDsp.saw(bass_hz, 0.3, sr)
-				tone = AudioDsp.mix_into(tone, AudioDsp.chirp(bass_hz, bass_hz, 0.3, sr), 0, 1.2)
-				tone = AudioDsp.one_pole(tone, 260.0 + 300.0 * tension, sr)
-				tone = AudioDsp.mul(tone, AudioDsp.env_ad(nb, 0.005, 0.09, sr))
-				var accent: float = 1.0 if e % 2 == 0 else 0.6
-				for ch: int in 2:
-					out[ch] = AudioDsp.mix_into(out[ch], tone, start + AudioDsp.samples(e * BEAT * 0.5, sr), bass * accent)
-		if tension > 0.0:
-			var sixteenths: int = int(chord_sec / (BEAT * 0.25))
-			for s: int in sixteenths:
-				var at: int = start + AudioDsp.samples(s * BEAT * 0.25, sr)
-				var hn: int = AudioDsp.samples(0.05, sr)
-				var hat: PackedFloat32Array = AudioDsp.filter(AudioDsp.white(hn, rng), AudioDsp.Filter.HIGHPASS, 7000.0, 0.7, sr)
-				hat = AudioDsp.mul(hat, AudioDsp.env_ad(hn, 0.001, 0.012, sr))
-				var hg: float = tension * (0.25 if s % 4 == 2 else 0.12)
-				out[0] = AudioDsp.mix_into(out[0], hat, at, hg * 0.8)
-				out[1] = AudioDsp.mix_into(out[1], hat, at, hg)
-				var arp_note: float = NOTE[notes[[1, 2, 3, 2][s % 4]]] * 2.0
-				var an: int = AudioDsp.samples(0.16, sr)
-				var arp: PackedFloat32Array = AudioDsp.one_pole(AudioDsp.saw(arp_note, 0.16, sr), 1800.0, sr)
-				arp = AudioDsp.mul(arp, AudioDsp.env_ad(an, 0.003, 0.05, sr))
-				out[s % 2] = AudioDsp.mix_into(out[s % 2], arp, at, tension * 0.12)
-	if motif:
-		for bar_index: int in [0, 4]:
-			var notes_hz: Array[float] = [NOTE["E5"], NOTE["C5"], NOTE["G5"]]
-			var bell_buf: PackedFloat32Array = chime(notes_hz, BEAT, sr, 0.9)
-			var at: int = AudioDsp.samples(bar_index * BAR + BEAT, sr)
-			out[0] = AudioDsp.mix_into(out[0], bell_buf, at, 0.14)
-			out[1] = AudioDsp.mix_into(out[1], bell_buf, at + AudioDsp.samples(0.012, sr), 0.12)
+	var bed: Array[PackedFloat32Array] = []
 	for ch: int in 2:
-		var spaced: PackedFloat32Array = AudioDsp.space(out[ch], sr, 0.45, 2.0, 6.0 * ch)
-		# Repli de la queue sur le début : boucle sans coupure.
-		var folded: PackedFloat32Array = AudioDsp.silence(length)
-		for k: int in length:
-			folded[k] = spaced[k]
-		for k: int in mini(tail, spaced.size() - length):
-			folded[k] += spaced[length + k]
-		out[ch] = folded
-	save_loop(name, out[0], out[1], peak_db)
+		var rng: RandomNumberGenerator = rng_for("station", ch)
+		var n: int = AudioDsp.samples(32.0, sr)
+		var rumble: PackedFloat32Array = AudioDsp.filter(AudioDsp.brown(n, rng), AudioDsp.Filter.LOWPASS, 180.0, 0.7, sr)
+		var vent: PackedFloat32Array = AudioDsp.filter(AudioDsp.pink(n, rng), AudioDsp.Filter.BANDPASS, 450.0, 0.6, sr)
+		var slow: PackedFloat32Array = AudioDsp.one_pole(AudioDsp.white(n, rng), 0.3, sr)
+		for k: int in n:
+			vent[k] *= 0.7 + slow[k] * 40.0
+		var buf: PackedFloat32Array = AudioDsp.mix_into(AudioDsp.gain(rumble, 1.5), vent, 0, 0.5)
+		for c: int in 3:
+			var clunk: PackedFloat32Array = AudioDsp.resample(kenney("impact-sounds", "impactMetal_heavy_%03d" % ((c + ch) % 5)), float(SR) / sr * 0.7)
+			clunk = AudioDsp.filter(clunk, AudioDsp.Filter.LOWPASS, 700.0, 0.7, sr)
+			clunk = AudioDsp.space(clunk, sr, 0.8, 3.0, 7.0 * ch)
+			buf = AudioDsp.mix_into(buf, clunk, AudioDsp.samples(3.0 + c * 9.5 + ch * 0.07, sr), 0.08 * AudioDsp.peak(rumble) / maxf(AudioDsp.peak(clunk), 0.001) * 6.0)
+		bed.append(buf)
+	return bed
+
+
+func _build_act_beds() -> void:
+	var sr: int = LOOP_SR
+	var n: int = AudioDsp.samples(32.0, sr)
+	# Acte II : ventilation qui siffle (bande étroite ~1,9 kHz, lente) et une
+	# alarme lointaine rare (deux tons, filtrée, une fois par boucle).
+	var a2: Array[PackedFloat32Array] = _station_bed()
+	for ch: int in 2:
+		var rng: RandomNumberGenerator = rng_for("bed_a2", ch)
+		var whistle: PackedFloat32Array = AudioDsp.filter(AudioDsp.white(n, rng), AudioDsp.Filter.BANDPASS, 1900.0 + 60.0 * ch, 25.0, sr)
+		var swell: PackedFloat32Array = AudioDsp.one_pole(AudioDsp.white(n, rng), 0.15, sr)
+		for k: int in n:
+			whistle[k] *= 0.4 + absf(swell[k]) * 60.0
+		a2[ch] = AudioDsp.mix_into(a2[ch], whistle, 0, 0.35 * AudioDsp.peak(a2[ch]) / maxf(AudioDsp.peak(whistle), 0.001))
+		var alarm: PackedFloat32Array = AudioDsp.silence(AudioDsp.samples(3.2, sr))
+		for b: int in 4:
+			var tone: PackedFloat32Array = AudioDsp.sine(AudioDsp.samples(0.38, sr), 740.0 if b % 2 == 0 else 587.0, sr)
+			tone = AudioDsp.fade(tone, 0.02, 0.05, sr)
+			alarm = AudioDsp.mix_into(alarm, tone, AudioDsp.samples(b * 0.8, sr), 1.0)
+		alarm = AudioDsp.filter(alarm, AudioDsp.Filter.LOWPASS, 1200.0, 0.7, sr)
+		alarm = AudioDsp.space(alarm, sr, 0.85, 3.0, 9.0 * ch)
+		a2[ch] = AudioDsp.mix_into(a2[ch], alarm, AudioDsp.samples(17.0 + 0.03 * ch, sr), 0.06 * AudioDsp.peak(a2[ch]) / maxf(AudioDsp.peak(alarm), 0.001))
+	save_loop("amb_station_bed_a2_loop", AudioDsp.make_loop(a2[0], 2.0, sr), AudioDsp.make_loop(a2[1], 2.0, sr), -10.0)
+	# Acte III : rumeur de foule au quai (voix Tessar lointaines, très
+	# filtrées) ; pas de Garde.
+	var a3: Array[PackedFloat32Array] = _station_bed()
+	var crowd: Array[PackedFloat32Array] = [AudioDsp.silence(n), AudioDsp.silence(n)]
+	var crng: RandomNumberGenerator = rng_for("bed_a3")
+	for v: int in 14:
+		var p: Passenger = Passenger.new()
+		p.sex = [Passenger.SEX_F, Passenger.SEX_M, Passenger.SEX_X][v % 3]
+		p.appearance_seed = 700 + v
+		var phrase: String = TessarVoice.phrase_for("dock_%d" % v, "Une phrase lointaine, sur le quai.")
+		var voice: PackedFloat32Array = TessarVoice.synthesize(phrase, TessarVoice.profile_for(p))
+		voice = AudioDsp.resample(voice, float(TessarVoice.SAMPLE_RATE) / sr)
+		voice = AudioDsp.filter(voice, AudioDsp.Filter.LOWPASS, 800.0, 0.7, sr)
+		var at: int = crng.randi_range(0, n - voice.size() - 1)
+		var pan: float = crng.randf()
+		var g: float = crng.randf_range(0.12, 0.3)
+		crowd[0] = AudioDsp.mix_into(crowd[0], voice, at, g * (1.0 - pan * 0.6))
+		crowd[1] = AudioDsp.mix_into(crowd[1], voice, at, g * (0.4 + pan * 0.6))
+	for ch: int in 2:
+		var spaced: PackedFloat32Array = AudioDsp.space(crowd[ch], sr, 0.8, 3.0, 6.0 * ch)
+		a3[ch] = AudioDsp.mix_into(a3[ch], spaced, 0, 0.3 * AudioDsp.peak(a3[ch]) / maxf(AudioDsp.peak(spaced), 0.001))
+	save_loop("amb_station_bed_a3_loop", AudioDsp.make_loop(a3[0], 2.0, sr), AudioDsp.make_loop(a3[1], 2.0, sr), -10.0)
+	# J31 · monde D : vent de poussière (bruit rose en rafales lentes).
+	var d: Array[PackedFloat32Array] = _station_bed()
+	for ch: int in 2:
+		var rng: RandomNumberGenerator = rng_for("bed_d", ch)
+		var wind: PackedFloat32Array = AudioDsp.filter(AudioDsp.pink(n, rng), AudioDsp.Filter.BANDPASS, 700.0, 0.8, sr)
+		var gust: PackedFloat32Array = AudioDsp.one_pole(AudioDsp.white(n, rng), 0.12, sr)
+		for k: int in n:
+			wind[k] *= 0.3 + absf(gust[k]) * 70.0
+		d[ch] = AudioDsp.mix_into(d[ch], wind, 0, 0.5 * AudioDsp.peak(d[ch]) / maxf(AudioDsp.peak(wind), 0.001))
+	save_loop("amb_station_bed_d_loop", AudioDsp.make_loop(d[0], 2.0, sr), AudioDsp.make_loop(d[1], 2.0, sr), -10.0)

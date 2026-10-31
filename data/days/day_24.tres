@@ -429,3 +429,4 @@ statement_topic_weights = Dictionary[StringName, float]({
 &"stay": 0.15
 })
 search_cue_noise_rate = 0.1
+music_tension = 1

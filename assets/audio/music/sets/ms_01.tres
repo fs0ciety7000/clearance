@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="MusicSetDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/music_layer_def.gd" id="1_ajb3c"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms01/mus_ms01_bed_loop.ogg" id="2_8od8x"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms01/mus_ms01_rain_loop.ogg" id="3_4bnhw"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms01/mus_ms01_motif_loop.ogg" id="4_gnu1y"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms01/mus_ms01_luciole_loop.ogg" id="5_8swk4"]
+[ext_resource type="Script" path="res://scripts/core/music_set_def.gd" id="6_rg1nr"]
+
+[sub_resource type="Resource" id="layer_bed"]
+script = ExtResource("1_ajb3c")
+id = &"bed"
+role = &"bed"
+stream = ExtResource("2_8od8x")
+gain_db = -7.96
+exposed = true
+keeps_on_power_down = true
+
+[sub_resource type="Resource" id="layer_rain"]
+script = ExtResource("1_ajb3c")
+id = &"rain"
+role = &"bed"
+stream = ExtResource("3_4bnhw")
+gain_db = 10.48
+exposed = true
+
+[sub_resource type="Resource" id="layer_motif"]
+script = ExtResource("1_ajb3c")
+id = &"motif"
+role = &"motif"
+stream = ExtResource("4_gnu1y")
+gain_db = 4.46
+exposed = true
+melodic = true
+
+[sub_resource type="Resource" id="layer_luciole"]
+script = ExtResource("1_ajb3c")
+id = &"luciole"
+role = &"variant"
+stream = ExtResource("5_8swk4")
+gain_db = 11.26
+exposed = true
+melodic = true
+group = &"ending_seen"
+
+[resource]
+script = ExtResource("6_rg1nr")
+id = &"ms_01"
+tempo_bpm = 60.0
+layers = Array[ExtResource("1_ajb3c")]([SubResource("layer_bed"), SubResource("layer_rain"), SubResource("layer_motif"), SubResource("layer_luciole")])
+thresholds = PackedFloat32Array(0.15, 0.35, 0.6, 0.8)
+max_level = 0

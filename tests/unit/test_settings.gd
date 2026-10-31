@@ -35,7 +35,7 @@ func test_default_values() -> void:
 
 func test_expected_key_set() -> void:
 	var keys: Array[StringName] = _settings.call(&"get_keys")
-	assert_eq(keys.size(), 19)
+	assert_eq(keys.size(), 22)
 	assert_has(keys, &"audio_mono", "mode mono (docs/AUDIO.md §9, M6)")
 	assert_has(keys, &"graphics_quality", "qualité graphique du guichet (M9)")
 	assert_has(keys, &"color_vision", "vision des couleurs (M11)")
@@ -44,6 +44,9 @@ func test_expected_key_set() -> void:
 	assert_has(keys, &"tutorial_j1", "tutoriel interactif du J1 (M11 lot C)")
 	assert_has(keys, &"tutorial_m13_statements", "carte d'aide des déclarations (M13 §6.5)")
 	assert_has(keys, &"tutorial_m13_search", "carte d'aide de la fouille (M13 §6.5)")
+	assert_has(keys, &"music_inspection_reduce", "musique discrète en inspection (M14 §2.11)")
+	assert_has(keys, &"music_dynamics", "musique dynamique / stable (M14 §2.11)")
+	assert_has(keys, &"cinematic_advance", "avance des cinématiques (M14 §3.7)")
 
 
 func test_typed_properties_read_defaults() -> void:

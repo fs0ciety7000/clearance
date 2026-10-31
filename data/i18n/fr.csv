@@ -4090,3 +4090,146 @@ ev_kind_offer,OFFRE · ÉCONOMAT
 ev_offer_at_shop,À L'ÉCONOMAT CE SOIR · %s
 ev_offer_goto,VOIR L'OFFRE
 disc_statement_doc_detail,%s : %s ≠ déclaré : %s
+cin_f1_1_audit,Neuf jours. L'Inspecteur a compté les enveloppes. Vous aussi.
+cin_f1_1_review,La Revue a souri. Puis elle a demandé votre badge.
+cin_f1_1_deposition,Le greffe a lu votre déposition jusqu'au bout. Puis votre badge.
+cin_f1_1_double,Trente jours à tenir deux fils. On a tiré sur les deux.
+cin_f1_2,On vous laisse la lumière. On ne vous laisse pas l'heure.
+cin_f1_3,"Au Guichet 04, quelqu'un d'autre apprend à dire « suivant »."
+cin_f1_3_borne,"Au Guichet 04, une borne jaune dit « suivant » à votre place."
+cin_f1_4_okonkwo,"Une nuit, trois coups contre la porte. Puis plus rien."
+cin_f1_4,"Il pleut, même ici."
+cin_f2_1,Le lecteur clignote rouge. Votre badge ne vous connaît plus.
+cin_f2_2,Une heure pour plier neuf mètres carrés. Le réchaud reste.
+cin_f2_3,"La Transit-7, dans l'autre sens."
+cin_f2_4,"Quelque part, derrière une vitre, quelqu'un lit vos papiers."
+cin_f3_1,La couchette triple n'a plus qu'un drap.
+cin_f3_2,"Sur la vitre embuée, un badge dessiné s'efface."
+cin_f3_2_lumika,"Sous la couchette, une luciole au crayon."
+cin_f3_3,10:00. Le guichet ouvre. Il n'y a nulle part ailleurs.
+cin_f4_1_dora,14:20. Elle ne vous regarde pas. Elle regarde Noa.
+cin_f4_1,14:20. Vous signez. Le stylo ne tremble pas.
+cin_f4_2,Un bureau au-dessus du Hall. Une porte. Une serrure.
+cin_f4_3,"Noa dessine des portes, maintenant."
+cin_f4_4,Gloire au Consortium. En bas de chaque page.
+cin_f5c_1,14:00. Les Veilleurs ouvrent l'air vers le quai 2.
+cin_f5_2_dora,"Dora passe la vitre, le registre sous le bras."
+cin_f5_2,"Elle passe la vitre. Derrière elle, on compte à voix haute."
+cin_f5c_3,"Sur chaque vitre, la Charte de l'air."
+cin_f5_4,Noa garde votre tampon. Il imprime des lucioles.
+cin_f5s_1,Dernière minute : les réservoirs s'ouvrent vers Tycho.
+cin_f5s_3,"Tycho respire. Une semaine, sur l'air d'Halcyon."
+cin_f5b_1,14:04. Le poste de la Garde du quai 2 brûle.
+cin_f5b_2,Les familles passent dans la fumée. Personne ne contrôle.
+cin_f5b_3,Une autre Commission scelle les vitres. Un autre nom.
+cin_f5b_4,Noa dessine des navettes avec des flammes.
+cin_f6e_1,"05:00, quai 6. Le Basse-Marée sent la rouille et le thé."
+cin_f6_2,"Wren raye vos noms. Son registre, personne ne le contrôle."
+cin_f6_3,Halcyon rapetisse dans le hublot.
+cin_f6e_4,Noa apprend un mot pour l'air. Elle le dit à chaque hublot.
+cin_f6d_1,"05:00, écluse 9. Le remorqueur sent l'huile et le sel."
+cin_f6d_4,"Dans la dérive, pas de vitres. Que des hublots."
+cin_f6t_1,"La Transit-7 repart vers Tycho, presque vide. Vous êtes dedans."
+cin_f6t_3,"Tycho. Une couchette, un tour d'air : le quatrième."
+cin_f6t_4,Une lampe de mine pour tout le réfectoire. Assez de lumière.
+cin_f7_1,"Jeudi, 10:00. Trois notes. Le Hall ouvre."
+cin_f7_2,La dernière navette est repartie à moitié vide.
+cin_f7_3,Les formulaires changent de numéro. Pas de couleur.
+cin_f7_4,La file serpente entre les barrières. « Suivant. »
+cin_f8_1,12:20. Le haut-parleur lit les dépositions.
+cin_f8_2,La vôtre en premier. Vous ne reconnaissez pas votre voix.
+cin_f8_3,"Au Bloc Pétrel, quelqu'un monte le son."
+cin_f8_4,"Sous-sol 3. Des archives, une lampe, du temps."
+cin_f9_1,14:00. Le 04 s'éteint. Puis le 05. Puis toutes.
+cin_f9_2,"Sans vitres, personne ne contrôle personne."
+cin_f9_3,"Les tampons posés à plat, comme des cartes."
+cin_f9_4,"Vous rentrez à pied, au milieu des autres."
+cin_f10_1,14:00. La Transit-7 s'arrime pour la dernière fois.
+cin_f10_2,Chaque famille avait un répondant. Vous aviez lu chaque numéro.
+cin_f10_3,"À l'école de l'Anneau C, on ajoute des bancs."
+cin_f10_4,Une porte a tenu. Ça ne suffit pas. Ça compte.
+cin_ea_1,18:00. Les bornes restent allumées.
+cin_ea_2,"Un an. Les mêmes papiers, d'autres visages."
+cin_ea_3,Vous rangez le tampon. Il pèse un peu plus.
+cin_eb_1,"La Charte de l'air, corrigée au crayon."
+cin_eb_2,"Au recycleur central, le Conseil siège en cercle."
+cin_eb_3,Douze vitres. Toutes ouvertes.
+cin_ec_1,12:20. Le Hall se tait pour écouter.
+cin_ec_2,"On relit 2187. Chaque nom, chaque date."
+cin_ec_3,La Main courante ne ferme plus.
+cin_ed_1,"Tycho, sas Castellanos. La même vitre, dans l'autre sens."
+cin_ed_2,"Au réfectoire, une place gardée."
+cin_ed_3,"Dehors, la poussière. Dedans, l'air se partage."
+cin_e_fig,"Un visage d'il y a un an, à la vitre."
+pa_a1_01,Le Consortium rappelle : un document exact est un citoyen en sécurité.
+pa_a1_02,Ressortissants : préparez vos papiers avant la vitre. Merci de votre fluidité.
+pa_a1_03,Les objets trouvés du Hall sont détruits après vingt-quatre heures.
+pa_a1_04,Transit-7 en provenance de Tycho : arrimage confirmé au quai 2.
+pa_a1_05,Chaque souffle se mérite. Pensez à votre quota respiratoire.
+pa_a1_06,Il est interdit de s'asseoir entre les barrières magnétiques.
+pa_a1_07,Personnel de vitre : la Continuité vous remercie de votre vigilance.
+pa_a1_08,Les enfants restent dans la file de leurs parents.
+pa_a1_09,Condensation sur les conduites : le Hall reste praticable.
+pa_a1_10,Le Consortium voit. Le Consortium protège.
+pa_a1_q2_01,Quai 2 : accès restreint jusqu'à nouvel ordre.
+pa_a1_q2_02,Tout bagage laissé sans surveillance sera détruit sans préavis.
+pa_a2_01,Quota respiratoire : chaque entrée compte. Merci de votre patience.
+pa_a2_02,Les attroupements de plus de quatre ressortissants sont interdits.
+pa_a2_03,Rééquilibrage de l'Anneau C : coupures programmées entre 22:00 et 05:00.
+pa_a2_04,Signalez toute inscription non autorisée dans les coursives.
+pa_a2_05,Contributeurs : votre employeur est votre garant. Gardez-le.
+pa_a2_06,La Garde de Continuité patrouille pour votre sécurité. Restez dans la file.
+pa_a2_07,L'ordre est l'air que nous respirons.
+pa_a2_08,Le couvre-feu respiratoire s'applique à tous les Anneaux.
+pa_a2_09,Transit-7 : rotation maintenue. Les places ne sont pas garanties.
+pa_a2_10,"Vigilance aujourd'hui, Continuité demain."
+pa_a3_01,L'Enquête de Continuité remercie les témoins de leur exactitude.
+pa_a3_02,"Les dépositions sont reçues au greffe, salle 3. Apportez votre badge."
+pa_a3_03,Tycho : la colonie est en cours de rééquilibrage. Aucun commentaire.
+pa_a3_04,Les familles sont priées de ne pas se séparer dans le Hall.
+pa_a3_05,Le Bureau dément toute fermeture de Tycho.
+pa_a3_06,L'Arbitrage siège. Le Hall reste ouvert.
+pa_a3_07,Un document exact est un citoyen en sécurité. Un témoin exact aussi.
+pa_a3_08,Les effets personnels des ressortissants de Tycho sont pesés au quai.
+pa_a3_09,Le Consortium voit. Le Consortium se souvient.
+pa_a3_10,Dernières rotations de la Transit-7 : consultez l'écran des départs.
+pa_ev01,Maintenance des lecteurs de bande. Merci de votre patience.
+pa_ev02,Incident technique au Guichet 04. Le Hall reste ouvert.
+pa_ev03,Clinique Meridian : portez votre masque dans la file.
+pa_ev04,Un inspecteur est présent dans le Hall. Comportement exemplaire attendu.
+pa_ev06,Places assises réservées aux classes C-1 et C-2. Merci de votre compréhension.
+pa_ev07,Gardez vos papiers sur vous. Un vol est un manque d'air.
+pa_ev08,Clinique Meridian saturée. Patientez dans le calme.
+pa_ev09,Alerte des quais : tout colis non déclaré sera saisi.
+pa_garde_01,Service de nuit : un seul guichet ouvert. Merci de votre patience.
+pa_garde_02,"Le Hall ferme ses portes à 05:00. La file, non."
+pa_garde_03,Extinction des écrans publicitaires : économie d'air.
+pa_garde_04,La Garde de nuit veille. Dormir dans la file est à vos risques.
+pa_epi_a_01,Bornes ACV-3 : présentez votre document face vers le haut.
+pa_epi_a_02,Les rejets de borne sont orientés vers les vitres. Merci de votre patience.
+pa_epi_b_01,Conseil de l'air : le recycleur central respire normalement.
+pa_epi_b_02,"Bienvenue. L'air du Hall est gratuit. Les papiers, toujours."
+pa_epi_c_01,12:20 : lecture des dépositions de 2187. Le silence est demandé.
+pa_epi_c_02,Le Bureau des Témoins remercie les répondants de leur présence.
+pa_epi_d_01,Comité de grève : tour d'air du soir à 19:00.
+pa_epi_d_02,Sas Castellanos : les mineurs du Puits 14 passent en premier.
+cin_lbl_charter,CHARTE DE L'AIR
+cin_lbl_ledger,MAIN COURANTE
+cin_skip_hold,Maintenir pour passer
+cin_skip_all,TOUT PASSER
+cin_next,▶
+cin_replay,REVOIR
+sub_pa_prefix,[Haut-parleur]
+opt_music_inspect,Musique pendant l'inspection
+opt_music_inspect_hint,Réduite : plus basse et sans mélodie en Mode Inspection.
+opt_music_reduced,RÉDUITE
+opt_music_normal,NORMALE
+opt_music_dynamics,Musique
+opt_music_dynamics_hint,"Stable : un seul niveau pendant le shift, sans montée de tension."
+opt_music_dynamic,DYNAMIQUE
+opt_music_stable,STABLE
+opt_cinematic_advance,Cinématiques
+opt_cinematic_hint,Manuelle : chaque planche attend un appui. Maintenir pour tout passer.
+opt_cinematic_auto,AUTOMATIQUE
+opt_cinematic_manual,MANUELLE
+dos_portrait_hidden,Visage non vu

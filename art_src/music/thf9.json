@@ -1,0 +1,479 @@
+{
+ "id": "thf9",
+ "def_id": "th_f9",
+ "kind": "theme",
+ "title": "TH-F9 · « Les vitres éteintes » — ré majeur, 75 BPM",
+ "doc": "docs/M14.md §2.7 : ouverture = bourdonnement de néon qui descend et s'éteint (2 mesures), 2 mesures de silence, puis chœur synthétique (24 voix désaccordées : 4 notes × 3 voix × 2 côtés) ; MO-2 chanté, lent ; MO-1 absent. Ouverture 2 + A 6 + B 6 mesures (38,4 s) puis queue de 8 mesures bouclable (25,6 s).",
+ "tempo": 75,
+ "beats_per_bar": 4,
+ "bars": 22,
+ "tail_bars": 2,
+ "sample_rate": 48000,
+ "seed": 9009,
+ "sections": [
+  {
+   "id": "opening",
+   "from_bar": 0,
+   "bars": 2
+  },
+  {
+   "id": "a",
+   "from_bar": 2,
+   "bars": 6
+  },
+  {
+   "id": "b",
+   "from_bar": 8,
+   "bars": 6
+  },
+  {
+   "id": "tail",
+   "from_bar": 14,
+   "bars": 8,
+   "loop": true
+  }
+ ],
+ "chords": [
+  {
+   "bar": 4,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F#3",
+    "A3",
+    "D4"
+   ]
+  },
+  {
+   "bar": 6,
+   "bars": 2,
+   "bass": "B1",
+   "notes": [
+    "B2",
+    "F#3",
+    "B3",
+    "D4"
+   ]
+  },
+  {
+   "bar": 8,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G3",
+    "B3",
+    "D4",
+    "G4"
+   ]
+  },
+  {
+   "bar": 10,
+   "bars": 2,
+   "bass": "F#2",
+   "notes": [
+    "F#3",
+    "A3",
+    "D4",
+    "F#4"
+   ]
+  },
+  {
+   "bar": 12,
+   "bars": 1,
+   "bass": "E2",
+   "notes": [
+    "E3",
+    "G3",
+    "B3",
+    "D4"
+   ]
+  },
+  {
+   "bar": 13,
+   "bars": 1,
+   "bass": "A1",
+   "notes": [
+    "E3",
+    "A3",
+    "D4",
+    "E4"
+   ]
+  },
+  {
+   "bar": 14,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F#3",
+    "A3",
+    "D4"
+   ]
+  },
+  {
+   "bar": 16,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G3",
+    "B3",
+    "D4",
+    "G4"
+   ]
+  },
+  {
+   "bar": 18,
+   "bars": 2,
+   "bass": "B1",
+   "notes": [
+    "F#3",
+    "B3",
+    "D4",
+    "F#4"
+   ]
+  },
+  {
+   "bar": 20,
+   "bars": 1,
+   "bass": "A1",
+   "notes": [
+    "E3",
+    "A3",
+    "D4",
+    "E4"
+   ]
+  },
+  {
+   "bar": 21,
+   "bars": 1,
+   "bass": "A1",
+   "notes": [
+    "E3",
+    "A3",
+    "C#4",
+    "E4"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-2": [
+   {
+    "step": 0,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 2,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 4,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 7,
+    "len": 1,
+    "note": "E5"
+   }
+  ]
+ },
+ "instruments": {
+  "neon": {
+   "type": "neon",
+   "glide": 0.3,
+   "width": 0.1,
+   "cutoff": 2600,
+   "flicker": 0.45,
+   "attack": 0.5,
+   "level": 0.22
+  },
+  "relay": {
+   "type": "brush",
+   "cutoff": 2400,
+   "q": 2.0,
+   "attack": 0.0005,
+   "decay": 0.03,
+   "length": 0.15,
+   "level": 0.25
+  },
+  "air": {
+   "type": "tone",
+   "wave": "air",
+   "cutoff": 900,
+   "attack": 1.5,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.0,
+   "level": 0.012
+  },
+  "choir": {
+   "type": "choir",
+   "voices": 3,
+   "detune_cents": 14,
+   "vib_hz": 5.0,
+   "vib_depth": 0.0045,
+   "formants": [
+    [
+     730,
+     5,
+     1.0
+    ],
+    [
+     1090,
+     7,
+     0.5
+    ],
+    [
+     2440,
+     9,
+     0.2
+    ]
+   ],
+   "breath": 0.012,
+   "attack": 2.4,
+   "decay": 1.0,
+   "sustain": 0.9,
+   "release": 3.0,
+   "level": 0.4
+  },
+  "choir_high": {
+   "type": "choir",
+   "voices": 2,
+   "detune_cents": 10,
+   "vib_hz": 5.4,
+   "vib_depth": 0.004,
+   "formants": [
+    [
+     400,
+     6,
+     1.0
+    ],
+    [
+     800,
+     8,
+     0.45
+    ],
+    [
+     2600,
+     10,
+     0.1
+    ]
+   ],
+   "formant_shift": 1.15,
+   "breath": 0.01,
+   "attack": 3.0,
+   "decay": 1.0,
+   "sustain": 0.9,
+   "release": 3.0,
+   "level": 0.25
+  },
+  "solo": {
+   "type": "choir",
+   "voices": 2,
+   "detune_cents": 4,
+   "vib_hz": 5.3,
+   "vib_depth": 0.006,
+   "formants": [
+    [
+     400,
+     6,
+     1.0
+    ],
+    [
+     800,
+     8,
+     0.45
+    ],
+    [
+     2600,
+     10,
+     0.1
+    ]
+   ],
+   "breath": 0.02,
+   "attack": 0.35,
+   "decay": 0.4,
+   "sustain": 0.85,
+   "release": 1.4,
+   "level": 0.5
+  },
+  "drone": {
+   "type": "tone",
+   "wave": "sine",
+   "attack": 3.0,
+   "decay": 1.0,
+   "sustain": 1.0,
+   "release": 3.0,
+   "level": 0.22
+  }
+ },
+ "mix": {
+  "eq": [],
+  "reverb": {
+   "rt60": 4.5,
+   "size": 1.8,
+   "damp_hz": 4200,
+   "predelay": 0.04
+  },
+  "width": 0.4
+ },
+ "stems": [
+  {
+   "id": "neon",
+   "name": "néon qui s'éteint",
+   "tracks": [
+    {
+     "instrument": "neon",
+     "gain_db": 0,
+     "send": 0.2,
+     "events": [
+      {
+       "bar": 0,
+       "step": 0,
+       "len": 32,
+       "note": "A2"
+      }
+     ]
+    },
+    {
+     "instrument": "relay",
+     "gain_db": 0,
+     "send": 0.4,
+     "pan": 0.2,
+     "events": [
+      {
+       "bar": 2,
+       "step": 0,
+       "len": 1,
+       "note": "C5",
+       "vel": 0.8
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "air",
+   "name": "salle vide",
+   "tracks": [
+    {
+     "instrument": "air",
+     "gain_db": 0,
+     "send": 0.1,
+     "events": [
+      {
+       "bar": 1,
+       "step": 8,
+       "len": 336,
+       "note": "C4"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "choir",
+   "name": "chœur (24 voix)",
+   "tracks": [
+    {
+     "instrument": "choir",
+     "gain_db": 0,
+     "send": 0.45,
+     "chords": {
+      "octave": 0
+     }
+    },
+    {
+     "instrument": "choir_high",
+     "gain_db": -3,
+     "send": 0.5,
+     "chords": {
+      "octave": 1,
+      "only": [
+       2,
+       3
+      ],
+      "from_bar": 8,
+      "to_bar": 22
+     },
+     "variant": "inactive",
+     "doc": "Piste muette dans la démo validée par le client (D-198) : les indices `only` n'étaient pas lus (corrigé en phase 2) ; gardée inactive pour ne pas changer TH-F9."
+    },
+    {
+     "instrument": "drone",
+     "gain_db": 0,
+     "send": 0.1,
+     "events": [
+      {
+       "bar": 8,
+       "step": 0,
+       "len": 96,
+       "note": "D2"
+      },
+      {
+       "bar": 14,
+       "step": 0,
+       "len": 128,
+       "note": "D2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mo2",
+   "name": "MO-2 chanté",
+   "tracks": [
+    {
+     "instrument": "solo",
+     "gain_db": 0,
+     "send": 0.5,
+     "pan": -0.1,
+     "events": [
+      {
+       "motif": "MO-2",
+       "bar": 6,
+       "step": 0,
+       "stretch": 2,
+       "vel": 0.8
+      },
+      {
+       "motif": "MO-2",
+       "bar": 8,
+       "step": 8,
+       "stretch": 2,
+       "vel": 0.9
+      },
+      {
+       "motif": "MO-2",
+       "bar": 10,
+       "step": 8,
+       "stretch": 2,
+       "transpose": 12,
+       "vel": 0.7
+      },
+      {
+       "motif": "MO-2",
+       "bar": 16,
+       "step": 0,
+       "stretch": 2,
+       "vel": 0.7
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "demo": {
+  "file": "m14_music_thf9_demo",
+  "tail_bars": 4,
+  "fade_out_bars": 4,
+  "target_lufs": -18.0
+ },
+ "endings": [
+  "f9_strike"
+ ]
+}

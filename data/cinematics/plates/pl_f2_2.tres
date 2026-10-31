@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://dh75hh05jv7s3"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_o8ix3"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_caulk"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_igdsh"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_ufiug"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_3uoim"]
+
+[sub_resource type="Resource" id="pl_f2_2_resource_1"]
+script = ExtResource("4_ufiug")
+texture_path = "res://assets/cinematics/bg/bg_p1.webp"
+
+[sub_resource type="Resource" id="pl_f2_2_resource_2"]
+script = ExtResource("4_ufiug")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f2_2_boxes.webp"
+rect = Rect2(0.0283, 0.6267, 0.4175, 0.3733)
+depth = 0.6
+props = Array[StringName]([&"cartons", &"stove"])
+
+[resource]
+script = ExtResource("5_3uoim")
+id = &"pl_f2_2"
+layers = Array[ExtResource("4_ufiug")]([SubResource("pl_f2_2_resource_1"), SubResource("pl_f2_2_resource_2")])
+caption_key = "cin_f2_2"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s4"
+set_variant = &"emptied"
+lighting = &"cabin"
+dominant = &"state.amber"
+paint_radius_px = 6

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://b2d0lbx3wgxns"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_7dkme"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_edki7"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_ge8nj"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_5qrxj"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_gpr8u"]
+
+[sub_resource type="Resource" id="pl_f5s_1_resource_1"]
+script = ExtResource("4_5qrxj")
+texture_path = "res://assets/cinematics/bg/bg_q2.webp"
+
+[sub_resource type="Resource" id="pl_f5s_1_resource_2"]
+script = ExtResource("4_5qrxj")
+kind = &"fx"
+depth = 0.8
+fx_kind = &"air"
+
+[resource]
+script = ExtResource("5_gpr8u")
+id = &"pl_f5s_1"
+min_act = 3
+layers = Array[ExtResource("4_5qrxj")]([SubResource("pl_f5s_1_resource_1"), SubResource("pl_f5s_1_resource_2")])
+caption_key = "cin_f5s_1"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s2"
+set_variant = &"tanks"
+lighting = &"dock"
+dominant = &"accent.magenta"
+paint_radius_px = 6

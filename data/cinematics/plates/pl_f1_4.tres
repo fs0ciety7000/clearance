@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://bi5ga0hpu7nny"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_o8017"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="2_7jphc"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="3_w3aqf"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="4_ddvf7"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="5_b8ruy"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="6_n4it8"]
+
+[sub_resource type="Resource" id="pl_f1_4_resource_5"]
+script = ExtResource("2_7jphc")
+all_of = Array[StringName]([&"okonkwo_warned"])
+
+[sub_resource type="Resource" id="pl_f1_4_resource_4"]
+script = ExtResource("1_o8017")
+key = "cin_f1_4_okonkwo"
+condition = SubResource("pl_f1_4_resource_5")
+
+[sub_resource type="Resource" id="pl_f1_4_resource_1"]
+script = ExtResource("5_b8ruy")
+texture_path = "res://assets/cinematics/bg/bg_b2.webp"
+
+[sub_resource type="Resource" id="pl_f1_4_resource_2"]
+script = ExtResource("5_b8ruy")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f1_4_light_lines.webp"
+rect = Rect2(0.4268, 0.7474, 0.1387, 0.1128)
+depth = 0.2
+props = Array[StringName]([&"door_gap_light"])
+
+[sub_resource type="Resource" id="pl_f1_4_resource_3"]
+script = ExtResource("5_b8ruy")
+kind = &"fx"
+depth = 0.8
+fx_kind = &"rain"
+fx_density = 0.15
+
+[resource]
+script = ExtResource("6_n4it8")
+id = &"pl_f1_4"
+layers = Array[ExtResource("5_b8ruy")]([SubResource("pl_f1_4_resource_1"), SubResource("pl_f1_4_resource_2"), SubResource("pl_f1_4_resource_3")])
+caption_key = "cin_f1_4"
+captions = Array[ExtResource("1_o8017")]([SubResource("pl_f1_4_resource_4")])
+duration_sec = 7.5
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s5"
+set_variant = &"cell_door"
+lighting = &"night"
+dominant = &"state.red"
+paint_radius_px = 6

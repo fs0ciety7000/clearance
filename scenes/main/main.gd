@@ -10,7 +10,8 @@
 ## emplacements de démonstration dans `user://qa_demo_saves`, jamais les vraies
 ## sauvegardes), `--title=new|difficulty|overwrite|load|days`, `--damage-slot=N`
 ## (avec `--demo-saves` : emplacement de démonstration N rendu illisible et
-## marqué endommagé, capture QA-043).
+## marqué endommagé, capture QA-043), `--end-to-title` (smoke des exports :
+## arrivée depuis l'écran de fin annoncée sur la sortie, puis on quitte).
 ## M12 (lot C, I28 / I29) : entrées **GARDE DE NUIT** (`GardeScreen` ; active
 ## si `GardeService.is_unlocked(profil)`, sinon grisée avec « Terminez votre
 ## premier jour au Guichet 04. ») et **DOSSIER DE L'AGENT** (`DossierScreen` ;
@@ -20,6 +21,10 @@
 ## puis `DayScene.pending_garde_run`. Captures : `--demo-profile` (profil de
 ## démonstration dans `user://qa_demo_saves`, avec `--demo-saves`),
 ## `--title=garde|dossier|dossier-people|dossier-garde|dossier-epilogues|dossier-last`.
+## M14 (QA-075) : titre → partie (CONTINUER, NOUVELLE PARTIE, CHARGER, Garde,
+## épilogue) : la musique du titre s'éteint en fondu (`TitleMusic.fade_out`,
+## 1,5 s) sous un voile noir, arbre en pause, **puis** la scène de jour —
+## même logique que `DayScene._leave_after_music_fade` (D-208).
 extends Control
 
 const DAY_SCENE_PATH: String = "res://scenes/main/day.tscn"
@@ -47,8 +52,13 @@ var quit_button: Button = null
 var options: OptionsPanel = null
 ## Écran ouvert par-dessus le titre (Nouvelle partie, Charger), null sinon.
 var screen: ScreenBase = null
-## Faux : `_start_day` n'ouvre pas la scène de jour (tests).
+## Faux : `_start_day` n'ouvre pas la scène de jour (tests) ; le fondu de la
+## musique du titre est quand même lancé.
 var change_scene: bool = true
+## Vrai pendant le fondu de sortie vers la scène de jour (un seul départ).
+var leaving: bool = false
+## Voile noir du fondu de sortie (créé au premier départ).
+var blackout: ColorRect = null
 ## Toasts du titre (chargement impossible), créés au premier besoin.
 var title_toasts: ToastStack = null
 var _menu: Array[Control] = []
@@ -108,6 +118,10 @@ func _ready() -> void:
 		GardeScreen.open_on_title = false
 		open_garde.call_deferred()
 	_debug_title(str(args.get("title", "")))
+	if args.has("end-to-title"):
+		# Smoke des exports : fin → cinématique → écran de fin → titre atteint.
+		print("main: titre atteint (--end-to-title)")
+		get_tree().create_timer(1.0).timeout.connect(get_tree().quit)
 
 
 ## Mention de version : « Démo · v0.8.0 » (`application/config/version`) ;
@@ -284,6 +298,7 @@ func open_garde() -> GardeScreen:
 func open_dossier() -> DossierScreen:
 	var dossier: DossierScreen = DossierScreen.new()
 	dossier.name = "DossierScreen"
+	dossier.title_music = get_node_or_null(^"TitleMusic") as TitleMusic # REVOIR : thème de la fin (M14)
 	dossier.epilogue_requested.connect(play_epilogue_from_profile)
 	dossier.garde_requested.connect(start_garde)
 	_open_screen(dossier, dossier_button)
@@ -364,8 +379,41 @@ func _ensure_title_toasts() -> void:
 func _start_day() -> void:
 	TutorialOverlay.pending = GameState.current_day == 1 and Settings.get_bool(Settings.KEY_TUTORIAL)
 	shift_start_requested.emit()
-	if change_scene:
+	_leave_for_day()
+
+
+## QA-075 : fondu de sortie de la musique du titre (1,5 s, effet `Fade`) sous
+## un voile noir, arbre en pause (plus rien ne répond), puis `day.tscn`. Sans
+## musique : tout de suite. `change_scene` faux (tests) : le fondu seul.
+func _leave_for_day() -> void:
+	if leaving:
+		return
+	var title_music: TitleMusic = get_node_or_null(^"TitleMusic") as TitleMusic
+	var wait: float = title_music.fade_out(DS.MUSIC_EXIT_FADE) if title_music != null else 0.0
+	if not change_scene:
+		return
+	leaving = true
+	if wait <= 0.0 or not is_inside_tree():
 		get_tree().change_scene_to_file(DAY_SCENE_PATH)
+		return
+	if blackout == null:
+		blackout = ColorRect.new()
+		blackout.name = "Blackout"
+		blackout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		add_child(blackout)
+	blackout.color = Color(DS.BG_VOID, 0.0)
+	blackout.mouse_filter = Control.MOUSE_FILTER_STOP
+	blackout.process_mode = Node.PROCESS_MODE_ALWAYS
+	move_child(blackout, get_child_count() - 1)
+	get_viewport().gui_release_focus()
+	get_tree().paused = true
+	var veil: Tween = blackout.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	veil.tween_property(blackout, "color:a", 1.0, DS.DUR_FAST if Settings.reduce_motion else wait)
+	await get_tree().create_timer(wait, true).timeout
+	if not is_inside_tree():
+		return
+	get_tree().paused = false
+	get_tree().change_scene_to_file(DAY_SCENE_PATH)
 
 
 # ---------------------------------------------------------------------------
@@ -382,8 +430,7 @@ func start_garde(code: String) -> bool:
 	DayScene.pending_garde_run = run
 	TutorialOverlay.pending = false
 	shift_start_requested.emit()
-	if change_scene:
-		get_tree().change_scene_to_file(DAY_SCENE_PATH)
+	_leave_for_day()
 	return true
 
 
@@ -405,8 +452,7 @@ func _play_epilogue(epi: Dictionary, slot: int) -> bool:
 		return false
 	TutorialOverlay.pending = false
 	shift_start_requested.emit()
-	if change_scene:
-		get_tree().change_scene_to_file(DAY_SCENE_PATH)
+	_leave_for_day()
 	return true
 
 
@@ -445,6 +491,42 @@ func _debug_title(which: String) -> void:
 				var dossier: DossierScreen = open_dossier()
 				if which != "dossier":
 					dossier.show_tab.call_deferred(StringName(which.trim_prefix("dossier-")))
+		"dossier-replay":
+			# M14 : REVOIR une fin vue (CIN-F10), figures en silhouette.
+			if not dossier_button.disabled:
+				var dossier_r: DossierScreen = open_dossier()
+				_debug_replay.call_deferred(dossier_r, str(DebugArgs.parse(OS.get_cmdline_user_args()).get("replay", "cin_f10")))
+		"options-m14":
+			# M14 : options, section Audio (musique) visible.
+			_show_options()
+			_debug_options_m14.call_deferred()
+
+
+## Capture M14 : REVOIR `id` depuis le Dossier, planche `--plate=N` à
+## `--plate-t` s (figée avec `--plate-hold`).
+func _debug_replay(dossier: DossierScreen, id: String) -> void:
+	var b: Button = dossier.replay_buttons.get(id, null)
+	if b == null:
+		push_warning("main: REVOIR %s indisponible" % id)
+		return
+	b.pressed.emit()
+	var args: Dictionary = DebugArgs.parse(OS.get_cmdline_user_args())
+	var plate_n: int = str(args.get("plate", "0")).to_int()
+	if dossier.replay != null and plate_n > 0:
+		await get_tree().process_frame
+		dossier.replay.jump_to(plate_n - 1, str(args.get("plate-t", "1.5")).to_float())
+		if args.has("plate-hold"):
+			dossier.replay.set_process(false)
+
+
+## Capture M14 : options défilées jusqu'aux réglages de musique (`--opt-row=cinematic` : avance des cinématiques).
+func _debug_options_m14() -> void:
+	await get_tree().process_frame
+	var row: String = str(DebugArgs.parse(OS.get_cmdline_user_args()).get("opt-row", "music"))
+	var target: Control = options.controls.get(Settings.KEY_CINEMATIC_ADVANCE if row == "cinematic" else Settings.KEY_MUSIC_DYNAMICS, null)
+	if target != null:
+		target.grab_focus()
+		options.scroll.ensure_control_visible(target)
 
 
 ## Capture QA-043 : `current.json` de l'emplacement de démonstration illisible,
@@ -548,4 +630,32 @@ static func write_demo_profile(dir: String, kind: String = "full") -> void:
 			"garde_version": GardeScreen.current_version()}}
 	profile["garde_seeds"] = [{"seed_code": "K2Q-9TX", "best": 18, "garde_version": GardeScreen.current_version()}]
 	profile["garde_stats"] = {"runs": 7, "total_correct": 112, "longest_run": 34}
+	# M14 : cinématiques vues (REVOIR) et portraits vus à la vitre (apparences
+	# tirées du vrai générateur, graines fixes) ; deux personnes restent en initiales.
+	profile["cinematics_seen"] = ["cin_f3", "cin_f5c", "cin_f10", "cin_ec"]
+	profile["portraits"] = demo_portraits(met)
 	ProfileService.save_profile(profile, dir)
+
+
+## Portraits de démonstration (captures) : un visage par personnage croisé,
+## sauf deux (2ᵉ et 5ᵉ : repli en initiales) ; une visière restée baissée.
+static func demo_portraits(met: Array) -> Dictionary:
+	var out: Dictionary = {}
+	var table: CharacterTableDef = CharacterTableDef.load_default()
+	var data: DataCatalog = DataCatalog.load_from()
+	if table == null or data == null or data.appearance_catalog == null:
+		return out
+	var gen: AppearanceGenerator = AppearanceGenerator.new(data.appearance_catalog)
+	var count: int = 0
+	for i: int in met.size():
+		if i == 1 or i == 4:
+			continue
+		var case_id: String = str(met[i])
+		var chr: CharacterDef = table.character_of(StringName(str(case_id)))
+		if chr == null or out.has(String(chr.id)):
+			continue
+		var app: PassengerAppearance = gen.generate(SeededRng.new(9_000 + count * 37), [&"hal", &"ter", &"tyc"][count % 3] as StringName)
+		out[String(chr.id)] = {"appearance": app.serialize(), "visor": "down" if count == 3 else "none",
+				"case_id": str(case_id), "day": 1 + count, "act": 1}
+		count += 1
+	return out

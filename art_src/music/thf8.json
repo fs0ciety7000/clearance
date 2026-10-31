@@ -1,0 +1,332 @@
+{
+ "id": "thf8",
+ "def_id": "th_f8",
+ "kind": "theme",
+ "title": "TH-F8 · Les Témoins — do mineur, 64 BPM",
+ "doc": "docs/M14.md §2.7 : « voix de haut-parleur » : formants tenus en nappe (voyelle « o »), clics réguliers (une lecture de noms) ; MO-1 en mineur harmonique (mi♭–do–sol, si naturel à la basse), une seule fois (mesure 7). Ouverture 2 + A 4 + B 4 (30 s) puis queue 8 (30 s).",
+ "tempo": 64,
+ "beats_per_bar": 4,
+ "bars": 18,
+ "tail_bars": 2,
+ "sample_rate": 48000,
+ "seed": 9008,
+ "sections": [
+  {
+   "id": "opening",
+   "from_bar": 0,
+   "bars": 2
+  },
+  {
+   "id": "a",
+   "from_bar": 2,
+   "bars": 4
+  },
+  {
+   "id": "b",
+   "from_bar": 6,
+   "bars": 4
+  },
+  {
+   "id": "tail",
+   "from_bar": 10,
+   "bars": 8,
+   "loop": true
+  }
+ ],
+ "chords": [
+  {
+   "bar": 0,
+   "bars": 2,
+   "bass": "C2",
+   "notes": [
+    "C3",
+    "Eb3",
+    "G3",
+    "C4"
+   ]
+  },
+  {
+   "bar": 2,
+   "bars": 2,
+   "bass": "Ab1",
+   "notes": [
+    "Ab2",
+    "C3",
+    "Eb3",
+    "G3"
+   ]
+  },
+  {
+   "bar": 4,
+   "bars": 2,
+   "bass": "F1",
+   "notes": [
+    "F2",
+    "Ab2",
+    "C3",
+    "F3"
+   ]
+  },
+  {
+   "bar": 6,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "B2",
+    "D3",
+    "F3"
+   ]
+  },
+  {
+   "bar": 8,
+   "bars": 2,
+   "bass": "C2",
+   "notes": [
+    "C3",
+    "Eb3",
+    "G3",
+    "C4"
+   ]
+  },
+  {
+   "bar": 10,
+   "bars": 2,
+   "bass": "Ab1",
+   "notes": [
+    "Ab2",
+    "C3",
+    "Eb3",
+    "G3"
+   ]
+  },
+  {
+   "bar": 12,
+   "bars": 2,
+   "bass": "F1",
+   "notes": [
+    "F2",
+    "Ab2",
+    "C3",
+    "F3"
+   ]
+  },
+  {
+   "bar": 14,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "B2",
+    "D3",
+    "F3"
+   ]
+  },
+  {
+   "bar": 16,
+   "bars": 2,
+   "bass": "C2",
+   "notes": [
+    "C3",
+    "Eb3",
+    "G3",
+    "C4"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-1hm": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "Eb5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "C5"
+   },
+   {
+    "step": 8,
+    "len": 8,
+    "note": "G5"
+   }
+  ]
+ },
+ "instruments": {
+  "voices": {
+   "type": "choir",
+   "voices": 2,
+   "detune_cents": 8,
+   "vib_hz": 4.5,
+   "vib_depth": 0.003,
+   "formants": [
+    [
+     450,
+     6,
+     1.0
+    ],
+    [
+     800,
+     8,
+     0.6
+    ],
+    [
+     2500,
+     10,
+     0.12
+    ]
+   ],
+   "breath": 0.015,
+   "attack": 2.0,
+   "decay": 1.0,
+   "sustain": 0.9,
+   "release": 2.5,
+   "level": 0.24
+  },
+  "click": {
+   "type": "brush",
+   "cutoff": 2600,
+   "q": 3.0,
+   "attack": 0.0005,
+   "decay": 0.008,
+   "length": 0.05,
+   "level": 0.18
+  },
+  "bell": {
+   "type": "bell",
+   "ratio": 3.5,
+   "index": 1.0,
+   "index_decay": 0.2,
+   "attack": 0.002,
+   "decay": 2.2,
+   "length": 5.0,
+   "level": 0.3
+  },
+  "low": {
+   "type": "tone",
+   "wave": "sine",
+   "attack": 0.5,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 1.5,
+   "level": 0.1
+  }
+ },
+ "mix": {
+  "eq": [],
+  "reverb": {
+   "rt60": 3.0,
+   "size": 1.4,
+   "damp_hz": 4000,
+   "predelay": 0.03
+  },
+  "width": 0.3
+ },
+ "stems": [
+  {
+   "id": "voices",
+   "tracks": [
+    {
+     "instrument": "voices",
+     "gain_db": 0,
+     "send": 0.45,
+     "chords": {
+      "octave": 0,
+      "only": [
+       1,
+       2,
+       3
+      ]
+     }
+    },
+    {
+     "instrument": "low",
+     "gain_db": -6,
+     "send": 0.2,
+     "chords": {
+      "octave": 0,
+      "only": [
+       0
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "clicks",
+   "tracks": [
+    {
+     "instrument": "click",
+     "gain_db": 0,
+     "send": 0.25,
+     "pan": 0.3,
+     "pattern": {
+      "bars": 1,
+      "steps": [
+       {
+        "step": 0,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.5
+       },
+       {
+        "step": 4,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.35
+       },
+       {
+        "step": 8,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.45
+       },
+       {
+        "step": 12,
+        "len": 1,
+        "note": "C5",
+        "vel": 0.35
+       }
+      ],
+      "from_bar": 2
+     }
+    }
+   ]
+  },
+  {
+   "id": "mo1",
+   "tracks": [
+    {
+     "instrument": "bell",
+     "gain_db": 0,
+     "send": 0.55,
+     "events": [
+      {
+       "motif": "MO-1hm",
+       "bar": 6,
+       "step": 0
+      }
+     ]
+    },
+    {
+     "instrument": "low",
+     "gain_db": 0,
+     "send": 0.2,
+     "events": [
+      {
+       "step": 8,
+       "len": 8,
+       "note": "B2",
+       "vel": 0.8,
+       "bar": 7
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "endings": [
+  "f8_registre"
+ ]
+}

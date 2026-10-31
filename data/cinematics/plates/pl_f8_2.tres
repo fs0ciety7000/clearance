@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://c2hridvykl4cr"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_o2bec"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_fkexv"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_ppawp"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_08cv5"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_tivlw"]
+
+[sub_resource type="Resource" id="pl_f8_2_resource_1"]
+script = ExtResource("4_08cv5")
+texture_path = "res://assets/cinematics/bg/bg_h1.webp"
+
+[sub_resource type="Resource" id="pl_f8_2_resource_2"]
+script = ExtResource("4_08cv5")
+kind = &"fig"
+texture_path = "res://assets/cinematics/fig/pl_f8_2_reflection.webp"
+rect = Rect2(0.3315, 0.2517, 0.3325, 0.6858)
+depth = 0.2
+figure_seed = 1481
+pose = &"idle"
+
+[resource]
+script = ExtResource("5_tivlw")
+id = &"pl_f8_2"
+min_act = 3
+layers = Array[ExtResource("4_08cv5")]([SubResource("pl_f8_2_resource_1"), SubResource("pl_f8_2_resource_2")])
+caption_key = "cin_f8_2"
+parallax_px = 10.0
+zoom_to = 1.03
+holo_effect = &"waveform"
+set_id = &"s1"
+set_variant = &"glass_reflection"
+lighting = &"hall"
+dominant = &"accent.cyan"
+paint_radius_px = 6

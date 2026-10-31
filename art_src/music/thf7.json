@@ -1,0 +1,249 @@
+{
+ "id": "thf7",
+ "def_id": "th_f7",
+ "kind": "theme",
+ "title": "TH-F7 · Le guichet rouvre — la mineur, 80 BPM",
+ "doc": "docs/M14.md §2.7 : « rien ne change ». Sous les planches, `stream` = les couches L0 + L1 de MS-02 (fichiers de l'ensemble, niveau N1, aucun octet de plus : `reuse`) ; sous l'écran de fin, la sortie (queue de 8 mesures, 24 s) avec MO-1 littéral toutes les 4 mesures, mêmes instruments que MS-02.",
+ "tempo": 80,
+ "beats_per_bar": 4,
+ "bars": 8,
+ "tail_bars": 2,
+ "sample_rate": 48000,
+ "seed": 9007,
+ "tail_only": true,
+ "main_tail_bars": 0,
+ "reuse": {
+  "set": "ms_02",
+  "score": "ms02",
+  "level": 1,
+  "layers": [
+   "l0",
+   "l1"
+  ]
+ },
+ "sections": [
+  {
+   "id": "tail",
+   "from_bar": 0,
+   "bars": 8,
+   "loop": true
+  }
+ ],
+ "chords": [
+  {
+   "bar": 0,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A3",
+    "C4",
+    "E4",
+    "B4"
+   ]
+  },
+  {
+   "bar": 2,
+   "bars": 2,
+   "bass": "F1",
+   "notes": [
+    "F3",
+    "A3",
+    "C4",
+    "E4"
+   ]
+  },
+  {
+   "bar": 4,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "F3",
+    "A3",
+    "D4",
+    "E4"
+   ]
+  },
+  {
+   "bar": 6,
+   "bars": 2,
+   "bass": "E1",
+   "notes": [
+    "E3",
+    "A3",
+    "B3",
+    "E4"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-1": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "E5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "C5"
+   },
+   {
+    "step": 8,
+    "len": 8,
+    "note": "G5"
+   }
+  ]
+ },
+ "instruments": {
+  "pad": {
+   "type": "pad",
+   "voices": 3,
+   "detune_cents": 9,
+   "cutoff": 820,
+   "q": 0.7,
+   "attack": 1.4,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 2.2,
+   "vib_hz": 0.21,
+   "vib_depth": 0.0012,
+   "level": 0.32
+  },
+  "bass": {
+   "type": "bass",
+   "cutoff": 210,
+   "cutoff_peak": 480,
+   "filter_decay": 0.06,
+   "q": 0.9,
+   "attack": 0.004,
+   "decay": 0.14,
+   "sustain": 0.45,
+   "release": 0.07,
+   "sub": 0.75,
+   "level": 0.6
+  },
+  "bell": {
+   "type": "bell",
+   "ratio": 3.5,
+   "index": 1.0,
+   "index_decay": 0.2,
+   "attack": 0.002,
+   "decay": 1.4,
+   "length": 3.6,
+   "level": 0.3
+  }
+ },
+ "mix": {
+  "eq": [],
+  "reverb": {
+   "rt60": 2.8,
+   "size": 1.3,
+   "damp_hz": 4500,
+   "predelay": 0.025
+  },
+  "width": 0.55
+ },
+ "stems": [
+  {
+   "id": "l0",
+   "tracks": [
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.35,
+     "chords": {
+      "octave": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "l1",
+   "tracks": [
+    {
+     "instrument": "bass",
+     "gain_db": 0,
+     "send": 0.05,
+     "pattern": {
+      "bars": 1,
+      "steps": [
+       {
+        "step": 0,
+        "len": 1,
+        "note": "bass",
+        "vel": 1.0
+       },
+       {
+        "step": 2,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.55
+       },
+       {
+        "step": 4,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.75
+       },
+       {
+        "step": 6,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.55
+       },
+       {
+        "step": 8,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.9
+       },
+       {
+        "step": 10,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.55
+       },
+       {
+        "step": 12,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.75
+       },
+       {
+        "step": 14,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.6
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "mo1",
+   "tracks": [
+    {
+     "instrument": "bell",
+     "gain_db": -3,
+     "send": 0.5,
+     "events": [
+      {
+       "motif": "MO-1",
+       "bar": 0,
+       "step": 4
+      },
+      {
+       "motif": "MO-1",
+       "bar": 4,
+       "step": 4
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "endings": [
+  "f7_reopens"
+ ]
+}

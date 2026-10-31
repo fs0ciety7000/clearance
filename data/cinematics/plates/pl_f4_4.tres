@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://drf6aq2cein4d"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_j65eo"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_fv2w4"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_1yho7"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_qmv68"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_uurfk"]
+
+[sub_resource type="Resource" id="pl_f4_4_resource_1"]
+script = ExtResource("4_qmv68")
+texture_path = "res://assets/cinematics/bg/bg_h6.webp"
+
+[resource]
+script = ExtResource("5_uurfk")
+id = &"pl_f4_4"
+min_act = 3
+layers = Array[ExtResource("4_qmv68")]([SubResource("pl_f4_4_resource_1")])
+caption_key = "cin_f4_4"
+parallax_px = 10.0
+zoom_to = 1.03
+holo_effect = &"consortium_eye"
+set_id = &"s1"
+set_variant = &"wide"
+lighting = &"hall"
+dominant = &"accent.yellow"
+paint_radius_px = 6

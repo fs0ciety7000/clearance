@@ -41,13 +41,24 @@ const DOSSIER_DIR: String = "res://data/dossier"
 const STATEMENTS_DIR: String = "res://data/statements"
 const SEARCH_DIR: String = "res://data/search"
 const UPGRADES_DIR: String = "res://data/upgrades"
+## M14 (docs/M14.md) : cinématiques de fin, annonces d'ambiance (lots E et F).
+const CINEMATICS_DIR: String = "res://data/cinematics"
+const PLATES_DIR: String = "res://data/cinematics/plates"
+const AUDIO_DATA_DIR: String = "res://data/audio"
 const CSV_PATH: String = "res://data/i18n/fr.csv"
 
+## M14 : la table des cinématiques est chargée **avant** tout script qui nomme
+## `PlateDef` (`build_data_m14.gd`). Dans l'ordre inverse, Godot 4.7.2 garde à
+## la sortie tout le graphe des scripts de données (≈ 150 « still in use » :
+## cycle `CinematicLibraryDef` → `CinematicDef` → `PlateDef` → … ; même famille
+## que la fuite de `MusicLibraryDef` notée en D-197).
+const _CINEMATIC_LIBRARY := preload("res://scripts/core/cinematic_library_def.gd")
 const K := AnomalyType.Kind
 const Act2 := preload("res://tools/build_data_act2.gd")
 const Act3 := preload("res://tools/build_data_act3.gd")
 const M12 := preload("res://tools/build_data_m12.gd")
 const M13 := preload("res://tools/build_data_m13.gd")
+const M14 := preload("res://tools/build_data_m14.gd")
 const FK := FieldDef.FieldKind
 const CAT := Rule.RuleCategory
 
@@ -82,7 +93,7 @@ const RESERVED_HOUSEHOLD_NAMES: PackedStringArray = ["Ilan", "Noa", "Dora"]
 ## ne bloque pas l'exécution (appels « Nonexistent function », `_build()`
 ## interrompu sans bruit) : vérifiés avant toute écriture.
 const DATA_SCRIPTS: PackedStringArray = ["res://tools/build_data_act2.gd", "res://tools/build_data_act3.gd",
-		"res://tools/build_data_m12.gd", "res://tools/build_data_m13.gd"]
+		"res://tools/build_data_m12.gd", "res://tools/build_data_m13.gd", "res://tools/build_data_m14.gd"]
 
 ## Compte les erreurs moteur et de script (`push_error`, erreurs d'exécution)
 ## émises pendant la génération : toute erreur fait échouer le build.
@@ -166,6 +177,7 @@ func _build() -> void:
 	for day: DayDef in Act3.build_days(act3_sets):
 		_save_day(day)
 	_build_m12(rules)
+	_build_m14()
 	_build_economy()
 	_reserve_character_names(pools)
 	assert(docs.size() == 9)
@@ -191,6 +203,7 @@ func _build_m12(rules: Dictionary[StringName, Rule]) -> void:
 		var day: DayDef = days[world]
 		for scripted: ScriptedCaseDef in day.scripted_cases:
 			scripted.resource_scene_unique_id = "scripted_%s" % scripted.id
+		_report(M14.extend_day(day))
 		var counter: Array[int] = [0]
 		_tag_subresources(day, "d31%s" % world, counter)
 		_save(day, EPILOGUE_DIR, "day_31_%s" % world)
@@ -211,6 +224,7 @@ func _build_m12(rules: Dictionary[StringName, Rule]) -> void:
 	_save(garde, GARDE_DIR, "garde")
 	var events: Array[StationEventDef] = M12.build_events()
 	M13.extend_events(events)
+	_report(M14.configure_events(events))
 	for event: StationEventDef in events:
 		var event_counter: Array[int] = [0]
 		_tag_subresources(event, String(event.id), event_counter)
@@ -219,9 +233,49 @@ func _build_m12(rules: Dictionary[StringName, Rule]) -> void:
 	M13.configure_station_events(station_events)
 	_save(station_events, EVENTS_DIR, "station_events")
 	var characters: CharacterTableDef = M12.build_characters()
+	_report(M14.configure_characters(characters))
 	var character_counter: Array[int] = [0]
 	_tag_subresources(characters, "chr", character_counter)
 	_save(characters, DOSSIER_DIR, "characters")
+
+
+# ---------------------------------------------------------------------------
+# M14 « Ambiance » (docs/M14.md, `tools/build_data_m14.gd`, lots E et F)
+# ---------------------------------------------------------------------------
+
+## Planches (`data/cinematics/plates/`), séquences (`cinematics.tres`) et
+## annonces d'ambiance (`data/audio/pa_lines.tres`) ; textes vérifiés dans
+## `fr.csv`. Les champs musicaux des jours, des événements et des personnages
+## sont posés à leur construction (`_save_day`, `_build_m12`).
+func _build_m14() -> void:
+	for dir: String in [CINEMATICS_DIR, PLATES_DIR, AUDIO_DATA_DIR]:
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
+	var plates: Array[PlateDef] = M14.build_plates()
+	var ids: Dictionary[StringName, bool] = {}
+	for plate: PlateDef in plates:
+		if ids.has(plate.id):
+			push_error("build_data: M14 — planche en double %s" % plate.id)
+			_failures += 1
+		ids[plate.id] = true
+		var counter: Array[int] = [0]
+		_tag_subresources(plate, String(plate.id), counter)
+		_save(plate, PLATES_DIR, String(plate.id))
+	var library: CinematicLibraryDef = M14.build_cinematics(plates)
+	var lib_counter: Array[int] = [0]
+	_tag_subresources(library, "cin", lib_counter)
+	_save(library, CINEMATICS_DIR, "cinematics")
+	var pa: PaLineTable = M14.build_pa_lines()
+	var pa_counter: Array[int] = [0]
+	_tag_subresources(pa, "pa", pa_counter)
+	_save(pa, AUDIO_DATA_DIR, "pa_lines")
+	_report(M14.validate_texts(_read_csv(CSV_PATH), plates, pa))
+
+
+## Problèmes signalés par un module de données : chacun fait échouer le build.
+func _report(problems: PackedStringArray) -> void:
+	for problem: String in problems:
+		push_error("build_data: M14 — %s" % problem)
+		_failures += 1
 
 
 # ---------------------------------------------------------------------------
@@ -1651,6 +1705,7 @@ func _save_day(day: DayDef) -> void:
 	for problem: String in M13.extend_day(day):
 		push_error("build_data: M13 — %s" % problem)
 		_failures += 1
+	_report(M14.extend_day(day))
 	_days.append(day)
 	for scripted: ScriptedCaseDef in day.scripted_cases:
 		scripted.resource_scene_unique_id = "scripted_%s" % scripted.id

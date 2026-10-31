@@ -20,6 +20,7 @@
 script = ExtResource("1_a8152")
 text_key = "hall_j30_transit"
 after_case = 5
+music_action = &"drop"
 
 [sub_resource type="Resource" id="d30_resource_35"]
 script = ExtResource("2_jvgqp")
@@ -30,6 +31,7 @@ script = ExtResource("1_a8152")
 text_key = "hall_j30_arrests"
 after_case = 6
 condition = SubResource("d30_resource_35")
+music_action = &"swell"
 
 [sub_resource type="Resource" id="d30_resource_37"]
 script = ExtResource("2_jvgqp")
@@ -41,6 +43,7 @@ text_key = "hall_j30_strike"
 after_case = 12
 condition = SubResource("d30_resource_37")
 ends_shift = true
+music_action = &"silence"
 
 [sub_resource type="Resource" id="d30_resource_24"]
 script = ExtResource("2_jvgqp")
@@ -582,3 +585,5 @@ statement_topic_weights = Dictionary[StringName, float]({
 &"stay": 0.2
 })
 search_cue_noise_rate = 0.1
+music_tension = 3
+music_floor = 2

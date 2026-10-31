@@ -1,0 +1,74 @@
+[gd_resource type="Resource" script_class="MusicSetDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/music_layer_def.gd" id="1_ygmle"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms07/mus_ms07_l0_loop.ogg" id="2_8c0he"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms07/mus_ms07_l1_loop.ogg" id="3_108ii"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms07/mus_ms07_world_a_loop.ogg" id="4_p8aod"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms07/mus_ms07_world_b_loop.ogg" id="5_v6hof"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms07/mus_ms07_world_c_loop.ogg" id="6_5y1g3"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms07/mus_ms07_world_d_loop.ogg" id="7_i60je"]
+[ext_resource type="Script" path="res://scripts/core/music_set_def.gd" id="8_wolfj"]
+
+[sub_resource type="Resource" id="layer_l0"]
+script = ExtResource("1_ygmle")
+id = &"l0"
+stream = ExtResource("2_8c0he")
+gain_db = -17.19
+exposed = true
+keeps_on_power_down = true
+
+[sub_resource type="Resource" id="layer_l1"]
+script = ExtResource("1_ygmle")
+id = &"l1"
+role = &"pulse"
+stream = ExtResource("3_108ii")
+gain_db = 7.05
+enter_level = 1
+
+[sub_resource type="Resource" id="layer_world_a"]
+script = ExtResource("1_ygmle")
+id = &"world_a"
+role = &"variant"
+stream = ExtResource("4_p8aod")
+gain_db = -1.97
+exposed = true
+melodic = true
+group = &"world_a"
+
+[sub_resource type="Resource" id="layer_world_b"]
+script = ExtResource("1_ygmle")
+id = &"world_b"
+role = &"variant"
+stream = ExtResource("5_v6hof")
+gain_db = -11.72
+exposed = true
+melodic = true
+group = &"world_b"
+
+[sub_resource type="Resource" id="layer_world_c"]
+script = ExtResource("1_ygmle")
+id = &"world_c"
+role = &"variant"
+stream = ExtResource("6_5y1g3")
+gain_db = -7.29
+exposed = true
+melodic = true
+group = &"world_c"
+
+[sub_resource type="Resource" id="layer_world_d"]
+script = ExtResource("1_ygmle")
+id = &"world_d"
+role = &"variant"
+stream = ExtResource("7_i60je")
+gain_db = -8.29
+exposed = true
+melodic = true
+group = &"world_d"
+
+[resource]
+script = ExtResource("8_wolfj")
+id = &"ms_07"
+tempo_bpm = 60.0
+layers = Array[ExtResource("1_ygmle")]([SubResource("layer_l0"), SubResource("layer_l1"), SubResource("layer_world_a"), SubResource("layer_world_b"), SubResource("layer_world_c"), SubResource("layer_world_d")])
+thresholds = PackedFloat32Array(0.15, 0.35, 0.6, 0.8)
+exposed_gain_db = 10.0

@@ -19,6 +19,11 @@
 ## nœud (Godot 4.7 les tire au hasard), identifiants `ext_resource` /
 ## `sub_resource` renumérotés dans l'ordre d'écriture.
 ## Budget (BOOTH_SCENE §13) : décor = 7 draw calls (5 maillages + vitre + file).
+## M14 (B86 → B88, BOOTH_SCENE §20) : variantes d'acte cuites dans les émissifs
+## (graffiti luciole, statut de la ligne TRANSIT·7, repliées par uniformes),
+## bannières holographiques `booth_banner_<id>.res` (nœud créé à la demande par
+## `BoothDirector`, +1 draw),
+## Gardes du Hall (`HallGuards`, 1 `MultiMesh`), file réelle (3 `MultiMesh`).
 extends SceneTree
 
 const OUT_SCENE: String = "res://scenes/booth/booth.tscn"
@@ -33,6 +38,15 @@ const CITY_COLORMAP: String = "res://art_src/downloads/city-kit-commercial/Model
 const DIRECTOR: String = "res://scripts/booth/booth_director.gd"
 const QUEUE: String = "res://scripts/booth/queue_impostors.gd"
 const QUALITY: String = "res://scripts/booth/booth_quality.gd"
+const GUARDS: String = "res://scripts/booth/hall_guards.gd"
+## M14 (VH-8) : bannières holographiques (texte cuit, retraduit en M15).
+const BANNERS: Dictionary[String, Array] = {
+	"quota": ["QUOTA\nRESPIRATOIRE", Color(1.0, 0.86, 0.1)],
+	"enquete": ["ENQUÊTE DE\nCONTINUITÉ", Color(1.0, 0.86, 0.1)],
+	"continuite": ["CONTINUITÉ", Color(1.0, 0.86, 0.1)],
+	"date": ["11.04.2187", Color(0.78, 0.86, 0.9)],
+}
+const BANNER_POS: Vector3 = Vector3(4.55, 2.45, -8.9)
 const DECOR_SHADER: String = "res://assets/shaders/booth_decor.gdshader"
 const EMISSIVE_SHADER: String = "res://assets/shaders/booth_emissive.gdshader"
 const HOLO_SHADER: String = "res://assets/shaders/booth_holo.gdshader"
@@ -187,6 +201,8 @@ func _initialize() -> void:
 		"holo": _save_mesh(holo_geo, "booth_holo"),
 		"rain": _save_mesh(rain_geo, "booth_rain"),
 	}
+	for id: String in BANNERS:
+		meshes["banner_" + id] = _save_mesh(_banner_geo(id), "booth_banner_" + id)
 	print("build_booth: triangles proche %d, lointain %d, émissifs %d (dont %d fenêtres), holo %d, pluie %d" % [
 			near_geo.triangles, far_geo.triangles, emissive_geo.triangles, _windows, holo_geo.triangles, rain_geo.triangles])
 	_build_scene(meshes)
@@ -577,6 +593,31 @@ func _build_hall() -> void:
 		panel_at(emissive_geo, Vector2(0.018, 0.11), g + Vector3(off.x, off.y, 0), glow(0.8), seeded(MAGENTA, 9), Vector3(0, 0, rot))
 	# (Mat détourné : couche = énergie, métal = graine.)
 	ring(emissive_geo, 0.0, 0.025, 0.0, 10, Transform3D(Basis.IDENTITY, g + Vector3(0, -0.03, 0.001)), Mat.new(0.8, MAGENTA, 9.0 / 255.0))
+	_build_graffiti_states(g)
+
+
+## M14 (VH-8, D-190) : états du graffiti par acte, repliés par l'uniforme
+## `graffiti_state` de `booth_emissive` (graines 200–203). Seul magenta du décor.
+func _build_graffiti_states(g: Vector3) -> void:
+	# 200 : recouvert d'une peinture grise (Acte II), deux couches irrégulières.
+	panel_at(emissive_geo, Vector2(0.3, 0.27), g + Vector3(0.0, 0.03, 0.003), glow(0.3), seeded(Color(0.36, 0.37, 0.38), 200))
+	panel_at(emissive_geo, Vector2(0.2, 0.12), g + Vector3(0.09, 0.15, 0.004), glow(0.3), seeded(Color(0.33, 0.34, 0.35), 200), Vector3(0, 0, 4))
+	# 201 : réapparu, plus grand (Acte III), au-dessus de l'ancienne tache.
+	var big: Vector3 = g + Vector3(-0.05, 0.2, 0.002)
+	for s: Array in [[Vector2(-0.11, 0.13), 35.0], [Vector2(0.0, 0.18), 0.0], [Vector2(0.11, 0.13), -35.0]]:
+		var off: Vector2 = s[0]
+		panel_at(emissive_geo, Vector2(0.04, 0.25), big + Vector3(off.x, off.y, 0), glow(0.85), seeded(MAGENTA, 201), Vector3(0, 0, s[1]))
+	ring(emissive_geo, 0.0, 0.055, 0.0, 12, Transform3D(Basis.IDENTITY, big + Vector3(0, -0.07, 0.001)), Mat.new(0.85, MAGENTA, 201.0 / 255.0))
+	# 202 : J30, deux traits de plus.
+	for s: Array in [[Vector2(-0.26, 0.05), 62.0], [Vector2(0.26, 0.05), -62.0]]:
+		var off: Vector2 = s[0]
+		panel_at(emissive_geo, Vector2(0.035, 0.2), big + Vector3(off.x, off.y, 0), glow(0.85), seeded(MAGENTA, 202), Vector3(0, 0, s[1]))
+	# 203 : J31 monde C, sous verre (« mémoire ») : cadre clair autour de la luciole.
+	var frame: Color = seeded(KEY.darkened(0.35), 203)
+	for side: Array in [[Vector2(0, 0.17), Vector2(0.34, 0.012)], [Vector2(0, -0.11), Vector2(0.34, 0.012)],
+			[Vector2(-0.165, 0.03), Vector2(0.012, 0.29)], [Vector2(0.165, 0.03), Vector2(0.012, 0.29)]]:
+		var c: Vector2 = side[0]
+		panel_at(emissive_geo, side[1], g + Vector3(c.x, c.y, 0.006), glow(0.6), frame)
 
 
 ## Enseignes et écrans du fond (portique devant la baie, z ≈ −8,8).
@@ -596,10 +637,11 @@ func _build_signage() -> void:
 	box_at(far_geo, Vector3(2.5, 1.08, 0.1), dep + Vector3(0, 0, -0.06), backplate)
 	box_at(far_geo, Vector3(0.015, 2.0, 0.015), dep + Vector3(-1.0, 1.5, -0.06), cable)
 	box_at(far_geo, Vector3(0.015, 2.0, 0.015), dep + Vector3(1.0, 1.5, -0.06), cable)
-	panel_at(emissive_geo, Vector2(2.34, 0.92), dep, glow(0.75, 2), seeded(TEAL_DIM.darkened(0.55), 13))
-	panel_at(emissive_geo, Vector2(2.34, 0.13), dep + Vector3(0, 0.395, 0.002), glow(0.9), seeded(TEAL_DIM.darkened(0.15), 14))
+	# M14 (VH-7) : graines 220–226 = écran des départs (uniforme `departures_status`).
+	panel_at(emissive_geo, Vector2(2.34, 0.92), dep, glow(0.75, 2), seeded(TEAL_DIM.darkened(0.55), 225))
+	panel_at(emissive_geo, Vector2(2.34, 0.13), dep + Vector3(0, 0.395, 0.002), glow(0.9), seeded(TEAL_DIM.darkened(0.15), 226))
 	text_at(emissive_geo, "DÉPARTS  ·  NAVETTES", _font_board, 0.075, dep + Vector3(0, 0.395, 0.004), glow(1.6),
-			seeded(TEAL_DIM.lightened(0.6), 15))
+			seeded(TEAL_DIM.lightened(0.6), 224))
 	var departures: Array[PackedStringArray] = [
 		PackedStringArray(["TYC-07", "TYCHO", "QUAI 3", "À L'HEURE"]),
 		PackedStringArray(["HAL-12", "ANNEAU B", "QUAI 1", "EMBARQUEMENT"]),
@@ -609,9 +651,16 @@ func _build_signage() -> void:
 	var columns: PackedFloat32Array = [-1.08, -0.6, 0.12, 0.52]
 	for row: int in departures.size():
 		for col: int in columns.size():
+			if row == 0 and col == 3:
+				continue # statut de la ligne TRANSIT·7 : trois variantes ci-dessous
 			text_at(emissive_geo, departures[row][col], _font_board, 0.07,
 					dep + Vector3(columns[col], 0.2 - row * 0.155, 0.004), glow(1.25 if col < 3 else 1.05),
-					seeded(TEAL_DIM.lightened(0.5 if col < 3 else 0.3), 16 + row), HORIZONTAL_ALIGNMENT_LEFT)
+					seeded(TEAL_DIM.lightened(0.5 if col < 3 else 0.3), 220 + row), HORIZONTAL_ALIGNMENT_LEFT)
+	# Statut TRANSIT·7 (TYC-07) : 210 À L'HEURE · 211 RETARD (EV-06) · 212 DERNIÈRE ROTATION (J28–J30).
+	var statuses: Array[Array] = [["À L'HEURE", 0.07, 210], ["RETARD", 0.07, 211], ["DERNIÈRE ROTATION", 0.05, 212]]
+	for st: Array in statuses:
+		text_at(emissive_geo, st[0], _font_board, st[1], dep + Vector3(columns[3], 0.2, 0.004), glow(1.05 if st[2] != 212 else 1.3),
+				seeded(TEAL_DIM.lightened(0.3), st[2]), HORIZONTAL_ALIGNMENT_LEFT)
 	# TRANSIT·7 (rose monde) et panneau du guichet (acier monde, liserés rose).
 	var transit: Vector3 = Vector3(-4.95, 1.25, -8.6)
 	box_at(far_geo, Vector3(2.1, 0.5, 0.06), transit + Vector3(0, 0, -0.06), backplate)
@@ -634,6 +683,19 @@ func _build_signage() -> void:
 	ring(holo_geo, 0.0, 0.035, 0.0, 16, Transform3D(Basis.IDENTITY, eye), Mat.new(1.6, Color(1.0, 0.9, 0.2), 0.6, 1.0, 1.0))
 	panel_at(holo_geo, Vector2(0.9, 0.9), eye + Vector3(0, 0, -0.01), glow(0.5, 1), Color(1.0, 0.8, 0.1, 0.08))
 	text_at(holo_geo, "GLOIRE AU CONSORTIUM", _font_display, 0.07, eye + Vector3(0, -0.4, 0), glow(1.3, 1), Color(1.0, 0.88, 0.2, 0.6))
+
+
+## M14 (VH-8) : bannière holographique d'acte (texte cuit + voile), centrée sur
+## `BANNER_POS` (moitié droite du fond, hors du visage et des enseignes).
+func _banner_geo(id: String) -> Geo:
+	var geo: Geo = Geo.new(Geo.HOLO)
+	var spec: Array = BANNERS[id]
+	var tint: Color = spec[1]
+	panel_at(geo, Vector2(1.5, 0.52), BANNER_POS + Vector3(0, 0, -0.01), glow(0.5, 1), Color(tint.r, tint.g, tint.b, 0.07))
+	for dy: float in [0.25, -0.25]:
+		panel_at(geo, Vector2(1.5, 0.012), BANNER_POS + Vector3(0, dy, 0), glow(1.3, 1), Color(tint.r, tint.g, tint.b, 0.55))
+	text_at(geo, spec[0], _font_display, 0.13, BANNER_POS, glow(1.4, 1), Color(tint.r, tint.g, tint.b, 0.7), HORIZONTAL_ALIGNMENT_CENTER, -6.0)
+	return geo
 
 
 ## Ville de l'Anneau habitable vue par la baie (Kenney City Kit Commercial, CC0) :
@@ -890,7 +952,18 @@ func _build_scene(meshes: Dictionary[String, ArrayMesh]) -> void:
 	glass.position = Vector3(0, 1.7, 0)
 	glass.unique_name_in_owner = true
 	glass.sorting_offset = 1.0
-	_queue_node()
+	var imat: ShaderMaterial = _queue_node()
+	# M14 (VH-4, VH-5) : Gardes du Hall (1 MultiMesh, même matériau que la file).
+	var guards: MultiMeshInstance3D = MultiMeshInstance3D.new()
+	guards.set_script(load(GUARDS))
+	var gmm: MultiMesh = MultiMesh.new()
+	gmm.transform_format = MultiMesh.TRANSFORM_3D
+	gmm.use_colors = true
+	gmm.use_custom_data = true
+	guards.multimesh = gmm
+	guards.material_override = imat
+	guards.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_add(booth, guards, "HallGuards", true)
 	_paths()
 	var quality: Node = Node.new()
 	quality.set_script(load(QUALITY))
@@ -968,18 +1041,20 @@ func _lights() -> SpotLight3D:
 	return key
 
 
-func _queue_node() -> void:
+func _queue_node() -> ShaderMaterial:
 	var mm: MultiMeshInstance3D = MultiMeshInstance3D.new()
 	mm.set_script(load(QUEUE))
 	var multimesh: MultiMesh = MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.use_colors = true
+	multimesh.use_custom_data = true
 	mm.multimesh = multimesh
 	var imat: ShaderMaterial = ShaderMaterial.new()
 	imat.shader = load(IMPOSTOR_SHADER) as Shader
 	mm.material_override = imat
 	mm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_add(booth, mm, "QueueImpostors", true)
+	return imat
 
 
 func _paths() -> void:

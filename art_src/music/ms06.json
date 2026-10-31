@@ -1,0 +1,435 @@
+{
+ "id": "ms06",
+ "def_id": "ms_06",
+ "kind": "set",
+ "title": "MS-06 · Bilan et soirée — ré dorien, 60 BPM",
+ "doc": "docs/M14.md §2.2 : cabine du Bloc Pétrel, recycleur. Lit commun + couche `warm` (MO-3 à la boîte à musique, foyer stable) ou `crisis` (battement grave, seconde tenue) échangées à la mesure. Premier plan −20 LUFS.",
+ "tempo": 60,
+ "beats_per_bar": 4,
+ "bars": 12,
+ "tail_bars": 2,
+ "sample_rate": 32000,
+ "seed": 2006,
+ "max_level": 0,
+ "chords": [
+  {
+   "bar": 0,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 2,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G3",
+    "B3",
+    "D4",
+    "E4"
+   ]
+  },
+  {
+   "bar": 4,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "F3",
+    "A3",
+    "C4",
+    "D4"
+   ]
+  },
+  {
+   "bar": 6,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "G3",
+    "A3",
+    "C4",
+    "E4"
+   ]
+  },
+  {
+   "bar": 8,
+   "bars": 2,
+   "bass": "C2",
+   "notes": [
+    "G3",
+    "B3",
+    "C4",
+    "E4"
+   ]
+  },
+  {
+   "bar": 10,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "A3",
+    "D4",
+    "F4"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-1": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "E5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "C5"
+   },
+   {
+    "step": 8,
+    "len": 8,
+    "note": "G5"
+   }
+  ],
+  "MO-2": [
+   {
+    "step": 0,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 2,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 4,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 7,
+    "len": 1,
+    "note": "E5"
+   }
+  ],
+  "MO-3": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "D5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "F5"
+   },
+   {
+    "step": 8,
+    "len": 4,
+    "note": "E5"
+   },
+   {
+    "step": 12,
+    "len": 12,
+    "note": "A5"
+   }
+  ]
+ },
+ "instruments": {
+  "pad": {
+   "type": "pad",
+   "voices": 3,
+   "detune_cents": 9,
+   "cutoff": 900,
+   "q": 0.7,
+   "attack": 1.8,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 2.6,
+   "vib_hz": 0.21,
+   "vib_depth": 0.0012,
+   "level": 0.3
+  },
+  "recycler": {
+   "type": "tone",
+   "wave": "air",
+   "attack": 2.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.0,
+   "level": 0.05,
+   "cutoff": 320
+  },
+  "box": {
+   "type": "musicbox",
+   "partial": 3.0,
+   "decay": 1.2,
+   "length": 2.0,
+   "level": 0.28
+  },
+  "warm": {
+   "type": "pad",
+   "voices": 2,
+   "detune_cents": 9,
+   "cutoff": 1300,
+   "q": 0.7,
+   "attack": 2.2,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 2.6,
+   "vib_hz": 0.21,
+   "vib_depth": 0.0012,
+   "level": 0.16
+  },
+  "heart": {
+   "type": "bass",
+   "cutoff": 130,
+   "cutoff_peak": 240,
+   "filter_decay": 0.06,
+   "q": 0.9,
+   "attack": 0.008,
+   "decay": 0.22,
+   "sustain": 0.0,
+   "release": 0.15,
+   "sub": 1.0,
+   "level": 0.7
+  },
+  "second": {
+   "type": "pad",
+   "voices": 2,
+   "detune_cents": 4,
+   "cutoff": 900,
+   "q": 0.7,
+   "attack": 3.0,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 3.0,
+   "vib_hz": 3.5,
+   "vib_depth": 0.002,
+   "level": 0.16
+  },
+  "floor": {
+   "type": "tone",
+   "wave": "sine",
+   "attack": 1.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 1.5,
+   "level": 0.1
+  }
+ },
+ "mix": {
+  "eq": [
+   {
+    "freq": 2400,
+    "q": 0.8,
+    "gain_db": -3
+   }
+  ],
+  "reverb": {
+   "rt60": 2.2,
+   "size": 1.0,
+   "damp_hz": 4000,
+   "predelay": 0.02
+  },
+  "width": 0.55
+ },
+ "level_plan": [
+  {
+   "label": "bed",
+   "layers": [
+    "bed"
+   ],
+   "solve": "bed",
+   "target": -22.5
+  },
+  {
+   "label": "chaud",
+   "layers": [
+    "bed",
+    "warm"
+   ],
+   "solve": "warm",
+   "target": -20.0
+  },
+  {
+   "label": "crise",
+   "layers": [
+    "bed",
+    "crisis"
+   ],
+   "solve": "crisis",
+   "target": -20.0
+  }
+ ],
+ "exposed_layers": [
+  "bed",
+  "warm"
+ ],
+ "stems": [
+  {
+   "id": "bed",
+   "name": "lit commun",
+   "layer": {
+    "role": "bed",
+    "enter_level": 0,
+    "exit_level": -1,
+    "exposed": true,
+    "melodic": false,
+    "power_down": true
+   },
+   "tracks": [
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.35,
+     "chords": {
+      "octave": 0
+     }
+    },
+    {
+     "instrument": "recycler",
+     "gain_db": 0,
+     "send": 0.0,
+     "events": [
+      {
+       "step": 0,
+       "len": 96,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 0
+      },
+      {
+       "step": 0,
+       "len": 96,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "warm",
+   "name": "chaud (MO-3)",
+   "layer": {
+    "role": "variant",
+    "enter_level": 0,
+    "exit_level": -1,
+    "exposed": true,
+    "melodic": true,
+    "power_down": false,
+    "group": "warm"
+   },
+   "tracks": [
+    {
+     "instrument": "floor",
+     "gain_db": -20,
+     "send": 0.3,
+     "chords": {
+      "octave": 1,
+      "only": [
+       0
+      ]
+     }
+    },
+    {
+     "instrument": "box",
+     "gain_db": 0,
+     "send": 0.4,
+     "pan": 0.15,
+     "events": [
+      {
+       "motif": "MO-3",
+       "bar": 0,
+       "step": 0
+      },
+      {
+       "motif": "MO-3",
+       "bar": 6,
+       "step": 0,
+       "vel": 0.8
+      }
+     ]
+    },
+    {
+     "instrument": "warm",
+     "gain_db": 0,
+     "send": 0.3,
+     "chords": {
+      "octave": 1,
+      "only": [
+       1,
+       2
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "crisis",
+   "name": "crise",
+   "layer": {
+    "role": "variant",
+    "enter_level": 0,
+    "exit_level": -1,
+    "exposed": true,
+    "melodic": false,
+    "power_down": false,
+    "group": "crisis"
+   },
+   "width": 0.35,
+   "tracks": [
+    {
+     "instrument": "heart",
+     "gain_db": 0,
+     "send": 0.05,
+     "pattern": {
+      "bars": 1,
+      "steps": [
+       {
+        "step": 0,
+        "len": 1,
+        "note": "bass",
+        "vel": 1.0
+       },
+       {
+        "step": 3,
+        "len": 1,
+        "note": "bass",
+        "vel": 0.5
+       }
+      ]
+     }
+    },
+    {
+     "instrument": "second",
+     "gain_db": 0,
+     "send": 0.3,
+     "pattern": {
+      "bars": 4,
+      "steps": [
+       {
+        "step": 0,
+        "len": 64,
+        "vel": 1.0,
+        "notes": [
+         "E4",
+         "F4"
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}

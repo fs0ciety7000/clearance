@@ -21,6 +21,7 @@
 script = ExtResource("1_rul15")
 text_key = "hall_j29_prorogation"
 at_minute = 1050
+music_action = &"swell"
 
 [sub_resource type="Resource" id="d29_resource_9"]
 script = ExtResource("3_b54fj")
@@ -531,3 +532,4 @@ statement_topic_weights = Dictionary[StringName, float]({
 &"stay": 0.2
 })
 search_cue_noise_rate = 0.1
+music_tension = 3

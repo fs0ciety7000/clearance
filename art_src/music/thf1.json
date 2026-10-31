@@ -1,0 +1,352 @@
+{
+ "id": "thf1",
+ "def_id": "th_f1",
+ "kind": "theme",
+ "title": "TH-F1 · Mise en attente — ré mineur, 60 BPM",
+ "doc": "docs/M14.md §2.7 : nappe « blanche » (sinus + bruit de néon clinique), un coup sourd isolé (porte, mesure 2), MO-1 ralenti au double, une octave plus bas, réverbération « couloir blanc ». Variante okonkwo_warned : trois tapes seules (MO-2 sans sa note) en fin de B. Ouverture 2 + A 4 + B 4 (32 s) puis queue 8 (32 s).",
+ "tempo": 60,
+ "beats_per_bar": 4,
+ "bars": 18,
+ "tail_bars": 2,
+ "sample_rate": 48000,
+ "seed": 9001,
+ "sections": [
+  {
+   "id": "opening",
+   "from_bar": 0,
+   "bars": 2
+  },
+  {
+   "id": "a",
+   "from_bar": 2,
+   "bars": 4
+  },
+  {
+   "id": "b",
+   "from_bar": 6,
+   "bars": 4
+  },
+  {
+   "id": "tail",
+   "from_bar": 10,
+   "bars": 8,
+   "loop": true
+  }
+ ],
+ "chords": [
+  {
+   "bar": 0,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 2,
+   "bars": 2,
+   "bass": "Bb1",
+   "notes": [
+    "Bb2",
+    "D3",
+    "F3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 4,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "Bb2",
+    "D3",
+    "F3"
+   ]
+  },
+  {
+   "bar": 6,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "D3",
+    "E3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 8,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 10,
+   "bars": 2,
+   "bass": "Bb1",
+   "notes": [
+    "Bb2",
+    "D3",
+    "F3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 12,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "Bb2",
+    "D3",
+    "F3"
+   ]
+  },
+  {
+   "bar": 14,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "D3",
+    "E3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 16,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-1": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "E5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "C5"
+   },
+   {
+    "step": 8,
+    "len": 8,
+    "note": "G5"
+   }
+  ]
+ },
+ "instruments": {
+  "white": {
+   "type": "tone",
+   "wave": "sine",
+   "attack": 2.5,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 3.0,
+   "level": 0.07
+  },
+  "neon": {
+   "type": "tone",
+   "wave": "hiss",
+   "cutoff": 7200,
+   "attack": 2.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.0,
+   "level": 0.012
+  },
+  "door": {
+   "type": "tone",
+   "wave": "thump",
+   "attack": 0.004,
+   "decay": 0.5,
+   "sustain": 0.0,
+   "release": 0.4,
+   "level": 0.7,
+   "cutoff": 180,
+   "drop": 0.6
+  },
+  "bell": {
+   "type": "bell",
+   "ratio": 3.5,
+   "index": 0.7,
+   "index_decay": 0.2,
+   "attack": 0.002,
+   "decay": 3.0,
+   "length": 6.0,
+   "level": 0.32
+  },
+  "tap": {
+   "type": "brush",
+   "cutoff": 1900,
+   "q": 4.0,
+   "attack": 0.0008,
+   "decay": 0.025,
+   "length": 0.12,
+   "level": 0.5
+  }
+ },
+ "mix": {
+  "eq": [],
+  "reverb": {
+   "rt60": 5.5,
+   "size": 2.0,
+   "damp_hz": 6500,
+   "predelay": 0.05
+  },
+  "width": 0.5
+ },
+ "stems": [
+  {
+   "id": "white",
+   "tracks": [
+    {
+     "instrument": "white",
+     "gain_db": 0,
+     "send": 0.5,
+     "chords": {
+      "octave": 1
+     }
+    },
+    {
+     "instrument": "neon",
+     "gain_db": 0,
+     "send": 0.1,
+     "events": [
+      {
+       "step": 0,
+       "len": 160,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 0
+      },
+      {
+       "step": 0,
+       "len": 128,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 10
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "door",
+   "tracks": [
+    {
+     "instrument": "door",
+     "gain_db": 0,
+     "send": 0.5,
+     "events": [
+      {
+       "step": 8,
+       "len": 2,
+       "note": "A1",
+       "vel": 1.0,
+       "bar": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mo1",
+   "tracks": [
+    {
+     "instrument": "bell",
+     "gain_db": 0,
+     "send": 0.65,
+     "events": [
+      {
+       "motif": "MO-1",
+       "bar": 2,
+       "step": 0,
+       "stretch": 2,
+       "transpose": -12
+      },
+      {
+       "motif": "MO-1",
+       "bar": 6,
+       "step": 0,
+       "stretch": 2,
+       "transpose": -12,
+       "vel": 0.85
+      },
+      {
+       "motif": "MO-1",
+       "bar": 12,
+       "step": 0,
+       "stretch": 2,
+       "transpose": -12,
+       "vel": 0.7
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "taps",
+   "tracks": [
+    {
+     "instrument": "tap",
+     "gain_db": 0,
+     "send": 0.3,
+     "pan": 0.2,
+     "variant": "okonkwo_warned",
+     "events": [
+      {
+       "step": 4,
+       "len": 1,
+       "note": "C5",
+       "vel": 0.9,
+       "bar": 9
+      },
+      {
+       "step": 6,
+       "len": 1,
+       "note": "C5",
+       "vel": 0.85,
+       "bar": 9
+      },
+      {
+       "step": 8,
+       "len": 1,
+       "note": "C5",
+       "vel": 0.95,
+       "bar": 9
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "endings": [
+  "f1_arrested"
+ ],
+ "variants": [
+  {
+   "id": "okonkwo_warned",
+   "flag": "okonkwo_warned",
+   "section": "b"
+  }
+ ]
+}

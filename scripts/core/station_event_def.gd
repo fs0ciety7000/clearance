@@ -59,6 +59,9 @@ enum WindowKind {
 ## Array[StringName], "label_key": String}` (`label_key` : argument `%s` de
 ## l'annonce et de la ligne du Rulebook). Vide = portée des données.
 @export var override_profiles: Array[Dictionary] = []
+## M14 (§2.5 P5, B83, D-177) — poids de l'événement dans l'intensité
+## musicale (0 → 1 ; EV-05 : cas particulier « power down », poids 0). Lot F.
+@export_range(0.0, 1.0) var music_weight: float = 0.0
 
 
 func is_class_b() -> bool:

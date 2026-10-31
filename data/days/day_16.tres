@@ -21,6 +21,7 @@
 script = ExtResource("1_vbcmf")
 text_key = "hall_j16_curfew"
 at_minute = 960
+music_action = &"drop"
 
 [sub_resource type="Resource" id="d16_resource_7"]
 script = ExtResource("3_agb5m")
@@ -483,3 +484,4 @@ statement_topic_weights = Dictionary[StringName, float]({
 &"stay": 0.25
 })
 search_cue_noise_rate = 0.12
+music_tension = 2

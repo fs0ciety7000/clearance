@@ -33,3 +33,4 @@ title_key = "sev_comparator_title"
 rulebook_key = "sev_comparator_rb"
 end_key = "sev_comparator_end"
 garde_window_passengers = 3
+music_weight = 0.4

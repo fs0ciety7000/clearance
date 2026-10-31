@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://da0nhw152t42r"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_6dk0p"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_kowq5"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_c5m7v"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_icc84"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_b0l7q"]
+
+[sub_resource type="Resource" id="pl_f6d_4_resource_1"]
+script = ExtResource("4_icc84")
+texture_path = "res://assets/cinematics/bg/bg_q7.webp"
+
+[sub_resource type="Resource" id="pl_f6d_4_resource_2"]
+script = ExtResource("4_icc84")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f6d_4_cargo_lights.webp"
+rect = Rect2(0.4468, 0.4349, 0.0942, 0.1102)
+depth = 0.05
+props = Array[StringName]([&"cargo_lights"])
+
+[resource]
+script = ExtResource("5_b0l7q")
+id = &"pl_f6d_4"
+min_act = 3
+layers = Array[ExtResource("4_icc84")]([SubResource("pl_f6d_4_resource_1"), SubResource("pl_f6d_4_resource_2")])
+caption_key = "cin_f6d_4"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s3"
+set_variant = &"porthole"
+lighting = &"night"
+dominant = &"accent.cyan"
+paint_radius_px = 6

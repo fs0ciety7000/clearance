@@ -505,3 +505,4 @@ statement_topic_weights = Dictionary[StringName, float]({
 })
 search_cue_noise_rate = 0.1
 intercom_lines = Array[ExtResource("8_hgg3s")]([SubResource("d08_resource_39"), SubResource("d08_resource_40"), SubResource("d08_resource_41")])
+music_tension = 2

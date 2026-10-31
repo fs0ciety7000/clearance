@@ -1,5 +1,18 @@
 # Changelog — CLEARANCE
 
+## 0.14.0 — 2026-10-31
+
+### M14 « Ambiance »
+- **Musique dynamique** composée et rendue par nos outils (synthèse procédurale) : un ensemble par acte, pour la Garde de nuit, la soirée, l'épilogue et l'écran titre ; jusqu'à cinq couches qui montent avec la file, le chrono, les discordances, le quota et les événements de station ; carillon du Consortium et « trois tapes » des Lucioles ; un thème par fin. Options : musique réduite pendant l'inspection, musique dynamique ou stable (D-174, D-176–D-182, D-205).
+- **Cinématiques de fin** en planches illustrées « lavis gravé » : 18 séquences, 66 planches, légendes sous-titrées, personnages nommés avec le visage de votre partie ; passables (appui) ou à passer entièrement (maintien), avance automatique ou manuelle, REVOIR depuis le Dossier (D-175, D-183–D-186, D-195).
+- **Hall vivant** : la file montre vos vrais prochains passagers en silhouettes (sans rien révéler), gardes en poste et en patrouille, décor qui change à chaque acte, graffiti des Lucioles qui évolue, 52 annonces de la station sous-titrées (D-187–D-190).
+- **Dossier de l'agent** : portraits des personnes croisées, tels que vous les avez vues (D-191).
+- Profil v3 (conversion automatique).
+
+### Corrections
+- Passe QA M14 (QA-072 à QA-080) : transitions musicales (fondus, horloge, titre), REVOIR fidèle aux planches vues, premier portrait vide, intensité au chrono critique (D-211, D-212).
+- EV-06 allongeait la file de 6 passagers au lieu de 3 (D-200).
+
 ## 0.13.0 — 2026-10-30
 
 ### M13 « Gameplay »

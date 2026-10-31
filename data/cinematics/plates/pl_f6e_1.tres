@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://htnl617ufqv"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_2kadh"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_vxkfd"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_128vw"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_pkqw2"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_484el"]
+
+[sub_resource type="Resource" id="pl_f6e_1_resource_3"]
+script = ExtResource("3_128vw")
+text_key = "BASSE-MARÉE"
+rect = Rect2(0.3706, 0.4002, 0.1509, 0.0755)
+literal = true
+
+[sub_resource type="Resource" id="pl_f6e_1_resource_1"]
+script = ExtResource("4_pkqw2")
+texture_path = "res://assets/cinematics/bg/bg_q5.webp"
+
+[sub_resource type="Resource" id="pl_f6e_1_resource_2"]
+script = ExtResource("4_pkqw2")
+kind = &"fx"
+depth = 0.5
+fx_kind = &"fog"
+fx_density = 0.35
+
+[resource]
+script = ExtResource("5_484el")
+id = &"pl_f6e_1"
+layers = Array[ExtResource("4_pkqw2")]([SubResource("pl_f6e_1_resource_1"), SubResource("pl_f6e_1_resource_2")])
+labels = Array[ExtResource("3_128vw")]([SubResource("pl_f6e_1_resource_3")])
+caption_key = "cin_f6e_1"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s3"
+set_variant = &"dock6"
+lighting = &"dawn"
+dominant = &"accent.cyan"
+paint_radius_px = 6

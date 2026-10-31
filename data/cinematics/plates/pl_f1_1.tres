@@ -1,0 +1,94 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://b03u455r61hrg"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_8178u"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="2_wjcl1"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="3_shbg8"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="4_2rip5"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="5_8ryoi"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="6_2epre"]
+
+[sub_resource type="Resource" id="pl_f1_1_resource_10"]
+script = ExtResource("2_wjcl1")
+all_of = Array[StringName]([&"cin_variant_audit"])
+
+[sub_resource type="Resource" id="pl_f1_1_resource_9"]
+script = ExtResource("1_8178u")
+key = "cin_f1_1_audit"
+condition = SubResource("pl_f1_1_resource_10")
+
+[sub_resource type="Resource" id="pl_f1_1_resource_12"]
+script = ExtResource("2_wjcl1")
+all_of = Array[StringName]([&"cin_variant_review"])
+
+[sub_resource type="Resource" id="pl_f1_1_resource_11"]
+script = ExtResource("1_8178u")
+key = "cin_f1_1_review"
+condition = SubResource("pl_f1_1_resource_12")
+
+[sub_resource type="Resource" id="pl_f1_1_resource_14"]
+script = ExtResource("2_wjcl1")
+all_of = Array[StringName]([&"cin_variant_deposition"])
+
+[sub_resource type="Resource" id="pl_f1_1_resource_13"]
+script = ExtResource("1_8178u")
+key = "cin_f1_1_deposition"
+condition = SubResource("pl_f1_1_resource_14")
+
+[sub_resource type="Resource" id="pl_f1_1_resource_2"]
+script = ExtResource("2_wjcl1")
+all_of = Array[StringName]([&"cin_variant_audit"])
+
+[sub_resource type="Resource" id="pl_f1_1_resource_3"]
+script = ExtResource("2_wjcl1")
+all_of = Array[StringName]([&"cin_variant_review"])
+
+[sub_resource type="Resource" id="pl_f1_1_resource_4"]
+script = ExtResource("2_wjcl1")
+all_of = Array[StringName]([&"cin_variant_deposition"])
+
+[sub_resource type="Resource" id="pl_f1_1_resource_5"]
+script = ExtResource("2_wjcl1")
+all_of = Array[StringName]([&"cin_act_3"])
+
+[sub_resource type="Resource" id="pl_f1_1_resource_1"]
+script = ExtResource("2_wjcl1")
+any_of = Array[Resource]([SubResource("pl_f1_1_resource_2"), SubResource("pl_f1_1_resource_3"), SubResource("pl_f1_1_resource_4"), SubResource("pl_f1_1_resource_5")])
+
+[sub_resource type="Resource" id="pl_f1_1_resource_6"]
+script = ExtResource("5_8ryoi")
+texture_path = "res://assets/cinematics/bg/bg_b1.webp"
+
+[sub_resource type="Resource" id="pl_f1_1_resource_7"]
+script = ExtResource("5_8ryoi")
+kind = &"fig"
+texture_path = "res://assets/cinematics/fig/pl_f1_1_agent.webp"
+rect = Rect2(0.437, 0.4488, 0.1274, 0.4227)
+depth = 0.55
+figure_seed = 1401
+pose = &"leave"
+facing_deg = 180.0
+
+[sub_resource type="Resource" id="pl_f1_1_resource_8"]
+script = ExtResource("5_8ryoi")
+kind = &"fig"
+texture_path = "res://assets/cinematics/fig/pl_f1_1_guards.webp"
+rect = Rect2(0.3564, 0.4201, 0.2954, 0.4306)
+depth = 0.7
+figure_seed = 1402
+pose = &"leave"
+facing_deg = 180.0
+
+[resource]
+script = ExtResource("6_2epre")
+id = &"pl_f1_1"
+condition = SubResource("pl_f1_1_resource_1")
+layers = Array[ExtResource("5_8ryoi")]([SubResource("pl_f1_1_resource_6"), SubResource("pl_f1_1_resource_7"), SubResource("pl_f1_1_resource_8")])
+caption_key = "cin_f1_1_double"
+captions = Array[ExtResource("1_8178u")]([SubResource("pl_f1_1_resource_9"), SubResource("pl_f1_1_resource_11"), SubResource("pl_f1_1_resource_13")])
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s5"
+set_variant = &"corridor"
+lighting = &"clinical"
+dominant = &"state.red"
+paint_radius_px = 6

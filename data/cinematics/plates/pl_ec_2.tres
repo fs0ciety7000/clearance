@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://bni2ejus6lllt"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_f1y8d"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_o6j8u"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_fwcia"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_kkyvs"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_6m1s6"]
+
+[sub_resource type="Resource" id="pl_ec_2_resource_3"]
+script = ExtResource("3_fwcia")
+text_key = "2187"
+rect = Rect2(0.44, 0.5, 0.12, 0.05)
+literal = true
+
+[sub_resource type="Resource" id="pl_ec_2_resource_1"]
+script = ExtResource("4_kkyvs")
+texture_path = "res://assets/cinematics/bg/bg_x1.webp"
+
+[sub_resource type="Resource" id="pl_ec_2_resource_2"]
+script = ExtResource("4_kkyvs")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_ec_2_register.webp"
+rect = Rect2(0.3838, 0.6233, 0.0986, 0.0538)
+depth = 0.6
+props = Array[StringName]([&"open_register"])
+
+[resource]
+script = ExtResource("5_6m1s6")
+id = &"pl_ec_2"
+min_act = 3
+layers = Array[ExtResource("4_kkyvs")]([SubResource("pl_ec_2_resource_1"), SubResource("pl_ec_2_resource_2")])
+labels = Array[ExtResource("3_fwcia")]([SubResource("pl_ec_2_resource_3")])
+caption_key = "cin_ec_2"
+duration_sec = 7.0
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s8"
+set_variant = &"school_register"
+lighting = &"school"
+dominant = &"accent.cyan"
+paint_radius_px = 6

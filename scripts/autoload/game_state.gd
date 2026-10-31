@@ -342,6 +342,8 @@ func end_campaign(ending: StringName, slot: int = SaveService.NO_SLOT, dir: Stri
 	if not day_history.is_empty():
 		day = SaveService.as_int(day_history[day_history.size() - 1].get("day", current_day), current_day)
 	var changed: bool = ProfileService.record(dir, "", day, case_memory.keys(), is_story_mode(), day)
+	# M14 (B92) : visages vus au dernier jour (pas de sauvegarde du soir).
+	changed = ProfileService.record_portraits(dir, case_memory, day) or changed
 	var epi: Dictionary = {}
 	if known:
 		epi = EpilogueService.make_seed(ending, narrative_flags, household, case_memory, campaign_seed, day)
@@ -469,10 +471,20 @@ static func same_seed(a: int, b: int) -> bool:
 	return a == b or SaveService.as_int(float(a)) == SaveService.as_int(float(b))
 
 
-## Profil global après une sauvegarde : personnages croisés, mode Récit.
+## Profil global après une sauvegarde : personnages croisés, mode Récit ;
+## M14 (B92, D-191) : portraits des personnages vus au jour joué.
 func _record_profile(dir: String) -> void:
-	if ProfileService.record(dir, "", current_day, case_memory.keys(), is_story_mode(), current_day):
+	var changed: bool = ProfileService.record(dir, "", current_day, case_memory.keys(), is_story_mode(), current_day)
+	changed = ProfileService.record_portraits(dir, case_memory, _played_day()) or changed
+	if changed:
 		EventBus.profile_changed.emit()
+
+
+## Dernier jour joué (dernière entrée de l'historique ; `current_day` sinon).
+func _played_day() -> int:
+	if day_history.is_empty():
+		return current_day
+	return SaveService.as_int(day_history[day_history.size() - 1].get("day", current_day), current_day)
 
 
 ## Ajoute au temps de jeu le temps écoulé depuis la dernière marque.

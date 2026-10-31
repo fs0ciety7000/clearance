@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://hb6oaaojku4"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_5g523"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_opn7i"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_vl6xf"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_o5fo3"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_jskkv"]
+
+[sub_resource type="Resource" id="pl_f6d_1_resource_1"]
+script = ExtResource("4_o5fo3")
+texture_path = "res://assets/cinematics/bg/bg_q8.webp"
+
+[sub_resource type="Resource" id="pl_f6d_1_resource_2"]
+script = ExtResource("4_o5fo3")
+kind = &"fx"
+depth = 0.5
+fx_kind = &"fog"
+fx_density = 0.3
+
+[resource]
+script = ExtResource("5_jskkv")
+id = &"pl_f6d_1"
+min_act = 3
+layers = Array[ExtResource("4_o5fo3")]([SubResource("pl_f6d_1_resource_1"), SubResource("pl_f6d_1_resource_2")])
+caption_key = "cin_f6d_1"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s3"
+set_variant = &"lock9"
+lighting = &"dawn"
+dominant = &"accent.cyan"
+paint_radius_px = 6

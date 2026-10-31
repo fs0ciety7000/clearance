@@ -38,3 +38,8 @@ func _emit_documents(case_id: StringName) -> void:
 func _emit_departed(case_id: StringName) -> void:
 	emitted.append([&"passenger_departed", case_id])
 	EventBus.passenger_departed.emit(case_id)
+
+
+## M14 : même API que `BoothDirector` (bande 3D en pause pendant une cinématique) ; sans effet.
+func set_rendering_paused(_paused: bool) -> void:
+	pass

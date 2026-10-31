@@ -31,3 +31,4 @@ Thumbs.db
 # Packs sources téléchargés (tools/fetch_assets.sh) — seules les ressources importées dans assets/ sont versionnées
 art_src/downloads/
 art_src/mixamo/
+art_src/plates/

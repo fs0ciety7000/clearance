@@ -1,0 +1,75 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://3vn6lt1j48gk"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_xy31g"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="2_gp4cg"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="3_y735r"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="4_gkrjm"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="5_w2k54"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="6_skgjg"]
+
+[sub_resource type="Resource" id="pl_f4_1_resource_9"]
+script = ExtResource("2_gp4cg")
+all_of = Array[StringName]([&"final3_dora"])
+
+[sub_resource type="Resource" id="pl_f4_1_resource_8"]
+script = ExtResource("1_xy31g")
+key = "cin_f4_1_dora"
+condition = SubResource("pl_f4_1_resource_9")
+
+[sub_resource type="Resource" id="pl_f4_1_resource_5"]
+script = ExtResource("2_gp4cg")
+all_of = Array[StringName]([&"final3_dora"])
+
+[sub_resource type="Resource" id="pl_f4_1_resource_4"]
+script = ExtResource("1_xy31g")
+key = "sc_82a"
+condition = SubResource("pl_f4_1_resource_5")
+
+[sub_resource type="Resource" id="pl_f4_1_resource_7"]
+script = ExtResource("2_gp4cg")
+none_of = Array[StringName]([&"final3_dora"])
+
+[sub_resource type="Resource" id="pl_f4_1_resource_6"]
+script = ExtResource("1_xy31g")
+key = "sc_82b"
+condition = SubResource("pl_f4_1_resource_7")
+
+[sub_resource type="Resource" id="pl_f4_1_resource_3"]
+script = ExtResource("3_y735r")
+id = &"fg_figure"
+memory_cases = Array[ExtResource("1_xy31g")]([SubResource("pl_f4_1_resource_4"), SubResource("pl_f4_1_resource_6")])
+pose = &"leave"
+framing = &"profile"
+lighting = &"dock"
+rect = Rect2(0.36, 0.24, 0.2, 0.7)
+silhouette_path = "res://assets/cinematics/fig/fg_figure_pl_f4_1.webp"
+
+[sub_resource type="Resource" id="pl_f4_1_resource_1"]
+script = ExtResource("5_w2k54")
+texture_path = "res://assets/cinematics/bg/bg_q1.webp"
+
+[sub_resource type="Resource" id="pl_f4_1_resource_2"]
+script = ExtResource("5_w2k54")
+kind = &"fig"
+texture_path = "res://assets/cinematics/fig/pl_f4_1_guards.webp"
+rect = Rect2(0.6353, 0.5356, 0.1538, 0.2266)
+depth = 0.5
+figure_seed = 1421
+pose = &"leave"
+facing_deg = 90.0
+
+[resource]
+script = ExtResource("6_skgjg")
+id = &"pl_f4_1"
+min_act = 3
+layers = Array[ExtResource("5_w2k54")]([SubResource("pl_f4_1_resource_1"), SubResource("pl_f4_1_resource_2")])
+figures = Array[ExtResource("3_y735r")]([SubResource("pl_f4_1_resource_3")])
+caption_key = "cin_f4_1"
+captions = Array[ExtResource("1_xy31g")]([SubResource("pl_f4_1_resource_8")])
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s2"
+set_variant = &"dock2"
+lighting = &"dock"
+dominant = &"accent.yellow"
+paint_radius_px = 6

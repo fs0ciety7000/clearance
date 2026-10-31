@@ -1,0 +1,2643 @@
+{
+	"campaign_seed": 5,
+	"case_memory": {
+		"sc_01": {
+			"appearance": {
+				"age_band": 2,
+				"height_step": 2,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_round_e2",
+					"hair": "hair_short_c08",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_01",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_04"
+				}
+			},
+			"birth_date": 4250,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-1402-4SWH",
+			"day": 1,
+			"faction_id": "hal",
+			"family_name": "Nakamura",
+			"given_name": "Valentin",
+			"index": 0,
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_02": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_10",
+				"traits": {
+					"accessory": "scarf",
+					"eyes": "eyes_blue",
+					"face": "face_angular_e1",
+					"hair": "hair_shaved_c04",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_07",
+					"palette": "palette_10",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 19881,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-2562-7PXQ",
+			"day": 1,
+			"faction_id": "ter",
+			"family_name": "Diallo",
+			"given_name": "Amara",
+			"index": 1,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_10",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_blue",
+					"face": "face_angular_e1",
+					"hair": "hair_shaved_c04",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_07",
+					"palette": "palette_10",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_08"
+				}
+			},
+			"sex": "F",
+			"verdict": "deny"
+		},
+		"sc_03": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_09",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_grey",
+					"face": "face_round_e1",
+					"hair": "hair_shaved_c03",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_08",
+					"palette": "palette_09",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_03"
+				}
+			},
+			"birth_date": 13116,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4902-BELL",
+			"day": 2,
+			"faction_id": "tyc",
+			"family_name": "Rasmussen",
+			"given_name": "Kasimir",
+			"index": 3,
+			"photo_appearance": {
+				"age_band": 0,
+				"height_step": -2,
+				"palette_id": "palette_07",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_blue",
+					"face": "face_square_e1",
+					"hair": "hair_braids_c03",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_05",
+					"palette": "palette_07",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_01"
+				}
+			},
+			"sex": "M",
+			"verdict": "deny"
+		},
+		"sc_04": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e1",
+					"hair": "hair_curly_c06",
+					"headwear": "visor_up",
+					"nose_mouth": "nose_mouth_n1_l2",
+					"outfit": "outfit_03",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 18932,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4471-K2Q9",
+			"day": 3,
+			"faction_id": "tyc",
+			"family_name": "Vasquez-Orlov",
+			"given_name": "Mira",
+			"index": 2,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e1",
+					"hair": "hair_curly_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l2",
+					"outfit": "outfit_03",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_08"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_05": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_01",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_blue",
+					"face": "face_oval_e2",
+					"hair": "hair_short_c08",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_05",
+					"palette": "palette_01",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 19486,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4036-52H5",
+			"day": 3,
+			"faction_id": "tyc",
+			"family_name": "Petrenko",
+			"given_name": "Lev",
+			"index": 7,
+			"sex": "M",
+			"verdict": "deny"
+		},
+		"sc_06": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_10",
+				"traits": {
+					"accessory": "scarf",
+					"eyes": "eyes_blue",
+					"face": "face_angular_e1",
+					"hair": "hair_shaved_c04",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_07",
+					"palette": "palette_10",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 19881,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-2562-7PXQ",
+			"day": 4,
+			"faction_id": "ter",
+			"family_name": "Diallo",
+			"given_name": "Amara",
+			"index": 1,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_10",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_blue",
+					"face": "face_angular_e1",
+					"hair": "hair_shaved_c04",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_07",
+					"palette": "palette_10",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_08"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_07": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_12",
+				"traits": {
+					"accessory": "half_visor",
+					"eyes": "eyes_green",
+					"face": "face_round_e3",
+					"hair": "hair_bun_c01",
+					"headwear": "cap",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_02",
+					"palette": "palette_12",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_05"
+				}
+			},
+			"birth_date": 19238,
+			"citizen_class": "C-1",
+			"citizen_id": "HG-1207-X2MH",
+			"day": 4,
+			"faction_id": "hal",
+			"family_name": "Valcourt",
+			"given_name": "Auguste",
+			"index": 4,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_12",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_round_e3",
+					"hair": "hair_bun_c01",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_02",
+					"palette": "palette_12",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_05"
+				}
+			},
+			"sex": "M",
+			"verdict": "deny"
+		},
+		"sc_08": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 1,
+				"palette_id": "palette_02",
+				"traits": {
+					"accessory": "respirator_neck",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e3",
+					"hair": "hair_curly_c04",
+					"headwear": "beanie",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_06",
+					"palette": "palette_02",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 14740,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4445-M7EA",
+			"day": 4,
+			"faction_id": "tyc",
+			"family_name": "Kowalczyk",
+			"given_name": "Dmitri",
+			"index": 8,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 1,
+				"palette_id": "palette_02",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e3",
+					"hair": "hair_curly_c04",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_06",
+					"palette": "palette_02",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_08"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_09": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 1,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_square_e2",
+					"hair": "hair_long_c06",
+					"headwear": "beanie",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_08",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 17398,
+			"citizen_class": "C-2",
+			"citizen_id": "HG-4919-RXB7",
+			"day": 5,
+			"faction_id": "tyc",
+			"family_name": "Achebe-Sörensen",
+			"given_name": "Noor",
+			"index": 3,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 1,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_square_e2",
+					"hair": "hair_long_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_08",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_08"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_10": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": 0,
+				"palette_id": "palette_11",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e3",
+					"hair": "hair_long_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l2",
+					"outfit": "outfit_08",
+					"palette": "palette_11",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_06"
+				}
+			},
+			"birth_date": 21519,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4080-JMSJ",
+			"day": 5,
+			"faction_id": "tyc",
+			"family_name": "Moreno-Lind",
+			"given_name": "Yara",
+			"index": 7,
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_104": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": 1,
+				"palette_id": "palette_04",
+				"traits": {
+					"accessory": "holo_tattoo_3",
+					"eyes": "eyes_green",
+					"face": "face_square_e3",
+					"hair": "hair_mohawk_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_04",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_01"
+				}
+			},
+			"birth_date": 21955,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-6488-XH7Y",
+			"day": 4,
+			"faction_id": "cer",
+			"family_name": "Strand",
+			"given_name": "Jory",
+			"index": 5,
+			"photo_appearance": {
+				"age_band": 0,
+				"height_step": 1,
+				"palette_id": "palette_04",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_square_e3",
+					"hair": "hair_mohawk_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_04",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_01"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_105": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -2,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "scarf",
+					"eyes": "eyes_green",
+					"face": "face_round_e3",
+					"hair": "hair_shaved_c06",
+					"headwear": "beanie",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_06"
+				}
+			},
+			"birth_date": 15723,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4932-SNTU",
+			"day": 8,
+			"faction_id": "tyc",
+			"family_name": "Mbeki",
+			"given_name": "Rosalind",
+			"index": 5,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -2,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_round_e3",
+					"hair": "hair_shaved_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_06"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_106": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_11",
+				"traits": {
+					"accessory": "respirator_neck",
+					"eyes": "eyes_hazel",
+					"face": "face_square_e1",
+					"hair": "hair_bun_c09",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_05",
+					"palette": "palette_11",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_04"
+				}
+			},
+			"birth_date": 19176,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-6089-W6FT",
+			"day": 9,
+			"faction_id": "cer",
+			"family_name": "Oduya",
+			"given_name": "Zuri",
+			"index": 6,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_11",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_square_e1",
+					"hair": "hair_bun_c09",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_05",
+					"palette": "palette_11",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_04"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_107": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": -1,
+				"palette_id": "palette_07",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_square_e2",
+					"hair": "hair_mohawk_c03",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_07",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_01"
+				}
+			},
+			"birth_date": 23156,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-2929-CRCB",
+			"day": 12,
+			"faction_id": "ter",
+			"family_name": "Nair",
+			"given_name": "Priya",
+			"index": 5,
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_108": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_11",
+				"traits": {
+					"accessory": "holo_tattoo_2",
+					"eyes": "eyes_hazel",
+					"face": "face_angular_e3",
+					"hair": "hair_shaved_c08",
+					"headwear": "cap",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_01",
+					"palette": "palette_11",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 18153,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4684-M2HZ",
+			"day": 16,
+			"faction_id": "tyc",
+			"family_name": "Ivanova",
+			"given_name": "Ilse",
+			"index": 5,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_11",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_angular_e3",
+					"hair": "hair_shaved_c08",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_01",
+					"palette": "palette_11",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_08"
+				}
+			},
+			"sex": "F",
+			"verdict": "deny"
+		},
+		"sc_11": {
+			"appearance": {
+				"age_band": 2,
+				"height_step": 2,
+				"palette_id": "palette_11",
+				"traits": {
+					"accessory": "respirator_neck",
+					"eyes": "eyes_grey",
+					"face": "face_oval_e2",
+					"hair": "hair_curly_c04",
+					"headwear": "hood",
+					"nose_mouth": "nose_mouth_n3_l1",
+					"outfit": "outfit_08",
+					"palette": "palette_11",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_01"
+				}
+			},
+			"birth_date": 7591,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-7526-A7UQ",
+			"day": 6,
+			"faction_id": "thr",
+			"family_name": "Mazur",
+			"given_name": "Dariusz",
+			"index": 2,
+			"photo_appearance": {
+				"age_band": 2,
+				"height_step": 2,
+				"palette_id": "palette_11",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_grey",
+					"face": "face_oval_e2",
+					"hair": "hair_curly_c04",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l1",
+					"outfit": "outfit_08",
+					"palette": "palette_11",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_01"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_12": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_04",
+				"traits": {
+					"accessory": "holo_tattoo_2",
+					"eyes": "eyes_green",
+					"face": "face_round_e1",
+					"hair": "hair_long_c02",
+					"headwear": "beanie",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_07",
+					"palette": "palette_04",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_01"
+				}
+			},
+			"birth_date": 16809,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-1040-85V2",
+			"day": 6,
+			"faction_id": "hal",
+			"family_name": "Ravel",
+			"given_name": "Corentin",
+			"index": 6,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_04",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_round_e1",
+					"hair": "hair_long_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_07",
+					"palette": "palette_04",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_01"
+				}
+			},
+			"sex": "M",
+			"verdict": "deny"
+		},
+		"sc_13": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_01",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_blue",
+					"face": "face_oval_e2",
+					"hair": "hair_short_c08",
+					"headwear": "visor_up",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_05",
+					"palette": "palette_01",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 19267,
+			"citizen_class": "C-2",
+			"citizen_id": "HG-1259-CS84",
+			"day": 7,
+			"faction_id": "hal",
+			"family_name": "Whitmore",
+			"given_name": "Soren",
+			"index": 3,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_01",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_oval_e2",
+					"hair": "hair_short_c07",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_05",
+					"palette": "palette_01",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_08"
+				}
+			},
+			"sex": "M",
+			"verdict": "deny"
+		},
+		"sc_14": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 1,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e1",
+					"hair": "hair_curly_c07",
+					"headwear": "beanie",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_08",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_04"
+				}
+			},
+			"birth_date": 20421,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-6015-UNLM",
+			"day": 7,
+			"faction_id": "cer",
+			"family_name": "Morrow",
+			"given_name": "Kaito",
+			"index": 9,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 1,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e1",
+					"hair": "hair_curly_c07",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_08",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_04"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_15": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_01",
+				"traits": {
+					"accessory": "half_visor",
+					"eyes": "eyes_brown",
+					"face": "face_angular_e1",
+					"hair": "hair_short_c07",
+					"headwear": "beanie",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_06",
+					"palette": "palette_01",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_05"
+				}
+			},
+			"birth_date": 12605,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-7736-J8SR",
+			"day": 8,
+			"faction_id": "thr",
+			"family_name": "Hadid",
+			"given_name": "Idris",
+			"index": 2,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_01",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_angular_e1",
+					"hair": "hair_short_c07",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_06",
+					"palette": "palette_01",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_05"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_16": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_07",
+				"traits": {
+					"accessory": "respirator_neck",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e2",
+					"hair": "hair_curly_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_07",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 13866,
+			"citizen_class": "C-5",
+			"citizen_id": "HG-7591-RVRX",
+			"day": 8,
+			"faction_id": "thr",
+			"family_name": "Hadid",
+			"given_name": "Hana",
+			"index": 3,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_07",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e2",
+					"hair": "hair_curly_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_07",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_08"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_17": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": 2,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_heterochromia",
+					"face": "face_oval_e2",
+					"hair": "hair_shaved_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_04",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_07"
+				}
+			},
+			"birth_date": 17931,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-2274-56M6",
+			"day": 8,
+			"faction_id": "ter",
+			"family_name": "Mensah",
+			"given_name": "Ngozi",
+			"index": 7,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_heterochromia",
+					"face": "face_oval_e2",
+					"hair": "hair_shaved_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_04",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_01"
+				}
+			},
+			"sex": "F",
+			"verdict": "deny"
+		},
+		"sc_18": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": 1,
+				"palette_id": "palette_09",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_round_e3",
+					"hair": "hair_short_c04",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_09",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_02"
+				}
+			},
+			"birth_date": -100002163,
+			"citizen_class": "C-5",
+			"citizen_id": "HG-9205-H7SL",
+			"day": 9,
+			"faction_id": "drv",
+			"family_name": "Long-Ruban",
+			"given_name": "Sefa",
+			"index": 4,
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_19": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_02",
+				"traits": {
+					"accessory": "scarf",
+					"eyes": "eyes_green",
+					"face": "face_square_e2",
+					"hair": "hair_long_c01",
+					"headwear": "beanie",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_02",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_05"
+				}
+			},
+			"birth_date": 15581,
+			"citizen_class": "C-5",
+			"citizen_id": "HG-9906-74BU",
+			"day": 9,
+			"faction_id": "drv",
+			"family_name": "Basse-Marée",
+			"given_name": "Wren",
+			"index": 9,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_02",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_square_e2",
+					"hair": "hair_long_c01",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_02",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_05"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_20": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -2,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_oval_e1",
+					"hair": "hair_long_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_03"
+				}
+			},
+			"birth_date": 17638,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4134-YD2G",
+			"day": 10,
+			"faction_id": "tyc",
+			"family_name": "Duval",
+			"given_name": "Bastien",
+			"index": 3,
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_21": {
+			"appearance": {
+				"age_band": 2,
+				"height_step": -1,
+				"palette_id": "palette_10",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_round_e1",
+					"hair": "hair_shaved_c04",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l1",
+					"outfit": "outfit_08",
+					"palette": "palette_10",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_07"
+				}
+			},
+			"birth_date": 10613,
+			"citizen_class": "C-1",
+			"citizen_id": "HG-1985-RUP9",
+			"day": 10,
+			"faction_id": "hal",
+			"family_name": "Montclair",
+			"given_name": "Philippa",
+			"index": 6,
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_22": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e1",
+					"hair": "hair_curly_c06",
+					"headwear": "visor_up",
+					"nose_mouth": "nose_mouth_n1_l2",
+					"outfit": "outfit_03",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 18932,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4471-K2Q9",
+			"day": 10,
+			"faction_id": "tyc",
+			"family_name": "Vasquez-Orlov",
+			"given_name": "Mira",
+			"index": 10,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e1",
+					"hair": "hair_curly_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l2",
+					"outfit": "outfit_03",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_08"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_23": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_03",
+				"traits": {
+					"accessory": "scarf",
+					"eyes": "eyes_brown",
+					"face": "face_oval_e3",
+					"hair": "hair_short_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_03",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"birth_date": 14500,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-1631-JZPE",
+			"day": 11,
+			"faction_id": "hal",
+			"family_name": "Lindgren",
+			"given_name": "Kenji",
+			"index": 1,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_03",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_oval_e3",
+					"hair": "hair_short_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_03",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_25": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_09",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_square_e3",
+					"hair": "hair_short_c01",
+					"headwear": "cap",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_04",
+					"palette": "palette_09",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_01"
+				}
+			},
+			"birth_date": 20471,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4791-TFJG",
+			"day": 11,
+			"faction_id": "tyc",
+			"family_name": "Navarro",
+			"given_name": "Elena",
+			"index": 12,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_09",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_square_e3",
+					"hair": "hair_short_c01",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_04",
+					"palette": "palette_09",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_01"
+				}
+			},
+			"sex": "F",
+			"verdict": "deny"
+		},
+		"sc_26": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_09",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_square_e3",
+					"hair": "hair_short_c01",
+					"headwear": "cap",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_04",
+					"palette": "palette_09",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_01"
+				}
+			},
+			"birth_date": 20471,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4791-TFJG",
+			"day": 12,
+			"faction_id": "tyc",
+			"family_name": "Navarro",
+			"given_name": "Elena",
+			"index": 0,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_09",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_square_e3",
+					"hair": "hair_short_c01",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_04",
+					"palette": "palette_09",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_01"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_27": {
+			"appearance": {
+				"age_band": 2,
+				"height_step": 2,
+				"palette_id": "palette_07",
+				"traits": {
+					"accessory": "holo_tattoo_1",
+					"eyes": "eyes_blue",
+					"face": "face_oval_e3",
+					"hair": "hair_bun_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_07",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_05"
+				}
+			},
+			"birth_date": 9253,
+			"citizen_class": "C-2",
+			"citizen_id": "HG-1817-WDP9",
+			"day": 12,
+			"faction_id": "hal",
+			"family_name": "Ferreira",
+			"given_name": "Margaux",
+			"index": 3,
+			"photo_appearance": {
+				"age_band": 2,
+				"height_step": 2,
+				"palette_id": "palette_07",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_blue",
+					"face": "face_oval_e3",
+					"hair": "hair_bun_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_07",
+					"palette": "palette_07",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_05"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_28": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": 1,
+				"palette_id": "palette_12",
+				"traits": {
+					"accessory": "holo_tattoo_4",
+					"eyes": "eyes_green",
+					"face": "face_square_e3",
+					"hair": "hair_short_c05",
+					"headwear": "hood",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_01",
+					"palette": "palette_12",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_02"
+				}
+			},
+			"birth_date": 23192,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-2204-3NGC",
+			"day": 12,
+			"faction_id": "ter",
+			"family_name": "Benali",
+			"given_name": "Tariq",
+			"index": 7,
+			"photo_appearance": {
+				"age_band": 0,
+				"height_step": 1,
+				"palette_id": "palette_12",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_square_e3",
+					"hair": "hair_short_c05",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_01",
+					"palette": "palette_12",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_02"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_29": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -2,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_angular_e2",
+					"hair": "hair_braids_c10",
+					"headwear": "cap",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_04",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_04"
+				}
+			},
+			"birth_date": 17963,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-7752-6T2W",
+			"day": 12,
+			"faction_id": "thr",
+			"family_name": "Mazur",
+			"given_name": "Katya",
+			"index": 11,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -2,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_angular_e2",
+					"hair": "hair_braids_c10",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_04",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_04"
+				}
+			},
+			"sex": "F",
+			"verdict": "deny"
+		},
+		"sc_30": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_03",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_square_e3",
+					"hair": "hair_long_c07",
+					"headwear": "beanie",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_03",
+					"palette": "palette_03",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_03"
+				}
+			},
+			"birth_date": 19024,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-6474-KWG9",
+			"day": 13,
+			"faction_id": "cer",
+			"family_name": "Kerr",
+			"given_name": "Ren",
+			"index": 3,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_03",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_square_e3",
+					"hair": "hair_long_c07",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_03",
+					"palette": "palette_03",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_03"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_31": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": -2,
+				"palette_id": "palette_02",
+				"traits": {
+					"accessory": "holo_tattoo_1",
+					"eyes": "eyes_hazel",
+					"face": "face_oval_e3",
+					"hair": "hair_mohawk_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_01",
+					"palette": "palette_02",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_01"
+				}
+			},
+			"birth_date": 22174,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-6600-SDLU",
+			"day": 13,
+			"faction_id": "cer",
+			"family_name": "Kerr",
+			"given_name": "Ren",
+			"index": 4,
+			"photo_appearance": {
+				"age_band": 0,
+				"height_step": -2,
+				"palette_id": "palette_02",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_oval_e3",
+					"hair": "hair_mohawk_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_01",
+					"palette": "palette_02",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_01"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_32": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_04",
+				"traits": {
+					"accessory": "holo_tattoo_4",
+					"eyes": "eyes_green",
+					"face": "face_square_e3",
+					"hair": "hair_short_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_04",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_03"
+				}
+			},
+			"birth_date": 13137,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-6801-F3T9",
+			"day": 13,
+			"faction_id": "cer",
+			"family_name": "Kerr",
+			"given_name": "Ren",
+			"index": 5,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_04",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_square_e3",
+					"hair": "hair_short_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_04",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_03"
+				}
+			},
+			"sex": "X",
+			"verdict": "approve"
+		},
+		"sc_33": {
+			"appearance": {
+				"age_band": 2,
+				"height_step": 1,
+				"palette_id": "palette_04",
+				"traits": {
+					"accessory": "half_visor",
+					"eyes": "eyes_brown",
+					"face": "face_square_e2",
+					"hair": "hair_braids_c05",
+					"headwear": "cap",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_05",
+					"palette": "palette_04",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_07"
+				}
+			},
+			"birth_date": -100002119,
+			"citizen_class": "C-5",
+			"citizen_id": "HG-9115-9YDT",
+			"day": 13,
+			"faction_id": "drv",
+			"family_name": "Sillage",
+			"given_name": "Corvo",
+			"index": 9,
+			"photo_appearance": {
+				"age_band": 2,
+				"height_step": 1,
+				"palette_id": "palette_04",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_square_e2",
+					"hair": "hair_braids_c05",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_05",
+					"palette": "palette_04",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_07"
+				}
+			},
+			"sex": "M",
+			"verdict": "deny"
+		},
+		"sc_34": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "respirator_neck",
+					"eyes": "eyes_brown",
+					"face": "face_square_e2",
+					"hair": "hair_shaved_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l2",
+					"outfit": "outfit_08",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_02"
+				}
+			},
+			"birth_date": 15799,
+			"citizen_class": "C-2",
+			"citizen_id": "HG-1712-8Q8L",
+			"day": 14,
+			"faction_id": "hal",
+			"family_name": "Langlois",
+			"given_name": "Hiro",
+			"index": 2,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_square_e2",
+					"hair": "hair_shaved_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l2",
+					"outfit": "outfit_08",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_02"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_35c": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 2,
+				"palette_id": "palette_03",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_green",
+					"face": "face_square_e3",
+					"hair": "hair_curly_c01",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_04",
+					"palette": "palette_03",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"birth_date": 15164,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-2602-DKMX",
+			"day": 14,
+			"faction_id": "ter",
+			"family_name": "Okonkwo",
+			"given_name": "Emeka",
+			"index": 8,
+			"sex": "M",
+			"verdict": "deny"
+		},
+		"sc_36": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_03",
+				"traits": {
+					"accessory": "scarf",
+					"eyes": "eyes_brown",
+					"face": "face_oval_e3",
+					"hair": "hair_short_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_03",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"birth_date": 14500,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-1631-JZPE",
+			"day": 15,
+			"faction_id": "hal",
+			"family_name": "Lindgren",
+			"given_name": "Kenji",
+			"index": 4,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_03",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_oval_e3",
+					"hair": "hair_short_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_03",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"sex": "M",
+			"verdict": "deny"
+		},
+		"sc_37": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": 2,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_heterochromia",
+					"face": "face_oval_e2",
+					"hair": "hair_shaved_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n1_l1",
+					"outfit": "outfit_04",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_07"
+				}
+			},
+			"birth_date": 20981,
+			"citizen_class": "C-5",
+			"citizen_id": "HG-2598-WLSN",
+			"day": 15,
+			"faction_id": "ter",
+			"family_name": "Mensah",
+			"given_name": "Fatou",
+			"index": 10,
+			"sex": "F",
+			"verdict": "deny"
+		},
+		"sc_38": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": -2,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "holo_tattoo_4",
+					"eyes": "eyes_hazel",
+					"face": "face_angular_e2",
+					"hair": "hair_curly_c02",
+					"headwear": "cap",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_07",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"birth_date": 22562,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-1990-4KTT",
+			"day": 16,
+			"faction_id": "hal",
+			"family_name": "Sato",
+			"given_name": "Aurelio",
+			"index": 3,
+			"photo_appearance": {
+				"age_band": 0,
+				"height_step": -2,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_angular_e2",
+					"hair": "hair_curly_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_07",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"sex": "M",
+			"verdict": "deny"
+		},
+		"sc_39": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_02",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_grey",
+					"face": "face_oval_e3",
+					"hair": "hair_braids_c04",
+					"headwear": "beanie",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_08",
+					"palette": "palette_02",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_04"
+				}
+			},
+			"birth_date": 17277,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-2956-Z48X",
+			"day": 16,
+			"faction_id": "ter",
+			"family_name": "Haddad",
+			"given_name": "Leila",
+			"index": 13,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_02",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_grey",
+					"face": "face_oval_e3",
+					"hair": "hair_braids_c04",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_08",
+					"palette": "palette_02",
+					"silhouette": "silhouette_s4_slight",
+					"skin": "skin_04"
+				}
+			},
+			"sex": "F",
+			"verdict": "deny"
+		},
+		"sc_40": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_angular_e1",
+					"hair": "hair_shaved_c09",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_03"
+				}
+			},
+			"birth_date": 16294,
+			"citizen_class": "C-2",
+			"citizen_id": "HG-1635-CTL4",
+			"day": 17,
+			"faction_id": "hal",
+			"family_name": "Choi",
+			"given_name": "Valentin",
+			"index": 2,
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_41": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": -2,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "holo_tattoo_4",
+					"eyes": "eyes_hazel",
+					"face": "face_angular_e2",
+					"hair": "hair_curly_c02",
+					"headwear": "cap",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_07",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"birth_date": 22562,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-1990-4KTT",
+			"day": 17,
+			"faction_id": "hal",
+			"family_name": "Sato",
+			"given_name": "Aurelio",
+			"index": 7,
+			"photo_appearance": {
+				"age_band": 0,
+				"height_step": -2,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_angular_e2",
+					"hair": "hair_curly_c02",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_07",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_42": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "respirator_neck",
+					"eyes": "eyes_brown",
+					"face": "face_oval_e3",
+					"hair": "hair_short_c08",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l1",
+					"outfit": "outfit_01",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_04"
+				}
+			},
+			"birth_date": 11998,
+			"citizen_class": "C-1",
+			"citizen_id": "HG-1442-D6ZQ",
+			"day": 18,
+			"faction_id": "hal",
+			"family_name": "Beaumont",
+			"given_name": "Isadora",
+			"index": 1,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_oval_e3",
+					"hair": "hair_short_c08",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l1",
+					"outfit": "outfit_01",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_04"
+				}
+			},
+			"sex": "F",
+			"verdict": "approve"
+		},
+		"sc_43": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -2,
+				"palette_id": "palette_02",
+				"traits": {
+					"accessory": "respirator_neck",
+					"eyes": "eyes_brown",
+					"face": "face_angular_e1",
+					"hair": "hair_long_c10",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_01",
+					"palette": "palette_02",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_02"
+				}
+			},
+			"birth_date": 19784,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-2215-UGD9",
+			"day": 18,
+			"faction_id": "ter",
+			"family_name": "Silva",
+			"given_name": "Mateus",
+			"index": 2,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -2,
+				"palette_id": "palette_02",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_angular_e1",
+					"hair": "hair_long_c10",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l2",
+					"outfit": "outfit_01",
+					"palette": "palette_02",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_02"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_44": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_03",
+				"traits": {
+					"accessory": "scarf",
+					"eyes": "eyes_brown",
+					"face": "face_oval_e3",
+					"hair": "hair_short_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_03",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"birth_date": 14500,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-1631-JZPE",
+			"day": 18,
+			"faction_id": "hal",
+			"family_name": "Lindgren",
+			"given_name": "Kenji",
+			"index": 12,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": -1,
+				"palette_id": "palette_03",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_oval_e3",
+					"hair": "hair_short_c06",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_03",
+					"silhouette": "silhouette_s2_slender",
+					"skin": "skin_06"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_83a": {
+			"appearance": {
+				"age_band": 2,
+				"height_step": 2,
+				"palette_id": "palette_06",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_brown",
+					"face": "face_round_e2",
+					"hair": "hair_short_c08",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_01",
+					"palette": "palette_06",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_04"
+				}
+			},
+			"birth_date": 4250,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-1402-4SWH",
+			"day": 16,
+			"faction_id": "hal",
+			"family_name": "Nakamura",
+			"given_name": "Valentin",
+			"index": 8,
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_84a": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 0,
+				"palette_id": "palette_09",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_grey",
+					"face": "face_round_e1",
+					"hair": "hair_shaved_c03",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_08",
+					"palette": "palette_09",
+					"silhouette": "silhouette_s1_stocky",
+					"skin": "skin_03"
+				}
+			},
+			"birth_date": 15568,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-4913-Q7BC",
+			"day": 4,
+			"faction_id": "tyc",
+			"family_name": "Abebe",
+			"given_name": "Kasimir",
+			"index": 10,
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_85b": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": 1,
+				"palette_id": "palette_01",
+				"traits": {
+					"accessory": "half_visor",
+					"eyes": "eyes_grey",
+					"face": "face_round_e2",
+					"hair": "hair_braids_c03",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_01",
+					"palette": "palette_01",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 21345,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-1122-FR7U",
+			"day": 11,
+			"faction_id": "hal",
+			"family_name": "Castelli",
+			"given_name": "Valentin",
+			"index": 8,
+			"photo_appearance": {
+				"age_band": 0,
+				"height_step": 1,
+				"palette_id": "palette_01",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_grey",
+					"face": "face_round_e2",
+					"hair": "hair_braids_c03",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_01",
+					"palette": "palette_01",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_08"
+				}
+			},
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"sc_86b": {
+			"appearance": {
+				"age_band": 1,
+				"height_step": 1,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e1",
+					"hair": "hair_curly_c07",
+					"headwear": "beanie",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_08",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_04"
+				}
+			},
+			"birth_date": 20421,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-6603-2MWE",
+			"day": 14,
+			"faction_id": "cer",
+			"family_name": "Morrow",
+			"given_name": "Kaito",
+			"index": 11,
+			"photo_appearance": {
+				"age_band": 1,
+				"height_step": 1,
+				"palette_id": "palette_05",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e1",
+					"hair": "hair_curly_c07",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l1",
+					"outfit": "outfit_08",
+					"palette": "palette_05",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_04"
+				}
+			},
+			"sex": "M",
+			"verdict": "deny"
+		},
+		"tuto_concordant": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": -2,
+				"palette_id": "palette_09",
+				"traits": {
+					"accessory": "none",
+					"eyes": "eyes_hazel",
+					"face": "face_round_e2",
+					"hair": "hair_short_c03",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n3_l1",
+					"outfit": "outfit_03",
+					"palette": "palette_09",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_03"
+				}
+			},
+			"birth_date": 24110,
+			"citizen_class": "C-4",
+			"citizen_id": "HG-2229-UBEK",
+			"day": 1,
+			"faction_id": "ter",
+			"family_name": "Ramanathan",
+			"given_name": "Kwame",
+			"index": 2,
+			"sex": "M",
+			"verdict": "approve"
+		},
+		"tuto_missing_document": {
+			"appearance": {
+				"age_band": 0,
+				"height_step": 1,
+				"palette_id": "palette_01",
+				"traits": {
+					"accessory": "half_visor",
+					"eyes": "eyes_grey",
+					"face": "face_round_e2",
+					"hair": "hair_braids_c03",
+					"headwear": "none",
+					"nose_mouth": "nose_mouth_n2_l2",
+					"outfit": "outfit_01",
+					"palette": "palette_01",
+					"silhouette": "silhouette_s3_medium",
+					"skin": "skin_08"
+				}
+			},
+			"birth_date": 21345,
+			"citizen_class": "C-3",
+			"citizen_id": "HG-1122-FR7U",
+			"day": 1,
+			"faction_id": "hal",
+			"family_name": "Castelli",
+			"given_name": "Valentin",
+			"index": 3,
+			"sex": "M",
+			"verdict": "approve"
+		}
+	},
+	"citations": 109,
+	"credits": 993,
+	"current_day": 19,
+	"day_history": [
+		{
+			"balance": 2999,
+			"citations": 1,
+			"correct": 7,
+			"credits": 35,
+			"day": 1,
+			"errors": 1,
+			"fines": 0,
+			"gained": 0,
+			"planned": 8,
+			"processed": 8,
+			"spent": 36,
+			"wage": 35
+		},
+		{
+			"balance": 2993,
+			"citations": 2,
+			"correct": 8,
+			"credits": 40,
+			"day": 2,
+			"errors": 2,
+			"fines": 0,
+			"gained": 0,
+			"planned": 10,
+			"processed": 10,
+			"spent": 46,
+			"wage": 40
+		},
+		{
+			"balance": 3007,
+			"citations": 1,
+			"correct": 10,
+			"credits": 50,
+			"day": 3,
+			"errors": 1,
+			"fines": 0,
+			"gained": 0,
+			"planned": 11,
+			"processed": 11,
+			"spent": 36,
+			"wage": 50
+		},
+		{
+			"balance": 2981,
+			"citations": 5,
+			"correct": 7,
+			"credits": 20,
+			"day": 4,
+			"errors": 5,
+			"fines": 15,
+			"gained": 0,
+			"planned": 12,
+			"processed": 12,
+			"spent": 46,
+			"wage": 35
+		},
+		{
+			"balance": 2940,
+			"citations": 6,
+			"correct": 6,
+			"credits": -5,
+			"day": 5,
+			"errors": 6,
+			"fines": 35,
+			"gained": 0,
+			"planned": 12,
+			"processed": 12,
+			"spent": 36,
+			"wage": 30
+		},
+		{
+			"balance": 2904,
+			"citations": 6,
+			"correct": 7,
+			"credits": 10,
+			"day": 6,
+			"errors": 6,
+			"fines": 25,
+			"gained": 0,
+			"planned": 13,
+			"processed": 13,
+			"spent": 46,
+			"wage": 35
+		},
+		{
+			"balance": 2863,
+			"citations": 6,
+			"correct": 8,
+			"credits": 5,
+			"day": 7,
+			"errors": 6,
+			"fines": 35,
+			"gained": 0,
+			"planned": 14,
+			"processed": 14,
+			"spent": 46,
+			"wage": 40
+		},
+		{
+			"balance": 2822,
+			"citations": 6,
+			"correct": 8,
+			"credits": 15,
+			"day": 8,
+			"errors": 6,
+			"fines": 25,
+			"gained": 0,
+			"planned": 14,
+			"processed": 14,
+			"spent": 56,
+			"wage": 40
+		},
+		{
+			"balance": 2771,
+			"citations": 7,
+			"correct": 8,
+			"credits": -5,
+			"day": 9,
+			"errors": 7,
+			"fines": 45,
+			"gained": 0,
+			"planned": 15,
+			"processed": 15,
+			"spent": 46,
+			"wage": 40
+		},
+		{
+			"balance": 2635,
+			"citations": 13,
+			"correct": 3,
+			"credits": -90,
+			"day": 10,
+			"errors": 13,
+			"fines": 105,
+			"gained": 0,
+			"planned": 16,
+			"processed": 16,
+			"spent": 46,
+			"wage": 15
+		},
+		{
+			"balance": 1818,
+			"citations": 5,
+			"correct": 11,
+			"credits": 30,
+			"day": 11,
+			"errors": 5,
+			"fines": 25,
+			"gained": 0,
+			"planned": 16,
+			"processed": 16,
+			"spent": 847,
+			"wage": 55
+		},
+		{
+			"balance": 1788,
+			"citations": 5,
+			"correct": 11,
+			"credits": 30,
+			"day": 12,
+			"errors": 5,
+			"fines": 25,
+			"gained": 0,
+			"planned": 16,
+			"processed": 16,
+			"spent": 60,
+			"wage": 55
+		},
+		{
+			"balance": 1688,
+			"citations": 10,
+			"correct": 6,
+			"credits": -45,
+			"day": 13,
+			"errors": 10,
+			"fines": 75,
+			"gained": 0,
+			"planned": 16,
+			"processed": 16,
+			"spent": 55,
+			"wage": 30
+		},
+		{
+			"balance": 1588,
+			"citations": 10,
+			"correct": 7,
+			"credits": -40,
+			"day": 14,
+			"errors": 10,
+			"fines": 75,
+			"gained": 0,
+			"planned": 17,
+			"processed": 17,
+			"spent": 60,
+			"wage": 35
+		},
+		{
+			"balance": 1586,
+			"citations": 6,
+			"correct": 17,
+			"credits": 50,
+			"day": 15,
+			"errors": 6,
+			"fines": 35,
+			"gained": 0,
+			"planned": 23,
+			"processed": 23,
+			"spent": 52,
+			"wage": 85
+		},
+		{
+			"balance": 1524,
+			"citations": 7,
+			"correct": 10,
+			"credits": 5,
+			"day": 16,
+			"errors": 7,
+			"fines": 45,
+			"gained": 0,
+			"planned": 17,
+			"processed": 17,
+			"spent": 67,
+			"wage": 50
+		},
+		{
+			"balance": 1020,
+			"citations": 8,
+			"correct": 9,
+			"credits": -10,
+			"day": 17,
+			"errors": 8,
+			"fines": 55,
+			"gained": 0,
+			"planned": 17,
+			"processed": 17,
+			"spent": 494,
+			"wage": 45
+		},
+		{
+			"balance": 993,
+			"citations": 5,
+			"correct": 13,
+			"credits": 40,
+			"day": 18,
+			"errors": 5,
+			"fines": 25,
+			"gained": 0,
+			"planned": 18,
+			"processed": 18,
+			"spent": 67,
+			"wage": 65
+		}
+	],
+	"difficulty": "hard",
+	"game_version": "0.13.0",
+	"household": {
+		"cold_streak": 0,
+		"debt_streak": 0,
+		"hunger_streak": 0,
+		"members": [
+			{
+				"away": "",
+				"breathless": false,
+				"breathless_streak": 0,
+				"cold": false,
+				"detained": false,
+				"health": "well",
+				"hungry": false,
+				"id": "ilan",
+				"untreated_evenings": 0
+			},
+			{
+				"away": "",
+				"breathless": false,
+				"breathless_streak": 0,
+				"cold": false,
+				"detained": false,
+				"health": "well",
+				"hungry": false,
+				"id": "noa",
+				"untreated_evenings": 0
+			},
+			{
+				"away": "",
+				"breathless": false,
+				"breathless_streak": 0,
+				"cold": false,
+				"detained": false,
+				"health": "well",
+				"hungry": false,
+				"id": "dora",
+				"untreated_evenings": 0
+			}
+		],
+		"oxygen_misses": 0,
+		"unpaid_rent_streak": 0
+	},
+	"narrative_flags": {
+		"act2_started": true,
+		"audit_clean": true,
+		"beaumont_defied": true,
+		"beaumont_order": true,
+		"bribe_seen": true,
+		"colleagues_refused": true,
+		"dora_names_written": true,
+		"dora_stayed": true,
+		"dora_told_puits9": true,
+		"drift_offer": true,
+		"final_passed": true,
+		"ilan_confessed": true,
+		"ilan_forbidden": true,
+		"ilan_job_refused": true,
+		"ilan_stayed": true,
+		"inspector_test_passed": true,
+		"kerr_mixup_approved": true,
+		"lease_declined": true,
+		"loyalty": 0,
+		"lucioles_contact": true,
+		"lucioles_heating_refused": true,
+		"lucioles_note_burned": true,
+		"lucioles_trust": 6,
+		"lumika_learned": true,
+		"met_mira": true,
+		"meter_installed": true,
+		"neighbor_ignored": true,
+		"noa_armband": true,
+		"noa_bioscan_free": true,
+		"noa_school_fine_paid": true,
+		"okonkwo_shielded": true,
+		"page_lucioles_kept": true,
+		"pivot_done": true,
+		"promotion_revoked": true,
+		"purge_clean": true,
+		"registre": 2,
+		"sc02_turned_away": true,
+		"sc06_reunited": true,
+		"sc07_bribe_returned": true,
+		"sc08_passed": true,
+		"sc09_doctor_passed": true,
+		"sc104_strand_passed": true,
+		"sc105_mbeki_passed": true,
+		"sc106_air_passed": true,
+		"sc107_nair_passed": true,
+		"sc108_ilse_refused": true,
+		"sc10_passed": true,
+		"sc11_veteran_passed": true,
+		"sc13_turned_back": true,
+		"sc14_passed": true,
+		"sc15_idris_passed": true,
+		"sc16_hana_passed": true,
+		"sc17_turned_back": true,
+		"sc18_passed": true,
+		"sc19_passed": true,
+		"sc20_passed": true,
+		"sc21_passed": true,
+		"sc23_lindgren_passed": true,
+		"sc25_elena_turned_away": true,
+		"sc26_elena_passed": true,
+		"sc27_mistigri_passed": true,
+		"sc28_tariq_passed": true,
+		"sc29_katya_locked_out": true,
+		"sc30_kerr_ok": true,
+		"sc33_corvo_refused": true,
+		"sc34_hiro_passed": true,
+		"sc35_okonkwo_refused": true,
+		"sc36_lindgren_refused": true,
+		"sc37_fatou_turned_away": true,
+		"sc38_sato_impressed": true,
+		"sc39_leila_late": true,
+		"sc40_valentin_passed": true,
+		"sc41_sato_spared": true,
+		"sc44_lindgren_passed": true,
+		"sc83_tech_met": true,
+		"sc84_miner_passed": true,
+		"sc85_passed": true,
+		"scanner_luciole_refused": true,
+		"solidarite": 2,
+		"suspicion": 2,
+		"upg_ag04_offer_seen": true,
+		"upg_ag05_offer_seen": true,
+		"upg_ag06_offer_seen": true,
+		"vannes_opened": true
+	},
+	"play_time_sec": 504,
+	"portrait_seed": 1299868105,
+	"saved_at": "2026-10-31T14:17:56",
+	"score_total": 780,
+	"version": 6
+}

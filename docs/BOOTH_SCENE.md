@@ -603,3 +603,151 @@ Planche de 12 apparences couvrant toutes les coupes, coiffes (visière baissée/
 
 ### 18.7 Décision proposée
 Fusion des pièces d'apparence en un maillage skinné par acteur, construit à l'application et mis en cache, avec un matériau à attributs par sommet (proposition D-075, à consigner par l'Orchestrateur).
+
+---
+
+## 19. M14 — planches de cinématique, phase 1 (lot C, 2026-10-30, 3D Designer / Asset Lead)
+
+Version minimale de B89/B90 (M14 §3.6, D-184) et **deux planches témoins pour la validation de DA** (PL-F9-1, PL-F10-3), chacune en deux traitements picturaux. Rien n'est encore branché au jeu : pas de `PlateDef` lue, pas d'import dans `assets/cinematics/` (phase 2, après le choix du client).
+
+### 19.1 Outil et passes
+`tools/build_plates.gd` (SceneTree, xvfb + `opengl3`, comme `qa_capture.gd`) :
+```
+xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
+    --script res://tools/build_plates.gd -- [--only=PL-F9-1,PL-F10-3] [--variant=a|b|all] [--mockups] [--verify]
+```
+1. **Décor** construit par l'outil avec le format de sommets et les matériaux du guichet (D-073 : `booth_decor` + Texture2DArray AmbientCG, `booth_emissive`, `booth_holo`), silhouettes anonymes (`imp_silhouette.res`, primitives) ; temps figé (`wet_motion` 0, `fx_intensity` 0, `flicker` 0, silhouettes sans balancement).
+2. **Passes** dans une `SubViewport` 2048×1152 (`own_world_3d`, MSAA 4×, sans TAA ni FXAA, glow et brouillard de l'environnement du guichet) : couleur ; **G-buffer** (matériau de remplacement : normale de vue octaédrique + profondeur log, sans MSAA) ; **masque** (couches `MID`/`FIG` : blanc, reste noir) ; **identifiants** (zones d'état, ci-dessous). Les passes techniques écrivent des codes bruts (environnement plat, tonemap linéaire ; les codes < 48 sont déformés en sortie 8 bits, d'où `ID_BASE`).
+3. **Peinture** `plate_paint.gdshader` (ASSETS §7.6) en plein écran sur chaque couche ; les couches transparentes gardent leur alpha et reçoivent un liseré d'encre.
+4. **Export** : `art_src/plates/<planche>/<a|b>/bg.png`, `mid.png`, `lit_nn.png` (+ `.webp` Lossy 0,75 pour mesurer le poids) et `art_src/plates/manifest.json` (SHA-256 et MD5, tailles PNG/WebP, VRAM, rectangles en pixels et normalisés comme `PlateLayerDef.rect`, caméra, rampe, ancres `holo` et `labels`, adaptateur et version de Mesa, durée).
+5. `--mockups` : planche à plat 1920×1080 (recadrage central, toutes les vitres allumées) et **capture composée** telle qu'à l'écran (ci-dessous) dans `docs/mockups/`. `--verify` : deuxième rendu et comparaison des SHA-256.
+
+**Aucun texte cuit** : plaques de numéro et tableau vierges ; les textes sont des `Label` posés à l'exécution sur les ancres du manifeste (test `test_plate_shaders.gd` : ni `TextMesh` ni `Label3D` dans l'outil).
+
+### 19.2 Couches (grammaire M14 §3.3)
+| Couche | Contenu | Remarque |
+|---|---|---|
+| `BG` | fond opaque 2048×1152 ; pour PL-F9-1, **l'état éteint** | — |
+| `LIT_nn` (PL-F9-1) | 12 découpes de l'état **allumé** (vitre, cabine, lueur et reflet au sol), une par guichet, alpha = zone d'identifiant floutée (2 × flou en boîte, 18 px) | l'écran les éteint une à une (`modulate.a`) ; `reduce_motion` : jamais affichées. Demande au lot A : un `kind` d'état (`STATE`/`LIT`) et un index dans `PlateLayerDef` pour `holo_effect = glass_off_sequence` |
+| `MID` | avant-plan transparent recadré (`get_used_rect`) : barrières + deux personnes de dos (F9) ; pupitres, bancs ajoutés et enfants (F10) | les objets occultés par `MID` sont dans `MID` (pas de décalage d'occlusion à la parallaxe) |
+| ancres `HOLO` | rectangles des vitres (F9), du tableau (F10) | `plate_holo.gdshader` à l'exécution |
+| ancres `LABEL` | plaques « 01 » → « 12 » (police mono DS) | `PlateLabelDef` : le texte est un numéro littéral, pas une clé — à prévoir (style `holo_small`) |
+
+**Zones d'état** : maillages invisibles du groupe `plate_id` (vitre + lueur au sol) rendus en codes `ID_BASE + n × ID_STEP` ; les occultants s'y écrivent en noir. Les zones voisines se chevauchent près de la caméra : chacune a sa hauteur (+4 mm × n), sinon elles se disputent la profondeur et le rendu varie d'un passage à l'autre (constaté, corrigé).
+
+### 19.3 Décors des témoins
+- **BG-H12 (S1, variante « arc »)** : 12 façades de guichet sur un arc concave (rayon 13 m, pas 8,4°) vues du Hall depuis 3,6 m de haut (FOV 40°) ; piliers de béton mouillé, comptoirs en tôle rivetée, bandeaux, plaque de numéro jaune assourdie (marque Consortium), murs hauts en aplats à joints (les couches texturées vues de loin deviennent du bruit sous le Kuwahara), plafond bas à bandeaux rayonnants, Œil du Consortium en hologramme, agent·es en silhouette derrière les vitres (jamais de visage).
+- **BG-X1 (S8)** : lieu jamais modélisé construit **en volumes simples par l'outil** (salle 9 × 12 m, pupitres d'origine, bancs **ajoutés** dépareillés : caisses de fret + planche, rangée de sièges de navette à sangles jaunes, pupitre rose ; dessins punaisés sans texte ; baie sur l'autre rive de l'Anneau), même matériau et même peinture que le guichet. Enfants de dos en primitives (buste, épaules, nuque, coiffure ou capuche ; rim faible sur la tête : un anneau clair autour d'un disque sombre se lisait comme un visage). M14 §3.6 prévoyait du 2D dessiné pour S8 : la maquette en volumes coûte autant à écrire, donne gratuitement perspective, lumière et contours G-buffer, et garde une seule grammaire (proposition ci-dessous).
+
+### 19.4 Traitements picturaux soumis au client
+| | A « aplats encrés » (`m14_plate_*.png`) | B « lavis gravé » (`m14_plate_*_alt.png`) |
+|---|---|---|
+| Kuwahara | rayon 4 | rayon 6 |
+| Rampe 8 tons | marches franches, chroma 0,3 | marches adoucies (`band_soft` 0,45), chroma 0,5 |
+| Encre | 2 px, 92 % | 1–2 px, 60 % |
+| Texture | grain ordonné 0,04 | hachures dans les deux tons sombres (0,32) + grain 0,03 + papier 0,05 |
+| Lecture | graphique, contrasté, proche de la bande dessinée ; la nuit avale les murs | plus doux, plus lisible dans les ombres, plus « peint » |
+| Poids | plus léger (aplats) | ×1,6 à ×2,5 (grain et papier cuits) |
+
+Rampes : gris monde (DS + BOOTH §5) teintés par la dominante de la fin — F9 acier `world.steel`, F10 vert (`state.green`, décoratif) avec lumières tirées vers l'ambre monde (lampes de classe). Recommandation 3D : **A**, avec le papier de B appliqué à l'exécution par l'écran si le client veut la matière (il ne coûte alors rien sur disque).
+
+### 19.5 Captures composées (`*_composed.png`)
+Composition figée à l'instant t ≈ 1,7 s : zoom 1,02, `MID` décalé de (−8, −3) px (parallaxe ≤ 12 px), F9 : vitres 04 et 05 éteintes, 06 à 45 % (une toutes les 0,5 s), lueurs `plate_holo` (temps figé) et numéros en `Label` (JetBrains Mono, `text.primary` allumé / `text.secondary` éteint) ; légende de M14 §3.4 (clés `cin_f9_1`, `cin_f10_3` lues dans `fr.csv` si présentes, sinon texte de M14) en style `SubtitleText` × 1,25 (23 px) sur voile `DS.SCRIM` (`bg.void` 72 %), dans la zone sûre 16:10. Cet assemblage préfigure `CinematicScreen` (lot D) ; il n'en est pas l'implémentation.
+
+### 19.6 Mesures (xvfb, llvmpipe LLVM 20.1.2, Mesa 25.2.8, 4 cœurs ; manifeste)
+| Mesure | PL-F9-1 A | PL-F9-1 B | PL-F10-3 A | PL-F10-3 B | Cible M14 |
+|---|---|---|---|---|---|
+| Rendu complet (passes + peinture + captures) | 21,2 s | 28,7 s | 16,0 s | 21,9 s | 63 planches ≤ 15 min |
+| Fond WebP 0,75 | 46 Ko | 118 Ko | 90 Ko | 215 Ko | ≈ 150 Ko |
+| Planche entière WebP (fond + couches) | 222 Ko (dont 12 `LIT` 167 Ko, `MID` 9 Ko) | 345 Ko | 134 Ko (`MID` 44 Ko) | 269 Ko | total ≤ 12 Mo |
+| PNG source du fond | 0,40 Mo | 3,3 Mo | 0,44 Mo | 3,9 Mo | — |
+| VRAM (RGBA8, toutes couches) | 14,9 Mo (fond 9,4 + `LIT` 3,4 + `MID` 2,4) | idem | 13,7 Mo (fond 9,4 + `MID` 4,7) | idem | ≤ 32 Mo pour 2 planches |
+| Contraste de la légende (95ᵉ centile du fond sous le voile) | 16,5:1 | 16,8:1 | 16,1:1 | 16,1:1 | ≥ 7:1 |
+| Déterminisme | identique | identique | identique | identique | SHA-256 identiques |
+
+- **Déterminisme** : `--verify` (deux rendus dans le même processus) et deux exécutions séparées : **32/32 couches et 8/8 captures identiques** (MD5 et SHA-256).
+- **Projection** : 63 planches en A ≈ 63 × 16–21 s ≈ 17–22 min sur llvmpipe 4 cœurs (captures comprises) — au-dessus de la cible de 15 min (M14 §3.6 l'estimait à 6 min) ; un GPU réel la tient largement ; leviers : ne rendre le G-buffer qu'une fois par planche quand les groupes ne changent pas, reconstruction incrémentale par hachage de recette. Disque : ≈ 63 × 180 Ko ≈ 11 Mo en A (sous 12 Mo) ; **B dépasserait** (≈ 17 Mo) sauf grain et papier appliqués à l'exécution.
+- **VRAM** : courante + suivante ≈ 28–30 Mo en RGBA8 : sous le plafond mais serré. Leviers : `MID` recadré (fait), couches d'état libérées une fois éteintes, import VRAM Compressed (÷ 4) à valider visuellement.
+
+### 19.7 Reste pour la phase 2 (après validation)
+- Lire `PlateDef` / `PlateLayerDef` / `PlateLabelDef` (`data/cinematics/plates/*.tres`, lot E) au lieu des recettes en dur ; `dominant` par nom de jeton ; réglages du traitement retenu (un seul pour tout le jeu).
+- Décors S2 → S7 (quai, cabine Pétrel, Anneau B, recycleur, Tycho) et variantes de S1 ; S8 en volumes simples ; 46 fonds, ≈ 50 couches.
+- Import dans `assets/cinematics/{bg,mid,fig,lit}/` (Lossy 0,75), `manifest.json`, reconstruction incrémentale.
+- `PlateFigureService` (B90 : studio de `PortraitService` en 512×768, pose, peinture en espace écran avec `plate_paint`), silhouettes de repli `fig/`, `PortraitService.size`, méthode du booth pour `UPDATE_DISABLED`.
+- `tools/qa_plates_audit.gd` (M-16 : contraste ≥ 7:1 sous la légende sur toutes les planches, zone sûre, ≤ 70 caractères ; M-09, M-11, M-12) — la mesure du contraste de 19.5 en est le premier morceau ; captures 1280×800.
+
+### 19.8 Décisions proposées
+- (a) **Couches d'état** (`LIT`) découpées par passe d'identifiants pour les effets « une à une » (PL-F9-1, et plus tard les douze vitres allumées de PL-EB-3, les bornes jaunes) plutôt qu'un masque calculé à l'exécution ; besoin d'un `kind` dans `PlateLayerDef`.
+- (b) **S8 en maquette de volumes simples** construite par l'outil plutôt qu'en polygones 2D (même coût, même grammaire, contours G-buffer).
+- (c) **Grandes surfaces des décors de planches en aplats + joints en géométrie** (pas de couches texturées vues de loin).
+- (d) Traitement **A** recommandé ; matière de B (papier) éventuellement en surcouche d'exécution.
+- (e) `art_src/plates/` ignoré par git.
+
+## 20. M14 — vie dans le Hall (lot C, 2026-10-31, 3D Designer / Asset Lead) — B86 → B88
+
+### 20.1 File réelle (VH-1 → VH-3, D-187)
+- **Maillages** (`tools/build_passenger_impostor.gd`, déterministe) : `imp_silhouette_bare.res` (400 tri.), `imp_silhouette_hood.res` (248), `imp_silhouette_cap.res` (224) — corps Kenney posé en `idle` + coiffes **aux cotes du rig** (`AppearanceApplier`) ; `imp_silhouette.res` historique inchangé (octet pour octet). Aucun bagage, accessoire ni implant (IV-1).
+- **`QueueImpostors`** (`scripts/booth/queue_impostors.gd`) sur `EventBus.queue_progressed` : tête de file (`upcoming[0]`) à la place 0 derrière le pilier jusqu'à sa présentation (compteur `presented`), places 1 → 6 = `upcoming[1 …]`, au plus `QueueSilhouette.visible_count` ; la file **se vide** (plus de retour en queue). EV-06 : +3 places le long de la barrière (−3,45 ; −7,72) → (−4,45 ; −8,18), puis point d'entrée. Teinte = `GreyboxStyle.PALETTES[palette_index][0]` désaturée à 40 % (le shader la mêle au remplissage sombre), taille `1 + 0,03 × height_step`. Un `MultiMesh` par forme (ce nœud = `bare`, enfants internes `Queue_hood` / `Queue_cap` créés à la première file qui en a besoin). Qualité **Bas** : un seul maillage, pas de débordement. Sans `queue_progressed` (démo, scènes anciennes) : file cosmétique d'avant.
+- **Shader** `impostor_silhouette.gdshader` : `INSTANCE_CUSTOM` (x marche → pas ±2 cm à 2 Hz ; y phase ; z mode passager/Garde/Arbitre/civil ; w assombrissement), uniforme `motion` = 0 avec `reduce_motion` (ni balancement au repos — corrigé — ni pas ; la translation de 1,2 s reste), marque émissive `UV.x` (brassard).
+
+### 20.2 Gardes (VH-4, VH-5, D-188)
+- `imp_guard.res` (440 tri. ≤ 600 : carrure élargie, casque à visière baissée, brassard marqué `UV.x` = 1, jaune émissif).
+- **`HallGuards`** (`scripts/booth/hall_guards.gd`, nœud `%HallGuards`, **1 `MultiMesh`**) : postes (0–3, près du portique, balancement seul) + 1 patrouilleur. Patrouille au fond du Hall (Z −8,55) d'un côté à la fois, de x = ±7,4 (hors champ) à x = ±1,6, demi-tour, retour, à 1,1 m/s avec le pas ; « 2 » à l'Acte II = deux passages l'un après l'autre, un de chaque côté. **À l'arrêt** sur `day_phase_changed(INSPECTING)` et pendant l'escorte de DÉTENTION ; repart à `passenger_departed`. EV-05 et grève (`lights_out`) : silhouettes assombries, patrouille arrêtée. J27 : `hall_j27_arbitre` → traversée de l'Arbitre escortée sur la moitié droite (2 instances de plus, toujours 1 draw). Qualité Bas : postes seuls.
+- Calendrier : `HallAmbience.for_day` (M14 §4.3, tel quel ; J31 D = un civil du comité, mode 3).
+- **Hors visage (M-15)** : `test_m14_hall.gd` projette la silhouette entière (pieds → 1,9 m, ±0,32 m) de chaque point des chemins (patrouille, Arbitre, escorte, postes) et vérifie l'absence d'intersection avec le rectangle du visage + 15 %, au cadrage normal **et** au travelling (FOV 6,5°, dolly 0,3 m visée tête), en 1920×376 et 1280×251.
+
+### 20.3 Hall par acte (VH-7, VH-8, D-190)
+`BoothDirector.apply_act_ambience(day)` (à `day_started`) applique `HallAmbience.for_day(jour, mode, monde)` :
+| Élément | Moyen | Coût |
+|---|---|---|
+| Lumière `HallTeal`/`HallRose` (jamais celles du visage) | Acte II −10 %, J16 → −15 % après 16:00 (`day_clock_ticked`), Acte III −10 % et blanc froid, J31 A jaune / B chaude / D ambre | 0 draw |
+| Graffiti luciole (seul magenta) | variantes cuites dans `booth_emissive.res` (graines 9, 200 – 203) repliées en un point par l'uniforme `graffiti_state` : visible / peinture grise (J11) / grand (J21) / + 2 traits (J30) / sous verre (J31 C) | 0 draw |
+| Écran des départs | statuts TRANSIT·7 cuits (graines 210 – 212, écran 220 – 226), uniforme `departures_status` : À L'HEURE, RETARD (EV-06), DERNIÈRE ROTATION en ambre (J28–J30), éteint (J31 B) | 0 draw |
+| Bannière holographique | `booth_banner_{quota,enquete,continuite,date}.res` (TextMesh cuits, matériau `booth_holo`), nœud `Banner` créé à la demande ; Bas : masquée | +1 draw |
+Le lit d'ambiance et le murmure ∝ file sont du lot B.
+
+### 20.4 Bande 3D en pause pour les cinématiques
+`BoothDirector.set_rendering_paused(true|false)` (et `is_rendering_paused()`) : le `SubViewport` hôte passe en `UPDATE_DISABLED` (coût GPU nul, dernière image gardée), puis revient au mode d'avant. `NullBooth` expose la même méthode (sans effet). Appel du lot D (`CinematicScreen`).
+
+### 20.5 Mesures (xvfb + `opengl3`, render info du `SubViewport` du booth, `tools/qa_hall_audit.gd`)
+| Situation | Draws bande 3D | Cible M-13 |
+|---|---|---|
+| J1, passager au guichet, file de 6 (3 formes), patrouilleur | **13** | ≤ 14 |
+| J1, qualité Bas | **9** | ≤ 11 |
+| J7, détention + escorte (pic) | **16** | ≤ 19 |
+| J22, bannière + 2 postes + patrouille sortie | **14** | — |
+File réelle émulée par l'outil depuis le vrai roster (`emulated_queue=1`) tant que le `DayController` n'émettait pas encore `queue_progressed`. Triangles ajoutés ≤ 9 × 400 + 4 × 440 ≈ 5,4 k.
+
+## 21. M14 — planches de cinématique, phase 2 : production (lot C, 2026-10-31) — B89, B90, B92
+
+### 21.1 Pipeline (`tools/build_plates.gd` + catalogue `tools/plate_sets.gd`)
+- **Données d'abord** : lit les 66 `PlateDef` du lot E (`data/cinematics/plates/`, bibliothèque chargée avant elles) ; un fond par chemin `bg/bg_<id>.webp` distinct (**46**), puis les couches `MID`/`FIG` de chaque planche dans le même décor et la même caméra, les 12 couches `LIT` de PL-F9-1 (passe d'identifiants, `state_index`), et les 5 **silhouettes de repli** des figures nommées (`PlateFigureService.render_image(…, silhouette = true)`, même pose et même cadrage que le rendu à l'exécution).
+- **Décors** : tous en volumes simples construits par l'outil (proposition 19.8 b étendue) — S1 Hall (arc de façades de PL-F9-1 réutilisé : vues du Hall H3/H4/H6–H9/H13/H15/H17/H18 ; côté agent·e H1/H2/H14/H16 ; porte H5, écrans H10, haut-parleur H11), S2 hangar du quai 2 / cabine et cuves de la Transit-7, S3 coque rouillée, cale, hublot, écluse 9, S4 cabine 9 m² (couchette triple, réchaud, recycleur, hublot) et appartement de l'Anneau D, S5 couloir et cellule de l'Anneau B, S6 recycleur central, S7 Tycho (dôme, plaine, sas Castellanos, réfectoire, dehors), S8 école (planche témoin), archives, bureau au-dessus du Hall, coursive. **Aucun texte cuit**, aucun visage (silhouettes ; l'agent·e de dos ou en mains seules).
+- **Traitement B unique** (D-195) : `PlatePaintStyle.PRESET` (Kuwahara r6, 8 tons, `band_soft` 0,45, chroma 0,5, encre 0,6, hachures 0,32, grain 0,03) ; **papier = 0 dans les images**, posé à l'exécution par `plate_paper.gdshader` (même motif). Dominante : jeton DS de la planche (`PlatePaintStyle.TOKENS`) ; un fond partagé par des fins de dominantes différentes (BG-Q1, BG-H1…) est peint en acier neutre.
+- **Recadrage** : les couches sont recadrées sur leur contenu réel (+12 px) ; les rectangles des données étaient des intentions (lot E) — `tools/build_data_m14.gd` **relit le manifeste** (`_rendered_rect`, `_anchor_rect` : couches et `Label` littéraux posés sur une ancre du décor, ex. plaques « 01 » → « 12 », « 04 », « BASSE-MARÉE »). Ordre : `build_plates` → `build_data` → `godot --import`.
+- **Robustesse** : échec franc (code 1) si un shader ne compile pas (uniformes absents ou image de contrôle non transformée par `plate_paint`), si un fond / une couche n'a pas de constructeur, ou si une couche sort vide. Reconstruction **incrémentale** par hachage de recette (catalogue, shader, dominante, éclairage, couches) ; `--force`, `--verify`, `--only=bg_…|pl_…|figures`, `--mockups=…`.
+- **Sources** : WebP versionnés (fonds en perte contrôlée 0,83, couches à alpha en perte contrôlée 0,9 : sans perte, elles pesaient 7,5 Mo et le total 17,8 Mo) — ni PNG lourds (88 Mo) ni Git LFS (décision de l'Orchestrateur). **Import** (`.import` écrits par l'outil) : Lossy WebP 0,75, sans mipmaps, *Fix Alpha Border* sur les couches. VRAM Compressed écarté : voir ASSETS §8 (S3TC 1,18 Mo / Basis 0,43–0,53 Mo par fond contre ≈ 0,12 Mo).
+
+### 21.2 Mesures (xvfb, llvmpipe LLVM 20.1.2, Mesa 25.2.8, 4 cœurs)
+| Mesure | Résultat | Cible |
+|---|---|---|
+| Rendu complet (46 fonds, 57 couches dont 12 `LIT` et 5 figures), 6 lots | ≈ 13,6 min | ≤ 15 min (M14 §3.6) |
+| Disque des planches importées (`.ctex`, M-12) | **9,95 Mo** | ≤ 12 Mo (D-195 : plafond 18) |
+| Sources WebP versionnées dans `assets/cinematics/` (fonds 0,83 : 10,3 Mo ; couches 0,9 avec alpha : 1,4 Mo ; + manifeste et `.import`) | **11,95 Mo** | ≤ 15 Mo (Orchestrateur) |
+| VRAM, pire paire de planches consécutives (M-11) | **22,6 Mo** (PL-F9-1 + PL-F9-2) | ≤ 32 Mo |
+| Légendes (M-16, `tools/qa_plates_audit.gd`, 66 planches × 1280×800 et 1920×1080) | contraste minimal **7,7:1** (PL-F3-3 Deck), toutes dans la zone sûre 16:10, ≥ 16 px | ≥ 7:1 |
+| Déterminisme (M-09) | `--verify` et deux exécutions complètes séparées : 103/103 WebP identiques (MD5) | identiques |
+
+### 21.3 Exécution (lot D)
+- `PlateFigureService` (`scripts/booth/plate_figure_service.gd`) : `request_for(slot, GameState.case_memory, ctx_flags, plate.dominant)` pendant la carte de titre → texture immédiate (silhouette de repli), mise à jour sur place (`figure_ready`) ; headless, REVOIR du Dossier, figure jamais vue : silhouette.
+- `PortraitService.size` (`DOSSIER_SIZE` = 128×160) : à poser avant `add_child` ; esquisse et rendu à la taille demandée ; changer la taille vide le cache.
+- **D-210 (finition)** : la toute première image d'un studio `PortraitService` neuf sortait vide en OpenGL 3 (fond seul ; reproduit au Dossier › PERSONNES sans amorce : première vignette vide). Correctif à la source dans `_pump` : une passe de chauffe (`UPDATE_ONCE` + `frame_post_draw`) **une fois par studio**, avant la première lecture ; la vignette d'amorce du Dossier est retirée. Capture [`m14_fix_d210_dossier_people.png`](mockups/m14_fix_d210_dossier_people.png).
+- Papier : `PlatePaintStyle.paper_material(rect.position_px, rect.size_px, Settings.fx_intensity)` comme matériau de chaque `TextureRect` de couche.
+- Bande 3D : `BoothDirector.set_rendering_paused(true)` pendant la séquence (§20.4).
+- `tools/plate_compose.gd` préfigure l'assemblage (captures `docs/mockups/m14_{f9_1,f1_1,f2_2,f10_3}_b[_deck].png`).
+
+### 21.4 Décisions proposées
+- (a) **VRAM Compressed écarté** pour les planches (disque) : Lossy WebP 0,75, VRAM non compressée sous le plafond.
+- (b) Rectangles des couches et ancres des `Label` **lus dans le manifeste** par `build_data_m14.gd` (le rendu fait foi).
+- (c) **Tranché** : sources WebP (les données pointent vers `.webp`), plus de PNG de 87 Mo.
+- (d) Fonds partagés par des fins de dominantes différentes peints en neutre ; teinte de la fin éventuellement ajoutée à l'exécution par le lot D.

@@ -1,0 +1,7042 @@
+{
+	"adapter": "llvmpipe (LLVM 20.1.2, 256 bits)",
+	"api": "4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4",
+	"figures": {
+		"res://assets/cinematics/fig/fg_figure31_pl_e_fig.webp": {
+			"file_bytes": 43692.0,
+			"kind": "fig_slot",
+			"md5": "05e9b9928637ec1a3d1176a6de217924",
+			"plate": "pl_e_fig",
+			"recipe": "28ff4ac4d51fb60efd9753611892b96f",
+			"rect": [
+				0.0,
+				0.0,
+				512.0,
+				768.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				0.25,
+				0.6667
+			],
+			"sha256": "e269b53e1a435182e7f88d62ba6acb4c2b6ba5c5f1c986786bed3052f21b92f2",
+			"size": [
+				512.0,
+				768.0
+			],
+			"slot": "fg_figure31",
+			"vram_bytes": 1572864.0
+		},
+		"res://assets/cinematics/fig/fg_figure31_pl_e_fig_d.webp": {
+			"file_bytes": 27062.0,
+			"kind": "fig_slot",
+			"md5": "2df910621852632ba48de42bffb268cb",
+			"plate": "pl_e_fig_d",
+			"recipe": "7732b26d0f0dab1205486f554c6f6cc5",
+			"rect": [
+				0.0,
+				0.0,
+				512.0,
+				768.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				0.25,
+				0.6667
+			],
+			"sha256": "7c9394409349b860e40cdc32a6491118351041b54f95e96e710f2b18b5fa7669",
+			"size": [
+				512.0,
+				768.0
+			],
+			"slot": "fg_figure31",
+			"vram_bytes": 1572864.0
+		},
+		"res://assets/cinematics/fig/fg_figure_pl_f4_1.webp": {
+			"file_bytes": 19682.0,
+			"kind": "fig_slot",
+			"md5": "d0f627be09665cb3090f53c778800a61",
+			"plate": "pl_f4_1",
+			"recipe": "88f0829a48c82d58261870819e926583",
+			"rect": [
+				0.0,
+				0.0,
+				512.0,
+				768.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				0.25,
+				0.6667
+			],
+			"sha256": "12aab128a2c4fd3d92af169198251224b9056243c47402cc0639bc99ed0bc675",
+			"size": [
+				512.0,
+				768.0
+			],
+			"slot": "fg_figure",
+			"vram_bytes": 1572864.0
+		},
+		"res://assets/cinematics/fig/fg_figure_pl_f5_2.webp": {
+			"file_bytes": 18126.0,
+			"kind": "fig_slot",
+			"md5": "663cdac5fcd494230e88a1772e267b55",
+			"plate": "pl_f5_2",
+			"recipe": "d910d3f58993d502566e614bb0dc96ed",
+			"rect": [
+				0.0,
+				0.0,
+				512.0,
+				768.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				0.25,
+				0.6667
+			],
+			"sha256": "646b5e5e38c41f149e8bf119aa2d8735e42475f9581a9d36cd4dff2079b4d4c4",
+			"size": [
+				512.0,
+				768.0
+			],
+			"slot": "fg_figure",
+			"vram_bytes": 1572864.0
+		},
+		"res://assets/cinematics/fig/fg_wren_pl_f6_2.webp": {
+			"file_bytes": 30378.0,
+			"kind": "fig_slot",
+			"md5": "77b2962b3ad74a5350bc8d7e3f36f991",
+			"plate": "pl_f6_2",
+			"recipe": "95628c3bf3dd5890c49e323872457370",
+			"rect": [
+				0.0,
+				0.0,
+				512.0,
+				768.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				0.25,
+				0.6667
+			],
+			"sha256": "08e4abec08e9c8409a69271eb8dca3b577daeefc950683dd2e9199fcffe39ca7",
+			"size": [
+				512.0,
+				768.0
+			],
+			"slot": "fg_wren",
+			"vram_bytes": 1572864.0
+		}
+	},
+	"files": {
+		"res://assets/cinematics/bg/bg_b1.webp": {
+			"file_bytes": 405406.0,
+			"kind": "bg",
+			"md5": "7b7192f7a0ce22875cfe79a4c05075a1",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "c7cfb782dbe8f7961cb78bd11e56df6acbf2c2625774f4726623651462469074",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_b2.webp": {
+			"file_bytes": 380318.0,
+			"kind": "bg",
+			"md5": "e74dacdf75e2b0d46c5be4601b85c1fc",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "f21ca91992a621e93f5f4405a258cec31ad81a4ffa715f7ba2fe06ade20643ad",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_c1.webp": {
+			"file_bytes": 252120.0,
+			"kind": "bg",
+			"md5": "b20c5fc8d82657f774f529ca750b9066",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "14116ff1affc0fd84eddef525b82ebda67f3f746166c733442081c8b39229ca8",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h1.webp": {
+			"file_bytes": 270558.0,
+			"kind": "bg",
+			"md5": "3779ef5bbfe40c3821b824c2efdab4cc",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "5c8d20cda0a845d886af2cef52786bdf0466672c65b8c741733d09e8d1e652a1",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h10.webp": {
+			"file_bytes": 236610.0,
+			"kind": "bg",
+			"md5": "736d5dba6fa7597914e962ef10633114",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "3ca0c26875da68cd0ddde1dd432ffcdfbed8317e2701e6287f7de080696a7cd3",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h11.webp": {
+			"file_bytes": 130296.0,
+			"kind": "bg",
+			"md5": "89d973707b9c486c2d0eedffafdc78b3",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "41e9c1aeecf0e5def94a0767794fbd170e04ab814a69e8d8925f708216225186",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h12.webp": {
+			"file_bytes": 345514.0,
+			"kind": "bg",
+			"md5": "d718b98015e8a3b8622e5b7905302dff",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "4f91223ed926f84f1839710b8f41507c8b6398c4ec88a2c0f0f536c1a2714762",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h13.webp": {
+			"file_bytes": 36528.0,
+			"kind": "bg",
+			"md5": "ac9343d8e2aa6ee5dd779cdd1a01856a",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "e3069ff493b0c3b56b720e34b0c46adbf038274e87808bd07868df4807a1e4e6",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h14.webp": {
+			"file_bytes": 132220.0,
+			"kind": "bg",
+			"md5": "717e70b8719875e444c8486df9abe811",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "57315b5f72a81b328290d3c5a1dec34b01b854f494dcc9ee620867ba08061452",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h15.webp": {
+			"file_bytes": 273796.0,
+			"kind": "bg",
+			"md5": "c8500b08796812a3f8e58b113b41111a",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "85ac408d4310bf87dfcf22ac817659003042630fceda71270e52522e2703a36c",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h16.webp": {
+			"file_bytes": 255456.0,
+			"kind": "bg",
+			"md5": "c98d69d003002fd38ebc129deb9c0d78",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "37bc6beac32ea9cdb3350e6688ae0c3ac349695b82693e0f9e16c507801433f8",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h17.webp": {
+			"file_bytes": 349854.0,
+			"kind": "bg",
+			"md5": "48fb4c65b2fd611d58053983da581b56",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "57907777a27974c0a7a321ace83518b6d02d1be21035f89f6a56d01ae25df350",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h18.webp": {
+			"file_bytes": 570742.0,
+			"kind": "bg",
+			"md5": "0911511fa0368e2a9817f099e7580b6d",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "b12e718e01edc78394f4ad8d6669748f589be03de9b5677d8eb24d776d095f20",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h2.webp": {
+			"file_bytes": 343306.0,
+			"kind": "bg",
+			"md5": "43e5dcb11cfd3f862f633f7c3a153bf8",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "4fb6bead9c272fcc63154068a563eddc04ff4f4c4d484658cc0c1f0618b04a91",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h3.webp": {
+			"file_bytes": 125292.0,
+			"kind": "bg",
+			"md5": "74bc8991d07ae6fcabbed30ec991b61f",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "ff664847705213881dba49170bfafd85db9659005c1530cc5d5a14e186cb87da",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h4.webp": {
+			"file_bytes": 129168.0,
+			"kind": "bg",
+			"md5": "9a645abf0f82394583309b148ba1f896",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "a8690ffc497401fd2a2d0a9ecb28a12ed5b29fca1bade3c389831c0e15bcecf4",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h5.webp": {
+			"file_bytes": 199018.0,
+			"kind": "bg",
+			"md5": "e462febb6b702baad74708cd682ac68b",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "9f266bfb99e3391dc3360921a2dc6319be54ec9e6a4c4e8e784e344fd01946fb",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h6.webp": {
+			"file_bytes": 225470.0,
+			"kind": "bg",
+			"md5": "21476c7f65638d985c5a72a040a07ae2",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "d95ab552057ddc88ee194c96ef0e6b0482a517871fded7d6baf0665da7061b16",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h7.webp": {
+			"file_bytes": 124404.0,
+			"kind": "bg",
+			"md5": "f72b513616fcf0dff4c7b0f64f7d76ee",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "e64dc6a630a102ace24aa4c1e2cf56853e4b864168784c9ad6df83e9668e7579",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h8.webp": {
+			"file_bytes": 150992.0,
+			"kind": "bg",
+			"md5": "3c472ffb356f25b1267f3d51728aba84",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "d9b3f0dfd6bd6b80d04c905de3ed28eac906fec367da0f120318e21e8476ab25",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_h9.webp": {
+			"file_bytes": 239652.0,
+			"kind": "bg",
+			"md5": "7b9ade6829068682dbd79497f8ab730a",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "d39f33e2279525fc3b7d452d0837a098369efc0b0900377029328daedc74a74b",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_p1.webp": {
+			"file_bytes": 284164.0,
+			"kind": "bg",
+			"md5": "e57d48f243e2773b6b683c2d3faaf5bb",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "22fa4ed0c73df1240d8b87a7f4fe03114caea832abb009d9ec7c5b1a5b02ff3c",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_p2.webp": {
+			"file_bytes": 286466.0,
+			"kind": "bg",
+			"md5": "099135eb7c5b67e68154108758326645",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "1f449e0ba9b971a12e7d1ee7ecd04f7bf6b377b29ca11c417c64c92e221ee485",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_p3.webp": {
+			"file_bytes": 200558.0,
+			"kind": "bg",
+			"md5": "6983c2e43739781c6fbdd6dd0a4365b6",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "442e3a6a215c8d3e70144eb75a66b5f1470e0b6348015beddf7c4ae9317bacef",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_p4.webp": {
+			"file_bytes": 253548.0,
+			"kind": "bg",
+			"md5": "9cbadca05686f1819be335828122e743",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "910e00784db7924b48e3a4484a411d75d177806012d4b1fcf606d1591d931950",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_p5.webp": {
+			"file_bytes": 280302.0,
+			"kind": "bg",
+			"md5": "c5d6b6f9db76f2e0c823fd3597b281b9",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "2e563c26fbb1afb18e95ebeca6995f8dd3abdf0d1f1256a5303ef1496c5520f5",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_p6.webp": {
+			"file_bytes": 250644.0,
+			"kind": "bg",
+			"md5": "009a162a93dc8e24c92c917ba7411b15",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "f433b467d58fcf56e14916b7dc52d8dc122b2356dc21d26b5caa2a583da16578",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_p7.webp": {
+			"file_bytes": 344576.0,
+			"kind": "bg",
+			"md5": "f5600f1d6ee8af658216d22ac22f6c33",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "4b64ff18f81d755a8d916eb0fc239a29e006d5e47c4c504db14ee8cdbab04ae7",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_q1.webp": {
+			"file_bytes": 208704.0,
+			"kind": "bg",
+			"md5": "6261e56405b02e1293762f72fc9e84fb",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "a1613a25907495d8b0e27f8a9e2d80efaaecd4cc7e9a19e41f0b74afe466a2dd",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_q2.webp": {
+			"file_bytes": 165726.0,
+			"kind": "bg",
+			"md5": "92f54a81738dd5bb908fbd97a3dfe488",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "458b350a98034f33e2b76c4a4a88c0ef6dab3a2f33cd9b3a425b73985fdf0061",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_q3.webp": {
+			"file_bytes": 234860.0,
+			"kind": "bg",
+			"md5": "b0c8f112ab14928f65e124cdf8973367",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "9c89f7e6fd4ab969954a32a9439c67f4ec3f50fbd5fb8c5d623dc5e185dc77df",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_q4.webp": {
+			"file_bytes": 179384.0,
+			"kind": "bg",
+			"md5": "f403693ae7f5e10191883ed3549dd3d9",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "0d176bd6608edc115c6574af9f6c41387d3a04779090a5fb601312276f239181",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_q5.webp": {
+			"file_bytes": 155400.0,
+			"kind": "bg",
+			"md5": "13a0b0f51ffa0cee72f316fd4f15b312",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "e3c6dbae944923a3ac5c5f743a454898f2a8d9518847253b49cee136a938478e",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_q6.webp": {
+			"file_bytes": 208942.0,
+			"kind": "bg",
+			"md5": "1820f7c90984e2922063299418468d07",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "212b0ad882281af4748a87887a4e59dba3d12a90e4d28882aec0ce54c1fa95a0",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_q7.webp": {
+			"file_bytes": 192334.0,
+			"kind": "bg",
+			"md5": "30a01d317f3b80301108573fb105ac1b",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "436acea2533f3bdbef3bd0ef573897291525fe74db56cb2d1dc63ce886d3cae0",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_q8.webp": {
+			"file_bytes": 188046.0,
+			"kind": "bg",
+			"md5": "859436466ff95116090b16b16ee88f46",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "aefa5bc830bfc9c4933c2ab62775f14a7ed9ed7b152378dd3ba6d53cc8d40ee0",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_r1.webp": {
+			"file_bytes": 197690.0,
+			"kind": "bg",
+			"md5": "7083bb5d57d49b21752981b20b3df900",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "2897b87a58f14a3a4a8139da6e5a71d5e308c4b02282ed8add81b35b8952b183",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_r2.webp": {
+			"file_bytes": 537574.0,
+			"kind": "bg",
+			"md5": "855c5ddc5389500c97596cd561d7a57b",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "1e3f6cb1641fb275e8393a6a6806330c08b3e5cf327c1b808721c940e71205b5",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_t1.webp": {
+			"file_bytes": 153972.0,
+			"kind": "bg",
+			"md5": "f9437fb5db3f0583f6e98e1f7d862d4d",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "22a38b41da709e31ff1fb0e47dc33768068e5f2b5a3c0bb4046adc664fc02c66",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_t2.webp": {
+			"file_bytes": 167956.0,
+			"kind": "bg",
+			"md5": "d5f2f1f2f6683e87005ac59ec22cd10c",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "52f8f7f9874e01868f9c26ae72dc33b4ef8a0e37e43935fd63c1c1bdd0578b76",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_t3.webp": {
+			"file_bytes": 207918.0,
+			"kind": "bg",
+			"md5": "c895ca8e2dc7773d83c50592cd510953",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "c723582b864c74a70a93f1e4286ab22589ca13436907050194f22df00139b850",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_t4.webp": {
+			"file_bytes": 118032.0,
+			"kind": "bg",
+			"md5": "6ca49cfba96c3f424a88202744b38393",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "d88519d02213e326303a4aea6e8c5ccfb7889475543407fafa63c32dd3047c14",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_t5.webp": {
+			"file_bytes": 151290.0,
+			"kind": "bg",
+			"md5": "b91995d6e0cd9ca3c0385d738f63997e",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "0c93343d1fad362518098bd3773c5d4a4511693a3b337dbd48b2a825eb9936c1",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_x1.webp": {
+			"file_bytes": 278500.0,
+			"kind": "bg",
+			"md5": "b05318cc1652f76b9b99326232578324",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "d47e0e579305af824176329bb06c8617d4a97a0cd684baeceebce37e5e0415c2",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_x2.webp": {
+			"file_bytes": 226048.0,
+			"kind": "bg",
+			"md5": "1d6fbcb89ad2d057eaeba5d9acdd4100",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "d8bc95de50b4e9e41da82fbb050c86c93bd30faaff37dfa217bb45313dfcc4c2",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/bg/bg_x3.webp": {
+			"file_bytes": 188956.0,
+			"kind": "bg",
+			"md5": "dcde69d790c2dba8ca016a11f60635c1",
+			"rect": [
+				0.0,
+				0.0,
+				2048.0,
+				1152.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				1.0,
+				1.0
+			],
+			"sha256": "68059f706405741774be95bd93f4953aada795219fbff9a8ba8ab04314882e3a",
+			"size": [
+				2048.0,
+				1152.0
+			],
+			"vram_bytes": 7077888.0
+		},
+		"res://assets/cinematics/fig/fg_figure31_pl_e_fig.webp": {
+			"file_bytes": 43692.0,
+			"kind": "fig_slot",
+			"md5": "05e9b9928637ec1a3d1176a6de217924",
+			"plate": "pl_e_fig",
+			"recipe": "28ff4ac4d51fb60efd9753611892b96f",
+			"rect": [
+				0.0,
+				0.0,
+				512.0,
+				768.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				0.25,
+				0.6667
+			],
+			"sha256": "e269b53e1a435182e7f88d62ba6acb4c2b6ba5c5f1c986786bed3052f21b92f2",
+			"size": [
+				512.0,
+				768.0
+			],
+			"slot": "fg_figure31",
+			"vram_bytes": 1572864.0
+		},
+		"res://assets/cinematics/fig/fg_figure31_pl_e_fig_d.webp": {
+			"file_bytes": 27062.0,
+			"kind": "fig_slot",
+			"md5": "2df910621852632ba48de42bffb268cb",
+			"plate": "pl_e_fig_d",
+			"recipe": "7732b26d0f0dab1205486f554c6f6cc5",
+			"rect": [
+				0.0,
+				0.0,
+				512.0,
+				768.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				0.25,
+				0.6667
+			],
+			"sha256": "7c9394409349b860e40cdc32a6491118351041b54f95e96e710f2b18b5fa7669",
+			"size": [
+				512.0,
+				768.0
+			],
+			"slot": "fg_figure31",
+			"vram_bytes": 1572864.0
+		},
+		"res://assets/cinematics/fig/fg_figure_pl_f4_1.webp": {
+			"file_bytes": 19682.0,
+			"kind": "fig_slot",
+			"md5": "d0f627be09665cb3090f53c778800a61",
+			"plate": "pl_f4_1",
+			"recipe": "88f0829a48c82d58261870819e926583",
+			"rect": [
+				0.0,
+				0.0,
+				512.0,
+				768.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				0.25,
+				0.6667
+			],
+			"sha256": "12aab128a2c4fd3d92af169198251224b9056243c47402cc0639bc99ed0bc675",
+			"size": [
+				512.0,
+				768.0
+			],
+			"slot": "fg_figure",
+			"vram_bytes": 1572864.0
+		},
+		"res://assets/cinematics/fig/fg_figure_pl_f5_2.webp": {
+			"file_bytes": 18126.0,
+			"kind": "fig_slot",
+			"md5": "663cdac5fcd494230e88a1772e267b55",
+			"plate": "pl_f5_2",
+			"recipe": "d910d3f58993d502566e614bb0dc96ed",
+			"rect": [
+				0.0,
+				0.0,
+				512.0,
+				768.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				0.25,
+				0.6667
+			],
+			"sha256": "646b5e5e38c41f149e8bf119aa2d8735e42475f9581a9d36cd4dff2079b4d4c4",
+			"size": [
+				512.0,
+				768.0
+			],
+			"slot": "fg_figure",
+			"vram_bytes": 1572864.0
+		},
+		"res://assets/cinematics/fig/fg_wren_pl_f6_2.webp": {
+			"file_bytes": 30378.0,
+			"kind": "fig_slot",
+			"md5": "77b2962b3ad74a5350bc8d7e3f36f991",
+			"plate": "pl_f6_2",
+			"recipe": "95628c3bf3dd5890c49e323872457370",
+			"rect": [
+				0.0,
+				0.0,
+				512.0,
+				768.0
+			],
+			"rect_norm": [
+				0.0,
+				0.0,
+				0.25,
+				0.6667
+			],
+			"sha256": "08e4abec08e9c8409a69271eb8dca3b577daeefc950683dd2e9199fcffe39ca7",
+			"size": [
+				512.0,
+				768.0
+			],
+			"slot": "fg_wren",
+			"vram_bytes": 1572864.0
+		},
+		"res://assets/cinematics/fig/pl_f1_1_agent.webp": {
+			"file_bytes": 20604.0,
+			"intent_rect": [
+				901.0,
+				346.0,
+				246.0,
+				714.0
+			],
+			"kind": "fig",
+			"md5": "8019af9453676eb4986bf4e234ef3184",
+			"outside_intent": 0.0,
+			"rect": [
+				895.0,
+				517.0,
+				261.0,
+				487.0
+			],
+			"rect_norm": [
+				0.437,
+				0.4488,
+				0.1274,
+				0.4227
+			],
+			"sha256": "524d899a97aa8df2d456eaa1abd00132bb226a5e0016306fbc5d2dea6810f1dd",
+			"size": [
+				261.0,
+				487.0
+			],
+			"vram_bytes": 508428.0
+		},
+		"res://assets/cinematics/fig/pl_f1_1_guards.webp": {
+			"file_bytes": 38072.0,
+			"intent_rect": [
+				614.0,
+				300.0,
+				819.0,
+				783.0
+			],
+			"kind": "fig",
+			"md5": "a27941364620cd5c92d7f4551da4927b",
+			"outside_intent": 0.0,
+			"rect": [
+				730.0,
+				484.0,
+				605.0,
+				496.0
+			],
+			"rect_norm": [
+				0.3564,
+				0.4201,
+				0.2954,
+				0.4306
+			],
+			"sha256": "af670f1fa07dbadaa31ebe690e7f56e04ad415e1a92435d11af0a3b65db0ac7b",
+			"size": [
+				605.0,
+				496.0
+			],
+			"vram_bytes": 1200320.0
+		},
+		"res://assets/cinematics/fig/pl_f1_2_seated.webp": {
+			"file_bytes": 9958.0,
+			"intent_rect": [
+				819.0,
+				484.0,
+				410.0,
+				576.0
+			],
+			"kind": "fig",
+			"md5": "4a3f0d9a37530139543cc4bc2b31fbf1",
+			"outside_intent": 0.0,
+			"rect": [
+				929.0,
+				671.0,
+				206.0,
+				361.0
+			],
+			"rect_norm": [
+				0.4536,
+				0.5825,
+				0.1006,
+				0.3134
+			],
+			"sha256": "eeee29b5584f3865618c06f89ee8cab8ae526a5a3883eb86bf3c8355e33653e7",
+			"size": [
+				206.0,
+				361.0
+			],
+			"vram_bytes": 297464.0
+		},
+		"res://assets/cinematics/fig/pl_f1_3_newcomer.webp": {
+			"file_bytes": 2658.0,
+			"intent_rect": [
+				901.0,
+				392.0,
+				246.0,
+				415.0
+			],
+			"kind": "fig",
+			"md5": "bd84bb84b6cafa1fef81f3d0cbe49201",
+			"outside_intent": 0.0,
+			"rect": [
+				986.0,
+				595.0,
+				144.0,
+				121.0
+			],
+			"rect_norm": [
+				0.4814,
+				0.5165,
+				0.0703,
+				0.105
+			],
+			"sha256": "7db468b0ef58860f5cc9eee62071f97012272df7cf6cf86e22a3ea761d8b3924",
+			"size": [
+				144.0,
+				121.0
+			],
+			"vram_bytes": 69696.0
+		},
+		"res://assets/cinematics/fig/pl_f4_1_guards.webp": {
+			"file_bytes": 8180.0,
+			"intent_rect": [
+				1024.0,
+				323.0,
+				696.0,
+				760.0
+			],
+			"kind": "fig",
+			"md5": "36928974340baccaee5648af7ecfa694",
+			"outside_intent": 0.0,
+			"rect": [
+				1301.0,
+				617.0,
+				315.0,
+				261.0
+			],
+			"rect_norm": [
+				0.6353,
+				0.5356,
+				0.1538,
+				0.2266
+			],
+			"sha256": "3c7b68b9e4eec22452e509805ea71d3951af6f741e5ae9f54f784309d83d7d80",
+			"size": [
+				315.0,
+				261.0
+			],
+			"vram_bytes": 328860.0
+		},
+		"res://assets/cinematics/fig/pl_f5c_1_watchers.webp": {
+			"file_bytes": 27394.0,
+			"intent_rect": [
+				369.0,
+				392.0,
+				819.0,
+				668.0
+			],
+			"kind": "fig",
+			"md5": "a4b996733472e8ee84f1d767a5ac2c76",
+			"outside_intent": 0.149,
+			"rect": [
+				294.0,
+				617.0,
+				520.0,
+				405.0
+			],
+			"rect_norm": [
+				0.1436,
+				0.5356,
+				0.2539,
+				0.3516
+			],
+			"sha256": "dca2509715f7250a4d0592325fb92a7377b49e299ba89a98927ce0bba4ffd4a0",
+			"size": [
+				520.0,
+				405.0
+			],
+			"vram_bytes": 842400.0
+		},
+		"res://assets/cinematics/fig/pl_f6_3_noa.webp": {
+			"file_bytes": 11730.0,
+			"intent_rect": [
+				614.0,
+				530.0,
+				369.0,
+				576.0
+			],
+			"kind": "fig",
+			"md5": "a10618b7277d1eb326a141f1aef2b9eb",
+			"outside_intent": 0.453,
+			"rect": [
+				492.0,
+				872.0,
+				273.0,
+				280.0
+			],
+			"rect_norm": [
+				0.2402,
+				0.7569,
+				0.1333,
+				0.2431
+			],
+			"sha256": "11966dd02ef0ff08e0d9265e485c3ed7578d39a928445612aef6b76930dc378a",
+			"size": [
+				273.0,
+				280.0
+			],
+			"vram_bytes": 305760.0
+		},
+		"res://assets/cinematics/fig/pl_f8_2_reflection.webp": {
+			"file_bytes": 43506.0,
+			"intent_rect": [
+				819.0,
+				207.0,
+				410.0,
+				645.0
+			],
+			"kind": "fig",
+			"md5": "8fa3ede96776188f3a7ebe75d45176e8",
+			"outside_intent": 0.376,
+			"rect": [
+				679.0,
+				290.0,
+				681.0,
+				790.0
+			],
+			"rect_norm": [
+				0.3315,
+				0.2517,
+				0.3325,
+				0.6858
+			],
+			"sha256": "9192e645c541146e880dfccc71d36f2e67aa8c18e67d68307e1e7db6f50ae631",
+			"size": [
+				681.0,
+				790.0
+			],
+			"vram_bytes": 2151960.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_01.webp": {
+			"file_bytes": 29554.0,
+			"kind": "lit",
+			"md5": "81f87700ffc69c5063bd1ca1832815c7",
+			"rect": [
+				148.0,
+				483.0,
+				333.0,
+				320.0
+			],
+			"rect_norm": [
+				0.0723,
+				0.4193,
+				0.1626,
+				0.2778
+			],
+			"sha256": "516ec18562e8a0122af207b8d889ffbfc471c8af07e59a65ca6407a71e0890a8",
+			"size": [
+				333.0,
+				320.0
+			],
+			"vram_bytes": 426240.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_02.webp": {
+			"file_bytes": 25458.0,
+			"kind": "lit",
+			"md5": "9d53d5dd420182dc40df3f5bdbb05fbf",
+			"rect": [
+				310.0,
+				478.0,
+				296.0,
+				305.0
+			],
+			"rect_norm": [
+				0.1514,
+				0.4149,
+				0.1445,
+				0.2648
+			],
+			"sha256": "58334a94eddbf9589ea2082e25150e47bac3d7f9f854736507e0c7f2dffc3e97",
+			"size": [
+				296.0,
+				305.0
+			],
+			"vram_bytes": 361120.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_03.webp": {
+			"file_bytes": 25274.0,
+			"kind": "lit",
+			"md5": "bd9f455e7f0c397218745f9428c6f090",
+			"rect": [
+				460.0,
+				473.0,
+				259.0,
+				294.0
+			],
+			"rect_norm": [
+				0.2246,
+				0.4106,
+				0.1265,
+				0.2552
+			],
+			"sha256": "8e7a478de5094d6a4928b2da6e848fbdbfba3ce2655424a25378639638f2b0c2",
+			"size": [
+				259.0,
+				294.0
+			],
+			"vram_bytes": 304584.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_04.webp": {
+			"file_bytes": 22562.0,
+			"kind": "lit",
+			"md5": "9c1a7210054f9bc927e10c7ff6601f5e",
+			"rect": [
+				601.0,
+				470.0,
+				232.0,
+				285.0
+			],
+			"rect_norm": [
+				0.2935,
+				0.408,
+				0.1133,
+				0.2474
+			],
+			"sha256": "77ed7918a3cf0d73d273b64601827774bfc458ed0415a299ed310077913013fb",
+			"size": [
+				232.0,
+				285.0
+			],
+			"vram_bytes": 264480.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_05.webp": {
+			"file_bytes": 21952.0,
+			"kind": "lit",
+			"md5": "39d0e485a4073005d1475b2be4d334d4",
+			"rect": [
+				737.0,
+				469.0,
+				211.0,
+				278.0
+			],
+			"rect_norm": [
+				0.3599,
+				0.4071,
+				0.103,
+				0.2413
+			],
+			"sha256": "22a42cf929bf5fa76d8861658b203a62ca2f2b8bab83e451215026057214fd97",
+			"size": [
+				211.0,
+				278.0
+			],
+			"vram_bytes": 234632.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_06.webp": {
+			"file_bytes": 20686.0,
+			"kind": "lit",
+			"md5": "3663772265c53bc6eb2bffcae9d62fe8",
+			"rect": [
+				868.0,
+				468.0,
+				195.0,
+				274.0
+			],
+			"rect_norm": [
+				0.4238,
+				0.4063,
+				0.0952,
+				0.2378
+			],
+			"sha256": "b70b937c65588ae3f2f57f87c9bafafd025e9956d37e3c35f4d4e4886cbc8782",
+			"size": [
+				195.0,
+				274.0
+			],
+			"vram_bytes": 213720.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_07.webp": {
+			"file_bytes": 20560.0,
+			"kind": "lit",
+			"md5": "43ed7b3ba0868f3553482fdad13201ae",
+			"rect": [
+				985.0,
+				468.0,
+				192.0,
+				274.0
+			],
+			"rect_norm": [
+				0.481,
+				0.4063,
+				0.0938,
+				0.2378
+			],
+			"sha256": "2bfd595e4706a32f3273d5651ae67045f69dde2515e5929bd4608fb4d9eac3b5",
+			"size": [
+				192.0,
+				274.0
+			],
+			"vram_bytes": 210432.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_08.webp": {
+			"file_bytes": 21996.0,
+			"kind": "lit",
+			"md5": "14ffc36e04387d548a683ad94940487e",
+			"rect": [
+				1097.0,
+				469.0,
+				211.0,
+				277.0
+			],
+			"rect_norm": [
+				0.5356,
+				0.4071,
+				0.103,
+				0.2405
+			],
+			"sha256": "b64c8d8ee4f27c0a3d7e3a4044c9579a964fd33a41356ccebd9e5cc5bf4a1f22",
+			"size": [
+				211.0,
+				277.0
+			],
+			"vram_bytes": 233788.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_09.webp": {
+			"file_bytes": 22728.0,
+			"kind": "lit",
+			"md5": "cc60fd328ed72147fc290538486ffd28",
+			"rect": [
+				1210.0,
+				470.0,
+				234.0,
+				284.0
+			],
+			"rect_norm": [
+				0.5908,
+				0.408,
+				0.1143,
+				0.2465
+			],
+			"sha256": "567ca38abaa7a52907fd20d8864d19510c5df863f3c07c622de56dd363bf5afb",
+			"size": [
+				234.0,
+				284.0
+			],
+			"vram_bytes": 265824.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_10.webp": {
+			"file_bytes": 25224.0,
+			"kind": "lit",
+			"md5": "6a055268765bb4b1af24b1eb2a8a1f69",
+			"rect": [
+				1324.0,
+				473.0,
+				261.0,
+				292.0
+			],
+			"rect_norm": [
+				0.6465,
+				0.4106,
+				0.1274,
+				0.2535
+			],
+			"sha256": "42b0ad5039d5493132423c27fb14d40cf5afac88238ce745377b1cde08103311",
+			"size": [
+				261.0,
+				292.0
+			],
+			"vram_bytes": 304848.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_11.webp": {
+			"file_bytes": 27202.0,
+			"kind": "lit",
+			"md5": "dd29366329e43d571249bedb485be47e",
+			"rect": [
+				1442.0,
+				477.0,
+				293.0,
+				302.0
+			],
+			"rect_norm": [
+				0.7041,
+				0.4141,
+				0.1431,
+				0.2622
+			],
+			"sha256": "531f86bf5169bd48ba6a256a41028273e49196bacbbb37a6be07b768fd333bd1",
+			"size": [
+				293.0,
+				302.0
+			],
+			"vram_bytes": 353944.0
+		},
+		"res://assets/cinematics/lit/pl_f9_1_lit_12.webp": {
+			"file_bytes": 29904.0,
+			"kind": "lit",
+			"md5": "6b4084550d9fbe38c9f58a17663b4f41",
+			"rect": [
+				1566.0,
+				483.0,
+				334.0,
+				316.0
+			],
+			"rect_norm": [
+				0.7646,
+				0.4193,
+				0.1631,
+				0.2743
+			],
+			"sha256": "f8f2d2c65dafaab95b741591717e8323c18787d26cdc53a52528f8d912ebf7b9",
+			"size": [
+				334.0,
+				316.0
+			],
+			"vram_bytes": 422176.0
+		},
+		"res://assets/cinematics/mid/pl_ea_2_short_queue.webp": {
+			"file_bytes": 56936.0,
+			"intent_rect": [
+				205.0,
+				461.0,
+				819.0,
+				622.0
+			],
+			"kind": "mid",
+			"md5": "acd1fd45178d36370f3c81371bc328b6",
+			"outside_intent": 0.043,
+			"rect": [
+				172.0,
+				510.0,
+				779.0,
+				642.0
+			],
+			"rect_norm": [
+				0.084,
+				0.4427,
+				0.3804,
+				0.5573
+			],
+			"sha256": "901dfb17e8681d695fb6e187236014f41428df0fddc123b3796f950963a4655b",
+			"size": [
+				779.0,
+				642.0
+			],
+			"vram_bytes": 2000472.0
+		},
+		"res://assets/cinematics/mid/pl_ea_3_hands.webp": {
+			"file_bytes": 3800.0,
+			"intent_rect": [
+				614.0,
+				645.0,
+				819.0,
+				461.0
+			],
+			"kind": "mid",
+			"md5": "0814ea876b16c0ad4e6fa499cfbbd5d8",
+			"outside_intent": 0.481,
+			"rect": [
+				808.0,
+				1008.0,
+				190.0,
+				144.0
+			],
+			"rect_norm": [
+				0.3945,
+				0.875,
+				0.0928,
+				0.125
+			],
+			"sha256": "18f4a4aaf23035922357f8acea56f50c55c4ef23a7f543a8d2389130fb2bf133",
+			"size": [
+				190.0,
+				144.0
+			],
+			"vram_bytes": 109440.0
+		},
+		"res://assets/cinematics/mid/pl_eb_1_pencil.webp": {
+			"file_bytes": 3024.0,
+			"intent_rect": [
+				819.0,
+				415.0,
+				410.0,
+				138.0
+			],
+			"kind": "mid",
+			"md5": "9095b405dd28a97c6e665028b0accc32",
+			"outside_intent": 0.0,
+			"rect": [
+				901.0,
+				496.0,
+				242.0,
+				59.0
+			],
+			"rect_norm": [
+				0.4399,
+				0.4306,
+				0.1182,
+				0.0512
+			],
+			"sha256": "c8e56655b8f7edcfb2715895edb014d499d3bcb2bcea19f36e090abe46998087",
+			"size": [
+				242.0,
+				59.0
+			],
+			"vram_bytes": 57112.0
+		},
+		"res://assets/cinematics/mid/pl_eb_2_council.webp": {
+			"file_bytes": 46234.0,
+			"intent_rect": [
+				287.0,
+				392.0,
+				1475.0,
+				691.0
+			],
+			"kind": "mid",
+			"md5": "02022a0e183be20ae50ecf052c4265f4",
+			"outside_intent": 0.0,
+			"rect": [
+				564.0,
+				546.0,
+				931.0,
+				519.0
+			],
+			"rect_norm": [
+				0.2754,
+				0.474,
+				0.4546,
+				0.4505
+			],
+			"sha256": "3a2ddae970bb2c11a36a015de9fc98afc1a52e7b57a85684d3d7553018652dc3",
+			"size": [
+				931.0,
+				519.0
+			],
+			"vram_bytes": 1932756.0
+		},
+		"res://assets/cinematics/mid/pl_ec_2_register.webp": {
+			"file_bytes": 3380.0,
+			"intent_rect": [
+				696.0,
+				645.0,
+				655.0,
+				346.0
+			],
+			"kind": "mid",
+			"md5": "f3af1fb979c585df445fa8ff0cb3ba39",
+			"outside_intent": 0.0,
+			"rect": [
+				786.0,
+				718.0,
+				202.0,
+				62.0
+			],
+			"rect_norm": [
+				0.3838,
+				0.6233,
+				0.0986,
+				0.0538
+			],
+			"sha256": "981380d025d40a98357debee90abe7739b3ae997b2904f62a7005870fed53068",
+			"size": [
+				202.0,
+				62.0
+			],
+			"vram_bytes": 50096.0
+		},
+		"res://assets/cinematics/mid/pl_ed_2_kept_seat.webp": {
+			"file_bytes": 3580.0,
+			"intent_rect": [
+				819.0,
+				599.0,
+				451.0,
+				369.0
+			],
+			"kind": "mid",
+			"md5": "64d617694ff3642fc4a0b004230f19b1",
+			"outside_intent": 0.188,
+			"rect": [
+				780.0,
+				679.0,
+				203.0,
+				180.0
+			],
+			"rect_norm": [
+				0.3809,
+				0.5894,
+				0.0991,
+				0.1563
+			],
+			"sha256": "4f5f9543e6321145f4764016358dda9fcb1f1182eb1c77ab22f3829fe05256db",
+			"size": [
+				203.0,
+				180.0
+			],
+			"vram_bytes": 146160.0
+		},
+		"res://assets/cinematics/mid/pl_f10_1_transit7.webp": {
+			"file_bytes": 42026.0,
+			"intent_rect": [
+				410.0,
+				230.0,
+				1434.0,
+				576.0
+			],
+			"kind": "mid",
+			"md5": "5e37a0bb519ffa66ad31fcf1a4e35567",
+			"outside_intent": 0.0,
+			"rect": [
+				598.0,
+				361.0,
+				1023.0,
+				293.0
+			],
+			"rect_norm": [
+				0.292,
+				0.3134,
+				0.4995,
+				0.2543
+			],
+			"sha256": "968747916b6c141a3038c73aa9019b93b289ec5db6650d6eca5dfdfce529294f",
+			"size": [
+				1023.0,
+				293.0
+			],
+			"vram_bytes": 1198956.0
+		},
+		"res://assets/cinematics/mid/pl_f10_3_benches.webp": {
+			"file_bytes": 96718.0,
+			"intent_rect": [
+				82.0,
+				507.0,
+				1884.0,
+				622.0
+			],
+			"kind": "mid",
+			"md5": "9a76d472104e239618b26c4007a6436b",
+			"outside_intent": 0.094,
+			"rect": [
+				0.0,
+				540.0,
+				2048.0,
+				612.0
+			],
+			"rect_norm": [
+				0.0,
+				0.4688,
+				1.0,
+				0.5313
+			],
+			"sha256": "644d13618882111cf9b9d48d2642adc4eb124b7bfb9351cb81e97f18aa413645",
+			"size": [
+				2048.0,
+				612.0
+			],
+			"vram_bytes": 5013504.0
+		},
+		"res://assets/cinematics/mid/pl_f10_4_hand.webp": {
+			"file_bytes": 15856.0,
+			"intent_rect": [
+				737.0,
+				576.0,
+				614.0,
+				461.0
+			],
+			"kind": "mid",
+			"md5": "c5d74b8552fb71f00bd621c7983d6497",
+			"outside_intent": 0.877,
+			"rect": [
+				1169.0,
+				987.0,
+				586.0,
+				165.0
+			],
+			"rect_norm": [
+				0.5708,
+				0.8568,
+				0.2861,
+				0.1432
+			],
+			"sha256": "101695eb8a06bf5d9462f410a99227cb6708b5c607dae4f81c9a3f3e8da09d60",
+			"size": [
+				586.0,
+				165.0
+			],
+			"vram_bytes": 386760.0
+		},
+		"res://assets/cinematics/mid/pl_f1_4_light_lines.webp": {
+			"file_bytes": 5082.0,
+			"intent_rect": [
+				614.0,
+				991.0,
+				819.0,
+				92.0
+			],
+			"kind": "mid",
+			"md5": "aa98232c7c73926855c5fc10f28b0c02",
+			"outside_intent": 1.0,
+			"rect": [
+				874.0,
+				861.0,
+				284.0,
+				130.0
+			],
+			"rect_norm": [
+				0.4268,
+				0.7474,
+				0.1387,
+				0.1128
+			],
+			"sha256": "1da3431e0713939dd8e694544ac337047257e1d0b49ab09846084e201e337f19",
+			"size": [
+				284.0,
+				130.0
+			],
+			"vram_bytes": 147680.0
+		},
+		"res://assets/cinematics/mid/pl_f2_1_hand.webp": {
+			"file_bytes": 4374.0,
+			"intent_rect": [
+				1065.0,
+				507.0,
+				451.0,
+				415.0
+			],
+			"kind": "mid",
+			"md5": "ce779cdeafc64a97c780e3e0fe554b8f",
+			"outside_intent": 0.0,
+			"rect": [
+				1297.0,
+				527.0,
+				137.0,
+				143.0
+			],
+			"rect_norm": [
+				0.6333,
+				0.4575,
+				0.0669,
+				0.1241
+			],
+			"sha256": "f2d41cd8264db90d3b05fbe2ca7ad3a8fbfabdf1d822c62c5e48031e9eae0818",
+			"size": [
+				137.0,
+				143.0
+			],
+			"vram_bytes": 78364.0
+		},
+		"res://assets/cinematics/mid/pl_f2_2_boxes.webp": {
+			"file_bytes": 47256.0,
+			"intent_rect": [
+				205.0,
+				599.0,
+				942.0,
+				507.0
+			],
+			"kind": "mid",
+			"md5": "a11db6b1c51cec4b899ffa3167dfde96",
+			"outside_intent": 0.208,
+			"rect": [
+				58.0,
+				722.0,
+				855.0,
+				430.0
+			],
+			"rect_norm": [
+				0.0283,
+				0.6267,
+				0.4175,
+				0.3733
+			],
+			"sha256": "b7971c0075924ced4cd6399bcb505b752089b6185e29bac0b0050bf757e401ef",
+			"size": [
+				855.0,
+				430.0
+			],
+			"vram_bytes": 1470600.0
+		},
+		"res://assets/cinematics/mid/pl_f2_3_halcyon.webp": {
+			"file_bytes": 3448.0,
+			"intent_rect": [
+				737.0,
+				300.0,
+				573.0,
+				346.0
+			],
+			"kind": "mid",
+			"md5": "0d25b9c0c7fad2b3a44415e43e69315e",
+			"outside_intent": 0.0,
+			"rect": [
+				909.0,
+				448.0,
+				214.0,
+				150.0
+			],
+			"rect_norm": [
+				0.4438,
+				0.3889,
+				0.1045,
+				0.1302
+			],
+			"sha256": "a82386b10939212afe8104f92a655d4ccf1ac8bd157e259d2232bf2326babbd9",
+			"size": [
+				214.0,
+				150.0
+			],
+			"vram_bytes": 128400.0
+		},
+		"res://assets/cinematics/mid/pl_f3_2_lumika_firefly.webp": {
+			"file_bytes": 698.0,
+			"intent_rect": [
+				860.0,
+				461.0,
+				328.0,
+				207.0
+			],
+			"kind": "mid",
+			"md5": "e48def4c7f29cca58c1224c7fd76adac",
+			"outside_intent": 0.0,
+			"rect": [
+				969.0,
+				600.0,
+				69.0,
+				31.0
+			],
+			"rect_norm": [
+				0.4731,
+				0.5208,
+				0.0337,
+				0.0269
+			],
+			"sha256": "6266d57ed66131598797126a24adbc67c2869919edd5e39e440d49766d6af839",
+			"size": [
+				69.0,
+				31.0
+			],
+			"vram_bytes": 8556.0
+		},
+		"res://assets/cinematics/mid/pl_f3_3_hands.webp": {
+			"file_bytes": 3800.0,
+			"intent_rect": [
+				614.0,
+				645.0,
+				819.0,
+				461.0
+			],
+			"kind": "mid",
+			"md5": "0814ea876b16c0ad4e6fa499cfbbd5d8",
+			"outside_intent": 0.481,
+			"rect": [
+				808.0,
+				1008.0,
+				190.0,
+				144.0
+			],
+			"rect_norm": [
+				0.3945,
+				0.875,
+				0.0928,
+				0.125
+			],
+			"sha256": "18f4a4aaf23035922357f8acea56f50c55c4ef23a7f543a8d2389130fb2bf133",
+			"size": [
+				190.0,
+				144.0
+			],
+			"vram_bytes": 109440.0
+		},
+		"res://assets/cinematics/mid/pl_f4_2_queue_below.webp": {
+			"file_bytes": 52246.0,
+			"intent_rect": [
+				205.0,
+				714.0,
+				1638.0,
+				392.0
+			],
+			"kind": "mid",
+			"md5": "5eac49b3c2b0b543bf6592f68ce75b75",
+			"outside_intent": 0.941,
+			"rect": [
+				395.0,
+				363.0,
+				1427.0,
+				440.0
+			],
+			"rect_norm": [
+				0.1929,
+				0.3151,
+				0.6968,
+				0.3819
+			],
+			"sha256": "aa7ff82df2fa15d11a1167a019c1d5846fad0f7e3e0e0afbaf79fdfe5d375294",
+			"size": [
+				1427.0,
+				440.0
+			],
+			"vram_bytes": 2511520.0
+		},
+		"res://assets/cinematics/mid/pl_f4_3_drawings.webp": {
+			"file_bytes": 12018.0,
+			"intent_rect": [
+				492.0,
+				691.0,
+				1065.0,
+				369.0
+			],
+			"kind": "mid",
+			"md5": "1677d10fa147fea51c418931820c9e2f",
+			"outside_intent": 0.256,
+			"rect": [
+				750.0,
+				646.0,
+				393.0,
+				130.0
+			],
+			"rect_norm": [
+				0.3662,
+				0.5608,
+				0.1919,
+				0.1128
+			],
+			"sha256": "c0f19f637571a5469a13d904ba0c3c05883463e517707c35a85db4a3138a3337",
+			"size": [
+				393.0,
+				130.0
+			],
+			"vram_bytes": 204360.0
+		},
+		"res://assets/cinematics/mid/pl_f5_2_families.webp": {
+			"file_bytes": 53566.0,
+			"intent_rect": [
+				82.0,
+				346.0,
+				983.0,
+				737.0
+			],
+			"kind": "mid",
+			"md5": "6c3a4cc75525fc0248e07deae136a788",
+			"outside_intent": 0.01,
+			"rect": [
+				47.0,
+				518.0,
+				642.0,
+				587.0
+			],
+			"rect_norm": [
+				0.0229,
+				0.4497,
+				0.3135,
+				0.5095
+			],
+			"sha256": "cb5ca5cf312b0b1d257c81f0d07450d5549ecfbd2cc8df8ccaf11f800c4facba",
+			"size": [
+				642.0,
+				587.0
+			],
+			"vram_bytes": 1507416.0
+		},
+		"res://assets/cinematics/mid/pl_f5_4_prints.webp": {
+			"file_bytes": 52546.0,
+			"intent_rect": [
+				451.0,
+				622.0,
+				1147.0,
+				438.0
+			],
+			"kind": "mid",
+			"md5": "5cecd6e8eebe94924d33ccac28db216f",
+			"outside_intent": 0.507,
+			"rect": [
+				474.0,
+				399.0,
+				890.0,
+				401.0
+			],
+			"rect_norm": [
+				0.2314,
+				0.3464,
+				0.4346,
+				0.3481
+			],
+			"sha256": "a5cc7a426a662dad0762f93b10b11b327c81e19ff03fa20169972e23273b3f62",
+			"size": [
+				890.0,
+				401.0
+			],
+			"vram_bytes": 1427560.0
+		},
+		"res://assets/cinematics/mid/pl_f5b_2_families.webp": {
+			"file_bytes": 31482.0,
+			"intent_rect": [
+				205.0,
+				323.0,
+				1638.0,
+				760.0
+			],
+			"kind": "mid",
+			"md5": "b8f55061069a734c862922cb5e4240b1",
+			"outside_intent": 0.0,
+			"rect": [
+				610.0,
+				528.0,
+				640.0,
+				324.0
+			],
+			"rect_norm": [
+				0.2979,
+				0.4583,
+				0.3125,
+				0.2813
+			],
+			"sha256": "02a1df09b3390595fe394df5bffde0ba0d452146361307f2ca33164e2645e25a",
+			"size": [
+				640.0,
+				324.0
+			],
+			"vram_bytes": 829440.0
+		},
+		"res://assets/cinematics/mid/pl_f5b_4_drawings.webp": {
+			"file_bytes": 41426.0,
+			"intent_rect": [
+				451.0,
+				622.0,
+				1147.0,
+				438.0
+			],
+			"kind": "mid",
+			"md5": "b276b162dd3867cfe7bba34a9c322d01",
+			"outside_intent": 0.689,
+			"rect": [
+				651.0,
+				406.0,
+				772.0,
+				350.0
+			],
+			"rect_norm": [
+				0.3179,
+				0.3524,
+				0.377,
+				0.3038
+			],
+			"sha256": "2143636d6d294c871297929859e7e93c911a104f36452b4f4840beb23e15e89d",
+			"size": [
+				772.0,
+				350.0
+			],
+			"vram_bytes": 1080800.0
+		},
+		"res://assets/cinematics/mid/pl_f6_2_ledger.webp": {
+			"file_bytes": 3808.0,
+			"intent_rect": [
+				614.0,
+				691.0,
+				614.0,
+				346.0
+			],
+			"kind": "mid",
+			"md5": "1a08abf1108dd26683aa2a45690afc91",
+			"outside_intent": 0.0,
+			"rect": [
+				956.0,
+				694.0,
+				198.0,
+				66.0
+			],
+			"rect_norm": [
+				0.4668,
+				0.6024,
+				0.0967,
+				0.0573
+			],
+			"sha256": "bd49b7563b228c04ac03c64707dc29dfb59d09d87c0c2f632ebec9f5aa51dc93",
+			"size": [
+				198.0,
+				66.0
+			],
+			"vram_bytes": 52272.0
+		},
+		"res://assets/cinematics/mid/pl_f6_3_halcyon.webp": {
+			"file_bytes": 2490.0,
+			"intent_rect": [
+				860.0,
+				346.0,
+				328.0,
+				207.0
+			],
+			"kind": "mid",
+			"md5": "3bb694479982e0607654a3d6bbfba4e7",
+			"outside_intent": 0.297,
+			"rect": [
+				946.0,
+				494.0,
+				169.0,
+				110.0
+			],
+			"rect_norm": [
+				0.4619,
+				0.4288,
+				0.0825,
+				0.0955
+			],
+			"sha256": "24021203bf6ec628dd3af1b6621033fee3b063a21dc2494e1ade5ff3f8de238f",
+			"size": [
+				169.0,
+				110.0
+			],
+			"vram_bytes": 74360.0
+		},
+		"res://assets/cinematics/mid/pl_f6d_4_cargo_lights.webp": {
+			"file_bytes": 1132.0,
+			"intent_rect": [
+				696.0,
+				276.0,
+				655.0,
+				346.0
+			],
+			"kind": "mid",
+			"md5": "5eae7af7c3bb4b66b170270a933e2227",
+			"outside_intent": 0.0,
+			"rect": [
+				915.0,
+				501.0,
+				193.0,
+				127.0
+			],
+			"rect_norm": [
+				0.4468,
+				0.4349,
+				0.0942,
+				0.1102
+			],
+			"sha256": "ff0fa25b15d09b7b75309d89b459c2031fc67406df1c8e5cbbb9588d42b8fbd9",
+			"size": [
+				193.0,
+				127.0
+			],
+			"vram_bytes": 98044.0
+		},
+		"res://assets/cinematics/mid/pl_f6e_4_hand.webp": {
+			"file_bytes": 1810.0,
+			"intent_rect": [
+				819.0,
+				346.0,
+				492.0,
+				461.0
+			],
+			"kind": "mid",
+			"md5": "2d4235b40ee12c169771460f6d7efc16",
+			"outside_intent": 0.0,
+			"rect": [
+				979.0,
+				602.0,
+				73.0,
+				141.0
+			],
+			"rect_norm": [
+				0.478,
+				0.5226,
+				0.0356,
+				0.1224
+			],
+			"sha256": "00d8626280519a24539ed1a68f8feaa0aa648e76a9a6585d8e63be6726d8b6fb",
+			"size": [
+				73.0,
+				141.0
+			],
+			"vram_bytes": 41172.0
+		},
+		"res://assets/cinematics/mid/pl_f6t_1_bags.webp": {
+			"file_bytes": 3926.0,
+			"intent_rect": [
+				1147.0,
+				714.0,
+				492.0,
+				346.0
+			],
+			"kind": "mid",
+			"md5": "5e524c4a126278e28e924d3f0a50ee72",
+			"outside_intent": 0.0,
+			"rect": [
+				1212.0,
+				840.0,
+				355.0,
+				218.0
+			],
+			"rect_norm": [
+				0.5918,
+				0.7292,
+				0.1733,
+				0.1892
+			],
+			"sha256": "6a7080cf6782032ec12d1d98238c603f1c88b3cb715ce042b85bea85c64b7aa1",
+			"size": [
+				355.0,
+				218.0
+			],
+			"vram_bytes": 309560.0
+		},
+		"res://assets/cinematics/mid/pl_f6t_3_committee.webp": {
+			"file_bytes": 59198.0,
+			"intent_rect": [
+				410.0,
+				346.0,
+				1229.0,
+				737.0
+			],
+			"kind": "mid",
+			"md5": "f5aebf272ff7aeefd459a349d4006437",
+			"outside_intent": 0.0,
+			"rect": [
+				449.0,
+				500.0,
+				956.0,
+				421.0
+			],
+			"rect_norm": [
+				0.2192,
+				0.434,
+				0.4668,
+				0.3655
+			],
+			"sha256": "b6b6f214f8aa4d866f26fc71c9a15283c2211e297c999d303ffb66a3d9717193",
+			"size": [
+				956.0,
+				421.0
+			],
+			"vram_bytes": 1609904.0
+		},
+		"res://assets/cinematics/mid/pl_f7_4_queue.webp": {
+			"file_bytes": 80322.0,
+			"intent_rect": [
+				123.0,
+				346.0,
+				1802.0,
+				737.0
+			],
+			"kind": "mid",
+			"md5": "6a586fcaa81499f17f1154c39d25b409",
+			"outside_intent": 0.007,
+			"rect": [
+				535.0,
+				372.0,
+				555.0,
+				764.0
+			],
+			"rect_norm": [
+				0.2612,
+				0.3229,
+				0.271,
+				0.6632
+			],
+			"sha256": "cf826f3ef43b059bfa92ab582a6b524f7f4965308ebf05d262a454af2e89dd68",
+			"size": [
+				555.0,
+				764.0
+			],
+			"vram_bytes": 1696080.0
+		},
+		"res://assets/cinematics/mid/pl_f8_3_hand.webp": {
+			"file_bytes": 6946.0,
+			"intent_rect": [
+				983.0,
+				530.0,
+				410.0,
+				346.0
+			],
+			"kind": "mid",
+			"md5": "ee11f7d2e3c8b589101f38780d4ae964",
+			"outside_intent": 0.534,
+			"rect": [
+				1223.0,
+				614.0,
+				302.0,
+				136.0
+			],
+			"rect_norm": [
+				0.5972,
+				0.533,
+				0.1475,
+				0.1181
+			],
+			"sha256": "9385fad1c8cb0f31d67ff6509ea7d09e8ca3cef3268d23c6e0cd1cb6a0b92b71",
+			"size": [
+				302.0,
+				136.0
+			],
+			"vram_bytes": 164288.0
+		},
+		"res://assets/cinematics/mid/pl_f9_1_foreground.webp": {
+			"file_bytes": 29416.0,
+			"intent_rect": [
+				0.0,
+				714.0,
+				2048.0,
+				438.0
+			],
+			"kind": "mid",
+			"md5": "a243e19404954fec7a28ec66c3caa546",
+			"outside_intent": 0.0,
+			"rect": [
+				139.0,
+				780.0,
+				1661.0,
+				372.0
+			],
+			"rect_norm": [
+				0.0679,
+				0.6771,
+				0.811,
+				0.3229
+			],
+			"sha256": "7a08ec04f013a8ddb85095ddb5f2607607640e272d35546d1f4c030b335149e4",
+			"size": [
+				1661.0,
+				372.0
+			],
+			"vram_bytes": 2471568.0
+		},
+		"res://assets/cinematics/mid/pl_f9_2_families.webp": {
+			"file_bytes": 72928.0,
+			"intent_rect": [
+				164.0,
+				346.0,
+				1720.0,
+				737.0
+			],
+			"kind": "mid",
+			"md5": "d556bfa23239d6af23cc9cd96f66b466",
+			"outside_intent": 0.049,
+			"rect": [
+				70.0,
+				562.0,
+				1486.0,
+				580.0
+			],
+			"rect_norm": [
+				0.0342,
+				0.4878,
+				0.7256,
+				0.5035
+			],
+			"sha256": "bc56d23cfa2fbe8ab0ee64ad9088e49a8a8b86225c693e06e5c459d59dd8d304",
+			"size": [
+				1486.0,
+				580.0
+			],
+			"vram_bytes": 3447520.0
+		},
+		"res://assets/cinematics/mid/pl_f9_4_crowd.webp": {
+			"file_bytes": 75198.0,
+			"intent_rect": [
+				0.0,
+				392.0,
+				2048.0,
+				714.0
+			],
+			"kind": "mid",
+			"md5": "b83bbdf193ce846478f15b9fd2145ce9",
+			"outside_intent": 0.005,
+			"rect": [
+				408.0,
+				513.0,
+				1045.0,
+				634.0
+			],
+			"rect_norm": [
+				0.1992,
+				0.4453,
+				0.5103,
+				0.5503
+			],
+			"sha256": "a8f1a00a8fd3c9d8db8f3b28da04961fe9d7e3f889eb4d440d380ba32288f370",
+			"size": [
+				1045.0,
+				634.0
+			],
+			"vram_bytes": 2650120.0
+		}
+	},
+	"godot": "4.7.2-stable (official)",
+	"groups": {
+		"bg_b1": {
+			"camera": {
+				"fov": 48.0,
+				"transform": "Transform3D(1, 0, 0, 0, 0.9999251, 0.012243984, 0, -0.012243984, 0.9999251, 0, 1.6, 4.5)"
+			},
+			"dominant": "state.red",
+			"files": {
+				"res://assets/cinematics/bg/bg_b1.webp": {
+					"file_bytes": 405406.0,
+					"kind": "bg",
+					"md5": "7b7192f7a0ce22875cfe79a4c05075a1",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "c7cfb782dbe8f7961cb78bd11e56df6acbf2c2625774f4726623651462469074",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/fig/pl_f1_1_agent.webp": {
+					"file_bytes": 20604.0,
+					"intent_rect": [
+						901.0,
+						346.0,
+						246.0,
+						714.0
+					],
+					"kind": "fig",
+					"md5": "8019af9453676eb4986bf4e234ef3184",
+					"outside_intent": 0.0,
+					"rect": [
+						895.0,
+						517.0,
+						261.0,
+						487.0
+					],
+					"rect_norm": [
+						0.437,
+						0.4488,
+						0.1274,
+						0.4227
+					],
+					"sha256": "524d899a97aa8df2d456eaa1abd00132bb226a5e0016306fbc5d2dea6810f1dd",
+					"size": [
+						261.0,
+						487.0
+					],
+					"vram_bytes": 508428.0
+				},
+				"res://assets/cinematics/fig/pl_f1_1_guards.webp": {
+					"file_bytes": 38072.0,
+					"intent_rect": [
+						614.0,
+						300.0,
+						819.0,
+						783.0
+					],
+					"kind": "fig",
+					"md5": "a27941364620cd5c92d7f4551da4927b",
+					"outside_intent": 0.0,
+					"rect": [
+						730.0,
+						484.0,
+						605.0,
+						496.0
+					],
+					"rect_norm": [
+						0.3564,
+						0.4201,
+						0.2954,
+						0.4306
+					],
+					"sha256": "af670f1fa07dbadaa31ebe690e7f56e04ad415e1a92435d11af0a3b65db0ac7b",
+					"size": [
+						605.0,
+						496.0
+					],
+					"vram_bytes": 1200320.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "clinical",
+			"plates": [
+				"pl_f1_1"
+			],
+			"ramp": [
+				"07080c",
+				"20141b",
+				"311f28",
+				"544452",
+				"625563",
+				"9390a0",
+				"c5c7d0",
+				"e8f1f5"
+			],
+			"recipe": "a1fcd70c54f7c2590de0bb7ab3d5e228",
+			"render_ms": 26293.0
+		},
+		"bg_b2": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(0.9997167, -0.0025350747, 0.023667399, 0, 0.99431235, 0.106503315, -0.02380278, -0.10647313, 0.99403065, 0.1, 1.45, 1.8)"
+			},
+			"dominant": "state.red",
+			"files": {
+				"res://assets/cinematics/bg/bg_b2.webp": {
+					"file_bytes": 380318.0,
+					"kind": "bg",
+					"md5": "e74dacdf75e2b0d46c5be4601b85c1fc",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "f21ca91992a621e93f5f4405a258cec31ad81a4ffa715f7ba2fe06ade20643ad",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/fig/pl_f1_2_seated.webp": {
+					"file_bytes": 9958.0,
+					"intent_rect": [
+						819.0,
+						484.0,
+						410.0,
+						576.0
+					],
+					"kind": "fig",
+					"md5": "4a3f0d9a37530139543cc4bc2b31fbf1",
+					"outside_intent": 0.0,
+					"rect": [
+						929.0,
+						671.0,
+						206.0,
+						361.0
+					],
+					"rect_norm": [
+						0.4536,
+						0.5825,
+						0.1006,
+						0.3134
+					],
+					"sha256": "eeee29b5584f3865618c06f89ee8cab8ae526a5a3883eb86bf3c8355e33653e7",
+					"size": [
+						206.0,
+						361.0
+					],
+					"vram_bytes": 297464.0
+				},
+				"res://assets/cinematics/mid/pl_f1_4_light_lines.webp": {
+					"file_bytes": 5082.0,
+					"intent_rect": [
+						614.0,
+						991.0,
+						819.0,
+						92.0
+					],
+					"kind": "mid",
+					"md5": "aa98232c7c73926855c5fc10f28b0c02",
+					"outside_intent": 1.0,
+					"rect": [
+						874.0,
+						861.0,
+						284.0,
+						130.0
+					],
+					"rect_norm": [
+						0.4268,
+						0.7474,
+						0.1387,
+						0.1128
+					],
+					"sha256": "1da3431e0713939dd8e694544ac337047257e1d0b49ab09846084e201e337f19",
+					"size": [
+						284.0,
+						130.0
+					],
+					"vram_bytes": 147680.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "clinical",
+			"plates": [
+				"pl_f1_2",
+				"pl_f1_4"
+			],
+			"ramp": [
+				"07080c",
+				"20141b",
+				"311f28",
+				"544452",
+				"625563",
+				"9390a0",
+				"c5c7d0",
+				"e8f1f5"
+			],
+			"recipe": "3e8876a69e93ae656fd009457e70c2fb",
+			"render_ms": 27828.0
+		},
+		"bg_c1": {
+			"camera": {
+				"fov": 52.0,
+				"transform": "Transform3D(0.99987704, -0.00021522862, 0.01568287, 0, 0.9999059, 0.01372251, -0.015684348, -0.0137208225, 0.99978286, 0.4, 1.65, 5.5)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_c1.webp": {
+					"file_bytes": 252120.0,
+					"kind": "bg",
+					"md5": "b20c5fc8d82657f774f529ca750b9066",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "14116ff1affc0fd84eddef525b82ebda67f3f746166c733442081c8b39229ca8",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f9_4_crowd.webp": {
+					"file_bytes": 75198.0,
+					"intent_rect": [
+						0.0,
+						392.0,
+						2048.0,
+						714.0
+					],
+					"kind": "mid",
+					"md5": "b83bbdf193ce846478f15b9fd2145ce9",
+					"outside_intent": 0.005,
+					"rect": [
+						408.0,
+						513.0,
+						1045.0,
+						634.0
+					],
+					"rect_norm": [
+						0.1992,
+						0.4453,
+						0.5103,
+						0.5503
+					],
+					"sha256": "a8f1a00a8fd3c9d8db8f3b28da04961fe9d7e3f889eb4d440d380ba32288f370",
+					"size": [
+						1045.0,
+						634.0
+					],
+					"vram_bytes": 2650120.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "night",
+			"plates": [
+				"pl_f9_4"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"485263",
+				"7a8798",
+				"b5bfc9",
+				"e8f1f5"
+			],
+			"recipe": "020426768dfd30e3f593dd6e9e4deb44",
+			"render_ms": 13639.0
+		},
+		"bg_h1": {
+			"camera": {
+				"fov": 54.0,
+				"transform": "Transform3D(0.9996197, -0.0025240933, 0.027459957, 0, 0.99580204, 0.091533184, -0.027575718, -0.091498375, 0.9954234, 0.12, 1.62, 1.35)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_h1.webp": {
+					"file_bytes": 270558.0,
+					"kind": "bg",
+					"md5": "3779ef5bbfe40c3821b824c2efdab4cc",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "5c8d20cda0a845d886af2cef52786bdf0466672c65b8c741733d09e8d1e652a1",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/fig/pl_f8_2_reflection.webp": {
+					"file_bytes": 43506.0,
+					"intent_rect": [
+						819.0,
+						207.0,
+						410.0,
+						645.0
+					],
+					"kind": "fig",
+					"md5": "8fa3ede96776188f3a7ebe75d45176e8",
+					"outside_intent": 0.376,
+					"rect": [
+						679.0,
+						290.0,
+						681.0,
+						790.0
+					],
+					"rect_norm": [
+						0.3315,
+						0.2517,
+						0.3325,
+						0.6858
+					],
+					"sha256": "9192e645c541146e880dfccc71d36f2e67aa8c18e67d68307e1e7db6f50ae631",
+					"size": [
+						681.0,
+						790.0
+					],
+					"vram_bytes": 2151960.0
+				},
+				"res://assets/cinematics/mid/pl_ea_3_hands.webp": {
+					"file_bytes": 3800.0,
+					"intent_rect": [
+						614.0,
+						645.0,
+						819.0,
+						461.0
+					],
+					"kind": "mid",
+					"md5": "0814ea876b16c0ad4e6fa499cfbbd5d8",
+					"outside_intent": 0.481,
+					"rect": [
+						808.0,
+						1008.0,
+						190.0,
+						144.0
+					],
+					"rect_norm": [
+						0.3945,
+						0.875,
+						0.0928,
+						0.125
+					],
+					"sha256": "18f4a4aaf23035922357f8acea56f50c55c4ef23a7f543a8d2389130fb2bf133",
+					"size": [
+						190.0,
+						144.0
+					],
+					"vram_bytes": 109440.0
+				},
+				"res://assets/cinematics/mid/pl_f3_3_hands.webp": {
+					"file_bytes": 3800.0,
+					"intent_rect": [
+						614.0,
+						645.0,
+						819.0,
+						461.0
+					],
+					"kind": "mid",
+					"md5": "0814ea876b16c0ad4e6fa499cfbbd5d8",
+					"outside_intent": 0.481,
+					"rect": [
+						808.0,
+						1008.0,
+						190.0,
+						144.0
+					],
+					"rect_norm": [
+						0.3945,
+						0.875,
+						0.0928,
+						0.125
+					],
+					"sha256": "18f4a4aaf23035922357f8acea56f50c55c4ef23a7f543a8d2389130fb2bf133",
+					"size": [
+						190.0,
+						144.0
+					],
+					"vram_bytes": 109440.0
+				}
+			},
+			"holo": [
+				[
+					-82.0,
+					-212.0,
+					2119.0,
+					1174.0
+				]
+			],
+			"labels": [],
+			"lighting": "dusk",
+			"plates": [
+				"pl_ea_3",
+				"pl_f3_3",
+				"pl_f8_2"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"505862",
+				"858e8f",
+				"b9beb3",
+				"e4eae2"
+			],
+			"recipe": "37347604decc1c8ea609cdc51734cdd9",
+			"render_ms": 31658.0
+		},
+		"bg_h10": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(0.9828722, -0.0018866961, -0.18427886, 0, 0.9999476, -0.01023773, 0.18428852, 0.01006238, 0.9828207, -0.8, 1.9, 3.4)"
+			},
+			"dominant": "text.primary",
+			"files": {
+				"res://assets/cinematics/bg/bg_h10.webp": {
+					"file_bytes": 236610.0,
+					"kind": "bg",
+					"md5": "736d5dba6fa7597914e962ef10633114",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "3ca0c26875da68cd0ddde1dd432ffcdfbed8317e2701e6287f7de080696a7cd3",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [
+				[
+					252.0,
+					607.0,
+					454.0,
+					272.0
+				],
+				[
+					797.0,
+					605.0,
+					391.0,
+					252.0
+				],
+				[
+					1266.0,
+					604.0,
+					341.0,
+					235.0
+				],
+				[
+					254.0,
+					257.0,
+					453.0,
+					274.0
+				],
+				[
+					797.0,
+					281.0,
+					390.0,
+					253.0
+				],
+				[
+					1265.0,
+					303.0,
+					340.0,
+					236.0
+				]
+			],
+			"labels": [],
+			"lighting": "hall",
+			"plates": [
+				"pl_f7_3"
+			],
+			"ramp": [
+				"07080c",
+				"282c33",
+				"3c424b",
+				"5f6977",
+				"6a7481",
+				"95a2b1",
+				"c5cfd8",
+				"e8f1f5"
+			],
+			"recipe": "a1262f239c9fac41c6699a985ebd5e01",
+			"render_ms": 10953.0
+		},
+		"bg_h11": {
+			"camera": {
+				"fov": 42.0,
+				"transform": "Transform3D(0.9517086, 0.124851845, 0.28046882, 0, 0.9135708, -0.40667978, -0.30700284, 0.38704064, 0.8694532, 0.9, 2.3, 1.4)"
+			},
+			"dominant": "accent.cyan",
+			"files": {
+				"res://assets/cinematics/bg/bg_h11.webp": {
+					"file_bytes": 130296.0,
+					"kind": "bg",
+					"md5": "89d973707b9c486c2d0eedffafdc78b3",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "41e9c1aeecf0e5def94a0767794fbd170e04ab814a69e8d8925f708216225186",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [
+				[
+					1196.0,
+					82.0,
+					703.0,
+					525.0
+				]
+			],
+			"labels": [],
+			"lighting": "hall",
+			"plates": [
+				"pl_ec_1",
+				"pl_f8_1"
+			],
+			"ramp": [
+				"07080c",
+				"0d212a",
+				"13323f",
+				"325a6c",
+				"456879",
+				"809daf",
+				"bbced8",
+				"e8f1f5"
+			],
+			"recipe": "e14c76e0b389368df05c0597c2224609",
+			"render_ms": 10278.0
+		},
+		"bg_h12": {
+			"camera": {
+				"fov": 40.0,
+				"transform": "Transform3D(1, 0, 0, 0, 0.9950372, 0.09950372, 0, -0.09950372, 0.9950372, 0, 3.6, 12)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_h12.webp": {
+					"file_bytes": 345514.0,
+					"kind": "bg",
+					"md5": "d718b98015e8a3b8622e5b7905302dff",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "4f91223ed926f84f1839710b8f41507c8b6398c4ec88a2c0f0f536c1a2714762",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_01.webp": {
+					"file_bytes": 29554.0,
+					"kind": "lit",
+					"md5": "81f87700ffc69c5063bd1ca1832815c7",
+					"rect": [
+						148.0,
+						483.0,
+						333.0,
+						320.0
+					],
+					"rect_norm": [
+						0.0723,
+						0.4193,
+						0.1626,
+						0.2778
+					],
+					"sha256": "516ec18562e8a0122af207b8d889ffbfc471c8af07e59a65ca6407a71e0890a8",
+					"size": [
+						333.0,
+						320.0
+					],
+					"vram_bytes": 426240.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_02.webp": {
+					"file_bytes": 25458.0,
+					"kind": "lit",
+					"md5": "9d53d5dd420182dc40df3f5bdbb05fbf",
+					"rect": [
+						310.0,
+						478.0,
+						296.0,
+						305.0
+					],
+					"rect_norm": [
+						0.1514,
+						0.4149,
+						0.1445,
+						0.2648
+					],
+					"sha256": "58334a94eddbf9589ea2082e25150e47bac3d7f9f854736507e0c7f2dffc3e97",
+					"size": [
+						296.0,
+						305.0
+					],
+					"vram_bytes": 361120.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_03.webp": {
+					"file_bytes": 25274.0,
+					"kind": "lit",
+					"md5": "bd9f455e7f0c397218745f9428c6f090",
+					"rect": [
+						460.0,
+						473.0,
+						259.0,
+						294.0
+					],
+					"rect_norm": [
+						0.2246,
+						0.4106,
+						0.1265,
+						0.2552
+					],
+					"sha256": "8e7a478de5094d6a4928b2da6e848fbdbfba3ce2655424a25378639638f2b0c2",
+					"size": [
+						259.0,
+						294.0
+					],
+					"vram_bytes": 304584.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_04.webp": {
+					"file_bytes": 22562.0,
+					"kind": "lit",
+					"md5": "9c1a7210054f9bc927e10c7ff6601f5e",
+					"rect": [
+						601.0,
+						470.0,
+						232.0,
+						285.0
+					],
+					"rect_norm": [
+						0.2935,
+						0.408,
+						0.1133,
+						0.2474
+					],
+					"sha256": "77ed7918a3cf0d73d273b64601827774bfc458ed0415a299ed310077913013fb",
+					"size": [
+						232.0,
+						285.0
+					],
+					"vram_bytes": 264480.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_05.webp": {
+					"file_bytes": 21952.0,
+					"kind": "lit",
+					"md5": "39d0e485a4073005d1475b2be4d334d4",
+					"rect": [
+						737.0,
+						469.0,
+						211.0,
+						278.0
+					],
+					"rect_norm": [
+						0.3599,
+						0.4071,
+						0.103,
+						0.2413
+					],
+					"sha256": "22a42cf929bf5fa76d8861658b203a62ca2f2b8bab83e451215026057214fd97",
+					"size": [
+						211.0,
+						278.0
+					],
+					"vram_bytes": 234632.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_06.webp": {
+					"file_bytes": 20686.0,
+					"kind": "lit",
+					"md5": "3663772265c53bc6eb2bffcae9d62fe8",
+					"rect": [
+						868.0,
+						468.0,
+						195.0,
+						274.0
+					],
+					"rect_norm": [
+						0.4238,
+						0.4063,
+						0.0952,
+						0.2378
+					],
+					"sha256": "b70b937c65588ae3f2f57f87c9bafafd025e9956d37e3c35f4d4e4886cbc8782",
+					"size": [
+						195.0,
+						274.0
+					],
+					"vram_bytes": 213720.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_07.webp": {
+					"file_bytes": 20560.0,
+					"kind": "lit",
+					"md5": "43ed7b3ba0868f3553482fdad13201ae",
+					"rect": [
+						985.0,
+						468.0,
+						192.0,
+						274.0
+					],
+					"rect_norm": [
+						0.481,
+						0.4063,
+						0.0938,
+						0.2378
+					],
+					"sha256": "2bfd595e4706a32f3273d5651ae67045f69dde2515e5929bd4608fb4d9eac3b5",
+					"size": [
+						192.0,
+						274.0
+					],
+					"vram_bytes": 210432.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_08.webp": {
+					"file_bytes": 21996.0,
+					"kind": "lit",
+					"md5": "14ffc36e04387d548a683ad94940487e",
+					"rect": [
+						1097.0,
+						469.0,
+						211.0,
+						277.0
+					],
+					"rect_norm": [
+						0.5356,
+						0.4071,
+						0.103,
+						0.2405
+					],
+					"sha256": "b64c8d8ee4f27c0a3d7e3a4044c9579a964fd33a41356ccebd9e5cc5bf4a1f22",
+					"size": [
+						211.0,
+						277.0
+					],
+					"vram_bytes": 233788.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_09.webp": {
+					"file_bytes": 22728.0,
+					"kind": "lit",
+					"md5": "cc60fd328ed72147fc290538486ffd28",
+					"rect": [
+						1210.0,
+						470.0,
+						234.0,
+						284.0
+					],
+					"rect_norm": [
+						0.5908,
+						0.408,
+						0.1143,
+						0.2465
+					],
+					"sha256": "567ca38abaa7a52907fd20d8864d19510c5df863f3c07c622de56dd363bf5afb",
+					"size": [
+						234.0,
+						284.0
+					],
+					"vram_bytes": 265824.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_10.webp": {
+					"file_bytes": 25224.0,
+					"kind": "lit",
+					"md5": "6a055268765bb4b1af24b1eb2a8a1f69",
+					"rect": [
+						1324.0,
+						473.0,
+						261.0,
+						292.0
+					],
+					"rect_norm": [
+						0.6465,
+						0.4106,
+						0.1274,
+						0.2535
+					],
+					"sha256": "42b0ad5039d5493132423c27fb14d40cf5afac88238ce745377b1cde08103311",
+					"size": [
+						261.0,
+						292.0
+					],
+					"vram_bytes": 304848.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_11.webp": {
+					"file_bytes": 27202.0,
+					"kind": "lit",
+					"md5": "dd29366329e43d571249bedb485be47e",
+					"rect": [
+						1442.0,
+						477.0,
+						293.0,
+						302.0
+					],
+					"rect_norm": [
+						0.7041,
+						0.4141,
+						0.1431,
+						0.2622
+					],
+					"sha256": "531f86bf5169bd48ba6a256a41028273e49196bacbbb37a6be07b768fd333bd1",
+					"size": [
+						293.0,
+						302.0
+					],
+					"vram_bytes": 353944.0
+				},
+				"res://assets/cinematics/lit/pl_f9_1_lit_12.webp": {
+					"file_bytes": 29904.0,
+					"kind": "lit",
+					"md5": "6b4084550d9fbe38c9f58a17663b4f41",
+					"rect": [
+						1566.0,
+						483.0,
+						334.0,
+						316.0
+					],
+					"rect_norm": [
+						0.7646,
+						0.4193,
+						0.1631,
+						0.2743
+					],
+					"sha256": "f8f2d2c65dafaab95b741591717e8323c18787d26cdc53a52528f8d912ebf7b9",
+					"size": [
+						334.0,
+						316.0
+					],
+					"vram_bytes": 422176.0
+				},
+				"res://assets/cinematics/mid/pl_f9_1_foreground.webp": {
+					"file_bytes": 29416.0,
+					"intent_rect": [
+						0.0,
+						714.0,
+						2048.0,
+						438.0
+					],
+					"kind": "mid",
+					"md5": "a243e19404954fec7a28ec66c3caa546",
+					"outside_intent": 0.0,
+					"rect": [
+						139.0,
+						780.0,
+						1661.0,
+						372.0
+					],
+					"rect_norm": [
+						0.0679,
+						0.6771,
+						0.811,
+						0.3229
+					],
+					"sha256": "7a08ec04f013a8ddb85095ddb5f2607607640e272d35546d1f4c030b335149e4",
+					"size": [
+						1661.0,
+						372.0
+					],
+					"vram_bytes": 2471568.0
+				}
+			},
+			"holo": [
+				[
+					174.0,
+					516.0,
+					142.0,
+					119.0
+				],
+				[
+					338.0,
+					511.0,
+					130.0,
+					110.0
+				],
+				[
+					491.0,
+					507.0,
+					121.0,
+					103.0
+				],
+				[
+					634.0,
+					504.0,
+					115.0,
+					98.0
+				],
+				[
+					771.0,
+					502.0,
+					111.0,
+					94.0
+				],
+				[
+					904.0,
+					502.0,
+					108.0,
+					92.0
+				],
+				[
+					1035.0,
+					502.0,
+					108.0,
+					92.0
+				],
+				[
+					1166.0,
+					502.0,
+					111.0,
+					94.0
+				],
+				[
+					1299.0,
+					504.0,
+					115.0,
+					98.0
+				],
+				[
+					1436.0,
+					507.0,
+					121.0,
+					103.0
+				],
+				[
+					1579.0,
+					511.0,
+					130.0,
+					110.0
+				],
+				[
+					1732.0,
+					516.0,
+					142.0,
+					119.0
+				]
+			],
+			"labels": [
+				{
+					"id": "booth_01",
+					"rect": [
+						229.0,
+						476.0,
+						45.0,
+						22.0
+					],
+					"rect_norm": [
+						0.1118,
+						0.4132,
+						0.022,
+						0.0191
+					],
+					"text": "01"
+				},
+				{
+					"id": "booth_02",
+					"rect": [
+						388.0,
+						473.0,
+						42.0,
+						21.0
+					],
+					"rect_norm": [
+						0.1895,
+						0.4106,
+						0.0205,
+						0.0182
+					],
+					"text": "02"
+				},
+				{
+					"id": "booth_03",
+					"rect": [
+						536.0,
+						470.0,
+						39.0,
+						19.0
+					],
+					"rect_norm": [
+						0.2617,
+						0.408,
+						0.019,
+						0.0165
+					],
+					"text": "03"
+				},
+				{
+					"id": "booth_04",
+					"rect": [
+						675.0,
+						468.0,
+						37.0,
+						18.0
+					],
+					"rect_norm": [
+						0.3296,
+						0.4063,
+						0.0181,
+						0.0156
+					],
+					"text": "04"
+				},
+				{
+					"id": "booth_05",
+					"rect": [
+						810.0,
+						467.0,
+						36.0,
+						18.0
+					],
+					"rect_norm": [
+						0.3955,
+						0.4054,
+						0.0176,
+						0.0156
+					],
+					"text": "05"
+				},
+				{
+					"id": "booth_06",
+					"rect": [
+						941.0,
+						466.0,
+						36.0,
+						17.0
+					],
+					"rect_norm": [
+						0.4595,
+						0.4045,
+						0.0176,
+						0.0148
+					],
+					"text": "06"
+				},
+				{
+					"id": "booth_07",
+					"rect": [
+						1071.0,
+						466.0,
+						36.0,
+						17.0
+					],
+					"rect_norm": [
+						0.5229,
+						0.4045,
+						0.0176,
+						0.0148
+					],
+					"text": "07"
+				},
+				{
+					"id": "booth_08",
+					"rect": [
+						1202.0,
+						467.0,
+						36.0,
+						18.0
+					],
+					"rect_norm": [
+						0.5869,
+						0.4054,
+						0.0176,
+						0.0156
+					],
+					"text": "08"
+				},
+				{
+					"id": "booth_09",
+					"rect": [
+						1335.0,
+						468.0,
+						37.0,
+						18.0
+					],
+					"rect_norm": [
+						0.6519,
+						0.4063,
+						0.0181,
+						0.0156
+					],
+					"text": "09"
+				},
+				{
+					"id": "booth_10",
+					"rect": [
+						1473.0,
+						470.0,
+						39.0,
+						19.0
+					],
+					"rect_norm": [
+						0.7192,
+						0.408,
+						0.019,
+						0.0165
+					],
+					"text": "10"
+				},
+				{
+					"id": "booth_11",
+					"rect": [
+						1618.0,
+						473.0,
+						42.0,
+						21.0
+					],
+					"rect_norm": [
+						0.79,
+						0.4106,
+						0.0205,
+						0.0182
+					],
+					"text": "11"
+				},
+				{
+					"id": "booth_12",
+					"rect": [
+						1773.0,
+						476.0,
+						45.0,
+						22.0
+					],
+					"rect_norm": [
+						0.8657,
+						0.4132,
+						0.022,
+						0.0191
+					],
+					"text": "12"
+				}
+			],
+			"lighting": "hall",
+			"plates": [
+				"pl_f9_1"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"485263",
+				"7a8798",
+				"b5bfc9",
+				"e8f1f5"
+			],
+			"recipe": "970c2ff263fa96c9b9bf0595f581ea1c",
+			"render_ms": 22062.0
+		},
+		"bg_h13": {
+			"camera": {
+				"fov": 46.0,
+				"transform": "Transform3D(1, 0, 0, 0, 0.99976635, 0.021616569, 0, -0.021616569, 0.99976635, 0, 1.8, 9.5)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_h13.webp": {
+					"file_bytes": 36528.0,
+					"kind": "bg",
+					"md5": "ac9343d8e2aa6ee5dd779cdd1a01856a",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "e3069ff493b0c3b56b720e34b0c46adbf038274e87808bd07868df4807a1e4e6",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f9_2_families.webp": {
+					"file_bytes": 72928.0,
+					"intent_rect": [
+						164.0,
+						346.0,
+						1720.0,
+						737.0
+					],
+					"kind": "mid",
+					"md5": "d556bfa23239d6af23cc9cd96f66b466",
+					"outside_intent": 0.049,
+					"rect": [
+						70.0,
+						562.0,
+						1486.0,
+						580.0
+					],
+					"rect_norm": [
+						0.0342,
+						0.4878,
+						0.7256,
+						0.5035
+					],
+					"sha256": "bc56d23cfa2fbe8ab0ee64ad9088e49a8a8b86225c693e06e5c459d59dd8d304",
+					"size": [
+						1486.0,
+						580.0
+					],
+					"vram_bytes": 3447520.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "hall_dark",
+			"plates": [
+				"pl_f9_2"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"485263",
+				"7a8798",
+				"b5bfc9",
+				"e8f1f5"
+			],
+			"recipe": "cbc786418dfec398ea6ac0eb03935c0a",
+			"render_ms": 21524.0
+		},
+		"bg_h14": {
+			"camera": {
+				"fov": 44.0,
+				"transform": "Transform3D(1, 0, 0, 0, 0.9374253, 0.34818646, 0, -0.34818646, 0.9374253, 0.05, 1.5, 1.2)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_h14.webp": {
+					"file_bytes": 132220.0,
+					"kind": "bg",
+					"md5": "717e70b8719875e444c8486df9abe811",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "57315b5f72a81b328290d3c5a1dec34b01b854f494dcc9ee620867ba08061452",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "hall_dark",
+			"plates": [
+				"pl_f9_3"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"485263",
+				"7a8798",
+				"b5bfc9",
+				"e8f1f5"
+			],
+			"recipe": "af15e31a1b291171389ebac6930c2aef",
+			"render_ms": 11099.0
+		},
+		"bg_h15": {
+			"camera": {
+				"fov": 46.0,
+				"transform": "Transform3D(1, 0, 0, 0, 0.9997297, -0.023249533, 0, 0.023249533, 0.9997297, 0, 2.3, 2.6)"
+			},
+			"dominant": "state.green",
+			"files": {
+				"res://assets/cinematics/bg/bg_h15.webp": {
+					"file_bytes": 273796.0,
+					"kind": "bg",
+					"md5": "c8500b08796812a3f8e58b113b41111a",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "85ac408d4310bf87dfcf22ac817659003042630fceda71270e52522e2703a36c",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [
+				[
+					640.0,
+					303.0,
+					768.0,
+					497.0
+				]
+			],
+			"labels": [],
+			"lighting": "hall",
+			"plates": [
+				"pl_f10_2"
+			],
+			"ramp": [
+				"07080c",
+				"102322",
+				"193533",
+				"385e5f",
+				"4a6b6e",
+				"839fa7",
+				"bdcfd4",
+				"e8f1f5"
+			],
+			"recipe": "44efc599c445e97e49ed2dda032eb0af",
+			"render_ms": 11134.0
+		},
+		"bg_h16": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(0.97879064, 0.038473997, -0.2012179, 0, 0.98220664, 0.18780345, 0.20486312, -0.18382025, 0.96137464, -0.35, 1.62, 1.35)"
+			},
+			"dominant": "state.green",
+			"files": {
+				"res://assets/cinematics/bg/bg_h16.webp": {
+					"file_bytes": 255456.0,
+					"kind": "bg",
+					"md5": "c98d69d003002fd38ebc129deb9c0d78",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "37bc6beac32ea9cdb3350e6688ae0c3ac349695b82693e0f9e16c507801433f8",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f10_4_hand.webp": {
+					"file_bytes": 15856.0,
+					"intent_rect": [
+						737.0,
+						576.0,
+						614.0,
+						461.0
+					],
+					"kind": "mid",
+					"md5": "c5d74b8552fb71f00bd621c7983d6497",
+					"outside_intent": 0.877,
+					"rect": [
+						1169.0,
+						987.0,
+						586.0,
+						165.0
+					],
+					"rect_norm": [
+						0.5708,
+						0.8568,
+						0.2861,
+						0.1432
+					],
+					"sha256": "101695eb8a06bf5d9462f410a99227cb6708b5c607dae4f81c9a3f3e8da09d60",
+					"size": [
+						586.0,
+						165.0
+					],
+					"vram_bytes": 386760.0
+				}
+			},
+			"holo": [
+				[
+					-365.0,
+					-617.0,
+					2433.0,
+					1557.0
+				]
+			],
+			"labels": [],
+			"lighting": "dusk",
+			"plates": [
+				"pl_f10_4"
+			],
+			"ramp": [
+				"07080c",
+				"102322",
+				"193533",
+				"385e5f",
+				"52706d",
+				"8da29c",
+				"bfcabc",
+				"e4eae2"
+			],
+			"recipe": "4e4a6224a4aedac180b9147fd99a9a25",
+			"render_ms": 22090.0
+		},
+		"bg_h17": {
+			"camera": {
+				"fov": 46.0,
+				"transform": "Transform3D(1, 0, 0, 0, 0.9964197, 0.08454472, 0, -0.08454471, 0.9964197, 0, 2.6, 7.5)"
+			},
+			"dominant": "accent.yellow",
+			"files": {
+				"res://assets/cinematics/bg/bg_h17.webp": {
+					"file_bytes": 349854.0,
+					"kind": "bg",
+					"md5": "48fb4c65b2fd611d58053983da581b56",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "57907777a27974c0a7a321ace83518b6d02d1be21035f89f6a56d01ae25df350",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "hall",
+			"plates": [
+				"pl_ea_1"
+			],
+			"ramp": [
+				"07080c",
+				"202116",
+				"313222",
+				"545a4b",
+				"62685c",
+				"939d9b",
+				"c5cece",
+				"e8f1f5"
+			],
+			"recipe": "75295fcc5ecd24db0e3fbabeb5c9d880",
+			"render_ms": 10230.0
+		},
+		"bg_h18": {
+			"camera": {
+				"fov": 42.0,
+				"transform": "Transform3D(1, 0, 0, 0, 0.9971993, 0.07478995, 0, -0.07478995, 0.9971993, 0, 3.2, 11)"
+			},
+			"dominant": "world.key",
+			"files": {
+				"res://assets/cinematics/bg/bg_h18.webp": {
+					"file_bytes": 570742.0,
+					"kind": "bg",
+					"md5": "0911511fa0368e2a9817f099e7580b6d",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "b12e718e01edc78394f4ad8d6669748f589be03de9b5677d8eb24d776d095f20",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "hall_warm",
+			"plates": [
+				"pl_eb_3"
+			],
+			"ramp": [
+				"07080c",
+				"3a3e44",
+				"555b64",
+				"77818e",
+				"81898f",
+				"a3abaa",
+				"c7ccc0",
+				"e4eae2"
+			],
+			"recipe": "bf8984799abd81a9787b56376340b898",
+			"render_ms": 10605.0
+		},
+		"bg_h2": {
+			"camera": {
+				"fov": 46.0,
+				"transform": "Transform3D(0.95911473, -0.02745946, 0.28168228, 0, 0.9952821, 0.09702389, -0.28301752, -0.093057044, 0.9545897, 0.2, 1.62, -0.4)"
+			},
+			"dominant": "text.primary",
+			"files": {
+				"res://assets/cinematics/bg/bg_h2.webp": {
+					"file_bytes": 343306.0,
+					"kind": "bg",
+					"md5": "43e5dcb11cfd3f862f633f7c3a153bf8",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "4fb6bead9c272fcc63154068a563eddc04ff4f4c4d484658cc0c1f0618b04a91",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f7_4_queue.webp": {
+					"file_bytes": 80322.0,
+					"intent_rect": [
+						123.0,
+						346.0,
+						1802.0,
+						737.0
+					],
+					"kind": "mid",
+					"md5": "6a586fcaa81499f17f1154c39d25b409",
+					"outside_intent": 0.007,
+					"rect": [
+						535.0,
+						372.0,
+						555.0,
+						764.0
+					],
+					"rect_norm": [
+						0.2612,
+						0.3229,
+						0.271,
+						0.6632
+					],
+					"sha256": "cf826f3ef43b059bfa92ab582a6b524f7f4965308ebf05d262a454af2e89dd68",
+					"size": [
+						555.0,
+						764.0
+					],
+					"vram_bytes": 1696080.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "hall",
+			"plates": [
+				"pl_f7_4"
+			],
+			"ramp": [
+				"07080c",
+				"282c33",
+				"3c424b",
+				"5f6977",
+				"6a7481",
+				"95a2b1",
+				"c5cfd8",
+				"e8f1f5"
+			],
+			"recipe": "5b9bf07129099acc17d845c96207b2b5",
+			"render_ms": 13947.0
+		},
+		"bg_h3": {
+			"camera": {
+				"fov": 40.0,
+				"transform": "Transform3D(0.99634665, -0.0018229235, 0.08538169, 0, 0.9997722, 0.021345422, -0.08540115, -0.02126744, 0.9961196, 0.6, 1.75, -4)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_h3.webp": {
+					"file_bytes": 125292.0,
+					"kind": "bg",
+					"md5": "74bc8991d07ae6fcabbed30ec991b61f",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "ff664847705213881dba49170bfafd85db9659005c1530cc5d5a14e186cb87da",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/fig/pl_f1_3_newcomer.webp": {
+					"file_bytes": 2658.0,
+					"intent_rect": [
+						901.0,
+						392.0,
+						246.0,
+						415.0
+					],
+					"kind": "fig",
+					"md5": "bd84bb84b6cafa1fef81f3d0cbe49201",
+					"outside_intent": 0.0,
+					"rect": [
+						986.0,
+						595.0,
+						144.0,
+						121.0
+					],
+					"rect_norm": [
+						0.4814,
+						0.5165,
+						0.0703,
+						0.105
+					],
+					"sha256": "7db468b0ef58860f5cc9eee62071f97012272df7cf6cf86e22a3ea761d8b3924",
+					"size": [
+						144.0,
+						121.0
+					],
+					"vram_bytes": 69696.0
+				},
+				"res://assets/cinematics/mid/pl_ea_2_short_queue.webp": {
+					"file_bytes": 56936.0,
+					"intent_rect": [
+						205.0,
+						461.0,
+						819.0,
+						622.0
+					],
+					"kind": "mid",
+					"md5": "acd1fd45178d36370f3c81371bc328b6",
+					"outside_intent": 0.043,
+					"rect": [
+						172.0,
+						510.0,
+						779.0,
+						642.0
+					],
+					"rect_norm": [
+						0.084,
+						0.4427,
+						0.3804,
+						0.5573
+					],
+					"sha256": "901dfb17e8681d695fb6e187236014f41428df0fddc123b3796f950963a4655b",
+					"size": [
+						779.0,
+						642.0
+					],
+					"vram_bytes": 2000472.0
+				}
+			},
+			"holo": [
+				[
+					848.0,
+					397.0,
+					354.0,
+					302.0
+				]
+			],
+			"labels": [
+				{
+					"id": "booth_04",
+					"rect": [
+						958.0,
+						268.0,
+						119.0,
+						59.0
+					],
+					"rect_norm": [
+						0.4678,
+						0.2326,
+						0.0581,
+						0.0512
+					],
+					"text": "04"
+				}
+			],
+			"lighting": "hall",
+			"plates": [
+				"pl_e_fig",
+				"pl_ea_2",
+				"pl_f1_3"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"485263",
+				"7a8798",
+				"b5bfc9",
+				"e8f1f5"
+			],
+			"recipe": "a70cf1241ce049de4b62cfa28ee5f014",
+			"render_ms": 21122.0
+		},
+		"bg_h4": {
+			"camera": {
+				"fov": 40.0,
+				"transform": "Transform3D(0.99634665, -0.0030369754, 0.08534712, 0, 0.9993675, 0.035561297, -0.08540115, -0.035431378, 0.99571645, 0.6, 1.75, -4)"
+			},
+			"dominant": "state.red",
+			"files": {
+				"res://assets/cinematics/bg/bg_h4.webp": {
+					"file_bytes": 129168.0,
+					"kind": "bg",
+					"md5": "9a645abf0f82394583309b148ba1f896",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "a8690ffc497401fd2a2d0a9ecb28a12ed5b29fca1bade3c389831c0e15bcecf4",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [
+				{
+					"id": "booth_04",
+					"rect": [
+						958.0,
+						245.0,
+						119.0,
+						59.0
+					],
+					"rect_norm": [
+						0.4678,
+						0.2127,
+						0.0581,
+						0.0512
+					],
+					"text": "04"
+				}
+			],
+			"lighting": "hall",
+			"plates": [
+				"pl_f1_3_borne"
+			],
+			"ramp": [
+				"07080c",
+				"20141b",
+				"311f28",
+				"544452",
+				"625563",
+				"9390a0",
+				"c5c7d0",
+				"e8f1f5"
+			],
+			"recipe": "2ab7ce0617c6c507edb2144f39a0d2a0",
+			"render_ms": 7924.0
+		},
+		"bg_h5": {
+			"camera": {
+				"fov": 48.0,
+				"transform": "Transform3D(0.9899495, -0.009975098, 0.14106916, 0, 0.99750936, 0.07053458, -0.1414214, -0.06982567, 0.98748386, 0.6, 1.5, 1.4)"
+			},
+			"dominant": "state.amber",
+			"files": {
+				"res://assets/cinematics/bg/bg_h5.webp": {
+					"file_bytes": 199018.0,
+					"kind": "bg",
+					"md5": "e462febb6b702baad74708cd682ac68b",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "9f266bfb99e3391dc3360921a2dc6319be54ec9e6a4c4e8e784e344fd01946fb",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f2_1_hand.webp": {
+					"file_bytes": 4374.0,
+					"intent_rect": [
+						1065.0,
+						507.0,
+						451.0,
+						415.0
+					],
+					"kind": "mid",
+					"md5": "ce779cdeafc64a97c780e3e0fe554b8f",
+					"outside_intent": 0.0,
+					"rect": [
+						1297.0,
+						527.0,
+						137.0,
+						143.0
+					],
+					"rect_norm": [
+						0.6333,
+						0.4575,
+						0.0669,
+						0.1241
+					],
+					"sha256": "f2d41cd8264db90d3b05fbe2ca7ad3a8fbfabdf1d822c62c5e48031e9eae0818",
+					"size": [
+						137.0,
+						143.0
+					],
+					"vram_bytes": 78364.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "hall",
+			"plates": [
+				"pl_f2_1"
+			],
+			"ramp": [
+				"07080c",
+				"201c18",
+				"312b25",
+				"54524e",
+				"62615f",
+				"93989d",
+				"c5cbcf",
+				"e8f1f5"
+			],
+			"recipe": "129234e6ed8735fe966d4ce25749f74f",
+			"render_ms": 15396.0
+		},
+		"bg_h6": {
+			"camera": {
+				"fov": 46.0,
+				"transform": "Transform3D(1, 0, 0, 0, 0.99666965, 0.08154569, 0, -0.08154569, 0.99666965, 0, 4.2, 14)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_h6.webp": {
+					"file_bytes": 225470.0,
+					"kind": "bg",
+					"md5": "21476c7f65638d985c5a72a040a07ae2",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "d95ab552057ddc88ee194c96ef0e6b0482a517871fded7d6baf0665da7061b16",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [
+				[
+					910.0,
+					344.0,
+					228.0,
+					227.0
+				]
+			],
+			"labels": [],
+			"lighting": "hall",
+			"plates": [
+				"pl_f4_4",
+				"pl_f7_1"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"485263",
+				"7a8798",
+				"b5bfc9",
+				"e8f1f5"
+			],
+			"recipe": "4d930d222b4fd8f95c6072706e587f1c",
+			"render_ms": 5767.0
+		},
+		"bg_h7": {
+			"camera": {
+				"fov": 44.0,
+				"transform": "Transform3D(0.9796027, 0.0050457283, -0.2008808, 0, 0.9996847, 0.025110103, 0.20094416, -0.024597924, 0.9792938, -1.4, 1.7, -3.2)"
+			},
+			"dominant": "accent.magenta",
+			"files": {
+				"res://assets/cinematics/bg/bg_h7.webp": {
+					"file_bytes": 124404.0,
+					"kind": "bg",
+					"md5": "f72b513616fcf0dff4c7b0f64f7d76ee",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "e64dc6a630a102ace24aa4c1e2cf56853e4b864168784c9ad6df83e9668e7579",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f5_2_families.webp": {
+					"file_bytes": 53566.0,
+					"intent_rect": [
+						82.0,
+						346.0,
+						983.0,
+						737.0
+					],
+					"kind": "mid",
+					"md5": "6c3a4cc75525fc0248e07deae136a788",
+					"outside_intent": 0.01,
+					"rect": [
+						47.0,
+						518.0,
+						642.0,
+						587.0
+					],
+					"rect_norm": [
+						0.0229,
+						0.4497,
+						0.3135,
+						0.5095
+					],
+					"sha256": "cb5ca5cf312b0b1d257c81f0d07450d5549ecfbd2cc8df8ccaf11f800c4facba",
+					"size": [
+						642.0,
+						587.0
+					],
+					"vram_bytes": 1507416.0
+				}
+			},
+			"holo": [
+				[
+					847.0,
+					414.0,
+					279.0,
+					244.0
+				]
+			],
+			"labels": [],
+			"lighting": "hall",
+			"plates": [
+				"pl_f5_2"
+			],
+			"ramp": [
+				"07080c",
+				"201321",
+				"311d31",
+				"54425d",
+				"62536c",
+				"938fa6",
+				"c5c7d3",
+				"e8f1f5"
+			],
+			"recipe": "577696efd8c3bab3953a8b76335a4893",
+			"render_ms": 17055.0
+		},
+		"bg_h8": {
+			"camera": {
+				"fov": 40.0,
+				"transform": "Transform3D(0.99759746, -0.0005759059, 0.069275215, 0, 0.9999654, 0.008313017, -0.06927761, -0.008293044, 0.99756294, 0.25, 1.75, -7.4)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_h8.webp": {
+					"file_bytes": 150992.0,
+					"kind": "bg",
+					"md5": "3c472ffb356f25b1267f3d51728aba84",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "d9b3f0dfd6bd6b80d04c905de3ed28eac906fec367da0f120318e21e8476ab25",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_eb_1_pencil.webp": {
+					"file_bytes": 3024.0,
+					"intent_rect": [
+						819.0,
+						415.0,
+						410.0,
+						138.0
+					],
+					"kind": "mid",
+					"md5": "9095b405dd28a97c6e665028b0accc32",
+					"outside_intent": 0.0,
+					"rect": [
+						901.0,
+						496.0,
+						242.0,
+						59.0
+					],
+					"rect_norm": [
+						0.4399,
+						0.4306,
+						0.1182,
+						0.0512
+					],
+					"sha256": "c8e56655b8f7edcfb2715895edb014d499d3bcb2bcea19f36e090abe46998087",
+					"size": [
+						242.0,
+						59.0
+					],
+					"vram_bytes": 57112.0
+				}
+			},
+			"holo": [
+				[
+					682.0,
+					279.0,
+					692.0,
+					593.0
+				]
+			],
+			"labels": [],
+			"lighting": "hall_warm",
+			"plates": [
+				"pl_eb_1",
+				"pl_f5c_3"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"505862",
+				"858e8f",
+				"b9beb3",
+				"e4eae2"
+			],
+			"recipe": "ba01672f041bc64318a576f7ffd78be8",
+			"render_ms": 22856.0
+		},
+		"bg_h9": {
+			"camera": {
+				"fov": 44.0,
+				"transform": "Transform3D(0.91137064, 0.01933903, -0.41113207, 0, 0.9988955, 0.04698653, 0.41158667, -0.042822145, 0.91036403, -5.5, 2.4, 5)"
+			},
+			"dominant": "state.red",
+			"files": {
+				"res://assets/cinematics/bg/bg_h9.webp": {
+					"file_bytes": 239652.0,
+					"kind": "bg",
+					"md5": "7b9ade6829068682dbd79497f8ab730a",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "d39f33e2279525fc3b7d452d0837a098369efc0b0900377029328daedc74a74b",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "hall",
+			"plates": [
+				"pl_f5b_3"
+			],
+			"ramp": [
+				"07080c",
+				"20141b",
+				"311f28",
+				"544452",
+				"625563",
+				"9390a0",
+				"c5c7d0",
+				"e8f1f5"
+			],
+			"recipe": "4253c887ca263e275c2c496fe3e14376",
+			"render_ms": 11347.0
+		},
+		"bg_p1": {
+			"camera": {
+				"fov": 62.0,
+				"transform": "Transform3D(0.9730803, -0.043467894, 0.22633007, 0, 0.9820524, 0.18860836, -0.2304664, -0.18353109, 0.9556158, 0.6, 1.65, 1)"
+			},
+			"dominant": "state.amber",
+			"files": {
+				"res://assets/cinematics/bg/bg_p1.webp": {
+					"file_bytes": 284164.0,
+					"kind": "bg",
+					"md5": "e57d48f243e2773b6b683c2d3faaf5bb",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "22fa4ed0c73df1240d8b87a7f4fe03114caea832abb009d9ec7c5b1a5b02ff3c",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f2_2_boxes.webp": {
+					"file_bytes": 47256.0,
+					"intent_rect": [
+						205.0,
+						599.0,
+						942.0,
+						507.0
+					],
+					"kind": "mid",
+					"md5": "a11db6b1c51cec4b899ffa3167dfde96",
+					"outside_intent": 0.208,
+					"rect": [
+						58.0,
+						722.0,
+						855.0,
+						430.0
+					],
+					"rect_norm": [
+						0.0283,
+						0.6267,
+						0.4175,
+						0.3733
+					],
+					"sha256": "b7971c0075924ced4cd6399bcb505b752089b6185e29bac0b0050bf757e401ef",
+					"size": [
+						855.0,
+						430.0
+					],
+					"vram_bytes": 1470600.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "cabin",
+			"plates": [
+				"pl_f2_2"
+			],
+			"ramp": [
+				"07080c",
+				"201c18",
+				"312b25",
+				"54524e",
+				"68665f",
+				"9a9c94",
+				"c6c8b8",
+				"e4eae2"
+			],
+			"recipe": "f87bddc0f5fd375542a2a51907269577",
+			"render_ms": 19339.0
+		},
+		"bg_p2": {
+			"camera": {
+				"fov": 58.0,
+				"transform": "Transform3D(0.81373346, -0.06711561, 0.5773503, 0, 0.993311, 0.11547005, -0.5812382, -0.09396185, 0.80829036, 0.9, 1.4, 0.6)"
+			},
+			"dominant": "text.secondary",
+			"files": {
+				"res://assets/cinematics/bg/bg_p2.webp": {
+					"file_bytes": 286466.0,
+					"kind": "bg",
+					"md5": "099135eb7c5b67e68154108758326645",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "1f449e0ba9b971a12e7d1ee7ecd04f7bf6b377b29ca11c417c64c92e221ee485",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "night",
+			"plates": [
+				"pl_f3_1"
+			],
+			"ramp": [
+				"07080c",
+				"1d2129",
+				"2b313d",
+				"4b5667",
+				"596374",
+				"8a97a8",
+				"bfcad3",
+				"e8f1f5"
+			],
+			"recipe": "51c8bd48a2977c5a0e49ac3e5f6cfc7c",
+			"render_ms": 10448.0
+		},
+		"bg_p3": {
+			"camera": {
+				"fov": 40.0,
+				"transform": "Transform3D(0.99560016, 0.0021944852, -0.09367784, 0, 0.99972576, 0.023419447, 0.09370354, -0.023316404, 0.9953271, 0.37, 1.5699999, -2.3000002)"
+			},
+			"dominant": "text.secondary",
+			"files": {
+				"res://assets/cinematics/bg/bg_p3.webp": {
+					"file_bytes": 200558.0,
+					"kind": "bg",
+					"md5": "6983c2e43739781c6fbdd6dd0a4365b6",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "442e3a6a215c8d3e70144eb75a66b5f1470e0b6348015beddf7c4ae9317bacef",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "night",
+			"plates": [
+				"pl_f3_2"
+			],
+			"ramp": [
+				"07080c",
+				"1d2129",
+				"2b313d",
+				"4b5667",
+				"596374",
+				"8a97a8",
+				"bfcad3",
+				"e8f1f5"
+			],
+			"recipe": "c7f6f0f5955171ef044531ee4d9fcdf4",
+			"render_ms": 9910.0
+		},
+		"bg_p4": {
+			"camera": {
+				"fov": 70.0,
+				"transform": "Transform3D(0.755689, 0.078615256, 0.6501951, 0, 0.99276954, -0.120036006, -0.6549306, 0.090709895, 0.75022507, 0.2, 0.18, -0.6)"
+			},
+			"dominant": "text.secondary",
+			"files": {
+				"res://assets/cinematics/bg/bg_p4.webp": {
+					"file_bytes": 253548.0,
+					"kind": "bg",
+					"md5": "9cbadca05686f1819be335828122e743",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "910e00784db7924b48e3a4484a411d75d177806012d4b1fcf606d1591d931950",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f3_2_lumika_firefly.webp": {
+					"file_bytes": 698.0,
+					"intent_rect": [
+						860.0,
+						461.0,
+						328.0,
+						207.0
+					],
+					"kind": "mid",
+					"md5": "e48def4c7f29cca58c1224c7fd76adac",
+					"outside_intent": 0.0,
+					"rect": [
+						969.0,
+						600.0,
+						69.0,
+						31.0
+					],
+					"rect_norm": [
+						0.4731,
+						0.5208,
+						0.0337,
+						0.0269
+					],
+					"sha256": "6266d57ed66131598797126a24adbc67c2869919edd5e39e440d49766d6af839",
+					"size": [
+						69.0,
+						31.0
+					],
+					"vram_bytes": 8556.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "night",
+			"plates": [
+				"pl_f3_2_lumika"
+			],
+			"ramp": [
+				"07080c",
+				"1d2129",
+				"2b313d",
+				"4b5667",
+				"596374",
+				"8a97a8",
+				"bfcad3",
+				"e8f1f5"
+			],
+			"recipe": "7ec633a2b13c906f62248f64f5a2e01f",
+			"render_ms": 17557.0
+		},
+		"bg_p5": {
+			"camera": {
+				"fov": 56.0,
+				"transform": "Transform3D(0.9838699, -0.043944195, 0.17340389, 0, 0.96935725, 0.24565552, -0.17888543, -0.24169308, 0.9537214, 0.6, 1.75, 0.9)"
+			},
+			"dominant": "accent.yellow",
+			"files": {
+				"res://assets/cinematics/bg/bg_p5.webp": {
+					"file_bytes": 280302.0,
+					"kind": "bg",
+					"md5": "c5d6b6f9db76f2e0c823fd3597b281b9",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "2e563c26fbb1afb18e95ebeca6995f8dd3abdf0d1f1256a5303ef1496c5520f5",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f4_3_drawings.webp": {
+					"file_bytes": 12018.0,
+					"intent_rect": [
+						492.0,
+						691.0,
+						1065.0,
+						369.0
+					],
+					"kind": "mid",
+					"md5": "1677d10fa147fea51c418931820c9e2f",
+					"outside_intent": 0.256,
+					"rect": [
+						750.0,
+						646.0,
+						393.0,
+						130.0
+					],
+					"rect_norm": [
+						0.3662,
+						0.5608,
+						0.1919,
+						0.1128
+					],
+					"sha256": "c0f19f637571a5469a13d904ba0c3c05883463e517707c35a85db4a3138a3337",
+					"size": [
+						393.0,
+						130.0
+					],
+					"vram_bytes": 204360.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "dawn",
+			"plates": [
+				"pl_f4_3"
+			],
+			"ramp": [
+				"07080c",
+				"202116",
+				"313222",
+				"545a4b",
+				"686d5c",
+				"9aa192",
+				"c6cab7",
+				"e4eae2"
+			],
+			"recipe": "95a740c7e1db2693e08e9826a5622eb5",
+			"render_ms": 13540.0
+		},
+		"bg_p6": {
+			"camera": {
+				"fov": 52.0,
+				"transform": "Transform3D(0.99886817, -0.03189221, 0.03528922, 0, 0.7419136, 0.6704955, -0.047565136, -0.66973656, 0.74107385, 0.45, 1.75, -0.2)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_p6.webp": {
+					"file_bytes": 250644.0,
+					"kind": "bg",
+					"md5": "009a162a93dc8e24c92c917ba7411b15",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "f433b467d58fcf56e14916b7dc52d8dc122b2356dc21d26b5caa2a583da16578",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f5_4_prints.webp": {
+					"file_bytes": 52546.0,
+					"intent_rect": [
+						451.0,
+						622.0,
+						1147.0,
+						438.0
+					],
+					"kind": "mid",
+					"md5": "5cecd6e8eebe94924d33ccac28db216f",
+					"outside_intent": 0.507,
+					"rect": [
+						474.0,
+						399.0,
+						890.0,
+						401.0
+					],
+					"rect_norm": [
+						0.2314,
+						0.3464,
+						0.4346,
+						0.3481
+					],
+					"sha256": "a5cc7a426a662dad0762f93b10b11b327c81e19ff03fa20169972e23273b3f62",
+					"size": [
+						890.0,
+						401.0
+					],
+					"vram_bytes": 1427560.0
+				},
+				"res://assets/cinematics/mid/pl_f5b_4_drawings.webp": {
+					"file_bytes": 41426.0,
+					"intent_rect": [
+						451.0,
+						622.0,
+						1147.0,
+						438.0
+					],
+					"kind": "mid",
+					"md5": "b276b162dd3867cfe7bba34a9c322d01",
+					"outside_intent": 0.689,
+					"rect": [
+						651.0,
+						406.0,
+						772.0,
+						350.0
+					],
+					"rect_norm": [
+						0.3179,
+						0.3524,
+						0.377,
+						0.3038
+					],
+					"sha256": "2143636d6d294c871297929859e7e93c911a104f36452b4f4840beb23e15e89d",
+					"size": [
+						772.0,
+						350.0
+					],
+					"vram_bytes": 1080800.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "cabin",
+			"plates": [
+				"pl_f5_4",
+				"pl_f5b_4"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"505862",
+				"858e8f",
+				"b9beb3",
+				"e4eae2"
+			],
+			"recipe": "5b72597e6c786f45deac54aaf5d580b0",
+			"render_ms": 22446.0
+		},
+		"bg_p7": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(0.9650813, 0.026942449, -0.26056138, 0, 0.99469656, 0.102853164, 0.2619506, -0.099261664, 0.959963, 0.5, 1.5, -1.6)"
+			},
+			"dominant": "accent.cyan",
+			"files": {
+				"res://assets/cinematics/bg/bg_p7.webp": {
+					"file_bytes": 344576.0,
+					"kind": "bg",
+					"md5": "f5600f1d6ee8af658216d22ac22f6c33",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "4b64ff18f81d755a8d916eb0fc239a29e006d5e47c4c504db14ee8cdbab04ae7",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f8_3_hand.webp": {
+					"file_bytes": 6946.0,
+					"intent_rect": [
+						983.0,
+						530.0,
+						410.0,
+						346.0
+					],
+					"kind": "mid",
+					"md5": "ee11f7d2e3c8b589101f38780d4ae964",
+					"outside_intent": 0.534,
+					"rect": [
+						1223.0,
+						614.0,
+						302.0,
+						136.0
+					],
+					"rect_norm": [
+						0.5972,
+						0.533,
+						0.1475,
+						0.1181
+					],
+					"sha256": "9385fad1c8cb0f31d67ff6509ea7d09e8ca3cef3268d23c6e0cd1cb6a0b92b71",
+					"size": [
+						302.0,
+						136.0
+					],
+					"vram_bytes": 164288.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "cabin",
+			"plates": [
+				"pl_f8_3"
+			],
+			"ramp": [
+				"07080c",
+				"0d212a",
+				"13323f",
+				"325a6c",
+				"4d6d77",
+				"8aa1a3",
+				"becabf",
+				"e4eae2"
+			],
+			"recipe": "56bb19520dbf8b0334d500fc4991885d",
+			"render_ms": 13889.0
+		},
+		"bg_q1": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(0.9929883, -0.002794077, -0.11817987, 0, 0.99972063, -0.023635976, 0.11821289, 0.023470245, 0.9927109, -1.5, 2.1, 9)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_q1.webp": {
+					"file_bytes": 208704.0,
+					"kind": "bg",
+					"md5": "6261e56405b02e1293762f72fc9e84fb",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "a1613a25907495d8b0e27f8a9e2d80efaaecd4cc7e9a19e41f0b74afe466a2dd",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/fig/pl_f4_1_guards.webp": {
+					"file_bytes": 8180.0,
+					"intent_rect": [
+						1024.0,
+						323.0,
+						696.0,
+						760.0
+					],
+					"kind": "fig",
+					"md5": "36928974340baccaee5648af7ecfa694",
+					"outside_intent": 0.0,
+					"rect": [
+						1301.0,
+						617.0,
+						315.0,
+						261.0
+					],
+					"rect_norm": [
+						0.6353,
+						0.5356,
+						0.1538,
+						0.2266
+					],
+					"sha256": "3c7b68b9e4eec22452e509805ea71d3951af6f741e5ae9f54f784309d83d7d80",
+					"size": [
+						315.0,
+						261.0
+					],
+					"vram_bytes": 328860.0
+				},
+				"res://assets/cinematics/mid/pl_f10_1_transit7.webp": {
+					"file_bytes": 42026.0,
+					"intent_rect": [
+						410.0,
+						230.0,
+						1434.0,
+						576.0
+					],
+					"kind": "mid",
+					"md5": "5e37a0bb519ffa66ad31fcf1a4e35567",
+					"outside_intent": 0.0,
+					"rect": [
+						598.0,
+						361.0,
+						1023.0,
+						293.0
+					],
+					"rect_norm": [
+						0.292,
+						0.3134,
+						0.4995,
+						0.2543
+					],
+					"sha256": "968747916b6c141a3038c73aa9019b93b289ec5db6650d6eca5dfdfce529294f",
+					"size": [
+						1023.0,
+						293.0
+					],
+					"vram_bytes": 1198956.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "dock",
+			"plates": [
+				"pl_f10_1",
+				"pl_f4_1",
+				"pl_f5b_1",
+				"pl_f7_2"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"485263",
+				"7a8798",
+				"b5bfc9",
+				"e8f1f5"
+			],
+			"recipe": "1a3bd52ba4282d64a12f7f0798b01066",
+			"render_ms": 33027.0
+		},
+		"bg_q2": {
+			"camera": {
+				"fov": 52.0,
+				"transform": "Transform3D(0.9885884, 0.007083725, 0.15047541, 0, 0.9988938, -0.047023557, -0.15064205, 0.046486944, 0.9874948, 1.2, 1.4, 6.5)"
+			},
+			"dominant": "accent.magenta",
+			"files": {
+				"res://assets/cinematics/bg/bg_q2.webp": {
+					"file_bytes": 165726.0,
+					"kind": "bg",
+					"md5": "92f54a81738dd5bb908fbd97a3dfe488",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "458b350a98034f33e2b76c4a4a88c0ef6dab3a2f33cd9b3a425b73985fdf0061",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "dock",
+			"plates": [
+				"pl_f5s_1"
+			],
+			"ramp": [
+				"07080c",
+				"201321",
+				"311d31",
+				"54425d",
+				"62536c",
+				"938fa6",
+				"c5c7d3",
+				"e8f1f5"
+			],
+			"recipe": "e4b2c195b76f0723abf0d5c18a136c03",
+			"render_ms": 10508.0
+		},
+		"bg_q3": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(0.9996145, -0.0013860877, 0.02773245, 0, 0.9987533, 0.049918406, -0.02776707, -0.049899157, 0.9983682, 0.2, 1.62, 2.4)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_q3.webp": {
+					"file_bytes": 234860.0,
+					"kind": "bg",
+					"md5": "b0c8f112ab14928f65e124cdf8973367",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "9c89f7e6fd4ab969954a32a9439c67f4ec3f50fbd5fb8c5d623dc5e185dc77df",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f2_3_halcyon.webp": {
+					"file_bytes": 3448.0,
+					"intent_rect": [
+						737.0,
+						300.0,
+						573.0,
+						346.0
+					],
+					"kind": "mid",
+					"md5": "0d25b9c0c7fad2b3a44415e43e69315e",
+					"outside_intent": 0.0,
+					"rect": [
+						909.0,
+						448.0,
+						214.0,
+						150.0
+					],
+					"rect_norm": [
+						0.4438,
+						0.3889,
+						0.1045,
+						0.1302
+					],
+					"sha256": "a82386b10939212afe8104f92a655d4ccf1ac8bd157e259d2232bf2326babbd9",
+					"size": [
+						214.0,
+						150.0
+					],
+					"vram_bytes": 128400.0
+				},
+				"res://assets/cinematics/mid/pl_f6t_1_bags.webp": {
+					"file_bytes": 3926.0,
+					"intent_rect": [
+						1147.0,
+						714.0,
+						492.0,
+						346.0
+					],
+					"kind": "mid",
+					"md5": "5e524c4a126278e28e924d3f0a50ee72",
+					"outside_intent": 0.0,
+					"rect": [
+						1212.0,
+						840.0,
+						355.0,
+						218.0
+					],
+					"rect_norm": [
+						0.5918,
+						0.7292,
+						0.1733,
+						0.1892
+					],
+					"sha256": "6a7080cf6782032ec12d1d98238c603f1c88b3cb715ce042b85bea85c64b7aa1",
+					"size": [
+						355.0,
+						218.0
+					],
+					"vram_bytes": 309560.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "dock",
+			"plates": [
+				"pl_f2_3",
+				"pl_f6t_1"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"485263",
+				"7a8798",
+				"b5bfc9",
+				"e8f1f5"
+			],
+			"recipe": "e3f3218a6307ebde4b14f26d87419579",
+			"render_ms": 29113.0
+		},
+		"bg_q4": {
+			"camera": {
+				"fov": 54.0,
+				"transform": "Transform3D(0.99763036, -0.0014198163, 0.06878744, 0, 0.99978703, 0.020636236, -0.068802096, -0.020587336, 0.99741787, 0.8, 1.7, 6.5)"
+			},
+			"dominant": "state.red",
+			"files": {
+				"res://assets/cinematics/bg/bg_q4.webp": {
+					"file_bytes": 179384.0,
+					"kind": "bg",
+					"md5": "f403693ae7f5e10191883ed3549dd3d9",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "0d176bd6608edc115c6574af9f6c41387d3a04779090a5fb601312276f239181",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f5b_2_families.webp": {
+					"file_bytes": 31482.0,
+					"intent_rect": [
+						205.0,
+						323.0,
+						1638.0,
+						760.0
+					],
+					"kind": "mid",
+					"md5": "b8f55061069a734c862922cb5e4240b1",
+					"outside_intent": 0.0,
+					"rect": [
+						610.0,
+						528.0,
+						640.0,
+						324.0
+					],
+					"rect_norm": [
+						0.2979,
+						0.4583,
+						0.3125,
+						0.2813
+					],
+					"sha256": "02a1df09b3390595fe394df5bffde0ba0d452146361307f2ca33164e2645e25a",
+					"size": [
+						640.0,
+						324.0
+					],
+					"vram_bytes": 829440.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "dock",
+			"plates": [
+				"pl_f5b_2"
+			],
+			"ramp": [
+				"07080c",
+				"20141b",
+				"311f28",
+				"544452",
+				"625563",
+				"9390a0",
+				"c5c7d0",
+				"e8f1f5"
+			],
+			"recipe": "1400e66c6ee6f8423353548403d8f12b",
+			"render_ms": 16093.0
+		},
+		"bg_q5": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(0.98837173, 0.021739664, 0.1504951, 0, 0.98972696, -0.14297032, -0.15205719, 0.14130782, 0.97821814, 1, 1.7, 9)"
+			},
+			"dominant": "accent.cyan",
+			"files": {
+				"res://assets/cinematics/bg/bg_q5.webp": {
+					"file_bytes": 155400.0,
+					"kind": "bg",
+					"md5": "13a0b0f51ffa0cee72f316fd4f15b312",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "e3c6dbae944923a3ac5c5f743a454898f2a8d9518847253b49cee136a938478e",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [
+				{
+					"id": "hull_name",
+					"rect": [
+						759.0,
+						461.0,
+						309.0,
+						87.0
+					],
+					"rect_norm": [
+						0.3706,
+						0.4002,
+						0.1509,
+						0.0755
+					],
+					"text": "BASSE-MARÉE"
+				}
+			],
+			"lighting": "dawn",
+			"plates": [
+				"pl_f6e_1"
+			],
+			"ramp": [
+				"07080c",
+				"0d212a",
+				"13323f",
+				"325a6c",
+				"4d6d77",
+				"8aa1a3",
+				"becabf",
+				"e4eae2"
+			],
+			"recipe": "c980b9365b351ac65312c4dc09924d4b",
+			"render_ms": 8120.0
+		},
+		"bg_q6": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(0.95448, 0.029510485, -0.29681152, 0, 0.9950937, 0.09893718, 0.29827496, -0.09443356, 0.94979703, -1.1, 1.7, 2.2)"
+			},
+			"dominant": "accent.cyan",
+			"files": {
+				"res://assets/cinematics/bg/bg_q6.webp": {
+					"file_bytes": 208942.0,
+					"kind": "bg",
+					"md5": "1820f7c90984e2922063299418468d07",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "212b0ad882281af4748a87887a4e59dba3d12a90e4d28882aec0ce54c1fa95a0",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f6_2_ledger.webp": {
+					"file_bytes": 3808.0,
+					"intent_rect": [
+						614.0,
+						691.0,
+						614.0,
+						346.0
+					],
+					"kind": "mid",
+					"md5": "1a08abf1108dd26683aa2a45690afc91",
+					"outside_intent": 0.0,
+					"rect": [
+						956.0,
+						694.0,
+						198.0,
+						66.0
+					],
+					"rect_norm": [
+						0.4668,
+						0.6024,
+						0.0967,
+						0.0573
+					],
+					"sha256": "bd49b7563b228c04ac03c64707dc29dfb59d09d87c0c2f632ebec9f5aa51dc93",
+					"size": [
+						198.0,
+						66.0
+					],
+					"vram_bytes": 52272.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "mine_lamp",
+			"plates": [
+				"pl_f6_2"
+			],
+			"ramp": [
+				"07080c",
+				"0d212a",
+				"13323f",
+				"325a6c",
+				"4d6d77",
+				"8aa1a3",
+				"becabf",
+				"e4eae2"
+			],
+			"recipe": "9b102f34ed63ac972b03e78210ed4c3c",
+			"render_ms": 20021.0
+		},
+		"bg_q7": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 1.6)"
+			},
+			"dominant": "accent.cyan",
+			"files": {
+				"res://assets/cinematics/bg/bg_q7.webp": {
+					"file_bytes": 192334.0,
+					"kind": "bg",
+					"md5": "30a01d317f3b80301108573fb105ac1b",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "436acea2533f3bdbef3bd0ef573897291525fe74db56cb2d1dc63ce886d3cae0",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/fig/pl_f6_3_noa.webp": {
+					"file_bytes": 11730.0,
+					"intent_rect": [
+						614.0,
+						530.0,
+						369.0,
+						576.0
+					],
+					"kind": "fig",
+					"md5": "a10618b7277d1eb326a141f1aef2b9eb",
+					"outside_intent": 0.453,
+					"rect": [
+						492.0,
+						872.0,
+						273.0,
+						280.0
+					],
+					"rect_norm": [
+						0.2402,
+						0.7569,
+						0.1333,
+						0.2431
+					],
+					"sha256": "11966dd02ef0ff08e0d9265e485c3ed7578d39a928445612aef6b76930dc378a",
+					"size": [
+						273.0,
+						280.0
+					],
+					"vram_bytes": 305760.0
+				},
+				"res://assets/cinematics/mid/pl_f6_3_halcyon.webp": {
+					"file_bytes": 2490.0,
+					"intent_rect": [
+						860.0,
+						346.0,
+						328.0,
+						207.0
+					],
+					"kind": "mid",
+					"md5": "3bb694479982e0607654a3d6bbfba4e7",
+					"outside_intent": 0.297,
+					"rect": [
+						946.0,
+						494.0,
+						169.0,
+						110.0
+					],
+					"rect_norm": [
+						0.4619,
+						0.4288,
+						0.0825,
+						0.0955
+					],
+					"sha256": "24021203bf6ec628dd3af1b6621033fee3b063a21dc2494e1ade5ff3f8de238f",
+					"size": [
+						169.0,
+						110.0
+					],
+					"vram_bytes": 74360.0
+				},
+				"res://assets/cinematics/mid/pl_f6d_4_cargo_lights.webp": {
+					"file_bytes": 1132.0,
+					"intent_rect": [
+						696.0,
+						276.0,
+						655.0,
+						346.0
+					],
+					"kind": "mid",
+					"md5": "5eae7af7c3bb4b66b170270a933e2227",
+					"outside_intent": 0.0,
+					"rect": [
+						915.0,
+						501.0,
+						193.0,
+						127.0
+					],
+					"rect_norm": [
+						0.4468,
+						0.4349,
+						0.0942,
+						0.1102
+					],
+					"sha256": "ff0fa25b15d09b7b75309d89b459c2031fc67406df1c8e5cbbb9588d42b8fbd9",
+					"size": [
+						193.0,
+						127.0
+					],
+					"vram_bytes": 98044.0
+				},
+				"res://assets/cinematics/mid/pl_f6e_4_hand.webp": {
+					"file_bytes": 1810.0,
+					"intent_rect": [
+						819.0,
+						346.0,
+						492.0,
+						461.0
+					],
+					"kind": "mid",
+					"md5": "2d4235b40ee12c169771460f6d7efc16",
+					"outside_intent": 0.0,
+					"rect": [
+						979.0,
+						602.0,
+						73.0,
+						141.0
+					],
+					"rect_norm": [
+						0.478,
+						0.5226,
+						0.0356,
+						0.1224
+					],
+					"sha256": "00d8626280519a24539ed1a68f8feaa0aa648e76a9a6585d8e63be6726d8b6fb",
+					"size": [
+						73.0,
+						141.0
+					],
+					"vram_bytes": 41172.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "night",
+			"plates": [
+				"pl_f6_3",
+				"pl_f6d_4",
+				"pl_f6e_4"
+			],
+			"ramp": [
+				"07080c",
+				"0d212a",
+				"13323f",
+				"325a6c",
+				"456879",
+				"809daf",
+				"bbced8",
+				"e8f1f5"
+			],
+			"recipe": "0831cf5d2d9b740dd3820d91489082fc",
+			"render_ms": 43505.0
+		},
+		"bg_q8": {
+			"camera": {
+				"fov": 48.0,
+				"transform": "Transform3D(0.99360526, 0.005094247, 0.11279471, 0, 0.9989817, -0.045117892, -0.11290969, 0.044829372, 0.99259347, 2, 2, 8)"
+			},
+			"dominant": "accent.cyan",
+			"files": {
+				"res://assets/cinematics/bg/bg_q8.webp": {
+					"file_bytes": 188046.0,
+					"kind": "bg",
+					"md5": "859436466ff95116090b16b16ee88f46",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "aefa5bc830bfc9c4933c2ab62775f14a7ed9ed7b152378dd3ba6d53cc8d40ee0",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "dawn",
+			"plates": [
+				"pl_f6d_1"
+			],
+			"ramp": [
+				"07080c",
+				"0d212a",
+				"13323f",
+				"325a6c",
+				"4d6d77",
+				"8aa1a3",
+				"becabf",
+				"e4eae2"
+			],
+			"recipe": "32c1458a25ed1906ccc164504a8ee9a5",
+			"render_ms": 8235.0
+		},
+		"bg_r1": {
+			"camera": {
+				"fov": 52.0,
+				"transform": "Transform3D(0.96656156, 0.01010887, 0.25623536, 0, 0.99922276, -0.03942084, -0.25643468, 0.03810267, 0.96581024, 2.2, 1.8, 3.8)"
+			},
+			"dominant": "accent.magenta",
+			"files": {
+				"res://assets/cinematics/bg/bg_r1.webp": {
+					"file_bytes": 197690.0,
+					"kind": "bg",
+					"md5": "7083bb5d57d49b21752981b20b3df900",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "2897b87a58f14a3a4a8139da6e5a71d5e308c4b02282ed8add81b35b8952b183",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/fig/pl_f5c_1_watchers.webp": {
+					"file_bytes": 27394.0,
+					"intent_rect": [
+						369.0,
+						392.0,
+						819.0,
+						668.0
+					],
+					"kind": "fig",
+					"md5": "a4b996733472e8ee84f1d767a5ac2c76",
+					"outside_intent": 0.149,
+					"rect": [
+						294.0,
+						617.0,
+						520.0,
+						405.0
+					],
+					"rect_norm": [
+						0.1436,
+						0.5356,
+						0.2539,
+						0.3516
+					],
+					"sha256": "dca2509715f7250a4d0592325fb92a7377b49e299ba89a98927ce0bba4ffd4a0",
+					"size": [
+						520.0,
+						405.0
+					],
+					"vram_bytes": 842400.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "recycler",
+			"plates": [
+				"pl_f5c_1"
+			],
+			"ramp": [
+				"07080c",
+				"201321",
+				"311d31",
+				"54425d",
+				"62536c",
+				"938fa6",
+				"c5c7d3",
+				"e8f1f5"
+			],
+			"recipe": "35f0f22f7b6e3b6418cc1e2da334a710",
+			"render_ms": 15159.0
+		},
+		"bg_r2": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(1, 0, 0, 0, 0.87947243, 0.47594982, 0, -0.47594982, 0.87947243, 0, 5.2, 6.5)"
+			},
+			"dominant": "world.key",
+			"files": {
+				"res://assets/cinematics/bg/bg_r2.webp": {
+					"file_bytes": 537574.0,
+					"kind": "bg",
+					"md5": "855c5ddc5389500c97596cd561d7a57b",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "1e3f6cb1641fb275e8393a6a6806330c08b3e5cf327c1b808721c940e71205b5",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_eb_2_council.webp": {
+					"file_bytes": 46234.0,
+					"intent_rect": [
+						287.0,
+						392.0,
+						1475.0,
+						691.0
+					],
+					"kind": "mid",
+					"md5": "02022a0e183be20ae50ecf052c4265f4",
+					"outside_intent": 0.0,
+					"rect": [
+						564.0,
+						546.0,
+						931.0,
+						519.0
+					],
+					"rect_norm": [
+						0.2754,
+						0.474,
+						0.4546,
+						0.4505
+					],
+					"sha256": "3a2ddae970bb2c11a36a015de9fc98afc1a52e7b57a85684d3d7553018652dc3",
+					"size": [
+						931.0,
+						519.0
+					],
+					"vram_bytes": 1932756.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "recycler",
+			"plates": [
+				"pl_eb_2"
+			],
+			"ramp": [
+				"07080c",
+				"3a3e44",
+				"555b64",
+				"77818e",
+				"7c8692",
+				"9da9b7",
+				"c6d1d9",
+				"e8f1f5"
+			],
+			"recipe": "654c2f072898f337c0aa8c4da77c875d",
+			"render_ms": 15389.0
+		},
+		"bg_t1": {
+			"camera": {
+				"fov": 58.0,
+				"transform": "Transform3D(1, 0, 0, 0, 0.99255306, -0.12181333, 0, 0.12181333, 0.99255306, 0, 1.8, 6)"
+			},
+			"dominant": "accent.magenta",
+			"files": {
+				"res://assets/cinematics/bg/bg_t1.webp": {
+					"file_bytes": 153972.0,
+					"kind": "bg",
+					"md5": "f9437fb5db3f0583f6e98e1f7d862d4d",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "22a38b41da709e31ff1fb0e47dc33768068e5f2b5a3c0bb4046adc664fc02c66",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "dawn",
+			"plates": [
+				"pl_f5s_3"
+			],
+			"ramp": [
+				"07080c",
+				"201321",
+				"311d31",
+				"54425d",
+				"68596b",
+				"9a959b",
+				"c6c4bb",
+				"e4eae2"
+			],
+			"recipe": "af9fff47610e115a65a3417a6b9b84b5",
+			"render_ms": 6418.0
+		},
+		"bg_t2": {
+			"camera": {
+				"fov": 46.0,
+				"transform": "Transform3D(0.9960377, -0.0007908578, -0.08892844, 0, 0.9999605, -0.008892843, 0.08893195, 0.008857607, 0.9959984, -2, 1.7, 6)"
+			},
+			"dominant": "state.amber",
+			"files": {
+				"res://assets/cinematics/bg/bg_t2.webp": {
+					"file_bytes": 167956.0,
+					"kind": "bg",
+					"md5": "d5f2f1f2f6683e87005ac59ec22cd10c",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "52f8f7f9874e01868f9c26ae72dc33b4ef8a0e37e43935fd63c1c1bdd0578b76",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "mine_lamp",
+			"plates": [
+				"pl_f2_4"
+			],
+			"ramp": [
+				"07080c",
+				"201c18",
+				"312b25",
+				"54524e",
+				"68665f",
+				"9a9c94",
+				"c6c8b8",
+				"e4eae2"
+			],
+			"recipe": "f0f9111078e4b5a59b1fcdcc2993afc2",
+			"render_ms": 5917.0
+		},
+		"bg_t3": {
+			"camera": {
+				"fov": 54.0,
+				"transform": "Transform3D(0.99896854, -0.0015454959, 0.04538135, 0, 0.9994206, 0.034036018, -0.04540766, -0.03400091, 0.9983897, 0.6, 1.7, 3.4)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_t3.webp": {
+					"file_bytes": 207918.0,
+					"kind": "bg",
+					"md5": "c895ca8e2dc7773d83c50592cd510953",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "c723582b864c74a70a93f1e4286ab22589ca13436907050194f22df00139b850",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f6t_3_committee.webp": {
+					"file_bytes": 59198.0,
+					"intent_rect": [
+						410.0,
+						346.0,
+						1229.0,
+						737.0
+					],
+					"kind": "mid",
+					"md5": "f5aebf272ff7aeefd459a349d4006437",
+					"outside_intent": 0.0,
+					"rect": [
+						449.0,
+						500.0,
+						956.0,
+						421.0
+					],
+					"rect_norm": [
+						0.2192,
+						0.434,
+						0.4668,
+						0.3655
+					],
+					"sha256": "b6b6f214f8aa4d866f26fc71c9a15283c2211e297c999d303ffb66a3d9717193",
+					"size": [
+						956.0,
+						421.0
+					],
+					"vram_bytes": 1609904.0
+				}
+			},
+			"holo": [
+				[
+					1088.0,
+					404.0,
+					294.0,
+					147.0
+				]
+			],
+			"labels": [],
+			"lighting": "mine_lamp",
+			"plates": [
+				"pl_e_fig_d",
+				"pl_ed_1",
+				"pl_f6t_3"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"505862",
+				"858e8f",
+				"b9beb3",
+				"e4eae2"
+			],
+			"recipe": "0510f2fde154895671cdefa9c99787e1",
+			"render_ms": 12493.0
+		},
+		"bg_t4": {
+			"camera": {
+				"fov": 54.0,
+				"transform": "Transform3D(0.981017, -0.018715095, 0.19301677, 0, 0.9953322, 0.096508384, -0.19392197, -0.09467636, 0.97643775, 1.4, 1.75, 2.6)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_t4.webp": {
+					"file_bytes": 118032.0,
+					"kind": "bg",
+					"md5": "6ca49cfba96c3f424a88202744b38393",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "d88519d02213e326303a4aea6e8c5ccfb7889475543407fafa63c32dd3047c14",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_ed_2_kept_seat.webp": {
+					"file_bytes": 3580.0,
+					"intent_rect": [
+						819.0,
+						599.0,
+						451.0,
+						369.0
+					],
+					"kind": "mid",
+					"md5": "64d617694ff3642fc4a0b004230f19b1",
+					"outside_intent": 0.188,
+					"rect": [
+						780.0,
+						679.0,
+						203.0,
+						180.0
+					],
+					"rect_norm": [
+						0.3809,
+						0.5894,
+						0.0991,
+						0.1563
+					],
+					"sha256": "4f5f9543e6321145f4764016358dda9fcb1f1182eb1c77ab22f3829fe05256db",
+					"size": [
+						203.0,
+						180.0
+					],
+					"vram_bytes": 146160.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "mine_lamp",
+			"plates": [
+				"pl_ed_2",
+				"pl_f6t_4"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"505862",
+				"858e8f",
+				"b9beb3",
+				"e4eae2"
+			],
+			"recipe": "707ae80df60863991da7bf307f78894a",
+			"render_ms": 12479.0
+		},
+		"bg_t5": {
+			"camera": {
+				"fov": 52.0,
+				"transform": "Transform3D(0.9856223, -0.0014273877, -0.16895783, 0, 0.99996436, -0.008447888, 0.16896385, 0.008326427, 0.9855871, -4, 1.7, 5)"
+			},
+			"dominant": "state.amber",
+			"files": {
+				"res://assets/cinematics/bg/bg_t5.webp": {
+					"file_bytes": 151290.0,
+					"kind": "bg",
+					"md5": "b91995d6e0cd9ca3c0385d738f63997e",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "0c93343d1fad362518098bd3773c5d4a4511693a3b337dbd48b2a825eb9936c1",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "mine_lamp",
+			"plates": [
+				"pl_ed_3"
+			],
+			"ramp": [
+				"07080c",
+				"201c18",
+				"312b25",
+				"54524e",
+				"68665f",
+				"9a9c94",
+				"c6c8b8",
+				"e4eae2"
+			],
+			"recipe": "2256621cb99148d0643ba3ead51067d2",
+			"render_ms": 5936.0
+		},
+		"bg_x1": {
+			"camera": {
+				"fov": 50.0,
+				"transform": "Transform3D(0.993331, -0.008667296, 0.11497111, 0, 0.9971705, 0.075173415, -0.11529735, -0.074672095, 0.99052036, 0.9, 1.8, 1.2)"
+			},
+			"dominant": "world.steel",
+			"files": {
+				"res://assets/cinematics/bg/bg_x1.webp": {
+					"file_bytes": 278500.0,
+					"kind": "bg",
+					"md5": "b05318cc1652f76b9b99326232578324",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "d47e0e579305af824176329bb06c8617d4a97a0cd684baeceebce37e5e0415c2",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_ec_2_register.webp": {
+					"file_bytes": 3380.0,
+					"intent_rect": [
+						696.0,
+						645.0,
+						655.0,
+						346.0
+					],
+					"kind": "mid",
+					"md5": "f3af1fb979c585df445fa8ff0cb3ba39",
+					"outside_intent": 0.0,
+					"rect": [
+						786.0,
+						718.0,
+						202.0,
+						62.0
+					],
+					"rect_norm": [
+						0.3838,
+						0.6233,
+						0.0986,
+						0.0538
+					],
+					"sha256": "981380d025d40a98357debee90abe7739b3ae997b2904f62a7005870fed53068",
+					"size": [
+						202.0,
+						62.0
+					],
+					"vram_bytes": 50096.0
+				},
+				"res://assets/cinematics/mid/pl_f10_3_benches.webp": {
+					"file_bytes": 96718.0,
+					"intent_rect": [
+						82.0,
+						507.0,
+						1884.0,
+						622.0
+					],
+					"kind": "mid",
+					"md5": "9a76d472104e239618b26c4007a6436b",
+					"outside_intent": 0.094,
+					"rect": [
+						0.0,
+						540.0,
+						2048.0,
+						612.0
+					],
+					"rect_norm": [
+						0.0,
+						0.4688,
+						1.0,
+						0.5313
+					],
+					"sha256": "644d13618882111cf9b9d48d2642adc4eb124b7bfb9351cb81e97f18aa413645",
+					"size": [
+						2048.0,
+						612.0
+					],
+					"vram_bytes": 5013504.0
+				}
+			},
+			"holo": [
+				[
+					860.0,
+					409.0,
+					377.0,
+					156.0
+				]
+			],
+			"labels": [],
+			"lighting": "school",
+			"plates": [
+				"pl_ec_2",
+				"pl_f10_3"
+			],
+			"ramp": [
+				"07080c",
+				"171b24",
+				"212834",
+				"3a4556",
+				"505862",
+				"858e8f",
+				"b9beb3",
+				"e4eae2"
+			],
+			"recipe": "144aa030324c7f75d89305be2becbb24",
+			"render_ms": 21268.0
+		},
+		"bg_x2": {
+			"camera": {
+				"fov": 54.0,
+				"transform": "Transform3D(0.9973521, 0.0037725712, -0.072625674, 0, 0.9986536, 0.05187548, 0.07272359, -0.05173812, 0.9960093, -0.5, 1.5, 1.6)"
+			},
+			"dominant": "accent.cyan",
+			"files": {
+				"res://assets/cinematics/bg/bg_x2.webp": {
+					"file_bytes": 226048.0,
+					"kind": "bg",
+					"md5": "1d6fbcb89ad2d057eaeba5d9acdd4100",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "d8bc95de50b4e9e41da82fbb050c86c93bd30faaff37dfa217bb45313dfcc4c2",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "archive",
+			"plates": [
+				"pl_ec_3",
+				"pl_f8_4"
+			],
+			"ramp": [
+				"07080c",
+				"0d212a",
+				"13323f",
+				"325a6c",
+				"4d6d77",
+				"8aa1a3",
+				"becabf",
+				"e4eae2"
+			],
+			"recipe": "4702dfa3526828efacb6d91c5875acdf",
+			"render_ms": 6462.0
+		},
+		"bg_x3": {
+			"camera": {
+				"fov": 64.0,
+				"transform": "Transform3D(0.99379873, -0.06942058, 0.08686164, 0, 0.7811703, 0.62431806, -0.11119426, -0.6204465, 0.77632594, 0.3, 5.75, -2.85)"
+			},
+			"dominant": "accent.yellow",
+			"files": {
+				"res://assets/cinematics/bg/bg_x3.webp": {
+					"file_bytes": 188956.0,
+					"kind": "bg",
+					"md5": "dcde69d790c2dba8ca016a11f60635c1",
+					"rect": [
+						0.0,
+						0.0,
+						2048.0,
+						1152.0
+					],
+					"rect_norm": [
+						0.0,
+						0.0,
+						1.0,
+						1.0
+					],
+					"sha256": "68059f706405741774be95bd93f4953aada795219fbff9a8ba8ab04314882e3a",
+					"size": [
+						2048.0,
+						1152.0
+					],
+					"vram_bytes": 7077888.0
+				},
+				"res://assets/cinematics/mid/pl_f4_2_queue_below.webp": {
+					"file_bytes": 52246.0,
+					"intent_rect": [
+						205.0,
+						714.0,
+						1638.0,
+						392.0
+					],
+					"kind": "mid",
+					"md5": "5eac49b3c2b0b543bf6592f68ce75b75",
+					"outside_intent": 0.941,
+					"rect": [
+						395.0,
+						363.0,
+						1427.0,
+						440.0
+					],
+					"rect_norm": [
+						0.1929,
+						0.3151,
+						0.6968,
+						0.3819
+					],
+					"sha256": "aa7ff82df2fa15d11a1167a019c1d5846fad0f7e3e0e0afbaf79fdfe5d375294",
+					"size": [
+						1427.0,
+						440.0
+					],
+					"vram_bytes": 2511520.0
+				}
+			},
+			"holo": [],
+			"labels": [],
+			"lighting": "office",
+			"plates": [
+				"pl_f4_2"
+			],
+			"ramp": [
+				"07080c",
+				"202116",
+				"313222",
+				"545a4b",
+				"686d5c",
+				"9aa192",
+				"c6cab7",
+				"e4eae2"
+			],
+			"recipe": "3ce0d1158baaae32bd8f90b9659b71f1",
+			"render_ms": 12760.0
+		}
+	},
+	"paper": "runtime (plate_paper.gdshader, alpha 0.05)",
+	"plate_size": [
+		2048,
+		1152
+	],
+	"recipe_version": 6,
+	"summary": {
+		"backgrounds": 46,
+		"layers": 57,
+		"plates": 66,
+		"render_ms_this_run": 15,
+		"source_bytes": 12349122,
+		"vram_worst_pair_bytes": 25236636
+	},
+	"tool": "tools/build_plates.gd",
+	"treatment": "B — lavis gravé",
+	"vendor": "Mesa"
+}

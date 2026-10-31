@@ -15,3 +15,12 @@ extends Resource
 @export var at_minute: int = -1
 @export var condition: FlagCondition = null
 @export var ends_shift: bool = false
+## M14 (§2.5, B83) — effet sur la musique (`MusicDirector`, lot B) :
+## `MUSIC_DROP` (L0 seule, −6 dB, 4 mesures), `MUSIC_SILENCE` (power down),
+## `MUSIC_SWELL` (+1 niveau et MO-1 entier) ; vide = aucun. Données : lot F.
+@export var music_action: StringName = &""
+
+const MUSIC_DROP: StringName = &"drop"
+const MUSIC_SILENCE: StringName = &"silence"
+const MUSIC_SWELL: StringName = &"swell"
+const MUSIC_ACTIONS: Array[StringName] = [MUSIC_DROP, MUSIC_SILENCE, MUSIC_SWELL]

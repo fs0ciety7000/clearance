@@ -17,8 +17,23 @@
 ##   monde non vu : silhouette « Un autre 11 avril ».
 ## Aucune donnée hors du profil et de la table (anti-spoiler : `DossierData`).
 ## Ⓑ / Échap : retour au titre (`finished(&"back")`).
+## M14 (lot D, I46 ; M14 §5, D-191) : **portraits** des cartes PERSONNES — le
+## visage tel que la vitre l'a montré (`ProfileService.portrait_of` →
+## `portrait_appearance`, visière comprise), rendu par un `PortraitService`
+## propre au Dossier (`DOSSIER_SIZE` 128×160, créé à la première ouverture de
+## l'onglet, libéré avec l'écran ; esquisse immédiate puis rendu sur place),
+## cadre chanfreiné à la couleur d'origine, initiales gardées dans le cadre et
+## code d'origine en texte ; jamais vu : initiales (« Visage non vu »).
+## **REVOIR** sur une fin vue dont la cinématique est au profil
+## (`has_seen_cinematic`) et sur un monde d'épilogue vu : `CinematicScreen`
+## par-dessus le Dossier, figures en silhouette (aucune mémoire de partie),
+## rien d'inscrit ; thème de la fin par `TitleMusic.play_theme_after_fade`,
+## puis retour de la musique du titre.
 class_name DossierScreen
 extends ScreenBase
+
+## D-203 : bibliothèque des cinématiques chargée avant tout script qui nomme `PlateDef`.
+const _CINEMATIC_LIBRARY := preload("res://scripts/core/cinematic_library_def.gd")
 
 signal epilogue_requested(key: String)
 signal garde_requested(code: String)
@@ -46,6 +61,15 @@ var back_button: Button = null
 var epilogue_buttons: Dictionary[String, Button] = {}
 var garde_button: Button = null
 var filter_buttons: Dictionary[int, Button] = {}
+## M14 : boutons REVOIR (id de cinématique → bouton), cinématique rejouée,
+## service de portraits du Dossier et musique du titre (`main.tscn`).
+var replay_buttons: Dictionary[String, Button] = {}
+var replay: CinematicScreen = null
+var portrait_service: PortraitService = null
+var title_music: TitleMusic = null
+## Drapeaux passés au thème du dernier REVOIR (variante du thème ; tests).
+var replay_theme_flags: Dictionary[StringName, Variant] = {}
+var _replay_from: String = ""
 var _scroll: ScrollContainer = null
 var _body: VBoxContainer = null
 
@@ -151,6 +175,7 @@ func show_tab(tab: StringName) -> void:
 		child.queue_free()
 	epilogue_buttons.clear()
 	filter_buttons.clear()
+	replay_buttons.clear()
 	garde_button = null
 	match tab:
 		TAB_ENDINGS:
@@ -240,7 +265,159 @@ func _ending_card(card: Dictionary, number: int) -> Control:
 			flow.add_child(ScreenBase.chip(text, UiIcon.Kind.DIAMOND, accent))
 	if not str(card["first_line"]).is_empty():
 		box.add_child(ScreenBase.wrapped("« %s »" % ComparisonUI.lumika_text(str(card["first_line"]), true), &"BodySmall", DS.TEXT_PRIMARY))
+	var replays: Array[Dictionary] = replays_for(profile, StringName(card["id"]))
+	if not replays.is_empty():
+		var row: HFlowContainer = HFlowContainer.new()
+		row.name = "Replays"
+		row.add_theme_constant_override("h_separation", DS.SPACE_2)
+		box.add_child(row)
+		for entry: Dictionary in replays:
+			var text: String = UiText.t("cin_replay", "REVOIR")
+			if replays.size() > 1 and not str(entry["variant"]).is_empty():
+				text = "%s · %s" % [text, UiText.t("dos_variant_%s" % entry["variant"], str(entry["variant"]).to_upper())]
+			var b: Button = ScreenBase.button(text, &"ButtonTool")
+			b.name = "Replay_%s" % entry["id"]
+			b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+			var info: Dictionary = entry.duplicate()
+			info["eyebrow"] = str(card["eyebrow"])
+			info["title"] = str(card["title"])
+			b.pressed.connect(func() -> void: play_replay(info))
+			row.add_child(b)
+			replay_buttons[str(entry["id"])] = b
 	return panel_node
+
+
+## Cinématiques revoyables d'une fin : une par séquence **vue** (profil), dans
+## l'ordre des fins vues ; `{id, ending, variant, act, day, plates, flags}`.
+## QA-073 : d'abord les séquences dont le contexte est au profil
+## (`cinematic_replays` : planches et drapeaux de la séquence vue) ; sinon
+## (profil antérieur) sélection des données (`CinematicService.select`) sur la
+## variante et l'acte inscrits au profil, sans drapeaux.
+static func replays_for(p_profile: Dictionary, ending: StringName) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var clean: Dictionary = ProfileService.sanitize(p_profile)
+	var ids: PackedStringArray = []
+	var empty: Dictionary[StringName, Variant] = {}
+	var stored: Dictionary = clean["cinematic_replays"]
+	var stored_ids: Array = stored.keys()
+	stored_ids.sort()
+	for row: Dictionary in clean["endings_seen"]:
+		if str(row["id"]) != String(ending):
+			continue
+		var variant: StringName = StringName(str(row.get("variant", "")))
+		var act: int = clampi(SaveService.as_int(row.get("act", 1)), 1, 3)
+		var found: bool = false
+		for cin_id: Variant in stored_ids:
+			var ctx: Dictionary = stored[cin_id]
+			if str(ctx["ending"]) != String(ending) or str(ctx["variant"]) != String(variant):
+				continue
+			found = true
+			if ids.has(str(cin_id)) or not ProfileService.has_seen_cinematic(clean, str(cin_id)):
+				continue
+			ids.append(str(cin_id))
+			out.append({"id": str(cin_id), "ending": String(ending), "variant": String(variant), "act": int(ctx["act"]),
+					"day": int(ctx["day"]), "plates": ctx["plates"], "flags": ctx["flags"]})
+		if found:
+			continue
+		var def: CinematicDef = CinematicService.select(ending, variant, empty, act)
+		if def == null or ids.has(String(def.id)) or not ProfileService.has_seen_cinematic(clean, String(def.id)):
+			continue
+		ids.append(String(def.id))
+		out.append({"id": String(def.id), "ending": String(ending), "variant": String(variant), "act": act})
+	return out
+
+
+## Drapeaux de contexte d'une séquence à revoir (`info["flags"]`, QA-073),
+## typés ; vides si le profil ne les a pas gardés.
+static func replay_flags(info: Dictionary) -> Dictionary[StringName, Variant]:
+	var out: Dictionary[StringName, Variant] = {}
+	var raw: Variant = info.get("flags", {})
+	if raw is Dictionary:
+		for key: Variant in raw:
+			out[StringName(str(key))] = (raw as Dictionary)[key]
+	return out
+
+
+## Planches à revoir : celles de la séquence vue (`info["plates"]`, dans
+## l'ordre ; QA-073), sinon la sélection des données sur `ctx`.
+static func replay_plates(def: CinematicDef, info: Dictionary, ctx: Dictionary[StringName, Variant], act: int) -> Array[PlateDef]:
+	var result: Array[PlateDef] = []
+	var raw: Variant = info.get("plates", [])
+	if raw is Array:
+		for plate_id: Variant in raw:
+			for plate: PlateDef in def.plates:
+				if plate != null and String(plate.id) == str(plate_id):
+					result.append(plate)
+					break
+	if result.is_empty():
+		result = CinematicService.plates_for(def, ctx, act, {})
+	return result
+
+
+## REVOIR : la séquence par-dessus le Dossier, figures en silhouette, rien
+## d'inscrit ; `info` = `{id, ending, variant, act, day, plates, flags,
+## eyebrow, title}` (fin) ou `{id, world, …}` (épilogue). QA-073 : planches,
+## légendes et variante du thème de la séquence vue (contexte du profil).
+func play_replay(info: Dictionary) -> CinematicScreen:
+	if replay != null and is_instance_valid(replay):
+		return replay
+	var lib: CinematicLibraryDef = CinematicLibraryDef.load_default()
+	var def: CinematicDef = lib.get_cinematic(StringName(str(info.get("id", "")))) if lib != null else null
+	if def == null:
+		return null
+	var act: int = int(info.get("act", 3))
+	var variant: StringName = StringName(str(info.get("variant", "")))
+	var flags: Dictionary[StringName, Variant] = replay_flags(info)
+	var ctx: Dictionary[StringName, Variant] = CinematicService.context_flags(flags, act, variant, int(info.get("day", 0)))
+	var plates: Array[PlateDef] = replay_plates(def, info, ctx, act)
+	if plates.is_empty():
+		return null
+	var ending: StringName = StringName(str(info.get("ending", "")))
+	var sequence: CinematicScreen = CinematicScreen.new()
+	sequence.setup(def, plates, ctx, {}, ending, variant)
+	sequence.set_title(str(info.get("eyebrow", "")), str(info.get("title", "")))
+	sequence.record_seen = false
+	sequence.already_seen = true
+	sequence.save_dir = save_dir
+	sequence.name = "Replay"
+	sequence.finished.connect(_on_replay_finished, CONNECT_ONE_SHOT)
+	_replay_from = str(info.get("id", ""))
+	replay = sequence
+	if is_inside_tree():
+		get_viewport().gui_release_focus()
+	add_child(sequence)
+	_play_replay_theme(ending, variant, StringName(str(info.get("world", ""))), flags)
+	return sequence
+
+
+## Thème de la fin (ou du monde) sur la musique du titre (`index.json`), avec
+## les drapeaux de la séquence vue (variante du thème, QA-073) ; un monde : sans
+## drapeaux, comme en jeu.
+func _play_replay_theme(ending: StringName, variant: StringName, world: StringName,
+		flags: Dictionary[StringName, Variant] = {}) -> void:
+	replay_theme_flags = {} if world != &"" else flags
+	if title_music == null or not is_instance_valid(title_music):
+		return
+	var path: String = AudioDirector.theme_path_for_world(world) if world != &"" else AudioDirector.theme_path_for_ending(ending, variant)
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return
+	var theme: MusicThemeDef = load(path) as MusicThemeDef
+	if theme != null:
+		title_music.play_theme_after_fade(theme, replay_theme_flags, Settings.fx_intensity < 1.0)
+
+
+func _on_replay_finished(_skipped: bool) -> void:
+	replay = null
+	if title_music != null and is_instance_valid(title_music) and is_inside_tree():
+		# Retour au Dossier : le thème s'éteint, la musique du titre revient.
+		title_music.fade_to(MusicDirector.SILENT_DB, DS.MUSIC_EXIT_FADE, true)
+		# Méthode liée (pas de lambda) : déconnectée d'elle-même si le titre est libéré.
+		get_tree().create_timer(DS.MUSIC_EXIT_FADE).timeout.connect(title_music.start.bind({}))
+	var back: Button = replay_buttons.get(_replay_from, null)
+	if back != null and is_instance_valid(back):
+		back.grab_focus.call_deferred()
+	else:
+		default_focus().grab_focus.call_deferred()
 
 
 ## Titre caché : barres pleines (jamais de texte, même partiel).
@@ -287,8 +464,31 @@ func _build_people() -> void:
 	grid.add_theme_constant_override("h_separation", DS.SPACE_3)
 	grid.add_theme_constant_override("v_separation", DS.SPACE_3)
 	_body.add_child(grid)
+	_ensure_portraits()
 	for person: Dictionary in list:
-		grid.add_child(person_card(person))
+		grid.add_child(person_card(person, portrait_for(str(person["id"]))))
+
+
+## M14 : `PortraitService` propre au Dossier (vignettes 128×160, LRU 48), créé
+## à la première ouverture de l'onglet PERSONNES, libéré avec l'écran.
+func _ensure_portraits() -> void:
+	if portrait_service != null:
+		return
+	portrait_service = PortraitService.new()
+	portrait_service.name = "DossierPortraits"
+	portrait_service.size = PortraitService.DOSSIER_SIZE # avant l'entrée dans l'arbre
+	portrait_service.max_entries = DossierData.PORTRAIT_CACHE
+	add_child(portrait_service)
+
+
+## Portrait d'un personnage tel que vu à la vitre, ou null (jamais vu : initiales).
+func portrait_for(chr_id: String) -> Texture2D:
+	var entry: Dictionary = ProfileService.portrait_of(profile, chr_id)
+	var app: PassengerAppearance = ProfileService.portrait_appearance(entry)
+	if app == null:
+		return null
+	_ensure_portraits()
+	return portrait_service.get_portrait(app)
 
 
 func set_act_filter(act: int) -> void:
@@ -298,16 +498,24 @@ func set_act_filter(act: int) -> void:
 		filter_buttons[act].grab_focus.call_deferred()
 
 
-## Carte d'un personnage : initiales sur la couleur d'origine + code d'origine
-## en texte, nom appris, première rencontre, rencontres, présentation.
-static func person_card(person: Dictionary) -> Control:
+## Carte d'un personnage : portrait vu à la vitre (M14) ou initiales sur la
+## couleur d'origine, code d'origine en texte, nom appris, première rencontre,
+## rencontres, présentation.
+static func person_card(person: Dictionary, portrait: Texture2D = null) -> Control:
 	var card: PanelContainer = ScreenBase.panel(&"ElevatedCard")
 	card.name = "Person_%s" % person["id"]
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.custom_minimum_size.x = 360.0
 	var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_3)
 	card.add_child(row)
-	row.add_child(InitialsBadge.make(str(person["initials"]), DossierData.faction_color(str(person["faction"]))))
+	var color: Color = DossierData.faction_color(str(person["faction"]))
+	if portrait != null:
+		row.add_child(PortraitFrame.make(portrait, str(person["initials"]), color))
+	else:
+		var badge: InitialsBadge = InitialsBadge.make(str(person["initials"]), color)
+		badge.tooltip_text = UiText.t("dos_portrait_hidden", "Visage non vu")
+		badge.mouse_filter = Control.MOUSE_FILTER_PASS
+		row.add_child(badge)
 	var col: VBoxContainer = ScreenBase.vbox(DS.SPACE_1)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(col)
@@ -436,6 +644,17 @@ func _world_block(world: Dictionary) -> Control:
 	if not seen:
 		box.add_child(_silhouette())
 		return card
+	var def: CinematicDef = CinematicService.select_epilogue(StringName(str(world["world"])))
+	if def != null and ProfileService.has_seen_cinematic(profile, String(def.id)):
+		var replay_button: Button = ScreenBase.button(UiText.t("cin_replay", "REVOIR"), &"ButtonTool")
+		replay_button.name = "Replay_%s" % def.id
+		replay_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		var info: Dictionary = ProfileService.cinematic_replay(profile, String(def.id))
+		info.merge({"id": String(def.id), "world": str(world["world"]), "act": 3, "day": 31}, true)
+		replay_button.pressed.connect(func() -> void: play_replay(info))
+		head.add_child(ScreenBase.spacer())
+		head.add_child(replay_button)
+		replay_buttons[String(def.id)] = replay_button
 	for variant: Dictionary in world["variants"]:
 		var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_3)
 		box.add_child(row)
@@ -469,7 +688,7 @@ func go_back() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if is_closing() or not is_visible_in_tree():
+	if is_closing() or not is_visible_in_tree() or (replay != null and is_instance_valid(replay)):
 		return
 	if event.is_action_pressed(&"cancel", false, true) or event.is_action_pressed(&"ui_cancel", false, true):
 		go_back()
@@ -480,6 +699,50 @@ func _input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"rulebook_prev", false, true):
 		cycle_tab(-1)
 		get_viewport().set_input_as_handled()
+
+
+## M14 : vignette du visage vu à la vitre (`DOSSIER_PORTRAIT_W` ×
+## `DOSSIER_PORTRAIT_H`, ≥ 72 px au Deck), cadre chanfreiné 2 px à la couleur
+## d'origine (repère décoratif), initiales gardées sur un voile en bas du cadre.
+class PortraitFrame:
+	extends PanelContainer
+
+	var texture_rect: TextureRect = null
+
+	static func make(texture: Texture2D, initials: String, color: Color) -> PortraitFrame:
+		var frame: PortraitFrame = PortraitFrame.new()
+		frame.name = "Portrait"
+		frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		frame.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		frame.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.BG_PANEL, color, DS.BORDER_STRONG, DS.CHAMFER_M,
+				DS.BORDER_STRONG))
+		var stack: Control = Control.new()
+		stack.custom_minimum_size = Vector2(DS.DOSSIER_PORTRAIT_W, DS.DOSSIER_PORTRAIT_H)
+		stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		frame.add_child(stack)
+		frame.texture_rect = TextureRect.new()
+		frame.texture_rect.name = "Face"
+		frame.texture_rect.texture = texture
+		frame.texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		frame.texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		frame.texture_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		frame.texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stack.add_child(frame.texture_rect)
+		var tag: PanelContainer = PanelContainer.new()
+		tag.name = "InitialsTag"
+		tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tag.add_theme_stylebox_override(&"panel", ThemeBuilder.chamfer_box(DS.SUBTITLE_BG, Color(0, 0, 0, 0), 0, DS.CHAMFER_S, DS.SPACE_1))
+		tag.anchor_left = 0.0
+		tag.anchor_top = 1.0
+		tag.anchor_bottom = 1.0
+		tag.grow_vertical = Control.GROW_DIRECTION_BEGIN
+		tag.offset_left = DS.SPACE_1
+		tag.offset_bottom = -DS.SPACE_1
+		var text: Label = ScreenBase.label(initials, &"DataSmall", DS.TEXT_PRIMARY)
+		text.name = "Initials"
+		tag.add_child(text)
+		stack.add_child(tag)
+		return frame
 
 
 ## Initiales sur un carré chanfreiné à la couleur d'origine (repère

@@ -554,6 +554,7 @@ func _connect_bus() -> void:
 	EventBus.item_slipped.connect(_on_item_slipped)
 	EventBus.item_decided.connect(_on_item_decided)
 	EventBus.hall_announced.connect(_on_hall_announced)
+	EventBus.ambient_announced.connect(_on_ambient_announced)
 	EventBus.day_phase_changed.connect(_on_day_phase_changed)
 	EventBus.day_clock_ticked.connect(_on_day_clock_ticked)
 	EventBus.case_presented.connect(_on_case_presented)
@@ -787,6 +788,20 @@ func say_passenger_line(case_id: StringName, key: String) -> void:
 
 func _on_hall_announced(text_key: String) -> void:
 	show_announcement(UiText.t(text_key, text_key))
+
+
+## M14 (I45, D-189) : annonce d'**ambiance** du Consortium (`pa_*`, voix Tessar
+## filtrée) sous-titrée dans la barre de sous-titres — « [Haut-parleur] … » —
+## seulement si l'option **sous-titres** est active (elle ne porte aucune
+## information de jeu : ni toast ni bandeau HAUT-PARLEUR · HALL). Clé non
+## traduite : rien (jamais la clé brute).
+func _on_ambient_announced(text_key: String, duration_sec: float) -> void:
+	if not subtitles.enabled or not UiText.has(text_key):
+		return
+	var text: String = UiText.t(text_key, "")
+	if text.is_empty():
+		return
+	subtitles.show_line("", text, UiText.t("sub_pa_prefix", "[Haut-parleur]"), maxf(duration_sec, UiText.subtitle_hold(text)))
 
 
 ## Annonce du haut-parleur du Hall (sous-titre discret ; toast si les

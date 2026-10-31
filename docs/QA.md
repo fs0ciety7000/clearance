@@ -1365,3 +1365,220 @@ godot --headless --script res://tools/gen_stats.gd -- --campaigns=40 --seed=1
 godot --headless --script res://tools/build_data.gd && git status --short data/      # aucun fichier modifié
 bash tools/export_all.sh linux && bash tools/smoke_export.sh
 ```
+
+## 17. Passe QA M14 « Ambiance »
+
+> Passe du 31.10.2026 sur `claude/laughing-bell-8ayudz` après `86e2193` (M14 intégré : musique procédurale dynamique, annonces de la station, hall vivant, cinématiques de fin en planches « lavis gravé », portraits et REVOIR au Dossier, options). Godot 4.7.2, GUT 9.7.1. **Le conteneur n'a pas de sortie son** : tout l'audio est jugé par mesures (outils, journaux du `MusicDirector`, ffmpeg). **QA ne corrige pas le code de jeu** : bugs QA-072 à QA-080 ci-dessous, chacun avec son propriétaire suggéré.
+
+### 17.1 Méthode et couverture
+
+| Volet | Outil | Résultat |
+|---|---|---|
+| Suite existante | GUT, unit puis integration en 3 lots (< 10 min chacun, 37 fichiers lancés un par un) | **1 033 / 1 033** à l'arrivée (unit 671 en 216 s, integration 362) ; après la passe **1 047 tests : 1 038 verts + 9 `pending`** (QA-072 → QA-080), 0 échec (§17.9) |
+| Audit audio | `tools/qa_audio_audit.gd` (18 partitions, une par processus) + **contre-mesure indépendante** ffmpeg (`ebur128=peak=true` et comptage des échantillons décodés) | **791 mesures, 0 échec** ; 62 OGG : true peak max **−1,1 dBTP**, 0 échantillon ≥ 0,999 |
+| CPU, mémoire | `tools/qa_audio_load.gd` (MS-02 et MS-04 au pire cas, 2 × 60 s ; mémoire des 5 ensembles de jeu) | M-10, M-11 (§17.2) |
+| Musique en vraie scène | **`tests/qa_drivers/qa_m14_campaign.gd`** (nouveau, étend `qa_campaign.gd`) : chaque `level_changed` / `bar_passed` du vrai `MusicDirector`, état de l'`AudioDirector`, **miroir d'intensité recalculé depuis les seuls signaux publics** écoutés par le pilote, Mode Inspection, coupure, fondu `Fade` et passe-bas à chaque sortie de scène, file, Gardes, cinématique | 3 campagnes J1 → J30 + 1 reprise 0.13 (§17.3, §17.7) |
+| Une journée sans bot | **`tests/qa_drivers/qa_m14_day.gd`** (nouveau) : briefing fermé comme un joueur, passager laissé à la vitre jusqu'à la sirène (le bot vide la file en < 1 min et n'entend aucune annonce), fin du shift en **temps réel** (`--qa-real-at=45`) | 16 journées : J3, J5 (sans sous-titres), J8, J12 Récit, J15 Stable, J20 grève, J25 EV-05, J25, J27, J30, Garde ×2, J31 ×5 (mondes A, B, C, D) |
+| Transitions en temps réel | **`tests/qa_drivers/qa_m14_transitions.gd`** (nouveau, `Engine.time_scale` = 1 : le fondu compte en temps réel, le minuteur de `DayScene` en temps de jeu) | soirée → jour suivant ; fin F9 → cinématique → maintien Ⓑ → écran de fin → titre (§17.3) |
+| Cinématiques | **`tests/qa_drivers/qa_m14_cin.gd`** (nouveau : vrai `DayScene.show_end`, légendes **lues**, figures, thème, bande 3D, durée, profil) ; **`qa_m14_replay_scan.gd`** (REVOIR et captures ↔ séquence vue) ; `tools/qa_plates_audit.gd` ; captures xvfb | 18 séquences sur 18 (§17.4) |
+| File, Hall | `qa_m14_campaign` (file à chaque `queue_progressed`), **`qa_m14_queue_scan.gd`** (nouveau : silhouette de la file ↔ passager réellement présenté, 3 graines × 30 jours, 1 383 passagers), `tools/qa_hall_audit.gd` (xvfb) | §17.5 |
+| Dossier, profil | **vrai `user://` écrit par la 0.13.0** (`git archive e4d6f71`, importé, campagne réelle graine 5, J1 → J18) ; **`qa_m14_profile.gd`** (nouveau : migration par le vrai titre, Dossier PERSONNES) ; reprise de la sauvegarde 0.13 en 0.14 jusqu'à la fin | §17.6 |
+| Stress D-083 | `tools/qa_audio_stress.sh` (jeu branché seul, puis moteur greffé à niveaux forcés) | **1 440 rechargements**, 0 plantage (§17.2, M-17) |
+| Régression, exports | `build_data`, `export_all.sh linux`, `smoke_export.sh`, sonde du `.pck` | §17.8 |
+
+**Vrai `user://` jamais touché par la passe** : tous les outils sous `XDG_DATA_HOME` jetable (scratchpad), aucun `override.cfg`. ⚠ À l'arrivée, le profil réel n'était **déjà plus vide** : `user://saves/profile.json` (v3, `f9_strike` acte 1 au J30, écrit à 12:19:07, avant la passe — vraisemblablement une capture `--screen=end` d'un lot précédent lancée sans `XDG_DATA_HOME` jetable) ; laissé tel quel (md5 `b16f6d74…`, `settings.cfg` `91d48bf5…` inchangés à la fin de la passe).
+
+### 17.2 Cibles mesurables M-01 → M-17 (M14 §6.2)
+
+| # | Cible | Mesure (passe M14) | Verdict |
+|---|---|---|---|
+| **M-01** | 0 échantillon ≥ 0,999 ; ≤ −1 dBTP | audit : 66 OK ; ffmpeg indépendant sur les 62 OGG : max **−1,1 dBTP** (`mus_th_f7_tail_loop`), 0 échantillon saturé | ✅ |
+| **M-02** | crête −1 dBTP ; DC ≤ 0,001 | 69 OK | ✅ |
+| **M-03** | N0 −30 ±2 → N4 −24 ±1 LUFS, monotone | MS-02 −30,00 / −28,03 / −26,69 / −25,13 / −24,14 ; MS-03 −30,00 / −28,02 / −26,83 / −25,23 / −24,21 ; MS-04 −30,01 / −28,01 / −26,72 / −25,14 / −24,15 ; MS-05 −29,98 / −28,02 / −26,64 / −25,10 / −24,11 ; N4 recoupé par ffmpeg à 0,05 LU ; MS-01, MS-06, MS-07 à leur plan | ✅ |
+| **M-04** | thèmes −18 ±1 LUFS | 18 thèmes et variantes OK | ✅ |
+| **M-05** | boucles sans clic | 135 OK (critère révisé D-197 : jointure ≤ 99,9ᵉ centile du fichier ; l'ancien critère est imprimé pour information, 45 lignes) | ✅ (critère révisé) |
+| **M-06** | longueurs exactes, `.import` | 124 OK + `test_music_sets` vert | ✅ |
+| **M-07** | mono ≤ 3 dB, corrélation ≥ 0 | 124 OK | ✅ |
+| **M-08** | UI ≥ musique + 12 dB (1–4 kHz) | 26 OK (bande propre de chaque cue, D-197) ; marge minimale **18,4 dB** (MS-02 N3, `ui.toast_info`) | ✅ |
+| **M-09** | déterminisme | 62 OGG = SHA-256 du manifeste ; planches = manifeste (`qa_plates_audit`) ; `build_data` relancé : 0 fichier de `data/` modifié. Autre architecture : non mesuré | ✅ (x86_64 seul) |
+| **M-10** | CPU ≤ +3 % d'un cœur | **+2,08 %** (MS-02 : 5,80 → 7,88 %) ; **+2,15 %** (MS-04) — machine de dev, pilote Dummy | ✅ dev · ⏳ **Steam Deck à faire** |
+| **M-11** | musique ≤ 6 Mo ; audio ≤ 40 Mo ; VRAM planches ≤ 32 Mo ; Dossier ≤ 4 Mo | musique résidente (`MEMORY_STATIC`) MS-05 4,59 · MS-02 4,83 · MS-03 4,92 · MS-04 5,14 · **MS-07 5,82 Mo** (marge 0,47 Mo) ; VRAM : pire paire 22,6 Mo (audit) et, en vraie scène xvfb, Δ mémoire de textures **+22,8 Mo** (CIN-F9) / **+26,5 Mo** (CIN-F10) ; audio total et Dossier : non mesurés (Dossier théorique : 48 × 128 × 160 × 4 o = 3,9 Mo) | ✅ partiel |
+| **M-12** | musique ≤ 24 ; planches ≤ 12 ; `.pck` ≤ 50 ; zip Windows ≤ 84 Mo | musique **22,03 Mo** ; planches importées **9,95 Mo** (sources 11,95) ; **`.pck` Linux 49 637 484 o = 49,6 Mo (47,3 Mio)** — marge 0,36 Mo ; tar.gz Linux 69,1 Mo ; zip Windows **estimé 78,8 Mo** (exe compressé de la 0.13 + `.pck` M14 compressé ; non exporté pour ne pas écraser `CLEARANCE-0.13.0-windows.zip`, QA-072) | ✅ (marges faibles) |
+| **M-13** | J1 ≤ 14 ; pic J7 ≤ 19 ; Bas J1 ≤ 11 | J1 **13** · J7 détention + escorte **16** · Bas J1 **9** ; aussi J21 13, J22 14, J27 14 (bannière, 5 instances de Garde), J31 8 ; Bas J7 11, J27 10 | ✅ |
+| **M-14** | séquence 25–45 s (épilogue 18–30) ; passer → écran de fin ≤ 1 s | 14 séquences de fin : **26,0 → 32,3 s** (carte de titre comprise, avance automatique, mesurées en jeu) ; J31 : CIN-EA 21 s, CIN-EB/EC/ED 28 s ; maintien Ⓑ : écran de fin **0,80 s** après le début du maintien (temps réel) | ✅ |
+| **M-15** | patrouille hors visage | `test_m14_hall` (13, projection au cadrage normal et au travelling, 1920 et 1280) vert ; en jeu : **0 déplacement** de la patrouille pendant `INSPECTING` sur 90 journées | ✅ |
+| **M-16** | légendes ≥ 7:1, ≤ 70 car., zone sûre | 66 planches × 2 résolutions : contraste minimal **7,7:1** (Deck), toutes dans la zone sûre 16:10 ; 71 légendes ≤ 70 ; légendes **lues** en scène sur les 18 séquences | ✅ |
+| **M-17** | stress D-083 : 0 plantage, 0 fuite | **640 rechargements** du jeu branché seul (J2, J12, J20, J27 ; 4 × 160) + **800 rechargements** avec moteur greffé, niveau forcé toutes les 0,5 s (J5, J16, J25, J30 ; 2 440 changements de niveau, 257 changements de clip, 494 fondus) : **0 plantage, 0 « leaked », 0 « Playback can only happen », 0 SCRIPT ERROR** ; + 4 campagnes réelles (98 « jour suivant » ou chapitres avec fondu de sortie, 0 erreur) | ✅ |
+
+### 17.3 Musique et annonces en vraie scène
+
+**Niveaux (3 campagnes, 90 journées, 175 changements de niveau pendant le shift, 269 en tout)** : **0 changement hors limite de mesure**, 0 pas > 1, 0 montée en moins de 2 mesures, 0 descente en moins de 4, Récit ≤ N2 sur 30 jours (max N2), Dur jusqu'à N4. **Miroir d'intensité** (valeur recalculée par le pilote depuis `queue_progressed`, `discrepancy_checked` DISCORDANT, `quota_changed`, `station_event_*`, `music_tension`, chrono) = valeur de l'`AudioDirector` sur **12 119 échantillons, 0 écart** : aucune entrée cachée ; en GUT, présenter des cas à anomalies ne change rien (`test_intensity_follows_public_signals_only`). Les seuls émetteurs de `discrepancy_checked` sont une comparaison demandée par le joueur (ou le bot) : la vérité du cas n'entre jamais.
+
+| Situation (journée sans bot, fin en temps réel) | Observé | Verdict |
+|---|---|---|
+| Montée avec le chrono (J3, J8, J25) | N1 → N2 → N3 au fil du shift, **N4 sans mélodie** au chrono critique (J8 : N4 à 14 s, J25 : idem) | ✅ |
+| Chrono critique depuis N1 (J15, option **Stable**) | N1 tout le shift ; à 14 s de la fin la priorité « chrono critique » relance N2, N3 à 8 s, **N4 à 1 s** de la sirène | **QA-078** |
+| Mode Inspection discret | −6 dB, passe-bas 3,5 kHz, L3 coupée sur 98 % des échantillons ; le reste : délai ≤ 0,25 s (recalcul à 4 Hz) | ✅ |
+| Coupure EV-05 (graine 12, J25, dès #4) / grève du J20 (`--lights-out`) | L0 seule, −6 dB, passe-bas 400 Hz : **105 / 105** et **427 / 427** échantillons ; aucune annonce d'ambiance pendant la coupure | ✅ |
+| Annonces de jeu `swell` (J27 Arbitre) / `drop` (J25, J30) | swell : +1 niveau 4 mesures ✅ ; **drop au J30 : N2 → N1 sous le plancher N2** pendant 60 s | **QA-077** |
+| Récit (J12) / J31 | plafonds N2 / N0–N2 (`cap=true`) | ✅ |
+| Garde | `I = 0,30 + 0,12·palier + …` : N1 → N2 au 1ᵉʳ palier ; file ignorée (`q = −1`) | ✅ |
+| Briefing → shift | exposé (L0 + L3) puis N0/N1 à la mesure ; `music_floor` respecté hors drop | ✅ |
+
+**Transitions en temps réel** (`qa_m14_transitions.gd`) :
+
+| Transition | Mesure | Verdict |
+|---|---|---|
+| Soirée → jour suivant | fondu `Fade` 0 → −54 dB en 1,50 s, rechargement 2,17 s après le départ (chargement compris), voile noir ; **passe-bas de pause 2,5 kHz actif pendant tout le fondu** (29 fois par campagne) | ✅ / **QA-074** |
+| Fin → cinématique | MS-04 s'éteint (fondu 2 s), **TH-F9 démarre 1,76 s après l'ouverture**, sur la carte de titre (3,5 s) | ✅ |
+| Cinématique passée (maintien Ⓑ, planche 3) | `finished(true)` 1,0 s après l'appui (0,8 s de maintien) → **queue** du thème (`th_f9_tail`) ; écran de fin à +0,8 s | ✅ |
+| Écran de fin → titre | fondu 1,5 s (−55 dB), scène changée 2,06 s après, MS-01 avec la couche MO-2 (`ending_seen` : une fin vue au profil) | ✅ |
+| Entrées de musique (titre, briefing) | fondu d'entrée de 1,5 s qui **commence à −15,6 dB** (briefing) / −25,4 dB (titre) dès la 1ʳᵉ image : l'horloge du `MusicDirector` borne `dt` à 0,25 s | **QA-076** |
+| Titre → partie (Continuer, Nouvelle partie, Garde, Épilogue) | `main.gd` change de scène tout de suite : MS-01 **coupée net** | **QA-075** |
+| Horloge de mesures | temps perdu par images longues (> 0,25 s) pendant la lecture : **30 → 480 ms par journée** en headless (cumul 6,6 s par campagne) ; le flux, lui, avance en temps réel | **QA-076** |
+
+**Annonces d'ambiance** (16 journées sans bot) : 5–6 par shift chronométré (≤ 6 ✅), première à **47–67 s** sans bot (45–75 ✅ ; 263 s au J27 joué par le bot : reports successifs derrière ses barks, puis abandon, comme prévu), écarts **92–180 s** (≥ 90 ✅), jamais répétées dans la journée, jamais pendant une coupure, jamais à moins de 25 s d'une annonce de jeu ou d'un événement, jamais à moins de 30 s de la fin ; pools justes : `pa_a1_*` / `pa_a1_q2_*` (J8), `pa_a2_*`, `pa_a3_*`, `pa_garde_*` (3 en 500 s, sans plafond ✅), `pa_epi_a_*`, `pa_epi_d_*` ; voix Tessar rendue à l'exécution (4,2–5,1 s). **Sous-titres** : « [Haut-parleur] « … » » affiché pour chaque annonce quand l'option est active, **rien** (ni sous-titre, ni toast, ni bandeau) quand elle est coupée (J5). Textes : aucun code de règle ni nom de document dans les 52 lignes (GUT) — `pa_epi_c_02` (« remercie les répondants ») et `pa_a3_08` (« effets des ressortissants de Tycho pesés au quai ») restent du décor, sans valeur de jeu. Le bot de campagne ne déclenche **aucune** annonce (barks continus, file vidée en moins d'une minute) : ce n'est pas un bug, mais les campagnes automatiques ne les couvrent pas.
+
+### 17.4 Cinématiques
+
+| Séquence | Chemin réel | Planches (légendes lues) | Figures | Thème · fin | Durée |
+|---|---|---|---|---|---|
+| CIN-F1 audit (acte I, J9) · revue (II, J17) · déposition (III, J29) | `show_end` | 4 ; légende 1 propre à chaque variante ; PL-F1-3 « borne » à l'acte III | — | TH-F1 | 32,2 / 32,0 / 32,3 s |
+| CIN-F2 (acte I, J10) | `show_end` | 4 | — | TH-F2 | 27,7 s |
+| CIN-F3 (acte II, J20) | `show_end` | 3 (aucune de l'acte III) | — | TH-F3 | 26,0 s |
+| CIN-F4 Dora | `show_end` | 4, PL-F4-1 « Dora » | silhouette (debug) | TH-F4 | 27,5 s |
+| CIN-F5C · F5S · F5B | `show_end` | 4 chacune, légendes propres | PL-F5-2 silhouette | TH-F5C / F5S / F5B | 27,5 s |
+| CIN-F6E J10 · J20 | `show_end` | 4, rien de l'acte III | Wren silhouette | TH-F6 | 27,5 s |
+| CIN-F6D (Récit, graine 7, campagne réelle) | partie | 4 | **Wren : visage de la partie** (`sc_72`, visière `none`) | TH-F6D | 27,5 s |
+| CIN-F6T | `show_end` | 4 | — | TH-F6T | 27,9 s |
+| CIN-F7 (graines 3, 11 et reprise 0.13 : campagnes réelles) | partie | 4 | — | TH-F7 (sortie) | 26,5 s |
+| CIN-F8 · F9 · F10 | `show_end` | 4 chacune | — | TH-F8 / F9 / F10 | 27,5 / 29,5 / 27,8 s |
+| CIN-EA · EB · EC · ED (J31, mondes A–D) | conclusion du J31 | 3 ; EB/EC/ED + PL-E-FIG | **figure du J31 : visage** (cas du J31) | TH-EA → TH-ED puis queue de la fin d'origine | 21 / 28 / 28 / 28 s |
+| F4 de l'acte II (simulation seule) | `show_end` | **aucune** (écran de fin direct) ✅ | — | **TH-F4 lancé** | **QA-079** |
+
+- Bande 3D en `UPDATE_DISABLED` pendant chaque séquence, rétablie à `finished` ; `cinematics_seen` inscrit au profil ; carte de titre = surtitre et titre de l'écran de fin ; aucune planche d'un acte ultérieur dans une fin anticipée (GUT `test_reachable_endings_have_a_clean_sequence`).
+- **Passer / maintenir / avance manuelle** : appui Ⓐ (action `ui_accept`, comme la manette) toutes les secondes → planche suivante (Récit, graine 7) ; maintien Ⓑ (`cancel`) → tout passer ; **avance manuelle** : aucune planche n'avance seule (CIN-F9, 12 s par planche, avancée à chaque appui). Manette seule : les gestes passent par les actions (`test_m14_ui` vert : 24).
+- **Accessibilité** : `reduce_motion` → PL-F9-1 affichée éteinte d'emblée, sans parallaxe [`m14_qa_cin_f9_1_reduce_motion.png`](mockups/m14_qa_cin_f9_1_reduce_motion.png) (normal : [`m14_qa_cin_f9_1.png`](mockups/m14_qa_cin_f9_1.png), vitres 04 → 08 éteintes à 3,2 s) ; qualité Bas + `holo_flicker` coupé + `fx_intensity` 0 [`m14_qa_cin_f5c_low_qa080.png`](mockups/m14_qa_cin_f5c_low_qa080.png) ; Deck 1280×800, texte 1,5 : légende et invite « ÉCHAP Maintenir pour passer · TOUT PASSER » dans la zone sûre [`m14_qa_cin_f6_2_deck_text150.png`](mockups/m14_qa_cin_f6_2_deck_text150.png).
+- **Mémoire et chargement** : Δ mémoire de textures pendant la séquence +22,8 Mo (F9, 12 couches `LIT`) et +26,5 Mo (F10) ≤ 32 ; les à-coups ne sont **pas mesurables** sous xvfb/llvmpipe (≈ 300 ms par image en 1080p) : à mesurer sur Deck.
+- **REVOIR** : la séquence rejouée diffère de la séquence vue pour F3 (Lumika, PL-F3-2) et F4 (Dora, PL-F4-1) — **QA-073**. La capture de debug `--cinematic=cin_f5c|cin_f5b|cin_f6d` joue une autre séquence — **QA-080** (la capture F5C ci-dessus montre en fait PL-F5S-3).
+
+### 17.5 Hall vivant
+
+- **File réelle** : à chaque `queue_progressed` des 90 journées de campagne, silhouettes affichées = `visible_count(…, capacité)` : **0 écart** ; champs hors liste blanche : 0. **EV-06** : la file passe de 9/12 à **9/15** (+3, D-200) au J5 (graine 3) ; Garde : `total = −1`, file pleine.
+- **Aucune fuite** (silhouette ↔ anomalie, `qa_m14_queue_scan`, 1 383 passagers) : teinte et taille de la silhouette = celles du passager présenté **à 100 %** ; seule la forme diffère (coiffe → capuche quand le passager arrive visière baissée, documenté BOOTH_SCENE §20.1), **à la même fréquence** chez les passagers en règle (11,5 %) et les autres (12,4 %) : rien ne s'apprend de la file. Les passagers scénarisés sont dans le roster (leur silhouette est la leur).
+- **Gardes** : postes et patrouille selon l'acte (J1 1, J21 3, J22 3, J27 5 instances avec la traversée de l'Arbitre, 1 draw) ; jamais en mouvement pendant `INSPECTING` (90 journées) ; hors visage : `test_m14_hall`. Qualité Bas : postes seuls, pas de débordement.
+- **Ambiance par acte** : bannière (J21, J22, J27), lits a2/a3 (`station_bed_cue`), J31 monde D (lit `_d`, PA `pa_epi_d_*`) ; capture J21 [`m14_qa_hall_j21.png`](mockups/m14_qa_hall_j21.png). Draw calls : M-13.
+
+### 17.6 Dossier, profil v3, options
+
+- **Migration v2 → v3 sur un vrai profil 0.13** (profil + emplacement écrits par la 0.13.0, J1 → J18, 54 cas en mémoire) par le vrai titre : version 3, **`profile.v2.bak`** présent (même contenu, réécrit et non copié octet pour octet), tous les champs v2 conservés, **33 portraits** = dernière rencontre de chaque personnage d'après la mémoire des cas (0 écart), liste blanche respectée (Mazur `sc_11` et non SC-29 Katya ; Kerr `sc_30` ; carte « premiers » `tuto_concordant`), entrées 0.13 sans visière lues **baissées** (Mira `sc_22`, Lev `sc_13` : anti-spoiler, ARCHITECTURE §12 ter.5), 372–387 o par portrait (≤ 400), 12,9 Ko en tout (≤ 20 Ko). Fixtures versées : `tests/fixtures/qa_profile_v2_013.json`, `qa_save_v6_013_j19.json`.
+- **Reprise de la sauvegarde 0.13 en 0.14** (`qa_campaign --qa-load`, J19 → J30) : 0 `SCRIPT ERROR`, 0 `QA_ISSUE` (hors solde aberrant attendu), fin F7 avec sa cinématique ; profil : **41 portraits** (rencontres de la 0.14 ajoutées), `cinematics_seen = [cin_f7]`.
+- **Dossier PERSONNES** (vraie `DossierScreen`, OpenGL 3) : portraits rendus, visière baissée pour Mira et Lev, initiales gardées sur le cadre, code d'origine écrit [`m14_qa_dossier_people_013.png`](mockups/m14_qa_dossier_people_013.png), Deck [`_deck`](mockups/m14_qa_dossier_people_013_deck.png). Aucun portrait d'un personnage seulement entendu (liste blanche) ; jamais de visage relevé sur une visière restée baissée.
+- **REVOIR** : seulement pour une séquence au profil — les fins vues **en 0.13** n'ont donc pas de REVOIR après migration (voulu par le contrat ; recommandation §17.10). Séquence rejouée ≠ séquence vue : QA-073.
+- **Options** : « Musique : Stable » (N1 tenu tout le shift, J15), « Musique pendant l'inspection » réduite/normale (sondes), « Cinématiques : manuelle » (aucune avance seule), sous-titres coupés (aucune annonce affichée) : vérifiés en scène par réglages de session ; écran d'options : `test_m14_ui` vert.
+
+### 17.7 Campagnes réelles J1 → J30 (`qa_m14_campaign`, `day.tscn`, bot `--autoplay`, ×10, deux tronçons de 9,5 min repris sur la vraie sauvegarde)
+
+| Graine | Profil | Mode | Jours | Fin (cinématique) | Passage | Solde | Conformité | Problèmes |
+|---|---|---|---|---|---|---|---|---|
+| 3 | loyal | Dur | J1 → J30 (19 + 11) | **F7** (CIN-F7, TH-F7) | avance automatique, 26,5 s | 373 ₵ | 58 % | aucun |
+| 11 | passeur | Dur | J1 → J30 (19 + 11) | **F7** (CIN-F7) | maintien Ⓑ dès la 1ʳᵉ image : passée | 101 ₵ | 55 % | aucun |
+| 7 | drift | **Récit** | J1 → J30 (19 + 11) | **F6 Dérive** (CIN-F6D, Wren au visage de la partie) | appuis Ⓐ : 5,2 s | 931 ₵ | 60 % | aucun |
+| 5 (sauvegarde **0.13** du J19) | default | Dur | J19 → J30 | **F7** (CIN-F7) | automatique | 265 ₵ | 58 % | aucun |
+
+0 `SCRIPT ERROR`, 0 fuite, 0 `QA_ISSUE` hors « solde aberrant » attendu (+3 000 ₵) ; sauvegarde relue = `GameState` chaque soir. **Garde** et **J31** : §17.3 (journées sans bot), §17.4.
+
+### 17.8 Régression et exports
+
+- **GUT** : unit **671 / 671** (216 s) ; integration **362 / 362** à l'arrivée (3 lots < 10 min) ; nouveau `tests/integration/test_qa_m14.gd` : **14 tests, 5 verts, 9 `pending`** (QA-072 → QA-080), 0 échec. Total **1 047 tests : 1 038 verts, 9 `pending`**.
+- **`build_data`** : relancé, **0 fichier** de `data/` modifié : déterministe.
+- **`export_all.sh linux`** : 53 s, `build/dist/CLEARANCE-0.13.0-linux.tar.gz` (**69,1 Mo** ; nom : QA-072) ; `.pck` **49,6 Mo** (M-12 ✅, marge 0,36 Mo) ; sonde du `.pck` : `index.json` de la musique, manifeste des planches, `pa_lines.tres`, `cinematics.tres`, 46 fonds bien embarqués. **`smoke_export.sh`** : titre, J1, J4, J7, J8, J10, J15, J19, J20, J24, J25, J30, Garde, J31 F10 et F6 : **OK** (3 min 49). Le smoke ne joue ni une fin (cinématique), ni le titre après une fin : à ajouter.
+- Campagnes, Garde, J31 : §17.3, §17.4, §17.7.
+
+### 17.9 Liste des bugs (M14)
+
+Statut : 🔴 ouvert. Chacun a un test `pending` dans `tests/integration/test_qa_m14.gd`.
+
+| ID | Sév. | Titre | Reproduction | Propriétaire suggéré | Preuve |
+|---|---|---|---|---|---|
+| QA-072 | Cosmétique | ✅ Corrigé (0.14.0) — **Version non montée** : `config/version = "0.13.0"` en M14 (export `CLEARANCE-0.13.0-linux.tar.gz`, `game_version` des sauvegardes) ; un export Windows écraserait l'archive 0.13.0 de `build/dist` | `bash tools/export_all.sh linux` | Orchestrateur (à la livraison 0.14.0) | `test_qa072_*` |
+| QA-073 | Mineur | ✅ Corrigé (0.14.0) — **REVOIR ne rejoue pas la séquence vue** : le profil ne garde que fin, variante et acte ; les planches conditionnées par des drapeaux de la partie retombent sur leur version générique — F3 avec `lumika_learned` (PL-F3-2 « Lumika » → PL-F3-2), F4 avec `final3_dora` (légende « Elle regarde Noa » → générique) ; le thème est aussi joué sans ses variantes de drapeaux (`play_theme_after_fade(theme, {})`) | `qa_m14_replay_scan.gd` ; Dossier › FINS › REVOIR après une fin F4 Dora | UI/UX Expert (`DossierScreen.replays_for` / `play_replay`) + Godot Architect (profil : mémoriser le contexte de la séquence vue, ex. clés de légende ou drapeaux de condition dans `cinematics_seen`) | `test_qa073_*` |
+| QA-074 | Cosmétique (audio) | ✅ Corrigé (0.14.0) — **Fondu de sortie étouffé comme une pause** : `_leave_after_music_fade` met l'arbre en pause ; l'`AudioDirector` y voit une pause et pose le passe-bas `Muffle` à **2,5 kHz** pendant les 1,5 s du fondu, à chaque jour suivant, chapitre et retour au titre (29 fois par campagne). M14 §2.6 : fondu de bus seul | transition soirée → jour suivant en temps réel (`qa_m14_transitions --qa-scenario=evening`) : `muffle=2500` de 4 609 à 6 100 ms | Audio Designer (`AudioDirector._update_pause` : ignorer la pause de sortie, ex. drapeau `leaving`) ou UI/UX Expert (`DayScene`) | `test_qa074_*` |
+| QA-075 | Mineur (audio) | ✅ Corrigé (0.14.0) — **Titre → partie : musique du titre coupée net** (CONTINUER, NOUVELLE PARTIE, Garde, épilogue) : `main.gd` (`_start_day`, `start_garde`, `_play_epilogue`) appelle `change_scene_to_file` tout de suite ; `TitleMusic._exit_tree` arrête le lecteur. D-208 ne couvre que `DayScene` ; la consigne « fondu de sortie avant chaque changement de scène » n'est pas tenue | titre → CONTINUER | UI/UX Expert (`scenes/main/main.gd` : `fade_to` 1,5 s puis changement de scène, comme `_leave_after_music_fade`) | `test_qa075_*` |
+| QA-076 | Mineur (audio) | ✅ Corrigé (0.14.0) — **Horloge de mesures du `MusicDirector` en retard sur le flux** : `_process` borne `dt` à 0,25 s ; toute image plus longue (chargement de scène, compilation de shader, planche chargée sans préchargement en qualité Bas) fait perdre la différence, définitivement, à l'horloge qui décide des limites de mesure, alors que `AudioStreamInteractive` avance en temps réel. Mesuré : **455 ms** perdus pour une image de 700 ms (GUT), **30 → 480 ms par journée** en headless (sans GPU : davantage en vrai). Effets : changements de niveau et rampes décalés dans la mesure, fondu d'entrée qui démarre à **−15,6 dB** (briefing) / **−25,4 dB** (titre) au lieu du silence | `test_qa076_*` ; `QA14_DAYMUSIC lost_ms=` | Audio Designer (`music_director.gd` : horloge sans borne, ou bornée seulement pour la rampe ; `_last_usec` remis à la 1ʳᵉ image après `play`) | `test_qa076_*` |
+| QA-077 | Mineur (audio) | ✅ Corrigé (0.14.0) — **Annonce `drop` sous le plancher du jour** : `MusicIntensity.decide` vise N0 pendant le drop (en plus du masque L0) ; le niveau redescend d'un cran toutes les 4 mesures puis remonte de +1 / 2 mesures : au J30 (plancher N2) la musique passe **N2 → N1 pendant 60 s** et revient un cran plus bas après l'annonce (M14 §2.5 : drop = L0 seule, −6 dB, 4 mesures) | `--day=30 --seed=3 --autoplay` (`qa_m14_day`) : `t=89 lv=1 floor=2 action=drop` | Audio Designer (drop = masque et gain seulement, niveau conservé) | `test_qa077_*` |
+| QA-078 | Mineur (audio, design) | ✅ Corrigé (0.14.0) — **Chrono critique : N4 hors d'atteinte depuis N1** : la règle +1 niveau / 2 mesures s'applique aussi au cas prioritaire « chrono critique » ; depuis N1 il faut 3 pas (≥ 16 s à 75 BPM dans le pire calage) pour 15 s de chrono. Avec l'option **Stable** (N1 tout le shift), la priorité du chrono fait monter N2, N3 puis **N4 à 1 s de la sirène** (J15) : une escalade tardive que le joueur a choisi d'éviter, et le N4 voulu n'est presque jamais entendu | `--day=15 --seed=3 --qa-stable --qa-real-at=45` | Audio Designer + Game Designer (N4 immédiat à la mesure suivante au chrono critique, ou Stable exempté : seule L3 coupée) | `test_qa078_*` |
+| QA-079 | Cosmétique (audio) | ✅ Corrigé (0.14.0) — **Fins simulées des actes I–II (F4, F5, F7, F8, F9) : thème de fin joué** sous l'écran de fin, alors qu'AUDIO §13.8 et M14 §2.7 prévoient que MS-06 continue (pas de cinématique : correct). `AudioDirector.on_end_screen` ne regarde pas l'acte. Inaccessible en partie réelle (D-076, D-086) : démo et simulation seulement | `--day=20 --screen=end --ending=f4_glory --flags=act2_started` : `theme=th_f4` | Audio Designer | `test_qa079_*` |
+| QA-080 | Cosmétique (outil) | ✅ Corrigé (0.14.0) — **Capture `--cinematic=<id>` : mauvaise séquence** pour CIN-F5C et CIN-F5B (→ F5S) et CIN-F6D (→ F6T) : `DayScene.ctx_variant_flags` ne connaît que les variantes de F1 (il faut `climate_vanne`, `vanne2_brulants`, `exit3_drift`). Les captures `m14_*` de ces séquences seraient fausses | `--day=30 --screen=cinematic --cinematic=cin_f5c --plate=3` : légende « Tycho respire… » (PL-F5S-3) | UI/UX Expert (`day_scene.gd`, debug) | `test_qa080_*`, [`m14_qa_cin_f5c_low_qa080.png`](mockups/m14_qa_cin_f5c_low_qa080.png) |
+
+Total M14 : **0 bloquant, 0 majeur, 5 mineurs (dont 4 audio), 4 cosmétiques** (QA-072 à QA-080, 9 bugs). Aucun bug des passes précédentes réapparu (QA-030 : 0 plantage sur 1 440 rechargements ; QA-065 : réapparu sous la forme QA-072).
+
+### 17.10 Recommandations priorisées
+
+1. **QA-076** puis **QA-074**, **QA-075** : la qualité perçue de chaque transition (fondu d'entrée qui saute, sortie étouffée, coupure au titre) — trois correctifs locaux.
+2. **QA-078** et **QA-077** (choix du Game Designer : N4 immédiat au chrono critique ? Stable exempté ?) ; **QA-073** (REVOIR fidèle, ou assumé et documenté).
+3. **QA-072** à la livraison 0.14.0 ; **QA-079**, **QA-080** (outils et démo).
+4. Mesures **Steam Deck** : M-10, M-11 (audio total, Dossier), à-coups de chargement des planches en qualité Bas (pas de préchargement), M-13 sur GPU réel ; écoute humaine des transitions, de la Garde et des annonces (voix Tessar à 16 kHz).
+5. Budgets serrés : `.pck` 49,6 / 50 Mo et MS-07 5,82 / 6 Mo — toute addition d'assets M15 devra libérer de la place.
+6. QA (suite) : ajouter au smoke une fin avec cinématique et un retour au titre ; une option de migration qui inscrit `cinematics_seen` pour les fins déjà vues en 0.13 (REVOIR) mérite une décision ; le bot de campagne ne déclenche aucune annonce d'ambiance : garder des journées sans bot dans les passes.
+
+### 17.11 Tests ajoutés (`tests/integration/test_qa_m14.gd`, 14 tests) et outils
+
+| Test | État |
+|---|---|
+| `test_reachable_endings_have_a_clean_sequence` | ✅ passe (18 fins et variantes atteignables : 3–5 planches, rien d'un acte ultérieur, légendes ≤ 70) |
+| `test_queue_silhouette_matches_the_presented_passenger` | ✅ passe (teinte, taille ; forme seulement par la visière, sans corrélation aux anomalies) |
+| `test_intensity_follows_public_signals_only` | ✅ passe |
+| `test_ambient_lines_carry_no_game_information` | ✅ passe (52 lignes) |
+| `test_real_0_13_profile_migrates_with_last_encounter_portraits` | ✅ passe (vrai profil et vraie sauvegarde 0.13.0) |
+| `test_qa072_version_is_0_14` … `test_qa080_debug_cinematic_plays_the_requested_sequence` | ⏸ `pending` QA-072 → QA-080 (9) |
+
+Fixtures : `tests/fixtures/qa_profile_v2_013.json`, `qa_save_v6_013_j19.json` — **écrits par la 0.13.0** (`git archive e4d6f71`, campagne réelle graine 5, profil `default`, J1 → J18).
+
+Pilotes (hors GUT, `tests/qa_drivers/`) : `qa_m14_campaign.gd` (campagne observée : `QA14_LEVEL`, `QA14_DAYMUSIC`, `QA14_MIRROR`, `QA14_PA`, `QA14_QUEUE`, `QA14_GUARD`, `QA14_FADE`, `QA14_CIN`, `QA14_END` ; `--qa-cin=auto|tap|hold`), `qa_m14_day.gd` (journée sans bot : `--qa-real-at`, `--qa-max-sec`, `--qa-follow`, `--qa-stable`, `--qa-subs=0`, `--qa-inspect=toggle`, `--qa-normal-inspect`), `qa_m14_transitions.gd` (temps réel : `--qa-scenario=evening|end`, `--qa-skip-at`), `qa_m14_cin.gd` (une fin par `show_end` : légendes, figures, thème, durée, mémoire de textures ; `--qa-manual`), `qa_m14_replay_scan.gd` (REVOIR et captures ↔ séquence vue), `qa_m14_queue_scan.gd` (file ↔ passager présenté), `qa_m14_profile.gd` (migration réelle et Dossier).
+
+### 17.12 Rejouer la passe M14
+
+```bash
+# GUT (unit puis integration par lots < 10 min ; le nouveau fichier seul)
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig= -gdir=res://tests/unit/ -gprefix=test_ -gsuffix=.gd \
+    -gpre_run_script=res://tests/helpers/gut_pre_run.gd -gexit
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig= -gtest=res://tests/integration/test_qa_m14.gd \
+    -gpre_run_script=res://tests/helpers/gut_pre_run.gd -gexit
+# Audio : audit par partition, CPU / mémoire, stress D-083
+godot --headless --path . --script res://tools/qa_audio_audit.gd -- --only=ms02 --json=/tmp/ms02.json   # ×18
+godot --headless --path . --script res://tools/qa_audio_load.gd -- --set=ms_04      # [--skip-cpu] ms_03 ms_05 ms_07
+STRESS_TIMEOUT=570 bash tools/qa_audio_stress.sh /tmp/s.log --qa-stress=reload --qa-control=off --qa-reloads=160 --autoplay --day=20 --seed=3
+STRESS_TIMEOUT=570 bash tools/qa_audio_stress.sh /tmp/s.log --qa-stress=reload --qa-reloads=200 --autoplay --day=25 --seed=12
+# Campagne observée (deux tronçons : le second reprend slot_1/current.json par --qa-load)
+X=$(mktemp -d); XDG_DATA_HOME=$X timeout 570 godot --headless --script res://tools/qa_boot.gd -- \
+    --qa-node=res://tests/qa_drivers/qa_m14_campaign.gd --autoplay --qa-seed=7 --qa-profile=drift --qa-credits=3000 \
+    --qa-speed=10 --qa-story --qa-cin=tap
+# Journées sans bot (annonces, chrono critique, coupure, Stable, Garde, J31)
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tests/qa_drivers/qa_m14_day.gd \
+    --day=15 --seed=3 --qa-speed=10 --qa-real-at=45 --qa-stable
+#   --day=25 --seed=12 --autoplay --qa-speed=4 (EV-05) ; --day=20 --seed=3 --screen=shift --lights-out --qa-max-sec=240 ;
+#   --day=30 --seed=3 --autoplay --qa-speed=4 (drop, QA-077) ; --garde --qa-max-sec=500 ; --epilogue=f6_drift --flags=exit3_drift --qa-max-sec=420 ;
+#   --epilogue=f10_pont --autoplay --qa-speed=4 --qa-follow=45 (CIN-EC) ; --day=5 --seed=3 --qa-subs=0 --qa-max-sec=400
+# Transitions en temps réel
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tests/qa_drivers/qa_m14_transitions.gd \
+    --qa-scenario=end --qa-skip-at=3 --day=30 --seed=3 --screen=end --ending=f9_strike --flags=act2_started,act3_started
+# Cinématiques par le vrai show_end ; REVOIR ; file ; profil 0.13
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tests/qa_drivers/qa_m14_cin.gd \
+    --seed=3 --screen=end --day=30 --ending=f4_glory --flags=act2_started,act3_started,final3_dora [--qa-manual]
+godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tests/qa_drivers/qa_m14_replay_scan.gd
+godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tests/qa_drivers/qa_m14_queue_scan.gd --seeds=3
+#   user:// de la 0.13.0 : git archive e4d6f71 | tar -x -C /tmp/v013 ; godot --headless --path /tmp/v013 --import ;
+#   campagne qa_campaign graine 5 (un tronçon), puis copie du user:// et :
+XDG_DATA_HOME=<copie> godot --headless --script res://tools/qa_boot.gd -- --qa-node=res://tests/qa_drivers/qa_m14_profile.gd
+# Hall, planches, captures (xvfb, OpenGL 3)
+xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 --script res://tools/qa_boot.gd -- \
+    --qa-node=res://tools/qa_hall_audit.gd --day=7 --screen=shift --seed=3 --qa-escort --qa-wait=14 [--qa-quality=0]
+xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 --script res://tools/qa_plates_audit.gd
+xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 --script res://tools/qa_boot.gd -- \
+    --qa-node=res://tools/qa_capture.gd --qa-wait=18 --qa-out=/tmp/c.png --day=30 --screen=cinematic --cinematic=cin_f9 \
+    --plate=1 --plate-t=3.2 --plate-hold [--qa-set=reduce_motion:true] [--qa-size=1280x800 --qa-set=text_scale:1.5]
+# Données, exports
+godot --headless --script res://tools/build_data.gd && git status --short data/      # aucun fichier modifié
+bash tools/export_all.sh linux && bash tools/smoke_export.sh && ls -l build/linux/CLEARANCE.pck
+```

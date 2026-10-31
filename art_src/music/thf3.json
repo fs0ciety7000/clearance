@@ -1,0 +1,375 @@
+{
+ "id": "thf3",
+ "def_id": "th_f3",
+ "kind": "theme",
+ "title": "TH-F3 · La cabine silencieuse — ré mineur, 60 BPM",
+ "doc": "docs/M14.md §2.7 : boîte à musique seule, recycleur en bourdon ; MO-3 sans sa dernière note. Variante lumika_learned : MO-2 au pincé très doux en fin de B. Ouverture 2 + A 3 + B 3 (24 s) puis queue 8 (32 s).",
+ "tempo": 60,
+ "beats_per_bar": 4,
+ "bars": 16,
+ "tail_bars": 2,
+ "sample_rate": 48000,
+ "seed": 9003,
+ "sections": [
+  {
+   "id": "opening",
+   "from_bar": 0,
+   "bars": 2
+  },
+  {
+   "id": "a",
+   "from_bar": 2,
+   "bars": 3
+  },
+  {
+   "id": "b",
+   "from_bar": 5,
+   "bars": 3
+  },
+  {
+   "id": "tail",
+   "from_bar": 8,
+   "bars": 8,
+   "loop": true
+  }
+ ],
+ "chords": [
+  {
+   "bar": 0,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 2,
+   "bars": 2,
+   "bass": "Bb1",
+   "notes": [
+    "Bb2",
+    "D3",
+    "F3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 4,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "Bb2",
+    "D3",
+    "F3"
+   ]
+  },
+  {
+   "bar": 6,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "D3",
+    "E3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 8,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "F3",
+    "A3",
+    "E4"
+   ]
+  },
+  {
+   "bar": 10,
+   "bars": 2,
+   "bass": "G1",
+   "notes": [
+    "G2",
+    "Bb2",
+    "D3",
+    "F3"
+   ]
+  },
+  {
+   "bar": 12,
+   "bars": 2,
+   "bass": "Bb1",
+   "notes": [
+    "Bb2",
+    "D3",
+    "F3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 14,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "D3",
+    "E3",
+    "A3"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-3s": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "D5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "F5"
+   },
+   {
+    "step": 8,
+    "len": 4,
+    "note": "E5"
+   }
+  ],
+  "MO-2": [
+   {
+    "step": 0,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 2,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 4,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 7,
+    "len": 1,
+    "note": "E5"
+   }
+  ]
+ },
+ "instruments": {
+  "box": {
+   "type": "musicbox",
+   "partial": 3.0,
+   "decay": 1.3,
+   "length": 2.0,
+   "level": 0.24
+  },
+  "recycler": {
+   "type": "tone",
+   "wave": "air",
+   "attack": 2.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.5,
+   "level": 0.07,
+   "cutoff": 260
+  },
+  "drone": {
+   "type": "tone",
+   "wave": "sine",
+   "attack": 2.0,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.5,
+   "level": 0.06
+  },
+  "soft": {
+   "type": "pluck",
+   "damping": 0.01,
+   "brightness": 0.25,
+   "length": 1.4,
+   "level": 0.22
+  }
+ },
+ "mix": {
+  "eq": [],
+  "reverb": {
+   "rt60": 2.4,
+   "size": 1.0,
+   "damp_hz": 4000,
+   "predelay": 0.02
+  },
+  "width": 0.5
+ },
+ "stems": [
+  {
+   "id": "box",
+   "tracks": [
+    {
+     "instrument": "box",
+     "gain_db": 0,
+     "send": 0.45,
+     "pan": 0.1,
+     "pattern": {
+      "bars": 2,
+      "steps": [
+       {
+        "step": 0,
+        "len": 2,
+        "note": "chord:0",
+        "vel": 0.7,
+        "oct": 1
+       },
+       {
+        "step": 6,
+        "len": 2,
+        "note": "chord:2",
+        "vel": 0.5,
+        "oct": 1
+       },
+       {
+        "step": 12,
+        "len": 2,
+        "note": "chord:1",
+        "vel": 0.55,
+        "oct": 1
+       },
+       {
+        "step": 20,
+        "len": 2,
+        "note": "chord:3",
+        "vel": 0.5,
+        "oct": 1
+       },
+       {
+        "step": 26,
+        "len": 2,
+        "note": "chord:2",
+        "vel": 0.45,
+        "oct": 1
+       }
+      ],
+      "from_bar": 2
+     }
+    },
+    {
+     "instrument": "box",
+     "gain_db": 0,
+     "send": 0.5,
+     "pan": -0.1,
+     "events": [
+      {
+       "motif": "MO-3s",
+       "bar": 2,
+       "step": 0
+      },
+      {
+       "motif": "MO-3s",
+       "bar": 5,
+       "step": 0,
+       "vel": 0.8
+      },
+      {
+       "motif": "MO-3s",
+       "bar": 10,
+       "step": 0,
+       "vel": 0.7
+      },
+      {
+       "motif": "MO-3s",
+       "bar": 14,
+       "step": 0,
+       "vel": 0.6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "recycler",
+   "tracks": [
+    {
+     "instrument": "recycler",
+     "gain_db": 0,
+     "send": 0.0,
+     "events": [
+      {
+       "step": 0,
+       "len": 128,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 0
+      },
+      {
+       "step": 0,
+       "len": 128,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 8
+      }
+     ]
+    },
+    {
+     "instrument": "drone",
+     "gain_db": 0,
+     "send": 0.1,
+     "events": [
+      {
+       "step": 0,
+       "len": 128,
+       "note": "D2",
+       "vel": 1.0,
+       "bar": 0
+      },
+      {
+       "step": 0,
+       "len": 128,
+       "note": "D2",
+       "vel": 1.0,
+       "bar": 8
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "luciole",
+   "tracks": [
+    {
+     "instrument": "soft",
+     "gain_db": 0,
+     "send": 0.3,
+     "pan": 0.3,
+     "variant": "lumika_learned",
+     "events": [
+      {
+       "motif": "MO-2",
+       "bar": 7,
+       "step": 4,
+       "transpose": 5,
+       "vel": 0.55
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "endings": [
+  "f3_family_lost"
+ ],
+ "variants": [
+  {
+   "id": "lumika_learned",
+   "flag": "lumika_learned",
+   "section": "b"
+  }
+ ]
+}

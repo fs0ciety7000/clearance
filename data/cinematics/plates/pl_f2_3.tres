@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://co800t7t7gkqt"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_cd8fh"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_3ipol"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_5jhl4"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_05xo5"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_00wsp"]
+
+[sub_resource type="Resource" id="pl_f2_3_resource_1"]
+script = ExtResource("4_05xo5")
+texture_path = "res://assets/cinematics/bg/bg_q3.webp"
+
+[sub_resource type="Resource" id="pl_f2_3_resource_2"]
+script = ExtResource("4_05xo5")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f2_3_halcyon.webp"
+rect = Rect2(0.4438, 0.3889, 0.1045, 0.1302)
+depth = 0.1
+props = Array[StringName]([&"halcyon_far"])
+
+[resource]
+script = ExtResource("5_00wsp")
+id = &"pl_f2_3"
+layers = Array[ExtResource("4_05xo5")]([SubResource("pl_f2_3_resource_1"), SubResource("pl_f2_3_resource_2")])
+caption_key = "cin_f2_3"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s2"
+set_variant = &"porthole"
+lighting = &"dock"
+dominant = &"state.amber"
+paint_radius_px = 6

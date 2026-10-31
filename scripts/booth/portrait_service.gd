@@ -17,12 +17,17 @@
 ## Coût (M10, BOOTH_SCENE §18.4) : un rendu `UPDATE_ONCE` par signature, puis
 ## rien — viewport `UPDATE_DISABLED` et modèle du studio en pause entre deux
 ## portraits ; les pièces fusionnées viennent du cache partagé avec l'acteur.
+## M14 (B92, D-191 ; lot C) : `size` règle la taille du rendu — 256×320 pour les
+## documents (défaut), **128×160** pour les vignettes du Dossier (`DOSSIER_SIZE`,
+## instance autonome du `DossierScreen`, lot D). Changer la taille vide le cache.
 class_name PortraitService
 extends Node
 
 signal portrait_ready(texture: Texture2D)
 
 const SIZE: Vector2i = Vector2i(256, 320)
+## Vignettes du Dossier (M14 §5.3), affichées à 96×120.
+const DOSSIER_SIZE: Vector2i = Vector2i(128, 160)
 const BACKDROP: Color = Color("#2A3140")
 ## Champ vertical et recul de la caméra portrait (épaules → haut du crâne).
 const FOV: float = 18.0
@@ -44,6 +49,17 @@ const GARDE_MAX_ENTRIES: int = 12
 ## de Garde, sinon `DEFAULT_MAX_ENTRIES`). Ordre d'insertion du dictionnaire =
 ## ordre d'utilisation (le plus ancien en tête).
 var max_entries: int = 0
+## Taille du rendu (et de l'esquisse) ; à poser avant l'entrée dans l'arbre de
+## préférence (sinon le studio est redimensionné et le cache vidé).
+var size: Vector2i = SIZE:
+	set(value):
+		var clamped: Vector2i = Vector2i(maxi(value.x, 16), maxi(value.y, 20))
+		if clamped == size:
+			return
+		size = clamped
+		_cache.clear()
+		if _viewport != null:
+			_viewport.size = size
 var _cache: Dictionary[String, ImageTexture] = {}
 var _queue: Array[Array] = []
 var _busy: bool = false
@@ -53,6 +69,8 @@ var _camera: Camera3D = null
 var _rig: PassengerRig = null
 var _pose_player: AnimationPlayer = null
 var _sitter: Node3D = null
+## D-210 : vrai une fois que le studio a produit une première image.
+var _warmed: bool = false
 
 
 func _ready() -> void:
@@ -72,7 +90,7 @@ func get_portrait(appearance: PassengerAppearance) -> Texture2D:
 		_cache.erase(key)
 		_cache[key] = cached
 		return cached
-	var texture: ImageTexture = ImageTexture.create_from_image(sketch(appearance))
+	var texture: ImageTexture = ImageTexture.create_from_image(sketch(appearance, size))
 	_cache[key] = texture
 	_evict()
 	if not _headless and is_inside_tree():
@@ -109,29 +127,30 @@ static func signature(appearance: PassengerAppearance) -> String:
 
 ## Esquisse CPU (fallback headless et image d'attente) : fond, épaules, cou,
 ## visage (teinte de peau), cheveux, yeux. Même structure de couleurs que le rig.
-static func sketch(appearance: PassengerAppearance) -> Image:
-	var img: Image = Image.create_empty(SIZE.x, SIZE.y, false, Image.FORMAT_RGBA8)
+## `p_size` : taille de l'image (défaut : celle des documents).
+static func sketch(appearance: PassengerAppearance, p_size: Vector2i = SIZE) -> Image:
+	var img: Image = Image.create_empty(p_size.x, p_size.y, false, Image.FORMAT_RGBA8)
 	img.fill(BACKDROP)
 	var skin: Color = GreyboxStyle.skin_color(appearance)
 	var pal: PackedColorArray = GreyboxStyle.palette(appearance)
 	var hair: Color = GreyboxStyle.hair_color(appearance)
 	var eyes: PackedColorArray = GreyboxStyle.eye_colors(appearance)
-	var cx: float = SIZE.x * 0.5
+	var cx: float = p_size.x * 0.5
 	var shoulders: float = 0.36 * GreyboxStyle.silhouette_scale(appearance).x
-	_fill_ellipse(img, Vector2(cx, SIZE.y * 1.02), Vector2(SIZE.x * shoulders, SIZE.y * 0.26), pal[0])
-	_fill_ellipse(img, Vector2(cx, SIZE.y * 0.70), Vector2(SIZE.x * 0.08, SIZE.y * 0.1), skin.darkened(0.1))
+	_fill_ellipse(img, Vector2(cx, p_size.y * 1.02), Vector2(p_size.x * shoulders, p_size.y * 0.26), pal[0])
+	_fill_ellipse(img, Vector2(cx, p_size.y * 0.70), Vector2(p_size.x * 0.08, p_size.y * 0.1), skin.darkened(0.1))
 	var face_w: float = 0.24
 	match GreyboxStyle.face_shape(appearance):
 		&"round":
 			face_w = 0.27
 		&"oval":
 			face_w = 0.22
-	_fill_ellipse(img, Vector2(cx, SIZE.y * 0.47), Vector2(SIZE.x * face_w, SIZE.y * 0.2), skin)
+	_fill_ellipse(img, Vector2(cx, p_size.y * 0.47), Vector2(p_size.x * face_w, p_size.y * 0.2), skin)
 	if GreyboxStyle.hair_cut(appearance) != &"shaved":
-		_fill_ellipse(img, Vector2(cx, SIZE.y * 0.33), Vector2(SIZE.x * (face_w + 0.02), SIZE.y * 0.1), hair)
+		_fill_ellipse(img, Vector2(cx, p_size.y * 0.33), Vector2(p_size.x * (face_w + 0.02), p_size.y * 0.1), hair)
 	for side: int in [-1, 1]:
 		var eye: Color = eyes[0] if side < 0 else eyes[1]
-		_fill_ellipse(img, Vector2(cx + side * SIZE.x * 0.085, SIZE.y * EYE_LINE), Vector2(9, 7), eye)
+		_fill_ellipse(img, Vector2(cx + side * p_size.x * 0.085, p_size.y * EYE_LINE), Vector2(9, 7) * (p_size.x / 256.0), eye)
 	return img
 
 
@@ -150,7 +169,7 @@ static func _fill_ellipse(img: Image, center: Vector2, radius: Vector2, color: C
 func _build_studio() -> void:
 	_viewport = SubViewport.new()
 	_viewport.name = "PortraitStudio"
-	_viewport.size = SIZE
+	_viewport.size = size
 	_viewport.own_world_3d = true
 	_viewport.transparent_bg = false
 	_viewport.msaa_3d = Viewport.MSAA_4X
@@ -225,10 +244,23 @@ func _pump() -> void:
 	_camera.position = Vector3(0, center_y, DISTANCE)
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw
+	if not _warmed:
+		# D-210 : en OpenGL 3, la toute première image d'un studio neuf sort vide
+		# (fond seul : cible de rendu et matériaux pas encore prêts à la première
+		# passe). Une seconde passe, une fois par studio, avant toute lecture.
+		_warmed = true
+		if not is_inside_tree() or _viewport == null:
+			_busy = false
+			return
+		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+		await RenderingServer.frame_post_draw
+	if not is_inside_tree() or _viewport == null:
+		_busy = false
+		return
 	var img: Image = _viewport.get_texture().get_image()
 	if img != null and not img.is_empty():
 		img.convert(Image.FORMAT_RGBA8)
-		if img.get_size() == SIZE:
+		if img.get_size() == Vector2i(texture.get_size()):
 			texture.update(img)
 		else:
 			texture.set_image(img)

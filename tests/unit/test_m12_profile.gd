@@ -53,7 +53,7 @@ func test_v1_profile_migrates_and_rebuilds_from_finished_slots() -> void:
 	assert_eq(profile["version"], ProfileService.VERSION)
 	assert_true(FileAccess.file_exists(DIR.path_join(ProfileService.V1_BACKUP_FILE)), "profile.v1.bak")
 	var raw: Dictionary = SaveService.read_json(ProfileService.profile_path(DIR))
-	assert_eq(SaveService.as_int(raw["version"]), 2, "profil réécrit en v2")
+	assert_eq(SaveService.as_int(raw["version"]), ProfileService.VERSION, "profil réécrit à la version courante (v3 depuis M14)")
 	var endings: Array = profile["endings_seen"]
 	assert_eq(endings.size(), 3, "aucune fin perdue")
 	for entry: Dictionary in endings:
@@ -91,7 +91,7 @@ func test_empty_or_unversioned_profile() -> void:
 	assert_eq(ProfileService.load_profile(DIR), ProfileService.empty_profile(), "absent : vierge")
 	_write_v1({"characters_met": ["sc_02"]})
 	var profile: Dictionary = ProfileService.load_profile(DIR)
-	assert_eq(profile["version"], 2)
+	assert_eq(profile["version"], ProfileService.VERSION, "v1 sans version → version courante (v3 depuis M14)")
 	assert_eq(profile["characters_met"], ["sc_02"])
 	assert_eq(profile["max_day_reached"], 0)
 

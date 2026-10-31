@@ -1,0 +1,677 @@
+[gd_resource type="Resource" script_class="PaLineTable" format=3 uid="uid://k8thlaby5nio"]
+
+[ext_resource type="Script" path="res://scripts/core/hall_announcement_def.gd" id="1_1cmfw"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="2_mrhen"]
+[ext_resource type="Script" path="res://scripts/generation/pa_line_table.gd" id="3_opamp"]
+
+[sub_resource type="Resource" id="pa_resource_2"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+
+[sub_resource type="Resource" id="pa_resource_1"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_01"
+condition = SubResource("pa_resource_2")
+
+[sub_resource type="Resource" id="pa_resource_4"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+
+[sub_resource type="Resource" id="pa_resource_3"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_02"
+condition = SubResource("pa_resource_4")
+
+[sub_resource type="Resource" id="pa_resource_6"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+
+[sub_resource type="Resource" id="pa_resource_5"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_03"
+condition = SubResource("pa_resource_6")
+
+[sub_resource type="Resource" id="pa_resource_8"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+
+[sub_resource type="Resource" id="pa_resource_7"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_04"
+condition = SubResource("pa_resource_8")
+
+[sub_resource type="Resource" id="pa_resource_10"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+
+[sub_resource type="Resource" id="pa_resource_9"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_05"
+condition = SubResource("pa_resource_10")
+
+[sub_resource type="Resource" id="pa_resource_12"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+
+[sub_resource type="Resource" id="pa_resource_11"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_06"
+condition = SubResource("pa_resource_12")
+
+[sub_resource type="Resource" id="pa_resource_14"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+
+[sub_resource type="Resource" id="pa_resource_13"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_07"
+condition = SubResource("pa_resource_14")
+
+[sub_resource type="Resource" id="pa_resource_16"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+
+[sub_resource type="Resource" id="pa_resource_15"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_08"
+condition = SubResource("pa_resource_16")
+
+[sub_resource type="Resource" id="pa_resource_18"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+
+[sub_resource type="Resource" id="pa_resource_17"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_09"
+condition = SubResource("pa_resource_18")
+
+[sub_resource type="Resource" id="pa_resource_20"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 1
+})
+
+[sub_resource type="Resource" id="pa_resource_19"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_10"
+condition = SubResource("pa_resource_20")
+
+[sub_resource type="Resource" id="pa_resource_22"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1,
+&"pa_day": 8
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_day": 10
+})
+
+[sub_resource type="Resource" id="pa_resource_21"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_q2_01"
+condition = SubResource("pa_resource_22")
+
+[sub_resource type="Resource" id="pa_resource_24"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1,
+&"pa_day": 8
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_day": 10
+})
+
+[sub_resource type="Resource" id="pa_resource_23"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a1_q2_02"
+condition = SubResource("pa_resource_24")
+
+[sub_resource type="Resource" id="pa_resource_26"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+
+[sub_resource type="Resource" id="pa_resource_25"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a2_01"
+condition = SubResource("pa_resource_26")
+
+[sub_resource type="Resource" id="pa_resource_28"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+
+[sub_resource type="Resource" id="pa_resource_27"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a2_02"
+condition = SubResource("pa_resource_28")
+
+[sub_resource type="Resource" id="pa_resource_30"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+
+[sub_resource type="Resource" id="pa_resource_29"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a2_03"
+condition = SubResource("pa_resource_30")
+
+[sub_resource type="Resource" id="pa_resource_32"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+
+[sub_resource type="Resource" id="pa_resource_31"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a2_04"
+condition = SubResource("pa_resource_32")
+
+[sub_resource type="Resource" id="pa_resource_34"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+
+[sub_resource type="Resource" id="pa_resource_33"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a2_05"
+condition = SubResource("pa_resource_34")
+
+[sub_resource type="Resource" id="pa_resource_36"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+
+[sub_resource type="Resource" id="pa_resource_35"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a2_06"
+condition = SubResource("pa_resource_36")
+
+[sub_resource type="Resource" id="pa_resource_38"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+
+[sub_resource type="Resource" id="pa_resource_37"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a2_07"
+condition = SubResource("pa_resource_38")
+
+[sub_resource type="Resource" id="pa_resource_40"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1,
+&"pa_day": 16
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_day": 20
+})
+
+[sub_resource type="Resource" id="pa_resource_39"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a2_08"
+condition = SubResource("pa_resource_40")
+
+[sub_resource type="Resource" id="pa_resource_42"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+
+[sub_resource type="Resource" id="pa_resource_41"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a2_09"
+condition = SubResource("pa_resource_42")
+
+[sub_resource type="Resource" id="pa_resource_44"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 2
+})
+
+[sub_resource type="Resource" id="pa_resource_43"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a2_10"
+condition = SubResource("pa_resource_44")
+
+[sub_resource type="Resource" id="pa_resource_46"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+
+[sub_resource type="Resource" id="pa_resource_45"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a3_01"
+condition = SubResource("pa_resource_46")
+
+[sub_resource type="Resource" id="pa_resource_48"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+
+[sub_resource type="Resource" id="pa_resource_47"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a3_02"
+condition = SubResource("pa_resource_48")
+
+[sub_resource type="Resource" id="pa_resource_50"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1,
+&"pa_day": 21
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_day": 29
+})
+
+[sub_resource type="Resource" id="pa_resource_49"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a3_03"
+condition = SubResource("pa_resource_50")
+
+[sub_resource type="Resource" id="pa_resource_52"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+
+[sub_resource type="Resource" id="pa_resource_51"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a3_04"
+condition = SubResource("pa_resource_52")
+
+[sub_resource type="Resource" id="pa_resource_54"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1,
+&"pa_day": 21
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_day": 28
+})
+
+[sub_resource type="Resource" id="pa_resource_53"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a3_05"
+condition = SubResource("pa_resource_54")
+
+[sub_resource type="Resource" id="pa_resource_56"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1,
+&"pa_day": 27
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_day": 30
+})
+
+[sub_resource type="Resource" id="pa_resource_55"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a3_06"
+condition = SubResource("pa_resource_56")
+
+[sub_resource type="Resource" id="pa_resource_58"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+
+[sub_resource type="Resource" id="pa_resource_57"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a3_07"
+condition = SubResource("pa_resource_58")
+
+[sub_resource type="Resource" id="pa_resource_60"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+
+[sub_resource type="Resource" id="pa_resource_59"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a3_08"
+condition = SubResource("pa_resource_60")
+
+[sub_resource type="Resource" id="pa_resource_62"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_act": 3
+})
+
+[sub_resource type="Resource" id="pa_resource_61"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a3_09"
+condition = SubResource("pa_resource_62")
+
+[sub_resource type="Resource" id="pa_resource_64"]
+script = ExtResource("2_mrhen")
+none_of = Array[StringName]([&"pa_garde"])
+gauges_min = Dictionary[StringName, int]({
+&"pa_act": 1,
+&"pa_day": 28
+})
+gauges_max = Dictionary[StringName, int]({
+&"pa_day": 30
+})
+
+[sub_resource type="Resource" id="pa_resource_63"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_a3_10"
+condition = SubResource("pa_resource_64")
+
+[sub_resource type="Resource" id="pa_resource_66"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_event_ev_01"])
+
+[sub_resource type="Resource" id="pa_resource_65"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_ev01"
+condition = SubResource("pa_resource_66")
+
+[sub_resource type="Resource" id="pa_resource_68"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_event_ev_02"])
+
+[sub_resource type="Resource" id="pa_resource_67"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_ev02"
+condition = SubResource("pa_resource_68")
+
+[sub_resource type="Resource" id="pa_resource_70"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_event_ev_03"])
+
+[sub_resource type="Resource" id="pa_resource_69"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_ev03"
+condition = SubResource("pa_resource_70")
+
+[sub_resource type="Resource" id="pa_resource_72"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_event_ev_04"])
+
+[sub_resource type="Resource" id="pa_resource_71"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_ev04"
+condition = SubResource("pa_resource_72")
+
+[sub_resource type="Resource" id="pa_resource_74"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_event_ev_06"])
+
+[sub_resource type="Resource" id="pa_resource_73"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_ev06"
+condition = SubResource("pa_resource_74")
+
+[sub_resource type="Resource" id="pa_resource_76"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_event_ev_07"])
+
+[sub_resource type="Resource" id="pa_resource_75"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_ev07"
+condition = SubResource("pa_resource_76")
+
+[sub_resource type="Resource" id="pa_resource_78"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_event_ev_08"])
+
+[sub_resource type="Resource" id="pa_resource_77"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_ev08"
+condition = SubResource("pa_resource_78")
+
+[sub_resource type="Resource" id="pa_resource_80"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_event_ev_09"])
+
+[sub_resource type="Resource" id="pa_resource_79"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_ev09"
+condition = SubResource("pa_resource_80")
+
+[sub_resource type="Resource" id="pa_resource_82"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_garde"])
+
+[sub_resource type="Resource" id="pa_resource_81"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_garde_01"
+condition = SubResource("pa_resource_82")
+
+[sub_resource type="Resource" id="pa_resource_84"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_garde"])
+
+[sub_resource type="Resource" id="pa_resource_83"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_garde_02"
+condition = SubResource("pa_resource_84")
+
+[sub_resource type="Resource" id="pa_resource_86"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_garde"])
+
+[sub_resource type="Resource" id="pa_resource_85"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_garde_03"
+condition = SubResource("pa_resource_86")
+
+[sub_resource type="Resource" id="pa_resource_88"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_garde"])
+
+[sub_resource type="Resource" id="pa_resource_87"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_garde_04"
+condition = SubResource("pa_resource_88")
+
+[sub_resource type="Resource" id="pa_resource_90"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_world_a"])
+
+[sub_resource type="Resource" id="pa_resource_89"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_epi_a_01"
+condition = SubResource("pa_resource_90")
+
+[sub_resource type="Resource" id="pa_resource_92"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_world_a"])
+
+[sub_resource type="Resource" id="pa_resource_91"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_epi_a_02"
+condition = SubResource("pa_resource_92")
+
+[sub_resource type="Resource" id="pa_resource_94"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_world_b"])
+
+[sub_resource type="Resource" id="pa_resource_93"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_epi_b_01"
+condition = SubResource("pa_resource_94")
+
+[sub_resource type="Resource" id="pa_resource_96"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_world_b"])
+
+[sub_resource type="Resource" id="pa_resource_95"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_epi_b_02"
+condition = SubResource("pa_resource_96")
+
+[sub_resource type="Resource" id="pa_resource_98"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_world_c"])
+
+[sub_resource type="Resource" id="pa_resource_97"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_epi_c_01"
+condition = SubResource("pa_resource_98")
+
+[sub_resource type="Resource" id="pa_resource_100"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_world_c"])
+
+[sub_resource type="Resource" id="pa_resource_99"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_epi_c_02"
+condition = SubResource("pa_resource_100")
+
+[sub_resource type="Resource" id="pa_resource_102"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_world_d"])
+
+[sub_resource type="Resource" id="pa_resource_101"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_epi_d_01"
+condition = SubResource("pa_resource_102")
+
+[sub_resource type="Resource" id="pa_resource_104"]
+script = ExtResource("2_mrhen")
+all_of = Array[StringName]([&"pa_world_d"])
+
+[sub_resource type="Resource" id="pa_resource_103"]
+script = ExtResource("1_1cmfw")
+text_key = "pa_epi_d_02"
+condition = SubResource("pa_resource_104")
+
+[resource]
+script = ExtResource("3_opamp")
+lines = Array[ExtResource("1_1cmfw")]([SubResource("pa_resource_1"), SubResource("pa_resource_3"), SubResource("pa_resource_5"), SubResource("pa_resource_7"), SubResource("pa_resource_9"), SubResource("pa_resource_11"), SubResource("pa_resource_13"), SubResource("pa_resource_15"), SubResource("pa_resource_17"), SubResource("pa_resource_19"), SubResource("pa_resource_21"), SubResource("pa_resource_23"), SubResource("pa_resource_25"), SubResource("pa_resource_27"), SubResource("pa_resource_29"), SubResource("pa_resource_31"), SubResource("pa_resource_33"), SubResource("pa_resource_35"), SubResource("pa_resource_37"), SubResource("pa_resource_39"), SubResource("pa_resource_41"), SubResource("pa_resource_43"), SubResource("pa_resource_45"), SubResource("pa_resource_47"), SubResource("pa_resource_49"), SubResource("pa_resource_51"), SubResource("pa_resource_53"), SubResource("pa_resource_55"), SubResource("pa_resource_57"), SubResource("pa_resource_59"), SubResource("pa_resource_61"), SubResource("pa_resource_63"), SubResource("pa_resource_65"), SubResource("pa_resource_67"), SubResource("pa_resource_69"), SubResource("pa_resource_71"), SubResource("pa_resource_73"), SubResource("pa_resource_75"), SubResource("pa_resource_77"), SubResource("pa_resource_79"), SubResource("pa_resource_81"), SubResource("pa_resource_83"), SubResource("pa_resource_85"), SubResource("pa_resource_87"), SubResource("pa_resource_89"), SubResource("pa_resource_91"), SubResource("pa_resource_93"), SubResource("pa_resource_95"), SubResource("pa_resource_97"), SubResource("pa_resource_99"), SubResource("pa_resource_101"), SubResource("pa_resource_103")])
+weights = PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 2, 2, 1, 1, 1, 2, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)

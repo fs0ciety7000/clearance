@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://c2uo5amh4qoip"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_egn7e"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_663nn"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_yncc8"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_avv2o"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_7cnwn"]
+
+[sub_resource type="Resource" id="pl_f6t_1_resource_1"]
+script = ExtResource("4_avv2o")
+texture_path = "res://assets/cinematics/bg/bg_q3.webp"
+
+[sub_resource type="Resource" id="pl_f6t_1_resource_2"]
+script = ExtResource("4_avv2o")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f6t_1_bags.webp"
+rect = Rect2(0.5918, 0.7292, 0.1733, 0.1892)
+depth = 0.7
+props = Array[StringName]([&"two_bags"])
+
+[resource]
+script = ExtResource("5_7cnwn")
+id = &"pl_f6t_1"
+min_act = 3
+layers = Array[ExtResource("4_avv2o")]([SubResource("pl_f6t_1_resource_1"), SubResource("pl_f6t_1_resource_2")])
+caption_key = "cin_f6t_1"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s2"
+set_variant = &"cabin_empty"
+lighting = &"dock"
+dominant = &"accent.cyan"
+paint_radius_px = 6

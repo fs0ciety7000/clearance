@@ -1,0 +1,1928 @@
+{
+	"format": 1,
+	"scores": {
+		"ms01": {
+			"bar_samples": 128000.0,
+			"bars": 16.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -2.43,
+			"files": {
+				"mus_ms01_bed_loop": {
+					"junction_click_rank": 0.145,
+					"junction_coding_rank": 0.344,
+					"loop": true,
+					"lra_lu": 1.5,
+					"lufs": -13.1,
+					"ogg_bytes": 612697.0,
+					"ogg_sha256": "beb53694417fc97a77d9479496238c9d01a9ba84c72f7f313e3eaf989e57b776",
+					"path": "assets/audio/music/ms01/mus_ms01_bed_loop.ogg",
+					"quality": 3.0,
+					"samples": 2048000.0,
+					"true_peak_dbtp": -1.3,
+					"wav_sha256": "17b4a446ec8fb82d0287724eef39f144cf33ad34133c00e8f72838c71583dc45"
+				},
+				"mus_ms01_luciole_loop": {
+					"junction_click_rank": 0.0,
+					"junction_coding_rank": 0.001,
+					"loop": true,
+					"lra_lu": 12.8,
+					"lufs": -39.4,
+					"ogg_bytes": 236759.0,
+					"ogg_sha256": "e752c1cf2b36d5bb4e2b59aee4d03117d7b9fbca5bf356a1224ffab6d62878b4",
+					"path": "assets/audio/music/ms01/mus_ms01_luciole_loop.ogg",
+					"quality": 1.0,
+					"samples": 2048000.0,
+					"true_peak_dbtp": -11.9,
+					"wav_sha256": "be7b31eb302f76dcad309fdd928926622e1edd4d9e0580206871589a8cf20a1d"
+				},
+				"mus_ms01_motif_loop": {
+					"junction_click_rank": 0.0,
+					"junction_coding_rank": 0.001,
+					"loop": true,
+					"lra_lu": 25.2,
+					"lufs": -21.3,
+					"ogg_bytes": 218387.0,
+					"ogg_sha256": "c9990deeaef0d9fd00f90c16be324ea31cf976ce894a2b2ba746f512ddd9ecc9",
+					"path": "assets/audio/music/ms01/mus_ms01_motif_loop.ogg",
+					"quality": 1.0,
+					"samples": 2048000.0,
+					"true_peak_dbtp": -9.7,
+					"wav_sha256": "30976b771ac7fc4954c43e17c9ff05806ef83a4876ab77e3038548029babd990"
+				},
+				"mus_ms01_rain_loop": {
+					"junction_click_rank": 0.0,
+					"junction_coding_rank": 0.022,
+					"loop": true,
+					"lra_lu": 10.7,
+					"lufs": -35.4,
+					"ogg_bytes": 681050.0,
+					"ogg_sha256": "07ed6eed8c4d1e945f78cf3160d37669a09b4ace34ebdbc879e211bb9006d359",
+					"path": "assets/audio/music/ms01/mus_ms01_rain_loop.ogg",
+					"quality": 3.0,
+					"samples": 2048000.0,
+					"true_peak_dbtp": -8.8,
+					"wav_sha256": "f68db450fe83f83c5936de123d5389948ec178952850791f08be9a2060ad2156"
+				}
+			},
+			"kind": "set",
+			"levels": {
+				"exposed_layers": [
+					"bed",
+					"rain",
+					"motif"
+				],
+				"exposed_lufs": -20.0,
+				"exposed_offset_db": 0.0,
+				"layer_gains_db": [
+					-7.96,
+					10.48,
+					4.46,
+					11.26
+				],
+				"level_lufs": [
+					-23.0,
+					-21.5,
+					-20.0,
+					-19.6
+				],
+				"method": "BS.1770 (pondération K, portes −70/−10), énergies croisées des couches, bus Music à 0,8",
+				"music_bus_db": -1.94,
+				"steps": [
+					{
+						"label": "bed",
+						"layers": [
+							"bed"
+						],
+						"lufs": -23.0,
+						"target_lufs": -23.0
+					},
+					{
+						"label": "bed+rain",
+						"layers": [
+							"bed",
+							"rain"
+						],
+						"lufs": -21.5,
+						"target_lufs": -21.5
+					},
+					{
+						"label": "titre",
+						"layers": [
+							"bed",
+							"rain",
+							"motif"
+						],
+						"lufs": -20.0,
+						"target_lufs": -20.0
+					},
+					{
+						"label": "titre+MO-2",
+						"layers": [
+							"bed",
+							"rain",
+							"motif",
+							"luciole"
+						],
+						"lufs": -19.6,
+						"target_lufs": -19.6
+					}
+				],
+				"targets_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				]
+			},
+			"quality": 1.0,
+			"render_sec": 82.4,
+			"sample_rate": 32000.0,
+			"score_hash": "e2d8e48f42839941ef355123fad8762f2ee41a4642df9ba0bd111b6b15f7cba9",
+			"source": "art_src/music/ms01.json",
+			"stems": [
+				"bed",
+				"rain",
+				"motif",
+				"luciole"
+			],
+			"tempo": 60.0,
+			"tool_version": "m14-3"
+		},
+		"ms02": {
+			"bar_samples": 96000.0,
+			"bars": 16.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -2.33,
+			"demo": {
+				"levels_by_bar": [
+					[
+						0.0,
+						0.0
+					],
+					[
+						4.0,
+						1.0
+					],
+					[
+						8.0,
+						2.0
+					],
+					[
+						12.0,
+						3.0
+					],
+					[
+						18.0,
+						4.0
+					]
+				],
+				"lra_lu": 6.3,
+				"lufs": -18.1,
+				"lufs_by_level": [
+					{
+						"bars": [
+							1.0,
+							4.0
+						],
+						"level": 0.0,
+						"lufs": -22.04
+					},
+					{
+						"bars": [
+							5.0,
+							8.0
+						],
+						"level": 1.0,
+						"lufs": -19.97
+					},
+					{
+						"bars": [
+							9.0,
+							12.0
+						],
+						"level": 2.0,
+						"lufs": -18.61
+					},
+					{
+						"bars": [
+							13.0,
+							18.0
+						],
+						"level": 3.0,
+						"lufs": -16.94
+					},
+					{
+						"bars": [
+							19.0,
+							24.0
+						],
+						"level": 4.0,
+						"lufs": -15.9
+					}
+				],
+				"ogg_sha256": "418b50e99de9df93ad28de31fda2bdfc93371f25ea18e87813e33692717dd607",
+				"path": "docs/mockups/m14_music_ms02_demo.ogg",
+				"present_gain_db": 8.0,
+				"seconds": 78.0,
+				"true_peak_dbtp": -1.8
+			},
+			"files": {
+				"mus_ms02_l0_loop": {
+					"junction_click_rank": 0.627,
+					"loop": true,
+					"lra_lu": 1.0,
+					"lufs": -12.9,
+					"ogg_bytes": 460504.0,
+					"ogg_sha256": "0ba4f4cb864aff153c4d4c270d61cc0db7741846a16b05208a747cf73f82ec35",
+					"path": "assets/audio/music/ms02/mus_ms02_l0_loop.ogg",
+					"quality": 3.0,
+					"samples": 1536000.0,
+					"true_peak_dbtp": -1.3,
+					"wav_sha256": "2ab56f67277bede84cc2c289d19f37b2565d6b73d548798c1ccc1c10dc0286d8"
+				},
+				"mus_ms02_l1_loop": {
+					"junction_click_rank": 0.081,
+					"loop": true,
+					"lra_lu": 1.7,
+					"lufs": -25.7,
+					"ogg_bytes": 232901.0,
+					"ogg_sha256": "5917f2949a87fc2c73a4392a55ad17b5a349c6ff7860537fd8208f8f5f365c96",
+					"path": "assets/audio/music/ms02/mus_ms02_l1_loop.ogg",
+					"quality": 1.0,
+					"samples": 1536000.0,
+					"true_peak_dbtp": -12.2,
+					"wav_sha256": "10646c5177740f8229787eb7c48a31accdc61974827c86f8cdb06290f345339f"
+				},
+				"mus_ms02_l2_loop": {
+					"junction_click_rank": 0.006,
+					"loop": true,
+					"lra_lu": 0.3,
+					"lufs": -33.8,
+					"ogg_bytes": 356326.0,
+					"ogg_sha256": "ccad84ccb2f793d682773456ae3e268c40de936da97945b4e7c078dc222d8532",
+					"path": "assets/audio/music/ms02/mus_ms02_l2_loop.ogg",
+					"quality": 1.0,
+					"samples": 1536000.0,
+					"true_peak_dbtp": -14.2,
+					"wav_sha256": "d71cfa2d350bfe69a2109aa4d8b6462a0d19d810521eb35b51ac32e633ae788e"
+				},
+				"mus_ms02_l3_loop": {
+					"junction_click_rank": 0.0,
+					"loop": true,
+					"lra_lu": 4.7,
+					"lufs": -25.3,
+					"ogg_bytes": 215313.0,
+					"ogg_sha256": "56b3714a13a77337f1c9c105abfca19f189425d7cf3a2c23bdfe451df2b418dd",
+					"path": "assets/audio/music/ms02/mus_ms02_l3_loop.ogg",
+					"quality": 1.0,
+					"samples": 1536000.0,
+					"true_peak_dbtp": -11.4,
+					"wav_sha256": "741bbc9b0b5ba8f284c17c2f49b09506061d7c9bce9f546963d89b95f9730025"
+				},
+				"mus_ms02_l4_loop": {
+					"junction_click_rank": 0.389,
+					"loop": true,
+					"lra_lu": 2.9,
+					"lufs": -20.0,
+					"ogg_bytes": 336569.0,
+					"ogg_sha256": "c049cb874047d95c8f7d2e648d52ab3be8a99768c476c5971a7f784c80c2c149",
+					"path": "assets/audio/music/ms02/mus_ms02_l4_loop.ogg",
+					"quality": 1.0,
+					"samples": 1536000.0,
+					"true_peak_dbtp": -6.7,
+					"wav_sha256": "356d70804c88c090adf987ac0bd20e34f56a07b28b0073a3b2fb0b867837f617"
+				}
+			},
+			"kind": "set",
+			"levels": {
+				"exposed_layers": [
+					"l0",
+					"l3"
+				],
+				"exposed_lufs": -27.17,
+				"exposed_offset_db": 7.17,
+				"layer_gains_db": [
+					-15.18,
+					-4.68,
+					3.25,
+					-3.12,
+					-5.8
+				],
+				"level_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				],
+				"method": "BS.1770 (pondération K, portes −70/−10), énergies croisées des couches, bus Music à 0,8",
+				"music_bus_db": -1.94,
+				"steps": [
+					{
+						"label": "N0",
+						"layers": [
+							"l0"
+						],
+						"lufs": -30.0,
+						"target_lufs": -30.0
+					},
+					{
+						"label": "N1",
+						"layers": [
+							"l0",
+							"l1"
+						],
+						"lufs": -28.0,
+						"target_lufs": -28.0
+					},
+					{
+						"label": "N2",
+						"layers": [
+							"l0",
+							"l1",
+							"l2"
+						],
+						"lufs": -26.5,
+						"target_lufs": -26.5
+					},
+					{
+						"label": "N3",
+						"layers": [
+							"l0",
+							"l1",
+							"l2",
+							"l3"
+						],
+						"lufs": -25.0,
+						"target_lufs": -25.0
+					},
+					{
+						"label": "N4",
+						"layers": [
+							"l0",
+							"l1",
+							"l2",
+							"l4"
+						],
+						"lufs": -24.0,
+						"target_lufs": -24.0
+					}
+				],
+				"targets_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				]
+			},
+			"quality": 1.0,
+			"render_sec": 85.1,
+			"sample_rate": 32000.0,
+			"score_hash": "0061130ee90b5a0f12d5e17520fb963e1226ab9de35fb5e2c517855169620155",
+			"source": "art_src/music/ms02.json",
+			"stems": [
+				"l0",
+				"l1",
+				"l2",
+				"l3",
+				"l4"
+			],
+			"tempo": 80.0,
+			"tool_version": "m14-3"
+		},
+		"ms03": {
+			"bar_samples": 102400.0,
+			"bars": 16.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -1.29,
+			"files": {
+				"mus_ms03_l0_loop": {
+					"junction_click_rank": 0.803,
+					"loop": true,
+					"lra_lu": 0.9,
+					"lufs": -11.7,
+					"ogg_bytes": 483253.0,
+					"ogg_sha256": "32de6b1d9886c9aec1ae034cb985c6b37bfc0a247dc772ba1dc6be930d088355",
+					"path": "assets/audio/music/ms03/mus_ms03_l0_loop.ogg",
+					"quality": 3.0,
+					"samples": 1638400.0,
+					"true_peak_dbtp": -1.2,
+					"wav_sha256": "1f7b848d7f731dcf1938855f4f62476487cce2b0c70be7c50122227cabab1819"
+				},
+				"mus_ms03_l1_loop": {
+					"junction_click_rank": 0.042,
+					"loop": true,
+					"lra_lu": 1.6,
+					"lufs": -23.5,
+					"ogg_bytes": 219676.0,
+					"ogg_sha256": "74e104069a1a8bf59e98ac800e1bb5be0d737c2cb63c69d4f0c444173f9bf0ed",
+					"path": "assets/audio/music/ms03/mus_ms03_l1_loop.ogg",
+					"quality": 1.0,
+					"samples": 1638400.0,
+					"true_peak_dbtp": -11.3,
+					"wav_sha256": "9f380e437b1aa982403d04155f40759d0d8db97e5f0d3df416a40908c61a4202"
+				},
+				"mus_ms03_l2_loop": {
+					"junction_click_rank": 0.22,
+					"loop": true,
+					"lra_lu": 2.4,
+					"lufs": -37.4,
+					"ogg_bytes": 353581.0,
+					"ogg_sha256": "6b9e4f5f7dc5ed6cc7206e3dd02b8f868292cc193dacb4e6932e05625b67be46",
+					"path": "assets/audio/music/ms03/mus_ms03_l2_loop.ogg",
+					"quality": 1.0,
+					"samples": 1638400.0,
+					"true_peak_dbtp": -12.6,
+					"wav_sha256": "c873e948716cc6fbc516aaea5eec2ecff9441bdd1f6c9467218692036162b7d9"
+				},
+				"mus_ms03_l3_loop": {
+					"junction_click_rank": 0.0,
+					"loop": true,
+					"lra_lu": 8.8,
+					"lufs": -28.6,
+					"ogg_bytes": 272083.0,
+					"ogg_sha256": "a376bed66fd59b0be2a346d3ecf623fbd8102a4856b054963d5175af3f3e7284",
+					"path": "assets/audio/music/ms03/mus_ms03_l3_loop.ogg",
+					"quality": 1.0,
+					"samples": 1638400.0,
+					"true_peak_dbtp": -11.2,
+					"wav_sha256": "23437bd4d11dc55e8862a8faf6929790133854dced317aa43dd0c1510c1e8e23"
+				},
+				"mus_ms03_l4_loop": {
+					"junction_click_rank": 0.146,
+					"loop": true,
+					"lra_lu": 2.6,
+					"lufs": -19.0,
+					"ogg_bytes": 362677.0,
+					"ogg_sha256": "8b7e3a2e0bd457757bae78334a2d8928c75163035744d58839920e2cf0b1ffb2",
+					"path": "assets/audio/music/ms03/mus_ms03_l4_loop.ogg",
+					"quality": 1.0,
+					"samples": 1638400.0,
+					"true_peak_dbtp": -5.9,
+					"wav_sha256": "2b683ac504e4458870a8ece0252421efc7e23e2c668a10ef0251b7621ce05093"
+				}
+			},
+			"kind": "set",
+			"levels": {
+				"exposed_layers": [
+					"l0",
+					"l3"
+				],
+				"exposed_lufs": -27.12,
+				"exposed_offset_db": 7.12,
+				"layer_gains_db": [
+					-16.37,
+					-5.15,
+					6.26,
+					0.9,
+					-6.69
+				],
+				"level_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				],
+				"method": "BS.1770 (pondération K, portes −70/−10), énergies croisées des couches, bus Music à 0,8",
+				"music_bus_db": -1.94,
+				"steps": [
+					{
+						"label": "N0",
+						"layers": [
+							"l0"
+						],
+						"lufs": -30.0,
+						"target_lufs": -30.0
+					},
+					{
+						"label": "N1",
+						"layers": [
+							"l0",
+							"l1"
+						],
+						"lufs": -28.0,
+						"target_lufs": -28.0
+					},
+					{
+						"label": "N2",
+						"layers": [
+							"l0",
+							"l1",
+							"l2"
+						],
+						"lufs": -26.5,
+						"target_lufs": -26.5
+					},
+					{
+						"label": "N3",
+						"layers": [
+							"l0",
+							"l1",
+							"l2",
+							"l3"
+						],
+						"lufs": -25.0,
+						"target_lufs": -25.0
+					},
+					{
+						"label": "N4",
+						"layers": [
+							"l0",
+							"l1",
+							"l2",
+							"l4"
+						],
+						"lufs": -24.0,
+						"target_lufs": -24.0
+					}
+				],
+				"targets_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				]
+			},
+			"quality": 1.0,
+			"render_sec": 88.4,
+			"sample_rate": 32000.0,
+			"score_hash": "0d90b604e2c60dd05fef967291aafa067a96bb4e6f59db272b0729f0048b46f9",
+			"source": "art_src/music/ms03.json",
+			"stems": [
+				"l0",
+				"l1",
+				"l2",
+				"l3",
+				"l4"
+			],
+			"tempo": 75.0,
+			"tool_version": "m14-3"
+		},
+		"ms04": {
+			"bar_samples": 120000.0,
+			"bars": 16.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -2.76,
+			"files": {
+				"mus_ms04_l0_loop": {
+					"junction_click_rank": 0.413,
+					"junction_coding_rank": 0.331,
+					"loop": true,
+					"lra_lu": 1.2,
+					"lufs": -13.3,
+					"ogg_bytes": 607663.0,
+					"ogg_sha256": "1bd8f199538f90e7a41d2b8c0346d7a7c4ae10931ca71bbe171ce94bc5a5d81d",
+					"path": "assets/audio/music/ms04/mus_ms04_l0_loop.ogg",
+					"quality": 4.0,
+					"samples": 1920000.0,
+					"true_peak_dbtp": -1.3,
+					"wav_sha256": "2049e9c587c9c81a3ad3fb4914c0ce951cc2008c8ae6a157f5f78bc51693de4d"
+				},
+				"mus_ms04_l1_loop": {
+					"junction_click_rank": 0.367,
+					"junction_coding_rank": 0.367,
+					"loop": true,
+					"lra_lu": 3.4,
+					"lufs": -23.1,
+					"ogg_bytes": 236022.0,
+					"ogg_sha256": "e4567caa552af66f55e9dfb657ce4c32cb37619b976879294515eb45b2a73e28",
+					"path": "assets/audio/music/ms04/mus_ms04_l1_loop.ogg",
+					"quality": 1.0,
+					"samples": 1920000.0,
+					"true_peak_dbtp": -7.6,
+					"wav_sha256": "4e477c205ab8925709928daf236b253d7712be4868d6ed5ad5eb1a7b3e9488d3"
+				},
+				"mus_ms04_l2_loop": {
+					"junction_click_rank": 0.33,
+					"junction_coding_rank": 0.52,
+					"loop": true,
+					"lra_lu": 3.8,
+					"lufs": -41.3,
+					"ogg_bytes": 394771.0,
+					"ogg_sha256": "dd3faf153026f07e0b02c69c8cbf5040da9ff02a9c7981641afc8215b66206bc",
+					"path": "assets/audio/music/ms04/mus_ms04_l2_loop.ogg",
+					"quality": 1.0,
+					"samples": 1920000.0,
+					"true_peak_dbtp": -20.5,
+					"wav_sha256": "5c117fbe8b06edaa2ea383ea0ebd70476000ae7ebafe11d6aa944b70ad38ba92"
+				},
+				"mus_ms04_l3_loop": {
+					"junction_click_rank": 0.212,
+					"junction_coding_rank": 0.212,
+					"loop": true,
+					"lra_lu": 28.2,
+					"lufs": -18.7,
+					"ogg_bytes": 211398.0,
+					"ogg_sha256": "1f59858bdc2d5b25f1d2ddc68397cb2c8401c95bc4e4b3b848524f13221e363a",
+					"path": "assets/audio/music/ms04/mus_ms04_l3_loop.ogg",
+					"quality": 1.0,
+					"samples": 1920000.0,
+					"true_peak_dbtp": -9.6,
+					"wav_sha256": "68c47bdec04c29a5144b738bb59608d79fef56d9cf33de34910a1df2f1a07e57"
+				},
+				"mus_ms04_l4_loop": {
+					"junction_click_rank": 0.658,
+					"junction_coding_rank": 0.121,
+					"loop": true,
+					"lra_lu": 2.8,
+					"lufs": -20.5,
+					"ogg_bytes": 413070.0,
+					"ogg_sha256": "7dbf655f74c614d43387976f16481e0c669680c6775d0ded01af8dba8a91e158",
+					"path": "assets/audio/music/ms04/mus_ms04_l4_loop.ogg",
+					"quality": 1.0,
+					"samples": 1920000.0,
+					"true_peak_dbtp": -7.2,
+					"wav_sha256": "a545975a3e7ab30f025715a4579f078076dd44931acfdf90d950c37a1d1355bb"
+				}
+			},
+			"kind": "set",
+			"levels": {
+				"exposed_layers": [
+					"l0",
+					"l3"
+				],
+				"exposed_lufs": -27.16,
+				"exposed_offset_db": 7.16,
+				"layer_gains_db": [
+					-14.74,
+					-4.83,
+					10.61,
+					-2.8,
+					-5.19
+				],
+				"level_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				],
+				"method": "BS.1770 (pondération K, portes −70/−10), énergies croisées des couches, bus Music à 0,8",
+				"music_bus_db": -1.94,
+				"steps": [
+					{
+						"label": "N0",
+						"layers": [
+							"l0"
+						],
+						"lufs": -30.0,
+						"target_lufs": -30.0
+					},
+					{
+						"label": "N1",
+						"layers": [
+							"l0",
+							"l1"
+						],
+						"lufs": -28.0,
+						"target_lufs": -28.0
+					},
+					{
+						"label": "N2",
+						"layers": [
+							"l0",
+							"l1",
+							"l2"
+						],
+						"lufs": -26.5,
+						"target_lufs": -26.5
+					},
+					{
+						"label": "N3",
+						"layers": [
+							"l0",
+							"l1",
+							"l2",
+							"l3"
+						],
+						"lufs": -25.0,
+						"target_lufs": -25.0
+					},
+					{
+						"label": "N4",
+						"layers": [
+							"l0",
+							"l1",
+							"l2",
+							"l4"
+						],
+						"lufs": -24.0,
+						"target_lufs": -24.0
+					}
+				],
+				"targets_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				]
+			},
+			"quality": 1.0,
+			"render_sec": 122.6,
+			"sample_rate": 32000.0,
+			"score_hash": "f116550a62c5afa64fc567a36160658b8b55b9234b021b1f9c4785957ffadc18",
+			"source": "art_src/music/ms04.json",
+			"stems": [
+				"l0",
+				"l1",
+				"l2",
+				"l3",
+				"l4"
+			],
+			"tempo": 64.0,
+			"tool_version": "m14-3"
+		},
+		"ms05": {
+			"bar_samples": 80000.0,
+			"bars": 16.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -1.57,
+			"files": {
+				"mus_ms05_l0_loop": {
+					"junction_click_rank": 0.396,
+					"loop": true,
+					"lra_lu": 1.5,
+					"lufs": -12.8,
+					"ogg_bytes": 420159.0,
+					"ogg_sha256": "cc33bdf9da17694bcc47b0c3d1258f091096d6e211708588353dfe080900c05a",
+					"path": "assets/audio/music/ms05/mus_ms05_l0_loop.ogg",
+					"quality": 4.0,
+					"samples": 1280000.0,
+					"true_peak_dbtp": -1.2,
+					"wav_sha256": "f134fe8fcf44f202171193699c053a730fa8e3e6c297b23dca1154695579ac85"
+				},
+				"mus_ms05_l1_loop": {
+					"junction_click_rank": 0.103,
+					"loop": true,
+					"lra_lu": 1.4,
+					"lufs": -26.2,
+					"ogg_bytes": 198339.0,
+					"ogg_sha256": "c3b66627a17a513703001982de6c5b359b4051adbbf9221d5a2bde3927168c36",
+					"path": "assets/audio/music/ms05/mus_ms05_l1_loop.ogg",
+					"quality": 1.0,
+					"samples": 1280000.0,
+					"true_peak_dbtp": -12.2,
+					"wav_sha256": "61383130b51181b474388254e648d6d4ad6350336e396bf853eadef8c8e51db7"
+				},
+				"mus_ms05_l2_loop": {
+					"junction_click_rank": 0.039,
+					"loop": true,
+					"lra_lu": 1.4,
+					"lufs": -32.6,
+					"ogg_bytes": 306711.0,
+					"ogg_sha256": "69892a5bbe3aadddf59c01672f406be7541b0ee9c62e08a82dd72dab5dfd6b75",
+					"path": "assets/audio/music/ms05/mus_ms05_l2_loop.ogg",
+					"quality": 1.0,
+					"samples": 1280000.0,
+					"true_peak_dbtp": -14.3,
+					"wav_sha256": "f12c66684128114fa55314ea6146c10ed4d95e46a2b87a9dea7669a39196aab6"
+				},
+				"mus_ms05_l3_loop": {
+					"junction_click_rank": 0.024,
+					"loop": true,
+					"lra_lu": 1.8,
+					"lufs": -27.0,
+					"ogg_bytes": 215297.0,
+					"ogg_sha256": "449e77ea0507dce5b3187afd8187995bf66ba9d5785699917a7a466b386d1bb2",
+					"path": "assets/audio/music/ms05/mus_ms05_l3_loop.ogg",
+					"quality": 1.0,
+					"samples": 1280000.0,
+					"true_peak_dbtp": -16.0,
+					"wav_sha256": "a56fe8ad1e5355079983e57effba382d4f21c4e270f324d09a03de5464e200aa"
+				},
+				"mus_ms05_l4_loop": {
+					"junction_click_rank": 0.108,
+					"loop": true,
+					"lra_lu": 2.3,
+					"lufs": -19.4,
+					"ogg_bytes": 281697.0,
+					"ogg_sha256": "c2ae5afc385d45c60d1831819162c593e1f0bd964242692530c68b3f5649cb13",
+					"path": "assets/audio/music/ms05/mus_ms05_l4_loop.ogg",
+					"quality": 1.0,
+					"samples": 1280000.0,
+					"true_peak_dbtp": -5.9,
+					"wav_sha256": "847db02d10620f52621d543dc638cdbe7111d2e6c041dd0c1c6a72883d007bc8"
+				}
+			},
+			"kind": "set",
+			"levels": {
+				"exposed_layers": [
+					"l0",
+					"l3"
+				],
+				"exposed_lufs": -27.11,
+				"exposed_offset_db": 7.11,
+				"layer_gains_db": [
+					-15.29,
+					-4.26,
+					2.25,
+					0.5,
+					-6.33
+				],
+				"level_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				],
+				"method": "BS.1770 (pondération K, portes −70/−10), énergies croisées des couches, bus Music à 0,8",
+				"music_bus_db": -1.94,
+				"steps": [
+					{
+						"label": "N0",
+						"layers": [
+							"l0"
+						],
+						"lufs": -30.0,
+						"target_lufs": -30.0
+					},
+					{
+						"label": "N1",
+						"layers": [
+							"l0",
+							"l1"
+						],
+						"lufs": -28.0,
+						"target_lufs": -28.0
+					},
+					{
+						"label": "N2",
+						"layers": [
+							"l0",
+							"l1",
+							"l2"
+						],
+						"lufs": -26.5,
+						"target_lufs": -26.5
+					},
+					{
+						"label": "N3",
+						"layers": [
+							"l0",
+							"l1",
+							"l2",
+							"l3"
+						],
+						"lufs": -25.0,
+						"target_lufs": -25.0
+					},
+					{
+						"label": "N4",
+						"layers": [
+							"l0",
+							"l1",
+							"l2",
+							"l4"
+						],
+						"lufs": -24.0,
+						"target_lufs": -24.0
+					}
+				],
+				"targets_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				]
+			},
+			"quality": 1.0,
+			"render_sec": 78.7,
+			"sample_rate": 32000.0,
+			"score_hash": "eb917c40b11ccf24cc130abe555b2ab12038bebeb91d207712536dc926d3213f",
+			"source": "art_src/music/ms05.json",
+			"stems": [
+				"l0",
+				"l1",
+				"l2",
+				"l3",
+				"l4"
+			],
+			"tempo": 96.0,
+			"tool_version": "m14-3"
+		},
+		"ms06": {
+			"bar_samples": 128000.0,
+			"bars": 12.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -2.47,
+			"files": {
+				"mus_ms06_bed_loop": {
+					"junction_click_rank": 0.372,
+					"loop": true,
+					"lra_lu": 1.4,
+					"lufs": -12.7,
+					"ogg_bytes": 475004.0,
+					"ogg_sha256": "e488f6b00fa83e3350b525f3190b5b4dec9d435c875a2d6ffb85ef3f145682be",
+					"path": "assets/audio/music/ms06/mus_ms06_bed_loop.ogg",
+					"quality": 3.0,
+					"samples": 1536000.0,
+					"true_peak_dbtp": -1.2,
+					"wav_sha256": "871e9e77fedd8abc5874e69637148fce75650468dcd43cbe045a4c145a118150"
+				},
+				"mus_ms06_crisis_loop": {
+					"junction_click_rank": 0.328,
+					"loop": true,
+					"lra_lu": 1.7,
+					"lufs": -21.8,
+					"ogg_bytes": 364515.0,
+					"ogg_sha256": "acedf356ac6e05582f1da1ff520ebc64e70d265682f1e134372235200dafc57d",
+					"path": "assets/audio/music/ms06/mus_ms06_crisis_loop.ogg",
+					"quality": 2.0,
+					"samples": 1536000.0,
+					"true_peak_dbtp": -5.9,
+					"wav_sha256": "aa385e63ffcf999dcef92cbd3bf694894aee58196bdf104084dcf047947cc99c"
+				},
+				"mus_ms06_warm_loop": {
+					"junction_click_rank": 0.088,
+					"loop": true,
+					"lra_lu": 6.3,
+					"lufs": -20.2,
+					"ogg_bytes": 335918.0,
+					"ogg_sha256": "8522cf9d0e7e60fc9fa5926d27a2691bba647ffd054db0f83e1fac7413238bb4",
+					"path": "assets/audio/music/ms06/mus_ms06_warm_loop.ogg",
+					"quality": 1.0,
+					"samples": 1536000.0,
+					"true_peak_dbtp": -6.9,
+					"wav_sha256": "f989cb74569ac87f18e6bee69670f71d16446d701b02a62b9f860eb3e87b3c3c"
+				}
+			},
+			"kind": "set",
+			"levels": {
+				"exposed_layers": [
+					"bed",
+					"warm"
+				],
+				"exposed_lufs": -20.0,
+				"exposed_offset_db": 0.0,
+				"layer_gains_db": [
+					-7.83,
+					-1.6,
+					0.18
+				],
+				"level_lufs": [
+					-22.5,
+					-20.0,
+					-20.0
+				],
+				"method": "BS.1770 (pondération K, portes −70/−10), énergies croisées des couches, bus Music à 0,8",
+				"music_bus_db": -1.94,
+				"steps": [
+					{
+						"label": "bed",
+						"layers": [
+							"bed"
+						],
+						"lufs": -22.5,
+						"target_lufs": -22.5
+					},
+					{
+						"label": "chaud",
+						"layers": [
+							"bed",
+							"warm"
+						],
+						"lufs": -20.0,
+						"target_lufs": -20.0
+					},
+					{
+						"label": "crise",
+						"layers": [
+							"bed",
+							"crisis"
+						],
+						"lufs": -20.0,
+						"target_lufs": -20.0
+					}
+				],
+				"targets_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				]
+			},
+			"quality": 1.0,
+			"render_sec": 77.1,
+			"sample_rate": 32000.0,
+			"score_hash": "bf50c1979150b317c1ad4370336082b64aeacde6b7a907a3b30fa7f2c5b9fcd9",
+			"source": "art_src/music/ms06.json",
+			"stems": [
+				"bed",
+				"warm",
+				"crisis"
+			],
+			"tempo": 60.0,
+			"tool_version": "m14-3"
+		},
+		"ms07": {
+			"bar_samples": 128000.0,
+			"bars": 16.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -0.75,
+			"files": {
+				"mus_ms07_l0_loop": {
+					"junction_click_rank": 0.891,
+					"junction_coding_rank": 0.862,
+					"loop": true,
+					"lra_lu": 2.6,
+					"lufs": -12.4,
+					"ogg_bytes": 676362.0,
+					"ogg_sha256": "b76922e769e3c43ca1f7b5fef422596a3315bd14d3a000a4aff583abf145f897",
+					"path": "assets/audio/music/ms07/mus_ms07_l0_loop.ogg",
+					"quality": 4.0,
+					"samples": 2048000.0,
+					"true_peak_dbtp": -1.2,
+					"wav_sha256": "377153d691eda135117bc031e0e1e48d1d22ad071657efc7744e113398e89b88"
+				},
+				"mus_ms07_l1_loop": {
+					"junction_click_rank": 0.02,
+					"junction_coding_rank": 0.826,
+					"loop": true,
+					"lra_lu": 5.7,
+					"lufs": -37.5,
+					"ogg_bytes": 319347.0,
+					"ogg_sha256": "b8abcabfcb6ba4835b7112e9bb1d42578f796a1c10e4a174a26bb1b69b60fbbd",
+					"path": "assets/audio/music/ms07/mus_ms07_l1_loop.ogg",
+					"quality": 1.0,
+					"samples": 2048000.0,
+					"true_peak_dbtp": -16.2,
+					"wav_sha256": "5bf895d534ac54c11cf3cbb73c8cd39e2ec87894ffe0fece63a325e12ba283a4"
+				},
+				"mus_ms07_world_a_loop": {
+					"junction_click_rank": 0.002,
+					"junction_coding_rank": 0.007,
+					"loop": true,
+					"lra_lu": 18.1,
+					"lufs": -30.3,
+					"ogg_bytes": 238918.0,
+					"ogg_sha256": "d732a48dde5f35b3049a112a9f202494032d79b7df600537acbe9195fcd8cc79",
+					"path": "assets/audio/music/ms07/mus_ms07_world_a_loop.ogg",
+					"quality": 1.0,
+					"samples": 2048000.0,
+					"true_peak_dbtp": -13.6,
+					"wav_sha256": "cbca760ac852f5d145b0b903040fa0e2d01420965a26753d2faa5baa5b91367a"
+				},
+				"mus_ms07_world_b_loop": {
+					"junction_click_rank": 0.189,
+					"junction_coding_rank": 0.279,
+					"loop": true,
+					"lra_lu": 1.9,
+					"lufs": -21.3,
+					"ogg_bytes": 471955.0,
+					"ogg_sha256": "af186bb31ffb26860bce61b09b1957d5f85312cd344204d3d9b14efccf305908",
+					"path": "assets/audio/music/ms07/mus_ms07_world_b_loop.ogg",
+					"quality": 1.0,
+					"samples": 2048000.0,
+					"true_peak_dbtp": -10.0,
+					"wav_sha256": "92cc9f60b4338c7c51744585a9ecd824e8d383d0178b6c20679597d4948f2d86"
+				},
+				"mus_ms07_world_c_loop": {
+					"junction_click_rank": 0.017,
+					"junction_coding_rank": 0.472,
+					"loop": true,
+					"lra_lu": 21.9,
+					"lufs": -21.4,
+					"ogg_bytes": 234497.0,
+					"ogg_sha256": "79bbb83f2513ff0a755389f74031c8b8a935476a24a100d98b194af755193d6b",
+					"path": "assets/audio/music/ms07/mus_ms07_world_c_loop.ogg",
+					"quality": 1.0,
+					"samples": 2048000.0,
+					"true_peak_dbtp": -10.2,
+					"wav_sha256": "dc435842b86abdf1816d4402a690a071512f268786c61f4e145f167506cca5be"
+				},
+				"mus_ms07_world_d_loop": {
+					"junction_click_rank": 0.276,
+					"junction_coding_rank": 0.603,
+					"loop": true,
+					"lra_lu": 0.2,
+					"lufs": -25.2,
+					"ogg_bytes": 457980.0,
+					"ogg_sha256": "f87081ec61330f8444cf80cfdb38d3fb0e9cf626dc40dbaeeaa3ad1a1c262689",
+					"path": "assets/audio/music/ms07/mus_ms07_world_d_loop.ogg",
+					"quality": 1.0,
+					"samples": 2048000.0,
+					"true_peak_dbtp": -15.4,
+					"wav_sha256": "3bae2cbf168088e180896d668cd4dc71d02fc0c345a5c5c0a22511e6a193ea10"
+				}
+			},
+			"kind": "set",
+			"levels": {
+				"exposed_layers": [
+					"l0",
+					"world_a"
+				],
+				"exposed_lufs": -30.0,
+				"exposed_offset_db": 10.0,
+				"layer_gains_db": [
+					-17.19,
+					7.05,
+					-1.97,
+					-11.72,
+					-7.29,
+					-8.29
+				],
+				"level_lufs": [
+					-31.5,
+					-30.0,
+					-30.0,
+					-30.0,
+					-30.0,
+					-28.0
+				],
+				"method": "BS.1770 (pondération K, portes −70/−10), énergies croisées des couches, bus Music à 0,8",
+				"music_bus_db": -1.94,
+				"steps": [
+					{
+						"label": "N0 nappe",
+						"layers": [
+							"l0"
+						],
+						"lufs": -31.5,
+						"target_lufs": -31.5
+					},
+					{
+						"label": "N0 A",
+						"layers": [
+							"l0",
+							"world_a"
+						],
+						"lufs": -30.0,
+						"target_lufs": -30.0
+					},
+					{
+						"label": "N0 B",
+						"layers": [
+							"l0",
+							"world_b"
+						],
+						"lufs": -30.0,
+						"target_lufs": -30.0
+					},
+					{
+						"label": "N0 C",
+						"layers": [
+							"l0",
+							"world_c"
+						],
+						"lufs": -30.0,
+						"target_lufs": -30.0
+					},
+					{
+						"label": "N0 D",
+						"layers": [
+							"l0",
+							"world_d"
+						],
+						"lufs": -30.0,
+						"target_lufs": -30.0
+					},
+					{
+						"label": "N1 A",
+						"layers": [
+							"l0",
+							"world_a",
+							"l1"
+						],
+						"lufs": -28.0,
+						"target_lufs": -28.0
+					}
+				],
+				"targets_lufs": [
+					-30.0,
+					-28.0,
+					-26.5,
+					-25.0,
+					-24.0
+				],
+				"world_themes": {
+					"th_ea": {
+						"layers": [
+							"l0",
+							"l1",
+							"world_a"
+						],
+						"lufs_with_bus": -28.0,
+						"offset_db": 8.06,
+						"world": "a"
+					},
+					"th_eb": {
+						"layers": [
+							"l0",
+							"l1",
+							"world_b"
+						],
+						"lufs_with_bus": -27.99,
+						"offset_db": 8.05,
+						"world": "b"
+					},
+					"th_ec": {
+						"layers": [
+							"l0",
+							"l1",
+							"world_c"
+						],
+						"lufs_with_bus": -27.98,
+						"offset_db": 8.05,
+						"world": "c"
+					},
+					"th_ed": {
+						"layers": [
+							"l0",
+							"l1",
+							"world_d"
+						],
+						"lufs_with_bus": -27.94,
+						"offset_db": 8.0,
+						"world": "d"
+					}
+				}
+			},
+			"quality": 1.0,
+			"render_sec": 132.3,
+			"sample_rate": 32000.0,
+			"score_hash": "2ea351a61a804af785ed4878ea0de19907b25b9cddbbef2e0904c078bb384554",
+			"source": "art_src/music/ms07.json",
+			"stems": [
+				"l0",
+				"l1",
+				"world_a",
+				"world_b",
+				"world_c",
+				"world_d"
+			],
+			"tempo": 60.0,
+			"tool_version": "m14-3"
+		},
+		"thf1": {
+			"bar_samples": 192000.0,
+			"bars": 18.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -0.49,
+			"files": {
+				"mus_th_f1": {
+					"loop": false,
+					"lra_lu": 7.2,
+					"lufs": -13.6,
+					"ogg_bytes": 444065.0,
+					"ogg_sha256": "4806f001915bea010d313221b2b56e0264294d33b0ab3fbdbaa7c8e4e05c0d28",
+					"path": "assets/audio/music/themes/mus_th_f1.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2304000.0,
+					"true_peak_dbtp": -1.2,
+					"variant": "",
+					"wav_sha256": "59915777558d82f9a65122bba9d2f878ac152f60f03517d333341dea94f9b9b6"
+				},
+				"mus_th_f1_okonkwo_warned": {
+					"loop": false,
+					"lra_lu": 7.2,
+					"lufs": -13.6,
+					"ogg_bytes": 448702.0,
+					"ogg_sha256": "05fa2a2e7a35fa6f0db35e964e54cb39f610fedf822b4cd74cc1c1efd9057f94",
+					"path": "assets/audio/music/themes/mus_th_f1_okonkwo_warned.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2304000.0,
+					"true_peak_dbtp": -1.2,
+					"variant": "okonkwo_warned",
+					"wav_sha256": "7b644e3521a42d06b8ba94aa3d1c857c33ef5ab37db41de207d829b8bafc250d"
+				},
+				"mus_th_f1_tail_loop": {
+					"junction_click_rank": 0.224,
+					"loop": true,
+					"lra_lu": 4.2,
+					"lufs": -15.1,
+					"ogg_bytes": 333810.0,
+					"ogg_sha256": "663e10630f5923293f8a9ed3f904c1774f24a1b09052fdd5567a01ffaec320e2",
+					"path": "assets/audio/music/themes/mus_th_f1_tail_loop.ogg",
+					"quality": 3.0,
+					"role": "tail",
+					"samples": 1536000.0,
+					"true_peak_dbtp": -3.5,
+					"variant": "",
+					"wav_sha256": "52a322dd5bf4d99d2345211186450c157b34303a9f0bcbf40632883f03da3b08"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 2.0,
+			"quality": 2.0,
+			"render_sec": 68.8,
+			"runtime_gain_db": -4.37,
+			"sample_rate": 48000.0,
+			"score_hash": "f9702018dac99346db086d491ee367c8c96155e10678d7fc00c5e4eb433a1d1c",
+			"source": "art_src/music/thf1.json",
+			"tail_bars": 8.0,
+			"tail_from_bar": 10.0,
+			"tail_only": false,
+			"tempo": 60.0,
+			"tool_version": "m14-3"
+		},
+		"thf10": {
+			"bar_samples": 160000.0,
+			"bars": 20.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -2.7,
+			"files": {
+				"mus_th_f10": {
+					"loop": false,
+					"lra_lu": 2.1,
+					"lufs": -13.1,
+					"ogg_bytes": 454756.0,
+					"ogg_sha256": "97196f69db347581320a0f38c6ecccc8d6f9bcbfb94d59a30eae0e1e7550351d",
+					"path": "assets/audio/music/themes/mus_th_f10.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2240000.0,
+					"true_peak_dbtp": -1.8,
+					"variant": "",
+					"wav_sha256": "243d37a90c8904be15651b38cf78285b151576cc65d1094b72de995ac6c4fefb"
+				},
+				"mus_th_f10_tail_loop": {
+					"junction_click_rank": 0.391,
+					"loop": true,
+					"lra_lu": 1.8,
+					"lufs": -13.2,
+					"ogg_bytes": 294564.0,
+					"ogg_sha256": "91400da3c8316e57b5daaa4e098487afe5024ab48f3a1511c4a4d21c88e05ada",
+					"path": "assets/audio/music/themes/mus_th_f10_tail_loop.ogg",
+					"quality": 3.0,
+					"role": "tail",
+					"samples": 1280000.0,
+					"true_peak_dbtp": -1.7,
+					"variant": "",
+					"wav_sha256": "fcd5a0a4319a6dca1f6dcfa4328f8021b0cf07ddf3500f2fa68f5a88bcbd4691"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 2.0,
+			"quality": 2.0,
+			"render_sec": 87.4,
+			"runtime_gain_db": -5.03,
+			"sample_rate": 48000.0,
+			"score_hash": "9d84c89e96a49e0615f4aa3f77002ef1b96ec99ab8b68110d3aac661eca81d2a",
+			"source": "art_src/music/thf10.json",
+			"tail_bars": 8.0,
+			"tail_from_bar": 12.0,
+			"tail_only": false,
+			"tempo": 72.0,
+			"tool_version": "m14-3"
+		},
+		"thf2": {
+			"bar_samples": 153600.0,
+			"bars": 20.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -3.42,
+			"files": {
+				"mus_th_f2": {
+					"loop": false,
+					"lra_lu": 2.7,
+					"lufs": -13.2,
+					"ogg_bytes": 427977.0,
+					"ogg_sha256": "7344285636acc2f7288fa5ef905e0e5ccad05992ed6f4a3e46964c0a37940d17",
+					"path": "assets/audio/music/themes/mus_th_f2.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2150400.0,
+					"true_peak_dbtp": -1.4,
+					"variant": "",
+					"wav_sha256": "5df07bef1cdd53e09cb63351051af7e0e938e2f6a255ec4dcad9ec0c22afeba4"
+				},
+				"mus_th_f2_tail_loop": {
+					"junction_click_rank": 0.001,
+					"loop": true,
+					"lra_lu": 1.7,
+					"lufs": -13.2,
+					"ogg_bytes": 278983.0,
+					"ogg_sha256": "da73e91af6b86288272559e8369fa66f2def0e3d6a98f3570d2ef163bb8ef73f",
+					"path": "assets/audio/music/themes/mus_th_f2_tail_loop.ogg",
+					"quality": 3.0,
+					"role": "tail",
+					"samples": 1228800.0,
+					"true_peak_dbtp": -2.1,
+					"variant": "",
+					"wav_sha256": "8d40dd8d596bbe1b7073c555a99c19e990b9197c37cbf49722710edcd5bba421"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 2.0,
+			"quality": 2.0,
+			"render_sec": 96.5,
+			"runtime_gain_db": -4.96,
+			"sample_rate": 48000.0,
+			"score_hash": "91213b969cc4536805ab49385791cbc4f87150caaa8913081f73218b48da3fd0",
+			"source": "art_src/music/thf2.json",
+			"tail_bars": 8.0,
+			"tail_from_bar": 12.0,
+			"tail_only": false,
+			"tempo": 75.0,
+			"tool_version": "m14-3"
+		},
+		"thf3": {
+			"bar_samples": 192000.0,
+			"bars": 16.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": 4.84,
+			"files": {
+				"mus_th_f3": {
+					"loop": false,
+					"lra_lu": 12.8,
+					"lufs": -14.2,
+					"ogg_bytes": 241015.0,
+					"ogg_sha256": "961e2777e0066be3650ee42781bae5e9cc5caecef1427455fc3739d947afc720",
+					"path": "assets/audio/music/themes/mus_th_f3.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 1920000.0,
+					"true_peak_dbtp": -1.3,
+					"variant": "",
+					"wav_sha256": "8563ca2d10f0ffa447e0fd86a7a12d56a15833b1983284e2d21aae1eab48fba2"
+				},
+				"mus_th_f3_lumika_learned": {
+					"loop": false,
+					"lra_lu": 12.8,
+					"lufs": -14.2,
+					"ogg_bytes": 245264.0,
+					"ogg_sha256": "48c9494edd515ec836be98d706408da87a733ce90aaa117c04275ef22c6745ce",
+					"path": "assets/audio/music/themes/mus_th_f3_lumika_learned.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 1920000.0,
+					"true_peak_dbtp": -1.3,
+					"variant": "lumika_learned",
+					"wav_sha256": "994393664487c0403310abc43b1b6a2a8e91c91f1a6d0644b7077a964251cd59"
+				},
+				"mus_th_f3_tail_loop": {
+					"junction_click_rank": 0.215,
+					"loop": true,
+					"lra_lu": 4.8,
+					"lufs": -14.4,
+					"ogg_bytes": 215910.0,
+					"ogg_sha256": "b1b765a5ed3aabc52295e7843fe0437f2af9540331161cbea0d38cb202f8327c",
+					"path": "assets/audio/music/themes/mus_th_f3_tail_loop.ogg",
+					"quality": 3.0,
+					"role": "tail",
+					"samples": 1536000.0,
+					"true_peak_dbtp": -2.1,
+					"variant": "",
+					"wav_sha256": "39a1a56f2ff1e3511a3882caaebcd092f3f738eedd6f46b9676cd9c40ce26f5d"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 2.0,
+			"quality": 2.0,
+			"render_sec": 49.7,
+			"runtime_gain_db": -3.79,
+			"sample_rate": 48000.0,
+			"score_hash": "3a72a77b0001da72e6d19839d424cf2308fa3dc8b70769e4a02dc7751f71636d",
+			"source": "art_src/music/thf3.json",
+			"tail_bars": 8.0,
+			"tail_from_bar": 8.0,
+			"tail_only": false,
+			"tempo": 60.0,
+			"tool_version": "m14-3"
+		},
+		"thf4": {
+			"bar_samples": 144000.0,
+			"bars": 22.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -6.24,
+			"files": {
+				"mus_th_f4": {
+					"loop": false,
+					"lra_lu": 3.8,
+					"lufs": -16.0,
+					"ogg_bytes": 480333.0,
+					"ogg_sha256": "56325de0a383317ae801a218cb062c9afa9a96394a2cc8924b928524203ef21b",
+					"path": "assets/audio/music/themes/mus_th_f4.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2304000.0,
+					"true_peak_dbtp": -1.4,
+					"variant": "",
+					"wav_sha256": "54b4d20d36a8da502f01c08d84152bceaffd058f0be48ed7079b83e787f022f8"
+				},
+				"mus_th_f4_dora": {
+					"loop": false,
+					"lra_lu": 3.8,
+					"lufs": -15.9,
+					"ogg_bytes": 480201.0,
+					"ogg_sha256": "b07daff82383c85a1b6e256be5e924ef216d1f0f7bdd3255c2154ddb9de38b4d",
+					"path": "assets/audio/music/themes/mus_th_f4_dora.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2304000.0,
+					"true_peak_dbtp": -1.4,
+					"variant": "dora",
+					"wav_sha256": "663c218eec6c17baf9bf5a8833546e5e89997dffc9b8db9f420215af9c939fa1"
+				},
+				"mus_th_f4_tail_loop": {
+					"junction_click_rank": 0.066,
+					"loop": true,
+					"lra_lu": 2.6,
+					"lufs": -16.0,
+					"ogg_bytes": 278629.0,
+					"ogg_sha256": "1ac9b5694acf7e4291d2b2c168335b93506cec46727b7e21f1c6cc893ebfdd54",
+					"path": "assets/audio/music/themes/mus_th_f4_tail_loop.ogg",
+					"quality": 3.0,
+					"role": "tail",
+					"samples": 1152000.0,
+					"true_peak_dbtp": -2.3,
+					"variant": "",
+					"wav_sha256": "248fb9184b0dbaea6c5f64d9c5e6b0d34ba17346c0b30980967721edb1fc767b"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 2.0,
+			"quality": 2.0,
+			"render_sec": 133.0,
+			"runtime_gain_db": -2.13,
+			"sample_rate": 48000.0,
+			"score_hash": "2a4fa807965ed9368b2785d8b6afae67d2ebcbcccbafc31bd7897d2b2f2f6bb7",
+			"source": "art_src/music/thf4.json",
+			"tail_bars": 8.0,
+			"tail_from_bar": 14.0,
+			"tail_only": false,
+			"tempo": 80.0,
+			"tool_version": "m14-3"
+		},
+		"thf5b": {
+			"bar_samples": 153600.0,
+			"bars": 22.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -4.19,
+			"files": {
+				"mus_th_f5b": {
+					"loop": false,
+					"lra_lu": 1.4,
+					"lufs": -15.4,
+					"ogg_bytes": 462264.0,
+					"ogg_sha256": "a597ce6518f9181f689bc6b90fad01834f7fd99f58dd4474491707c5a42e46ad",
+					"path": "assets/audio/music/themes/mus_th_f5b.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2457600.0,
+					"true_peak_dbtp": -1.4,
+					"variant": "",
+					"wav_sha256": "c48b67292a170994f193b0c490973cfd3376df5e2d12bfab7b44c4d897e15d11"
+				},
+				"mus_th_f5b_rfx": {
+					"loop": false,
+					"lra_lu": 1.3,
+					"lufs": -15.7,
+					"ogg_bytes": 464119.0,
+					"ogg_sha256": "45b77c0116af62a37f61296e955976a4896b146c85d341b6c26eaaf71d0ff9b5",
+					"path": "assets/audio/music/themes/mus_th_f5b_rfx.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2457600.0,
+					"true_peak_dbtp": -3.7,
+					"variant": "rfx",
+					"wav_sha256": "00ac1ef014ddb931bd66129fa19ee4c5aa7e302e3f5cb1287038df8ba72a1638"
+				},
+				"mus_th_f5b_tail_loop": {
+					"junction_click_rank": 0.043,
+					"loop": true,
+					"lra_lu": 1.3,
+					"lufs": -15.3,
+					"ogg_bytes": 261942.0,
+					"ogg_sha256": "d3587ca1f5dd56b34515ab2eb2df85c66c9691f843c411b2bd2c0ab3e055f287",
+					"path": "assets/audio/music/themes/mus_th_f5b_tail_loop.ogg",
+					"quality": 3.0,
+					"role": "tail",
+					"samples": 1228800.0,
+					"true_peak_dbtp": -1.9,
+					"variant": "",
+					"wav_sha256": "06ff790f4bb750c0f33c3b57fce6557b90607fe4858f97bee28a02dec2a3a60b"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 2.0,
+			"quality": 2.0,
+			"render_sec": 136.8,
+			"runtime_gain_db": -2.65,
+			"sample_rate": 48000.0,
+			"score_hash": "9775dca1c8bb132a299c478498fe19fef29745dd9fbc2cfbf4f393973d51db02",
+			"source": "art_src/music/thf5b.json",
+			"tail_bars": 8.0,
+			"tail_from_bar": 14.0,
+			"tail_only": false,
+			"tempo": 75.0,
+			"tool_version": "m14-3"
+		},
+		"thf5c": {
+			"bar_samples": 153600.0,
+			"bars": 22.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -3.87,
+			"files": {
+				"mus_th_f5c": {
+					"loop": false,
+					"lra_lu": 3.1,
+					"lufs": -13.3,
+					"ogg_bytes": 495555.0,
+					"ogg_sha256": "f1de84905eb3975801abdfeb72fd8d94666104c1fa6f4c3c43db42797accbd15",
+					"path": "assets/audio/music/themes/mus_th_f5c.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2457600.0,
+					"true_peak_dbtp": -1.4,
+					"variant": "",
+					"wav_sha256": "d50a9426750b2bdc26776c1c2b8db0a32d7bedc76c0ae9e98eb9a1b903e26adb"
+				},
+				"mus_th_f5c_s": {
+					"loop": false,
+					"lra_lu": 1.1,
+					"lufs": -14.2,
+					"ogg_bytes": 485364.0,
+					"ogg_sha256": "993edacbc05516f0ecf367d08df79cd74aa542285505a71abf98d65374d4d14e",
+					"path": "assets/audio/music/themes/mus_th_f5c_s.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2457600.0,
+					"true_peak_dbtp": -2.8,
+					"variant": "s",
+					"wav_sha256": "6bd92c7e368b7542bbdd956188cebea95a57ec1831aedeccec09abb947cd2864"
+				},
+				"mus_th_f5c_s_tail_loop": {
+					"junction_click_rank": 0.377,
+					"loop": true,
+					"lra_lu": 0.7,
+					"lufs": -14.2,
+					"ogg_bytes": 288779.0,
+					"ogg_sha256": "0bbac659b91d781795470f3c1a74f1e39aaa7a63e3610d1f706fc44fd2a86d62",
+					"path": "assets/audio/music/themes/mus_th_f5c_s_tail_loop.ogg",
+					"quality": 3.0,
+					"role": "tail",
+					"samples": 1228800.0,
+					"true_peak_dbtp": -3.0,
+					"variant": "s",
+					"wav_sha256": "be7c0eba40f857cdf29de23da8ab2898965340360eda169a765ceffcec0cbb8e"
+				},
+				"mus_th_f5c_tail_loop": {
+					"junction_click_rank": 0.262,
+					"loop": true,
+					"lra_lu": 1.2,
+					"lufs": -13.5,
+					"ogg_bytes": 304840.0,
+					"ogg_sha256": "ae5182c2430d7ef9f28e9c70e38606952776c71258266f2f7fd855c2f965d8b2",
+					"path": "assets/audio/music/themes/mus_th_f5c_tail_loop.ogg",
+					"quality": 3.0,
+					"role": "tail",
+					"samples": 1228800.0,
+					"true_peak_dbtp": -2.1,
+					"variant": "",
+					"wav_sha256": "5300cf98acd7f0af60d8ae725563196fb879bca873885e8956cdb8934127a1d0"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 2.0,
+			"quality": 2.0,
+			"render_sec": 198.8,
+			"runtime_gain_db": -4.79,
+			"sample_rate": 48000.0,
+			"score_hash": "ff39bade0b24cc573fa85eb0ac294cd4405655750b3c19486e20e4f72d91d5d5",
+			"source": "art_src/music/thf5c.json",
+			"tail_bars": 8.0,
+			"tail_from_bar": 14.0,
+			"tail_only": false,
+			"tempo": 75.0,
+			"tool_version": "m14-3"
+		},
+		"thf6": {
+			"bar_samples": 180000,
+			"bars": 18,
+			"beats_per_bar": 4,
+			"common_gain_db": 1.68,
+			"files": {
+				"mus_th_f6": {
+					"loop": false,
+					"lra_lu": 0.9,
+					"lufs": -13.1,
+					"ogg_bytes": 422241,
+					"ogg_sha256": "db0604e1cb31b8b0cf6bbece82a0d67b6b55c7433200a1e259a352696c63af20",
+					"path": "assets/audio/music/themes/mus_th_f6.ogg",
+					"quality": 2,
+					"role": "main",
+					"samples": 2160000,
+					"true_peak_dbtp": -2.0,
+					"variant": "",
+					"wav_sha256": "59bf691e2a10ca41a1a8e756ed18ef32fe9eb1cfb0bbd01fb2ae44b80f748eed"
+				},
+				"mus_th_f6_d": {
+					"loop": false,
+					"lra_lu": 0.7,
+					"lufs": -13.0,
+					"ogg_bytes": 424182,
+					"ogg_sha256": "b7d10dfcff35b82d675afa5ef6174fe4cba892e0586bee2e3582d41172288b04",
+					"path": "assets/audio/music/themes/mus_th_f6_d.ogg",
+					"quality": 2,
+					"role": "main",
+					"samples": 2160000,
+					"true_peak_dbtp": -1.5,
+					"variant": "d",
+					"wav_sha256": "1921a4ad04508e3862c45a7431050c74756637d1b4130b7ab0a5deb54e7010d4"
+				},
+				"mus_th_f6_t": {
+					"loop": false,
+					"lra_lu": 1.1,
+					"lufs": -12.9,
+					"ogg_bytes": 421126,
+					"ogg_sha256": "361623c6607404ebedb78e45727fbbb79c7168994cde5e76f916e1f924d92f91",
+					"path": "assets/audio/music/themes/mus_th_f6_t.ogg",
+					"quality": 2,
+					"role": "main",
+					"samples": 2160000,
+					"true_peak_dbtp": -1.6,
+					"variant": "t",
+					"wav_sha256": "6a9f73bfb732e864327c347df3c2a6c570d99c4343be29c8bf460a61589ea7e1"
+				},
+				"mus_th_f6_tail_loop": {
+					"junction_click_rank": 0.18,
+					"junction_coding_rank": 0.927,
+					"loop": true,
+					"lra_lu": 0.8,
+					"lufs": -12.9,
+					"ogg_bytes": 631650,
+					"ogg_sha256": "0987d033c0a927595dfeb16d27b9e82588ac5a2a6a14d4c2db317aa9570fe30d",
+					"path": "assets/audio/music/themes/mus_th_f6_tail_loop.ogg",
+					"quality": 7,
+					"role": "tail",
+					"samples": 1440000,
+					"true_peak_dbtp": -2.6,
+					"variant": "",
+					"wav_sha256": "df89448d71530cb6942060ff2fc04dcf622053caf18f43eba9eb6ec851fe34d5"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 2,
+			"quality": 2,
+			"render_sec": 179.3,
+			"runtime_gain_db": -4.97,
+			"sample_rate": 48000,
+			"score_hash": "849acd8918b6f6f554ac58e909306ec8664901fc9df123d029f23fd04b1f38b3",
+			"source": "art_src/music/thf6.json",
+			"tail_bars": 8,
+			"tail_from_bar": 10,
+			"tail_only": false,
+			"tempo": 64.0,
+			"tool_version": "m14-3"
+		},
+		"thf7": {
+			"bar_samples": 144000.0,
+			"bars": 8.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -3.78,
+			"files": {
+				"mus_th_f7_tail_loop": {
+					"junction_click_rank": 0.016,
+					"junction_coding_rank": 0.448,
+					"loop": true,
+					"lra_lu": 1.2,
+					"lufs": -12.8,
+					"ogg_bytes": 259413.0,
+					"ogg_sha256": "c8b91ed957a640d96c1f0aa4ea75677ef876924c0a490f54febd41726db5c22e",
+					"path": "assets/audio/music/themes/mus_th_f7_tail_loop.ogg",
+					"quality": 3.0,
+					"role": "tail",
+					"samples": 1152000.0,
+					"true_peak_dbtp": -1.1,
+					"variant": "",
+					"wav_sha256": "2f599a43328a63101bbbc9eea1d20bfa4e790f6e92b877d794a790697852433c"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 0.0,
+			"quality": 2.0,
+			"render_sec": 30.1,
+			"runtime_gain_db": -5.23,
+			"sample_rate": 48000.0,
+			"score_hash": "5686d64a30f029ea0466c0a6f33a4cf8bea656821f13f9fbb80a4c099b3a7066",
+			"source": "art_src/music/thf7.json",
+			"tail_bars": 8.0,
+			"tail_from_bar": 0.0,
+			"tail_only": true,
+			"tempo": 80.0,
+			"tool_version": "m14-3"
+		},
+		"thf8": {
+			"bar_samples": 180000.0,
+			"bars": 18.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -4.92,
+			"files": {
+				"mus_th_f8": {
+					"loop": false,
+					"lra_lu": 2.6,
+					"lufs": -13.9,
+					"ogg_bytes": 454607.0,
+					"ogg_sha256": "54bb03e8ac58608aa5e3a2e56a03b6301466c4c31360af28f30130c349985559",
+					"path": "assets/audio/music/themes/mus_th_f8.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2160000.0,
+					"true_peak_dbtp": -1.6,
+					"variant": "",
+					"wav_sha256": "275ad268c66fa644c4cb74bbc8ae67e333e26a68998e51c80aa3e5e84dab85a8"
+				},
+				"mus_th_f8_tail_loop": {
+					"junction_click_rank": 0.649,
+					"junction_coding_rank": 0.521,
+					"loop": true,
+					"lra_lu": 2.6,
+					"lufs": -14.2,
+					"ogg_bytes": 350013.0,
+					"ogg_sha256": "f7d8032dcec29628d4099f70f84a828dced2671e990c36c7dc4b4f9a69288b30",
+					"path": "assets/audio/music/themes/mus_th_f8_tail_loop.ogg",
+					"quality": 3.0,
+					"role": "tail",
+					"samples": 1440000.0,
+					"true_peak_dbtp": -1.4,
+					"variant": "",
+					"wav_sha256": "89b20371ba0e85eaf3d88ba7527db28d9be2dfa93f6d955080a76a67e69395e3"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 2.0,
+			"quality": 2.0,
+			"render_sec": 106.6,
+			"runtime_gain_db": -4.18,
+			"sample_rate": 48000.0,
+			"score_hash": "95facc2896cc44bf08bebfa5338ac564e95c6d22806bd908cad3f64d603875cb",
+			"source": "art_src/music/thf8.json",
+			"tail_bars": 8.0,
+			"tail_from_bar": 10.0,
+			"tail_only": false,
+			"tempo": 64.0,
+			"tool_version": "m14-3"
+		},
+		"thf9": {
+			"bar_samples": 153600.0,
+			"bars": 22.0,
+			"beats_per_bar": 4.0,
+			"common_gain_db": -12.46,
+			"demo": {
+				"lra_lu": 13.2,
+				"lufs": -18.0,
+				"ogg_sha256": "b4bd8e7852966296518b82d592df08411f7007812b4494bcc27e1cec18c108da",
+				"path": "docs/mockups/m14_music_thf9_demo.ogg",
+				"present_gain_db": -3.04,
+				"seconds": 83.2,
+				"true_peak_dbtp": -4.5
+			},
+			"files": {
+				"mus_th_f9": {
+					"loop": false,
+					"lra_lu": 12.1,
+					"lufs": -15.2,
+					"ogg_bytes": 501817.0,
+					"ogg_sha256": "dc528773af557fbcb33189af55a538a4049000e2f3c147092a656b8ac17e76a4",
+					"path": "assets/audio/music/themes/mus_th_f9.ogg",
+					"quality": 2.0,
+					"role": "main",
+					"samples": 2457600.0,
+					"true_peak_dbtp": -1.2,
+					"variant": "",
+					"wav_sha256": "a7d0da1a3e647625ed5cc8cf466a2b5316e48107583b026adedb8d796cfe2f70"
+				},
+				"mus_th_f9_tail_loop": {
+					"junction_click_rank": 0.172,
+					"loop": true,
+					"lra_lu": 2.4,
+					"lufs": -15.0,
+					"ogg_bytes": 349853.0,
+					"ogg_sha256": "9e934e3f3127a153252a28202724d145dd1af4103f140034c9789268448fcdcd",
+					"path": "assets/audio/music/themes/mus_th_f9_tail_loop.ogg",
+					"quality": 4.0,
+					"role": "tail",
+					"samples": 1228800.0,
+					"true_peak_dbtp": -3.6,
+					"variant": "",
+					"wav_sha256": "7b1444a3cdd0faf7f179b0a777d544a69f8af99c16d7ff46c8b868a6de73a239"
+				}
+			},
+			"kind": "theme",
+			"main_tail_bars": 2.0,
+			"quality": 2.0,
+			"render_sec": 148.1,
+			"runtime_gain_db": -2.95,
+			"sample_rate": 48000.0,
+			"score_hash": "f25466edbda7f925f15aaa7e29f12e28f59fa64486a8e4d1326378ec6b903d6c",
+			"source": "art_src/music/thf9.json",
+			"tail_bars": 8.0,
+			"tail_from_bar": 14.0,
+			"tail_only": false,
+			"tempo": 75.0,
+			"tool_version": "m14-3"
+		}
+	},
+	"tool_version": "m14-3",
+	"total_ogg_bytes": 23103373
+}

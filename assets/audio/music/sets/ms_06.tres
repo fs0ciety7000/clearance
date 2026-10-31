@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MusicSetDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/music_layer_def.gd" id="1_dpojv"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms06/mus_ms06_bed_loop.ogg" id="2_msjuu"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms06/mus_ms06_warm_loop.ogg" id="3_r21ki"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ms06/mus_ms06_crisis_loop.ogg" id="4_khf8n"]
+[ext_resource type="Script" path="res://scripts/core/music_set_def.gd" id="5_rxs5t"]
+
+[sub_resource type="Resource" id="layer_bed"]
+script = ExtResource("1_dpojv")
+id = &"bed"
+role = &"bed"
+stream = ExtResource("2_msjuu")
+gain_db = -7.83
+exposed = true
+keeps_on_power_down = true
+
+[sub_resource type="Resource" id="layer_warm"]
+script = ExtResource("1_dpojv")
+id = &"warm"
+role = &"variant"
+stream = ExtResource("3_r21ki")
+gain_db = -1.6
+exposed = true
+melodic = true
+group = &"warm"
+
+[sub_resource type="Resource" id="layer_crisis"]
+script = ExtResource("1_dpojv")
+id = &"crisis"
+role = &"variant"
+stream = ExtResource("4_khf8n")
+gain_db = 0.18
+exposed = true
+group = &"crisis"
+
+[resource]
+script = ExtResource("5_rxs5t")
+id = &"ms_06"
+tempo_bpm = 60.0
+bars = 12
+layers = Array[ExtResource("1_dpojv")]([SubResource("layer_bed"), SubResource("layer_warm"), SubResource("layer_crisis")])
+thresholds = PackedFloat32Array(0.15, 0.35, 0.6, 0.8)
+max_level = 0

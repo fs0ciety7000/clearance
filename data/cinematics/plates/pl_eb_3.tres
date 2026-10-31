@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://cepv3ew8v6vp6"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_v50t7"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_72ngl"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_johno"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_fddri"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_aqkt0"]
+
+[sub_resource type="Resource" id="pl_eb_3_resource_1"]
+script = ExtResource("4_fddri")
+texture_path = "res://assets/cinematics/bg/bg_h18.webp"
+
+[resource]
+script = ExtResource("5_aqkt0")
+id = &"pl_eb_3"
+min_act = 3
+layers = Array[ExtResource("4_fddri")]([SubResource("pl_eb_3_resource_1")])
+caption_key = "cin_eb_3"
+duration_sec = 7.0
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s1"
+set_variant = &"arc_lit"
+lighting = &"hall_warm"
+dominant = &"world.key"
+paint_radius_px = 6

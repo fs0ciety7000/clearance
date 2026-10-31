@@ -1,6 +1,6 @@
 # CLEARANCE — Design System
 
-> Version 0.7 · Propriétaire : Design System / Senior Designer · Statut : **brouillon à valider**
+> Version 0.8 · Propriétaire : Design System / Senior Designer · Statut : **brouillon à valider**
 > Sources de vérité : ce document (intentions, règles) · `res://ui/theme/tokens.gd` (valeurs code, `class_name DS`) · `res://ui/theme/clearance_theme.tres` (thème Godot).
 > Les valeurs de base (couleurs, familles de police) sont fixées par le contrat de l'Orchestrateur. Ce document y ajoute uniquement des **nuances dérivées** (alpha, états).
 
@@ -300,6 +300,8 @@ Règles absolues :
 5. Pluie / reflets du monde 3D derrière les hologrammes : le panneau holo applique un voile `bg.panel` à ≥ 85 % d'opacité derrière les zones de texte pour garantir les contrastes du §2.3.
 6. **« Scintillement holographique »** (M11, `Settings.holo_flicker`, actif par défaut) : coupé, il fige le scintillement du cadre, le défilement des scanlines et les glitchs, **sans toucher aux lueurs** (glow) ni au niveau « Effets visuels » — pour les joueurs gênés par le mouvement lumineux mais qui veulent garder la lisibilité des halos. Appliqué aux HoloDocuments (`DocumentView` : scanlines figées, plus de scintillement du bord) et au guichet 3D par `BoothQuality` (uniforme `flicker` 0 / 1) : `booth_holo` (logo, barrières : scintillement, scanlines, défilement) et, depuis QA-047, `booth_emissive` — néons « instables » (mode 1 : plus de chute de 60 % à ≤ 2 Hz, lueur pleine et fixe) et écrans holo (mode 2 : ni scanlines ni balayage). Restent actifs : les lueurs / halos (glow), la pluie, les liens magenta (pointillés ≤ 20 px/s) et la respiration très lente des vitrages de la ville (mode 3, < 0,05 Hz), qui suivent « Effets visuels » (`fx_intensity`). Textes d'aide (Options › Accessibilité) : « Effets visuels » = intensité des lueurs, halos, scanlines et animations d'effet (Désactivés : tout est fixe, sans halo) ; « Scintillement holographique » = plus aucun clignotement ni défilement, lueurs gardées.
 
+7. **Planches de cinématique (M14, D-184, D-195)** : la couche holographique d'une planche (`plate_holo.gdshader`, voiles posés sur les vitres, écrans et hologrammes peints) suit les mêmes plafonds — scintillement ≤ 0,06 à ≤ 2 Hz, scanlines α ≤ 0,08 à ≤ 20 px/s, aucun glitch — et les mêmes réglages : `holo_flicker` coupé fige scintillement et défilement (lueurs gardées), `fx_intensity` règle halos, papier et effets, « Réduire les animations » fige tout. Les effets scénarisés dessinés (forme d'onde, Œil du Consortium, cercles du carillon) bougent à ≤ 0,5 Hz. **Aucun effet sur les `Label`** posés sur la planche ni sous la légende (qui est hors de la planche, sur voile).
+
 ---
 
 ## 6. Iconographie
@@ -519,6 +521,22 @@ Contrat : ARCHITECTURE §12, M13 §1.7, §2.2, §2.12, §3.3 ; UI_FLOW §8.7. R�
 
 Icônes dessinées ajoutées : `GATE` (arche du portique), `QUOTE` (guillemets de déclaration), `ITEM` (caisse neutre), `TOOL` (clé d'amélioration).
 
+### 7.14 Composants M14 « Ambiance » (0.8)
+
+Contrat : ARCHITECTURE §12 ter.3, M14 §3.3, §3.7, §5 ; UI_FLOW §8.8. Règle commune : la couleur dominante d'une planche est **décorative** (jeton de `PlateDef.dominant`, jamais une couleur en dur) ; tout sens passe par le texte (légende, étiquettes, invites).
+
+| Composant | Fichier | Anatomie | États / règles |
+|---|---|---|---|
+| **CinematicScreen** (cinématique de fin) | `scripts/ui/cinematic_screen.gd` | fond `bg.void` ; planche 2048×1152 « remplir la hauteur » (1 080 lignes) ; zone sûre 16:10 (`CIN_SAFE_ASPECT`) ; couches `TextureRect` + papier à l'exécution ; voiles `plate_holo` ; `Label` mono (horloges, numéros) ou display (`holo_display` : CHARTE DE L'AIR, MAIN COURANTE) en `text.primary` | carte de titre `PLATE_TITLE_SEC` ; planche `max(PLATE_MIN_SEC ; PLATE_BASE_SEC + PLATE_CHARS_SEC × car.)` (×`PLATE_SLOW_FACTOR`), fondu `DUR_PLATE_XFADE` ; parallaxe ≤ `PARALLAX_MAX_PX`, zoom ≤ `KEN_BURNS_MAX`, `ease.inout` ; animations réduites : ni parallaxe ni zoom, fondus `dur.fast` |
+| **Carte de titre** | idem | icône (`EndScreen.icon_of`) + surtitre `DocFieldLabel` en capitales, filet 24 %, titre `DisplayLabel` — couleur de l'écran de fin (`EndScreen.accent_of`) | 3,5 s, passable après `PLATE_ADVANCE_LOCK` ; absente au J31 (D-201) |
+| **Légende de planche** | idem | `SubtitleText` × `CIN_CAPTION_SCALE` (≥ `CIN_CAPTION_MIN_PHYSICAL` px physiques), voile `SCRIM` (bg.void 72 %) `chamfer.s`, marge `space.4`, au plus `CIN_CAPTION_WIDTH` de la zone sûre, centrée à `space.16` du bas | contraste ≥ 7:1 sur toute image (pire cas blanc : 7,7:1) ; révélation `dur.slow` ; ≤ 2 lignes (3 au-delà de 130 % : la planche remonte de `CIN_PLATE_RAISE`) ; avance manuelle : « ▶ » cyan qui pulse à `CIN_NEXT_BLINK_HZ` (fixe en animations réduites) |
+| **Invite de passage** | idem | `HoldRing` (`CIN_RING_SIZE`, piste `line.subtle`, arc cyan 3 px) + `PromptGlyph` `cancel` + « Maintenir pour passer » `CaptionLabel` + « TOUT PASSER » `ButtonGhost` (cible souris, non focalisable) — en haut à droite de la zone sûre | maintien `CIN_SKIP_HOLD` ; invite visible dès la 1ʳᵉ image si la séquence est déjà vue, sinon après la 1ʳᵉ planche ; apparition `dur.base` |
+| **Effets HOLO scénarisés** | idem (`HoloGlyph`) | forme d'onde cyan 3 px (PL-F8-1/2, PL-EC-1) ; Œil du Consortium jaune (PL-F4-4) ; trois cercles du carillon jaunes (PL-F7-1) ; `glass_off_sequence` (PL-F9-1) : couches `LIT` éteintes une à une (`CIN_GLASS_OFF_DELAY`, puis toutes les `CIN_GLASS_OFF_STEP`, fondu `dur.slow`) avec leur voile | mouvement ≤ 0,5 Hz ; figés si `holo_flicker` coupé, animations réduites ou effets à 0 ; PL-F9-1 éteinte d'emblée en animations réduites |
+| **Effets FX** | idem (shader en ligne) | pluie (traits fins), fumée et brume (bruit lent, **jamais de flash**), poussière et particules d'air ; teinte `text.primary`, α ≤ 0,6 | figés (image fixe) en animations réduites ou qualité Bas |
+| **PortraitFrame** (Dossier) | `scripts/ui/dossier_screen.gd` | vignette `DOSSIER_PORTRAIT_W` × `DOSSIER_PORTRAIT_H` (112×140, rendu 128×160), fond `bg.panel`, cadre 2 px `chamfer.m` à la couleur d'origine `FACTION_*` ; initiales `DataSmall` sur voile `SUBTITLE_BG` en bas à gauche du cadre | toujours accompagnée du code d'origine écrit ; jamais vu : `InitialsBadge` (infobulle « Visage non vu ») ; visière baissée si jamais relevée |
+| **REVOIR** | `dossier_screen.gd` | `ButtonTool` « REVOIR » (« REVOIR · CHARTE » quand une fin a plusieurs séquences vues) sous la carte de fin ; en tête de carte de monde (ÉPILOGUES) | seulement pour une séquence vue (`has_seen_cinematic`) ; focus rendu au bouton au retour |
+| **Sous-titre d'annonce** | `scripts/ui/subtitle_bar.gd` | barre de sous-titres existante : didascalie « [Haut-parleur] » + « « … » », sans locuteur | option Sous-titres ; durée du signal ; jamais la clé brute |
+
 ## 8. Motion
 
 ### 8.1 Durées
@@ -533,6 +551,13 @@ Icônes dessinées ajoutées : `GATE` (arche du portique), `QUOTE` (guillemets d
 | `stagger` | 30 | Décalage entre DocFields à l'apparition |
 | `DIRECTIVE_HOLD` (M12) | 4 000 | Carte « DIRECTIVE DE GARDE N° n » : affichage maximal avant fondu ; surlignage de la règle au Rulebook |
 | `EPILOGUE_OFFER_DELAY` (M12) | 3 000 | Écran de fin de l'Acte III : délai avant « UN AN PLUS TARD » |
+| `PLATE_TITLE_SEC` (M14) | 3 500 | Carte de titre d'une cinématique |
+| `PLATE_MIN_SEC` · `PLATE_BASE_SEC` · `PLATE_CHARS_SEC` (M14) | 6 000 · 2 500 · 60 / car. | Durée d'une planche : max(6 s ; 2,5 s + 0,06 s × caractères) ; ×`PLATE_SLOW_FACTOR` 1,5 avec l'horloge ralentie |
+| `PLATE_ADVANCE_LOCK` (M14) | 600 | Un appui n'avance qu'après 0,6 s d'affichage |
+| `DUR_PLATE_XFADE` (M14) | 800 | Fondu croisé entre planches (`dur.fast` en animations réduites) |
+| `CIN_SKIP_HOLD` (M14) | 800 | Maintien qui passe toute la cinématique |
+| `CIN_GLASS_OFF_DELAY` · `CIN_GLASS_OFF_STEP` (M14) | 1 000 · 500 | PL-F9-1 : première vitre éteinte, puis une toutes les 0,5 s |
+| `MUSIC_EXIT_FADE` (M14) | 1 500 | Fondu de sortie de la musique avant un changement de scène (voile noir) |
 
 ### 8.2 Easings (Godot `Tween`)
 
@@ -725,4 +750,5 @@ Tenir un registre `CREDITS` (source, auteur, licence, URL, date) pour chaque ass
 - 0.5.1 — Correctifs QA M11 : §5 règle 6 étendue au guichet 3D (`booth_emissive` lit `flicker`, QA-047) et textes d'aide des deux réglages ; token `SKIP_HOLD` 1,0 s (VUE maintenue = passer une étape du tutoriel, QA-042) ; token `PROMPT_INACTIVE_ALPHA` 0,3 (glyphe d'invite qui ne vaut pas en ce moment : Ⓐ de SUIVANT quand le focus est sur un autre contrôle actionnable) ; puce « SAUVEGARDE ENDOMMAGÉE » (`Palette.STATE_RED` + icône WARNING + texte, `SaveSlotCard`).
 - 0.6 — M12 « Rejouabilité » (lot C) : tokens `DIRECTIVE_HOLD` 4 s, `EPILOGUE_OFFER_DELAY` 3 s, `GARDE_CODE_LENGTH` 6, origines `FACTION_*` (§2.6) ; composants §7.12 (bandeau ÉVÉNEMENT, carte de directive, surlignage de règle, compteurs de Garde de la barre d'état, initiales du Dossier, silhouettes, cartes du J31) ; style `LineEdit` du thème. Aucun token de base modifié.
 - 0.7 — M13 « Gameplay » (lot C) : tokens `JOURNAL_MAX_LINES`, `JOURNAL_VIEW_H`, `STATEMENT_GLYPH`, `SEARCH_PANEL_WIDTH`, `SEARCH_SILHOUETTE_W`, `BUSY_REDUCED_STEP`, `HELP_CARD_WIDTH` ; composants §7.13 (puce de déclaration, journal de dialogue, indicateur d'attente, portique et objets, onglet Contrebande, Économat, carte d'aide, pastilles d'améliorations, sceau sous Lampe de Wood) ; icônes `GATE`, `QUOTE`, `ITEM`, `TOOL`. Exception documentée : la puce en ligne a une cible de `HIT_TARGET_MIN − SPACE_2` (le focus manette la rejoint, aucun geste au pixel). Aucun token de base modifié.
+- 0.8 — M14 « Ambiance » (lot D) : tokens de mouvement des cinématiques (`PLATE_TITLE_SEC`, `PLATE_MIN_SEC`, `PLATE_BASE_SEC`, `PLATE_CHARS_SEC`, `PLATE_SLOW_FACTOR`, `PLATE_ADVANCE_LOCK`, `DUR_PLATE_XFADE`, `PARALLAX_MAX_PX`, `KEN_BURNS_MAX`, `CIN_SKIP_HOLD`, `CIN_GLASS_OFF_DELAY`, `CIN_GLASS_OFF_STEP`, `CIN_NEXT_BLINK_HZ`), de légende (`CIN_CAPTION_SCALE`, `CIN_CAPTION_MIN_PHYSICAL`, `CIN_CAPTION_WIDTH`, `CIN_SAFE_ASPECT`, `CIN_PLATE_RAISE`), `CIN_HOLO_POWER`, `CIN_RING_SIZE`, `DOSSIER_PORTRAIT_W`/`_H`, `MUSIC_EXIT_FADE` ; §5 règle 7 (holographie des planches) ; composants §7.14 (cinématique, carte de titre, légende, invite de passage, effets HOLO et FX, cadre de portrait, REVOIR, sous-titre d'annonce). Exception documentée : la cinématique n'a aucun contrôle focalisable (Ⓐ et Ⓑ agissent sur la séquence ; « TOUT PASSER » est une cible souris). Aucun token de base modifié.
 - 0.4 — M9 (interfaces de l'Acte III) : icônes dessinées `SCALES` (balance : Arbitrage, Enquête, convocations) et `STRIKE` (règle / document retiré·e) ; composants `LedgerCardView` (liseré vert, surlignage de la dernière entrée), `SummonsCardView` (ambre de l'Enquête), règle retirée barrée (texte `text.muted`), compteur QUOTA « SUSPENDU » gris, carte plein cadre « FIN DE L'ACTE II » (couleur de la fin rappelée), chiffre romain paramétrable (Ⅲ, ambre) ; F10 « LE PONT » en `state.green`. Aucun token nouveau.

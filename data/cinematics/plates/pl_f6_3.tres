@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://52gv31yj5col"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_0paqo"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_jq4uv"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_i6j6n"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_x4q2q"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_vua2a"]
+
+[sub_resource type="Resource" id="pl_f6_3_resource_1"]
+script = ExtResource("4_x4q2q")
+texture_path = "res://assets/cinematics/bg/bg_q7.webp"
+
+[sub_resource type="Resource" id="pl_f6_3_resource_2"]
+script = ExtResource("4_x4q2q")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f6_3_halcyon.webp"
+rect = Rect2(0.4619, 0.4288, 0.0825, 0.0955)
+depth = 0.05
+props = Array[StringName]([&"halcyon_far"])
+
+[sub_resource type="Resource" id="pl_f6_3_resource_3"]
+script = ExtResource("4_x4q2q")
+kind = &"fig"
+texture_path = "res://assets/cinematics/fig/pl_f6_3_noa.webp"
+rect = Rect2(0.2402, 0.7569, 0.1333, 0.2431)
+depth = 0.7
+figure_seed = 1461
+pose = &"idle"
+facing_deg = 180.0
+
+[resource]
+script = ExtResource("5_vua2a")
+id = &"pl_f6_3"
+layers = Array[ExtResource("4_x4q2q")]([SubResource("pl_f6_3_resource_1"), SubResource("pl_f6_3_resource_2"), SubResource("pl_f6_3_resource_3")])
+caption_key = "cin_f6_3"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s3"
+set_variant = &"porthole"
+lighting = &"night"
+dominant = &"accent.cyan"
+paint_radius_px = 6

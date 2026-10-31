@@ -1,0 +1,569 @@
+{
+ "id": "thf5c",
+ "def_id": "th_f5c",
+ "kind": "theme",
+ "title": "TH-F5C · Rendre l'air (Charte) — la majeur, 75 BPM ; variante TH-F5S (Seconde Vanne)",
+ "doc": "docs/M14.md §2.7 : nappes chaudes dont le filtre s'ouvre de 600 Hz à 6 kHz sur 16 mesures (« l'air descend ») ; MO-2 (mesure 5) puis MO-1 (mesure 9), résolus à l'unisson sur mi (mesure 13 : seule réconciliation du jeu, exception de D-179). Variante `s` → TH-F5S : section B modulée vers fa♯ mineur (Tycho), souffle de vannes, MO-1 lointain sans résolution ; queue propre. Ouverture 2 + A 6 + B 6 (38,4 s) puis queue 8 (25,6 s).",
+ "tempo": 75,
+ "beats_per_bar": 4,
+ "bars": 22,
+ "tail_bars": 2,
+ "sample_rate": 48000,
+ "seed": 9005,
+ "sections": [
+  {
+   "id": "opening",
+   "from_bar": 0,
+   "bars": 2
+  },
+  {
+   "id": "a",
+   "from_bar": 2,
+   "bars": 6
+  },
+  {
+   "id": "b",
+   "from_bar": 8,
+   "bars": 6
+  },
+  {
+   "id": "tail",
+   "from_bar": 14,
+   "bars": 8,
+   "loop": true
+  }
+ ],
+ "chords": [
+  {
+   "bar": 0,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "E3",
+    "A3",
+    "C#4"
+   ]
+  },
+  {
+   "bar": 2,
+   "bars": 2,
+   "bass": "F#1",
+   "notes": [
+    "F#2",
+    "C#3",
+    "F#3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 4,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "A3",
+    "D4",
+    "F#4"
+   ]
+  },
+  {
+   "bar": 6,
+   "bars": 2,
+   "bass": "E2",
+   "notes": [
+    "E3",
+    "B3",
+    "E4",
+    "G#4"
+   ]
+  },
+  {
+   "bar": 8,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "E3",
+    "A3",
+    "C#4"
+   ]
+  },
+  {
+   "bar": 10,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "A3",
+    "D4",
+    "F#4"
+   ]
+  },
+  {
+   "bar": 12,
+   "bars": 2,
+   "bass": "E2",
+   "notes": [
+    "E3",
+    "B3",
+    "E4",
+    "G#4"
+   ]
+  },
+  {
+   "bar": 14,
+   "bars": 2,
+   "bass": "A1",
+   "notes": [
+    "A2",
+    "E3",
+    "A3",
+    "C#4"
+   ]
+  },
+  {
+   "bar": 16,
+   "bars": 2,
+   "bass": "D2",
+   "notes": [
+    "D3",
+    "A3",
+    "D4",
+    "F#4"
+   ]
+  },
+  {
+   "bar": 18,
+   "bars": 2,
+   "bass": "F#1",
+   "notes": [
+    "F#2",
+    "C#3",
+    "F#3",
+    "A3"
+   ]
+  },
+  {
+   "bar": 20,
+   "bars": 2,
+   "bass": "E2",
+   "notes": [
+    "E3",
+    "B3",
+    "E4",
+    "G#4"
+   ]
+  }
+ ],
+ "motifs": {
+  "MO-1A": [
+   {
+    "step": 0,
+    "len": 4,
+    "note": "C#5"
+   },
+   {
+    "step": 4,
+    "len": 4,
+    "note": "A4"
+   },
+   {
+    "step": 8,
+    "len": 8,
+    "note": "E5"
+   }
+  ],
+  "MO-2": [
+   {
+    "step": 0,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 2,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 4,
+    "len": 2,
+    "note": "A4"
+   },
+   {
+    "step": 7,
+    "len": 1,
+    "note": "E5"
+   }
+  ]
+ },
+ "instruments": {
+  "pad": {
+   "type": "pad",
+   "voices": 3,
+   "detune_cents": 9,
+   "cutoff": 6000,
+   "q": 0.7,
+   "attack": 2.0,
+   "decay": 1.0,
+   "sustain": 0.85,
+   "release": 2.8,
+   "vib_hz": 0.21,
+   "vib_depth": 0.0012,
+   "level": 0.3
+  },
+  "valve": {
+   "type": "tone",
+   "wave": "air",
+   "attack": 1.5,
+   "decay": 0.5,
+   "sustain": 1.0,
+   "release": 2.0,
+   "level": 0.05,
+   "cutoff": 1800
+  },
+  "pluck": {
+   "type": "pluck",
+   "damping": 0.006,
+   "brightness": 0.45,
+   "length": 1.5,
+   "level": 0.34,
+   "band": [
+    300,
+    4000
+   ]
+  },
+  "bell": {
+   "type": "bell",
+   "ratio": 3.5,
+   "index": 1.0,
+   "index_decay": 0.2,
+   "attack": 0.002,
+   "decay": 2.0,
+   "length": 4.5,
+   "level": 0.3
+  }
+ },
+ "mix": {
+  "eq": [],
+  "reverb": {
+   "rt60": 3.6,
+   "size": 1.7,
+   "damp_hz": 5000,
+   "predelay": 0.03
+  },
+  "width": 0.5
+ },
+ "stems": [
+  {
+   "id": "pads",
+   "tracks": [
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.45,
+     "chords": {
+      "octave": 0,
+      "to_bar": 8
+     },
+     "automation": {
+      "cutoff": [
+       [
+        0,
+        600
+       ],
+       [
+        16,
+        6000
+       ],
+       [
+        22,
+        6000
+       ]
+      ]
+     }
+    },
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.45,
+     "not_variant": "s",
+     "chords": {
+      "octave": 0,
+      "from_bar": 8
+     },
+     "automation": {
+      "cutoff": [
+       [
+        0,
+        600
+       ],
+       [
+        16,
+        6000
+       ],
+       [
+        22,
+        6000
+       ]
+      ]
+     }
+    },
+    {
+     "instrument": "pad",
+     "gain_db": 0,
+     "send": 0.45,
+     "variant": "s",
+     "events": [
+      {
+       "step": 0,
+       "len": 32,
+       "vel": 0.9,
+       "notes": [
+        "F#3",
+        "A3",
+        "C#4",
+        "E4"
+       ],
+       "bar": 8
+      },
+      {
+       "step": 0,
+       "len": 32,
+       "vel": 0.9,
+       "notes": [
+        "D3",
+        "F#3",
+        "A3",
+        "C#4"
+       ],
+       "bar": 10
+      },
+      {
+       "step": 0,
+       "len": 32,
+       "vel": 0.9,
+       "notes": [
+        "C#3",
+        "F3",
+        "G#3",
+        "B3"
+       ],
+       "bar": 12
+      },
+      {
+       "step": 0,
+       "len": 32,
+       "vel": 0.9,
+       "notes": [
+        "F#3",
+        "A3",
+        "C#4",
+        "E4"
+       ],
+       "bar": 14
+      },
+      {
+       "step": 0,
+       "len": 32,
+       "vel": 0.9,
+       "notes": [
+        "D3",
+        "F#3",
+        "A3",
+        "E4"
+       ],
+       "bar": 16
+      },
+      {
+       "step": 0,
+       "len": 32,
+       "vel": 0.9,
+       "notes": [
+        "F#3",
+        "A3",
+        "C#4",
+        "E4"
+       ],
+       "bar": 18
+      },
+      {
+       "step": 0,
+       "len": 32,
+       "vel": 0.9,
+       "notes": [
+        "C#3",
+        "G#3",
+        "C#4",
+        "E4"
+       ],
+       "bar": 20
+      }
+     ],
+     "automation": {
+      "cutoff": [
+       [
+        0,
+        600
+       ],
+       [
+        16,
+        3000
+       ],
+       [
+        22,
+        3000
+       ]
+      ]
+     }
+    },
+    {
+     "instrument": "valve",
+     "gain_db": 0,
+     "send": 0.2,
+     "variant": "s",
+     "events": [
+      {
+       "step": 0,
+       "len": 96,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 8
+      },
+      {
+       "step": 0,
+       "len": 128,
+       "note": "C4",
+       "vel": 1.0,
+       "bar": 14
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "motifs",
+   "tracks": [
+    {
+     "instrument": "pluck",
+     "gain_db": 0,
+     "send": 0.35,
+     "pan": 0.2,
+     "events": [
+      {
+       "motif": "MO-2",
+       "bar": 4,
+       "step": 4
+      }
+     ]
+    },
+    {
+     "instrument": "bell",
+     "gain_db": 0,
+     "send": 0.5,
+     "pan": -0.15,
+     "not_variant": "s",
+     "events": [
+      {
+       "motif": "MO-1A",
+       "bar": 8,
+       "step": 0
+      }
+     ]
+    },
+    {
+     "instrument": "bell",
+     "gain_db": -8,
+     "send": 0.85,
+     "pan": -0.3,
+     "variant": "s",
+     "events": [
+      {
+       "motif": "MO-1A",
+       "bar": 10,
+       "step": 0,
+       "vel": 0.7
+      },
+      {
+       "motif": "MO-1A",
+       "bar": 18,
+       "step": 0,
+       "vel": 0.6
+      }
+     ]
+    },
+    {
+     "instrument": "pluck",
+     "gain_db": 0,
+     "send": 0.4,
+     "not_variant": "s",
+     "events": [
+      {
+       "motif": "MO-2",
+       "bar": 12,
+       "step": 0
+      }
+     ]
+    },
+    {
+     "instrument": "bell",
+     "gain_db": 0,
+     "send": 0.45,
+     "not_variant": "s",
+     "events": [
+      {
+       "motif": "MO-1A",
+       "bar": 12,
+       "step": 0
+      }
+     ]
+    },
+    {
+     "instrument": "pluck",
+     "gain_db": -2,
+     "send": 0.4,
+     "not_variant": "s",
+     "events": [
+      {
+       "motif": "MO-2",
+       "bar": 18,
+       "step": 4,
+       "vel": 0.7
+      }
+     ]
+    },
+    {
+     "instrument": "pluck",
+     "gain_db": -4,
+     "send": 0.5,
+     "variant": "s",
+     "events": [
+      {
+       "motif": "MO-2",
+       "bar": 16,
+       "step": 4,
+       "transpose": -3,
+       "vel": 0.6
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "endings": [
+  "f5_air"
+ ],
+ "ending_variants": [
+  "c"
+ ],
+ "variants": [
+  {
+   "id": "s",
+   "def_id": "th_f5s",
+   "ending_variants": [
+    "s"
+   ],
+   "own_tail": true
+  }
+ ]
+}

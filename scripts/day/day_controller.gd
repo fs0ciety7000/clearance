@@ -4,7 +4,9 @@
 ## WAITING_CASE … → SUMMARY`. Construit les cas avec le `CaseBuilder` du jour,
 ## garde la clé de réponse (`CaseKey`, jamais transmise), note le verdict
 ## (`ScoringService`) et émet `day_started`, `day_phase_changed`,
-## `case_presented`, `case_resolved`, `day_ended`.
+## `case_presented`, `case_resolved`, `day_ended` ; M14 : `queue_progressed`
+## (file réelle du Hall, à l'ouverture, après chaque cas et quand EV-06
+## allonge la file).
 ## Robustesse (§7, §8 bis.6) : tout signal du booth d'un autre `case_id` ou
 ## hors de l'état attendu est ignoré ; des timeouts de sécurité font avancer
 ## le jour même sans booth (`SilentBooth`). Ils sont pilotés par `advance()`
@@ -244,7 +246,22 @@ func _begin(source: DayDef, day_seed: int, flags: Array[StringName], memory: Dic
 	EventBus.summons_published.emit(builder.get_summons())
 	EventBus.ledger_changed.emit(builder.get_ledger())
 	EventBus.quota_changed.emit(quota.used, quota.maximum if quota.is_active() else 0)
+	_emit_queue_progressed()
 	return true
+
+
+## M14 (VH-1 → VH-3, B86, D-187 ; ARCHITECTURE §12 ter.4) : la file du Hall
+## montre les vrais passagers suivants. `processed` = passagers traités,
+## `total` = `day.passenger_count` (−1 en Garde : file sans fin) ;
+## `upcoming[0]` = le prochain appelé. Les silhouettes viennent du seul roster
+## d'apparences du matin (`CaseBuilder.roster`, lecture) : aucune donnée de
+## `CaseKey`, de document, d'origine ni de verdict.
+func _emit_queue_progressed() -> void:
+	if builder == null or day == null:
+		return
+	var processed: int = summary.results.size() if summary != null else 0
+	var total: int = -1 if mode == DayDef.MODE_GARDE else day.passenger_count
+	EventBus.queue_progressed.emit(processed, total, QueueSilhouette.upcoming(builder.roster, processed, total))
 
 
 ## Vrai si le shift n'a aucune économie (J31, Garde, D-123).
@@ -431,6 +448,7 @@ func _on_verdict_stamped(verdict: Verdict) -> void:
 		if current_scripted != null:
 			GameState.remember_case(current_scripted.id, CaseMemory.snapshot(day.day_number, current_case, result.verdict_kind))
 	EventBus.case_resolved.emit(current_case_id(), result)
+	_emit_queue_progressed()
 	if result.has_citation():
 		EventBus.citation_issued.emit(result.citation_reason_key)
 	if quota.is_active():
@@ -804,9 +822,14 @@ func _start_station_event(plan: StationEventPlan, queue_changes: bool = true) ->
 		# EV-06 : file allongée seulement si le générateur sait l'étendre
 		# (`CaseBuilder.extend_queue(count)`, lot B : roster du jour).
 		if builder.has_method(&"extend_queue"):
-			builder.call(&"extend_queue", day.passenger_count + extra)
-			day.passenger_count += extra
+			# `builder.day` est ce `day` (même copie de shift) : `extend_queue`
+			# l'allonge déjà ; l'ancien `+= extra` doublait EV-06 (+6 au lieu
+			# des +3 de M12 §2, constaté en M14 par `test_m14_queue_progress`).
+			var target: int = day.passenger_count + extra
+			builder.call(&"extend_queue", target)
+			day.passenger_count = maxi(day.passenger_count, target)
 			summary.planned_cases = day.passenger_count
+			_emit_queue_progressed()
 		else:
 			push_warning("DayController: file non extensible (CaseBuilder.extend_queue absent), EV-06 sans passagers en plus")
 	var seconds: int = plan.modifier(RuleChangeDef.MOD_EXTRA_SECONDS)

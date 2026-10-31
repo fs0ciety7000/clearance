@@ -337,6 +337,12 @@ func test_epilogue_intro_briefing_shift_and_conclusion() -> void:
 		await wait_process_frames(1)
 	assert_eq(scene.day_controller.phase, DayPhase.Kind.SUMMARY, "fin à la file vide")
 	await wait_seconds(DayScene.SIREN_DELAY_SEC + 0.3)
+	# M14 : la cinématique du monde (CIN-EC) d'abord, passée ici (test_m14_ui).
+	var sequence: CinematicScreen = scene.screen as CinematicScreen
+	assert_not_null(sequence, "cinématique du monde avant la conclusion")
+	if sequence != null:
+		sequence.skip_all()
+	await wait_process_frames(2)
 	var conclusion: EpilogueScreen = scene.screen as EpilogueScreen
 	assert_not_null(conclusion, "carte de conclusion")
 	if conclusion == null:

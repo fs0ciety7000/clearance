@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://bh6ug80g75m7m"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_ovl7m"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_0h0nd"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_06nhm"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_xgv84"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_6ulpy"]
+
+[sub_resource type="Resource" id="pl_f6e_4_resource_1"]
+script = ExtResource("4_xgv84")
+texture_path = "res://assets/cinematics/bg/bg_q7.webp"
+rect = Rect2(-0.3, -0.3, 1.6, 1.6)
+
+[sub_resource type="Resource" id="pl_f6e_4_resource_2"]
+script = ExtResource("4_xgv84")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f6e_4_hand.webp"
+rect = Rect2(0.478, 0.5226, 0.0356, 0.1224)
+depth = 0.6
+props = Array[StringName]([&"child_hand"])
+
+[resource]
+script = ExtResource("5_6ulpy")
+id = &"pl_f6e_4"
+layers = Array[ExtResource("4_xgv84")]([SubResource("pl_f6e_4_resource_1"), SubResource("pl_f6e_4_resource_2")])
+caption_key = "cin_f6e_4"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s3"
+set_variant = &"porthole"
+lighting = &"night"
+dominant = &"accent.cyan"
+paint_radius_px = 6

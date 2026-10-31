@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://r8hfxxxb5g1h"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_30n6r"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_7ktg4"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_bsyra"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_tjmbh"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_qcojr"]
+
+[sub_resource type="Resource" id="pl_ed_2_resource_1"]
+script = ExtResource("4_tjmbh")
+texture_path = "res://assets/cinematics/bg/bg_t4.webp"
+
+[sub_resource type="Resource" id="pl_ed_2_resource_2"]
+script = ExtResource("4_tjmbh")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_ed_2_kept_seat.webp"
+rect = Rect2(0.3809, 0.5894, 0.0991, 0.1563)
+depth = 0.5
+props = Array[StringName]([&"empty_seat", &"bowl"])
+
+[resource]
+script = ExtResource("5_qcojr")
+id = &"pl_ed_2"
+min_act = 3
+layers = Array[ExtResource("4_tjmbh")]([SubResource("pl_ed_2_resource_1"), SubResource("pl_ed_2_resource_2")])
+caption_key = "cin_ed_2"
+duration_sec = 7.0
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s7"
+set_variant = &"refectory"
+lighting = &"mine_lamp"
+dominant = &"state.amber"
+paint_radius_px = 6

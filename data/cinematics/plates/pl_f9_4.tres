@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://bwt56rnehbdbo"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_35io3"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_vms3d"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_0obn7"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_5ll0p"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_wapfl"]
+
+[sub_resource type="Resource" id="pl_f9_4_resource_1"]
+script = ExtResource("4_5ll0p")
+texture_path = "res://assets/cinematics/bg/bg_c1.webp"
+
+[sub_resource type="Resource" id="pl_f9_4_resource_2"]
+script = ExtResource("4_5ll0p")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f9_4_crowd.webp"
+rect = Rect2(0.1992, 0.4453, 0.5103, 0.5503)
+depth = 0.5
+figure_seed = 1493
+pose = &"leave"
+
+[sub_resource type="Resource" id="pl_f9_4_resource_3"]
+script = ExtResource("4_5ll0p")
+kind = &"fx"
+depth = 0.8
+fx_kind = &"rain"
+
+[resource]
+script = ExtResource("5_wapfl")
+id = &"pl_f9_4"
+min_act = 3
+layers = Array[ExtResource("4_5ll0p")]([SubResource("pl_f9_4_resource_1"), SubResource("pl_f9_4_resource_2"), SubResource("pl_f9_4_resource_3")])
+caption_key = "cin_f9_4"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s8"
+set_variant = &"ring_c_walkway"
+lighting = &"night"
+dominant = &"world.steel"
+paint_radius_px = 6

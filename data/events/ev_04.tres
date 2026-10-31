@@ -32,3 +32,4 @@ title_key = "sev_inspection_title"
 end_key = "sev_inspection_end"
 garde_changes = Array[ExtResource("1_opghg")]([SubResource("ev_04_resource_3")])
 garde_announce_key = "sev_inspection_announce_garde"
+music_weight = 0.4

@@ -261,3 +261,4 @@ statement_topic_weights = Dictionary[StringName, float]({
 &"purpose": 0.5,
 &"stay": 0.5
 })
+music_tension = 1

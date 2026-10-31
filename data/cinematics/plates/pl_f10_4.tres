@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://cxo8rruew0wtt"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_vo54x"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_3m4eh"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_gftrs"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_xshhu"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_n6x7w"]
+
+[sub_resource type="Resource" id="pl_f10_4_resource_1"]
+script = ExtResource("4_xshhu")
+texture_path = "res://assets/cinematics/bg/bg_h16.webp"
+
+[sub_resource type="Resource" id="pl_f10_4_resource_2"]
+script = ExtResource("4_xshhu")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f10_4_hand.webp"
+rect = Rect2(0.5708, 0.8568, 0.2861, 0.1432)
+depth = 0.7
+props = Array[StringName]([&"folded_sheet"])
+
+[resource]
+script = ExtResource("5_n6x7w")
+id = &"pl_f10_4"
+min_act = 3
+layers = Array[ExtResource("4_xshhu")]([SubResource("pl_f10_4_resource_1"), SubResource("pl_f10_4_resource_2")])
+caption_key = "cin_f10_4"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s1"
+set_variant = &"evening"
+lighting = &"dusk"
+dominant = &"state.green"
+paint_radius_px = 6

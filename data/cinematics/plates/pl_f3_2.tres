@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://bxst2ix0bt5n5"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_b2g6k"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="2_8rcm8"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="3_1mxds"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="4_33uw3"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="5_7upgn"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="6_chf5g"]
+
+[sub_resource type="Resource" id="pl_f3_2_resource_1"]
+script = ExtResource("2_8rcm8")
+none_of = Array[StringName]([&"lumika_learned"])
+
+[sub_resource type="Resource" id="pl_f3_2_resource_2"]
+script = ExtResource("5_7upgn")
+texture_path = "res://assets/cinematics/bg/bg_p3.webp"
+
+[sub_resource type="Resource" id="pl_f3_2_resource_3"]
+script = ExtResource("5_7upgn")
+kind = &"fx"
+depth = 0.3
+fx_kind = &"fog"
+
+[resource]
+script = ExtResource("6_chf5g")
+id = &"pl_f3_2"
+condition = SubResource("pl_f3_2_resource_1")
+layers = Array[ExtResource("5_7upgn")]([SubResource("pl_f3_2_resource_2"), SubResource("pl_f3_2_resource_3")])
+caption_key = "cin_f3_2"
+duration_sec = 7.5
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s4"
+set_variant = &"porthole_fog"
+lighting = &"night"
+dominant = &"text.secondary"
+paint_radius_px = 6

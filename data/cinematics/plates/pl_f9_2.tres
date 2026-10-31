@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://c5jh3s4xy88dt"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_jm5ik"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_76dhs"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_52ckx"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_jvwue"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_qg2kn"]
+
+[sub_resource type="Resource" id="pl_f9_2_resource_1"]
+script = ExtResource("4_jvwue")
+texture_path = "res://assets/cinematics/bg/bg_h13.webp"
+
+[sub_resource type="Resource" id="pl_f9_2_resource_2"]
+script = ExtResource("4_jvwue")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f9_2_families.webp"
+rect = Rect2(0.0342, 0.4878, 0.7256, 0.5035)
+depth = 0.4
+figure_seed = 1492
+pose = &"leave"
+
+[resource]
+script = ExtResource("5_qg2kn")
+id = &"pl_f9_2"
+min_act = 3
+layers = Array[ExtResource("4_jvwue")]([SubResource("pl_f9_2_resource_1"), SubResource("pl_f9_2_resource_2")])
+caption_key = "cin_f9_2"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s1"
+set_variant = &"lights_out"
+lighting = &"hall_dark"
+dominant = &"world.steel"
+paint_radius_px = 6

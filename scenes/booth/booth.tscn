@@ -15,7 +15,8 @@
 [ext_resource type="Shader" path="res://assets/shaders/booth_glass.gdshader" id="13_booth"]
 [ext_resource type="Shader" path="res://assets/shaders/impostor_silhouette.gdshader" id="14_booth"]
 [ext_resource type="Script" path="res://scripts/booth/queue_impostors.gd" id="15_booth"]
-[ext_resource type="Script" path="res://scripts/booth/booth_quality.gd" id="16_booth"]
+[ext_resource type="Script" path="res://scripts/booth/hall_guards.gd" id="16_booth"]
+[ext_resource type="Script" path="res://scripts/booth/booth_quality.gd" id="17_booth"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -68,6 +69,12 @@ shader = ExtResource("14_booth")
 [sub_resource type="MultiMesh" id="MultiMesh_1"]
 transform_format = 1
 use_colors = true
+use_custom_data = true
+
+[sub_resource type="MultiMesh" id="MultiMesh_2"]
+transform_format = 1
+use_colors = true
+use_custom_data = true
 
 [sub_resource type="Curve3D" id="Curve3D_1"]
 bake_interval = 0.05
@@ -229,7 +236,15 @@ cast_shadow = 0
 multimesh = SubResource("MultiMesh_1")
 script = ExtResource("15_booth")
 slots = PackedVector2Array(-1.32, -3.45, -1.95, -4.15, -1.4, -4.85, -2.25, -5.55, -1.55, -6.3, -2.45, -6.95, -2.95, -7.6)
+overflow_slots = PackedVector2Array(-3.45, -7.72, -3.95, -7.95, -4.45, -8.18, -5.2, -8.4)
 tints = PackedColorArray(0.23137255, 0.25882354, 0.32156864, 1, 0.35686275, 0.2901961, 0.24705882, 1, 0.18431373, 0.2901961, 0.29803923, 1, 0.29803923, 0.22745098, 0.30980393, 1, 0.41960785, 0.3882353, 0.33333334, 1, 0.18039216, 0.22745098, 0.33333334, 1)
+
+[node name="HallGuards" type="MultiMeshInstance3D" parent="." unique_id=972325002]
+unique_name_in_owner = true
+material_override = SubResource("ShaderMaterial_6")
+cast_shadow = 0
+multimesh = SubResource("MultiMesh_2")
+script = ExtResource("16_booth")
 
 [node name="ArrivalPath" type="Path3D" parent="." unique_id=30588609]
 unique_name_in_owner = true
@@ -261,7 +276,7 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 1
 unique_name_in_owner = true
 
 [node name="Quality" type="Node" parent="." unique_id=868223148 node_paths=PackedStringArray("key_light")]
-script = ExtResource("16_booth")
+script = ExtResource("17_booth")
 environment = SubResource("Environment_1")
 key_light = NodePath("../Lights/KeyLight")
 decor_material = SubResource("ShaderMaterial_1")

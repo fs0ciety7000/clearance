@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://c3143kum7sjbl"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_1tpco"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_gex4o"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_ftfwo"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_lvspa"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_j1ead"]
+
+[sub_resource type="Resource" id="pl_f6t_4_resource_1"]
+script = ExtResource("4_lvspa")
+texture_path = "res://assets/cinematics/bg/bg_t4.webp"
+
+[resource]
+script = ExtResource("5_j1ead")
+id = &"pl_f6t_4"
+min_act = 3
+layers = Array[ExtResource("4_lvspa")]([SubResource("pl_f6t_4_resource_1")])
+caption_key = "cin_f6t_4"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s7"
+set_variant = &"refectory"
+lighting = &"mine_lamp"
+dominant = &"accent.cyan"
+paint_radius_px = 6

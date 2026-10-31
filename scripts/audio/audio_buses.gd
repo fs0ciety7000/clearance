@@ -4,7 +4,7 @@
 ##
 ## ```
 ## Master ── [Mono (StereoEnhance, off)] [HardLimiter −1 dB]
-##  ├── Music      ── [Duck (Amplify)] [Muffle (LowPass, off : pause)]
+##  ├── Music      ── [Duck (Amplify)] [Muffle (LowPass, off : pause)] [Fade (Amplify) : fondus globaux, M14]
 ##  ├── Ambience   ── [Duck (Amplify)] [Glass (LowPass 8 kHz)] [Station (Reverb)]
 ##  ├── SFX        ── [Compressor 3:1]
 ##  │    └── SFX_World ── [Hall (Reverb)]
@@ -38,6 +38,9 @@ const LAYOUT: Array[Array] = [
 const FX_MONO: String = "Mono"
 const FX_DUCK: String = "Duck"
 const FX_MUFFLE: String = "Muffle"
+## Fondus globaux de la musique (M14, D-176) : seul gain animé de la musique,
+## jamais le `volume_db` d'un lecteur (D-083).
+const FX_FADE: String = "Fade"
 const FX_HYGIAPHONE: String = "Hygiaphone"
 
 const DEFAULT_LAYOUT_PATH: String = "res://default_bus_layout.tres"
@@ -87,6 +90,10 @@ static func effects_for(bus_name: StringName) -> Array[AudioEffect]:
 			muffle.resource_name = FX_MUFFLE
 			muffle.cutoff_hz = 2500.0
 			out.append(muffle)
+			var fade: AudioEffectAmplify = AudioEffectAmplify.new()
+			fade.resource_name = FX_FADE
+			fade.volume_db = 0.0
+			out.append(fade)
 		AMBIENCE:
 			out.append(_duck())
 			var glass: AudioEffectLowPassFilter = AudioEffectLowPassFilter.new()

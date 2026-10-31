@@ -1,0 +1,229 @@
+[gd_resource type="Resource" script_class="CinematicLibraryDef" format=3 uid="uid://wta8q6kn8uo3"]
+
+[ext_resource type="Script" path="res://scripts/core/cinematic_def.gd" id="1_j0xww"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="2_6g1mj"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f1_1.tres" id="3_eom8w"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f1_2.tres" id="4_m12yp"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f1_3.tres" id="5_ogvsk"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f1_3_borne.tres" id="6_x3pta"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f1_4.tres" id="7_gj2q6"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f2_1.tres" id="8_agbvj"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f2_2.tres" id="9_eyewk"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f2_3.tres" id="10_p2ckl"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f2_4.tres" id="11_wpquy"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f3_1.tres" id="12_wbjir"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f3_2.tres" id="13_67im8"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f3_2_lumika.tres" id="14_f36jw"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f3_3.tres" id="15_vysij"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f4_1.tres" id="16_at2vo"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f4_2.tres" id="17_lgsne"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f4_3.tres" id="18_c1m4t"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f4_4.tres" id="19_5if4i"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f5c_1.tres" id="20_wvuo5"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f5_2.tres" id="21_8vfa7"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f5c_3.tres" id="22_lq20s"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f5_4.tres" id="23_005dp"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f5s_1.tres" id="24_tv8gm"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f5s_3.tres" id="25_xgw5n"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f5b_1.tres" id="26_lu3ri"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f5b_2.tres" id="27_5wu7d"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f5b_3.tres" id="28_gyyjt"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f5b_4.tres" id="29_mp2iv"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f6e_1.tres" id="30_w4d3x"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f6_2.tres" id="31_ef8xo"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f6_3.tres" id="32_pbmdp"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f6e_4.tres" id="33_f6uwl"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f6d_1.tres" id="34_e31ap"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f6d_4.tres" id="35_xcqto"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f6t_1.tres" id="36_abkn0"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f6t_3.tres" id="37_ae43p"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f6t_4.tres" id="38_is6eg"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f7_1.tres" id="39_ws0jr"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f7_2.tres" id="40_clsmj"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f7_3.tres" id="41_hjvot"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f7_4.tres" id="42_g3gox"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f8_1.tres" id="43_sqmjb"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f8_2.tres" id="44_cnx1j"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f8_3.tres" id="45_aq5cy"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f8_4.tres" id="46_2dkbv"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f9_1.tres" id="47_53mlj"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f9_2.tres" id="48_b642y"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f9_3.tres" id="49_1o156"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f9_4.tres" id="50_htr1l"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f10_1.tres" id="51_uquv2"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f10_2.tres" id="52_yb72v"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f10_3.tres" id="53_kowox"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_f10_4.tres" id="54_kcovm"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_ea_1.tres" id="55_6yfo7"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_e_fig.tres" id="56_ns836"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_ea_2.tres" id="57_adqb8"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_ea_3.tres" id="58_vm427"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_eb_1.tres" id="59_v02hl"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_eb_2.tres" id="60_dk52a"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_eb_3.tres" id="61_lm2xm"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_ec_1.tres" id="62_elhss"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_ec_2.tres" id="63_rciq4"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_ec_3.tres" id="64_ufmom"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_ed_1.tres" id="65_tsn6v"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_e_fig_d.tres" id="66_1u5jd"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_ed_2.tres" id="67_mptrm"]
+[ext_resource type="Resource" path="res://data/cinematics/plates/pl_ed_3.tres" id="68_rbmk7"]
+[ext_resource type="Script" path="res://scripts/core/cinematic_library_def.gd" id="69_srjli"]
+
+[sub_resource type="Resource" id="cin_resource_1"]
+script = ExtResource("1_j0xww")
+id = &"cin_f1"
+endings = Array[StringName]([&"f1_arrested"])
+acts = PackedInt32Array()
+theme_id = &"th_f1"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("3_eom8w"), ExtResource("4_m12yp"), ExtResource("5_ogvsk"), ExtResource("6_x3pta"), ExtResource("7_gj2q6")])
+
+[sub_resource type="Resource" id="cin_resource_2"]
+script = ExtResource("1_j0xww")
+id = &"cin_f2"
+endings = Array[StringName]([&"f2_reassigned"])
+acts = PackedInt32Array()
+theme_id = &"th_f2"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("8_agbvj"), ExtResource("9_eyewk"), ExtResource("10_p2ckl"), ExtResource("11_wpquy")])
+
+[sub_resource type="Resource" id="cin_resource_3"]
+script = ExtResource("1_j0xww")
+id = &"cin_f3"
+endings = Array[StringName]([&"f3_family_lost"])
+acts = PackedInt32Array()
+theme_id = &"th_f3"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("12_wbjir"), ExtResource("13_67im8"), ExtResource("14_f36jw"), ExtResource("15_vysij")])
+
+[sub_resource type="Resource" id="cin_resource_4"]
+script = ExtResource("1_j0xww")
+id = &"cin_f4"
+endings = Array[StringName]([&"f4_glory"])
+acts = PackedInt32Array(3)
+theme_id = &"th_f4"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("16_at2vo"), ExtResource("17_lgsne"), ExtResource("18_c1m4t"), ExtResource("19_5if4i")])
+
+[sub_resource type="Resource" id="cin_resource_5"]
+script = ExtResource("1_j0xww")
+id = &"cin_f5c"
+endings = Array[StringName]([&"f5_air"])
+ending_variants = Array[StringName]([&"c"])
+acts = PackedInt32Array(3)
+theme_id = &"th_f5c"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("20_wvuo5"), ExtResource("21_8vfa7"), ExtResource("22_lq20s"), ExtResource("23_005dp")])
+
+[sub_resource type="Resource" id="cin_resource_6"]
+script = ExtResource("1_j0xww")
+id = &"cin_f5s"
+endings = Array[StringName]([&"f5_air"])
+ending_variants = Array[StringName]([&"s"])
+acts = PackedInt32Array(3)
+theme_id = &"th_f5s"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("24_tv8gm"), ExtResource("21_8vfa7"), ExtResource("25_xgw5n"), ExtResource("23_005dp")])
+
+[sub_resource type="Resource" id="cin_resource_7"]
+script = ExtResource("1_j0xww")
+id = &"cin_f5b"
+endings = Array[StringName]([&"f5_air"])
+ending_variants = Array[StringName]([&"b"])
+acts = PackedInt32Array(3)
+theme_id = &"th_f5b"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("26_lu3ri"), ExtResource("27_5wu7d"), ExtResource("28_gyyjt"), ExtResource("29_mp2iv")])
+
+[sub_resource type="Resource" id="cin_resource_8"]
+script = ExtResource("1_j0xww")
+id = &"cin_f6e"
+endings = Array[StringName]([&"f6_drift"])
+ending_variants = Array[StringName]([&"j10", &"j20"])
+acts = PackedInt32Array(1, 2)
+theme_id = &"th_f6"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("30_w4d3x"), ExtResource("31_ef8xo"), ExtResource("32_pbmdp"), ExtResource("33_f6uwl")])
+
+[sub_resource type="Resource" id="cin_resource_9"]
+script = ExtResource("1_j0xww")
+id = &"cin_f6d"
+endings = Array[StringName]([&"f6_drift"])
+ending_variants = Array[StringName]([&"d"])
+acts = PackedInt32Array(3)
+theme_id = &"th_f6d"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("34_e31ap"), ExtResource("31_ef8xo"), ExtResource("32_pbmdp"), ExtResource("35_xcqto")])
+
+[sub_resource type="Resource" id="cin_resource_10"]
+script = ExtResource("1_j0xww")
+id = &"cin_f6t"
+endings = Array[StringName]([&"f6_drift"])
+ending_variants = Array[StringName]([&"t"])
+acts = PackedInt32Array(3)
+theme_id = &"th_f6t"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("36_abkn0"), ExtResource("32_pbmdp"), ExtResource("37_ae43p"), ExtResource("38_is6eg")])
+
+[sub_resource type="Resource" id="cin_resource_11"]
+script = ExtResource("1_j0xww")
+id = &"cin_f7"
+endings = Array[StringName]([&"f7_reopens"])
+acts = PackedInt32Array(3)
+theme_id = &"th_f7"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("39_ws0jr"), ExtResource("40_clsmj"), ExtResource("41_hjvot"), ExtResource("42_g3gox")])
+
+[sub_resource type="Resource" id="cin_resource_12"]
+script = ExtResource("1_j0xww")
+id = &"cin_f8"
+endings = Array[StringName]([&"f8_registre"])
+acts = PackedInt32Array(3)
+theme_id = &"th_f8"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("43_sqmjb"), ExtResource("44_cnx1j"), ExtResource("45_aq5cy"), ExtResource("46_2dkbv")])
+
+[sub_resource type="Resource" id="cin_resource_13"]
+script = ExtResource("1_j0xww")
+id = &"cin_f9"
+endings = Array[StringName]([&"f9_strike"])
+acts = PackedInt32Array(3)
+theme_id = &"th_f9"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("47_53mlj"), ExtResource("48_b642y"), ExtResource("49_1o156"), ExtResource("50_htr1l")])
+
+[sub_resource type="Resource" id="cin_resource_14"]
+script = ExtResource("1_j0xww")
+id = &"cin_f10"
+endings = Array[StringName]([&"f10_pont"])
+acts = PackedInt32Array(3)
+theme_id = &"th_f10"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("51_uquv2"), ExtResource("52_yb72v"), ExtResource("53_kowox"), ExtResource("54_kcovm")])
+
+[sub_resource type="Resource" id="cin_resource_15"]
+script = ExtResource("1_j0xww")
+id = &"cin_ea"
+acts = PackedInt32Array()
+worlds = Array[StringName]([&"a"])
+theme_id = &"th_ea"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("55_6yfo7"), ExtResource("56_ns836"), ExtResource("57_adqb8"), ExtResource("58_vm427")])
+title_card = false
+
+[sub_resource type="Resource" id="cin_resource_16"]
+script = ExtResource("1_j0xww")
+id = &"cin_eb"
+acts = PackedInt32Array()
+worlds = Array[StringName]([&"b"])
+theme_id = &"th_eb"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("59_v02hl"), ExtResource("56_ns836"), ExtResource("60_dk52a"), ExtResource("61_lm2xm")])
+title_card = false
+
+[sub_resource type="Resource" id="cin_resource_17"]
+script = ExtResource("1_j0xww")
+id = &"cin_ec"
+acts = PackedInt32Array()
+worlds = Array[StringName]([&"c"])
+theme_id = &"th_ec"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("62_elhss"), ExtResource("56_ns836"), ExtResource("63_rciq4"), ExtResource("64_ufmom")])
+title_card = false
+
+[sub_resource type="Resource" id="cin_resource_18"]
+script = ExtResource("1_j0xww")
+id = &"cin_ed"
+acts = PackedInt32Array()
+worlds = Array[StringName]([&"d"])
+theme_id = &"th_ed"
+plates = Array[ExtResource("2_6g1mj")]([ExtResource("65_tsn6v"), ExtResource("66_1u5jd"), ExtResource("67_mptrm"), ExtResource("68_rbmk7")])
+title_card = false
+
+[resource]
+script = ExtResource("69_srjli")
+cinematics = Array[ExtResource("1_j0xww")]([SubResource("cin_resource_1"), SubResource("cin_resource_2"), SubResource("cin_resource_3"), SubResource("cin_resource_4"), SubResource("cin_resource_5"), SubResource("cin_resource_6"), SubResource("cin_resource_7"), SubResource("cin_resource_8"), SubResource("cin_resource_9"), SubResource("cin_resource_10"), SubResource("cin_resource_11"), SubResource("cin_resource_12"), SubResource("cin_resource_13"), SubResource("cin_resource_14"), SubResource("cin_resource_15"), SubResource("cin_resource_16"), SubResource("cin_resource_17"), SubResource("cin_resource_18")])
