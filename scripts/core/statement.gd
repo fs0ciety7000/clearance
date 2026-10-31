@@ -218,14 +218,30 @@ const _FOLD: Dictionary[String, String] = {
 func fragment_text(translate: Callable) -> String:
 	if phrase_key.is_empty():
 		return _value_text()
-	return format_fragment(str(translate.call(phrase_key)), args)
+	return format_fragment(str(translate.call(phrase_key)), translated_args(args, translate))
+
+
+## M15 : arguments de lieu donnés par clé (`stmt_place_*`, provenance) traduits
+## dans la langue courante avant formatage ; les autres (noms propres,
+## employeurs, nombres) restent tels quels.
+const PLACE_KEY_PREFIX: String = "stmt_place_"
+
+
+static func translated_args(p_args: Array, translate: Callable) -> Array:
+	var out: Array = []
+	for arg: Variant in p_args:
+		if arg is String and (arg as String).begins_with(PLACE_KEY_PREFIX):
+			out.append(str(translate.call(arg)))
+		else:
+			out.append(arg)
+	return out
 
 
 ## Texte de la valeur barrée (VN-2), vide sans auto-correction.
 func struck_text(translate: Callable) -> String:
 	if corrected_from.is_empty():
 		return ""
-	return format_fragment(str(translate.call(corrected_from)), corrected_args)
+	return format_fragment(str(translate.call(corrected_from)), translated_args(corrected_args, translate))
 
 
 ## Fragment selon sa place dans la phrase (finition M13) : majuscule en début
@@ -239,7 +255,8 @@ func cased_fragment_text(translate: Callable, sentence_start: bool, struck: bool
 		if struck:
 			return ""
 		return apply_case(_value_text(), true) if sentence_start else _value_text()
-	return format_fragment(apply_case(str(translate.call(key)), sentence_start), corrected_args if struck else args)
+	return format_fragment(apply_case(str(translate.call(key)), sentence_start),
+			translated_args(corrected_args if struck else args, translate))
 
 
 ## Casse de la première lettre d'un gabarit : majuscule si `sentence_start`,

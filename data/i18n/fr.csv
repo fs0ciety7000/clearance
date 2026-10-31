@@ -4070,7 +4070,7 @@ sum_item_unmotivated,FOUILLE SANS MOTIF
 pause_upgrades,GUICHET 04 · AMÉLIORATIONS
 help_eyebrow,AIDE · NOUVEAU AU GUICHET
 help_statements_title,DÉCLARATIONS · CE QU'ILS DISENT
-help_statements_text,"La réponse du passager s'inscrit au journal. Ses valeurs soulignées » se comparent comme des champs : choisissez-en une, puis le champ du permis. Une déclaration contradictoire documente un refus (R43)."
+help_statements_text,"La réponse du passager s'inscrit au journal. Ses valeurs soulignées se comparent comme des champs : choisissez-en une, puis le champ du permis. Une déclaration contradictoire documente un refus (R43)."
 help_statements_step_1,%s : poser la question
 help_statements_step_2,%s : Mode Inspection
 help_statements_step_3,"Croix ↑ vers le journal · %s : choisir la puce, puis le champ"
@@ -4233,3 +4233,31 @@ opt_cinematic_hint,Manuelle : chaque planche attend un appui. Maintenir pour tou
 opt_cinematic_auto,AUTOMATIQUE
 opt_cinematic_manual,MANUELLE
 dos_portrait_hidden,Visage non vu
+opt_language_section,LANGUE
+opt_language,Langue du jeu
+opt_language_hint,"Textes, documents, sous-titres et annonces. Noms propres, tessar et codes ne sont pas traduits."
+title_eyebrow,Halcyon Gate · Contrôle d'entrée · 2187
+title_tagline,"Chaque visage, chaque hologramme, chaque règle compte."
+demo_full_game_only,Dans le jeu complet.
+demo_end_eyebrow,CLEARANCE · DÉMO · JOURS 1 À %d
+demo_end_thanks,"Merci d'avoir tenu le Guichet 04 pendant cinq jours. La file, elle, ne s'arrête pas."
+demo_end_full_title,DANS LE JEU COMPLET
+demo_end_full_text,"Trente jours en trois actes, dix fins, la Garde de nuit et le Dossier de l'agent. Votre foyer, vos choix et la file continuent là où la démo s'arrête."
+demo_end_saves_hint,La partie de démo reste dans ses propres sauvegardes ; le jeu complet commence au jour 1.
+demo_end_store,VOIR LE JEU COMPLET
+key_space,ESPACE
+key_escape,ÉCHAP
+key_enter,ENTRÉE
+key_backspace,RETOUR
+key_shift,MAJ
+pad_view,VUE
+pad_cross,CROIX
+pad_circle,ROND
+pad_square,CARRÉ
+pad_triangle,TRIANGLE
+faction_cer_sectors,Libre-Fédération de Cérès · Ceinture — stations de prospection
+faction_drv_sectors,Cargos dérivants — sans port d'attache · La Soute — amarrages des cargos
+faction_hal_sectors,Anneaux D–F · Anneau C — logements de service · Coursives d'Halcyon Gate
+faction_ter_sectors,Terre — Concordat des Zones Sèches
+faction_thr_sectors,Républiques de Tharsis (Mars) · Tharsis — dômes d'Olympus
+faction_tyc_sectors,Colonie Tycho (Lune) · Cratère Tycho — dortoirs Kessler-Ashe

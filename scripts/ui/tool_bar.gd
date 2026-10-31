@@ -180,6 +180,11 @@ func _notification(what: int) -> void:
 
 ## Recalcule (en différé) le niveau de compaction pour que la barre tienne
 ## dans la largeur de son parent.
+## M15 : textes retraduits — compaction réévaluée.
+func on_language_changed() -> void:
+	queue_compaction()
+
+
 func queue_compaction() -> void:
 	if _compaction_queued or _row == null:
 		return

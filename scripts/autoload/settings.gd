@@ -85,6 +85,13 @@ const MUSIC_STABLE: float = 1.0
 const KEY_CINEMATIC_ADVANCE: StringName = &"cinematic_advance"
 const CINEMATIC_AUTO: float = 0.0
 const CINEMATIC_MANUAL: float = 1.0
+## M15 (D-213) — « Langue » : `fr` / `en` (texte ; seul réglage non numérique).
+## Défaut (`""` dans `DEFAULTS`) : langue du système si `en*`, sinon `fr`
+## (`Localization.system_language`). Appliquée à chaud (`Localization`).
+const KEY_LANGUAGE: StringName = &"language"
+## M15 (D-214) — pseudo-localisation `en-XA` : réglage **caché** (absent des
+## Options), ignoré hors debug ; argument `--pseudo-loc` (valeur de session).
+const KEY_PSEUDO_LOC: StringName = &"pseudo_loc"
 
 const FX_LEVELS: PackedFloat32Array = [1.0, 0.5, 0.0]
 const TEXT_SCALE_MIN: float = 0.9
@@ -115,6 +122,8 @@ const DEFAULTS: Dictionary = {
 	&"music_inspection_reduce": true,
 	&"music_dynamics": 0.0,
 	&"cinematic_advance": 0.0,
+	&"language": "",
+	&"pseudo_loc": false,
 }
 
 ## Réglage de volume → nom du bus audio (docs/AUDIO.md §2).
@@ -178,6 +187,13 @@ var holo_flicker: bool:
 	set(value):
 		set_value(KEY_HOLO_FLICKER, value)
 
+## M15 : langue choisie (`fr` / `en`).
+var language: String:
+	get:
+		return get_string(KEY_LANGUAGE)
+	set(value):
+		set_value(KEY_LANGUAGE, value)
+
 
 func _init() -> void:
 	_reset_values()
@@ -185,7 +201,27 @@ func _init() -> void:
 
 func _ready() -> void:
 	load_settings()
+	_read_language_args()
 	apply_all()
+
+
+## M15 : recettes de retraduction oubliées avant l'arrêt (`UiText.clear_recipes`).
+func _exit_tree() -> void:
+	UiText.clear_recipes()
+
+
+## M15 : arguments de debug (`DebugArgs`) — `--lang=fr|en` et `--pseudo-loc`
+## (pseudo-localisation `en-XA`), valeurs de session jamais écrites.
+func _read_language_args() -> void:
+	if not DebugArgs.enabled():
+		return
+	var args: Dictionary = DebugArgs.parse(OS.get_cmdline_user_args())
+	if args.has("lang"):
+		_session_keys[KEY_LANGUAGE] = true
+		_values[KEY_LANGUAGE] = _sanitize(KEY_LANGUAGE, str(args["lang"]))
+	if args.has("pseudo-loc"):
+		_session_keys[KEY_PSEUDO_LOC] = true
+		_values[KEY_PSEUDO_LOC] = true
 
 
 ## M14 : musique figée à N1 pendant le shift (« Musique : Stable »).
@@ -222,6 +258,8 @@ func has_key(key: StringName) -> bool:
 
 
 func get_default(key: StringName) -> Variant:
+	if key == KEY_LANGUAGE:
+		return Localization.system_language()
 	return DEFAULTS.get(key)
 
 
@@ -242,12 +280,18 @@ func get_bool(key: StringName) -> bool:
 	return value if value is bool else false
 
 
+func get_string(key: StringName) -> String:
+	var value: Variant = get_value(key)
+	return value if value is String else ""
+
+
 ## Niveau de qualité effectif (0 Bas, 1 Moyen, 2 Élevé) : « Auto » vaut Moyen
 ## sur Steam Deck, Élevé ailleurs.
 func graphics_quality_level() -> int:
 	var value: float = get_float(KEY_GRAPHICS_QUALITY)
 	if value < 0.0:
-		return 1 if is_steam_deck() else 2
+		# M15 (lot W) : Web = Moyen comme le Steam Deck.
+		return 1 if is_steam_deck() or OS.has_feature("web") else 2
 	return int(value)
 
 
@@ -301,10 +345,20 @@ func is_session_value(key: StringName) -> bool:
 
 ## Change le fichier des préférences (tests) : valeurs par défaut, sessions
 ## effacées, puis lecture de `path` s'il existe.
+## M15 : la langue et la pseudo-localisation **de session** (`--lang`,
+## `--pseudo-loc`, langue fixée par la suite GUT) survivent au changement de
+## fichier ; les autres valeurs de session sont effacées.
 func use_storage(path: String) -> void:
 	settings_path = path
+	var kept: Dictionary[StringName, Variant] = {}
+	for key: StringName in [KEY_LANGUAGE, KEY_PSEUDO_LOC]:
+		if _session_keys.has(key):
+			kept[key] = _values[key]
 	_session_keys.clear()
 	_reset_values()
+	for key: StringName in kept:
+		_session_keys[key] = true
+		_values[key] = kept[key]
 	load_settings()
 	apply_all()
 	for key: StringName in DEFAULTS:
@@ -371,11 +425,16 @@ func _reset_values() -> void:
 	_values.clear()
 	_persisted.clear()
 	for key: StringName in DEFAULTS:
-		_values[key] = DEFAULTS[key]
-		_persisted[key] = DEFAULTS[key]
+		_values[key] = get_default(key)
+		_persisted[key] = get_default(key)
 
 
 func _apply(key: StringName) -> void:
+	if key == KEY_LANGUAGE or key == KEY_PSEUDO_LOC:
+		# Locale + retraduction de l'arbre avant `settings_changed` (les écrans
+		# qui recomposent un texte l'écoutent ensuite).
+		Localization.apply_language(get_string(KEY_LANGUAGE), get_bool(KEY_PSEUDO_LOC))
+		return
 	if key == KEY_COLOR_VISION:
 		Palette.apply(int(get_float(key)))
 		return
@@ -394,6 +453,8 @@ func _apply(key: StringName) -> void:
 
 ## Ramène une valeur dans le domaine du réglage ; défaut si type incompatible.
 func _sanitize(key: StringName, value: Variant) -> Variant:
+	if key == KEY_LANGUAGE:
+		return Localization.sanitize_language(value)
 	var default_value: Variant = DEFAULTS[key]
 	if default_value is bool:
 		if value is bool:

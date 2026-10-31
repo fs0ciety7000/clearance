@@ -1,6 +1,6 @@
 # CLEARANCE — Design System
 
-> Version 0.8 · Propriétaire : Design System / Senior Designer · Statut : **brouillon à valider**
+> Version 0.9 · Propriétaire : Design System / Senior Designer · Statut : **brouillon à valider**
 > Sources de vérité : ce document (intentions, règles) · `res://ui/theme/tokens.gd` (valeurs code, `class_name DS`) · `res://ui/theme/clearance_theme.tres` (thème Godot).
 > Les valeurs de base (couleurs, familles de police) sont fixées par le contrat de l'Orchestrateur. Ce document y ajoute uniquement des **nuances dérivées** (alpha, états).
 
@@ -537,6 +537,21 @@ Contrat : ARCHITECTURE §12 ter.3, M14 §3.3, §3.7, §5 ; UI_FLOW §8.8. Règle
 | **REVOIR** | `dossier_screen.gd` | `ButtonTool` « REVOIR » (« REVOIR · CHARTE » quand une fin a plusieurs séquences vues) sous la carte de fin ; en tête de carte de monde (ÉPILOGUES) | seulement pour une séquence vue (`has_seen_cinematic`) ; focus rendu au bouton au retour |
 | **Sous-titre d'annonce** | `scripts/ui/subtitle_bar.gd` | barre de sous-titres existante : didascalie « [Haut-parleur] » + « « … » », sans locuteur | option Sous-titres ; durée du signal ; jamais la clé brute |
 
+### 7.15 Composants M15 « Monde » (0.9)
+
+Contrat : ARCHITECTURE §17, M15 §2–§3 ; UI_FLOW §8.9. Règle commune : **aucun texte n'a une largeur fixe** — un composant partagé grandit (bouton), passe à la ligne (libellé `wrapped`, `HFlowContainer` de boutons) ou défile ; l'anglais et la pseudo-localisation (+35 %) ne doivent ni couper ni chevaucher.
+
+| Composant | Fichier | Anatomie | États / règles |
+|---|---|---|---|
+| **Ligne LANGUE** (Options) | `scripts/ui/options_panel.gd` | section « LANGUE » (icône CHAT cyan) ; libellé `BodyLabel` + aide `CaptionLabel` ; `ToggleTab` « FRANÇAIS » · « ENGLISH » (endonymes, jamais traduits), min. 160 px, `HFlowContainer` | bouton actif = coché ; appui = langue appliquée à chaud, focus conservé ; focus initial des Options |
+| **Fin de la démo** | `scripts/ui/demo_end_screen.gd` (`ScreenBase`) | surtitre `DocFieldLabel` jaune ; titre `DisplayLabel` (à la ligne si besoin) ; remerciement `BodyLabel` ; filet ; tuiles `stat_tile` (solde jaune, conformité, foyer) ; section « DANS LE JEU COMPLET » (icône LOGO jaune) ; aide `CaptionLabel` ; `ButtonPrimary` « VOIR LE JEU COMPLET » + `ButtonTool` « RETOUR AU TITRE » dans un `HFlowContainer` ; largeur de contenu `CONTENT_MAX_WIDTH` 1 100 px, défilement | apparition commune `ScreenBase` (réduite si animations réduites) ; focus initial sur le CTA ; Ⓑ = titre |
+| **SideLabel** (texte d'appoint d'un en-tête de section) | `scripts/ui/screen_base.gd` (`ScreenBase.section`) | `DataSmall` à la couleur de la section, au bout de la rangée après le filet | largeur ≤ place laissée par l'icône, le titre et le filet (rangée bornée) ; sinon tronqué « … » + infobulle ; rangée libre : entier |
+| **Pseudo-localisation** (debug) | `scripts/ui/localization.gd` | accents choisis dans les glyphes **communs** aux trois polices, remplissage `·`, bornes `¡ … !` | jamais en release ; outil de capture `tools/qa_pseudo_captures.sh` |
+
+**Polices (M15)** : `ThemeBuilder` donne **Inter en repli** à Chakra Petch et JetBrains Mono (glyphes `₵` `ᵉ` `ʳ` `⚠` `↔` absents de ces deux familles) ; `▾` (absent partout) est affiché `▼`. Couverture testée sur tout le texte FR / EN / pseudo-loc (`tests/unit/test_m15_fonts.gd`).
+
+**Formats (M15)** : crédits `42 ₵` (FR) / `₵42` (EN), séparateur de milliers espace fine insécable / virgule ; dates `JJ.MM.AAAA` et heures 24 h identiques dans les deux langues (ARCHITECTURE §17.5).
+
 ## 8. Motion
 
 ### 8.1 Durées
@@ -751,4 +766,5 @@ Tenir un registre `CREDITS` (source, auteur, licence, URL, date) pour chaque ass
 - 0.6 — M12 « Rejouabilité » (lot C) : tokens `DIRECTIVE_HOLD` 4 s, `EPILOGUE_OFFER_DELAY` 3 s, `GARDE_CODE_LENGTH` 6, origines `FACTION_*` (§2.6) ; composants §7.12 (bandeau ÉVÉNEMENT, carte de directive, surlignage de règle, compteurs de Garde de la barre d'état, initiales du Dossier, silhouettes, cartes du J31) ; style `LineEdit` du thème. Aucun token de base modifié.
 - 0.7 — M13 « Gameplay » (lot C) : tokens `JOURNAL_MAX_LINES`, `JOURNAL_VIEW_H`, `STATEMENT_GLYPH`, `SEARCH_PANEL_WIDTH`, `SEARCH_SILHOUETTE_W`, `BUSY_REDUCED_STEP`, `HELP_CARD_WIDTH` ; composants §7.13 (puce de déclaration, journal de dialogue, indicateur d'attente, portique et objets, onglet Contrebande, Économat, carte d'aide, pastilles d'améliorations, sceau sous Lampe de Wood) ; icônes `GATE`, `QUOTE`, `ITEM`, `TOOL`. Exception documentée : la puce en ligne a une cible de `HIT_TARGET_MIN − SPACE_2` (le focus manette la rejoint, aucun geste au pixel). Aucun token de base modifié.
 - 0.8 — M14 « Ambiance » (lot D) : tokens de mouvement des cinématiques (`PLATE_TITLE_SEC`, `PLATE_MIN_SEC`, `PLATE_BASE_SEC`, `PLATE_CHARS_SEC`, `PLATE_SLOW_FACTOR`, `PLATE_ADVANCE_LOCK`, `DUR_PLATE_XFADE`, `PARALLAX_MAX_PX`, `KEN_BURNS_MAX`, `CIN_SKIP_HOLD`, `CIN_GLASS_OFF_DELAY`, `CIN_GLASS_OFF_STEP`, `CIN_NEXT_BLINK_HZ`), de légende (`CIN_CAPTION_SCALE`, `CIN_CAPTION_MIN_PHYSICAL`, `CIN_CAPTION_WIDTH`, `CIN_SAFE_ASPECT`, `CIN_PLATE_RAISE`), `CIN_HOLO_POWER`, `CIN_RING_SIZE`, `DOSSIER_PORTRAIT_W`/`_H`, `MUSIC_EXIT_FADE` ; §5 règle 7 (holographie des planches) ; composants §7.14 (cinématique, carte de titre, légende, invite de passage, effets HOLO et FX, cadre de portrait, REVOIR, sous-titre d'annonce). Exception documentée : la cinématique n'a aucun contrôle focalisable (Ⓐ et Ⓑ agissent sur la séquence ; « TOUT PASSER » est une cible souris). Aucun token de base modifié.
+- 0.9 — M15 « Monde » (lot A) : composants §7.15 (ligne LANGUE des Options, écran « Fin de la démo », pseudo-localisation `en-XA`) ; Inter en police de repli de Chakra Petch et JetBrains Mono ; `▾` → `▼` ; formats de crédits et de nombres selon la langue. Aucun token de base modifié.
 - 0.4 — M9 (interfaces de l'Acte III) : icônes dessinées `SCALES` (balance : Arbitrage, Enquête, convocations) et `STRIKE` (règle / document retiré·e) ; composants `LedgerCardView` (liseré vert, surlignage de la dernière entrée), `SummonsCardView` (ambre de l'Enquête), règle retirée barrée (texte `text.muted`), compteur QUOTA « SUSPENDU » gris, carte plein cadre « FIN DE L'ACTE II » (couleur de la fin rappelée), chiffre romain paramétrable (Ⅲ, ambre) ; F10 « LE PONT » en `state.green`. Aucun token nouveau.

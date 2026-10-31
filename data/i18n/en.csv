@@ -4233,3 +4233,31 @@ opt_cinematic_hint,Manual: each panel waits for a press. Hold to skip everything
 opt_cinematic_auto,AUTOMATIC
 opt_cinematic_manual,MANUAL
 dos_portrait_hidden,Face not seen
+opt_language_section,LANGUAGE
+opt_language,Game language
+opt_language_hint,"Text, documents, subtitles and announcements. Proper names, Tessar and codes are not translated."
+title_eyebrow,Halcyon Gate · Entry control · 2187
+title_tagline,"Every face, every hologram, every rule counts."
+demo_full_game_only,In the full game.
+demo_end_eyebrow,CLEARANCE · DEMO · DAYS 1 TO %d
+demo_end_thanks,"Thank you for holding Booth 04 for five days. The queue, for its part, never stops."
+demo_end_full_title,IN THE FULL GAME
+demo_end_full_text,"Thirty days in three acts, ten endings, the Night Watch and the Officer's File. Your household, your choices and the queue carry on where the demo stops."
+demo_end_saves_hint,The demo game keeps its own saves; the full game starts on day 1.
+demo_end_store,SEE THE FULL GAME
+key_space,SPACE
+key_escape,ESC
+key_enter,ENTER
+key_backspace,BACKSPACE
+key_shift,SHIFT
+pad_view,VIEW
+pad_cross,CROSS
+pad_circle,CIRCLE
+pad_square,SQUARE
+pad_triangle,TRIANGLE
+faction_cer_sectors,Free Federation of Ceres · Belt — prospecting stations
+faction_drv_sectors,Drifting freighters — no home port · The Hold — freighter moorings
+faction_hal_sectors,Rings D–F · Ring C — service quarters · Halcyon Gate walkways
+faction_ter_sectors,Earth — Dry Zones Concordat
+faction_thr_sectors,Republics of Tharsis (Mars) · Tharsis — Olympus domes
+faction_tyc_sectors,Tycho Colony (Moon) · Tycho Crater — Kessler-Ashe dormitories

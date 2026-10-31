@@ -159,7 +159,8 @@ static func close_evening(data: DataCatalog, summary: DaySummary, report: Evenin
 	if pivot3:
 		GameState.set_flag(EndingService.FLAG_ACT3, true)
 	var ending: StringName = report.ending
-	if ending == EveningReport.ENDING_NONE and GameState.current_day > data.get_last_day_number():
+	# M15 (D-215) : en démo, la soirée du J5 termine la partie (fin de la démo).
+	if ending == EveningReport.ENDING_NONE and GameState.current_day > DemoMode.last_day(data.get_last_day_number()):
 		ending = ENDING_DEMO_COMPLETE
 	if ending == EveningReport.ENDING_NONE:
 		GameState.save_to_slot(save_slot, save_dir)

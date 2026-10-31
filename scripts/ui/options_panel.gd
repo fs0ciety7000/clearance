@@ -22,6 +22,11 @@
 ## (`cinematic_advance`) ; Audio › « Musique pendant l'inspection » Réduite /
 ## Normale (`music_inspection_reduce`) et « Musique » Dynamique / Stable
 ## (`music_dynamics`), lus par l'`AudioDirector` (`settings_changed`).
+## M15 (lot A, D-213) : section **Langue** en tête — Français / English
+## (noms dans leur propre langue, jamais traduits), appliquée à chaud
+## (`Settings.KEY_LANGUAGE` → `Localization` : tous les écrans ouverts sont
+## retraduits, ce panneau compris ; le focus reste sur le bouton choisi).
+## La pseudo-localisation `en-XA` (debug) n'a **pas** de ligne : réglage caché.
 class_name OptionsPanel
 extends VBoxContainer
 
@@ -44,6 +49,8 @@ const MUSIC_DYNAMICS_KEYS: Array[Array] = [["opt_music_dynamic", "DYNAMIQUE"], [
 const CINEMATIC_KEYS: Array[Array] = [["opt_cinematic_auto", "AUTOMATIQUE"], ["opt_cinematic_manual", "MANUELLE"]]
 ## Glyphes manette : Auto (−1), Xbox / Steam Deck (0), PlayStation (1).
 const PAD_GLYPH_KEYS: Array[Array] = [["opt_pad_auto", "AUTO"], ["opt_pad_xbox", "XBOX · DECK"], ["opt_pad_ps", "PLAYSTATION"]]
+## M15 : langues proposées, libellé dans leur propre langue (endonymes).
+const LANGUAGE_LABELS: Array[Array] = [["fr", "FRANÇAIS"], ["en", "ENGLISH"]]
 ## Hauteur laissée hors de la zone défilante (titre du panneau, marges, retour).
 const SCROLL_RESERVE: float = 320.0
 
@@ -56,6 +63,8 @@ var scroll: ScrollContainer = null
 var in_game: bool = false
 var hard_mode_row: Control = null
 var hard_mode_button: Button = null
+## M15 : boutons de langue par code (`fr`, `en`).
+var language_buttons: Dictionary[String, Button] = {}
 var _rows: VBoxContainer = null
 
 
@@ -77,6 +86,7 @@ func _ready() -> void:
 	pad.add_child(_rows)
 	scroll.add_child(pad)
 	_rows.minimum_size_changed.connect(_fit_height)
+	_add_language_row()
 	_rows.add_child(ScreenBase.section(UiText.t("opt_accessibility", "ACCESSIBILITÉ"), UiIcon.Kind.INFO, DS.ACCENT_CYAN))
 	_add_slider(Settings.KEY_TEXT_SCALE, UiText.t("opt_text_scale", "Taille du texte"), Settings.TEXT_SCALE_MIN,
 			Settings.TEXT_SCALE_MAX, Settings.TEXT_SCALE_STEP, true)
@@ -156,9 +166,50 @@ func focus_first() -> void:
 		first.grab_focus()
 
 
-## Premier réglage (focus par défaut, manette).
+## Premier réglage (focus par défaut, manette) : la langue active (M15).
 func first_control() -> Control:
-	return controls.get(Settings.KEY_TEXT_SCALE, null)
+	var active: Button = language_buttons.get(Settings.language, null)
+	if active != null:
+		return active
+	return controls.get(Settings.KEY_LANGUAGE, controls.get(Settings.KEY_TEXT_SCALE, null))
+
+
+## M15 : section « LANGUE » — un bouton par langue, l'actif coché ; un clic
+## applique la langue à chaud (`Settings.set_value`).
+func _add_language_row() -> void:
+	_rows.add_child(ScreenBase.section(UiText.t("opt_language_section", "LANGUE"), UiIcon.Kind.CHAT, DS.ACCENT_CYAN))
+	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
+	box.name = "LanguageRow"
+	var texts: VBoxContainer = ScreenBase.vbox(0)
+	texts.add_child(ScreenBase.label(UiText.t("opt_language", "Langue du jeu"), &"BodyLabel"))
+	texts.add_child(ScreenBase.wrapped(UiText.t("opt_language_hint",
+			"Textes, documents, sous-titres et annonces. Noms propres, tessar et codes ne sont pas traduits."), &"CaptionLabel"))
+	box.add_child(texts)
+	var buttons: HFlowContainer = HFlowContainer.new()
+	buttons.add_theme_constant_override("h_separation", 0)
+	buttons.add_theme_constant_override("v_separation", DS.SPACE_1)
+	box.add_child(buttons)
+	var group: ButtonGroup = ButtonGroup.new()
+	var current: String = Settings.language
+	for entry: Array in LANGUAGE_LABELS:
+		var code: String = entry[0]
+		var b: Button = Button.new()
+		b.name = "Lang_%s" % code
+		b.theme_type_variation = &"ToggleTab"
+		b.toggle_mode = true
+		b.button_group = group
+		b.text = entry[1]
+		b.custom_minimum_size = Vector2(160, DS.HIT_TARGET_MIN)
+		b.focus_mode = Control.FOCUS_ALL
+		b.button_pressed = current == code
+		b.toggled.connect(func(on: bool) -> void:
+			if on:
+				Settings.set_value(Settings.KEY_LANGUAGE, code))
+		buttons.add_child(b)
+		language_buttons[code] = b
+		if code == Localization.LANG_FR:
+			controls[Settings.KEY_LANGUAGE] = b
+	_rows.add_child(box)
 
 
 func _notification(what: int) -> void:
@@ -366,7 +417,9 @@ func _add_bool_choice_row(key: StringName, caption: String, hint: String, labels
 
 
 static func _toggle_text(on: bool) -> String:
-	return ("✓ " + UiText.t("opt_on", "ACTIVÉ")) if on else UiText.t("opt_off", "DÉSACTIVÉ")
+	if not on:
+		return UiText.t("opt_off", "DÉSACTIVÉ")
+	return UiText.remember_call("✓ " + UiText.t("opt_on", "ACTIVÉ"), _toggle_text.bind(on))
 
 
 static func _percent(value: float) -> String:

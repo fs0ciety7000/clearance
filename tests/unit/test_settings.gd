@@ -35,7 +35,7 @@ func test_default_values() -> void:
 
 func test_expected_key_set() -> void:
 	var keys: Array[StringName] = _settings.call(&"get_keys")
-	assert_eq(keys.size(), 22)
+	assert_eq(keys.size(), 24, "M15 : + language, pseudo_loc")
 	assert_has(keys, &"audio_mono", "mode mono (docs/AUDIO.md §9, M6)")
 	assert_has(keys, &"graphics_quality", "qualité graphique du guichet (M9)")
 	assert_has(keys, &"color_vision", "vision des couleurs (M11)")

@@ -812,7 +812,12 @@ func _on_tabs_menu_id(index: int) -> void:
 
 func _update_page(id: int) -> void:
 	var index: int = _tab_ids.find(id)
-	_tabs_menu.text = UiText.tf("rb_tabs_menu", [index + 1, _tab_ids.size()], "%d / %d ▾")
+	# M15 : « ▾ » n'existe dans aucune des polices OFL (repli système
+	# incertain) ; « ▼ » est couvert partout (`test_m15_fonts`).
+	var count: int = _tab_ids.size()
+	var make: Callable = func() -> String:
+		return UiText.tf("rb_tabs_menu", [index + 1, count], "%d / %d ▾").replace("▾", "▼")
+	_tabs_menu.text = UiText.remember_call(make.call(), make)
 	_tabs_menu.tooltip_text = UiText.tf("rb_page", [index + 1, _tab_ids.size()], "ONGLET %d / %d")
 	# Après le placement des onglets recréés (une image).
 	if is_inside_tree() and not get_tree().process_frame.is_connected(_reveal_current_tab):

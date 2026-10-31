@@ -80,6 +80,13 @@ func _notification(what: int) -> void:
 		_update_width()
 
 
+## M15 : textes retraduits (`Localization`) — largeur et infobulle recalculées.
+func on_language_changed() -> void:
+	tooltip_text = StampMark.label_of(kind) + " — " + hint
+	_update_width()
+	queue_redraw()
+
+
 func _update_width() -> void:
 	if not is_inside_tree():
 		return

@@ -154,8 +154,14 @@ static func last_day() -> int:
 
 ## Dossier réel de `dir` : `DEFAULT_DIR` est redirigé par `use_root` (suite
 ## de tests : `tests/helpers/gut_pre_run.gd`, jamais les parties du joueur).
+## M15 (D-215) : en démo, `DEFAULT_DIR` → `DemoMode.SAVES_DIR` (sauvegardes et
+## profil séparés du jeu complet) ; `use_root` (tests) reste prioritaire.
 static func resolve_dir(dir: String) -> String:
-	return _root if dir == DEFAULT_DIR and not _root.is_empty() else dir
+	if dir != DEFAULT_DIR:
+		return dir
+	if not _root.is_empty():
+		return _root
+	return DemoMode.SAVES_DIR if DemoMode.is_demo() else dir
 
 
 ## Redirige `DEFAULT_DIR` (vide : `user://saves`). Réservé aux tests.

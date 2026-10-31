@@ -180,7 +180,7 @@ AudioMixBarrier="*res://scripts/autoload/audio_mix_barrier.gd"
 | Autoload | Rôle (état réel) | Ne fait PAS |
 |---|---|---|
 | `EventBus` | 50 signaux typés (catalogue §7 ; M11 : `save_slots_changed`, `profile_changed`, `difficulty_changed`, §10 ; M12 : 10 signaux, §11.2). Aucun état, aucune méthode. | Logique, stockage |
-| `Settings` | Préférences dans `user://settings.cfg` (`ConfigFile`) : `volume_{master,music,ambience,sfx,voice,ui}` (appliqués aux bus `Master/Music/Ambience/SFX/Voice/UI`), `fx_intensity` (1 / 0,5 / 0), `reduce_motion`, `text_scale` (0,9–1,5, D-026), `subtitles`, `clock_slow_accessibility` (horloge ×0,5), `audio_mono`, `graphics_quality` (M9 : −1 Auto / 0 Bas / 1 Moyen / 2 Élevé ; `graphics_quality_level()` résout Auto = Moyen sur Steam Deck — variable `SteamDeck=1` —, Élevé ailleurs ; appliqué par `BoothQuality`). `set_value()` valide (`_sanitize`), applique et émet `settings_changed` (choix du joueur, persisté ; `persist = false` diffère seulement l'écriture). **Valeurs de session** (QA-006) : `set_session_value()` / `clear_session_value()` (argument `--reduce-motion`, outils, tests) appliquent sans jamais écrire — `save_settings()` écrit pour ces clés la dernière valeur persistée. `use_storage(path)` change de fichier : la suite GUT utilise `user://test_settings/settings.cfg` (crochet `tests/helpers/gut_pre_run.gd`, `.gutconfig.json`). 🎯 Langue, daltonisme, sensibilité manette : non implémentés. | État de partie |
+| `Settings` | Préférences dans `user://settings.cfg` (`ConfigFile`) : `volume_{master,music,ambience,sfx,voice,ui}` (appliqués aux bus `Master/Music/Ambience/SFX/Voice/UI`), `fx_intensity` (1 / 0,5 / 0), `reduce_motion`, `text_scale` (0,9–1,5, D-026), `subtitles`, `clock_slow_accessibility` (horloge ×0,5), `audio_mono`, `graphics_quality` (M9 : −1 Auto / 0 Bas / 1 Moyen / 2 Élevé ; `graphics_quality_level()` résout Auto = Moyen sur Steam Deck — variable `SteamDeck=1` —, Élevé ailleurs ; appliqué par `BoothQuality`). `set_value()` valide (`_sanitize`), applique et émet `settings_changed` (choix du joueur, persisté ; `persist = false` diffère seulement l'écriture). **Valeurs de session** (QA-006) : `set_session_value()` / `clear_session_value()` (argument `--reduce-motion`, outils, tests) appliquent sans jamais écrire — `save_settings()` écrit pour ces clés la dernière valeur persistée. `use_storage(path)` change de fichier : la suite GUT utilise `user://test_settings/settings.cfg` (crochet `tests/helpers/gut_pre_run.gd`, `.gutconfig.json`). M11 : `color_vision`, `holo_flicker`, `pad_glyphs`, tutoriels ; M14 : musique, cinématiques ; **M15** : `language` (`fr` / `en`, texte, à chaud, §17.1) et `pseudo_loc` (caché, debug). 🎯 Sensibilité manette : non implémentée. | État de partie |
 | `GameState` | État de **campagne** : `campaign_seed`, `current_day`, `credits`, `score_total`, `citations`, `narrative_flags: Dictionary[StringName, Variant]` (drapeaux et jauges `loyalty` / `lucioles_trust` / `suspicion`), `day_history: Array[Dictionary]`, `household: Household`, `case_memory` (§9.4). `to_save_dict()` / `apply_save_dict()` / `save_to_slot()` / `load_from_slot()` (§10) ; M11 : `active_slot`, `difficulty` (`is_story_mode()`, `set_difficulty()`), `load_day_snapshot()`, `end_campaign()` (archive + profil, `ProfileService`), `play_time_sec`, `portrait_seed` (§10). `get_day_seed()`, `add_to_flag()`, `get_true_flags()`, `remember_case()`. Émet `credits_changed`, `narrative_flag_changed`, `game_saved`, `game_loaded`, `save_slots_changed`, `profile_changed`, `difficulty_changed`. | État du jour en cours (porté par `DayController`) |
 
 | `AudioMixBarrier` (rév. 3.5, QA-030) | Barrière de mixage : `AudioServer.lock()` / `unlock()` une fois par image (`_process`, `PROCESS_MODE_ALWAYS`, avant `AudioServer.update()`) — contournement de la course de Godot 4.7.2 sur les `bus_details` (§13, R31). | Aucun état, aucun signal, aucun son |
@@ -1719,3 +1719,92 @@ Déclencheurs : **`workflow_dispatch`** et **tags `v*`** uniquement (jamais à c
 | Windows | taille des fichiers, ressources PE (icône, version, éditeur) | ✅ ; **non lancé** (pas de Windows/Wine) |
 | macOS | structure du `.app`, `Info.plist` (version, bundle id, `LSMinimumSystemVersionByArchitecture`, catégorie), signature ad hoc lue dans les Mach-O | ✅ ; **non lancé**, `codesign`/`spctl`/`rcodesign` indisponibles |
 | Steam Deck | — | à faire sur matériel (1280×800, manette) |
+
+---
+
+## 17. M15 « Monde » — localisation et démo (lot A, D-213 → D-215)
+
+Contrat partagé : `docs/M15.md`. Ce lot livre la langue à chaud, la pseudo-localisation, les formats, la couverture des polices et la **démo J1–J5**. La traduction elle-même (`data/i18n/en.csv`) est le lot B (`docs/LOCALIZATION.md`).
+
+### 17.1 Langue (`Settings.KEY_LANGUAGE`, `Localization`)
+
+- **Réglage** `language` : seul réglage **texte** de `Settings` (`get_string`, propriété `Settings.language`) ; valeurs `fr` / `en` (`Localization.sanitize_language` : `en*` → `en`, `fr*` → `fr`, tout le reste → langue du système). `DEFAULTS` porte `""` (marqueur de type) ; le défaut effectif est `Localization.system_language()` (`en` si `OS.get_locale_language()` commence par « en », sinon `fr`), résolu à la réinitialisation. Persisté en texte dans `settings.cfg`.
+- **Réglage caché** `pseudo_loc` (bool, absent des Options) : pseudo-localisation `en-XA`, ignorée hors debug (`Localization.pseudo_allowed` : build debug ou fonctionnalité `debug_args`).
+- **Arguments** (debug, `DebugArgs.enabled`) lus par `Settings._ready` : `--lang=fr|en`, `--pseudo-loc` — valeurs **de session** (jamais écrites). `use_storage` (tests) conserve la langue et la pseudo-loc de session ; le crochet GUT (`tests/helpers/gut_pre_run.gd`) fixe la suite en **français** quelle que soit la langue du système.
+- **Traductions** : `fr.csv` (source) et `en.csv` (mêmes clés, en-tête `keys,en`) importés par Godot (`*.translation`, ignorés par git) et déclarés dans `project.godot` (`internationalization/locale/translations`, `locale/fallback="fr"`) ; `Localization.ensure_loaded()` les enregistre aussi à la demande (outils `--script`). Sur un clone neuf, le **premier** `godot --import` affiche deux erreurs « Cannot open file en.en.translation » (fichiers pas encore générés) : sans effet, absentes aux exécutions suivantes.
+- **Repli** : clé absente en anglais → texte français (locale de repli `fr`) ; clé absente partout → repli du code (`UiText.t(key, fallback)`).
+- **Application** (`Settings._apply` → `Localization.apply_language(code, pseudo)`) : `TranslationServer.set_locale(code)`, puis **retraduction de tout l'arbre** (`Localization.retranslate_tree(root)`), **puis** `EventBus.settings_changed(&"language", code)` : un écran qui recompose lui-même un texte l'écoute et voit déjà la nouvelle langue.
+
+### 17.2 Retraduction à chaud
+
+Pas de reconstruction des écrans (un shift en cours ne se recharge pas) : chaque texte affiché est **recomposé**.
+
+- `UiText` garde la **recette** de chaque texte qu'il produit (`t`, `tf`, `plural` ; `remember_call(text, maker)` pour un texte composé par une fonction : `date_with_weekday`, `passenger_number`, crédits, compteur du Rulebook, bouton « ✓ ACTIVÉ ») — dictionnaire texte → recette, deux générations de 20 000 entrées ; `UiText.remake(text)` la rejoue dans la langue courante (arguments texte eux-mêmes retraduits). Variante en capitales mémorisée (`.to_upper()` des appelants). `UiText.clear_recipes()` à la sortie (`Settings._exit_tree`) : des `Callable` gardés dans une variable statique jusqu'à l'arrêt corrompent la mémoire de Godot 4.7.2 à la fermeture.
+- `Localization.retranslate_tree(root)` parcourt `Label`, `Button` (et dérivés), `RichTextLabel` (source BBCode), `LinkButton`, `Label3D`, infobulles, `placeholder_text`, titres de `Window`, onglets (`TabContainer`, `TabBar`), items (`OptionButton`, `PopupMenu`, `ItemList`) et les propriétés texte dessinées par `_draw` (`Localization.CUSTOM_TEXT_PROPERTIES` : `caption`, `hint`, `locked_hint`, `face_label`) ; `queue_redraw()` sur chaque `CanvasItem`.
+- Texte sans recette : retraduit **pièce par pièce** — segments hors balises BBCode, lignes, puis pièces séparées par « · », « — », « – », « › ». Un nom propre, du tessar, un code, une valeur générée n'ont pas de recette : intacts (D-213).
+- **Contrat** : un nœud qui expose `on_language_changed()` est rappelé après la retraduction de ses textes (`StampButton` : largeur et infobulle ; `TopBar` / `ToolBar` : compaction). `ComparisonUI` (bandeau d'état, outils, questions) et `CinematicScreen` (légende recomposée puis recoupée à la largeur) écoutent `settings_changed(language)`.
+- Garde-fou : `UiText.tf` ne plante jamais sur une traduction au nombre de spécificateurs différent (motif rendu tel quel, avertissement).
+- Vérifié par `tests/integration/test_m15_hot_language.gd` (guichet en plein shift : documents posés, Rulebook, journal, intercom, annonce ; titre + Options ; Nouvelle partie, Charger) : après la bascule, **aucun** texte visible égal à un texte de `fr.csv` dont l'anglais diffère ; retour au français identique.
+
+### 17.3 Ce qui n'est pas traduit, et la logique
+
+Noms propres, tessar, codes (N° ID, MRZ, employeurs), sigles de règles : jamais des clés. La génération **ne dépend pas de la langue** : même graine → même cas (CaseKey, anomalies, cadres de déclaration). Lieux de provenance des déclarations : désormais des **clés** (`stmt_place_*`, `StatementTablesDef.provenance_places` / `origin_places`, `tools/build_data_m13.gd`), traduites au rendu (`Statement.translated_args`) ; la longueur qui choisit les cadres (`StatementTablesDef.fragment_length`) reste celle du texte **français** source (`text_lengths` des clés de lieu) : le choix des cadres est identique dans les deux langues (`build_data` déterministe, seul `data/statements/statements.tres` change).
+
+### 17.4 Pseudo-localisation `en-XA` (D-214)
+
+`Localization.pseudo(text)` : accents (glyphes présents dans les trois polices), **+35 %** de remplissage `·` par lettre, bornes `¡ … !` ; spécificateurs `%…`, balises `[…]`, jetons `{…}` préservés. Appliquée par `UiText` à **tout** texte produit (traduction de la langue choisie ou repli du code) : un texte sans accents à l'écran est un texte **brut** (hors `UiText`). Pas de traduction `en_XA` côté `TranslationServer` : les traductions importées sont compressées et ne listent pas leurs messages. Outil : `tools/qa_pseudo_captures.sh` (écrans principaux × 1080p / Deck / Deck texte 150 %, `docs/mockups/m15_pseudo_*`) ; `--lang=en` pour les captures en vrai anglais du lot U.
+
+### 17.5 Formats (D-214)
+
+| Format | Français | Anglais | API |
+|---|---|---|---|
+| Date (jeu, documents, sauvegardes) | `19.03.2187` | `19.03.2187` | `GameDate.format`, `UiText.date`, `Localization.date` |
+| Heure (station, sauvegardes) | `14:07` (24 h) | `14:07` (24 h) | `UiText.clock`, `Localization.clock` |
+| Nombre | `1 234` (espace fine insécable) | `1,234` | `Localization.number` |
+| Crédits | `42 ₵`, `−5 ₵`, `+5 ₵` | `₵42`, `−₵5`, `+₵5` | `Localization.credits` (`ScreenBase.credits`) |
+| Solde des barres | `₵ 42` | `₵42` | `Localization.credits_tag` (barre du haut, cartes d'emplacement) |
+
+Les montants écrits **dans** une phrase traduite (« 25 ₵ ») suivent le guide de style du lot B.
+
+### 17.5 bis Robustesse de l'UI aux longueurs (composants partagés)
+
+Passe pseudo-loc (`docs/mockups/m15_pseudo_*`) : le guichet, les écrans de titre, Options, Nouvelle partie, Charger, briefing, bilan, pause et fin de démo tiennent à 1080p, au Deck et en texte 150 %. Corrigé dans les composants partagés :
+- **En-tête de section** (`ScreenBase.section`, texte d'appoint) : `ScreenBase.SideLabel` ne prend jamais plus que la place laissée par ses voisins (rangée bornée par son conteneur) — tronqué « … » avec infobulle au lieu d'élargir la colonne (cas réel : « Économat du Hall » de la soirée au Deck 150 %, qui poussait la colonne de droite hors de l'écran, même en français). Rangée libre (à la taille de son contenu) : texte entier. Test `tests/unit/test_m15_ui_robustness.gd`.
+- **Noms de touches et de boutons** (`InputPrompts.named`) : « ESPACE », « ÉCHAP », « ENTRÉE », « RETOUR », « MAJ », « VUE », « CROIX », « ROND », « CARRÉ » passent par des clés (`key_*`, `pad_*`) ; invites réécrites au changement de langue.
+- **Secteurs d'origine** du Rulebook (onglet Origines) : clé `faction_<id>_sectors`, repli = texte des données (`FactionDef.origin_sectors`, en français).
+- **Titre** : surtitre et devise de `main.tscn` traduits (`title_eyebrow`, `title_tagline`, repli = texte de la scène).
+- Pseudo-loc : une didascalie entre crochets (« [serre son sac] ») est du texte ; seules les vraies balises BBCode (`[b]`, `[color=…]`) sont préservées.
+
+Restent pour le lot U (écran par écran, en vrai anglais) : en-tête des documents au Deck (nom d'émetteur coupé par le n° de série), onglets du Rulebook au Deck (deuxième onglet rogné par le compteur), colonne des avis d'infraction du bilan (texte très étroit au Deck 150 %).
+
+### 17.6 Polices
+
+Inter couvre tout le texte FR / EN / pseudo-loc ; Chakra Petch (titres) n'a ni `ᵉ` `ʳ` `⚠` `↔`, JetBrains Mono (données) ni `₵` `ᵉ` `ʳ` : `ThemeBuilder._font_variant` leur donne **Inter en repli** (`FontVariation.fallbacks`). `▾` n'existe dans aucune police : le compteur du Rulebook l'affiche en `▼`. Test : `tests/unit/test_m15_fonts.gd` (chaque police du thème × tous les caractères de `fr.csv`, `en.csv` et de la pseudo-loc).
+
+### 17.7 Démo J1–J5 (D-215, `DemoMode`)
+
+- **Activation** : fonctionnalité d'export `demo` (préréglages « Windows Desktop Demo », « macOS Demo » — bundle `com.clearance.demo` —, « Linux Demo » d'`export_presets.cfg`, sorties `build/demo-<plateforme>/CLEARANCE-Demo.*` ; le préréglage Web du lot W la porte aussi) ; en debug, argument `--demo` ; tests : `DemoMode.force`.
+- **Bornes** : `DemoMode.last_day(n)` = min(n, 5) ; `Campaign.close_evening` rend `ENDING_DEMO_COMPLETE` après la soirée du **J5** (partie archivée, `status = ended`) ; `DayScene.open_end_screen` ouvre alors **`DemoEndScreen`** (au lieu de l'`EndScreen`).
+- **Données séparées** : `SaveService.resolve_dir(DEFAULT_DIR)` → `user://demo/saves` (sauvegardes **et** `profile.json`) ; `use_root` (tests) prioritaire ; préférences (`settings.cfg` : langue, accessibilité) **partagées** avec le jeu complet.
+- **Titre** : Garde de nuit et Dossier de l'agent **désactivés** avec la mention « Dans le jeu complet. » — choix le plus simple et le plus sûr (la Garde tire ses règles de tous les jours ; le Dossier lirait des fins et personnages hors démo). Mention de version « Démo · v… » en démo, « v… » seule dans le jeu complet (corrige la mention « Démo » héritée du *vertical slice*).
+- **Contenu au-delà du J5** : présent dans le paquet mais **verrouillé** (les `DayDef` J6–J30 sont référencés par le catalogue, la validation des sauvegardes et les cinématiques : les exclure n'est pas simple). `DemoMode.is_locked_day(day)` disponible pour un garde-fou supplémentaire.
+- **Export** : `bash tools/export_all.sh --demo [windows macos linux]` → `build/dist/CLEARANCE-<version>-demo-<plateforme>.*` + `SHA256SUMS-demo` (le `SHA256SUMS` du jeu complet ignore les archives de la démo). **Smoke** : `bash tools/smoke_demo.sh` (binaire release Linux de la démo : titre FR puis EN sans erreur, ligne « main: démo J1–J5 (données : user://demo/saves) » exigée, rien écrit dans `user://saves`).
+- Tests : `tests/integration/test_m15_demo.gd`.
+
+### 17.7 bis Ajouts pour le Web (demande du lot W)
+
+`project.godot` `[audio] general/default_playback_type.web=0` (lecture en flux sur le Web : effets de bus — limiteur, mono, ducking, hygiaphone — conservés) ; `Settings.graphics_quality_level()` : « Auto » = Moyen sur Steam Deck **et** sur le Web ; titre : « QUITTER » masqué quand `OS.has_feature("web")` (aucun autre `get_tree().quit()` atteignable par le joueur).
+
+### 17.7 ter Clés ajoutées (M15, fin de `fr.csv` et `en.csv`)
+
+`opt_language_section`, `opt_language`, `opt_language_hint`, `title_eyebrow`, `title_tagline`, `demo_full_game_only`, `demo_end_{eyebrow,thanks,full_title,full_text,saves_hint,store}`, `key_{space,escape,enter,backspace,shift}`, `pad_{view,cross,circle,square,triangle}`, `faction_{cer,drv,hal,ter,thr,tyc}_sectors` (29 clés ; anglais à relire par le lot B). Coquille corrigée : `help_statements_text` (« » » isolé).
+
+### 17.8 Tests M15 (lot A)
+
+| Fichier | Couvre |
+|---|---|
+| `tests/unit/test_m15_localization.gd` | réglage, persistance, repli FR, bascule à chaud (recettes, BBCode, pièces, noms propres), ordre retraduction → `settings_changed`, ligne Options, **complétude stricte de `en.csv`** (`STRICT_EN_COMPLETENESS = true` depuis la livraison du lot B ; à faux, *pending* avec la liste), clés EN inconnues, spécificateurs identiques, pseudo-loc, formats |
+| `tests/unit/test_m15_fonts.gd` | couverture des glyphes |
+| `tests/unit/test_m15_ui_robustness.gd` | texte d'appoint des en-têtes de section borné (`SideLabel`) |
+| `tests/integration/test_m15_hot_language.gd` | bascule à chaud sur les vrais écrans |
+| `tests/integration/test_m15_demo.gd` | démo bornée au J5, sauvegardes séparées, écran de fin de démo, titre |

@@ -44,7 +44,7 @@ host_keys = Dictionary[StringName, String]({
 &"son": "stmt_host_son"
 })
 family_relations = PackedStringArray("sister", "brother", "son", "daughter", "mother")
-provenance_places = PackedStringArray("Tycho", "Cérès", "la Terre", "l\'Anneau B")
+provenance_places = PackedStringArray("stmt_place_tyc", "stmt_place_cer", "stmt_place_ter", "stmt_place_ring_b")
 employer_aliases = Dictionary[String, String]({
 "Aurel": "Banque Aurel",
 "Ceres-Verte": "Hydroponie Ceres-Verte",
@@ -75,9 +75,9 @@ vague_unfit_frames = PackedStringArray("line_stmt_frame_gen_2", "line_stmt_frame
 origin_frames = PackedStringArray("line_stmt_origin_1", "line_stmt_origin_3")
 origin_contrast_frames = PackedStringArray("line_stmt_origin_3")
 origin_places = Dictionary[StringName, String]({
-&"cer": "Cérès",
-&"ter": "la Terre",
-&"tyc": "Tycho"
+&"cer": "stmt_place_cer",
+&"ter": "stmt_place_ter",
+&"tyc": "stmt_place_tyc"
 })
 origin_frames_plain = PackedStringArray("line_stmt_origin_2")
 origin_frames_drv = PackedStringArray("line_stmt_origin_drv_1", "line_stmt_origin_drv_2")
@@ -154,6 +154,10 @@ text_lengths = Dictionary[String, int]({
 "stmt_origin_ter": 19,
 "stmt_origin_thr": 18,
 "stmt_origin_tyc": 16,
+"stmt_place_cer": 5,
+"stmt_place_ring_b": 10,
+"stmt_place_ter": 8,
+"stmt_place_tyc": 5,
 "stmt_prov_place": 14,
 "stmt_prov_shuttle": 25,
 "stmt_prov_tessar": 15,

@@ -1467,6 +1467,11 @@ func _on_settings_changed(key: StringName, value: Variant) -> void:
 			passenger_panel.busy.reduce_motion = reduce_motion
 		Settings.KEY_SUBTITLES:
 			subtitles.enabled = value
+		Settings.KEY_LANGUAGE, Settings.KEY_PSEUDO_LOC:
+			# M15 : textes déjà retraduits (`Localization`) ; bandeau d'état,
+			# barre d'outils et menu des questions recomposés, largeurs revues.
+			_refresh_all()
+			propagate_call(&"queue_redraw")
 		Settings.KEY_COLOR_VISION:
 			# Palette changée (DESIGN_SYSTEM §2.5) : thème et tracés (liens,
 			# champs, tampons) suivent ; les panneaux déjà construits gardent

@@ -53,6 +53,14 @@ const PS_BUTTONS: Dictionary[int, String] = {
 	JOY_BUTTON_DPAD_UP: "↑", JOY_BUTTON_DPAD_DOWN: "↓", JOY_BUTTON_DPAD_LEFT: "←", JOY_BUTTON_DPAD_RIGHT: "→",
 }
 
+## M15 : noms de touches et de boutons en toutes lettres → clé de traduction
+## (repli : le nom français de la table). Les sigles (LT, RB, A, TAB…) ne se
+## traduisent pas.
+const NAME_KEYS: Dictionary[String, String] = {
+	"ESPACE": "key_space", "ÉCHAP": "key_escape", "ENTRÉE": "key_enter", "RETOUR": "key_backspace", "MAJ": "key_shift",
+	"VUE": "pad_view", "CROIX": "pad_cross", "ROND": "pad_circle", "CARRÉ": "pad_square", "TRIANGLE": "pad_triangle",
+}
+
 ## Dernier périphérique utilisé (Steam Deck : manette d'emblée).
 static var device: Device = Device.DECK if OS.get_environment("SteamDeck") == "1" else Device.KEYBOARD
 static var _instance: InputPrompts = null
@@ -129,6 +137,10 @@ func _input(event: InputEvent) -> void:
 
 
 func _on_settings_changed(key: StringName, _value: Variant) -> void:
+	if key == Settings.KEY_LANGUAGE:
+		# M15 : noms de touches traduits — les phrases d'invite sont réécrites.
+		device_changed.emit(device)
+		return
 	if key == Settings.KEY_PAD_GLYPHS and is_gamepad():
 		var style: Device = pad_style()
 		if style != device:
@@ -172,7 +184,7 @@ static func event_text(event: InputEvent, d: Device) -> String:
 			names = PS_BUTTONS
 		elif d == Device.DECK:
 			names = DECK_BUTTONS
-		return names.get(button.button_index, "?")
+		return named(names.get(button.button_index, "?"))
 	var motion: InputEventJoypadMotion = event as InputEventJoypadMotion
 	if motion != null:
 		return axis_text(motion.axis, motion.axis_value, d)
@@ -184,16 +196,22 @@ static func key_text(key: InputEventKey) -> String:
 	if code == KEY_NONE and key.physical_keycode != KEY_NONE:
 		code = key.physical_keycode
 		# Disposition réelle (AZERTY : la touche physique Q s'affiche « A ») ;
-		# le serveur headless (tests, outils) ne la connaît pas.
-		if DisplayServer.get_name() != "headless":
+		# le serveur headless (tests, outils) ne la connaît pas, le Web non plus
+		# (« Not supported by this display server » à chaque appel, docs/WEB.md).
+		if DisplayServer.get_name() != "headless" and not OS.has_feature("web"):
 			var mapped: Key = DisplayServer.keyboard_get_keycode_from_physical(key.physical_keycode)
 			if mapped != KEY_NONE:
 				code = mapped
 	if KEY_NAMES.has(code):
-		return KEY_NAMES[code]
+		return named(KEY_NAMES[code])
 	if code > KEY_SPACE and code < 127:
 		return String.chr(code).to_upper() # touche imprimable : son caractère ([, ], ,, .)
 	return OS.get_keycode_string(code).to_upper()
+
+
+## M15 : nom en toutes lettres traduit (`NAME_KEYS`), sigle inchangé.
+static func named(text: String) -> String:
+	return UiText.t(NAME_KEYS[text], text) if NAME_KEYS.has(text) else text
 
 
 static func axis_text(axis: int, value: float, d: Device) -> String:

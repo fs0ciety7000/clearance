@@ -243,7 +243,7 @@ static func section(title: String, icon: UiIcon.Kind = UiIcon.Kind.DIAMOND, colo
 	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(line)
 	if not side.is_empty():
-		row.add_child(label(side, &"DataSmall", color))
+		row.add_child(SideLabel.make(side, &"DataSmall", color))
 	return row
 
 
@@ -295,8 +295,87 @@ static func chip(text: String, icon: UiIcon.Kind, color: Color) -> PanelContaine
 	return p
 
 
-## « 42 ₵ », « −5 ₵ », « +5 ₵ » (signe forcé si `signed`).
+## « 42 ₵ », « −5 ₵ », « +5 ₵ » (signe forcé si `signed`) ; M15 : selon la
+## langue (« ₵42 » en anglais, séparateur de milliers, `Localization.credits`).
 static func credits(amount: int, signed: bool = false) -> String:
-	if amount < 0:
-		return "−%d ₵" % absi(amount)
-	return ("+%d ₵" if signed and amount > 0 else "%d ₵") % amount
+	return UiText.remember_call(Localization.credits(amount, signed), Localization.credits.bind(amount, signed))
+
+
+## M15 : texte d'appoint au bout d'une rangée (côté d'un en-tête de section) :
+## jamais plus large que la place laissée par ses voisins — tronqué « … »
+## (texte complet en infobulle) au lieu d'élargir l'écran (anglais,
+## pseudo-localisation, texte 150 %).
+class SideLabel extends Label:
+	static func make(p_text: String, variation: StringName, color: Color) -> SideLabel:
+		var l: SideLabel = SideLabel.new()
+		l.theme_type_variation = variation
+		l.text = p_text
+		l.add_theme_color_override(&"font_color", color)
+		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		l.mouse_filter = Control.MOUSE_FILTER_PASS
+		l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		return l
+
+	func _ready() -> void:
+		var parent: Control = get_parent() as Control
+		if parent != null:
+			parent.resized.connect(_fit)
+		refit()
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_VISIBILITY_CHANGED or what == NOTIFICATION_THEME_CHANGED:
+			refit()
+
+	## Contrat `Localization` : texte retraduit → largeur recalculée.
+	func on_language_changed() -> void:
+		refit()
+
+	## Recalcule maintenant puis après la mise en page du parent (sa largeur
+	## n'est connue qu'après le tri de son conteneur).
+	func refit() -> void:
+		if not is_inside_tree():
+			return
+		_fit()
+		await get_tree().process_frame
+		if is_inside_tree():
+			_fit()
+
+	## Vrai si un conteneur impose sa largeur à `row` (colonne qui remplit, ou
+	## case qui s'étend dans une rangée).
+	static func _width_bounded(row: Control) -> bool:
+		var holder: Node = row.get_parent()
+		if holder is VBoxContainer or holder is MarginContainer or holder is PanelContainer or holder is ScrollContainer:
+			return (row.size_flags_horizontal & Control.SIZE_FILL) != 0
+		if holder is HBoxContainer or holder is GridContainer:
+			return (row.size_flags_horizontal & Control.SIZE_EXPAND) != 0
+		return false
+
+	## Largeur minimale = place laissée par les voisins (jamais plus que le
+	## texte entier) ; la largeur du parent ne dépend donc jamais de ce texte.
+	func _fit() -> void:
+		var font: Font = get_theme_font(&"font")
+		if font == null:
+			return
+		var full: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, get_theme_font_size(&"font_size")).x
+		var parent: BoxContainer = get_parent() as BoxContainer
+		var room: float = full
+		# Rangée à la taille de son contenu (aucun conteneur ne borne sa
+		# largeur) : texte entier, comme avant M15.
+		var content_sized: bool = parent != null and not _width_bounded(parent)
+		if parent != null and parent.size.x > 0.0 and not content_sized:
+			var used: float = 0.0
+			var count: int = 0
+			for child: Node in parent.get_children():
+				var c: Control = child as Control
+				if c == null or not c.visible or c == self:
+					continue
+				used += c.get_combined_minimum_size().x
+				count += 1
+			used += parent.get_theme_constant(&"separation") * count
+			room = parent.size.x - used
+		elif parent != null and parent.size.x <= 0.0:
+			room = minf(full, DS.SPACE_16) # premier passage : pas encore de largeur
+		var width: float = clampf(room, minf(full, DS.SPACE_8), ceilf(full))
+		tooltip_text = text if width + 0.5 < full else ""
+		if not is_equal_approx(custom_minimum_size.x, width):
+			custom_minimum_size.x = width

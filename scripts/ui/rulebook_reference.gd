@@ -282,7 +282,9 @@ static func _origins(belt_search: bool = false) -> Control:
 	for faction: FactionDef in factions:
 		var digit: String = faction.id_prefix.right(1)
 		var title: String = "%s · %s" % [faction.code, UiText.t(faction.name_key, String(faction.id))]
-		var sectors: String = " · ".join(faction.origin_sectors)
+		# M15 : secteurs d'origine (texte de données, en français) traduisibles
+		# par la clé `faction_<id>_sectors` ; repli : le texte des données.
+		var sectors: String = UiText.t("faction_%s_sectors" % faction.id, " · ".join(faction.origin_sectors))
 		var side: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
 		side.add_child(ScreenBase.label(UiText.t("rb_origins_block", "BLOC ID"), &"DocFieldLabel"))
 		side.add_child(ScreenBase.label(faction.id_prefix + "XXX-XXXX", &"DocFieldValue", DS.TEXT_PRIMARY))

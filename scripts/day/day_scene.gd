@@ -644,7 +644,10 @@ func play_cinematic(sequence: CinematicScreen, id: StringName, then: Callable) -
 
 
 ## Écran de fin (inchangé depuis M12) : épilogue lu, traces, tableau.
-func open_end_screen(ending: StringName) -> EndScreen:
+func open_end_screen(ending: StringName) -> ScreenBase:
+	# M15 (D-215) : dans la démo, la fin de la démo ouvre « Fin de la démo ».
+	if ending == Campaign.ENDING_DEMO_COMPLETE and DemoMode.is_demo():
+		return open_demo_end_screen()
 	var end: EndScreen = EndScreen.new()
 	end.name = "EndScreen"
 	end.epilogue = Campaign.epilogue(ending)
@@ -655,6 +658,16 @@ func open_end_screen(ending: StringName) -> EndScreen:
 			return
 		go_to_title())
 	_open(end, &"end")
+	return end
+
+
+## M15 (D-215) : écran « Fin de la démo » (merci, jeu complet, retour au titre).
+func open_demo_end_screen() -> DemoEndScreen:
+	var end: DemoEndScreen = DemoEndScreen.new()
+	end.name = "DemoEndScreen"
+	end.setup(GameState.credits, Campaign.compliance(), GameState.household)
+	end.finished.connect(func(_choice: StringName) -> void: go_to_title())
+	_open(end, &"demo_end")
 	return end
 
 

@@ -269,7 +269,8 @@ static func build_statement_tables(text_of: Callable) -> StatementTablesDef:
 	t.provenance_shuttle_key = "stmt_prov_shuttle"
 	t.provenance_place_key = "stmt_prov_place"
 	t.provenance_tessar_key = "stmt_prov_tessar"
-	t.provenance_places = PackedStringArray(["Tycho", "Cérès", "la Terre", "l'Anneau B"])
+	# M15 : lieux par clé (`stmt_place_*`), traduits au rendu (`Statement.translated_args`).
+	t.provenance_places = PackedStringArray(["stmt_place_tyc", "stmt_place_cer", "stmt_place_ter", "stmt_place_ring_b"])
 	t.employer_aliases = EMPLOYER_ALIASES.duplicate()
 	t.vague_employers = PackedStringArray(["les serres", "la station"])
 	t.lore_employers = LORE_CORPORATIONS.duplicate()
@@ -295,7 +296,7 @@ static func build_statement_tables(text_of: Callable) -> StatementTablesDef:
 			"line_stmt_frame_visit_2"])
 	t.origin_frames = PackedStringArray(["line_stmt_origin_1", "line_stmt_origin_3"])
 	t.origin_contrast_frames = PackedStringArray(["line_stmt_origin_3"])
-	t.origin_places = {&"tyc": "Tycho", &"cer": "Cérès", &"ter": "la Terre"}
+	t.origin_places = {&"tyc": "stmt_place_tyc", &"cer": "stmt_place_cer", &"ter": "stmt_place_ter"}
 	t.origin_frames_plain = PackedStringArray(["line_stmt_origin_2"])
 	t.origin_frames_drv = PackedStringArray(["line_stmt_origin_drv_1", "line_stmt_origin_drv_2"])
 	t.origin_frames_tessar = PackedStringArray(["line_stmt_origin_tessar_1"])
@@ -349,6 +350,7 @@ static func _text_keys(t: StatementTablesDef) -> PackedStringArray:
 	for relation: StringName in t.host_keys:
 		keys.append(t.host_keys[relation])
 	keys.append_array([t.provenance_shuttle_key, t.provenance_place_key, t.provenance_tessar_key])
+	keys.append_array(t.provenance_places) # M15 : longueur du lieu (texte FR, source)
 	for faction: StringName in t.frames:
 		keys.append_array(t.frames[faction])
 	for list: PackedStringArray in [t.work_frames, t.visit_frames, t.correction_frames, t.stay_frames, t.stay_frames_vague, t.origin_frames,
