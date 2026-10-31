@@ -423,7 +423,7 @@ static func _toggle_text(on: bool) -> String:
 
 
 static func _percent(value: float) -> String:
-	return "%d %%" % roundi(value * 100.0)
+	return ScreenBase.percent(roundi(value * 100.0))
 
 
 ## Piste et poignée DS (rectangles, pas d'arrondi ; cyan = interactif).

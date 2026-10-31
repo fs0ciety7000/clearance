@@ -105,12 +105,15 @@ Un terme du glossaire se traduit **toujours** de la même façon (UI, dialogues,
 - **Le Tessar** : tout segment entre chevrons `‹…›` est recopié à l'identique, ponctuation et espaces compris (`‹Kumo ri sava sa ?›`). La traduction anglaise suit hors chevrons, comme en français.
 - **Codes** : N° ID (`HG-4471-K2Q9`), MRZ, numéros de documents, codes employeurs (`KA`, `CT-KA`), classes (`C-3`), implants (`MIL-9`), formulaires (`27-B/2`), convocations (`ENQ-0004`), numéros de série internes (`G04-J%02d-%02d`, tampon `CONSORTIUM · G04 · J%02d`), préfixe de graine `NUIT-`.
 - **Sigles de règles** : `R01`, `R32`… restent tels quels.
-- **Noms d'employeurs** (`rb_emp_*`, `issuer_dispensaire_tycho`, `val_issuer_dt`) : ce sont les **valeurs** écrites sur les documents (données, non traduites) ; le Rulebook doit les reproduire à l'identique pour que le joueur puisse les comparer (`Valcourt-Hsu Logistique`, `Bureau de Continuité`, `Dispensaire de Tycho`…).
+- **Noms d'employeurs** (`rb_emp_*`, `issuer_dispensaire_tycho`, `val_issuer_dt`) : ce sont les **valeurs** écrites sur les documents (données, non traduites) ; le Rulebook doit les reproduire à l'identique pour que le joueur puisse les comparer (`Valcourt-Hsu Logistique`, `Bureau de Continuité`, `Dispensaire de Tycho`…). La mention « SANS EMPLOYEUR » n'est pas un nom : traduite à l'affichage (`val_no_employer`, *NO EMPLOYER*).
+- **Secteurs d'origine** (lot U) : données en français, **traduits** des deux côtés — champ « Zone » de l'Attestation d'asile par `faction_<id>_sector_<n>`, onglet Origines par `faction_<id>_sectors`. La ligne du Rulebook doit être **exactement** les secteurs joints par « · », dans le même ordre (testé).
 - **Dates et heures** : format neutre `JJ.MM.AAAA` et `HH:MM` (24 h). Dans la prose, « le 22 mars » devient *22 March* (style britannique, sans ordinal).
 
 ## 4. Guide de style
 
 - **Anglais britannique** (*colour, neighbour, recognise, programme, cancelled*) ; guillemets droits doubles `"…"` à la place des « … » ; points de suspension `…` (un caractère).
+- **Montants et pourcentages** (lot U) : en anglais, le symbole précède le nombre, sans espace — `₵25`, `+₵10`, `(₵0)`, `₵%d` — comme l'interface (`Localization.credits`) ; pourcentage collé : `62%`, `Compliance %d%%`. Le français garde `25 ₵` et `62 %`.
+- **Guillemets de l'interface** (lot U) : jamais dans le code ; clés `ui_quoted` (`« %s »` / `"%s"`) et `ui_speaker_quoted` (`%s : « %s »` / `%s: "%s"`).
 - **UI** : sobre, impératif court, MAJUSCULES quand le français en a. Viser une longueur ≤ au français (l'anglais est plus court : en profiter). Pluriels : clés `_one` séparées comme en FR.
 - **Consortium** (bulletins, directives, Commission, Arbitre) : froid, administratif, passif et euphémismes (*placed in holding*, *rebalanced*, *reassigned*), jamais de contraction.
 - **Lucioles** : phrases courtes, cryptiques, sans signature sauf initiale.

@@ -20,6 +20,8 @@ const SCREEN_MARGIN_X: int = 96
 const SCREEN_MARGIN_Y: int = 64
 ## Pas de la grille de fond (multiple de 4).
 const GRID_STEP: float = 48.0
+## M15 (lot U) : borne de `text_room()` (texte 1,5 au plancher du Deck).
+const TEXT_ROOM_MAX: float = 2.0
 ## Longueur des équerres d'angle.
 const BRACKET: float = 28.0
 
@@ -95,6 +97,16 @@ func _min_text_px() -> int:
 	if not is_inside_tree():
 		return 0
 	return ThemeBuilder.min_px_for(get_viewport().get_final_transform().get_scale().x)
+
+
+## M15 (lot U) : facteur d'agrandissement du texte à l'écran — taille du texte
+## (`Settings.text_scale`) × plancher de lisibilité (`ThemeBuilder.min_px_for`,
+## Steam Deck), borné à `TEXT_ROOM_MAX`. Une colonne de largeur fixe en
+## pixels logiques la multiplie pour garder la même place **en caractères**
+## (colonne des avis d'infraction du bilan au Deck, texte 1,5).
+func text_room() -> float:
+	var floor_factor: float = maxf(float(_min_text_px()) / float(DS.FS_CAPTION), 1.0)
+	return clampf(maxf(Settings.text_scale, 1.0) * floor_factor, 1.0, TEXT_ROOM_MAX)
 
 
 func _apply_theme() -> void:
@@ -295,10 +307,27 @@ static func chip(text: String, icon: UiIcon.Kind, color: Color) -> PanelContaine
 	return p
 
 
+## M15 (lot U) : puce dont le texte passe à la ligne au lieu de dépasser de sa
+## colonne (consigne d'une carte du Rulebook au Deck : « TO BE REPORTED ·
+## DOCUMENTED… » coupée au bord). La puce prend la largeur de la colonne.
+static func wrap_chip(p: PanelContainer) -> PanelContainer:
+	p.size_flags_horizontal = Control.SIZE_FILL
+	for l: Label in p.find_children("*", "Label", true, false):
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return p
+
+
 ## « 42 ₵ », « −5 ₵ », « +5 ₵ » (signe forcé si `signed`) ; M15 : selon la
 ## langue (« ₵42 » en anglais, séparateur de milliers, `Localization.credits`).
 static func credits(amount: int, signed: bool = false) -> String:
 	return UiText.remember_call(Localization.credits(amount, signed), Localization.credits.bind(amount, signed))
+
+
+## M15 (lot U) : pourcentage selon la langue (« 69 % » / « 69% »), recomposé
+## au changement de langue.
+static func percent(value: int) -> String:
+	return UiText.remember_call(Localization.percent(value), Localization.percent.bind(value))
 
 
 ## M15 : texte d'appoint au bout d'une rangée (côté d'un en-tête de section) :

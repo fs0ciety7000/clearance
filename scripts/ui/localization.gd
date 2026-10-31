@@ -489,6 +489,12 @@ static func credits(amount: int, signed: bool = false) -> String:
 	return sign + body + " " + CURRENCY
 
 
+## M15 (lot U) : pourcentage — « 69 % » (français, espace) ; « 69% »
+## (anglais, collé).
+static func percent(value: int) -> String:
+	return ("%d%%" % value) if is_english() else ("%d %%" % value)
+
+
 ## Solde compact des barres (« ₵ 42 » en français, « ₵42 » en anglais).
 static func credits_tag(amount: int) -> String:
 	if is_english():

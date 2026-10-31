@@ -4261,3 +4261,18 @@ faction_hal_sectors,Anneaux D–F · Anneau C — logements de service · Coursi
 faction_ter_sectors,Terre — Concordat des Zones Sèches
 faction_thr_sectors,Républiques de Tharsis (Mars) · Tharsis — dômes d'Olympus
 faction_tyc_sectors,Colonie Tycho (Lune) · Cratère Tycho — dortoirs Kessler-Ashe
+faction_cer_sector_1,Libre-Fédération de Cérès
+faction_cer_sector_2,Ceinture — stations de prospection
+faction_drv_sector_1,Cargos dérivants — sans port d'attache
+faction_drv_sector_2,La Soute — amarrages des cargos
+faction_hal_sector_1,Anneaux D–F
+faction_hal_sector_2,Anneau C — logements de service
+faction_hal_sector_3,Coursives d'Halcyon Gate
+faction_ter_sector_1,Terre — Concordat des Zones Sèches
+faction_thr_sector_1,Républiques de Tharsis (Mars)
+faction_thr_sector_2,Tharsis — dômes d'Olympus
+faction_tyc_sector_1,Colonie Tycho (Lune)
+faction_tyc_sector_2,Cratère Tycho — dortoirs Kessler-Ashe
+ui_quoted,« %s »
+ui_speaker_quoted,%s : « %s »
+val_no_employer,SANS EMPLOYEUR

@@ -1654,7 +1654,7 @@ func ask(topic: StringName) -> void:
 	var question: String = InterrogationTopics.question_text(topic, current_case)
 	_last_question = question
 	# Rappel de la question jusqu'à la réponse (qui la reprend en légende au journal).
-	passenger_panel.set_hint(UiText.t("speaker_agent", "AGENT") + " : « " + question + " »")
+	passenger_panel.set_hint(UiText.speaker_quoted(UiText.t("speaker_agent", "AGENT"), question))
 	question_menu_open = false
 	# M13 : la demande de fouille n'est pas une question (R08, ARCHITECTURE §12.5).
 	if not asked_topics.has(topic) and topic != InterrogationTopics.SEARCH:

@@ -45,7 +45,7 @@ func show_line(speaker: String, text: String, tag: String = "", hold_sec: float 
 	_tag.visible = not tag.is_empty()
 	_speaker.text = speaker
 	_speaker.visible = not speaker.is_empty()
-	_text.text = "« %s »" % text
+	_text.text = UiText.quoted(text)
 	visible = true
 	reset_size()
 	if is_inside_tree():

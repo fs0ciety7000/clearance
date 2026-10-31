@@ -37,6 +37,8 @@ signal collapse_changed(collapsed: bool)
 
 ## Onglet « toutes les règles ».
 const TAB_ALL: int = -1
+## M15 (lot U) : marge (px) sous laquelle un onglet au bord compte comme entier.
+const TAB_CLIP_TOLERANCE: float = 1.0
 ## M7 : onglets de référence (identifiants négatifs, ordre `RulebookReference.ORDER`).
 const TAB_REFERENCE_BASE: int = -10
 const COLLAPSED_WIDTH: float = 48.0
@@ -226,6 +228,9 @@ func _build_nav() -> void:
 	_tabs_row = HBoxContainer.new()
 	_tabs_row.add_theme_constant_override("separation", 0)
 	_tabs_scroll.add_child(_tabs_row)
+	# M15 (lot U) : onglets replacés (libellés raccourcis, bascule de langue) →
+	# visibilité au bord recalculée.
+	_tabs_row.resized.connect(_update_nav_hints.call_deferred)
 	_next_button = _keycap_button(&"rulebook_next", UiText.t("rb_tab_next", "Onglet suivant"))
 	_next_button.pressed.connect(cycle_tab.bind(1))
 	nav.add_child(_next_button)
@@ -773,6 +778,7 @@ func _update_nav_hints() -> void:
 	if _tabs_scroll == null or _prev_button == null:
 		return
 	var view: Rect2 = _tabs_scroll.get_global_rect().grow(1.0)
+	_hide_clipped_tabs()
 	var left: bool = false
 	var right: bool = false
 	for button: Button in _tab_buttons:
@@ -787,6 +793,36 @@ func _update_nav_hints() -> void:
 		right = right or center > view.end.x
 	_prev_button.modulate = Palette.STATE_AMBER if left else Color.WHITE
 	_next_button.modulate = Palette.STATE_AMBER if right else Color.WHITE
+
+
+## M15 (lot U) : un onglet (ou la légende « BULLETINS ») que le bord de la
+## rangée coupe n'est pas dessiné — jamais un libellé tronqué à moitié
+## (« Documen… » sous `]` au Deck en texte 1,5) ; il réapparaît entier en
+## défilant. Les flèches `[` `]` et le compteur « n / N ▼ » disent qu'il y en a
+## d'autres. Positions locales et valeur de défilement (la position globale des
+## onglets n'est mise à jour qu'au tri suivant du `ScrollContainer`).
+func _hide_clipped_tabs() -> void:
+	var width: float = _tabs_scroll.size.x
+	var scroll: float = float(_tabs_scroll.scroll_horizontal)
+	var items: Array[Control] = []
+	for button: Button in _tab_buttons:
+		if is_instance_valid(button):
+			items.append(button)
+	if _ref_caption != null and is_instance_valid(_ref_caption):
+		items.append(_ref_caption)
+	for item: Control in items:
+		var left: float = item.position.x - scroll
+		var whole: bool = width <= 0.0 or item.size.x <= 0.0 \
+				or (left >= -TAB_CLIP_TOLERANCE and left + item.size.x <= width + TAB_CLIP_TOLERANCE)
+		if item == _ref_caption:
+			item.modulate.a = 1.0 if whole else 0.0
+		else:
+			item.self_modulate.a = 1.0 if whole else 0.0
+
+
+## Vrai si l'onglet `button` est entièrement visible dans la rangée (M15, lot U).
+func is_tab_whole(button: Button) -> bool:
+	return button != null and is_instance_valid(button) and button.self_modulate.a > 0.0
 
 
 ## Menu « n / N ▾ » : tous les onglets, par section, l'onglet courant coché.

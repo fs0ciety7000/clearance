@@ -20,6 +20,11 @@ const SHIFT_WARN_MIN: int = 30
 const EPOCH_WEEKDAY: int = 4
 ## Préfixe des clés de valeurs ENUM (`val_work` → « TRAVAIL »).
 const VALUE_KEY_PREFIX: String = "val_"
+## Champ dont la valeur est un secteur d'origine (`Passenger.origin_sector`).
+const ORIGIN_SECTOR_PATH: StringName = &"origin_sector"
+## M15 (lot U) : valeurs de champ texte qui ne sont pas des noms (mentions des
+## données, en français) → clé d'affichage. La logique compare la donnée brute.
+const DATA_TEXT_KEYS: Dictionary = {"SANS EMPLOYEUR": "val_no_employer"}
 ## Traductions : chargées par `Localization.ensure_loaded()` (FR source, EN
 ## M15, `Localization.TRANSLATION_PATHS`) ; locale de repli `fr`
 ## (`internationalization/locale/fallback`).
@@ -187,8 +192,27 @@ static func value_text(field: FieldDef, value: Variant) -> String:
 				return tf("unit_days", [days_count], "%d JOURS")
 			return str(value)
 		FieldDef.FieldKind.TEXT:
-			return str(value).to_upper()
+			# M15 (lot U) : secteur d'origine traduit comme au Rulebook.
+			if field.truth_path == ORIGIN_SECTOR_PATH:
+				return RulebookReference.sector_text(str(value)).to_upper()
+			# Mentions de procédure écrites en français dans les données (« SANS
+			# EMPLOYEUR », comparé tel quel par R09) : traduites à l'affichage.
+			var data_text: String = str(value).to_upper()
+			if DATA_TEXT_KEYS.has(data_text):
+				return t(DATA_TEXT_KEYS[data_text], data_text).to_upper()
+			return data_text
 	return FieldValue.to_display(value, field)
+
+
+## M15 (lot U) : réplique ou devise entre guillemets de la langue courante
+## (« … » en français, "…" en anglais, clé `ui_quoted`).
+static func quoted(text: String) -> String:
+	return tf("ui_quoted", [text], "« %s »")
+
+
+## M15 (lot U) : « LOCUTEUR : « réplique » » selon la langue (`ui_speaker_quoted`).
+static func speaker_quoted(speaker: String, text: String) -> String:
+	return tf("ui_speaker_quoted", [speaker, text], "%s : « %s »")
 
 
 ## Libellé d'un champ (clé `label_key`, repli : identifiant en capitales).

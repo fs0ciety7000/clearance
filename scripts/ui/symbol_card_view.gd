@@ -45,7 +45,9 @@ func setup(p_symbol_id: StringName) -> void:
 	_title.custom_minimum_size.x = 120.0
 	column.add_child(_title)
 	column.add_child(ScreenBase.wrapped(UiText.t(key + "_text", ""), &"BodySmall"))
-	column.add_child(ScreenBase.chip(UiText.t(key + "_action", "À SIGNALER"), UiIcon.Kind.WARNING, Palette.STATE_AMBER))
+	# M15 (lot U) : consigne repliée (jamais coupée au bord du Rulebook au Deck).
+	column.add_child(ScreenBase.wrap_chip(ScreenBase.chip(UiText.t(key + "_action", "À SIGNALER"), UiIcon.Kind.WARNING,
+			Palette.STATE_AMBER)))
 	margin.minimum_size_changed.connect(_sync_min_size.bind(margin))
 	_sync_min_size(margin)
 

@@ -13,6 +13,10 @@ extends Resource
 @export var code: String = ""
 ## Préfixe du N° ID : `"HG-"` + chiffre d'origine.
 @export var id_prefix: String = ""
+## Secteurs d'origine (champ « Zone » de l'Attestation d'asile, onglet
+## Origines du Rulebook) : textes **français** des données, tirés par le
+## générateur sans dépendre de la langue (D-224) ; affichés traduits par la clé
+## `sector_key(i)` (M15, lot U).
 @export var origin_sectors: PackedStringArray = []
 ## Sceau / emblème (asset, M4+) ; null en M2.
 @export var seal_texture: Texture2D = null
@@ -44,3 +48,10 @@ func matches_citizen_id(citizen_id: String) -> bool:
 func get_id_block_digit() -> int:
 	var digit: String = id_prefix.right(1)
 	return digit.to_int() if digit.is_valid_int() else -1
+
+
+## M15 (lot U) : clé de traduction du secteur `index` (0…) de `origin_sectors`
+## — `faction_<id>_sector_<n>`, n = index + 1. Affichage seulement : la valeur
+## stockée dans le passager reste le texte des données.
+func sector_key(index: int) -> String:
+	return "faction_%s_sector_%d" % [id, index + 1]

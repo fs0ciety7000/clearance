@@ -147,6 +147,22 @@ static func catalog_rule(rule_id: StringName) -> Rule:
 	return catalog().rules.get(rule_id, null)
 
 
+## M15 (lot U) : secteur d'origine `value` (texte des données, en français,
+## `FactionDef.origin_sectors` / `Passenger.origin_sector`) dans la langue
+## courante, par la clé `FactionDef.sector_key` — la même traduction que
+## l'onglet Origines (`faction_<id>_sectors`, cohérence testée). Un texte qui
+## n'est pas un secteur connu est rendu tel quel. Aucune logique ne compare ces
+## textes : la génération et les cas restent identiques dans les deux langues.
+static func sector_text(value: String) -> String:
+	if value.is_empty():
+		return value
+	for faction: FactionDef in catalog().factions.values():
+		var index: int = faction.origin_sectors.find(value)
+		if index >= 0:
+			return UiText.t(faction.sector_key(index), value)
+	return value
+
+
 ## Codes employeurs (R25) triés par code : `[code, employeur]`.
 static func employer_rows() -> Array[PackedStringArray]:
 	var rows: Array[PackedStringArray] = []
@@ -283,7 +299,8 @@ static func _origins(belt_search: bool = false) -> Control:
 		var digit: String = faction.id_prefix.right(1)
 		var title: String = "%s · %s" % [faction.code, UiText.t(faction.name_key, String(faction.id))]
 		# M15 : secteurs d'origine (texte de données, en français) traduisibles
-		# par la clé `faction_<id>_sectors` ; repli : le texte des données.
+		# par la clé `faction_<id>_sectors` ; repli : le texte des données. Les
+		# documents affichent chaque secteur par `sector_text` (mêmes mots).
 		var sectors: String = UiText.t("faction_%s_sectors" % faction.id, " · ".join(faction.origin_sectors))
 		var side: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
 		side.add_child(ScreenBase.label(UiText.t("rb_origins_block", "BLOC ID"), &"DocFieldLabel"))

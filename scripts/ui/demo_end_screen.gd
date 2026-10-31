@@ -69,7 +69,7 @@ func _build() -> void:
 	box.add_child(stats)
 	stats.add_child(stat_tile(UiText.t("end_balance", "SOLDE FINAL"), ScreenBase.credits(final_credits),
 			UiText.t("end_balance_detail", "Banque Aurel"), DS.ACCENT_YELLOW))
-	stats.add_child(stat_tile(UiText.t("end_compliance", "INDICE DE CONFORMITÉ"), "%d %%" % roundi(compliance * 100.0),
+	stats.add_child(stat_tile(UiText.t("end_compliance", "INDICE DE CONFORMITÉ"), percent(roundi(compliance * 100.0)),
 			"", DS.TEXT_PRIMARY))
 	if household != null:
 		var alive: int = 0

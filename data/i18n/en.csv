@@ -139,7 +139,7 @@ pp_unlocked,QUESTION UNLOCKED · DISCREPANCY %d
 pp_idle,BOOTH OPEN · QUEUE
 pp_idle_hint,Press the intercom (N) to call the next passenger forward.
 pp_unverified,IDENTITY NOT VERIFIED
-pp_arriving_hint,The passenger is approaching. Their documents will slide through the slot when they arrive.
+pp_arriving_hint,The passenger is approaching. Their papers come through the slot on arrival.
 pp_visor_hint,Face masked: ask them to remove the visor (Q).
 qp_passenger,PASSENGER
 qp_waiting,WAITING
@@ -330,7 +330,7 @@ spk_okonkwo,OKONKWO · BOOTH 03
 spk_ilan,ILAN · PETREL BLOCK
 spk_hall,NEWS IN BRIEF · BOOTH HALL
 spk_treasury,CONSORTIUM · STAFF TREASURY
-msg_consortium_advance,Payment notice: a settling-in advance of %d ₵ has been credited to your Banque Aurel account. The Consortium invests in its officers; it counts on their output. Repayment terms will be communicated to you in due course.
+msg_consortium_advance,Payment notice: a settling-in advance of ₵%d has been credited to your Banque Aurel account. The Consortium invests in its officers; it counts on their output. Repayment terms will be communicated to you in due course.
 br_advance_line,ADVANCE CREDITED
 msg_okonkwo_day01,"Welcome to 04, colleague. Two rules today, not one more. The intercom (N) moves the queue; Space is the Inspection key: one field, then another. A pinned discrepancy is your proof — no proof, no denial. Stamps are held down: V to approve, X to deny."
 msg_okonkwo_day02,"We look at faces now. Compare the passenger to their photo: a haircut, a beard, a cap, those change. Face shape, eyes, complexion, they don't."
@@ -339,7 +339,7 @@ msg_family_day01,"Good luck on your first day. Noa drew your badge on the fogged
 msg_family_ok,"Everyone's eaten, the cabin is warm-ish. Dora says you take after her son: stubborn and punctual."
 msg_family_cold,"It was cold last night. Noa slept in her coat, and the recycler whistles when the heating's off."
 msg_family_hungry,We split the last spirulina loaf. We'll manage today… not two days running.
-msg_family_noa_sick,"Noa is coughing, a grey cough that won't go away. The Meridian Clinic wants 15 ₵ for the medicine."
+msg_family_noa_sick,"Noa is coughing, a grey cough that won't go away. The Meridian Clinic wants ₵15 for the medicine."
 msg_family_sick,"Someone's sick at home. Without medicine, it'll get worse."
 msg_family_grave,"It's serious. We need medicine tonight, whatever it costs."
 msg_family_lost,The cabin is too quiet. I don't know how else to say it.
@@ -389,7 +389,7 @@ cit_interview_skipped,Interview skipped
 cit_abusive_detention,Wrongful detention
 cit_undocumented_detention,Detention procedure
 cit_irregular_entry_desc,Entry approved despite a breach of today's regulations.
-cit_unjustified_denial_desc,Denial of a passenger whose papers were in order.
+cit_unjustified_denial_desc,Denied a passenger whose papers were in order.
 cit_undocumented_denial_desc,"Correct denial, but no pinned discrepancy supports it."
 cit_face_unchecked_desc,Approval of a passenger whose face remained masked.
 cit_interview_skipped_desc,Tycho national stamped without an interview.
@@ -404,11 +404,11 @@ sum_unprocessed,%d not processed · lost earnings
 sum_unprocessed_one,%d not processed · lost earnings
 sum_queue_empty,Queue cleared before the siren
 sum_correct,CORRECT
-sum_compliance,Compliance %d %%
+sum_compliance,Compliance %d%%
 sum_citations,CITATIONS
 sum_citation_detail,%d warn. · %d fine(s)
 sum_wage,WAGE
-sum_wage_detail,%d ₵ per correct case
+sum_wage_detail,₵%d per correct case
 sum_fines,FINES
 sum_fines_detail,Docked from pay
 sum_net,NET TODAY
@@ -416,8 +416,8 @@ sum_net_detail,Paid tonight by Banque Aurel
 sum_ledger,BOOTH LEDGER
 sum_errors,%d ERRORS
 sum_errors_one,%d ERROR
-sum_unprocessed_row,%d passengers still queuing at the siren — 0 ₵
-sum_unprocessed_row_one,%d passenger still queuing at the siren — 0 ₵
+sum_unprocessed_row,%d passengers still queuing at the siren — ₵0
+sum_unprocessed_row_one,%d passenger still queuing at the siren — ₵0
 sum_ok,Correct
 sum_detail_missed,Missed: %s
 sum_detail_undocumented,No discrepancy pinned for: %s
@@ -620,7 +620,7 @@ msg_insp_day05_complaint,"A C-1 citizen has filed a complaint against Booth 04 f
 msg_echo_sc08_passed,In brief: a laid-off Tycho worker who entered yesterday with no employer was arrested at dormitory 12. Reminder: the WORK purpose requires an employer.
 msg_okonkwo_day05,"Bio-scan for everyone. Check the issuer: ""Meridian"", not ""Meridiane"". Yesterday I let a grey cough through. I'm not a doctor. Neither are you."
 msg_luc_day05,A woman will come today. Her strip ends in 07. She treats the children of Ring C. Yours too.
-msg_ilan_day05,"There was 20 ₵ extra last night. I'm not asking where it came from. I'd rather know, all the same."
+msg_ilan_day05,"There was ₵20 extra last night. I'm not asking where it came from. I'd rather know, all the same."
 day06_directive_title,Directive No. 06 — Implants
 day06_intro,Delegation No. 06: the dock scan bay is dismantled. Booth 04 compares visible implants with declared implants (Implants tab). MIL- prohibited without a Transit Authority waiver; DER-19 always prohibited. Tharsis nationals admitted at the booth.
 day06_slogan,The Consortium sees. The Consortium protects.
@@ -628,9 +628,9 @@ msg_echo_sc09_doctor_passed,In brief: an unregistered practitioner has reportedl
 msg_echo_sc09_doctor_refused,In brief: Grey Fever is spreading in the Ring C dormitories. Meridian reminds you that only an approved bio-scan protects.
 msg_okonkwo_day06,"Tharsians today. I've had them across from me before, during the Salt War. A MIL implant with a valid waiver goes through. The rule, nothing but the rule — for once, it's on their side."
 msg_ilan_day06,Someone paid the heating yesterday. The receipt has a little drawing on it. Noa slept without coughing. I'm not asking questions.
-msg_ilan_day06_noa,Noa's cough has changed colour. The clinic wants a bio-scan tonight. 25 ₵.
+msg_ilan_day06_noa,Noa's cough has changed colour. The clinic wants a bio-scan tonight. ₵25.
 day07_directive_title,Directive No. 07 — Holding
-day07_intro,"The Continuity Guard issues Booth 04 a HOLDING stamp. Any identity fraud is placed in holding. Vigilance bonus: 5 ₵ per justified holding. The Bureau releases the ""Subversive Symbols"" tab."
+day07_intro,"The Continuity Guard issues Booth 04 a HOLDING stamp. Any identity fraud is placed in holding. Vigilance bonus: ₵5 per justified holding. The Bureau releases the ""Subversive Symbols"" tab."
 day07_slogan,"Vigilance today, Continuity tomorrow."
 msg_okonkwo_day07_test_passed,"You had a visitor yesterday. The guy with the fat envelope? Ravel, from Inspection. He does it to all the new ones. You did right."
 msg_okonkwo_day07_test_failed,"Yesterday's guy, with the fat envelope? Ravel, from Inspection. He never lets a file go. Tidy your drawer."
@@ -701,7 +701,7 @@ sc09_noor_present,‹Tal ka nesu.› One's missing. I know which.
 sc09_noor_purpose,To heal. The Grey Fever is in your dormitories. Meridian doesn't come down to Ring C.
 sc09_noor_stay,Until the children stop coughing.
 sc09_noor_origin,"Tycho. I treated the first wave there, in 2183."
-sc09_noor_about_rule_violated,A Meridian bio-scan costs 25 ₵ and three days' wait. I'm short on both.
+sc09_noor_about_rule_violated,A Meridian bio-scan costs ₵25 and three days' wait. I'm short on both.
 sc09_noor_confront,"Look at the end of my strip. You can read, I can tell."
 sc09_noor_exit_approve,"Petrel Block, that's yours, right? I'll drop by tomorrow night."
 sc09_noor_exit_deny,I understand. The children won't.
@@ -788,7 +788,7 @@ sc19_wren_present,‹Tal ka nesu.› The stamp is old. So am I.
 sc19_wren_purpose,Selling sailcloth. And seats. Not at the same time.
 sc19_wren_origin,Nowhere. Very handy: nobody can send you back there.
 sc19_wren_about_rule_violated,"The old seal? We bought it the day before yesterday. News travels fast, here."
-sc19_wren_note,"""Dock 6, Basse-Marée, Friday 05:00. Three seats, 40 ₵. Old women cough badly adrift. Four seats, if you insist."""
+sc19_wren_note,"""Dock 6, Basse-Marée, Friday 05:00. Three seats, ₵40. Old women cough badly adrift. Four seats, if you insist."""
 sc19_wren_exit_deny,I thought as much. Keep the card. Windows can be left behind.
 sc19_wren_exit_approve,Thank you. The card still stands.
 sc20_arkady_arrival,"Hello, Booth. Lovely day for breathing."
@@ -826,7 +826,7 @@ sc22_mira_exit_deny,"Another window, then. You've just cost me time we don't hav
 sc22_mira_exit_detain,"[to the guards, calm] I know the way. Glory to the Consortium… as they say."
 evt_d04_birthday_title,NINE YEARS OLD
 evt_d04_birthday_text,Noa has decorated the bunk with ration labels. She asks for nothing. She watches the door.
-evt_d04_birthday_opt_gift,Buy a hydroponic orange (5 ₵)
+evt_d04_birthday_opt_gift,Buy a hydroponic orange (₵5)
 evt_d04_birthday_opt_none,"Promise her ""next year"""
 evt_d04_birthday_res_gift,"She kept the peel in her pocket all night, for the smell."
 evt_d04_birthday_res_none,"""Next year,"" Noa repeated. She wrote it on the fogged-up window."
@@ -835,19 +835,19 @@ evt_d05_heat_text,"Under the door: a receipt for tonight's heating, paid, and a 
 evt_d05_heat_opt_accept,Keep the receipt (free heating tonight)
 evt_d05_heat_opt_refuse,Burn it and pay yourself
 evt_d05_heat_res_accept,The cabin is warm. Noa falls asleep without coughing. Someone knows where you live.
-evt_d05_heat_res_refuse,The receipt burns fast. The heating still costs 6 ₵.
+evt_d05_heat_res_refuse,The receipt burns fast. The heating still costs ₵6.
 evt_d06_bioscan_title,THE GREY COUGH
-evt_d06_bioscan_text,The Meridian Clinic demands a bio-scan for Noa: suspected Grey Fever. 25 ₵.
+evt_d06_bioscan_text,The Meridian Clinic demands a bio-scan for Noa: suspected Grey Fever. ₵25.
 evt_d06_bioscan_text_free,"A knock. It's the doctor from the booth, bag in hand. ""I told you so."" She examines Noa."
-evt_d06_bioscan_opt_pay,Pay for the bio-scan (25 ₵)
-evt_d06_bioscan_opt_free,Let the doctor see to it (0 ₵)
+evt_d06_bioscan_opt_pay,Pay for the bio-scan (₵25)
+evt_d06_bioscan_opt_free,Let the doctor see to it (₵0)
 evt_d06_bioscan_opt_skip,Wait (Noa falls ill)
 evt_d06_bioscan_res_pay,Negative. A bronchitis from the cold. Noa keeps the certificate under her pillow.
 evt_d06_bioscan_res_free,"""No Grey Fever. Warmth, broth."" She refuses your credits."
 evt_d06_bioscan_res_skip,"Noa coughs all night. The bio-scan will come back on Tuesday, dearer in worry."
 evt_d07_school_title,NOTICE FROM THE RING C SCHOOL
-evt_d07_school_text,"""Your child reproduced a subversive symbol (firefly) in her exercise book. Educational fine: 10 ₵."""
-evt_d07_school_opt_pay,Pay the fine (10 ₵)
+evt_d07_school_text,"""Your child reproduced a subversive symbol (firefly) in her exercise book. Educational fine: ₵10."""
+evt_d07_school_opt_pay,Pay the fine (₵10)
 evt_d07_school_opt_ignore,Don't pay
 evt_d07_school_res_pay,"Noa rubbed out the firefly. She drew another one, tiny, under her bunk."
 evt_d07_school_res_ignore,The school forwards the notice to the Bureau. Your staff number is on it.
@@ -855,16 +855,16 @@ evt_d07_lumika,"Ilan, to Noa: ""‹Lumika› means firefly. Don't tell anyone.""
 evt_d07_tag_title,THE CABIN DOOR
 evt_d07_tag_text,"Painted in magenta on your door: ""04 PUTS OUT FIREFLIES"". Noa read it before you did."
 evt_d08_neighbor_title,CABIN 12
-evt_d08_neighbor_text,"Mrs Halvorsen, the neighbour, has been hiding a young Tharsian since the bombing. Reporting bonus: 10 ₵."
-evt_d08_neighbor_opt_denounce,Report them (+10 ₵)
-evt_d08_neighbor_opt_help,Give them a meal (10 ₵)
+evt_d08_neighbor_text,"Mrs Halvorsen, the neighbour, has been hiding a young Tharsian since the bombing. Reporting bonus: ₵10."
+evt_d08_neighbor_opt_denounce,Report them (+₵10)
+evt_d08_neighbor_opt_help,Give them a meal (₵10)
 evt_d08_neighbor_opt_ignore,See nothing
 evt_d08_neighbor_res_denounce,The Guard came at 23:00. Mrs Halvorsen no longer says hello.
 evt_d08_neighbor_res_help,"The boy ate standing up, in silence. He left a magenta thread on the plate."
 evt_d08_neighbor_res_ignore,"Through the partition, someone prays in Tharsian. You turn up the recycler."
 evt_d08_package_title,A PARCEL WITHOUT A FIREFLY
 evt_d08_package_text,"A hard-eyed man: ""Keep this for two days. Twenty credits. It's not the Watchers asking."""
-evt_d08_package_opt_accept,Hide the parcel (+20 ₵)
+evt_d08_package_opt_accept,Hide the parcel (+₵20)
 evt_d08_package_opt_refuse,Shut the door
 evt_d08_package_res_accept,"The parcel is heavy, lukewarm, and makes no sound. It's under Noa's bunk."
 evt_d08_package_res_refuse,"He shrugs. ""Other doors will open."""
@@ -879,16 +879,16 @@ evt_d09_ilan_res_support,Ilan holds you for a long time. Noa pretends to be asle
 evt_d09_ilan_res_forbid,Ilan puts the recycler key on the table. It stays there all night.
 evt_d09_ilan_res_denounce,The Guard knocks at 4 a.m. Ilan doesn't struggle. Noa won't speak to you any more.
 evt_d09_okonkwo_title,DEPOSITION — BOOTH 03
-evt_d09_okonkwo_text,"Ravel lays down a form: ""Holding rate: zero. Presumed sympathies. Your signature is enough. Bonus: 15 ₵."""
-evt_d09_okonkwo_opt_sign,Sign (+15 ₵)
+evt_d09_okonkwo_text,"Ravel lays down a form: ""Holding rate: zero. Presumed sympathies. Your signature is enough. Bonus: ₵15."""
+evt_d09_okonkwo_opt_sign,Sign (+₵15)
 evt_d09_okonkwo_opt_refuse,Refuse to sign
 evt_d09_okonkwo_opt_warn,"Refuse, then warn Okonkwo tonight"
 evt_d09_okonkwo_res_sign,The signature fits on one line. The form leaves with Ravel.
 evt_d09_okonkwo_res_refuse,"""Noted,"" says Ravel. He doesn't say what."
 evt_d09_okonkwo_res_warn,"At 1 a.m. you knock at Cormorant Block. Okonkwo opens, already dressed. ""I know. Thank you."""
 evt_d09_drift_title,"DOCK 6, FRIDAY 05:00"
-evt_d09_drift_text,"Wren's card is on the table. Three seats on the Basse-Marée, four if you insist. 40 ₵."
-evt_d09_drift_opt_buy,Buy the seats (40 ₵)
+evt_d09_drift_text,"Wren's card is on the table. Three seats on the Basse-Marée, four if you insist. ₵40."
+evt_d09_drift_opt_buy,Buy the seats (₵40)
 evt_d09_drift_opt_keep,"Keep the card, without paying"
 evt_d09_drift_res_buy,"Wren counts the credits twice. ""Friday. Not a minute late."""
 evt_d09_drift_res_keep,"The card joins Dora's badge, in your jacket pocket."
@@ -968,7 +968,7 @@ hh_state_detained,IN HOLDING
 ev_slipped_item_keep,KEEP
 ev_slipped_item_return,RETURN
 ev_slipped_item_report,HAND TO THE GUARD
-wb_envelope_label,ENVELOPE · %d ₵
+wb_envelope_label,ENVELOPE · ₵%d
 wb_note_label,FOLDED NOTE
 wb_dock_card_label,DOCK CARD
 rb_tab_wanted,Wanted notice
@@ -980,10 +980,10 @@ evt_d04_money,"Ilan counts the credits on the table twice, without a word."
 evt_d05_ilan_night,"Ilan went out at midnight. ""A repair job."" Their hands smelled of ozone when they came back."
 evt_d08_dora_title,SHAFT 9
 evt_d08_dora_text,"Dora talks for a long time, between puffs of oxygen. Forty-one days of strike, the air cut off, Shaft 9. A Vasquez-Orlov held her hand."
-evt_d08_sabotage,The cabin's recycler has been forced. Emergency repair: heating costs 12 ₵ tonight.
+evt_d08_sabotage,The cabin's recycler has been forced. Emergency repair: heating costs ₵12 tonight.
 evt_d08_kwame,"Ilan saw a little boy alone in the Hall, calling for his mother. Ilan couldn't do anything."
 evt_d09_audit_arrest,"Ravel closes your file. ""Stand up, please."" Two guards are waiting in the corridor."
-evt_d09_audit_retention,"""30 ₵ deducted. File open. Don't give me a reason to come back."""
+evt_d09_audit_retention,"""₵30 deducted. File open. Don't give me a reason to come back."""
 evt_d09_audit_clean,"""Nothing to report. That's rare. Don't spoil it tomorrow."""
 end_f1_title,HOLDING
 end_f2_title,REASSIGNMENT
@@ -1041,7 +1041,7 @@ disc_symbol_match,Mark listed in the subversive symbols bulletin: documented rep
 hh_ev_ilan_detained,Ilan is placed in holding in Ring B. Their bunk stays made.
 evt_d09_audit_title,THE BOOTH 04 FILE
 evt_d08_bioscan_title,"THE GREY COUGH, AGAIN"
-evt_d08_soute_meds,"A packet under the door, from dock 6: medicine from the Hold costs 8 ₵ tonight."
+evt_d08_soute_meds,"A packet under the door, from dock 6: medicine from the Hold costs ₵8 tonight."
 wanted_generated_reason,Document trafficking. Dock 5 smuggling ring.
 rb_tab_implants,Implants
 rb_tab_symbols,Subversive symbols
@@ -1094,7 +1094,7 @@ rb_implant_mil_status,PROHIBITED WITHOUT WAIVER
 rb_symbols_intro,Continuity Bureau bulletin · subversive symbols found at the docks.
 rb_symbol_luciole_title,Firefly · magenta ink
 rb_symbol_luciole_text,"Small glowing insect drawn in the corner of a document, visible under the loupe. Mark of the Firefly network."
-rb_symbol_luciole_action,TO BE REPORTED · DOCUMENTED DETENTION
+rb_symbol_luciole_action,REPORT · DOCUMENTED DETENTION
 doc_mark_label,Mark in the corner of the document
 rb_seals_intro,Seals in force as of 21.03.2187: any old model is denied.
 rb_wanted_intro,By name or by face: holding. Inspection Mode: compare the notice with the passenger's face or papers.
@@ -1374,7 +1374,7 @@ sc46_wren_arrival_stayed,"You stayed, on Friday. I'm leaving Monday. I won't ask
 sc46_wren_present,"‹Tal ka nesu.› New pass. New seal. I learned, you see."
 sc46_wren_purpose,Selling sailcloth. And four seats. Still not at the same time.
 sc46_wren_origin,"Nowhere. You breathe better there than here, this week."
-sc46_wren_note,"""Dock 6, Basse-Marée, Monday 02.04, 05:00. Four seats, 60 ₵. After that, dock 6 closes to freighters."""
+sc46_wren_note,"""Dock 6, Basse-Marée, Monday 02.04, 05:00. Four seats, ₵60. After that, dock 6 closes to freighters."""
 sc46_wren_exit_approve,"Monday, 05:00. After that, the Consortium closes dock 6."
 sc46_wren_exit_deny,Denied by the book? All the more reason to leave. Monday.
 sc47_kasimir_arrival,"Hello, Booth. I've heard about you. Good or bad, depends who's talking."
@@ -1434,8 +1434,8 @@ day11_intro,"The Rebalancing Commission now runs the Hall. Breathing quota: 5 no
 day11_slogan,Every breath is counted.
 msg_comm_day11,"I am Isadora Beaumont. The station lost an hour of air last night. We are going to pay it back, together, booth by booth."
 msg_comm_day11_failed,I am Isadora Beaumont. The night was calm thanks to vigilant booths. Calm has a cost: we are going to share it out.
-msg_cons_day11_levy,"Rebalancing Levy: 30% of staff savings above 40 ₵, deducted tonight. The Consortium thanks you for your contribution."
-msg_cons_day11_albedo,"The Commission is reopening the Albedo file to shed light on the night of the 22nd: all information will be paid for. Tonight, Rebalancing Levy: 30% of savings above 40 ₵."
+msg_cons_day11_levy,"Rebalancing Levy: 30% of staff savings above ₵40, deducted tonight. The Consortium thanks you for your contribution."
+msg_cons_day11_albedo,"The Commission is reopening the Albedo file to shed light on the night of the 22nd: all information will be paid for. Tonight, Rebalancing Levy: 30% of savings above ₵40."
 msg_luc_day11_opened,One hour. Ring C breathed for one hour. The children opened the portholes. We will do it again.
 msg_luc_day11_aborted,The valve closed again too fast. We were short of hands. We'll be less short.
 msg_brul_day11,[black ink] They have Mira. The Watchers pray. We count. — K.
@@ -1462,7 +1462,7 @@ msg_sato_day13,"Colleague's tip: Drifters are named after their freighter. If th
 msg_ilan_day13_dmitri,The new one at recycler 3 has a metal hand. He said hello. I didn't know what to say back.
 msg_ilan_day13,Noa asks whether a freighter can have a surname. I told her some have nothing else.
 day14_directive_title,Directive No. 14 — Firmware and assistance
-day14_intro,"Ondine Synaptique reminds you: every NX- shunt carries an update less than 90 days old (Firmware field on the card, Implants tab). The Commission offers booths the ACV-2 Compliance Assistant (rental: 5 ₵ per evening)."
+day14_intro,"Ondine Synaptique reminds you: every NX- shunt carries an update less than 90 days old (Firmware field on the card, Implants tab). The Commission offers booths the ACV-2 Compliance Assistant (rental: ₵5 per evening)."
 day14_slogan,The Consortium sees. The Consortium helps you see.
 msg_echo_kerr_mixup,In brief: two namesake nationals reported in a crossed-identity situation in Ring D. The Bureau is opening a form.
 msg_sato_day14_kerr,Three Ren Kerrs yesterday? I only had two. The third must have got lost. Or found.
@@ -1536,14 +1536,14 @@ evt_d10_promo_text,"""Your vigilance is noted. C-2 promotion on probation until 
 evt_d10_drift_title,"DOCK 6, TOMORROW 05:00"
 evt_d10_drift_text,"The seats are paid for. Wren left a note: ""05:00. Not a minute late."" The cabin fits into two bags."
 evt_d10_drift_opt_board,Board (end of the campaign)
-evt_d10_drift_opt_stay,Stay. Wren will refund you 20 ₵
+evt_d10_drift_opt_stay,Stay. Wren will refund you ₵20
 evt_d10_drift_res_board,You close the Petrel Block door without locking it.
-evt_d10_drift_res_stay,"Wren refunds 20 ₵ without a word. In the morning, the Basse-Marée leaves without you."
+evt_d10_drift_res_stay,"Wren refunds ₵20 without a word. In the morning, the Basse-Marée leaves without you."
 evt_d11_levy_title,REBALANCING LEVY
-evt_d11_levy_text,"""30% of your savings above 40 ₵: %d ₵. Every breath is counted."""
+evt_d11_levy_text,"""30% of your savings above ₵40: ₵%d. Every breath is counted."""
 evt_d11_meter_title,THE METER
-evt_d11_meter_text,"A technician fits an air meter to your recycler. Installation: 10 ₵. Without a meter, every ration is billed at the flat rate (+1 ₵)."
-evt_d11_meter_opt_pay,Pay for installation (10 ₵)
+evt_d11_meter_text,"A technician fits an air meter to your recycler. Installation: ₵10. Without a meter, every ration is billed at the flat rate (+₵1)."
+evt_d11_meter_opt_pay,Pay for installation (₵10)
 evt_d11_meter_res_pay,The meter blinks with every breath. Noa plays at making it blink as little as possible.
 evt_d11_meter_opt_refuse,Refuse the meter
 evt_d11_meter_res_refuse,"The technician ticks ""flat rate"". He looks pleased: the flat rate pays better."
@@ -1554,15 +1554,15 @@ evt_d11_petition_res_sign,Your name is the seventh. The rain keeps falling.
 evt_d11_petition_opt_ignore,Don't sign
 evt_d11_petition_res_ignore,"The petition passes under your door, then under the next one."
 evt_d12_job_title,A JOB FOR ILAN
-evt_d12_job_text,"The Commission is hiring ""rationing technicians"": fitting meters in Ring C cabins. 8 ₵ an evening."
+evt_d12_job_text,"The Commission is hiring ""rationing technicians"": fitting meters in Ring C cabins. ₵8 an evening."
 evt_d12_job_opt_accept,"""Take it."""
 evt_d12_job_res_accept,"Ilan fits meters at the neighbours'. In the evening, Ilan doesn't talk about the neighbours any more."
 evt_d12_job_opt_refuse,"""Not that job."""
 evt_d12_job_res_refuse,"Ilan mends their old recycler overalls, without a word."
 evt_d12_bail_title,THE BAIL
-evt_d12_bail_text,"Ring B: Ilan can be ""returned to circulation"" for 60 ₵ bail and form 9-R, to be collected at booth 9-R."
-evt_d12_bail_text_denounced,"Form 9-R asks: ""Relationship to the informant?"" The informant is you. Bail: 60 ₵."
-evt_d12_bail_opt_pay,Pay the bail (60 ₵) if affordable
+evt_d12_bail_text,"Ring B: Ilan can be ""returned to circulation"" for ₵60 bail and form 9-R, to be collected at booth 9-R."
+evt_d12_bail_text_denounced,"Form 9-R asks: ""Relationship to the informant?"" The informant is you. Bail: ₵60."
+evt_d12_bail_opt_pay,Pay the bail (₵60) if affordable
 evt_d12_bail_res_pay,"Ilan comes home at midnight, thin, with the white cough of Ring B."
 evt_d12_bail_opt_wait,Wait
 evt_d12_bail_res_wait,"Booth 9-R is closed on Saturdays. And Sundays. And Mondays, for stocktaking."
@@ -1573,11 +1573,11 @@ evt_d12_page_opt_keep,Keep it
 evt_d12_page_res_keep,"The page joins Dora's badge, in the inside pocket."
 evt_d12_page_opt_burn,Burn it
 evt_d12_page_res_burn,Forty names burn in ten seconds.
-evt_d12_page_opt_report,Hand it to the Bureau (+10 ₵)
+evt_d12_page_opt_report,Hand it to the Bureau (+₵10)
 evt_d12_page_res_report,The Bureau thanks you. It doesn't say for what.
 evt_d13_vigil_title,LITTLE VIGILANCE
-evt_d13_vigil_text,"The school launches the youth vigilance programme. Yellow armband required: 5 ₵. Noa asks whether she should ""tell about the firefly""."
-evt_d13_vigil_opt_pay,Pay for the armband (5 ₵)
+evt_d13_vigil_text,"The school launches the youth vigilance programme. Yellow armband required: ₵5. Noa asks whether she should ""tell about the firefly""."
+evt_d13_vigil_opt_pay,Pay for the armband (₵5)
 evt_d13_vigil_res_pay,"Noa wears the armband inside out. ""That way, the firefly's inside."""
 evt_d13_vigil_opt_ignore,Don't pay
 evt_d13_vigil_res_ignore,Noa is the only one without an armband. She says it's better for drawing.
@@ -1595,21 +1595,21 @@ evt_d14_names_res_write,Three pages. Dora falls asleep at name forty-one. A hund
 evt_d14_names_opt_sleep,Let her sleep
 evt_d14_names_res_sleep,"You hold her hand. The names go on, quieter, until morning."
 evt_d14_lease_title,ACV-2 COMPLIANCE ASSISTANT
-evt_d14_lease_text,"Rental: 5 ₵ per evening, deducted automatically. The box highlights expired dates and sends your verdicts to the Commission."
+evt_d14_lease_text,"Rental: ₵5 per evening, deducted automatically. The box highlights expired dates and sends your verdicts to the Commission."
 evt_d14_lease_opt_take,Rent the ACV-2
 evt_d14_lease_res_take,A technician screws on the yellow box. It blinks when you hesitate.
 evt_d14_lease_opt_decline,Decline
 evt_d14_lease_res_decline,"""As you wish. Equipped booths are faster."""
-evt_d14_noor,"The doctor from Day 5 drops by, bag in hand. ""I don't count credits. I count coughs."" Medicine at 5 ₵ tonight."
+evt_d14_noor,"The doctor from Day 5 drops by, bag in hand. ""I don't count credits. I count coughs."" Medicine at ₵5 tonight."
 evt_d15_fund_title,THE 07 COLLECTION
 evt_d15_fund_text,"The Booth 07 officer, taken away on the 20th, won't be coming back. The booths are chipping in for his family. The envelope goes from window to window."
-evt_d15_fund_opt_give,Give 10 ₵
+evt_d15_fund_opt_give,Give ₵10
 evt_d15_fund_res_give,You add ten credits and a note. Someone has drawn a firefly on the envelope.
 evt_d15_fund_opt_pass,Pass it on
 evt_d15_fund_res_pass,"The envelope goes on its way, a little lighter than you'd have liked."
 evt_d15_fund_opt_report,Hand it to the Commission
 evt_d15_fund_res_report,"""Undeclared collection."" The Commission thanks you. The windows don't."
-evt_d15_food,"Hydroponic shortage: food costs 12 ₵ from tonight. The Ring D greenhouses are ""rebalancing""."
+evt_d15_food,"Hydroponic shortage: food costs ₵12 from tonight. The Ring D greenhouses are ""rebalancing""."
 evt_d15_ilan_back,"Ilan comes back from the Hold, thinner, a valve burn on one hand. The recycler key sleeps under the pillow."
 evt_d16_call_title,THE CENTRAL RECYCLER
 evt_d16_call_text,"A note for Ilan: ""Sunday, 15:00, the Ring D central recycler. We need your hands."""
@@ -1624,14 +1624,14 @@ evt_d16_unplug_opt_unplug,Unplug it
 evt_d16_unplug_res_unplug,You put it away in the laundry bag. The little firefly goes out.
 evt_d16_unplug_opt_keep,Leave it
 evt_d16_unplug_res_keep,"It purrs. So do you, a little, to cover the noise."
-evt_d16_tariffs,"Tariff rebalancing: supplemental oxygen 15 ₵, medicine 20 ₵ per sick relative."
+evt_d16_tariffs,"Tariff rebalancing: supplemental oxygen ₵15, medicine ₵20 per sick relative."
 evt_d17_review_title,THE REBALANCING REVIEW
 evt_d17_review_arrest,"Beaumont doesn't look up. ""Booth 04 is revoked. So are you."" Two guards are waiting."
-evt_d17_review_demoted,"""Demotion confirmed. 40 ₵ deducted. You were on the list. You're not any more. Almost."""
+evt_d17_review_demoted,"""Demotion confirmed. ₵40 deducted. You were on the list. You're not any more. Almost."""
 evt_d17_review_clean,"""Nothing. You are the most boring person in this Hall. That's a compliment."""
 evt_d17_list_title,THE LUKEWARM LIST
-evt_d17_list_text,"Beaumont holds out a list: six ""lukewarm"" officers. ""Add a name or confirm one. Bonus: 15 ₵."""
-evt_d17_list_opt_sign,Confirm a name (+15 ₵)
+evt_d17_list_text,"Beaumont holds out a list: six ""lukewarm"" officers. ""Add a name or confirm one. Bonus: ₵15."""
+evt_d17_list_opt_sign,Confirm a name (+₵15)
 evt_d17_list_res_sign,"Your signature fits on one line. So does your colleague's fate, now."
 evt_d17_list_opt_refuse,Refuse
 evt_d17_list_res_refuse,"""Noted,"" says Beaumont. She has the same pen as Ravel."
@@ -1645,16 +1645,16 @@ evt_d17_file_opt_leave,Don't touch it
 evt_d17_file_res_leave,You stare at the wall. Beaumont comes back. The file hasn't moved.
 evt_d17_mira,"Midnight news: ""A detainee evaded Continuity during the Review transfers. Wanted: M. Vasquez-Orlov."""
 evt_d18_dora_title,GOING BACK TO TYCHO
-evt_d18_dora_text,"Dora has written to her sister, on Tycho. ""I want to breathe dust one last time."" The Transit-7 leaves on Sunday. Ticket: 40 ₵."
-evt_d18_dora_opt_pay,Pay for the ticket (40 ₵)
+evt_d18_dora_text,"Dora has written to her sister, on Tycho. ""I want to breathe dust one last time."" The Transit-7 leaves on Sunday. Ticket: ₵40."
+evt_d18_dora_opt_pay,Pay for the ticket (₵40)
 evt_d18_dora_res_pay,"Dora slips her badge into your pocket, not hers. ""You'll need it more than I will."""
 evt_d18_dora_opt_keep,"""Stay with us."""
 evt_d18_dora_res_keep,"""Then I'll die under your porthole. That's not so bad."" She laughs, then coughs."
 evt_d18_beaumont_obeyed,"Letter from the Commission: ""Obedience noted. Your promotion is confirmed for 01.04."""
 evt_d18_beaumont_defied,"Letter from the Commission: ""Insubordination noted. Your elder's loyalty ration is suspended."""
 evt_d19_drift_title,"DOCK 6, MONDAY 05:00"
-evt_d19_drift_text,"Wren's card: four seats on the Basse-Marée, 60 ₵. ""After Monday, dock 6 closes to freighters."""
-evt_d19_drift_opt_buy,Buy the seats (60 ₵)
+evt_d19_drift_text,"Wren's card: four seats on the Basse-Marée, ₵60. ""After Monday, dock 6 closes to freighters."""
+evt_d19_drift_opt_buy,Buy the seats (₵60)
 evt_d19_drift_res_buy,"Wren counts twice. ""Monday. Not a minute late. This time, come."""
 evt_d19_drift_opt_keep,Keep the card
 evt_d19_drift_res_keep,Two dock cards in your pocket now. Two doors you didn't take.
@@ -1668,7 +1668,7 @@ evt_d19_registre_title,THE REGISTER
 evt_d19_registre_text,"%d pages on the table. The Hall loudspeaker reads out whatever is slipped into the bulletin slot. Tomorrow, it could read 212 names."
 evt_d19_registre_opt_send,Slip the register into the slot
 evt_d19_registre_res_send,The roll goes off down the pneumatic tube with a sound like a sigh.
-evt_d19_registre_opt_surrender,Hand it to the Commission (+20 ₵)
+evt_d19_registre_opt_surrender,Hand it to the Commission (+₵20)
 evt_d19_registre_res_surrender,"Beaumont leafs through it. ""Names. So many of them."" She files them in the grey folder."
 evt_d19_registre_opt_keep,Keep it
 evt_d19_registre_res_keep,"The pages stay under Dora's badge. One day, perhaps."
@@ -1752,7 +1752,7 @@ spk_sato,SATO · BOOTH 03
 spk_sato_former,SATO · NO BOOTH
 spk_brulants,UNSIGNED · BLACK INK
 r_air_quota_title,Breathing quota
-r_air_quota_text,"Non-residents: %d entries per day. Quota reached: denial justified; any extra entry is charged to the booth (0 ₵). Exempt: Halcyon-Born, DIPLOMATIC purpose."
+r_air_quota_text,"Non-residents: %d entries per day. Quota reached: denial justified; any extra entry is charged to the booth (₵0). Exempt: Halcyon-Born, DIPLOMATIC purpose."
 r_contract_required_title,Work contract
 r_contract_required_text,"WORK purpose: Work Contract required, in the holder's name, not expired."
 r_contract_consistent_title,Employer code
@@ -1878,7 +1878,7 @@ hh_ev_ilan_back,"Ilan came back from the Hold, thinner and sick."
 hh_ev_dora_tycho,Dora has left for Tycho. Her bunk still smells of dust.
 ev_note_ration,"Unpaid: short of breath, then illness on the second night."
 ev_note_oxygen_free,Loyalty ration: provided by the Commission.
-ev_note_levy,30% of savings above 40 ₵. Deducted automatically. The Consortium thanks you.
+ev_note_levy,30% of savings above ₵40. Deducted automatically. The Consortium thanks you.
 ev_note_lease,"Deducted automatically, every evening, as long as the yellow box stays screwed to the booth."
 ev_note_inc_ilan_job,Eight credits an evening for fitting meters at the neighbours'.
 disc_revoked_match,ID No. REVOKED — the holder is no longer a citizen.
@@ -1930,11 +1930,11 @@ chapter2_recap_failed,"On 22 March, the valves didn't move. The next day, the st
 chapter2_recap_quota,"The Rebalancing Commission takes over the Hall: an entry quota per booth, a meter in every cabin."
 chapter2_saved,Game saved
 chapter2_continue,GO ON DUTY · DAY 11
-sum_overruns_detail,Beyond the quota · 0 ₵ each
+sum_overruns_detail,Beyond the quota · ₵0 each
 sum_item_overrun,CHARGED
 sum_item_quota_refusal,QUOTA DENIAL
 end_act2_chip,ACT II
-doc_third_party,SOMEONE ELSE'S DOCUMENT
+doc_third_party,THIRD-PARTY DOCUMENT
 sc40_valentin_revoked,DENIED
 sc24_dmitri_hired,DENIED
 sc16_family_split,APPROVED
@@ -2148,7 +2148,7 @@ sc72_wren_purpose,"Selling what's left of the freighter. The plating, by the kil
 sc72_wren_origin,"The Basse-Marée. Thirty years. It'll end up as footrests, apparently."
 sc72_wren_about_rule_violated,Struck from the register on Monday. Things get erased fast here. Corvo told me.
 sc72_wren_confront,I know the rule. I learned it for you. It didn't wait for me.
-sc72_wren_note,"""Thursday 12.04, 05:00, the Hold, airlock 9. No freighter: a tug. Four seats, 70 ₵. Last time. — W."""
+sc72_wren_note,"""Thursday 12.04, 05:00, the Hold, airlock 9. No freighter: a tug. Four seats, ₵70. Last time. — W."""
 sc72_wren_exit_deny,Keep the card. There's one door left. It's in the Hold.
 sc72_wren_exit_approve,‹Shen tavi.› You're cheating for a wreck. That touches me. A little.
 sc73_celeste_arrival,Hello. Nurse at the Meridian hospice. And sponsor for the one right after me.
@@ -2306,7 +2306,7 @@ msg_echo_sc58_crate,In brief: a Meridian clerk was turned away over a certificat
 msg_okafor_day24,"The Inquiry will hear Noa tomorrow morning, ""juvenile deposition"". I'll be there. What she says belongs to her. Tonight, talk to her. — A. Okafor"
 msg_ilan_day24,"Noa asked what ""witness"" means. I told her: someone who saw. She said: then I'm one."
 day25_directive_title,Directive No. 25 — Tycho rebalancing
-day25_intro,"The Tycho colony, on strike, is rebalanced: its oxygen budget is suspended. Kessler-Ashe contracts (CT-KA) of Tycho nationals: suspended. Continuity Contribution tonight: 20% of savings above 60 ₵, for Tycho's air."
+day25_intro,"The Tycho colony, on strike, is rebalanced: its oxygen budget is suspended. Kessler-Ashe contracts (CT-KA) of Tycho nationals: suspended. Continuity Contribution tonight: 20% of savings above ₵60, for Tycho's air."
 day25_slogan,Every breath must be earned. Tycho will learn.
 msg_arb_day25,The Directorate has rebalanced Tycho. The Inquiry had nothing to do with it. I mention it because I'll be asked.
 msg_tycho_day25_dora,"Air: 31 hours. We take turns breathing, children first. Dora says it's like '51. Nobody asks her to be quiet. — Y."
@@ -2395,18 +2395,18 @@ evt_d20_ilan_soute,"Ilan doesn't come home. A note: ""We're holding the recycler
 evt_d20_ilan_back,"Ilan comes home at dawn, without the key. ""We were short of hands. Again."" Then ten hours of sleep."
 evt_d20_mira_detained,"Midnight news: ""The saboteur M. Vasquez-Orlov has once again been placed in holding at Booth 04."" They don't usually write ""once again""."
 evt_d20_flat_title,AN OFFICE IN RING D
-evt_d20_flat_text,"The C-2 flat has a porthole that doesn't frost over, air and heating included. Moving costs 20 ₵. Noa would change schools."
-evt_d20_flat_opt_move,Move (20 ₵)
+evt_d20_flat_text,"The C-2 flat has a porthole that doesn't frost over, air and heating included. Moving costs ₵20. Noa would change schools."
+evt_d20_flat_opt_move,Move (₵20)
 evt_d20_flat_res_move,Noa sticks her firefly drawing on the new porthole. The porthole doesn't frost. The drawing does.
 evt_d20_flat_opt_stay,Stay at Petrel Block
 evt_d20_flat_res_stay,The neighbours don't congratulate you. They still lend you salt.
 evt_d20_drift_title,"DOCK 6, MONDAY 05:00"
 evt_d20_drift_text,"The seats are paid for. The Basse-Marée is the last freighter before dock 6 closes. Wren wrote: ""05:00. After that, nothing."""
-evt_d20_drift_text_refused,"A Drifter child hands back 30 ₵ at the door, with a note from Wren: ""Not you."""
+evt_d20_drift_text_refused,"A Drifter child hands back ₵30 at the door, with a note from Wren: ""Not you."""
 evt_d20_drift_opt_board,Board (end of the campaign)
 evt_d20_drift_res_board,You leave the Petrel Block key in the door.
-evt_d20_drift_opt_stay,Stay. Wren will refund you 30 ₵
-evt_d20_drift_res_stay,"Wren refunds 30 ₵. ""Twice. So you belong here, then."""
+evt_d20_drift_opt_stay,Stay. Wren will refund you ₵30
+evt_d20_drift_res_stay,"Wren refunds ₵30. ""Twice. So you belong here, then."""
 chapter3_title,WITNESSES
 chapter3_sub,Monday 02.04.2187 — Wednesday 11.04.2187
 chapter3_recall,"On 1 April, the station held its breath. On the 2nd, it asked who had done it."
@@ -2419,8 +2419,8 @@ evt_d21_amnesty_res_refuse,"The form stays on the table. ""Files will be process
 evt_d21_recall_title,CONTINUITY RECALL
 evt_d21_recall_text_none,"No entries charged: nothing to refund. The Arbiter ""commends your precision"". The Commission's ACV-2 is returned."
 evt_d21_loan_title,THE ARBITER'S ADVANCE
-evt_d21_loan_text,"For booths in difficulty: 30 ₵ right now, 35 ₵ deducted on Sunday. ""Continuity lends to those who repay."""
-evt_d21_loan_opt_take,Accept the advance (+30 ₵)
+evt_d21_loan_text,"For booths in difficulty: ₵30 right now, ₵35 deducted on Sunday. ""Continuity lends to those who repay."""
+evt_d21_loan_opt_take,Accept the advance (+₵30)
 evt_d21_loan_res_take,"Thirty credits, and a receipt in your name. The receipt weighs more."
 evt_d21_loan_opt_decline,Decline
 evt_d21_loan_res_decline,The form goes back. It'll come round for others.
@@ -2429,11 +2429,11 @@ evt_d22_q1_text,"""On 22 March, Mira Vasquez-Orlov was at your window. What did 
 evt_d22_q1_text_kept,"""Monday, a Valcourt envelope. 22 March, Mira Vasquez-Orlov. Let's start with the most recent."" Ravel already has both answers."
 evt_enq_opt_tell,Tell
 evt_enq_opt_silent,Stay silent
-evt_enq_opt_accuse,Accuse (+10 ₵)
+evt_enq_opt_accuse,Accuse (+₵10)
 evt_d22_drawing,Noa's drawing is pinned above the hot plate. A magenta window among the yellow ones. Noa says it's yours.
 evt_d22_corvo,"A Drifter knocks at Petrel Block: Corvo Sillage died at dock 6, sitting on his last sailcloth. He asked that the nut stay around Noa's neck."
 evt_d23_job_title,ILAN'S JOB
-evt_d23_job_text,Two offers. Tycho's recyclers are short of hands: it would mean leaving tomorrow. Ring C is looking for replacements for the strikers: 10 ₵ an evening.
+evt_d23_job_text,Two offers. Tycho's recyclers are short of hands: it would mean leaving tomorrow. Ring C is looking for replacements for the strikers: ₵10 an evening.
 evt_d23_job_opt_tycho,"""Go to Tycho."""
 evt_d23_job_res_tycho,"Ilan packs a bag. Noa slips the toy stamp into it. ""So they know who sent you."""
 evt_d23_job_opt_scab,"""Take the replacement job."""
@@ -2441,7 +2441,7 @@ evt_d23_job_res_scab,"Ilan comes back in the evening without a word. On the recy
 evt_d23_job_opt_none,"""Neither."""
 evt_d23_job_res_none,"Ilan repairs the hot plate, twice. It was working perfectly."
 evt_d23_noor,"Noor comes by at 21:00, bag in hand. ""The syrup, twice a day. And tonight's medicine is on me."""
-evt_d23_fund,"An envelope under the door: 15 ₵ and a note from booths 01 to 12. ""For 04, who needs it this time."""
+evt_d23_fund,"An envelope under the door: ₵15 and a note from booths 01 to 12. ""For 04, who needs it this time."""
 evt_d24_noa_title,NOA SUMMONED
 evt_d24_noa_text,"The Inquiry will hear Noa tomorrow, ""juvenile deposition"", in the presence of her teacher. Noa asks what she should say."
 evt_d24_noa_text_cold,"The Inquiry will hear Noa tomorrow. The teacher won't be there: ""I've been kept at the Hall."" Noa asks what she should say."
@@ -2449,25 +2449,25 @@ evt_d24_noa_opt_truth,"""What you saw."""
 evt_d24_noa_res_truth,"Noa nods. ""The open porthole, then. And the air that smelled of outside."""
 evt_d24_noa_opt_coach,Teach her what to say
 evt_d24_noa_res_coach,You rehearse three sentences. Noa repeats them. She doesn't look at you as she says them.
-evt_d24_noa_opt_keep,Keep her at home (10 ₵ fine)
+evt_d24_noa_opt_keep,Keep her at home (₵10 fine)
 evt_d24_noa_res_keep,"Noa stays in bed, delighted. The fine notice arrives before breakfast."
 evt_d24_luc,"A firefly on the letterbox: ""The Logbook is a passage list. Sponsors are doors. Thank you for holding them open."""
 evt_d25_dora_title,DORA WANTS TO TESTIFY
 evt_d25_dora_text,"Dora heard the Tycho radio. ""They're doing it again. In '51, nobody testified. I want to be heard, this time."""
 evt_d25_dora_opt_write,Help her write it
 evt_d25_dora_res_write,Four pages. Dora signs with her miner's number. She sleeps better.
-evt_d25_dora_opt_go,Go with her to the Inquiry (5 ₵)
+evt_d25_dora_opt_go,Go with her to the Inquiry (₵5)
 evt_d25_dora_res_go,Dora speaks for forty minutes. Ravel doesn't interrupt her. She comes home coughing.
 evt_d25_dora_opt_rest,"""Get some rest."""
 evt_d25_dora_res_rest,"""I'll rest afterwards,"" says Dora. She doesn't say after what."
 evt_d25_dora_letter,"Letter from Tycho: ""We take turns breathing. Children first, then the old, then everyone else. I'm one of the old: I'm skipping my turn. — Dora"""
 evt_d25_tycho_fund_title,THE TYCHO FUND
 evt_d25_tycho_fund_text,"The strike committee passes a tin can from window to window. It sounds hollow. ""For Tycho's air. The real thing."""
-evt_d25_tycho_fund_opt_give,Give 10 ₵
+evt_d25_tycho_fund_opt_give,Give ₵10
 evt_d25_tycho_fund_res_give,You add ten credits. Someone has scratched a firefly on the lid.
 evt_d25_tycho_fund_opt_pass,Pass it on
 evt_d25_tycho_fund_res_pass,"The tin moves on, a little lighter than you'd have liked."
-evt_d25_tycho_fund_opt_report,Hand it to the Guard (+10 ₵)
+evt_d25_tycho_fund_opt_report,Hand it to the Guard (+₵10)
 evt_d25_tycho_fund_res_report,"""Seditious collection."" The Guard thanks you. The windows don't."
 evt_d25_levy_title,CONTRIBUTION FOR TYCHO
 evt_d26_q2_title,THE INQUIRY · QUESTION 2
@@ -2480,24 +2480,24 @@ evt_d26_ilan_opt_hide,"""Hide."""
 evt_d26_ilan_res_hide,"Ilan leaves before dawn. Noa keeps their bunk warm, again."
 evt_d26_ilan_released,"The Inquiry has processed the files. Ilan walks home from Ring B, no form, no signature. ""Nobody asked for anything. That was almost worse."""
 evt_d27_drift_title,"THE HOLD, THURSDAY 05:00"
-evt_d27_drift_text,"Wren's card: a tug, airlock 9, Thursday 05:00. Four seats, 70 ₵. ""After that, nothing leaves that way."""
-evt_d27_drift_opt_buy,Buy the seats (70 ₵)
+evt_d27_drift_text,"Wren's card: a tug, airlock 9, Thursday 05:00. Four seats, ₵70. ""After that, nothing leaves that way."""
+evt_d27_drift_opt_buy,Buy the seats (₵70)
 evt_d27_drift_res_buy,"Wren counts once. ""Thursday. This time, I won't wait for you."""
 evt_d27_drift_opt_keep,Keep the card
 evt_d27_drift_res_keep,Three dock cards in your pocket. A collection of doors.
 evt_d27_tycho_title,ONE-WAY TO TYCHO
-evt_d27_tycho_text,"The Transit-7 leaves for Tycho on Thursday, almost empty. Tickets for the family: 30 ₵. The Directorate lets anyone who wants to leave go. Almost nobody wants to."
-evt_d27_tycho_text_dora,"The Transit-7 leaves for Tycho on Thursday. Tickets for the family: 30 ₵. Dora is already there: ""Here, at least, we know why we're short of air."""
-evt_d27_tycho_opt_buy,Take the tickets (30 ₵)
+evt_d27_tycho_text,"The Transit-7 leaves for Tycho on Thursday, almost empty. Tickets for the family: ₵30. The Directorate lets anyone who wants to leave go. Almost nobody wants to."
+evt_d27_tycho_text_dora,"The Transit-7 leaves for Tycho on Thursday. Tickets for the family: ₵30. Dora is already there: ""Here, at least, we know why we're short of air."""
+evt_d27_tycho_opt_buy,Take the tickets (₵30)
 evt_d27_tycho_res_buy,"Ilan tucks the tickets into Noa's book. Nobody says the word ""leave""."
 evt_d27_tycho_opt_keep,Stay
 evt_d27_tycho_res_keep,The tickets stay at the Transit-7 counter. It closes on Thursday at 18:00.
-evt_d27_loan,"The Arbiter's advance has fallen due: 35 ₵ deducted. The receipt comes back stamped ""SETTLED"". It still weighs as much."
+evt_d27_loan,"The Arbiter's advance has fallen due: ₵35 deducted. The receipt comes back stamped ""SETTLED"". It still weighs as much."
 evt_d28_q3_title,THE INQUIRY · QUESTION 3
 evt_d28_q3_text,"""You know some Watchers. Give me three, and your file ends there."" For once, Ravel writes nothing. He waits."
 evt_d28_q3_opt_tell,"Say: ""I know some."""
 evt_d28_q3_res_tell,"""You know some. No names."" Ravel writes one line. ""The most honest of the week."""
-evt_d28_q3_opt_accuse,Give three names (+10 ₵)
+evt_d28_q3_opt_accuse,Give three names (+₵10)
 evt_d28_q3_res_accuse,"Three names. Ravel writes them slowly, as if hoping for a crossing-out."
 evt_d28_summons,"Sato's summons is on the table, under the salt. ""Tuesday, 18:00. Bring: your memory."" Noa asks if you can forget it on purpose."
 evt_d28_radio,"Dora listens to the Tycho radio, ear pressed to the set. She doesn't speak. She counts, like in March."
@@ -2510,7 +2510,7 @@ evt_d29_deposition_res_loyal,"The Fireflies, Albedo, disorder. Montclair nods: "
 evt_d29_deposition_opt_silent,Stay silent
 evt_d29_deposition_res_silent,"You say nothing. Ravel closes the file. ""Silence is a deposition too."""
 evt_d29_verdict_arrest,"Montclair signs without looking up. ""Booth 04 is placed in holding. The Inquiry thanks you for your contribution."""
-evt_d29_verdict_blame,"""Reprimand. 30 ₵ deducted. The promotion will wait."" Ravel adds, more quietly: ""That was almost honest."""
+evt_d29_verdict_blame,"""Reprimand. ₵30 deducted. The promotion will wait."" Ravel adds, more quietly: ""That was almost honest."""
 evt_d29_verdict_clean,"""Nothing to note."" Montclair files your folder with the others. It's just as thick."
 evt_d29_strike_title,"TOMORROW, WITH TYCHO"
 evt_d29_strike_text,"A note goes from window to window: ""Tomorrow, when the Transit-7 arrives, the lamps go out. All of them. For Tycho."""
@@ -2663,9 +2663,9 @@ inc_loan,Arbiter's advance
 inc_scab,Ilan's wage · replacement
 inc_vitres_fund,Windows fund
 inc_head_bonus,Head of booth bonus
-ev_note_contribution,Deducted automatically: 20% of savings above 60 ₵.
-ev_note_recall,5 ₵ per entry charged by the Commission (capped at 30 ₵).
-ev_note_loan,35 ₵ deducted on Sunday.
+ev_note_contribution,Deducted automatically: 20% of savings above ₵60.
+ev_note_recall,₵5 per entry charged by the Commission (capped at ₵30).
+ev_note_loan,₵35 deducted on Sunday.
 ss_pont,Tycho families admitted
 wanted_anouk_reason,Technician from the night of 01.04. Sabotage.
 wanted_kasimir3_reason,Burner network. Dock 1.
@@ -2691,11 +2691,11 @@ end_trace_pont,"%d people from Tycho came in through your window, on the last da
 msg_echo_sc62_flood,In brief: fake sponsors reported at every booth. The Bureau calls for numerical vigilance.
 msg_ilan_day25_home,Noa spent the day drawing the investigator. He has a lot of pens.
 msg_echo_sc67_refused,In brief: a Tharsian witness summoned by the Inquiry was turned away at Booth 04. The Arbiter asked why.
-evt_d21_recall_text,The Arbiter cancels the Commission's charges: %d ₵ are refunded to you for entries made at your own expense. The Commission's ACV-2 is returned.
+evt_d21_recall_text,The Arbiter cancels the Commission's charges: ₵%d are refunded to you for entries made at your own expense. The Commission's ACV-2 is returned.
 evt_d22_q1_res_tell,"You tell it. Ravel writes without looking up. ""Thank you. That's shorter than I feared."""
 evt_d22_q1_res_silent,"""Silence noted,"" says Ravel. ""It takes up less room than the rest."""
 evt_d22_q1_res_accuse,You give a name that isn't yours. Ravel copies it out with care.
-evt_d25_levy_text,"20% of your savings above 60 ₵: %d ₵. ""For Tycho's air,"" says the receipt. The same day, Tycho's air is cut off."
+evt_d25_levy_text,"20% of your savings above ₵60: ₵%d. ""For Tycho's air,"" says the receipt. The same day, Tycho's air is cut off."
 evt_d26_q2_res_tell,"You give the time, the face, the stamp. Ravel nods: ""Consistent."""
 evt_d26_q2_res_silent,"""Silence has a time too,"" says Ravel. He notes it."
 evt_d26_q2_res_accuse,"You name a colleague. Ravel notes the name, then the time, then you."
@@ -2745,7 +2745,7 @@ tag_sc81b,[a sponsor's badge clipped to the chest]
 chapter3_eyebrow,CHAPTER III · HALCYON GATE · BOOTH 04
 chapter3_numeral,III
 chapter3_continue,GO ON DUTY · DAY 21
-chapter3_climate_vanne,The Watchers hold the central recycler. The quota is suspended; the Valve's air costs 1 ₵.
+chapter3_climate_vanne,The Watchers hold the central recycler. The quota is suspended; the Valve's air costs ₵1.
 chapter3_climate_brulants,Dock 1 is still smoking. The Guard counts the windows; the Inquiry looks for culprits.
 chapter3_climate_vitres,"The booths have a committee. The quota is ""suspended for review""."
 chapter3_climate_registre,Two hundred and twelve names were read. Tycho rose up this very morning.
@@ -2753,7 +2753,7 @@ chapter3_climate_promu,"Head of booth on probation, C-2. Still at the window: th
 chapter3_climate_statu_quo,"Nothing happened, says the bulletin. Everyone knows something did."
 act_card_continue,THE NIGHT OF 1 APRIL ▶
 ev_kind_verdict,VERDICT
-ev_deposition_pending,The registry is deliberating. Your deposition first.
+ev_deposition_pending,The registry is deliberating. Your deposition comes first.
 ev_dep_arrest,HOLDING · END OF THE CAMPAIGN
 ev_dep_blame,REPRIMAND · DEDUCTED FROM BALANCE
 ev_dep_clean,NOTHING TO NOTE
@@ -3215,7 +3215,7 @@ sev_quarantine_title,MERIDIAN ALERT
 sev_quarantine_announce,Meridian Orbital Clinic: Grey Fever case aboard the Transit-7. Tycho nationals: bio-scan under 7 days old required until closing.
 sev_quarantine_rb,TYC · BIO-SCAN < 7 DAYS (MERIDIAN ALERT)
 sev_inspection_title,INSPECTION IN PROGRESS
-sev_inspection_announce,[INSPECTION voice] Surprise inspection of Booth 04 for the next five passengers. No warnings. Diligence bonus: 2 ₵ per correct decision.
+sev_inspection_announce,[INSPECTION voice] Surprise inspection of Booth 04 for the next five passengers. No warnings. Diligence bonus: ₵2 per correct decision.
 sev_inspection_announce_garde,[INSPECTION voice] Night inspection for the next five passengers. Every correct decision counts double.
 sev_inspection_end,Inspection over. The Inspector takes his notebook with him.
 sev_blackout_title,POWER CUT · EMERGENCY LIGHTING
@@ -3462,7 +3462,7 @@ garde_daily,DAILY SEED
 garde_free,FREE SEED
 garde_daily_utc,UTC · the same for everyone
 garde_daily_none,Not played yet today.
-garde_daily_record,Today's record: %d · first try: %d · %d attempt(s)
+garde_daily_record,Today's record: %d · first try: %d · attempts: %d
 garde_play_daily,PLAY THE DAILY SEED
 garde_seed_input,Watch code (6 characters)
 garde_seed_placeholder,K2Q-9TX
@@ -3477,7 +3477,7 @@ garde_no_save,No saving during a watch: the score is recorded at the end.
 garde_records,RECORDS
 garde_records_none,No watch recorded yet. The first one sets the record.
 garde_best,BEST SCORE
-garde_best_detail,passengers judged correctly
+garde_best_detail,correct verdicts
 garde_stats,WATCHES
 garde_stats_detail,%d correct verdicts · longest watch (passengers): %d
 garde_stats_line,%d watches · %d correct verdicts · longest watch (passengers): %d
@@ -3496,7 +3496,7 @@ garde_dir_title,WATCH DIRECTIVE No. %d
 garde_dir_retire,TAKEN BACK BY THE DOCKS
 garde_dir_restore,RESTORED
 garde_dir_adds,Adds: %s
-garde_dir_effect,Takes effect with the next passenger · Rulebook › Rules.
+garde_dir_effect,From the next passenger · Rulebook › Rules.
 garde_dir_ok,UNDERSTOOD
 garde_dawn,06:00. Dawn. Your relief isn't coming.
 garde_tier_toast,TIER %d
@@ -3509,7 +3509,7 @@ garde_end_title,END OF WATCH
 garde_end_reason,Three mistakes. Your relief arrives.
 garde_end_quit,Watch ended at your request.
 garde_end_eyebrow,NIGHT WATCH · %s
-garde_score_caption,SCORE · PASSENGERS JUDGED CORRECTLY
+garde_score_caption,SCORE · CORRECT VERDICTS
 garde_record_new,NEW RECORD
 garde_record_daily,TODAY'S RECORD
 garde_first_try,TODAY'S FIRST TRY · %d
@@ -3580,7 +3580,7 @@ dos_last_day,Last day: D%02d
 dos_last_world,Epilogue: %s
 dos_last_no_trace,No notable choices recorded for this game.
 dos_epi_never,Not played yet
-dos_epi_played,First played: %s · played %d times
+dos_epi_played,First played: %s · plays: %d
 dos_epi_play,PLAY
 dos_epi_replay,REPLAY
 dos_scroll_hint,scroll
@@ -3804,7 +3804,7 @@ cue_collar,[collar turned up at the nape]
 item_ol01_name,Personal effects
 item_ol01_desc,"photo, letter, child's toy"
 item_ol02_name,Credits
-item_ol02_desc,%d ₵ in tokens
+item_ol02_desc,₵%d in tokens
 item_ol03_name,Medicine
 item_ol03_desc,Meridian-labelled · prescription attached
 item_ol04_name,O₂ cartridge
@@ -3857,14 +3857,14 @@ srch_cue_bulge,bulge under jacket
 srch_cue_glove,single glove
 srch_cue_gait,stiff gait
 srch_cue_collar,collar turned up
-zone_z1,HEAD AND NECK
+zone_z1,HEAD/NECK
 zone_z2,TORSO
-zone_z3,ARMS AND HANDS
+zone_z3,ARMS/HANDS
 zone_z4,LEGS
 zone_z5,LUGGAGE
 cit_unwarranted_search,Search without grounds
 cit_search_skipped,Search skipped
-cit_unwarranted_search_desc,Passenger in order put through the arch with no established grounds.
+cit_unwarranted_search_desc,Passenger in order searched without grounds.
 cit_search_skipped_desc,Belter staying more than 7 days admitted without a search (R47).
 ss_searches,Searches · %d (without grounds · %d)
 ss_statements,Contradictory statements found · %d
@@ -3872,7 +3872,7 @@ shop_title,HALL COMMISSARY
 shop_offcatalog,OFF-CATALOGUE
 shop_owned,OWNED
 shop_new,NEW
-shop_one_per_evening,One purchase per evening. The Commissary gives no credit.
+shop_one_per_evening,One purchase per evening. No credit.
 shop_intro,"The Bureau sells tools to its officers. It sells them dear, out of your wage. It gets its money back… as they say. Have a look anyway."
 upg_ag01_name,New speech grille
 upg_ag01_desc,Answers come faster. Questions cost one second less.
@@ -4063,7 +4063,7 @@ seal_uv,UV · %s
 shop_after,Balance after purchase
 shop_empty,Nothing new at the Commissary tonight.
 shop_price_note,Price: %s
-shop_one_only,One purchase per evening: untick the other one first.
+shop_one_only,One per evening: untick the other first.
 shop_bought,BOUGHT · %s · takes effect tomorrow
 sum_item_searched,SEARCHED
 sum_item_unmotivated,SEARCH WITHOUT GROUNDS
@@ -4235,14 +4235,14 @@ opt_cinematic_manual,MANUAL
 dos_portrait_hidden,Face not seen
 opt_language_section,LANGUAGE
 opt_language,Game language
-opt_language_hint,"Text, documents, subtitles and announcements. Proper names, Tessar and codes are not translated."
+opt_language_hint,"Menus, documents, subtitles and announcements. Proper names, Tessar and codes are never translated."
 title_eyebrow,Halcyon Gate · Entry control · 2187
 title_tagline,"Every face, every hologram, every rule counts."
 demo_full_game_only,In the full game.
 demo_end_eyebrow,CLEARANCE · DEMO · DAYS 1 TO %d
-demo_end_thanks,"Thank you for holding Booth 04 for five days. The queue, for its part, never stops."
+demo_end_thanks,"Thank you for holding Booth 04 for five days. The queue, however, never stops."
 demo_end_full_title,IN THE FULL GAME
-demo_end_full_text,"Thirty days in three acts, ten endings, the Night Watch and the Officer's File. Your household, your choices and the queue carry on where the demo stops."
+demo_end_full_text,"Thirty days in three acts, ten endings, the Night Watch and the Officer's File. Your household, your choices and the queue carry on where the demo ends."
 demo_end_saves_hint,The demo game keeps its own saves; the full game starts on day 1.
 demo_end_store,SEE THE FULL GAME
 key_space,SPACE
@@ -4261,3 +4261,18 @@ faction_hal_sectors,Rings D–F · Ring C — service quarters · Halcyon Gate w
 faction_ter_sectors,Earth — Dry Zones Concordat
 faction_thr_sectors,Republics of Tharsis (Mars) · Tharsis — Olympus domes
 faction_tyc_sectors,Tycho Colony (Moon) · Tycho Crater — Kessler-Ashe dormitories
+faction_cer_sector_1,Free Federation of Ceres
+faction_cer_sector_2,Belt — prospecting stations
+faction_drv_sector_1,Drifting freighters — no home port
+faction_drv_sector_2,The Hold — freighter moorings
+faction_hal_sector_1,Rings D–F
+faction_hal_sector_2,Ring C — service quarters
+faction_hal_sector_3,Halcyon Gate walkways
+faction_ter_sector_1,Earth — Dry Zones Concordat
+faction_thr_sector_1,Republics of Tharsis (Mars)
+faction_thr_sector_2,Tharsis — Olympus domes
+faction_tyc_sector_1,Tycho Colony (Moon)
+faction_tyc_sector_2,Tycho Crater — Kessler-Ashe dormitories
+ui_quoted,"""%s"""
+ui_speaker_quoted,"%s: ""%s"""
+val_no_employer,NO EMPLOYER

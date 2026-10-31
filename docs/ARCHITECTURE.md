@@ -1763,19 +1763,21 @@ Noms propres, tessar, codes (N° ID, MRZ, employeurs), sigles de règles : jamai
 | Nombre | `1 234` (espace fine insécable) | `1,234` | `Localization.number` |
 | Crédits | `42 ₵`, `−5 ₵`, `+5 ₵` | `₵42`, `−₵5`, `+₵5` | `Localization.credits` (`ScreenBase.credits`) |
 | Solde des barres | `₵ 42` | `₵42` | `Localization.credits_tag` (barre du haut, cartes d'emplacement) |
+| Pourcentage (lot U) | `62 %` | `62%` | `Localization.percent`, `ScreenBase.percent` (recomposé à chaud) |
+| Guillemets (lot U) | `« … »`, `AGENT : « … »` | `"…"`, `OFFICER: "…"` | `UiText.quoted`, `UiText.speaker_quoted` (clés `ui_quoted`, `ui_speaker_quoted`) |
 
-Les montants écrits **dans** une phrase traduite (« 25 ₵ ») suivent le guide de style du lot B.
+Les montants écrits **dans** une phrase traduite suivent la langue (lot U) : « 25 ₵ » en français, « ₵25 » en anglais (`docs/LOCALIZATION.md` §4).
 
 ### 17.5 bis Robustesse de l'UI aux longueurs (composants partagés)
 
 Passe pseudo-loc (`docs/mockups/m15_pseudo_*`) : le guichet, les écrans de titre, Options, Nouvelle partie, Charger, briefing, bilan, pause et fin de démo tiennent à 1080p, au Deck et en texte 150 %. Corrigé dans les composants partagés :
 - **En-tête de section** (`ScreenBase.section`, texte d'appoint) : `ScreenBase.SideLabel` ne prend jamais plus que la place laissée par ses voisins (rangée bornée par son conteneur) — tronqué « … » avec infobulle au lieu d'élargir la colonne (cas réel : « Économat du Hall » de la soirée au Deck 150 %, qui poussait la colonne de droite hors de l'écran, même en français). Rangée libre (à la taille de son contenu) : texte entier. Test `tests/unit/test_m15_ui_robustness.gd`.
 - **Noms de touches et de boutons** (`InputPrompts.named`) : « ESPACE », « ÉCHAP », « ENTRÉE », « RETOUR », « MAJ », « VUE », « CROIX », « ROND », « CARRÉ » passent par des clés (`key_*`, `pad_*`) ; invites réécrites au changement de langue.
-- **Secteurs d'origine** du Rulebook (onglet Origines) : clé `faction_<id>_sectors`, repli = texte des données (`FactionDef.origin_sectors`, en français).
+- **Secteurs d'origine** du Rulebook (onglet Origines) : clé `faction_<id>_sectors`, repli = texte des données (`FactionDef.origin_sectors`, en français). Lot U : les documents les traduisent aussi (§17.9).
 - **Titre** : surtitre et devise de `main.tscn` traduits (`title_eyebrow`, `title_tagline`, repli = texte de la scène).
 - Pseudo-loc : une didascalie entre crochets (« [serre son sac] ») est du texte ; seules les vraies balises BBCode (`[b]`, `[color=…]`) sont préservées.
 
-Restent pour le lot U (écran par écran, en vrai anglais) : en-tête des documents au Deck (nom d'émetteur coupé par le n° de série), onglets du Rulebook au Deck (deuxième onglet rogné par le compteur), colonne des avis d'infraction du bilan (texte très étroit au Deck 150 %).
+Restaient pour le lot U (écran par écran, en vrai anglais) : en-tête des documents au Deck (nom d'émetteur coupé par le n° de série), onglets du Rulebook au Deck (deuxième onglet rogné par le compteur), colonne des avis d'infraction du bilan (texte très étroit au Deck 150 %) — corrigés, §17.9.
 
 ### 17.6 Polices
 
@@ -1808,3 +1810,12 @@ Inter couvre tout le texte FR / EN / pseudo-loc ; Chakra Petch (titres) n'a ni `
 | `tests/unit/test_m15_ui_robustness.gd` | texte d'appoint des en-têtes de section borné (`SideLabel`) |
 | `tests/integration/test_m15_hot_language.gd` | bascule à chaud sur les vrais écrans |
 | `tests/integration/test_m15_demo.gd` | démo bornée au J5, sauvegardes séparées, écran de fin de démo, titre |
+
+
+### 17.9 Passe anglaise (lot U) — secteurs d'origine, débordements
+
+- **Secteurs d'origine** (`FactionDef.origin_sectors`, `Passenger.origin_sector`) : aucune règle ni générateur ne les compare (`scripts/rules/`, `scripts/generation/` : tirage seulement ; seul affichage : champ « Zone » de l'Attestation d'asile, onglet Origines). Les **données restent en français** (tirage identique dans les deux langues, D-224, `build_data` inchangé) ; l'affichage est **traduit des deux côtés** : documents par `RulebookReference.sector_text(valeur)` → clé `FactionDef.sector_key(i)` = `faction_<id>_sector_<n>` (appelé par `UiText.value_text` pour un champ `truth_path = origin_sector`), Rulebook par `faction_<id>_sectors`. Test : la ligne du Rulebook est exactement la suite des secteurs, dans chaque langue ; en français, chaque clé = texte des données (`tests/unit/test_m15_origin_sectors.gd`). Un texte hors liste (cas scénarisé) est rendu tel quel. Même mécanique pour la mention « SANS EMPLOYEUR » (comparée telle quelle par R09) : `UiText.DATA_TEXT_KEYS` → `val_no_employer` à l'affichage ; les **noms** d'employeurs restent en français (D-219).
+- **Composants** (DESIGN_SYSTEM §7.15) : émetteur de document sur deux lignes (`DocumentView.ISSUER_MAX_LINES`) ; onglets du Rulebook jamais dessinés à moitié (`RulebookPanel._hide_clipped_tabs`, positions locales + valeur de défilement) ; colonne des avis d'infraction à largeur de texte (`ScreenBase.text_room`, `ShiftSummaryScreen.tickets_width`) ; consigne repliable des cartes de symbole (`ScreenBase.wrap_chip`) ; guillemets et pourcentages de la langue ; nom de zone du portique recomposé à chaud (`SearchPanel.zone_caption`, colonne des zones 256 → 280 px) ; jour du tableau de l'écran de fin par `dos_chr_first` (« J01 » / « D01 »).
+- **Clés ajoutées** (fin de `fr.csv` et `en.csv`) : `faction_{cer,drv,hal,ter,thr,tyc}_sector_<n>` (12), `ui_quoted`, `ui_speaker_quoted`, `val_no_employer`.
+- **Captures** : `bash tools/qa_pseudo_captures.sh --lang=en all` (≈ 45 écrans × 1080p / Deck / Deck texte 1,5 ; `QA_JOBS=3` en parallèle, chaque capture dans son propre `XDG_DATA_HOME` jetable) → `docs/mockups/m15_en_*` ; avant / après des écrans corrigés : `m15_en_before_*`.
+- **Tests** : `tests/integration/test_m15_en_overflow.gd` (anglais, Deck : émetteur entier, onglets jamais à moitié, colonne des avis, texte d'appoint de l'Économat entier, guillemets), `tests/unit/test_m15_origin_sectors.gd`.

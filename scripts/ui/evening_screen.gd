@@ -1082,7 +1082,7 @@ func _deposition_verdict(event: EveningEvent) -> Control:
 		var said_id: StringName = choices.get(events[i].id, &"")
 		var said: EveningOptionDef = events[i].get_option(said_id)
 		if events[i].is_choice() and said != null:
-			var quote: Label = label("« %s »" % UiText.t(said.label_key, String(said.id)), &"CaptionLabel", Palette.TEXT_SECONDARY)
+			var quote: Label = label(UiText.quoted(UiText.t(said.label_key, String(said.id))), &"CaptionLabel", Palette.TEXT_SECONDARY)
 			quote.name = "Said"
 			box.add_child(quote)
 			break
@@ -1195,7 +1195,7 @@ func _open_final_confirm(event: EveningEvent, option: EveningOptionDef) -> void:
 	var title: Label = label(UiText.t("ev_final_title", "QUITTER HALCYON ?"), &"DisplayLabel", DS.TEXT_PRIMARY)
 	title.name = "FinalTitle"
 	box.add_child(title)
-	var choice: Label = wrapped("« %s »" % UiText.t(option.label_key, String(option.id)), &"BodyStrong", Palette.STATE_AMBER)
+	var choice: Label = wrapped(UiText.quoted(UiText.t(option.label_key, String(option.id))), &"BodyStrong", Palette.STATE_AMBER)
 	choice.custom_minimum_size.x = 400.0
 	box.add_child(choice)
 	box.add_child(wrapped(UiText.t("ev_final_text", "La partie s'arrête ce soir : vous quittez Halcyon, et le Guichet 04 ne rouvrira pas pour vous."),
