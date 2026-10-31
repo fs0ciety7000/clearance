@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://bqo4oowbty8lt"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_34rlu"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_wgu4l"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_3aafy"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_mvdxr"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_rlaht"]
+
+[sub_resource type="Resource" id="pl_f1_3_resource_3"]
+script = ExtResource("3_3aafy")
+text_key = "04"
+rect = Rect2(0.47, 0.18, 0.06, 0.06)
+literal = true
+
+[sub_resource type="Resource" id="pl_f1_3_resource_1"]
+script = ExtResource("4_mvdxr")
+texture_path = "res://assets/cinematics/bg/bg_h3.png"
+
+[sub_resource type="Resource" id="pl_f1_3_resource_2"]
+script = ExtResource("4_mvdxr")
+kind = &"fig"
+texture_path = "res://assets/cinematics/fig/pl_f1_3_newcomer.png"
+rect = Rect2(0.44, 0.34, 0.12, 0.36)
+depth = 0.3
+figure_seed = 1404
+pose = &"idle"
+
+[resource]
+script = ExtResource("5_rlaht")
+id = &"pl_f1_3"
+max_act = 2
+layers = Array[ExtResource("4_mvdxr")]([SubResource("pl_f1_3_resource_1"), SubResource("pl_f1_3_resource_2")])
+labels = Array[ExtResource("3_3aafy")]([SubResource("pl_f1_3_resource_3")])
+caption_key = "cin_f1_3"
+duration_sec = 7.5
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s1"
+set_variant = &"booth04"
+lighting = &"hall"
+dominant = &"state.red"
+paint_radius_px = 6

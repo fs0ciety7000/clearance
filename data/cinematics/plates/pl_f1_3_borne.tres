@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://cax4oeyddvvhp"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_gess8"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_pepl3"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_hpvi2"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_a1feu"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_4l2av"]
+
+[sub_resource type="Resource" id="pl_f1_3_borne_resource_2"]
+script = ExtResource("3_hpvi2")
+text_key = "04"
+rect = Rect2(0.47, 0.18, 0.06, 0.06)
+literal = true
+
+[sub_resource type="Resource" id="pl_f1_3_borne_resource_1"]
+script = ExtResource("4_a1feu")
+texture_path = "res://assets/cinematics/bg/bg_h4.png"
+
+[resource]
+script = ExtResource("5_4l2av")
+id = &"pl_f1_3_borne"
+min_act = 3
+layers = Array[ExtResource("4_a1feu")]([SubResource("pl_f1_3_borne_resource_1")])
+labels = Array[ExtResource("3_hpvi2")]([SubResource("pl_f1_3_borne_resource_2")])
+caption_key = "cin_f1_3_borne"
+duration_sec = 7.5
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s1"
+set_variant = &"bornes"
+lighting = &"hall"
+dominant = &"state.red"
+paint_radius_px = 6

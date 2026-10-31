@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://dxlcakx3b6nyo"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_8e418"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_o7v4v"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_xljpe"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_u0daf"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_lusnn"]
+
+[sub_resource type="Resource" id="pl_f5s_3_resource_1"]
+script = ExtResource("4_u0daf")
+texture_path = "res://assets/cinematics/bg/bg_t1.png"
+
+[sub_resource type="Resource" id="pl_f5s_3_resource_2"]
+script = ExtResource("4_u0daf")
+kind = &"fx"
+depth = 0.4
+fx_kind = &"air"
+fx_density = 0.3
+
+[resource]
+script = ExtResource("5_lusnn")
+id = &"pl_f5s_3"
+min_act = 3
+layers = Array[ExtResource("4_u0daf")]([SubResource("pl_f5s_3_resource_1"), SubResource("pl_f5s_3_resource_2")])
+caption_key = "cin_f5s_3"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s7"
+set_variant = &"dome"
+lighting = &"dawn"
+dominant = &"accent.magenta"
+paint_radius_px = 6

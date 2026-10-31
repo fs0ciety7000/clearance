@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://co62ldkteapcn"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_bk1uj"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_4gcbc"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_burb0"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_lktdc"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_nuxfy"]
+
+[sub_resource type="Resource" id="pl_f10_3_resource_1"]
+script = ExtResource("4_lktdc")
+texture_path = "res://assets/cinematics/bg/bg_x1.png"
+
+[sub_resource type="Resource" id="pl_f10_3_resource_2"]
+script = ExtResource("4_lktdc")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f10_3_benches.png"
+rect = Rect2(0.04, 0.44, 0.92, 0.54)
+depth = 0.5
+figure_seed = 1501
+pose = &"sit"
+props = Array[StringName]([&"added_benches"])
+
+[resource]
+script = ExtResource("5_nuxfy")
+id = &"pl_f10_3"
+min_act = 3
+layers = Array[ExtResource("4_lktdc")]([SubResource("pl_f10_3_resource_1"), SubResource("pl_f10_3_resource_2")])
+caption_key = "cin_f10_3"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s8"
+set_variant = &"school"
+lighting = &"school"
+dominant = &"state.green"
+paint_radius_px = 6

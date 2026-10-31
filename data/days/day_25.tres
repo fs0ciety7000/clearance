@@ -21,6 +21,7 @@
 script = ExtResource("1_2c0he")
 text_key = "hall_j25_tycho"
 after_case = 6
+music_action = &"drop"
 
 [sub_resource type="Resource" id="d25_resource_12"]
 script = ExtResource("2_vwexb")
@@ -515,3 +516,4 @@ statement_topic_weights = Dictionary[StringName, float]({
 &"stay": 0.2
 })
 search_cue_noise_rate = 0.1
+music_tension = 2

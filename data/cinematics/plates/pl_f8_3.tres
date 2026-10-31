@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://vysfolayol6l"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_oxhdv"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_112yk"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_u36oo"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_80yss"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_asej6"]
+
+[sub_resource type="Resource" id="pl_f8_3_resource_1"]
+script = ExtResource("4_80yss")
+texture_path = "res://assets/cinematics/bg/bg_p7.png"
+
+[sub_resource type="Resource" id="pl_f8_3_resource_2"]
+script = ExtResource("4_80yss")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f8_3_hand.png"
+rect = Rect2(0.48, 0.46, 0.2, 0.3)
+depth = 0.7
+props = Array[StringName]([&"radio"])
+
+[resource]
+script = ExtResource("5_asej6")
+id = &"pl_f8_3"
+min_act = 3
+layers = Array[ExtResource("4_80yss")]([SubResource("pl_f8_3_resource_1"), SubResource("pl_f8_3_resource_2")])
+caption_key = "cin_f8_3"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s4"
+set_variant = &"radio"
+lighting = &"cabin"
+dominant = &"accent.cyan"
+paint_radius_px = 6

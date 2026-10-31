@@ -45,3 +45,4 @@ rulebook_key = "sev_stolen_ids_rb"
 list_label = &"stolen"
 list_size = 3
 garde_window_passengers = 10
+music_weight = 0.4

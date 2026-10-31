@@ -42,3 +42,4 @@ garde_changes = Array[ExtResource("1_4vn10")]([SubResource("ev_08_resource_2")])
 garde_announce_key = "sev_exemption_announce_garde"
 garde_title_key = "sev_exemption_title_garde"
 garde_rulebook_key = "sev_exemption_rb_garde"
+music_weight = 0.1

@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://ssopxdn63cd1"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_ars56"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_nbtfg"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_0ucjk"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_ey0d8"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_6mcd3"]
+
+[sub_resource type="Resource" id="pl_f10_1_resource_3"]
+script = ExtResource("3_0ucjk")
+text_key = "14:00"
+rect = Rect2(0.8, 0.08, 0.1, 0.06)
+style = &"clock"
+literal = true
+
+[sub_resource type="Resource" id="pl_f10_1_resource_1"]
+script = ExtResource("4_ey0d8")
+texture_path = "res://assets/cinematics/bg/bg_q1.png"
+
+[sub_resource type="Resource" id="pl_f10_1_resource_2"]
+script = ExtResource("4_ey0d8")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f10_1_transit7.png"
+rect = Rect2(0.2, 0.2, 0.7, 0.5)
+depth = 0.2
+props = Array[StringName]([&"transit7_hull"])
+
+[resource]
+script = ExtResource("5_6mcd3")
+id = &"pl_f10_1"
+min_act = 3
+layers = Array[ExtResource("4_ey0d8")]([SubResource("pl_f10_1_resource_1"), SubResource("pl_f10_1_resource_2")])
+labels = Array[ExtResource("3_0ucjk")]([SubResource("pl_f10_1_resource_3")])
+caption_key = "cin_f10_1"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s2"
+set_variant = &"dock2_docked"
+lighting = &"dock"
+dominant = &"state.green"
+paint_radius_px = 6

@@ -21,6 +21,7 @@
 script = ExtResource("1_4kf2j")
 text_key = "hall_j27_arbitre"
 at_minute = 600
+music_action = &"swell"
 
 [sub_resource type="Resource" id="d27_resource_47"]
 script = ExtResource("2_17beh")
@@ -31,6 +32,7 @@ script = ExtResource("1_4kf2j")
 text_key = "hall_j27_cameras"
 after_case = 3
 condition = SubResource("d27_resource_47")
+music_action = &"drop"
 
 [sub_resource type="Resource" id="d27_resource_20"]
 script = ExtResource("3_oqemj")
@@ -599,3 +601,4 @@ statement_topic_weights = Dictionary[StringName, float]({
 &"stay": 0.2
 })
 search_cue_noise_rate = 0.1
+music_tension = 2

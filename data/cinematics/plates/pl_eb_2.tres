@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://d3iq5sorda21x"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_keved"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_x3nii"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_45ru0"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_yfmoq"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_uqw8f"]
+
+[sub_resource type="Resource" id="pl_eb_2_resource_1"]
+script = ExtResource("4_yfmoq")
+texture_path = "res://assets/cinematics/bg/bg_r2.png"
+
+[sub_resource type="Resource" id="pl_eb_2_resource_2"]
+script = ExtResource("4_yfmoq")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_eb_2_council.png"
+rect = Rect2(0.14, 0.34, 0.72, 0.6)
+depth = 0.4
+figure_seed = 1521
+pose = &"sit"
+
+[sub_resource type="Resource" id="pl_eb_2_resource_3"]
+script = ExtResource("4_yfmoq")
+kind = &"fx"
+depth = 0.8
+fx_kind = &"air"
+fx_density = 0.3
+
+[resource]
+script = ExtResource("5_uqw8f")
+id = &"pl_eb_2"
+min_act = 3
+layers = Array[ExtResource("4_yfmoq")]([SubResource("pl_eb_2_resource_1"), SubResource("pl_eb_2_resource_2"), SubResource("pl_eb_2_resource_3")])
+caption_key = "cin_eb_2"
+duration_sec = 7.0
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s6"
+set_variant = &"council"
+lighting = &"recycler"
+dominant = &"world.key"
+paint_radius_px = 6

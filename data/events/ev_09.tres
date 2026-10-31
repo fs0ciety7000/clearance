@@ -53,3 +53,4 @@ override_profiles = Array[Dictionary]([{
 "label_key": "sev_contraband_alert_transit",
 "purposes": [&"transit"]
 }])
+music_weight = 0.5

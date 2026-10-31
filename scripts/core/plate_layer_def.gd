@@ -14,6 +14,12 @@ const KIND_MID: StringName = &"mid"
 const KIND_FIG: StringName = &"fig"
 const KIND_FX: StringName = &"fx"
 const KINDS: Array[StringName] = [KIND_BG, KIND_MID, KIND_FIG, KIND_FX]
+## Ajout lot E (demande du lot C, BOOTH_SCENE §19.2, §19.8 a) : couche d'**état**
+## « allumé » d'un élément du fond (PL-F9-1 : une vitre), découpée par la passe
+## d'identifiants ; l'écran l'éteint (`modulate.a`) selon `PlateDef.holo_effect`.
+## Le fond peint est l'état éteint. Index de l'élément : `state_index`.
+const KIND_LIT: StringName = &"lit"
+const STATE_KINDS: Array[StringName] = [KIND_LIT]
 ## Effets procéduraux (shader, figés si `reduce_motion`).
 const FX_RAIN: StringName = &"rain"
 const FX_SMOKE: StringName = &"smoke"
@@ -34,6 +40,10 @@ const FX_FOG: StringName = &"fog"
 ## `FX` : `FX_*` et densité (0..1).
 @export var fx_kind: StringName = &""
 @export_range(0.0, 1.0) var fx_density: float = 0.5
+## Ajout lot E (demande du lot C) : `KIND_LIT` — index de l'élément d'état
+## (PL-F9-1 : 0 = vitre 01 … 11 = vitre 12), −1 sinon. L'ordre d'extinction
+## est l'ordre des couches `KIND_LIT` dans `PlateDef.layers`.
+@export var state_index: int = -1
 
 @export_group("Rendu hors ligne")
 ## `MID` / `FIG` anonyme : graine d'apparence fixe (jamais un visage nommé),

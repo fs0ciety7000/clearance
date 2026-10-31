@@ -1,0 +1,130 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://oghof08ehj8n"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_53fpb"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_qtta1"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="3_21ejo"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="4_u3nyn"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="5_sacjg"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="6_yrxsj"]
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_4"]
+script = ExtResource("3_21ejo")
+all_of = Array[StringName]([&"sc93_dora_passed"])
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_3"]
+script = ExtResource("1_53fpb")
+key = "sc_93a"
+condition = SubResource("pl_e_fig_d_resource_4")
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_6"]
+script = ExtResource("3_21ejo")
+all_of = Array[StringName]([&"sc93_mira_passed"])
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_5"]
+script = ExtResource("1_53fpb")
+key = "sc_93b"
+condition = SubResource("pl_e_fig_d_resource_6")
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_8"]
+script = ExtResource("3_21ejo")
+all_of = Array[StringName]([&"sc93_ilan_passed"])
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_7"]
+script = ExtResource("1_53fpb")
+key = "sc_93c"
+condition = SubResource("pl_e_fig_d_resource_8")
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_10"]
+script = ExtResource("3_21ejo")
+all_of = Array[StringName]([&"sc96_figure_passed"])
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_9"]
+script = ExtResource("1_53fpb")
+key = "sc_96a"
+condition = SubResource("pl_e_fig_d_resource_10")
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_12"]
+script = ExtResource("3_21ejo")
+all_of = Array[StringName]([&"sc96_figure_passed"])
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_11"]
+script = ExtResource("1_53fpb")
+key = "sc_96b"
+condition = SubResource("pl_e_fig_d_resource_12")
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_14"]
+script = ExtResource("3_21ejo")
+all_of = Array[StringName]([&"sc96_figure_passed"])
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_13"]
+script = ExtResource("1_53fpb")
+key = "sc_96c"
+condition = SubResource("pl_e_fig_d_resource_14")
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_16"]
+script = ExtResource("3_21ejo")
+all_of = Array[StringName]([&"sc96_figure_passed"])
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_15"]
+script = ExtResource("1_53fpb")
+key = "sc_96d"
+condition = SubResource("pl_e_fig_d_resource_16")
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_18"]
+script = ExtResource("3_21ejo")
+all_of = Array[StringName]([&"sc100_figure_passed"])
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_17"]
+script = ExtResource("1_53fpb")
+key = "sc_100a"
+condition = SubResource("pl_e_fig_d_resource_18")
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_20"]
+script = ExtResource("3_21ejo")
+all_of = Array[StringName]([&"sc100_figure_passed"])
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_19"]
+script = ExtResource("1_53fpb")
+key = "sc_100b"
+condition = SubResource("pl_e_fig_d_resource_20")
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_22"]
+script = ExtResource("3_21ejo")
+all_of = Array[StringName]([&"sc103_mira_passed"])
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_21"]
+script = ExtResource("1_53fpb")
+key = "sc_103"
+condition = SubResource("pl_e_fig_d_resource_22")
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_2"]
+script = ExtResource("2_qtta1")
+id = &"fg_figure31"
+memory_cases = Array[ExtResource("1_53fpb")]([SubResource("pl_e_fig_d_resource_3"), SubResource("pl_e_fig_d_resource_5"), SubResource("pl_e_fig_d_resource_7"), SubResource("pl_e_fig_d_resource_9"), SubResource("pl_e_fig_d_resource_11"), SubResource("pl_e_fig_d_resource_13"), SubResource("pl_e_fig_d_resource_15"), SubResource("pl_e_fig_d_resource_17"), SubResource("pl_e_fig_d_resource_19"), SubResource("pl_e_fig_d_resource_21")])
+pose = &"present_docs"
+framing = &"bust"
+lighting = &"mine_lamp"
+rect = Rect2(0.38, 0.18, 0.24, 0.62)
+depth = 0.5
+silhouette_path = "res://assets/cinematics/fig/fg_figure31_pl_e_fig_d.png"
+omit_plate_if_missing = true
+
+[sub_resource type="Resource" id="pl_e_fig_d_resource_1"]
+script = ExtResource("5_sacjg")
+texture_path = "res://assets/cinematics/bg/bg_t3.png"
+
+[resource]
+script = ExtResource("6_yrxsj")
+id = &"pl_e_fig_d"
+min_act = 3
+layers = Array[ExtResource("5_sacjg")]([SubResource("pl_e_fig_d_resource_1")])
+figures = Array[ExtResource("2_qtta1")]([SubResource("pl_e_fig_d_resource_2")])
+caption_key = "cin_e_fig"
+duration_sec = 7.0
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s7"
+set_variant = &"castellanos"
+lighting = &"mine_lamp"
+dominant = &"state.amber"
+paint_radius_px = 6

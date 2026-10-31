@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://ccd37cttde5i"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_sjg6n"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_e0n3n"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_88sa7"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_sk7ye"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_f4t3i"]
+
+[sub_resource type="Resource" id="pl_f3_3_resource_3"]
+script = ExtResource("3_88sa7")
+text_key = "10:00"
+rect = Rect2(0.78, 0.1, 0.1, 0.06)
+style = &"clock"
+literal = true
+
+[sub_resource type="Resource" id="pl_f3_3_resource_1"]
+script = ExtResource("4_sk7ye")
+texture_path = "res://assets/cinematics/bg/bg_h1.png"
+
+[sub_resource type="Resource" id="pl_f3_3_resource_2"]
+script = ExtResource("4_sk7ye")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f3_3_hands.png"
+rect = Rect2(0.3, 0.56, 0.4, 0.4)
+depth = 0.8
+props = Array[StringName]([&"stamp"])
+
+[resource]
+script = ExtResource("5_f4t3i")
+id = &"pl_f3_3"
+layers = Array[ExtResource("4_sk7ye")]([SubResource("pl_f3_3_resource_1"), SubResource("pl_f3_3_resource_2")])
+labels = Array[ExtResource("3_88sa7")]([SubResource("pl_f3_3_resource_3")])
+caption_key = "cin_f3_3"
+duration_sec = 7.5
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s1"
+set_variant = &"counter"
+lighting = &"hall"
+dominant = &"text.secondary"
+paint_radius_px = 6

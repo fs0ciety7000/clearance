@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://dbd4it8d17m68"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_4l2x4"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_oru86"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_25cdr"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_b1a1e"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_1bfj5"]
+
+[sub_resource type="Resource" id="pl_f6_2_resource_4"]
+script = ExtResource("1_4l2x4")
+key = "sc_72"
+
+[sub_resource type="Resource" id="pl_f6_2_resource_5"]
+script = ExtResource("1_4l2x4")
+key = "sc_46"
+
+[sub_resource type="Resource" id="pl_f6_2_resource_6"]
+script = ExtResource("1_4l2x4")
+key = "sc_19"
+
+[sub_resource type="Resource" id="pl_f6_2_resource_3"]
+script = ExtResource("2_oru86")
+id = &"fg_wren"
+memory_cases = Array[ExtResource("1_4l2x4")]([SubResource("pl_f6_2_resource_4"), SubResource("pl_f6_2_resource_5"), SubResource("pl_f6_2_resource_6")])
+pose = &"present_docs"
+framing = &"bust"
+lighting = &"mine_lamp"
+rect = Rect2(0.52, 0.16, 0.3, 0.8)
+depth = 0.5
+silhouette_path = "res://assets/cinematics/fig/fg_wren_pl_f6_2.png"
+
+[sub_resource type="Resource" id="pl_f6_2_resource_1"]
+script = ExtResource("4_b1a1e")
+texture_path = "res://assets/cinematics/bg/bg_q6.png"
+
+[sub_resource type="Resource" id="pl_f6_2_resource_2"]
+script = ExtResource("4_b1a1e")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f6_2_ledger.png"
+rect = Rect2(0.3, 0.6, 0.3, 0.3)
+depth = 0.7
+props = Array[StringName]([&"register"])
+
+[resource]
+script = ExtResource("5_1bfj5")
+id = &"pl_f6_2"
+layers = Array[ExtResource("4_b1a1e")]([SubResource("pl_f6_2_resource_1"), SubResource("pl_f6_2_resource_2")])
+figures = Array[ExtResource("2_oru86")]([SubResource("pl_f6_2_resource_3")])
+caption_key = "cin_f6_2"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s3"
+set_variant = &"cargo_hold"
+lighting = &"mine_lamp"
+dominant = &"accent.cyan"
+paint_radius_px = 6

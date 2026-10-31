@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://bm0qq3s50nuli"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_xt8oh"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="2_tls8n"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="3_tl364"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="4_ny23x"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="5_aguga"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="6_xyqnc"]
+
+[sub_resource type="Resource" id="pl_f3_2_lumika_resource_1"]
+script = ExtResource("2_tls8n")
+all_of = Array[StringName]([&"lumika_learned"])
+
+[sub_resource type="Resource" id="pl_f3_2_lumika_resource_2"]
+script = ExtResource("5_aguga")
+texture_path = "res://assets/cinematics/bg/bg_p4.png"
+
+[sub_resource type="Resource" id="pl_f3_2_lumika_resource_3"]
+script = ExtResource("5_aguga")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f3_2_lumika_firefly.png"
+rect = Rect2(0.42, 0.4, 0.16, 0.18)
+depth = 0.3
+props = Array[StringName]([&"firefly_drawing"])
+
+[resource]
+script = ExtResource("6_xyqnc")
+id = &"pl_f3_2_lumika"
+condition = SubResource("pl_f3_2_lumika_resource_1")
+layers = Array[ExtResource("5_aguga")]([SubResource("pl_f3_2_lumika_resource_2"), SubResource("pl_f3_2_lumika_resource_3")])
+caption_key = "cin_f3_2_lumika"
+duration_sec = 7.5
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s4"
+set_variant = &"under_bunk"
+lighting = &"night"
+dominant = &"text.secondary"
+paint_radius_px = 6

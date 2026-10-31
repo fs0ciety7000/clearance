@@ -330,3 +330,4 @@ statement_topic_weights = Dictionary[StringName, float]({
 &"stay": 0.5
 })
 intercom_lines = Array[ExtResource("8_2hp76")]([SubResource("d04_resource_17"), SubResource("d04_resource_18"), SubResource("d04_resource_19"), SubResource("d04_resource_20")])
+music_tension = 1

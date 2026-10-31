@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://cs85qw5h25r6m"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_88m1q"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_2mkul"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_67xcc"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_2c0w6"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_3y5fi"]
+
+[sub_resource type="Resource" id="pl_ea_1_resource_2"]
+script = ExtResource("3_67xcc")
+text_key = "18:00"
+rect = Rect2(0.8, 0.08, 0.1, 0.06)
+style = &"clock"
+literal = true
+
+[sub_resource type="Resource" id="pl_ea_1_resource_1"]
+script = ExtResource("4_2c0w6")
+texture_path = "res://assets/cinematics/bg/bg_h17.png"
+
+[resource]
+script = ExtResource("5_3y5fi")
+id = &"pl_ea_1"
+min_act = 3
+layers = Array[ExtResource("4_2c0w6")]([SubResource("pl_ea_1_resource_1")])
+labels = Array[ExtResource("3_67xcc")]([SubResource("pl_ea_1_resource_2")])
+caption_key = "cin_ea_1"
+duration_sec = 7.0
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s1"
+set_variant = &"bornes_evening"
+lighting = &"hall"
+dominant = &"accent.yellow"
+paint_radius_px = 6

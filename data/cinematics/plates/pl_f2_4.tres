@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://cco5qm1mgy3xa"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_njrp1"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_5p5ys"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_s2b0t"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_bjv2j"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_jok6h"]
+
+[sub_resource type="Resource" id="pl_f2_4_resource_1"]
+script = ExtResource("4_bjv2j")
+texture_path = "res://assets/cinematics/bg/bg_t2.png"
+
+[sub_resource type="Resource" id="pl_f2_4_resource_2"]
+script = ExtResource("4_bjv2j")
+kind = &"fx"
+depth = 0.8
+fx_kind = &"dust"
+fx_density = 0.4
+
+[resource]
+script = ExtResource("5_jok6h")
+id = &"pl_f2_4"
+layers = Array[ExtResource("4_bjv2j")]([SubResource("pl_f2_4_resource_1"), SubResource("pl_f2_4_resource_2")])
+caption_key = "cin_f2_4"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s7"
+set_variant = &"dust"
+lighting = &"mine_lamp"
+dominant = &"state.amber"
+paint_radius_px = 6

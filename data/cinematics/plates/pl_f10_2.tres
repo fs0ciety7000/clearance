@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://tfmdroh1qdyw"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_h3u4n"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_pg3xq"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_r3pfi"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_qik2e"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_pwh5k"]
+
+[sub_resource type="Resource" id="pl_f10_2_resource_2"]
+script = ExtResource("3_r3pfi")
+text_key = "cin_lbl_ledger"
+rect = Rect2(0.36, 0.2, 0.28, 0.07)
+style = &"holo_display"
+
+[sub_resource type="Resource" id="pl_f10_2_resource_3"]
+script = ExtResource("3_r3pfi")
+text_key = "117"
+rect = Rect2(0.4, 0.32, 0.2, 0.05)
+literal = true
+
+[sub_resource type="Resource" id="pl_f10_2_resource_4"]
+script = ExtResource("3_r3pfi")
+text_key = "119"
+rect = Rect2(0.4, 0.39, 0.2, 0.05)
+literal = true
+
+[sub_resource type="Resource" id="pl_f10_2_resource_5"]
+script = ExtResource("3_r3pfi")
+text_key = "121"
+rect = Rect2(0.4, 0.46, 0.2, 0.05)
+literal = true
+
+[sub_resource type="Resource" id="pl_f10_2_resource_1"]
+script = ExtResource("4_qik2e")
+texture_path = "res://assets/cinematics/bg/bg_h15.png"
+
+[resource]
+script = ExtResource("5_pwh5k")
+id = &"pl_f10_2"
+min_act = 3
+layers = Array[ExtResource("4_qik2e")]([SubResource("pl_f10_2_resource_1")])
+labels = Array[ExtResource("3_r3pfi")]([SubResource("pl_f10_2_resource_2"), SubResource("pl_f10_2_resource_3"), SubResource("pl_f10_2_resource_4"), SubResource("pl_f10_2_resource_5")])
+caption_key = "cin_f10_2"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s1"
+set_variant = &"ledger"
+lighting = &"hall"
+dominant = &"state.green"
+paint_radius_px = 6

@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://ckmedukivru2c"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_mlfpf"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_2y2hp"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_7ggs5"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_s0v6v"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_q86pg"]
+
+[sub_resource type="Resource" id="pl_f6t_3_resource_1"]
+script = ExtResource("4_s0v6v")
+texture_path = "res://assets/cinematics/bg/bg_t3.png"
+
+[sub_resource type="Resource" id="pl_f6t_3_resource_2"]
+script = ExtResource("4_s0v6v")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f6t_3_committee.png"
+rect = Rect2(0.2, 0.3, 0.6, 0.64)
+depth = 0.4
+figure_seed = 1462
+pose = &"idle"
+
+[sub_resource type="Resource" id="pl_f6t_3_resource_3"]
+script = ExtResource("4_s0v6v")
+kind = &"fx"
+depth = 0.8
+fx_kind = &"dust"
+fx_density = 0.3
+
+[resource]
+script = ExtResource("5_q86pg")
+id = &"pl_f6t_3"
+min_act = 3
+layers = Array[ExtResource("4_s0v6v")]([SubResource("pl_f6t_3_resource_1"), SubResource("pl_f6t_3_resource_2"), SubResource("pl_f6t_3_resource_3")])
+caption_key = "cin_f6t_3"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s7"
+set_variant = &"castellanos"
+lighting = &"mine_lamp"
+dominant = &"accent.cyan"
+paint_radius_px = 6

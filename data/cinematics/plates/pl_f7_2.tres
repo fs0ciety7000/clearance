@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://1tuyf5xfjmtr"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_128gu"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_aj73f"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_p4bdr"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_rlsvq"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_hy2f4"]
+
+[sub_resource type="Resource" id="pl_f7_2_resource_1"]
+script = ExtResource("4_rlsvq")
+texture_path = "res://assets/cinematics/bg/bg_q1.png"
+
+[resource]
+script = ExtResource("5_hy2f4")
+id = &"pl_f7_2"
+min_act = 3
+layers = Array[ExtResource("4_rlsvq")]([SubResource("pl_f7_2_resource_1")])
+caption_key = "cin_f7_2"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s2"
+set_variant = &"dock2_empty"
+lighting = &"dock"
+dominant = &"text.primary"
+paint_radius_px = 6

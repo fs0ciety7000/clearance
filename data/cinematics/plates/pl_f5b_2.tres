@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://cugqxhxte5q8h"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_xg3my"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_1of3r"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_a4tko"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_sh31e"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_wdd60"]
+
+[sub_resource type="Resource" id="pl_f5b_2_resource_1"]
+script = ExtResource("4_sh31e")
+texture_path = "res://assets/cinematics/bg/bg_q4.png"
+
+[sub_resource type="Resource" id="pl_f5b_2_resource_2"]
+script = ExtResource("4_sh31e")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f5b_2_families.png"
+rect = Rect2(0.1, 0.28, 0.8, 0.66)
+depth = 0.4
+figure_seed = 1453
+pose = &"leave"
+
+[sub_resource type="Resource" id="pl_f5b_2_resource_3"]
+script = ExtResource("4_sh31e")
+kind = &"fx"
+depth = 0.7
+fx_kind = &"smoke"
+fx_density = 0.6
+
+[resource]
+script = ExtResource("5_wdd60")
+id = &"pl_f5b_2"
+min_act = 3
+layers = Array[ExtResource("4_sh31e")]([SubResource("pl_f5b_2_resource_1"), SubResource("pl_f5b_2_resource_2"), SubResource("pl_f5b_2_resource_3")])
+caption_key = "cin_f5b_2"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s2"
+set_variant = &"crossing"
+lighting = &"dock"
+dominant = &"state.red"
+paint_radius_px = 6

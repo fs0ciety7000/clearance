@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://di2wia5bt7mov"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_we5gm"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_b8bbn"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_gcsbr"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_h7sti"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_voogf"]
+
+[sub_resource type="Resource" id="pl_f3_1_resource_1"]
+script = ExtResource("4_h7sti")
+texture_path = "res://assets/cinematics/bg/bg_p2.png"
+
+[resource]
+script = ExtResource("5_voogf")
+id = &"pl_f3_1"
+layers = Array[ExtResource("4_h7sti")]([SubResource("pl_f3_1_resource_1")])
+caption_key = "cin_f3_1"
+duration_sec = 7.5
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s4"
+set_variant = &"night"
+lighting = &"night"
+dominant = &"text.secondary"
+paint_radius_px = 6

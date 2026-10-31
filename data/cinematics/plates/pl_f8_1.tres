@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://du32lvg7emr47"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_j73fu"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_oeqsu"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_ok5ur"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_ye56e"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_ujwwe"]
+
+[sub_resource type="Resource" id="pl_f8_1_resource_2"]
+script = ExtResource("3_ok5ur")
+text_key = "12:20"
+rect = Rect2(0.8, 0.08, 0.1, 0.06)
+style = &"clock"
+literal = true
+
+[sub_resource type="Resource" id="pl_f8_1_resource_1"]
+script = ExtResource("4_ye56e")
+texture_path = "res://assets/cinematics/bg/bg_h11.png"
+
+[resource]
+script = ExtResource("5_ujwwe")
+id = &"pl_f8_1"
+min_act = 3
+layers = Array[ExtResource("4_ye56e")]([SubResource("pl_f8_1_resource_1")])
+labels = Array[ExtResource("3_ok5ur")]([SubResource("pl_f8_1_resource_2")])
+caption_key = "cin_f8_1"
+parallax_px = 10.0
+zoom_to = 1.03
+holo_effect = &"waveform"
+set_id = &"s1"
+set_variant = &"speaker"
+lighting = &"hall"
+dominant = &"accent.cyan"
+paint_radius_px = 6

@@ -10,6 +10,7 @@ id = &"chr_premiers"
 case_ids = Array[StringName]([&"tuto_concordant", &"tuto_missing_document", &"sc_85a", &"sc_85b", &"sc_90"])
 display_name = "dos_name_premiers"
 blurb_key = "dos_chr_premiers"
+portrait_cases = Array[StringName]([&"tuto_concordant", &"sc_90"])
 
 [sub_resource type="Resource" id="chr_resource_2"]
 script = ExtResource("1_pdx7a")
@@ -90,6 +91,7 @@ case_ids = Array[StringName]([&"sc_11", &"sc_29", &"sc_78"])
 display_name = "dos_name_mazur"
 faction = &"thr"
 blurb_key = "dos_chr_mazur"
+portrait_cases = Array[StringName]([&"sc_11", &"sc_78"])
 
 [sub_resource type="Resource" id="chr_resource_12"]
 script = ExtResource("1_pdx7a")
@@ -209,6 +211,7 @@ case_ids = Array[StringName]([&"sc_30", &"sc_31", &"sc_32", &"sc_69"])
 display_name = "dos_name_kerr_ceres"
 faction = &"cer"
 blurb_key = "dos_chr_kerr_ceres"
+portrait_cases = Array[StringName]([&"sc_30", &"sc_69"])
 
 [sub_resource type="Resource" id="chr_resource_27"]
 script = ExtResource("1_pdx7a")

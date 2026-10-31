@@ -39,3 +39,4 @@ title_key = "sev_quarantine_title"
 rulebook_key = "sev_quarantine_rb"
 garde_window_passengers = 10
 garde_required_unit = &"u07"
+music_weight = 0.5

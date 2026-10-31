@@ -1,0 +1,72 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://0wx1lqifr2ai"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_tjj2g"]
+[ext_resource type="Script" path="res://scripts/core/flag_condition.gd" id="2_iwqy5"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="3_2y61b"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="4_5gnt7"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="5_3i3ys"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="6_joplu"]
+
+[sub_resource type="Resource" id="pl_f5_2_resource_9"]
+script = ExtResource("2_iwqy5")
+all_of = Array[StringName]([&"final3_dora"])
+
+[sub_resource type="Resource" id="pl_f5_2_resource_8"]
+script = ExtResource("1_tjj2g")
+key = "cin_f5_2_dora"
+condition = SubResource("pl_f5_2_resource_9")
+
+[sub_resource type="Resource" id="pl_f5_2_resource_5"]
+script = ExtResource("2_iwqy5")
+all_of = Array[StringName]([&"final3_dora"])
+
+[sub_resource type="Resource" id="pl_f5_2_resource_4"]
+script = ExtResource("1_tjj2g")
+key = "sc_82a"
+condition = SubResource("pl_f5_2_resource_5")
+
+[sub_resource type="Resource" id="pl_f5_2_resource_7"]
+script = ExtResource("2_iwqy5")
+none_of = Array[StringName]([&"final3_dora"])
+
+[sub_resource type="Resource" id="pl_f5_2_resource_6"]
+script = ExtResource("1_tjj2g")
+key = "sc_82b"
+condition = SubResource("pl_f5_2_resource_7")
+
+[sub_resource type="Resource" id="pl_f5_2_resource_3"]
+script = ExtResource("3_2y61b")
+id = &"fg_figure"
+memory_cases = Array[ExtResource("1_tjj2g")]([SubResource("pl_f5_2_resource_4"), SubResource("pl_f5_2_resource_6")])
+pose = &"leave"
+rect = Rect2(0.5, 0.2, 0.22, 0.76)
+silhouette_path = "res://assets/cinematics/fig/fg_figure_pl_f5_2.png"
+
+[sub_resource type="Resource" id="pl_f5_2_resource_1"]
+script = ExtResource("5_3i3ys")
+texture_path = "res://assets/cinematics/bg/bg_h7.png"
+
+[sub_resource type="Resource" id="pl_f5_2_resource_2"]
+script = ExtResource("5_3i3ys")
+kind = &"mid"
+texture_path = "res://assets/cinematics/mid/pl_f5_2_families.png"
+rect = Rect2(0.04, 0.3, 0.48, 0.64)
+depth = 0.3
+figure_seed = 1452
+pose = &"idle"
+
+[resource]
+script = ExtResource("6_joplu")
+id = &"pl_f5_2"
+min_act = 3
+layers = Array[ExtResource("5_3i3ys")]([SubResource("pl_f5_2_resource_1"), SubResource("pl_f5_2_resource_2")])
+figures = Array[ExtResource("3_2y61b")]([SubResource("pl_f5_2_resource_3")])
+caption_key = "cin_f5_2"
+captions = Array[ExtResource("1_tjj2g")]([SubResource("pl_f5_2_resource_8")])
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s1"
+set_variant = &"glass_open"
+lighting = &"hall"
+dominant = &"accent.magenta"
+paint_radius_px = 6

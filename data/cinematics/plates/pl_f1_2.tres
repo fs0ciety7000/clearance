@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://cy5dnkdiedkxp"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_83yfb"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_tlwod"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_wpoms"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_6uacj"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_paciv"]
+
+[sub_resource type="Resource" id="pl_f1_2_resource_1"]
+script = ExtResource("4_6uacj")
+texture_path = "res://assets/cinematics/bg/bg_b2.png"
+
+[sub_resource type="Resource" id="pl_f1_2_resource_2"]
+script = ExtResource("4_6uacj")
+kind = &"fig"
+texture_path = "res://assets/cinematics/fig/pl_f1_2_seated.png"
+rect = Rect2(0.4, 0.42, 0.2, 0.5)
+depth = 0.5
+figure_seed = 1403
+pose = &"sit"
+facing_deg = 180.0
+
+[resource]
+script = ExtResource("5_paciv")
+id = &"pl_f1_2"
+layers = Array[ExtResource("4_6uacj")]([SubResource("pl_f1_2_resource_1"), SubResource("pl_f1_2_resource_2")])
+caption_key = "cin_f1_2"
+duration_sec = 7.5
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s5"
+set_variant = &"cell"
+lighting = &"clinical"
+dominant = &"state.red"
+paint_radius_px = 6

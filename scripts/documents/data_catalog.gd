@@ -10,6 +10,12 @@ extends RefCounted
 
 const DATA_ROOT: String = "res://data"
 const ECONOMY_PATH: String = "res://data/economy/economy.tres"
+## M14 (ARCHITECTURE §12 ter.1) : données chargées **par chemin** par leurs
+## propres tables (`CinematicLibraryDef.load_default`, `PaLineTable.load_default`),
+## jamais par le catalogue — ni indexées ni chargées ici (66 planches de moins
+## à chaque chargement du catalogue, aucune référence de type vers la
+## bibliothèque des cinématiques depuis ce script chargé tôt, D-197).
+const BY_PATH_DIRS: PackedStringArray = ["res://data/cinematics", "res://data/audio"]
 
 var factions: Dictionary[StringName, FactionDef] = {}
 var documents: Dictionary[StringName, DocumentTypeDef] = {}
@@ -50,8 +56,16 @@ var errors: PackedStringArray = []
 static func load_from(root: String = DATA_ROOT) -> DataCatalog:
 	var catalog: DataCatalog = DataCatalog.new()
 	for path: String in list_resource_paths(root):
-		catalog._register(path)
+		if not _is_by_path(path):
+			catalog._register(path)
 	return catalog
+
+
+static func _is_by_path(path: String) -> bool:
+	for dir: String in BY_PATH_DIRS:
+		if path.begins_with(dir + "/"):
+			return true
+	return false
 
 
 ## Chemins de toutes les ressources (`.tres`/`.res`) sous `root`, triés.

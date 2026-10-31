@@ -25,6 +25,7 @@ script = ExtResource("1_wowgs")
 text_key = "hall_j20_registre"
 after_case = 4
 condition = SubResource("d20_resource_81")
+music_action = &"drop"
 
 [sub_resource type="Resource" id="d20_resource_83"]
 script = ExtResource("2_ltwl7")
@@ -36,6 +37,7 @@ text_key = "hall_j20_strike"
 after_case = 10
 condition = SubResource("d20_resource_83")
 ends_shift = true
+music_action = &"silence"
 
 [sub_resource type="Resource" id="d20_resource_21"]
 script = ExtResource("2_ltwl7")
@@ -784,3 +786,5 @@ statement_topic_weights = Dictionary[StringName, float]({
 &"stay": 0.25
 })
 search_cue_noise_rate = 0.1
+music_tension = 3
+music_floor = 1

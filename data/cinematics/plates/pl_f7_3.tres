@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="PlateDef" format=3 uid="uid://disfo3vn8nwmq"]
+
+[ext_resource type="Script" path="res://scripts/core/conditional_key.gd" id="1_bdwdf"]
+[ext_resource type="Script" path="res://scripts/core/figure_slot_def.gd" id="2_3wyvh"]
+[ext_resource type="Script" path="res://scripts/core/plate_label_def.gd" id="3_cte73"]
+[ext_resource type="Script" path="res://scripts/core/plate_layer_def.gd" id="4_qtqk1"]
+[ext_resource type="Script" path="res://scripts/core/plate_def.gd" id="5_ktr26"]
+
+[sub_resource type="Resource" id="pl_f7_3_resource_2"]
+script = ExtResource("3_cte73")
+text_key = "27-B"
+rect = Rect2(0.42, 0.3, 0.16, 0.1)
+style = &"holo_display"
+literal = true
+
+[sub_resource type="Resource" id="pl_f7_3_resource_1"]
+script = ExtResource("4_qtqk1")
+texture_path = "res://assets/cinematics/bg/bg_h10.png"
+
+[resource]
+script = ExtResource("5_ktr26")
+id = &"pl_f7_3"
+min_act = 3
+layers = Array[ExtResource("4_qtqk1")]([SubResource("pl_f7_3_resource_1")])
+labels = Array[ExtResource("3_cte73")]([SubResource("pl_f7_3_resource_2")])
+caption_key = "cin_f7_3"
+parallax_px = 10.0
+zoom_to = 1.03
+set_id = &"s1"
+set_variant = &"forms"
+lighting = &"hall"
+dominant = &"text.primary"
+paint_radius_px = 6
