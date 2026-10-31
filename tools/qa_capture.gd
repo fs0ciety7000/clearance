@@ -25,6 +25,12 @@
 ## Correctifs M13 : `--qa-evening-step=N|last` affiche l'événement N de « CE SOIR »
 ## (lettre d'offre de l'Économat, QA-069) ; avec `--qa-focus=offer` (après lui),
 ## le focus va à « VOIR L'OFFRE ».
+## M14 (lot D) : les arguments de scène passent tels quels — cinématique
+## `--day=30 --screen=cinematic --cinematic=cin_f9 --plate=1 --plate-t=3.2
+## --plate-hold` ; titre (`--qa-scene=res://scenes/main/main.tscn --demo-saves
+## --demo-profile`) : `--title=dossier-people`, `--title=dossier-replay
+## --replay=cin_f10 --plate=3`, `--title=options-m14 [--opt-row=cinematic]`
+## (captures `docs/mockups/m14_ui_*.png`, UI_FLOW §8.8).
 ## Lancé par `tools/qa_boot.gd` (autoloads requis), sous xvfb :
 ##   xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
 ##       --script res://tools/qa_boot.gd -- --qa-node=res://tools/qa_capture.gd --qa-size=1280x800 \

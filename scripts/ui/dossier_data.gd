@@ -21,6 +21,8 @@ const ENDINGS: Array[StringName] = [EndingService.F1_ARRESTED, EndingService.F2_
 const WORLDS: Array[String] = ["a", "b", "c", "d"]
 ## Jour du J31 (cas des épilogues, première rencontre).
 const EPILOGUE_DAY: int = 31
+## M14 (D-191) : cache des portraits du Dossier (tous les personnages tiennent).
+const PORTRAIT_CACHE: int = 48
 
 ## Table cas → jour (première apparition), construite à la demande.
 static var _case_days: Dictionary[StringName, int] = {}

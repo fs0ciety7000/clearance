@@ -85,9 +85,22 @@
 ## contrebande, aucun motif) et joue le geste (question puis puce ↔ permis ;
 ## portique et zones ; boîte « AUCUN MOTIF ÉTABLI » ; objet ↔ onglet
 ## Contrebande) ; `--shop=<ag0N>` coche une offre de l'Économat (soirée).
+## M14 (lot D, ARCHITECTURE §12 ter.3, I42 / I43) : **cinématiques de fin** —
+## `show_end(ending)` joue d'abord la `CinematicScreen` de la fin
+## (`CinematicService.select`), puis l'`EndScreen` inchangé à `finished` ; J31 :
+## `select_epilogue(monde)` avant la carte de conclusion. Aucune séquence
+## (démo, fins simulées des actes I–II) : écran suivant direct. Bande 3D en
+## pause de rendu pendant la séquence (`set_rendering_paused`) ; la musique de
+## la fin est lancée par l'`AudioDirector` (il lit `screen`). Fondu de sortie
+## de la musique (`AudioDirector.fade_out_music`, 1,5 s, voile noir, arbre en
+## pause) avant chaque rechargement ou retour au titre. Captures :
+## `--screen=cinematic --cinematic=cin_f9 [--plate=N] [--plate-t=s]` (`--flags`).
 class_name DayScene
 extends Control
 
+## D-203 : bibliothèque des cinématiques chargée avant tout script qui nomme
+## `PlateDef` (fuite de scripts à la sortie de Godot 4.7.2 sinon).
+const _CINEMATIC_LIBRARY := preload("res://scripts/core/cinematic_library_def.gd")
 const COMPARISON_UI_PATH: String = "res://scenes/ui/comparison_ui.tscn"
 const TITLE_SCENE_PATH: String = "res://scenes/main/main.tscn"
 ## Propriétés que l'UI expose pour recevoir les fournisseurs.
@@ -150,6 +163,10 @@ var end_garde_dialog: ConfirmDialog = null
 var epilogue_card: Dictionary = {}
 ## M13 : carte d'aide (déclarations, portique) affichée, null sinon.
 var help_card: HelpCard = null
+## M14 : cinématique en cours (null sinon) et départ de la scène en cours
+## (fondu de sortie de la musique : un seul à la fois).
+var cinematic: CinematicScreen = null
+var leaving: bool = false
 
 
 func _ready() -> void:
@@ -425,7 +442,7 @@ func _on_day_ended(summary: DaySummary) -> void:
 	if session == GameState.SESSION_EPILOGUE:
 		# J31 (D-123) : ni bilan ni soirée — conclusion composée.
 		epilogue_card = Campaign.close_epilogue(summary)
-		get_tree().create_timer(SIREN_DELAY_SEC).timeout.connect(show_epilogue_conclusion.bind(epilogue_card))
+		get_tree().create_timer(SIREN_DELAY_SEC).timeout.connect(show_epilogue_ending.bind(epilogue_card))
 		return
 	if lights_out_active:
 		# Grève : plus de sirène, le Hall s'éteint jusqu'au noir complet.
@@ -520,7 +537,7 @@ func _after_evening(choice: StringName) -> void:
 		if chapter_three_pending():
 			show_chapter_three()
 			return
-		get_tree().reload_current_scene()
+		reload_after_music_fade()
 		return
 	show_end(choice)
 
@@ -535,7 +552,7 @@ func show_chapter_two() -> void:
 	var chapter: ChapterScreen = ChapterScreen.new()
 	chapter.name = "ChapterScreen"
 	chapter.setup(GameState.narrative_flags)
-	chapter.finished.connect(func(_choice: StringName) -> void: get_tree().reload_current_scene())
+	chapter.finished.connect(func(_choice: StringName) -> void: reload_after_music_fade())
 	_open(chapter, &"chapter2")
 
 
@@ -549,7 +566,7 @@ func show_chapter_three() -> void:
 	var chapter: ChapterScreen = ChapterScreen.new()
 	chapter.name = "ChapterScreen"
 	chapter.setup(GameState.narrative_flags, 3)
-	chapter.finished.connect(func(_choice: StringName) -> void: get_tree().reload_current_scene())
+	chapter.finished.connect(func(_choice: StringName) -> void: reload_after_music_fade())
 	_open(chapter, &"chapter3")
 
 
@@ -561,6 +578,73 @@ func show_final(summary: DaySummary) -> void:
 func show_end(ending: StringName) -> void:
 	# Toute fin archive la partie et l'inscrit au profil (D-101) — idempotent.
 	GameState.end_campaign(ending)
+	# M14 : la cinématique de la fin d'abord (null : écran de fin direct).
+	var sequence: CinematicScreen = make_end_cinematic(ending)
+	if sequence != null:
+		play_cinematic(sequence, &"cinematic", func(_skipped: bool) -> void: open_end_screen(ending))
+		return
+	open_end_screen(ending)
+
+
+## Cinématique d'une fin (M14 §3.2, ARCHITECTURE §12 ter.3) : sélection pure
+## sur les drapeaux de la partie, planches retenues, figures depuis la mémoire
+## des cas ; carte de titre = surtitre et titre de l'écran de fin. Null si la
+## fin n'en a pas (démo, fins des actes I–II de F4/F5/F7/F8/F9).
+func make_end_cinematic(ending: StringName) -> CinematicScreen:
+	var flags: Dictionary[StringName, Variant] = GameState.narrative_flags
+	var variant: StringName = EpilogueService.variant_of(ending, flags)
+	var act: int = EpilogueService.act_of(flags)
+	var day: int = GameState.current_day
+	var def: CinematicDef = CinematicService.select(ending, variant, flags, act, day)
+	if def == null:
+		return null
+	var ctx: Dictionary[StringName, Variant] = CinematicService.context_flags(flags, act, variant, day)
+	var plates: Array[PlateDef] = CinematicService.plates_for(def, ctx, act, GameState.case_memory)
+	if plates.is_empty():
+		return null
+	var sequence: CinematicScreen = CinematicScreen.new()
+	sequence.setup(def, plates, ctx, GameState.case_memory, ending, variant)
+	var epi: Dictionary = Campaign.epilogue(ending)
+	var eyebrow_key: String = str(epi.get("eyebrow_key", "end_eyebrow_%s" % ending))
+	var title_key: String = str(epi.get("title_key", "end_title_%s" % ending))
+	sequence.set_title(UiText.t(eyebrow_key, "") if UiText.has(eyebrow_key) else "",
+			UiText.t(title_key, "") if UiText.has(title_key) else "")
+	return sequence
+
+
+## Cinématique de la conclusion du J31 (monde de la graine d'épilogue), ou null.
+func make_epilogue_cinematic() -> CinematicScreen:
+	var world: StringName = StringName(str(GameState.epilogue_seed.get("world", "")))
+	var def: CinematicDef = CinematicService.select_epilogue(world)
+	if def == null:
+		return null
+	var flags: Dictionary[StringName, Variant] = GameState.narrative_flags
+	var ctx: Dictionary[StringName, Variant] = CinematicService.context_flags(flags, 3, &"", 31)
+	var plates: Array[PlateDef] = CinematicService.plates_for(def, ctx, 3, GameState.case_memory)
+	if plates.is_empty():
+		return null
+	var sequence: CinematicScreen = CinematicScreen.new()
+	sequence.setup(def, plates, ctx, GameState.case_memory)
+	return sequence
+
+
+## Joue une cinématique plein cadre : bande 3D en pause de rendu pendant la
+## séquence, puis `then(skipped)`.
+func play_cinematic(sequence: CinematicScreen, id: StringName, then: Callable) -> CinematicScreen:
+	cinematic = sequence
+	if booth != null:
+		booth.set_rendering_paused(true)
+	sequence.finished.connect(func(skipped: bool) -> void:
+		cinematic = null
+		if booth != null and is_instance_valid(booth):
+			booth.set_rendering_paused(false)
+		then.call(skipped), CONNECT_ONE_SHOT)
+	_open(sequence, id)
+	return sequence
+
+
+## Écran de fin (inchangé depuis M12) : épilogue lu, traces, tableau.
+func open_end_screen(ending: StringName) -> EndScreen:
 	var end: EndScreen = EndScreen.new()
 	end.name = "EndScreen"
 	end.epilogue = Campaign.epilogue(ending)
@@ -571,6 +655,7 @@ func show_end(ending: StringName) -> void:
 			return
 		go_to_title())
 	_open(end, &"end")
+	return end
 
 
 func go_to_title() -> void:
@@ -578,7 +663,39 @@ func go_to_title() -> void:
 	# M12 : une session épilogue ou Garde ne laisse aucune campagne chargée.
 	GameState.end_session()
 	if is_inside_tree():
-		get_tree().change_scene_to_file(TITLE_SCENE_PATH)
+		_leave_after_music_fade(func() -> void: get_tree().change_scene_to_file(TITLE_SCENE_PATH))
+
+
+## Jour suivant, chapitre, épilogue, Garde rejouée : rechargement de la scène
+## après le fondu de sortie de la musique.
+func reload_after_music_fade() -> void:
+	_leave_after_music_fade(func() -> void: get_tree().reload_current_scene())
+
+
+## M14 (docs/AUDIO.md §13.15) : la musique s'éteint par l'effet `Fade`
+## (`AudioDirector.fade_out_music`, 1,5 s) avant de quitter la scène ; voile
+## noir et arbre en pause pendant le fondu (plus rien ne bouge ni ne répond).
+## Sans musique : tout de suite. Un seul départ à la fois.
+func _leave_after_music_fade(action: Callable) -> void:
+	if leaving:
+		return
+	leaving = true
+	var audio: AudioDirector = get_node_or_null(^"%AudioDirector") as AudioDirector
+	var wait: float = audio.fade_out_music(DS.MUSIC_EXIT_FADE) if audio != null and is_instance_valid(audio) else 0.0
+	if wait <= 0.0 or not is_inside_tree():
+		action.call()
+		return
+	get_tree().paused = true
+	blackout.visible = true
+	blackout.mouse_filter = Control.MOUSE_FILTER_STOP
+	move_child(blackout, get_child_count() - 1)
+	var veil: Tween = blackout.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	veil.tween_property(blackout, "color:a", 1.0, DS.DUR_FAST if Settings.reduce_motion else wait)
+	await get_tree().create_timer(wait, true).timeout
+	if not is_inside_tree():
+		return
+	get_tree().paused = false
+	action.call()
 
 
 # ---------------------------------------------------------------------------
@@ -596,7 +713,7 @@ func play_epilogue_after_end(ending: StringName) -> bool:
 	if Campaign.start_epilogue(epi, slot) == null:
 		return false
 	get_tree().paused = false
-	get_tree().reload_current_scene()
+	reload_after_music_fade()
 	return true
 
 
@@ -639,6 +756,18 @@ func show_epilogue_intro() -> EpilogueScreen:
 			_show_briefing(false))
 	_open(card, &"epilogue_intro")
 	return card
+
+
+## M14 : fin du J31 — la cinématique du monde (CIN-EA → CIN-ED), puis la
+## carte de conclusion (inchangée) ; sans séquence, la carte directement.
+func show_epilogue_ending(card: Dictionary) -> void:
+	if (screen != null and is_instance_valid(screen) and screen.name == "EpilogueConclusion") or cinematic != null:
+		return
+	var sequence: CinematicScreen = make_epilogue_cinematic()
+	if sequence != null:
+		play_cinematic(sequence, &"epilogue_cinematic", func(_skipped: bool) -> void: show_epilogue_conclusion(card))
+		return
+	show_epilogue_conclusion(card)
 
 
 ## Carte de conclusion du J31 ; « RETOUR AU TITRE » termine la session.
@@ -751,7 +880,7 @@ func _after_garde_end(choice: StringName) -> void:
 			if run != null:
 				pending_garde_run = run
 				get_tree().paused = false
-				get_tree().reload_current_scene()
+				reload_after_music_fade()
 				return
 		&"new_seed":
 			GardeScreen.open_on_title = true
@@ -837,6 +966,59 @@ func _debug_screen(which: String) -> void:
 			pause_menu.open.call_deferred()
 			if which == "options":
 				pause_menu.show_options.call_deferred()
+		"cinematic":
+			if briefing != null:
+				briefing.closed.disconnect(_on_briefing_closed)
+				briefing.queue_free()
+				briefing = null
+			_debug_cinematic.call_deferred(StringName(_arg("cinematic", "cin_f9")))
+
+
+## Capture M14 : `--cinematic=<id>` (fin de la séquence : son ending ; actes
+## et variante selon `--flags`), `--plate=N` (1…) et `--plate-t=s` (instant
+## dans la planche ; PL-F9-1 : vitres éteintes une à une). Rien n'est inscrit
+## au profil.
+func _debug_cinematic(id: StringName) -> void:
+	var lib: CinematicLibraryDef = CinematicLibraryDef.load_default()
+	var def: CinematicDef = lib.get_cinematic(id) if lib != null else null
+	if def == null:
+		push_warning("DayScene: --cinematic=%s inconnue" % id)
+		return
+	var sequence: CinematicScreen = null
+	if def.is_epilogue():
+		GameState.epilogue_seed = {"world": String(def.worlds[0])}
+		sequence = make_epilogue_cinematic()
+	else:
+		var ending: StringName = def.endings[0]
+		if not def.acts.is_empty():
+			for act: int in def.acts:
+				GameState.set_flag(EndingService.FLAG_ACT2, act >= 2)
+				GameState.set_flag(EndingService.FLAG_ACT3, act >= 3)
+		if not def.ending_variants.is_empty():
+			ctx_variant_flags(ending, def.ending_variants[0])
+		sequence = make_end_cinematic(ending)
+	if sequence == null:
+		push_warning("DayScene: --cinematic=%s sans planche" % id)
+		return
+	sequence.record_seen = false
+	play_cinematic(sequence, &"cinematic", func(_skipped: bool) -> void: pass)
+	var plate_n: int = clampi(_arg("plate", "0").to_int(), 0, sequence.plates.size())
+	if plate_n > 0:
+		await get_tree().process_frame
+		sequence.jump_to(plate_n - 1, _arg("plate-t", "1.5").to_float())
+	if _args.has("plate-hold"):
+		sequence.set_process(false) # planche figée pour la capture (shaders vivants)
+
+
+## Capture : drapeaux qui donnent la variante voulue d'une fin (`--cinematic`).
+static func ctx_variant_flags(ending: StringName, wanted: StringName) -> void:
+	match [ending, wanted]:
+		[EndingService.F1_ARRESTED, EpilogueService.VARIANT_AUDIT]:
+			GameState.set_flag(EndingService.FLAG_AUDIT_ARRESTED, true)
+		[EndingService.F1_ARRESTED, EpilogueService.VARIANT_REVIEW]:
+			GameState.set_flag(EndingService.FLAG_REVIEW_ARRESTED, true)
+		[EndingService.F1_ARRESTED, EpilogueService.VARIANT_DEPOSITION]:
+			GameState.set_flag(EndingService.FLAG_DEPOSITION_ARRESTED, true)
 
 
 ## Mise en scène de capture M7 (après l'arrivée des documents).

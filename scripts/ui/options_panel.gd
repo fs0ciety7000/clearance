@@ -18,6 +18,10 @@
 ## dans le menu pause seulement (`in_game`) et en mode Récit, « Passer en mode
 ## Dur » (`hard_mode_requested` : le menu pause demande confirmation,
 ## irréversible, D-102).
+## M14 (I44) : Accessibilité › « Cinématiques » Automatique / Manuelle
+## (`cinematic_advance`) ; Audio › « Musique pendant l'inspection » Réduite /
+## Normale (`music_inspection_reduce`) et « Musique » Dynamique / Stable
+## (`music_dynamics`), lus par l'`AudioDirector` (`settings_changed`).
 class_name OptionsPanel
 extends VBoxContainer
 
@@ -33,6 +37,11 @@ const QUALITY_KEYS: Array[String] = ["opt_quality_low", "opt_quality_medium", "o
 ## Vision des couleurs : libellés des modes `Palette.Mode` (0–3).
 const COLOR_VISION_KEYS: Array[Array] = [["opt_cv_none", "AUCUNE"], ["opt_cv_protan", "PROTAN · DEUTAN"],
 	["opt_cv_tritan", "TRITAN"], ["opt_cv_contrast", "CONTRASTE ÉLEVÉ"]]
+## M14 (I44) : musique pendant l'inspection (réduite / normale), musique
+## dynamique / stable, avance des cinématiques (automatique / manuelle).
+const MUSIC_INSPECT_KEYS: Array[Array] = [["opt_music_reduced", "RÉDUITE"], ["opt_music_normal", "NORMALE"]]
+const MUSIC_DYNAMICS_KEYS: Array[Array] = [["opt_music_dynamic", "DYNAMIQUE"], ["opt_music_stable", "STABLE"]]
+const CINEMATIC_KEYS: Array[Array] = [["opt_cinematic_auto", "AUTOMATIQUE"], ["opt_cinematic_manual", "MANUELLE"]]
 ## Glyphes manette : Auto (−1), Xbox / Steam Deck (0), PlayStation (1).
 const PAD_GLYPH_KEYS: Array[Array] = [["opt_pad_auto", "AUTO"], ["opt_pad_xbox", "XBOX · DECK"], ["opt_pad_ps", "PLAYSTATION"]]
 ## Hauteur laissée hors de la zone défilante (titre du panneau, marges, retour).
@@ -84,11 +93,19 @@ func _ready() -> void:
 			UiText.t("opt_subtitles_hint", "Voix des passagers en tessar, sous-titrées en français."))
 	_add_toggle(Settings.KEY_CLOCK_SLOW_ACCESSIBILITY, UiText.t("opt_clock_slow", "Horloge du shift ralentie (×0,5)"),
 			UiText.t("opt_clock_slow_hint", "Les gains par cas sont inchangés."))
+	_add_choice_row(Settings.KEY_CINEMATIC_ADVANCE, UiText.t("opt_cinematic_advance", "Cinématiques"),
+			UiText.t("opt_cinematic_hint", "Manuelle : chaque planche attend un appui. Maintenir pour tout passer."),
+			CINEMATIC_KEYS, [Settings.CINEMATIC_AUTO, Settings.CINEMATIC_MANUAL])
 	_rows.add_child(ScreenBase.section(UiText.t("opt_audio", "AUDIO"), UiIcon.Kind.CHAT, Palette.TEXT_SECONDARY))
 	for key: StringName in VOLUME_KEYS:
 		_add_slider(key, UiText.t("opt_%s" % key, String(key)), 0.0, 1.0, 0.05, true)
 	_add_toggle(Settings.KEY_AUDIO_MONO, UiText.t("opt_audio_mono", "Son mono"),
 			UiText.t("opt_audio_mono_hint", "Gauche et droite mélangées : aucun son ne se perd d'une seule oreille."))
+	_add_bool_choice_row(Settings.KEY_MUSIC_INSPECTION_REDUCE, UiText.t("opt_music_inspect", "Musique pendant l'inspection"),
+			UiText.t("opt_music_inspect_hint", "Réduite : plus basse et sans mélodie en Mode Inspection."), MUSIC_INSPECT_KEYS)
+	_add_choice_row(Settings.KEY_MUSIC_DYNAMICS, UiText.t("opt_music_dynamics", "Musique"),
+			UiText.t("opt_music_dynamics_hint", "Stable : un seul niveau pendant le shift, sans montée de tension."),
+			MUSIC_DYNAMICS_KEYS, [Settings.MUSIC_DYNAMIC, Settings.MUSIC_STABLE])
 	_rows.add_child(ScreenBase.section(UiText.t("opt_controls", "COMMANDES"), UiIcon.Kind.DIAMOND, Palette.TEXT_SECONDARY))
 	_add_choice_row(Settings.KEY_PAD_GLYPHS, UiText.t("opt_pad_glyphs", "Glyphes de manette"),
 			UiText.t("opt_pad_glyphs_hint", "Les invites suivent le dernier appareil utilisé, clavier ou manette."),
@@ -306,6 +323,39 @@ func _add_choice_row(key: StringName, caption: String, hint: String, labels: Arr
 		b.custom_minimum_size = Vector2(120, DS.HIT_TARGET_MIN)
 		b.focus_mode = Control.FOCUS_ALL
 		b.button_pressed = is_equal_approx(current, value)
+		b.toggled.connect(func(on: bool) -> void:
+			if on:
+				Settings.set_value(key, value))
+		buttons.add_child(b)
+		if i == 0:
+			controls[key] = b
+	_rows.add_child(box)
+
+
+## Choix exclusif sur un réglage booléen : premier bouton = vrai, second = faux.
+func _add_bool_choice_row(key: StringName, caption: String, hint: String, labels: Array[Array]) -> void:
+	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_2)
+	var texts: VBoxContainer = ScreenBase.vbox(0)
+	texts.add_child(ScreenBase.label(caption, &"BodyLabel"))
+	if not hint.is_empty():
+		texts.add_child(ScreenBase.wrapped(hint, &"CaptionLabel"))
+	box.add_child(texts)
+	var buttons: HFlowContainer = HFlowContainer.new()
+	buttons.add_theme_constant_override("h_separation", 0)
+	buttons.add_theme_constant_override("v_separation", DS.SPACE_1)
+	box.add_child(buttons)
+	var group: ButtonGroup = ButtonGroup.new()
+	var current: bool = Settings.get_bool(key)
+	for i: int in labels.size():
+		var value: bool = i == 0
+		var b: Button = Button.new()
+		b.theme_type_variation = &"ToggleTab"
+		b.toggle_mode = true
+		b.button_group = group
+		b.text = UiText.t(labels[i][0], labels[i][1])
+		b.custom_minimum_size = Vector2(120, DS.HIT_TARGET_MIN)
+		b.focus_mode = Control.FOCUS_ALL
+		b.button_pressed = current == value
 		b.toggled.connect(func(on: bool) -> void:
 			if on:
 				Settings.set_value(key, value))

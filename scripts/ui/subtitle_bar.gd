@@ -1,6 +1,7 @@
 ## Sous-titres des barks (UI_FLOW §4.8) : en bas de la vitre, sous le visage,
 ## `[tag] NOM « texte »` sur fond `bg.void` 85 %. Non diégétique : aucun effet.
 ## Durée = max(1,5 s ; 60 ms × caractères). Désactivables (`Settings.subtitles`).
+## M14 : annonces d'ambiance « [Haut-parleur] « … » » (sans locuteur, durée imposée).
 class_name SubtitleBar
 extends PanelContainer
 
@@ -34,7 +35,8 @@ func _ready() -> void:
 	row.add_child(_text)
 
 
-func show_line(speaker: String, text: String, tag: String = "") -> void:
+## `hold_sec` > 0 : durée imposée (annonces d'ambiance M14 : durée du signal).
+func show_line(speaker: String, text: String, tag: String = "", hold_sec: float = 0.0) -> void:
 	if not enabled or text.is_empty():
 		return
 	_serial += 1
@@ -42,11 +44,12 @@ func show_line(speaker: String, text: String, tag: String = "") -> void:
 	_tag.text = tag
 	_tag.visible = not tag.is_empty()
 	_speaker.text = speaker
+	_speaker.visible = not speaker.is_empty()
 	_text.text = "« %s »" % text
 	visible = true
 	reset_size()
 	if is_inside_tree():
-		get_tree().create_timer(UiText.subtitle_hold(text)).timeout.connect(_expire.bind(serial))
+		get_tree().create_timer(hold_sec if hold_sec > 0.0 else UiText.subtitle_hold(text)).timeout.connect(_expire.bind(serial))
 
 
 ## Didascalie seule (« [trois tapes sur la vitre] »), sans réplique.
@@ -58,6 +61,7 @@ func show_tag(speaker: String, tag: String) -> void:
 	_tag.text = tag
 	_tag.visible = true
 	_speaker.text = speaker
+	_speaker.visible = not speaker.is_empty()
 	_text.text = ""
 	visible = true
 	reset_size()

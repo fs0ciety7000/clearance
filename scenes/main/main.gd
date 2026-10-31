@@ -284,6 +284,7 @@ func open_garde() -> GardeScreen:
 func open_dossier() -> DossierScreen:
 	var dossier: DossierScreen = DossierScreen.new()
 	dossier.name = "DossierScreen"
+	dossier.title_music = get_node_or_null(^"TitleMusic") as TitleMusic # REVOIR : thème de la fin (M14)
 	dossier.epilogue_requested.connect(play_epilogue_from_profile)
 	dossier.garde_requested.connect(start_garde)
 	_open_screen(dossier, dossier_button)
@@ -445,6 +446,42 @@ func _debug_title(which: String) -> void:
 				var dossier: DossierScreen = open_dossier()
 				if which != "dossier":
 					dossier.show_tab.call_deferred(StringName(which.trim_prefix("dossier-")))
+		"dossier-replay":
+			# M14 : REVOIR une fin vue (CIN-F10), figures en silhouette.
+			if not dossier_button.disabled:
+				var dossier_r: DossierScreen = open_dossier()
+				_debug_replay.call_deferred(dossier_r, str(DebugArgs.parse(OS.get_cmdline_user_args()).get("replay", "cin_f10")))
+		"options-m14":
+			# M14 : options, section Audio (musique) visible.
+			_show_options()
+			_debug_options_m14.call_deferred()
+
+
+## Capture M14 : REVOIR `id` depuis le Dossier, planche `--plate=N` à
+## `--plate-t` s (figée avec `--plate-hold`).
+func _debug_replay(dossier: DossierScreen, id: String) -> void:
+	var b: Button = dossier.replay_buttons.get(id, null)
+	if b == null:
+		push_warning("main: REVOIR %s indisponible" % id)
+		return
+	b.pressed.emit()
+	var args: Dictionary = DebugArgs.parse(OS.get_cmdline_user_args())
+	var plate_n: int = str(args.get("plate", "0")).to_int()
+	if dossier.replay != null and plate_n > 0:
+		await get_tree().process_frame
+		dossier.replay.jump_to(plate_n - 1, str(args.get("plate-t", "1.5")).to_float())
+		if args.has("plate-hold"):
+			dossier.replay.set_process(false)
+
+
+## Capture M14 : options défilées jusqu'aux réglages de musique (`--opt-row=cinematic` : avance des cinématiques).
+func _debug_options_m14() -> void:
+	await get_tree().process_frame
+	var row: String = str(DebugArgs.parse(OS.get_cmdline_user_args()).get("opt-row", "music"))
+	var target: Control = options.controls.get(Settings.KEY_CINEMATIC_ADVANCE if row == "cinematic" else Settings.KEY_MUSIC_DYNAMICS, null)
+	if target != null:
+		target.grab_focus()
+		options.scroll.ensure_control_visible(target)
 
 
 ## Capture QA-043 : `current.json` de l'emplacement de démonstration illisible,
@@ -548,4 +585,32 @@ static func write_demo_profile(dir: String, kind: String = "full") -> void:
 			"garde_version": GardeScreen.current_version()}}
 	profile["garde_seeds"] = [{"seed_code": "K2Q-9TX", "best": 18, "garde_version": GardeScreen.current_version()}]
 	profile["garde_stats"] = {"runs": 7, "total_correct": 112, "longest_run": 34}
+	# M14 : cinématiques vues (REVOIR) et portraits vus à la vitre (apparences
+	# tirées du vrai générateur, graines fixes) ; deux personnes restent en initiales.
+	profile["cinematics_seen"] = ["cin_f3", "cin_f5c", "cin_f10", "cin_ec"]
+	profile["portraits"] = demo_portraits(met)
 	ProfileService.save_profile(profile, dir)
+
+
+## Portraits de démonstration (captures) : un visage par personnage croisé,
+## sauf deux (2ᵉ et 5ᵉ : repli en initiales) ; une visière restée baissée.
+static func demo_portraits(met: Array) -> Dictionary:
+	var out: Dictionary = {}
+	var table: CharacterTableDef = CharacterTableDef.load_default()
+	var data: DataCatalog = DataCatalog.load_from()
+	if table == null or data == null or data.appearance_catalog == null:
+		return out
+	var gen: AppearanceGenerator = AppearanceGenerator.new(data.appearance_catalog)
+	var count: int = 0
+	for i: int in met.size():
+		if i == 1 or i == 4:
+			continue
+		var case_id: String = str(met[i])
+		var chr: CharacterDef = table.character_of(StringName(str(case_id)))
+		if chr == null or out.has(String(chr.id)):
+			continue
+		var app: PassengerAppearance = gen.generate(SeededRng.new(9_000 + count * 37), [&"hal", &"ter", &"tyc"][count % 3] as StringName)
+		out[String(chr.id)] = {"appearance": app.serialize(), "visor": "down" if count == 3 else "none",
+				"case_id": str(case_id), "day": 1 + count, "act": 1}
+		count += 1
+	return out

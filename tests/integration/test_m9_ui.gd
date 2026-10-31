@@ -438,6 +438,11 @@ func test_end_screen_has_ten_act_three_endings() -> void:
 	for ending: StringName in [EndingService.F1_ARRESTED, EndingService.F4_GLORY, EndingService.F5_AIR, EndingService.F6_DRIFT,
 			EndingService.F7_REOPENS, EndingService.F8_REGISTRE, EndingService.F9_STRIKE, EndingService.F10_PONT]:
 		scene.show_end(ending)
+		# M14 : la cinématique de la fin passe d'abord (testée par test_m14_ui).
+		var sequence: CinematicScreen = scene.screen as CinematicScreen
+		assert_not_null(sequence, "%s : cinématique avant l'écran de fin" % ending)
+		if sequence != null:
+			sequence.skip_all()
 		var end: EndScreen = scene.screen as EndScreen
 		var act: int = end.epilogue["act"]
 		assert_eq(act, 3, "%s : épilogue de l'Acte III" % ending)

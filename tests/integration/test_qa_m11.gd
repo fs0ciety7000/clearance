@@ -367,6 +367,13 @@ func test_pad_end_screen_and_load_screen_past_day() -> void:
 	InputPrompts.simulate_device(InputPrompts.Device.XBOX)
 	scene.show_end(&"f2_reassigned")
 	await wait_process_frames(5)
+	# M14 : la cinématique de F2 d'abord — Ⓑ maintenu 0,8 s la passe.
+	var sequence: CinematicScreen = scene.screen as CinematicScreen
+	assert_not_null(sequence, "cinématique avant l'écran de fin")
+	if sequence != null:
+		sequence.begin_hold(CinematicScreen.HOLD_CANCEL)
+		sequence.tick(DS.CIN_SKIP_HOLD + 0.01)
+	await wait_process_frames(3)
 	var end: EndScreen = scene.screen as EndScreen
 	for c: Dictionary in end.finished.get_connections():
 		end.finished.disconnect(c["callable"])

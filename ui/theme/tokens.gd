@@ -219,3 +219,29 @@ const SEARCH_PANEL_WIDTH := 640 # panneau du portique (bande B, à la place de l
 const SEARCH_SILHOUETTE_W := 120 # silhouette filaire des zones Z1–Z5
 const BUSY_REDUCED_STEP := 0.25 # « Réduire les animations » : la barre d'attente avance par quarts, sans balayage
 const HELP_CARD_WIDTH := 760 # carte d'aide M13 (déclarations J4, fouille J8), posée sur le plan de travail
+# ---------------------------------------------------------------------------
+# M14 « Ambiance » (DESIGN_SYSTEM 0.8) — cinématiques de fin, portraits du Dossier
+# ---------------------------------------------------------------------------
+const PLATE_TITLE_SEC := 3.5 # carte de titre d'une cinématique (surtitre + titre de la fin)
+const PLATE_MIN_SEC := 6.0 # durée minimale d'une planche : max(6 s ; 2,5 s + 0,06 s × caractères)
+const PLATE_BASE_SEC := 2.5
+const PLATE_CHARS_SEC := 0.06
+const PLATE_SLOW_FACTOR := 1.5 # « Horloge ralentie » : planches ×1,5
+const PLATE_ADVANCE_LOCK := 0.6 # un appui n'avance qu'après 0,6 s d'affichage
+const DUR_PLATE_XFADE := 0.8 # fondu croisé entre planches (« Réduire les animations » : DUR_FAST)
+const PARALLAX_MAX_PX := 12.0 # décalage BG ↔ couche la plus proche sur toute la planche @1080p
+const KEN_BURNS_MAX := 1.04 # zoom lent maximal d'une planche (jamais de rotation)
+const CIN_SKIP_HOLD := 0.8 # maintien qui passe toute la séquence (Échap / Ⓑ / Ⓐ / clic / TOUT PASSER)
+const CIN_CAPTION_SCALE := 1.25 # légende : sous-titre agrandi (≥ 1,25 × FS_SUBTITLE)
+const CIN_CAPTION_MIN_PHYSICAL := 16 # px physiques minimum de la légende (Steam Deck)
+const CIN_CAPTION_WIDTH := 0.86 # largeur maximale de la légende (part de la zone sûre 16:10)
+const CIN_SAFE_ASPECT := 1.6 # zone sûre Deck (16:10) au centre de la planche
+const CIN_PLATE_RAISE := 0.04 # texte > 130 % : la planche remonte de 4 % (légende sur 3 lignes)
+const CIN_GLASS_OFF_DELAY := 1.0 # PL-F9-1 : première vitre éteinte après 1 s
+const CIN_GLASS_OFF_STEP := 0.5 # PL-F9-1 : une vitre de plus toutes les 0,5 s
+const CIN_NEXT_BLINK_HZ := 0.5 # « ▶ » de l'avance manuelle (≤ 1 Hz)
+const CIN_HOLO_POWER := 0.7 # allumage des voiles holographiques posés sur une planche
+const CIN_RING_SIZE := 28 # anneau de progression du maintien (px @1080p)
+const DOSSIER_PORTRAIT_W := 112 # vignette du Dossier (128×160 rendue, 112×140 affichée : ≥ 72 px au Deck)
+const DOSSIER_PORTRAIT_H := 140
+const MUSIC_EXIT_FADE := 1.5 # fondu de sortie de la musique avant un changement de scène (M14 §2.6)

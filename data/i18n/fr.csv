@@ -4215,3 +4215,21 @@ pa_epi_d_01,Comité de grève : tour d'air du soir à 19:00.
 pa_epi_d_02,Sas Castellanos : les mineurs du Puits 14 passent en premier.
 cin_lbl_charter,CHARTE DE L'AIR
 cin_lbl_ledger,MAIN COURANTE
+cin_skip_hold,Maintenir pour passer
+cin_skip_all,TOUT PASSER
+cin_next,▶
+cin_replay,REVOIR
+sub_pa_prefix,[Haut-parleur]
+opt_music_inspect,Musique pendant l'inspection
+opt_music_inspect_hint,Réduite : plus basse et sans mélodie en Mode Inspection.
+opt_music_reduced,RÉDUITE
+opt_music_normal,NORMALE
+opt_music_dynamics,Musique
+opt_music_dynamics_hint,"Stable : un seul niveau pendant le shift, sans montée de tension."
+opt_music_dynamic,DYNAMIQUE
+opt_music_stable,STABLE
+opt_cinematic_advance,Cinématiques
+opt_cinematic_hint,Manuelle : chaque planche attend un appui. Maintenir pour tout passer.
+opt_cinematic_auto,AUTOMATIQUE
+opt_cinematic_manual,MANUELLE
+dos_portrait_hidden,Visage non vu
