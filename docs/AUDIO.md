@@ -1,6 +1,6 @@
 # CLEARANCE — Audio Design
 
-> Version 0.2 · Propriétaire : Audio Designer · Statut : **implémenté (M6)** — voir §12 pour l'état réel
+> Version 0.5 · Propriétaire : Audio Designer · Statut : **implémenté (M6)** — voir §12 pour l'état réel ; **M14 phase 1** (musique dynamique : moteur, stress D-083, chaîne de rendu, échantillons) — voir §13
 > Cohérent avec `DESIGN_SYSTEM.md` §9 (Audio-UI), §11 (Assets libres) et `docs/ARCHITECTURE.md` §7 (catalogue `EventBus`).
 > Moteur : Godot 4.7.2. Dossier cible : `res://assets/audio/{sfx,ambience,music,voice}/`.
 
@@ -35,7 +35,7 @@ Fichier : `res://default_bus_layout.tres` (chemin par défaut de Godot, aucune e
 
 ```
 Master ── Limiter (ceiling −1 dBTP)
- ├── Music      ── (sidechain-like ducking via script)
+ ├── Music      ── (sidechain-like ducking via script) ; M14 : effet « Fade » (fondus globaux, §13.2)
  ├── Ambience   ── LowPassFilter (automatisé), Reverb "Station"
  ├── SFX        ── Compressor léger
  │    └── SFX_World  (send) ── Reverb "Station" (sons 3D côté passager / hall)
@@ -46,7 +46,7 @@ Master ── Limiter (ceiling −1 dBTP)
 | Bus | Effets (ordre) | Réglages de départ | Notes |
 |---|---|---|---|
 | `Master` | `AudioEffectLimiter` | ceiling −1 dB, threshold −3 dB | Option **Mono** : `AudioServer` → script qui somme L/R (cf. §9) |
-| `Music` | `AudioEffectLowPassFilter` (désactivé par défaut) | cutoff 20 kHz → 2,5 kHz en pause/menu | Volume ducké de −6 dB pendant une voix |
+| `Music` | `AudioEffectAmplify` (« Duck »), `AudioEffectLowPassFilter` (« Muffle », désactivé par défaut), `AudioEffectAmplify` (« Fade », M14) | cutoff 20 kHz → 2,5 kHz en pause/menu ; Fade 0 dB | Volume ducké de −6 dB pendant une voix ; **Fade** = seul gain animé de la musique (D-176, D-083 ; §13.2) |
 | `Ambience` | `AudioEffectLowPassFilter`, `AudioEffectReverb` (« Station ») | LPF 8 kHz (vitre), reverb room 0,8, damping 0,4, wet 0,25 | LPF descend à 4 kHz quand l'intercom est **off** (l'extérieur se referme) |
 | `SFX` | `AudioEffectCompressor` | ratio 3:1, threshold −12 dB, attack 5 ms | Tampons, fente, hologrammes, pas |
 | `SFX_World` (enfant de `SFX`) | `AudioEffectReverb` (« Station ») | wet 0,2 | Sons 3D derrière la vitre (pas, porte station) |
@@ -143,6 +143,8 @@ Légende priorité : **P1** critique (jamais volé, jamais coupé) · **P2** imp
 | `amb.stop_all` | `day_ended` → fade-out 3 s | — | — | — | — |
 
 ### 4.5 Musique (états)
+
+> **M14** : remplacé par la musique dynamique en couches (§13 ; docs/M14.md §2). Le tableau ci-dessous décrit les boucles M6 encore jouées par `AudioDirector.set_music()` jusqu'à la phase 2 du lot B.
 
 Lecteur unique `AudioStreamPlayer` (bus `Music`) avec **`AudioStreamInteractive`** (Godot 4.3+) : transitions synchronisées sur la mesure, fades 2–4 s.
 
@@ -331,7 +333,7 @@ L'`AudioDirector` (nœud de `day.tscn`) est le **seul** écouteur audio de l'Eve
 2. Ajout au catalogue EventBus des 4 signaux passager (§11) + éventuel `intercom_toggled(enabled)` si l'intercom devient une action joueur.
 3. Seuils timer warning / critical (60 s / 15 s proposés) : à aligner avec le Game Design et DS §7.6.
 4. Formule rituelle « Gloire au Consortium » : validation Lore Master.
-5. `AudioStreamInteractive` (Godot 4.3+) pour la musique : OK côté Godot Architect ?
+5. ~~`AudioStreamInteractive` (Godot 4.3+) pour la musique : OK côté Godot Architect ?~~ **Close** (M14, D-176) : oui, avec des clips `AudioStreamSynchronized` — prototype de stress D-083 passé (§13.3).
 
 ## 12. Implémentation M6 (état réel)
 
@@ -375,9 +377,118 @@ L'`AudioDirector` (nœud de `day.tscn`) est le **seul** écouteur audio de l'Eve
 
 **Accessibilité vérifiée** : chaque cue critique a son doublage visuel existant (timer : barre ambre/rouge ; tampon : animation + empreinte ; discordance : lien magenta + numéro ; concordance : chip ; citation : ticket ; règle nouvelle : badge NOUVEAU ; barks : sous-titres). « Réduire les effets » (`fx_intensity < 1`) coupe `ui.timer_critical_tick` et adoucit les tampons de 4 dB.
 
+## 13. Musique dynamique M14 — phase 1 du lot B (état réel)
+
+> Conception : `docs/M14.md` §2 (D-174, D-176 → D-182), cibles §6.2 (D-192), contrat d'interfaces `docs/ARCHITECTURE.md` §12 ter. Phase 1 = **avant validation client** : moteur et prototype de stress D-083 (B82), chaîne de rendu minimale (B79/B80), échantillons MS-02 et TH-F9, audit objectif (B94). Le jeu n'est **pas** encore branché : `AudioDirector.set_music()` joue toujours les boucles M6 (§4.5) jusqu'à la phase 2.
+
+### 13.1 Fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `scripts/audio/music_director.gd` | `MusicDirector` (nœud de scène) : un lecteur, `AudioStreamInteractive` de clips `AudioStreamSynchronized`, niveaux N0 → N4 à la mesure, fondus par l'effet `Fade` |
+| `scripts/audio/audio_buses.gd` → `default_bus_layout.tres` | effet `Fade` (`AudioEffectAmplify`, `AudioBuses.FX_FADE`) ajouté en 3ᵉ position du bus `Music` (UID du fichier conservé par `build_audio.gd`) |
+| `scripts/audio/audio_dsp.gd` | briques de synthèse ajoutées (§13.4) |
+| `scripts/audio/music_renderer.gd` | `MusicRenderer` : séquenceur, instruments, rendu d'une couche (repli de queue, longueur exacte) |
+| `scripts/audio/audio_loudness.gd` | `AudioLoudness` : sonie BS.1770-4 (pondération K, portes −70 / −10) |
+| `scripts/audio/ffmpeg_audio.gd` | `FfmpegAudio` : encodage Vorbis déterministe, mesures `ebur128` (outils seulement) |
+| `tools/build_music.gd` | rendu des partitions → WAV → OGG + `.import` + `manifest.json` ; `--demos` ; `--defs` (`.tres`) |
+| `art_src/music/ms02.json`, `thf9.json` | partitions (format §13.4) |
+| `assets/audio/music/ms02/mus_ms02_l{0..4}_loop.ogg` | couches de MS-02 (32 kHz, q3) |
+| `assets/audio/music/themes/mus_th_f9.ogg`, `mus_th_f9_tail_loop.ogg` | TH-F9 (48 kHz, q3) |
+| `assets/audio/music/sets/ms_02.tres`, `themes/th_f9.tres`, `music_library.tres` | données au format du lot A (`MusicSetDef`, `MusicThemeDef`, `MusicLibraryDef`), écrites par `build_music.gd --defs` |
+| `assets/audio/music/manifest.json` | SHA-256 (WAV, OGG), échantillons, LUFS, true peak, LRA, gains des niveaux, hachage des partitions et de l'outil |
+| `tools/qa_audio_stress.gd`, `tools/qa_audio_stress.sh` | stress D-083 (M-17) |
+| `tools/qa_audio_audit.gd` | audit M-01 → M-09, M-12 |
+| `tests/unit/test_music_director.gd`, `tests/unit/test_music_render.gd` | 21 tests GUT (règles de niveau, lecteur unique à volume fixe, rampes, `Fade`, sortie propre, masques `MusicSetDef`, thème → queue, bibliothèque ; briques DSP, longueurs exactes, déterminisme, jointure, linéarité, sonie BS.1770, partitions MO-1/MO-2, manifeste et `.import`) |
+| `docs/mockups/m14_music_ms02_demo.ogg`, `m14_music_thf9_demo.ogg` | démos de direction musicale (validation client) |
+
+### 13.2 Moteur (`MusicDirector`, D-176)
+
+- **Un seul** `AudioStreamPlayer` (`MusicPlayer`, bus `Music`), `volume_db = 0` **jamais modifié** (ni tween, ni écriture par image).
+- Flux : un `AudioStreamInteractive` dont chaque clip est un ensemble (`AudioStreamSynchronized`, ≤ 5 couches) ou un thème ; transition `CLIP_ANY → CLIP_ANY` à la mesure suivante, fondu croisé de 8 temps (2 mesures) dans le flux ; thème → queue par **avance automatique** du clip (`configure_theme(…, tail)`), `skip_to_tail()` pour une cinématique passée.
+- Niveaux : volume de chaque couche par `AudioStreamSynchronized.set_sync_stream_volume()` (lu par le thread de mixage, aucune allocation, aucun `bus_details` remplacé) ; rampe linéaire en amplitude d'**une mesure** ; une écriture au plus par couche et par image, seulement si la valeur change ; couche muette = −80 dB exactement.
+- Horloge : Godot 4.7 ne donne pas la position d'un `AudioStreamInteractive` (`get_playback_position()` = 0, vérifié) → horloge de mesures en temps réel (`Time.get_ticks_usec`, insensible à `Engine.time_scale` et à la pause). `request_level()` s'applique en début de mesure (+1 toutes les 2 mesures, −1 toutes les 4 : `next_level()`, pur) ; `force_level()` pour les outils.
+- Masques : `configure_from_def(MusicSetDef)` → couches de `MusicSetDef.active_layers(level, mask, groups)` (exposé, sans mélodie, power down, groupes) et gain « exposé » ; sans donnée, la table de M14 §2.5. API de la phase 2 déjà présente sous forme minimale : `use_library()`, `set_groups()`, `set_mask()`, `play_theme()`, `skip_to_tail()`.
+- Fondus globaux : `fade_to(db, s, stop_at_end)` écrit l'effet `Fade` une fois par image (rampe en amplitude).
+- `_exit_tree` : `stop()`, `stream = null`, `Fade` remis à 0 dB (QA-039). `AudioDirector._exit_tree` arrête de toute façon tous les lecteurs de ses enfants.
+
+### 13.3 Stress D-083 (B82, M-17) — résultat : **le moteur ne déclenche pas la course**
+
+Outil : `bash tools/qa_audio_stress.sh <journal> [args]` (lance `tools/qa_audio_stress.gd` via `qa_boot`, `user://` jetable). Le vrai `MusicDirector` est **greffé** sous l'`AudioDirector` de chaque `day.tscn` chargée (signal `node_added`, sans modifier le jeu) avec les 5 couches de MS-02, un 2ᵉ ensemble de 3 couches et un thème, puis brutalisé : niveau forcé (−1 → 4) toutes les 0,5 s, mélodie coupée au hasard, changement de clip toutes les 1–6 s (fondu croisé dans le flux), fondu `Fade` toutes les 0,5–3 s, relance de `play()` toutes les 5–15 s. Modes : `reload` (protocole de QA-030 : la vraie scène, bot `--autoplay`, `Engine.time_scale` 8, `reload_current_scene` toutes les 1–240 images, briefing comme plein shift), `campaign` (ajoute `qa_campaign.gd`, « Quitter → Continuer » réels), `bare` (le moteur seul, scène minimale rechargée toutes les 1–30 images). Contrôles : `--qa-control=legacy` (deux lecteurs dont le `volume_db` est réécrit à chaque image : le schéma abandonné), `--qa-control=off`, `--qa-no-barrier` (`AudioMixBarrier` en pause). Fin par `AudioMixBarrier.quit_after_silence()` ; le script compte `signal 11`, fuites (« leaked », « still in use »), « Playback can only happen… », `SCRIPT ERROR`.
+
+| Série | Mode, barrière | Volume | Opérations sur le moteur | Plantages | Fuites à la sortie |
+|---|---|---|---|---|---|
+| **Rechargements de la vraie scène** (13 tronçons ≤ 10 min, jours 1, 2, 4, 7, 10, 12, 15, 18, 20, 25 ; graines variées) | `reload`, barrière active | **3 400 rechargements** de `day.tscn` (2 tronçons coupés par le délai : comptés au dernier relevé) | 10 878 changements de niveau, 1 144 changements de clip, 2 290 fondus `Fade`, 395 relances, 601 557 écritures de volume de couche | **0** | 0 (1 tronçon : 6 objets / 3 ressources, non reproduit en 3 reprises de la même graine, ni en ligne de base sans moteur) |
+| **Campagne réelle J1 → J30** (graine 23, profil `solidaire`, +3 000 ₵, `--qa-reload`, 3 tronçons repris de la vraie sauvegarde) | `campaign`, barrière active | 30 jours joués, **31 « Quitter → Continuer »** réels, 55 moteurs greffés, fin **F9** au J30 | 1 982 changements de niveau, 284 changements de clip, 562 fondus, 96 relances, 186 596 écritures | **0** | 0 ; 0 `SCRIPT ERROR` |
+| Moteur seul, niveau changé **à chaque image** | `bare`, barrière active | 3 000 + 1 000 cycles lecture → libération | 55 685 changements de niveau, 165 341 écritures | **0** | 0 (après correctif, ci-dessous) |
+| Moteur seul **sans `AudioMixBarrier`** | `bare`, barrière en pause | 3 000 cycles | 3 624 changements de niveau, 10 072 écritures | **0** | 0 |
+| Contrôle : schéma abandonné (2 lecteurs, `volume_db` réécrit à chaque image), sans barrière | `bare --qa-control=legacy --qa-no-barrier` | 3 000 cycles | 93 338 écritures de `volume_db` | 0 | (fuite de scripts du prototype de l'époque, voir ci-dessous) |
+| Ligne de base : jeu seul (`--qa-control=off`), J20 | `reload`, barrière active | 250 rechargements | — | 0 | 0 |
+
+**Lecture** : sur le protocole qui avait reproduit QA-030 (≈ 1 plantage pour 2 100 rechargements de la vraie scène **sans** barrière), le moteur M14 n'a produit **aucun plantage** en 3 400 rechargements et une campagne complète, avec un trafic de changements de niveau très supérieur au jeu réel (un niveau forcé toutes les 0,5 s ; en jeu : au plus un changement toutes les 2 mesures). Mécanisme : la musique ne réécrit **jamais** le volume d'une lecture de l'`AudioServer` (0 écriture de `volume_db` mesurée, sonde GUT) ; les niveaux vivent dans le flux et les fondus dans un effet de bus. Limite : le mode `bare` ne reproduit pas la course même sans barrière (charge trop faible) — la sensibilité de l'outil repose sur le protocole de QA-030 dans la vraie scène, pas sur un contrôle positif refait ici. **Le repli prémixé n'est pas nécessaire.**
+
+**Défaut trouvé et corrigé par le stress** : une version intermédiaire de `MusicDirector.use_library(library: MusicLibraryDef)` faisait fuir à la sortie **tout le graphe de scripts du jeu** (≈ 160 « GDScript leaked », 157 ressources « still in use ») dès que la classe était chargée — reproduit par une sonde minimale (référencer `MusicDirector` suffit ; `MusicLibraryDef` seule : rien) et isolé par bissection à la référence de type `MusicLibraryDef` (dont les statiques tirent `DayDef`) dans la signature. Correctif : paramètre typé `Resource`, lu par propriétés ; 0 fuite ensuite (moteur seul 1 000 cycles, J20 250 rechargements). À garder en tête pour le lot A : une référence de type vers `MusicLibraryDef` depuis un script chargé tôt reproduirait la fuite.
+
+### 13.4 Chaîne de rendu hors ligne (B79/B80, D-180)
+
+`art_src/music/<id>.json` → `tools/build_music.gd` (`MusicRenderer` + `AudioDsp`) → WAV 16 bits (`art_src/downloads/_music_build/`, ignoré par git) → ffmpeg Vorbis → `assets/audio/music/…` + `.import` + `manifest.json`. Point d'entrée : `bash tools/build_audio.sh --only=music:ms02` (une partition ; `music:all` toutes ; `--force`, `--demos`) qui enchaîne rendu, import et `--defs` ; ou directement `godot --headless --path . --script res://tools/build_music.gd -- [--only=…] [--force] [--demos] [--defs]`.
+
+**Partition** (JSON) : `id`, `def_id` (`ms_02`, `th_f9`), `kind` (`set` | `theme`), `tempo`, `beats_per_bar`, `bars`, `tail_bars` (queue repliée, 2), `sample_rate`, `seed` ; `chords[]` (`bar`, `bars`, `bass`, `notes`) ; `motifs` (MO-n : pas, durée, note) ; `instruments` (préréglages nommés : `pad`, `choir`, `bass`, `bell`, `pluck`, `musicbox`, `arp`, `tick`, `brush`, `noise_swell`, `neon`, `tone` [sinus, triangle, dent de scie, air, souffle]) ; `mix` (`eq[]` en cloche, `reverb` FDN `rt60`/`size`/`damp_hz`/`predelay`, `width`) ; `stems[]` (une couche : `id`, `layer` facultatif [rôle, seuils, masques], `eq`/`width` propres facultatifs) → `tracks[]` (`instrument`, `gain_db`, `send`, `pan`, `humanize_ms` seedé, et `chords` [nappe : `octave`, `only`, `from_bar`, `to_bar`], `pattern` [`bars`, `steps` : `step` en doubles croches, `len`, `note` (`A3`, `chord:k`, `bass`, `rest`), `notes`, `oct`, `vel`, `prob` seedée], `events` [y compris `{"motif": "MO-1", "bar", "step", "stretch", "transpose"}`], `automation` [`cutoff`, `gain_db` par mesure, par bloc de 64 échantillons], `bitcrush`) ; thèmes : `sections[]` (`opening`, `a`, `b`, `tail` bouclable), `endings` ; `demo` (niveaux par mesure ou queue, présentation).
+
+**Briques `AudioDsp`** (statiques pures) : `blep_saw` (polyBLEP, vibrato), `blep_pulse` (PWM), `sine`, `triangle`, `fm2` (cloche 2 opérateurs), `karplus` (pincé), `env_adsr`, `svf` (TPT passe-bas / bande / haut, coupure par bloc de 64), `block_curve`, `eq_peak`, `chorus`, `delay`, `fdn_reverb` (4 lignes, Hadamard, amortissement, pré-délai ; linéaire), `bitcrush`, `ms_width`, `dc_block`. Les anciennes (`filter`, `one_pole`, `space`…) sont inchangées.
+
+**Boucles** : chaque couche est rendue sur `bars + 2` mesures ; la queue des 2 dernières est **repliée** sur le début ; longueur = `bars × échantillons par mesure` exactement (tempos à double croche entière : 80 BPM à 32 kHz = 96 000 éch. par mesure ; 75 BPM à 48 kHz = 153 600). Une note avancée par l'humanisation avant le début est calée sur l'échantillon 0 : une attaque à cheval sur la jointure serait codée de part et d'autre du bord du flux Vorbis (clic mesuré, §13.5).
+
+**Thème** : `stream` = ouverture → A → B **suivis du premier passage de la queue**, d'un seul tenant ; `tail_stream` = la queue repliée en boucle. La fin de `stream` enchaîne donc sur `tail_stream` sans couture (la queue a la même fin dans les deux fichiers). `MusicThemeDef.main_bars()` (14 pour TH-F9) reste la fin de B ; la queue commence à la mesure 14 de `stream`.
+
+**Mixage et gains** : même réverbération et même égaliseur pour chaque couche (somme des couches = mixage complet, linéarité testée) ; un **gain commun** par ensemble (crête de la couche la plus forte à −1,3 dBFS, abaissé tant qu'un OGG décodé dépasse −1 dBTP). Les gains de niveau ne sont **pas** dans les fichiers : `build_music` les calcule exactement (énergies pondérées K croisées des couches par sous-blocs de 100 ms, dichotomie couche par couche, bus Music à 0,8 = −1,94 dB) et les écrit dans `MusicLayerDef.gain_db` ; le gain « exposé » (L0 + L3 à −20 LUFS) dans `MusicSetDef.exposed_gain_db`.
+
+**Déterminisme** : graines dérivées de `seed`, de l'id, de la couche, de la piste et de l'index ; aucun ordre de dictionnaire ; ffmpeg `-map_metadata -1 -fflags +bitexact -flags:a +bitexact -serial_offset <hachage du nom>`. **Deux builds `--force --demos` successifs : WAV, OGG et démos identiques au bit près** (SHA-256 comparés). Incrémental : une partition n'est rendue que si son texte, `music_renderer.gd`, `audio_dsp.gd` ou `TOOL_VERSION` (à incrémenter quand la normalisation ou l'encodage de `build_music.gd` changent) ont changé, ou si un OGG ne correspond plus au manifeste ; un 3ᵉ build après modification de l'outil a redonné les mêmes SHA-256. Les `.tres` de `--defs` gardent leurs UID et des identifiants de sous-ressources stables (`layer_l0`, `section_a`…) ; les identifiants `ext_resource` restent tirés par Godot (normalisation à faire en phase 2, comme `build_booth.gd`). **Anciens OGG** (`amb_*`, `mus_*` de `build_audio.sh`) : mêmes options (serial = CRC du nom) → deux builds identiques ; leur PCM décodé est identique à celui des fichiers précédents (seuls les octets du conteneur changent).
+
+**Durées de rendu** (machine de dev, 1 cœur, autres processus actifs) : MS-02 (5 couches × 48 s) ≈ 82 s ; TH-F9 (70,4 s + queue 25,6 s, chœur de 24 voix) ≈ 200 s ; audit complet ≈ 45 s.
+
+### 13.5 Mesures objectives (`tools/qa_audio_audit.gd`, M14 §6.2)
+
+`godot --headless --path . --script res://tools/qa_audio_audit.gd -- [--json=rapport.json] [--only=ms02]` : tout est mesuré sur les **OGG décodés** par ffmpeg (et les WAV intermédiaires pour M-05 b) ; code de sortie 1 au premier échec. Résultat au rendu final : **105 mesures, 0 échec**.
+
+| # | Mesure | Résultat |
+|---|---|---|
+| M-01 | 0 échantillon ≥ 0,999 ; true peak ≤ −1 dBTP | couches MS-02 : −1,3 / −12,7 / −12,4 / −11,5 / −6,1 dBTP ; TH-F9 −1,0 ; queue −3,5 ; démos −1,8 et −4,5 ; 0 échantillon saturé |
+| M-02 | crête d'ensemble −1 dBTP (±0,5) ; DC ≤ 0,001 | MS-02 −1,3 dBTP ; DC ≤ 0,0001 |
+| M-03 | N0 → N4 (gains du manifeste, bus par défaut) | **−30,0 / −28,0 / −26,6 / −25,1 / −24,1 LUFS**, croissance monotone ; N4 recoupé par ffmpeg à 0,01 LU près ; gains L0 → L4 : −15,2 / −4,7 / +3,3 / −3,1 / −5,8 dB ; exposé : +7,2 dB |
+| M-04 | thème −18 ±1 LUFS | TH-F9 −18,0 LUFS au gain d'exécution −3,3 dB (gain à porter dans les données : voir §13.7) |
+| M-05 | boucles sans clic | toutes les boucles : clic ≤ 99,9ᵉ centile du fichier, erreur de codage à la jointure ≤ 99ᵉ centile, aucun silence > 20 ms (voir l'écart de méthode ci-dessous) |
+| M-06 | longueur exacte, `.import` | décodé = 1 536 000 éch. (MS-02), 3 379 200 et 1 228 800 (TH-F9) ; `loop`, `bpm`, `beat_count`, `bar_beats` cohérents ; aussi GUT |
+| M-07 | mono : perte ≤ 3 dB, corrélation ≥ 0 / 400 ms | pertes 0,0 → 1,1 dB ; corrélations minimales 0,08 → 0,99 (largeur M/S 0,55, L4 0,35, TH-F9 0,4) |
+| M-08 | UI ≥ musique + 12 dB dans 1–4 kHz | marge des cues P1 en bande : **37 / 37 / 36 / 25 / 28 dB** (N0 → N4) ; 12 cues jugées toutes ≥ 12 dB ; 3 cues « hors bande » non jugées (§13.7) |
+| M-09 | déterminisme | SHA-256 = manifeste ; deux builds identiques (§13.4) |
+| M-12 | taille | musique M14 : 3,26 Mo (MS-02 2,13 Mo, TH-F9 1,13 Mo) |
+
+**Écarts de méthode (à valider par la QA)** :
+- **M-05** — le critère du document (saut ≤ 3 × la médiane, RMS 10 ms ±1 dB) suppose un contenu continu : il échoue sur toute attaque placée au temps 1 (basse, cliquetis), aussi aux débuts de mesure **intérieurs**. Il est imprimé pour information ; le critère retenu compare la jointure **au reste du même fichier** : (a) énergie HF (dérivée seconde, 1 ms) ≤ son 99,9ᵉ centile ; (b) erreur de codage (OGG − WAV, ±50 ms) ≤ son 99ᵉ centile (le WAV est continu par construction, test GUT) ; (c) silence. Constat utile : Vorbis étale les attaques vers l'arrière (pré-écho) partout **sauf** à la jointure ; une attaque à cheval sur la jointure y crée un vrai clic (3,9 × le 99,9ᵉ centile) — d'où le calage des notes humanisées sur l'échantillon 0.
+- **M-08** — musique : RMS maximale sur 3 s dans la bande (filtres d'ordre 4) ; cue : crête d'échantillon dans la bande. Trois cues P1/P2 n'ont presque pas d'énergie dans 1–4 kHz (crête en bande > 12 dB sous leur crête totale : `ui.match`, `ui.incomparable`, `ui.toast_error`) : elles ne sont pas jugées ici (leur lisibilité se joue dans le grave). À trancher par la QA et l'UI/UX : critère par bande propre de chaque cue, ou éclaircir ces trois cues.
+
+### 13.6 Échantillons de direction musicale (validation client)
+
+| Démo | Contenu | Mesures |
+|---|---|---|
+| `docs/mockups/m14_music_ms02_demo.ogg` (78 s, 32 kHz stéréo, Vorbis q5) | **MS-02, Acte I** — la mineur, 80 BPM ; 26 mesures : N0 (mes. 1–4, nappe seule) → N1 (5–8, + basse en croches) → N2 (9–12, + cliquetis et balais) → N3 (13–18, + arpège ; **MO-1** à la cloche FM en mesure 17) → N4 (19–24, L3 sort, seconde mineure mi–fa tenue et bruit qui s'ouvre sur 4 mesures), fondu final de 2 mesures. Rampes d'une mesure et gains exacts du jeu, **+8 dB de présentation** (niveaux relatifs du jeu conservés) | −18,1 LUFS intégré, −1,8 dBTP, LRA 6,3 LU, 0 échantillon saturé ; par palier : N0 −22,0 · N1 −20,0 · N2 −18,6 · N3 −16,9 · N4 −15,9 LUFS (en jeu : −30 → −24) |
+| `docs/mockups/m14_music_thf9_demo.ogg` (83,2 s, 48 kHz stéréo, Vorbis q5) | **TH-F9 « Les vitres éteintes »** — ré majeur, 75 BPM ; ouverture : bourdonnement de néon (impulsion étroite à 110 Hz, papillotement) qui descend et s'éteint (mes. 1–2), déclic de relais, 2 mesures de quasi-silence (air de salle vide à −60 dBFS) ; A : chœur synthétique (4 notes × 3 voix × 2 côtés = 24 voix, formants « a ») ré – si m, **MO-2 chanté** lent (la la la · mi) sur si m ; B : sol – ré/fa♯ – mi m7 – la sus4, chœur aigu « ou », bourdon de ré grave, MO-2 deux fois ; queue de 8 mesures (ré – sol – si m – la sus4/la), MO-2 une fois ; **MO-1 absent**. Démo = `stream` (70,4 s) + 4 mesures de la queue, fondu final de 4 mesures | −18,0 LUFS intégré (cible des fins), −4,5 dBTP, LRA 13,2 LU, 0 échantillon saturé |
+
+Jointures des boucles de jeu : voir M-05 (§13.5) ; les démos sont des montages linéaires sans jointure.
+
+### 13.7 Reste pour la phase 2 et points ouverts
+
+- Brancher `MusicDirector` dans `day.tscn` (enfant d'`AudioDirector`) et `main.tscn` ; supprimer `AudioDirector.set_music()`, ses deux lecteurs et ses tweens (`_fade` reste pour les ambiances) ; `volume_music` à 0 → lecteur arrêté ; Mode Inspection (−6 dB **et passe-bas 3,5 kHz** : réutiliser `Muffle` à 3,5 kHz ou ajouter un filtre au bus) ; « power down » (L0 −6 dB, passe-bas 400 Hz) ; `MusicIntensity` (pur) et ses tests.
+- Ensembles MS-01, MS-03 → MS-07, thèmes TH-F1 → TH-F10, variantes, TH-EA → TH-ED ; lits d'ambiance par acte ; jingles ; annonces (B85).
+- `qa_audio_load.gd` (M-10, CPU) ; mémoire (M-11) ; campagnes réelles une fois le moteur branché.
+- **Proposé au lot A** : un `gain_db` dans `MusicThemeDef` (les thèmes sont normalisés à −1 dBTP ; TH-F9 demande −3,3 dB pour −18 LUFS) ; documenter que `stream` contient le premier passage de la queue (§13.4).
+- Effet de bord Vorbis aux jointures : règle de composition « aucune attaque à cheval sur la jointure » (appliquée par le moteur de rendu) ; si une couche future l'exige, encoder la boucle avec pré-roulement n'est pas possible tel quel (Godot boucle au bout du flux, `loop_offset` seulement au début).
+
 ## Changelog
 
 - 0.1 — Création : intentions, bus, cue sheet, barks MVP, budget, mix, conventions, licences.
 - 0.2 — M6 : implémentation (§12), registre des licences (§10.1), bus layout à la racine.
 - 0.3 — M8 : interfaces de l'Acte II sans cue nouvelle (§12).
 - 0.4 — M9 : interfaces de l'Acte III sans cue nouvelle (§12).
+- 0.5 — M14 phase 1 (lot B) : §13 musique dynamique — `MusicDirector` (moteur D-176), stress D-083 (B82), chaîne de rendu `build_music.gd` (partitions JSON, `AudioDsp` étendu, Vorbis déterministe, `manifest.json`), audit `qa_audio_audit.gd`, échantillons MS-02 et TH-F9 ; effet `Fade` du bus Music (§2) ; OGG d'ambiance et de musique M6 rendus déterministes ; question n° 5 close.

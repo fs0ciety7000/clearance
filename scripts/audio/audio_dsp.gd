@@ -350,6 +350,357 @@ static func space(buf: PackedFloat32Array, rate: int, wet: float, size: float = 
 	return out
 
 
+# --- Synthèse musicale (M14, B79 ; docs/M14.md §2.8) -------------------------
+# Fonctions statiques pures, sans état global : mêmes entrées → mêmes
+# échantillons (rendu déterministe de `tools/build_music.gd`).
+
+enum Svf { LOWPASS, BANDPASS, HIGHPASS }
+
+## Taille d'un bloc d'automatisation (coupure du SVF, gains).
+const BLOCK: int = 64
+
+
+## Correction polyBLEP (discontinuité d'une forme d'onde à `t` ∈ [0, 1[).
+static func _poly_blep(t: float, dt: float) -> float:
+	if t < dt:
+		var x: float = t / dt
+		return x + x - x * x - 1.0
+	if t > 1.0 - dt:
+		var y: float = (t - 1.0) / dt
+		return y * y + y + y + 1.0
+	return 0.0
+
+
+## Dent de scie à bande limitée (polyBLEP) : pas d'alias audible à 32 kHz.
+## `vib_hz` / `vib_depth` (fraction de fréquence) : vibrato sinusoïdal.
+static func blep_saw(n: int, freq: float, rate: int, phase: float = 0.0, vib_hz: float = 0.0,
+		vib_depth: float = 0.0) -> PackedFloat32Array:
+	var buf: PackedFloat32Array = silence(n)
+	var t: float = fposmod(phase, 1.0)
+	var base: float = freq / rate
+	var vw: float = TAU * vib_hz / rate
+	for i: int in n:
+		var dt: float = base * (1.0 + vib_depth * sin(vw * i)) if vib_depth > 0.0 else base
+		buf[i] = 2.0 * t - 1.0 - _poly_blep(t, dt)
+		t += dt
+		if t >= 1.0:
+			t -= 1.0
+	return buf
+
+
+## Impulsion à largeur variable (PWM ; 0,5 = carré), à bande limitée.
+static func blep_pulse(n: int, freq: float, rate: int, width: float = 0.5, phase: float = 0.0) -> PackedFloat32Array:
+	var buf: PackedFloat32Array = silence(n)
+	var t: float = fposmod(phase, 1.0)
+	var dt: float = freq / rate
+	var w: float = clampf(width, 0.05, 0.95)
+	for i: int in n:
+		var v: float = 1.0 if t < w else -1.0
+		v += _poly_blep(t, dt)
+		v -= _poly_blep(fposmod(t - w + 1.0, 1.0), dt)
+		buf[i] = v
+		t += dt
+		if t >= 1.0:
+			t -= 1.0
+	return buf
+
+
+## Sinus (partiels, sous-basse, boîte à musique).
+static func sine(n: int, freq: float, rate: int, phase: float = 0.0) -> PackedFloat32Array:
+	var buf: PackedFloat32Array = silence(n)
+	var w: float = TAU * freq / rate
+	for i: int in n:
+		buf[i] = sin(phase + w * i)
+	return buf
+
+
+## Triangle (harmoniques en 1/n² : alias négligeable sans correction).
+static func triangle(n: int, freq: float, rate: int, phase: float = 0.0) -> PackedFloat32Array:
+	var buf: PackedFloat32Array = silence(n)
+	var t: float = fposmod(phase, 1.0)
+	var dt: float = freq / rate
+	for i: int in n:
+		buf[i] = 4.0 * absf(t - 0.5) - 1.0
+		t += dt
+		if t >= 1.0:
+			t -= 1.0
+	return buf
+
+
+## FM à 2 opérateurs (cloche) : porteuse `freq`, modulante `freq × ratio`,
+## indice `index` décroissant avec la constante de temps `index_decay` (s).
+static func fm2(n: int, freq: float, ratio: float, index: float, index_decay: float, rate: int) -> PackedFloat32Array:
+	var buf: PackedFloat32Array = silence(n)
+	var wc: float = TAU * freq / rate
+	var wm: float = wc * ratio
+	var k: float = 1.0 / maxf(index_decay * rate, 1.0)
+	for i: int in n:
+		buf[i] = sin(wc * i + index * exp(-i * k) * sin(wm * i))
+	return buf
+
+
+## Corde pincée Karplus-Strong : bruit seedé dans une ligne à retard
+## moyennée ; `damping` (0..1, perte par période), `brightness` (0..1).
+static func karplus(n: int, freq: float, rate: int, rng: RandomNumberGenerator, damping: float = 0.004,
+		brightness: float = 0.5) -> PackedFloat32Array:
+	var period: float = rate / maxf(freq, 20.0)
+	var d: int = maxi(int(period), 2)
+	var frac: float = period - d
+	var line: PackedFloat32Array = silence(d + 1)
+	var bright_lp: float = 0.0
+	for i: int in line.size():
+		var w: float = rng.randf() * 2.0 - 1.0
+		bright_lp += (w - bright_lp) * clampf(brightness, 0.05, 1.0)
+		line[i] = bright_lp
+	var buf: PackedFloat32Array = silence(n)
+	var pos: int = 0
+	var size: int = line.size()
+	var keep: float = 1.0 - clampf(damping, 0.0, 0.5)
+	var prev: float = 0.0
+	for i: int in n:
+		var a: float = line[pos]
+		var b: float = line[(pos + 1) % size]
+		var out: float = a + (b - a) * frac
+		buf[i] = out
+		var avg: float = (out + prev) * 0.5 * keep
+		prev = out
+		line[pos] = avg
+		pos = (pos + 1) % size
+	return buf
+
+
+## Enveloppe ADSR (s) ; `gate` = durée tenue (s) avant le relâchement.
+static func env_adsr(n: int, attack: float, decay: float, sustain: float, release: float, gate: float,
+		rate: int) -> PackedFloat32Array:
+	var buf: PackedFloat32Array = silence(n)
+	var na: int = maxi(samples(attack, rate), 1)
+	var nd: int = maxi(samples(decay, rate), 1)
+	var ng: int = maxi(samples(gate, rate), na)
+	var nr: int = maxi(samples(release, rate), 1)
+	var level: float = 0.0
+	var release_from: float = 0.0
+	for i: int in n:
+		if i < ng:
+			if i < na:
+				level = float(i) / na
+			elif i < na + nd:
+				level = lerpf(1.0, sustain, float(i - na) / nd)
+			else:
+				level = sustain
+			release_from = level
+		else:
+			var r: int = i - ng
+			level = release_from * (1.0 - float(r) / nr) if r < nr else 0.0
+		buf[i] = level
+	return buf
+
+
+## Filtre à variables d'état (TPT, stable à toute coupure) ; `cutoffs` =
+## coupure par bloc de `BLOCK` échantillons (une seule valeur = statique).
+static func svf(buf: PackedFloat32Array, mode: Svf, cutoffs: PackedFloat32Array, q: float, rate: int) -> PackedFloat32Array:
+	var out: PackedFloat32Array = silence(buf.size())
+	var ic1: float = 0.0
+	var ic2: float = 0.0
+	var k: float = 1.0 / maxf(q, 0.1)
+	var g: float = 0.0
+	var a1: float = 0.0
+	var a2: float = 0.0
+	var a3: float = 0.0
+	var blocks: int = cutoffs.size()
+	for i: int in buf.size():
+		if i % BLOCK == 0:
+			var fc: float = cutoffs[mini(i / BLOCK, blocks - 1)] if blocks > 0 else 1000.0
+			g = tan(PI * clampf(fc, 10.0, rate * 0.45) / rate)
+			a1 = 1.0 / (1.0 + g * (g + k))
+			a2 = g * a1
+			a3 = g * a2
+		var v0: float = buf[i]
+		var v3: float = v0 - ic2
+		var v1: float = a1 * ic1 + a2 * v3
+		var v2: float = ic2 + a2 * ic1 + a3 * v3
+		ic1 = 2.0 * v1 - ic1
+		ic2 = 2.0 * v2 - ic2
+		match mode:
+			Svf.LOWPASS:
+				out[i] = v2
+			Svf.BANDPASS:
+				out[i] = v1
+			_:
+				out[i] = v0 - k * v1 - v2
+	return out
+
+
+## Coupures par bloc interpolées linéairement entre des points (temps en
+## échantillons, valeurs en Hz) ; au-delà du dernier point, valeur tenue.
+static func block_curve(n: int, points_at: PackedInt32Array, values: PackedFloat32Array) -> PackedFloat32Array:
+	var blocks: int = maxi(ceili(float(n) / BLOCK), 1)
+	var out: PackedFloat32Array = silence(blocks)
+	var j: int = 0
+	for b: int in blocks:
+		var at: int = b * BLOCK
+		while j + 1 < points_at.size() and points_at[j + 1] <= at:
+			j += 1
+		if points_at.is_empty():
+			out[b] = 1000.0
+		elif at <= points_at[0] or j + 1 >= points_at.size():
+			out[b] = values[0] if at <= points_at[0] else values[values.size() - 1]
+		else:
+			var span: float = maxf(points_at[j + 1] - points_at[j], 1)
+			out[b] = lerpf(values[j], values[j + 1], (at - points_at[j]) / span)
+	return out
+
+
+## Égaliseur en cloche (biquad RBJ « peaking »).
+static func eq_peak(buf: PackedFloat32Array, freq: float, q: float, gain_db: float, rate: int) -> PackedFloat32Array:
+	return filter(buf, Filter.PEAK, freq, q, rate, gain_db)
+
+
+## Chorus à 2 lignes modulées (retard 8–20 ms) ; `mix` 0..1.
+static func chorus(buf: PackedFloat32Array, rate: int, depth_ms: float = 3.0, speed_hz: float = 0.4,
+		mix: float = 0.4, phase: float = 0.0) -> PackedFloat32Array:
+	var n: int = buf.size()
+	var out: PackedFloat32Array = silence(n)
+	var base: float = 0.012 * rate
+	var depth: float = depth_ms * 0.001 * rate
+	var w: float = TAU * speed_hz / rate
+	for i: int in n:
+		var wet: float = 0.0
+		for v: int in 2:
+			var d: float = base + depth * sin(w * i + phase + v * PI * 0.5) * (1.0 if v == 0 else 0.8)
+			var pos: float = i - d
+			var j: int = floori(pos)
+			if j >= 0 and j + 1 < n:
+				var t: float = pos - j
+				wet += buf[j] * (1.0 - t) + buf[j + 1] * t
+		out[i] = buf[i] * (1.0 - mix * 0.5) + wet * 0.5 * mix
+	return out
+
+
+## Délai à rétroaction (synchronisable : `delay` en échantillons), passe-bas
+## à un pôle dans la boucle (`damp_hz`).
+static func delay(buf: PackedFloat32Array, rate: int, delay_samples: int, feedback: float, mix: float,
+		damp_hz: float = 4000.0) -> PackedFloat32Array:
+	var n: int = buf.size()
+	var d: int = maxi(delay_samples, 1)
+	var line: PackedFloat32Array = silence(d)
+	var out: PackedFloat32Array = silence(n)
+	var a: float = 1.0 - exp(-TAU * damp_hz / rate)
+	var lp: float = 0.0
+	var pos: int = 0
+	for i: int in n:
+		var echo: float = line[pos]
+		lp += a * (echo - lp)
+		line[pos] = buf[i] + lp * feedback
+		pos = (pos + 1) % d
+		out[i] = buf[i] + echo * mix
+	return out
+
+
+## Réverbération FDN à 4 lignes (matrice de Hadamard, amortissement par ligne)
+## en stéréo : renvoie [gauche, droite] **mouillés seulement** (le direct est
+## mixé par l'appelant). `rt60` (s), `size` (échelle des retards), `damp_hz`,
+## `predelay` (s). Linéaire : la somme des réverbérations de deux couches =
+## la réverbération de leur somme.
+static func fdn_reverb(left: PackedFloat32Array, right: PackedFloat32Array, rate: int, rt60: float,
+		size: float = 1.0, damp_hz: float = 5000.0, predelay: float = 0.02) -> Array[PackedFloat32Array]:
+	var n: int = left.size()
+	var base_ms: PackedFloat32Array = PackedFloat32Array([29.7, 37.1, 41.1, 43.7])
+	var lens: PackedInt32Array = PackedInt32Array()
+	var gains: PackedFloat32Array = PackedFloat32Array()
+	for ms: float in base_ms:
+		var d: int = maxi(int(ms * 0.001 * size * rate), 8)
+		lens.append(d)
+		gains.append(pow(10.0, -3.0 * d / (maxf(rt60, 0.05) * rate)))
+	var l0: PackedFloat32Array = silence(lens[0])
+	var l1: PackedFloat32Array = silence(lens[1])
+	var l2: PackedFloat32Array = silence(lens[2])
+	var l3: PackedFloat32Array = silence(lens[3])
+	var p0: int = 0
+	var p1: int = 0
+	var p2: int = 0
+	var p3: int = 0
+	var s0: float = 0.0
+	var s1: float = 0.0
+	var s2: float = 0.0
+	var s3: float = 0.0
+	var a: float = 1.0 - exp(-TAU * damp_hz / rate)
+	var pd: int = maxi(samples(predelay, rate), 0)
+	var out_l: PackedFloat32Array = silence(n)
+	var out_r: PackedFloat32Array = silence(n)
+	var g0: float = gains[0]
+	var g1: float = gains[1]
+	var g2: float = gains[2]
+	var g3: float = gains[3]
+	for i: int in n:
+		var j: int = i - pd
+		var xl: float = left[j] if j >= 0 else 0.0
+		var xr: float = right[j] if j >= 0 else 0.0
+		var o0: float = l0[p0]
+		var o1: float = l1[p1]
+		var o2: float = l2[p2]
+		var o3: float = l3[p3]
+		s0 += a * (o0 - s0)
+		s1 += a * (o1 - s1)
+		s2 += a * (o2 - s2)
+		s3 += a * (o3 - s3)
+		var d0: float = s0 * g0
+		var d1: float = s1 * g1
+		var d2: float = s2 * g2
+		var d3: float = s3 * g3
+		# Hadamard 4×4 normalisée (½).
+		l0[p0] = 0.5 * (d0 + d1 + d2 + d3) + xl
+		l1[p1] = 0.5 * (d0 - d1 + d2 - d3) + xr
+		l2[p2] = 0.5 * (d0 + d1 - d2 - d3) + xl
+		l3[p3] = 0.5 * (d0 - d1 - d2 + d3) + xr
+		p0 = (p0 + 1) % lens[0]
+		p1 = (p1 + 1) % lens[1]
+		p2 = (p2 + 1) % lens[2]
+		p3 = (p3 + 1) % lens[3]
+		out_l[i] = (o0 + o2) * 0.35
+		out_r[i] = (o1 + o3) * 0.35
+	return [out_l, out_r]
+
+
+## Réduction de bits et de fréquence (MO-2 « radio », Brûlants).
+static func bitcrush(buf: PackedFloat32Array, bits: int, hold: int = 1) -> PackedFloat32Array:
+	var out: PackedFloat32Array = silence(buf.size())
+	var steps: float = pow(2.0, clampi(bits, 2, 16) - 1)
+	var held: float = 0.0
+	var h: int = maxi(hold, 1)
+	for i: int in buf.size():
+		if i % h == 0:
+			held = roundf(buf[i] * steps) / steps
+		out[i] = held
+	return out
+
+
+## Largeur stéréo M/S (`width` 0 = mono, 1 = inchangé) : [gauche, droite].
+static func ms_width(left: PackedFloat32Array, right: PackedFloat32Array, width: float) -> Array[PackedFloat32Array]:
+	var n: int = mini(left.size(), right.size())
+	var out_l: PackedFloat32Array = silence(n)
+	var out_r: PackedFloat32Array = silence(n)
+	for i: int in n:
+		var m: float = (left[i] + right[i]) * 0.5
+		var s: float = (left[i] - right[i]) * 0.5 * width
+		out_l[i] = m + s
+		out_r[i] = m - s
+	return [out_l, out_r]
+
+
+## Coupe-continu (passe-haut à un pôle, ≈ 5 Hz).
+static func dc_block(buf: PackedFloat32Array, rate: int) -> PackedFloat32Array:
+	var out: PackedFloat32Array = silence(buf.size())
+	var r: float = 1.0 - TAU * 5.0 / rate
+	var x1: float = 0.0
+	var y1: float = 0.0
+	for i: int in buf.size():
+		var y: float = buf[i] - x1 + r * y1
+		x1 = buf[i]
+		y1 = y
+		out[i] = y
+	return out
+
+
 # --- AudioStreamWAV ----------------------------------------------------------
 
 ## Tampon(s) → `AudioStreamWAV` PCM 16 bits (mono si `right` vide).

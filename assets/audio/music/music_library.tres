@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="MusicLibraryDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/music_library_def.gd" id="1_58op6"]
+[ext_resource type="Script" path="res://scripts/core/music_set_def.gd" id="2_jjxxk"]
+[ext_resource type="Resource" path="res://assets/audio/music/sets/ms_02.tres" id="3_m125w"]
+[ext_resource type="Script" path="res://scripts/core/music_theme_def.gd" id="4_tpi44"]
+[ext_resource type="Resource" path="res://assets/audio/music/themes/th_f9.tres" id="5_scatu"]
+
+[resource]
+script = ExtResource("1_58op6")
+sets = Array[ExtResource("2_jjxxk")]([ExtResource("3_m125w")])
+themes = Array[ExtResource("4_tpi44")]([ExtResource("5_scatu")])

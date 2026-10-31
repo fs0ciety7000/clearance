@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="MusicThemeDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/music_theme_def.gd" id="1_xmck5"]
+[ext_resource type="Script" path="res://scripts/core/music_section_def.gd" id="2_aq6f5"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f9.ogg" id="3_uakwf"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/themes/mus_th_f9_tail_loop.ogg" id="4_8m5l7"]
+[ext_resource type="Script" path="res://scripts/core/music_theme_variant_def.gd" id="5_106jo"]
+
+[sub_resource type="Resource" id="section_opening"]
+script = ExtResource("2_aq6f5")
+
+[sub_resource type="Resource" id="section_a"]
+script = ExtResource("2_aq6f5")
+id = &"a"
+start_bar = 2
+bars = 6
+
+[sub_resource type="Resource" id="section_b"]
+script = ExtResource("2_aq6f5")
+id = &"b"
+start_bar = 8
+bars = 6
+
+[sub_resource type="Resource" id="section_tail"]
+script = ExtResource("2_aq6f5")
+id = &"tail"
+start_bar = 14
+bars = 8
+loop = true
+
+[resource]
+script = ExtResource("1_xmck5")
+id = &"th_f9"
+tempo_bpm = 75.0
+endings = Array[StringName]([&"f9_strike"])
+stream = ExtResource("3_uakwf")
+tail_stream = ExtResource("4_8m5l7")
+sections = Array[ExtResource("2_aq6f5")]([SubResource("section_opening"), SubResource("section_a"), SubResource("section_b"), SubResource("section_tail")])

@@ -127,9 +127,13 @@ func n_of(seconds: float, rate: int = SR) -> int:
 func _build_bus_layout() -> void:
 	AudioBuses.configure_server()
 	var layout: AudioBusLayout = AudioServer.generate_bus_layout()
+	# L'uid du fichier existant est gardé (diff minimal, références stables).
+	var uid: int = ResourceLoader.get_resource_uid(AudioBuses.DEFAULT_LAYOUT_PATH)
 	var err: Error = ResourceSaver.save(layout, AudioBuses.DEFAULT_LAYOUT_PATH)
 	if err != OK:
 		push_error("build_audio: default_bus_layout.tres non écrit (%s)" % error_string(err))
+	elif uid != ResourceUID.INVALID_ID:
+		ResourceSaver.set_uid(AudioBuses.DEFAULT_LAYOUT_PATH, uid)
 	written += 1
 
 
