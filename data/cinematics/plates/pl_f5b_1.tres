@@ -8,7 +8,7 @@
 
 [sub_resource type="Resource" id="pl_f5b_1_resource_1"]
 script = ExtResource("4_qx2b1")
-texture_path = "res://assets/cinematics/bg/bg_q1.png"
+texture_path = "res://assets/cinematics/bg/bg_q1.webp"
 
 [sub_resource type="Resource" id="pl_f5b_1_resource_2"]
 script = ExtResource("4_qx2b1")

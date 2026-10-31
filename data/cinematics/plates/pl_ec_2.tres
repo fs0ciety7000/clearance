@@ -14,13 +14,13 @@ literal = true
 
 [sub_resource type="Resource" id="pl_ec_2_resource_1"]
 script = ExtResource("4_kkyvs")
-texture_path = "res://assets/cinematics/bg/bg_x1.png"
+texture_path = "res://assets/cinematics/bg/bg_x1.webp"
 
 [sub_resource type="Resource" id="pl_ec_2_resource_2"]
 script = ExtResource("4_kkyvs")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_ec_2_register.png"
-rect = Rect2(0.34, 0.56, 0.32, 0.3)
+texture_path = "res://assets/cinematics/mid/pl_ec_2_register.webp"
+rect = Rect2(0.3838, 0.6233, 0.0986, 0.0538)
 depth = 0.6
 props = Array[StringName]([&"open_register"])
 

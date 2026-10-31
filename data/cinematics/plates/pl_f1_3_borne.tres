@@ -9,12 +9,12 @@
 [sub_resource type="Resource" id="pl_f1_3_borne_resource_2"]
 script = ExtResource("3_hpvi2")
 text_key = "04"
-rect = Rect2(0.47, 0.18, 0.06, 0.06)
+rect = Rect2(0.4678, 0.2127, 0.0581, 0.0512)
 literal = true
 
 [sub_resource type="Resource" id="pl_f1_3_borne_resource_1"]
 script = ExtResource("4_a1feu")
-texture_path = "res://assets/cinematics/bg/bg_h4.png"
+texture_path = "res://assets/cinematics/bg/bg_h4.webp"
 
 [resource]
 script = ExtResource("5_4l2av")

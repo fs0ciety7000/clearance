@@ -8,14 +8,14 @@
 
 [sub_resource type="Resource" id="pl_f6e_4_resource_1"]
 script = ExtResource("4_xgv84")
-texture_path = "res://assets/cinematics/bg/bg_q7.png"
+texture_path = "res://assets/cinematics/bg/bg_q7.webp"
 rect = Rect2(-0.3, -0.3, 1.6, 1.6)
 
 [sub_resource type="Resource" id="pl_f6e_4_resource_2"]
 script = ExtResource("4_xgv84")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f6e_4_hand.png"
-rect = Rect2(0.4, 0.3, 0.24, 0.4)
+texture_path = "res://assets/cinematics/mid/pl_f6e_4_hand.webp"
+rect = Rect2(0.478, 0.5226, 0.0356, 0.1224)
 depth = 0.6
 props = Array[StringName]([&"child_hand"])
 

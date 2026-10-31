@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_ea_3_resource_1"]
 script = ExtResource("4_8ywnc")
-texture_path = "res://assets/cinematics/bg/bg_h1.png"
+texture_path = "res://assets/cinematics/bg/bg_h1.webp"
 
 [sub_resource type="Resource" id="pl_ea_3_resource_2"]
 script = ExtResource("4_8ywnc")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_ea_3_hands.png"
-rect = Rect2(0.3, 0.56, 0.4, 0.4)
+texture_path = "res://assets/cinematics/mid/pl_ea_3_hands.webp"
+rect = Rect2(0.3945, 0.875, 0.0928, 0.125)
 depth = 0.8
 props = Array[StringName]([&"stamp"])
 

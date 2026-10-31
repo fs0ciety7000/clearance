@@ -14,7 +14,7 @@ style = &"holo_display"
 
 [sub_resource type="Resource" id="pl_f5c_3_resource_1"]
 script = ExtResource("4_t7w71")
-texture_path = "res://assets/cinematics/bg/bg_h8.png"
+texture_path = "res://assets/cinematics/bg/bg_h8.webp"
 
 [resource]
 script = ExtResource("5_7673o")

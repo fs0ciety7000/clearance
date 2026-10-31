@@ -27,17 +27,17 @@ framing = &"bust"
 lighting = &"mine_lamp"
 rect = Rect2(0.52, 0.16, 0.3, 0.8)
 depth = 0.5
-silhouette_path = "res://assets/cinematics/fig/fg_wren_pl_f6_2.png"
+silhouette_path = "res://assets/cinematics/fig/fg_wren_pl_f6_2.webp"
 
 [sub_resource type="Resource" id="pl_f6_2_resource_1"]
 script = ExtResource("4_b1a1e")
-texture_path = "res://assets/cinematics/bg/bg_q6.png"
+texture_path = "res://assets/cinematics/bg/bg_q6.webp"
 
 [sub_resource type="Resource" id="pl_f6_2_resource_2"]
 script = ExtResource("4_b1a1e")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f6_2_ledger.png"
-rect = Rect2(0.3, 0.6, 0.3, 0.3)
+texture_path = "res://assets/cinematics/mid/pl_f6_2_ledger.webp"
+rect = Rect2(0.4668, 0.6024, 0.0967, 0.0573)
 depth = 0.7
 props = Array[StringName]([&"register"])
 

@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f2_3_resource_1"]
 script = ExtResource("4_05xo5")
-texture_path = "res://assets/cinematics/bg/bg_q3.png"
+texture_path = "res://assets/cinematics/bg/bg_q3.webp"
 
 [sub_resource type="Resource" id="pl_f2_3_resource_2"]
 script = ExtResource("4_05xo5")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f2_3_halcyon.png"
-rect = Rect2(0.36, 0.26, 0.28, 0.3)
+texture_path = "res://assets/cinematics/mid/pl_f2_3_halcyon.webp"
+rect = Rect2(0.4438, 0.3889, 0.1045, 0.1302)
 depth = 0.1
 props = Array[StringName]([&"halcyon_far"])
 

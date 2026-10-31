@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f5_4_resource_1"]
 script = ExtResource("4_gf1jm")
-texture_path = "res://assets/cinematics/bg/bg_p6.png"
+texture_path = "res://assets/cinematics/bg/bg_p6.webp"
 
 [sub_resource type="Resource" id="pl_f5_4_resource_2"]
 script = ExtResource("4_gf1jm")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f5_4_prints.png"
-rect = Rect2(0.22, 0.54, 0.56, 0.38)
+texture_path = "res://assets/cinematics/mid/pl_f5_4_prints.webp"
+rect = Rect2(0.2314, 0.3464, 0.4346, 0.3481)
 depth = 0.6
 props = Array[StringName]([&"stamp", &"firefly_prints"])
 

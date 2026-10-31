@@ -8,21 +8,21 @@
 
 [sub_resource type="Resource" id="pl_f6_3_resource_1"]
 script = ExtResource("4_x4q2q")
-texture_path = "res://assets/cinematics/bg/bg_q7.png"
+texture_path = "res://assets/cinematics/bg/bg_q7.webp"
 
 [sub_resource type="Resource" id="pl_f6_3_resource_2"]
 script = ExtResource("4_x4q2q")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f6_3_halcyon.png"
-rect = Rect2(0.42, 0.3, 0.16, 0.18)
+texture_path = "res://assets/cinematics/mid/pl_f6_3_halcyon.webp"
+rect = Rect2(0.4619, 0.4288, 0.0825, 0.0955)
 depth = 0.05
 props = Array[StringName]([&"halcyon_far"])
 
 [sub_resource type="Resource" id="pl_f6_3_resource_3"]
 script = ExtResource("4_x4q2q")
 kind = &"fig"
-texture_path = "res://assets/cinematics/fig/pl_f6_3_noa.png"
-rect = Rect2(0.3, 0.46, 0.18, 0.5)
+texture_path = "res://assets/cinematics/fig/pl_f6_3_noa.webp"
+rect = Rect2(0.2402, 0.7569, 0.1333, 0.2431)
 depth = 0.7
 figure_seed = 1461
 pose = &"idle"

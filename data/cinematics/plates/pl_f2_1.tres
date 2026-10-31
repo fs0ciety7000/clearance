@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f2_1_resource_1"]
 script = ExtResource("4_ie64x")
-texture_path = "res://assets/cinematics/bg/bg_h5.png"
+texture_path = "res://assets/cinematics/bg/bg_h5.webp"
 
 [sub_resource type="Resource" id="pl_f2_1_resource_2"]
 script = ExtResource("4_ie64x")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f2_1_hand.png"
-rect = Rect2(0.52, 0.44, 0.22, 0.36)
+texture_path = "res://assets/cinematics/mid/pl_f2_1_hand.webp"
+rect = Rect2(0.6333, 0.4575, 0.0669, 0.1241)
 depth = 0.8
 props = Array[StringName]([&"badge"])
 

@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f5c_1_resource_1"]
 script = ExtResource("4_kpjn2")
-texture_path = "res://assets/cinematics/bg/bg_r1.png"
+texture_path = "res://assets/cinematics/bg/bg_r1.webp"
 
 [sub_resource type="Resource" id="pl_f5c_1_resource_2"]
 script = ExtResource("4_kpjn2")
 kind = &"fig"
-texture_path = "res://assets/cinematics/fig/pl_f5c_1_watchers.png"
-rect = Rect2(0.18, 0.34, 0.4, 0.58)
+texture_path = "res://assets/cinematics/fig/pl_f5c_1_watchers.webp"
+rect = Rect2(0.1436, 0.5356, 0.2539, 0.3516)
 depth = 0.5
 figure_seed = 1451
 pose = &"idle"

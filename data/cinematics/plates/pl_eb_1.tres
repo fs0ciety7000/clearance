@@ -14,13 +14,13 @@ style = &"holo_display"
 
 [sub_resource type="Resource" id="pl_eb_1_resource_1"]
 script = ExtResource("4_fnr6d")
-texture_path = "res://assets/cinematics/bg/bg_h8.png"
+texture_path = "res://assets/cinematics/bg/bg_h8.webp"
 
 [sub_resource type="Resource" id="pl_eb_1_resource_2"]
 script = ExtResource("4_fnr6d")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_eb_1_pencil.png"
-rect = Rect2(0.4, 0.36, 0.2, 0.12)
+texture_path = "res://assets/cinematics/mid/pl_eb_1_pencil.webp"
+rect = Rect2(0.4399, 0.4306, 0.1182, 0.0512)
 depth = 0.2
 props = Array[StringName]([&"pencil_correction"])
 

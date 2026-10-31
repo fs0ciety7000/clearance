@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f10_4_resource_1"]
 script = ExtResource("4_xshhu")
-texture_path = "res://assets/cinematics/bg/bg_h16.png"
+texture_path = "res://assets/cinematics/bg/bg_h16.webp"
 
 [sub_resource type="Resource" id="pl_f10_4_resource_2"]
 script = ExtResource("4_xshhu")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f10_4_hand.png"
-rect = Rect2(0.36, 0.5, 0.3, 0.4)
+texture_path = "res://assets/cinematics/mid/pl_f10_4_hand.webp"
+rect = Rect2(0.5708, 0.8568, 0.2861, 0.1432)
 depth = 0.7
 props = Array[StringName]([&"folded_sheet"])
 

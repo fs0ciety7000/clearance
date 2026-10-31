@@ -18,6 +18,12 @@
 ## M8 (Acte II) : accessoires des cas scénarisés (`PropDecor` : enfant, caisse
 ## du chat, drone, LED de shunt) ; grève du J20 : `lights_out()` éteint les
 ## lampes du guichet (la ville reste visible par la baie).
+## M14 (B86 → B88, BOOTH_SCENE §20) : file réelle (`QueueImpostors` sur
+## `queue_progressed`), Gardes du Hall (`HallGuards` : postes, patrouille à
+## l'arrêt pendant l'inspection et l'escorte, traversée de l'Arbitre au J27),
+## Hall par acte (`apply_act_ambience` : lumière, graffiti, écran des départs,
+## bannière) et `set_rendering_paused` (bande 3D en `UPDATE_DISABLED` pendant
+## une cinématique, appel du lot D).
 class_name BoothDirector
 extends Node3D
 
@@ -90,6 +96,11 @@ const GUARD_FOLLOW_DELAY_SEC: float = 0.55
 const LIGHTS_OUT_KEEP: float = 0.06
 const LIGHTS_OUT_CITY: float = 0.35
 
+## M14 (VH-7) : lumières du Hall réglées par acte (jamais celles du visage).
+const HALL_LIGHTS: Array[StringName] = [&"HallTeal", &"HallRose"]
+## M14 : clé de l'annonce du J27 qui déclenche la traversée de l'Arbitre.
+const ARBITER_ANNOUNCEMENT: String = "hall_j27_arbitre"
+
 const FLAG_ARRIVED: int = 1
 const FLAG_DOCUMENTS: int = 2
 const FLAG_DEPARTED: int = 4
@@ -108,6 +119,10 @@ const FLAG_DEPARTED: int = 4
 @onready var slot_glow: OmniLight3D = %SlotGlow
 @onready var gate_light: OmniLight3D = %GateLight
 @onready var glass: MeshInstance3D = %Glass
+## M14 : Gardes du Hall et bannière d'acte (absents des scènes anciennes).
+@onready var hall_guards: HallGuards = get_node_or_null(^"%HallGuards") as HallGuards
+## Bannière d'acte (VH-8), créée à la demande (`apply_act_ambience`).
+var banner: MeshInstance3D = null
 
 var actors: Array[PassengerActor] = []
 var inspection_mode: bool = false
@@ -117,6 +132,13 @@ var guard: PassengerActor = null
 var escort_case_id: StringName = &""
 ## Acte II : lampes éteintes (grève du J20).
 var lights_dimmed: bool = false
+## M14 : réglages du Hall du jour (`HallAmbience.for_day`), jour, durée du shift.
+var hall_settings: Dictionary = {}
+var _hall_light_base: Dictionary[StringName, Array] = {}
+var _hall_light_scale: float = 1.0
+var _day_duration: float = 0.0
+var _render_paused: bool = false
+var _render_mode_before: SubViewport.UpdateMode = SubViewport.UPDATE_WHEN_VISIBLE
 
 var _by_case: Dictionary[StringName, PassengerActor] = {}
 var _cases: Dictionary[StringName, Case] = {}
@@ -167,6 +189,15 @@ func _ready() -> void:
 	EventBus.inspection_mode_changed.connect(_on_inspection_mode_changed)
 	EventBus.inspection_target_picked.connect(_on_inspection_target_picked)
 	EventBus.day_started.connect(_on_day_started)
+	EventBus.day_phase_changed.connect(_on_day_phase_changed)
+	EventBus.day_clock_ticked.connect(_on_day_clock_ticked)
+	EventBus.station_event_started.connect(_on_station_event_started)
+	EventBus.station_event_ended.connect(_on_station_event_ended)
+	EventBus.hall_announced.connect(_on_hall_announced)
+	for light_name: StringName in HALL_LIGHTS:
+		var light: Light3D = get_node_or_null(NodePath("Lights/" + String(light_name))) as Light3D
+		if light != null:
+			_hall_light_base[light_name] = [light.light_energy, light.light_color]
 	_build_guard()
 
 
@@ -250,6 +281,117 @@ func get_face_viewport_rect() -> Rect2:
 
 func _on_day_started(day: DayDef, _rulebook: Array[RulebookEntry]) -> void:
 	queue.setup(SeededRng.mix(day.day_number, day.game_date))
+	apply_act_ambience(day)
+
+
+# --- M14 : Hall par acte, Gardes, rendu en pause ---------------------------------
+
+## Applique le Hall du jour (VH-4 → VH-8) : calendrier des Gardes, lumière du
+## Hall, graffiti, écran des départs, bannière (Bas : masquée). 0 draw de plus
+## hors bannière et Gardes.
+func apply_act_ambience(day: DayDef) -> void:
+	if day == null:
+		return
+	_day_duration = day.duration_sec
+	hall_settings = HallAmbience.for_day(day.day_number, day.mode, day.epilogue_world)
+	var quality: int = clampi(Settings.graphics_quality_level(), 0, 2)
+	if hall_guards != null:
+		hall_guards.configure(hall_settings, SeededRng.mix(day.day_number, day.game_date + 7), quality)
+	var emissive: ShaderMaterial = _emissive_material()
+	if emissive != null:
+		emissive.set_shader_parameter(&"graffiti_state", int(hall_settings["graffiti"]))
+		emissive.set_shader_parameter(&"departures_status", int(hall_settings["departures"]))
+	var id: StringName = hall_settings["banner"]
+	var path: String = "res://assets/models/booth/booth_banner_%s.res" % id
+	var show_banner: bool = id != HallAmbience.BANNER_NONE and quality >= 1 and ResourceLoader.exists(path)
+	if show_banner and banner == null:
+		banner = MeshInstance3D.new()
+		banner.name = "Banner"
+		banner.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var holo: GeometryInstance3D = get_node_or_null(^"Decor/Holo") as GeometryInstance3D
+		banner.material_override = holo.material_override if holo != null else null
+		add_child(banner)
+	if banner != null:
+		banner.visible = show_banner
+		banner.mesh = load(path) as Mesh if show_banner else null
+	_set_hall_light(HallAmbience.light_scale_at(hall_settings, DayDef.SHIFT_START_MIN))
+
+
+## Énergie et teinte des lumières du Hall (`HallTeal`, `HallRose`).
+func _set_hall_light(scale: float) -> void:
+	_hall_light_scale = scale
+	var tint: Color = hall_settings.get("light_tint", Color.WHITE)
+	for light_name: StringName in _hall_light_base:
+		var light: Light3D = get_node_or_null(NodePath("Lights/" + String(light_name))) as Light3D
+		if light == null:
+			continue
+		var base: Array = _hall_light_base[light_name]
+		light.light_color = (base[1] as Color) * tint
+		light.light_energy = float(base[0]) * scale * (LIGHTS_OUT_KEEP if lights_dimmed else 1.0)
+
+
+func _emissive_material() -> ShaderMaterial:
+	var node: GeometryInstance3D = get_node_or_null(^"Decor/Emissive") as GeometryInstance3D
+	return node.material_override as ShaderMaterial if node != null else null
+
+
+## Bande 3D en pause (`UPDATE_DISABLED`) pendant une cinématique (M14 §3.6,
+## ARCHITECTURE §12 ter.3 ; appel du lot D) : coût GPU nul ; la dernière image
+## reste affichée. `false` rétablit le mode d'avant.
+func set_rendering_paused(paused: bool) -> void:
+	var vp: SubViewport = get_viewport() as SubViewport
+	if paused == _render_paused:
+		return
+	_render_paused = paused
+	if vp == null:
+		return
+	if paused:
+		_render_mode_before = vp.render_target_update_mode
+		vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	else:
+		vp.render_target_update_mode = _render_mode_before
+
+
+func is_rendering_paused() -> bool:
+	return _render_paused
+
+
+func _on_day_phase_changed(phase: DayPhase.Kind, _case_id: StringName) -> void:
+	if hall_guards != null and phase == DayPhase.Kind.INSPECTING:
+		hall_guards.set_inspecting(true)
+
+
+func _on_day_clock_ticked(remaining_sec: float) -> void:
+	if not bool(hall_settings.get("curfew", false)) or _day_duration <= 0.0:
+		return
+	var scale: float = HallAmbience.light_scale_at(hall_settings, DayDef.minute_at(_day_duration, remaining_sec))
+	if not is_equal_approx(scale, _hall_light_scale):
+		_set_hall_light(scale)
+
+
+func _on_station_event_started(plan: StationEventPlan) -> void:
+	if plan == null or plan.event == null:
+		return
+	if plan.event.id == &"ev_05" and hall_guards != null:
+		hall_guards.set_dimmed(true)
+	var emissive: ShaderMaterial = _emissive_material()
+	if emissive != null and not hall_settings.is_empty():
+		emissive.set_shader_parameter(&"departures_status", HallAmbience.departures_with_event(hall_settings, plan.event.id))
+
+
+func _on_station_event_ended(plan: StationEventPlan) -> void:
+	if plan == null or plan.event == null:
+		return
+	if plan.event.id == &"ev_05" and hall_guards != null and not lights_dimmed:
+		hall_guards.set_dimmed(false)
+	var emissive: ShaderMaterial = _emissive_material()
+	if emissive != null and not hall_settings.is_empty():
+		emissive.set_shader_parameter(&"departures_status", int(hall_settings["departures"]))
+
+
+func _on_hall_announced(text_key: String) -> void:
+	if text_key == ARBITER_ANNOUNCEMENT and hall_guards != null:
+		hall_guards.start_arbiter_crossing()
 
 
 func _on_case_presented(case: Case) -> void:
@@ -390,6 +532,8 @@ func _emit_once(case_id: StringName, flag: int) -> void:
 			if _desk_actor != null and _desk_actor.case_id == case_id:
 				_desk_actor = null
 			queue.advance()
+			if hall_guards != null:
+				hall_guards.set_inspecting(false)
 			EventBus.passenger_departed.emit(case_id)
 
 
@@ -520,6 +664,8 @@ func start_escort(actor: PassengerActor) -> void:
 	var length: float = _guard_in_path.curve.get_baked_length()
 	var speed: float = GUARD_SPEED * (REDUCED_SPEED_FACTOR if actor.reduce_motion else 1.0)
 	guard.walk_to_desk(_guard_in_path, speed, length * 0.85 if actor.reduce_motion else 0.0, _guard_mark)
+	if hall_guards != null:
+		hall_guards.set_escorting(true)
 	escort_started.emit(escort_case_id)
 
 
@@ -564,6 +710,8 @@ func _on_guard_departed() -> void:
 	_escort_actor = null
 	_guard_follow_at = -1.0
 	guard.release()
+	if hall_guards != null:
+		hall_guards.set_escorting(false)
 	escort_finished.emit(case_id)
 
 
@@ -741,6 +889,8 @@ func _update_glass() -> void:
 ## n'est modifié : la scène suivante repart éclairée).
 func lights_out(duration: float) -> void:
 	lights_dimmed = true
+	if hall_guards != null:
+		hall_guards.set_dimmed(true)
 	var lights_root: Node = get_node_or_null(^"Lights")
 	if lights_root == null:
 		return

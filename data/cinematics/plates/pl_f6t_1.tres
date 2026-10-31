@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f6t_1_resource_1"]
 script = ExtResource("4_avv2o")
-texture_path = "res://assets/cinematics/bg/bg_q3.png"
+texture_path = "res://assets/cinematics/bg/bg_q3.webp"
 
 [sub_resource type="Resource" id="pl_f6t_1_resource_2"]
 script = ExtResource("4_avv2o")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f6t_1_bags.png"
-rect = Rect2(0.56, 0.62, 0.24, 0.3)
+texture_path = "res://assets/cinematics/mid/pl_f6t_1_bags.webp"
+rect = Rect2(0.5918, 0.7292, 0.1733, 0.1892)
 depth = 0.7
 props = Array[StringName]([&"two_bags"])
 

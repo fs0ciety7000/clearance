@@ -8,7 +8,7 @@
 
 [sub_resource type="Resource" id="pl_ec_3_resource_1"]
 script = ExtResource("4_hsy5h")
-texture_path = "res://assets/cinematics/bg/bg_x2.png"
+texture_path = "res://assets/cinematics/bg/bg_x2.webp"
 
 [resource]
 script = ExtResource("5_7dokk")

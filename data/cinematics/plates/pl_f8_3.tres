@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f8_3_resource_1"]
 script = ExtResource("4_80yss")
-texture_path = "res://assets/cinematics/bg/bg_p7.png"
+texture_path = "res://assets/cinematics/bg/bg_p7.webp"
 
 [sub_resource type="Resource" id="pl_f8_3_resource_2"]
 script = ExtResource("4_80yss")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f8_3_hand.png"
-rect = Rect2(0.48, 0.46, 0.2, 0.3)
+texture_path = "res://assets/cinematics/mid/pl_f8_3_hand.webp"
+rect = Rect2(0.5972, 0.533, 0.1475, 0.1181)
 depth = 0.7
 props = Array[StringName]([&"radio"])
 

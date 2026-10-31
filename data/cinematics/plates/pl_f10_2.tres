@@ -32,7 +32,7 @@ literal = true
 
 [sub_resource type="Resource" id="pl_f10_2_resource_1"]
 script = ExtResource("4_qik2e")
-texture_path = "res://assets/cinematics/bg/bg_h15.png"
+texture_path = "res://assets/cinematics/bg/bg_h15.webp"
 
 [resource]
 script = ExtResource("5_pwh5k")

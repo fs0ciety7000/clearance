@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f6t_3_resource_1"]
 script = ExtResource("4_s0v6v")
-texture_path = "res://assets/cinematics/bg/bg_t3.png"
+texture_path = "res://assets/cinematics/bg/bg_t3.webp"
 
 [sub_resource type="Resource" id="pl_f6t_3_resource_2"]
 script = ExtResource("4_s0v6v")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f6t_3_committee.png"
-rect = Rect2(0.2, 0.3, 0.6, 0.64)
+texture_path = "res://assets/cinematics/mid/pl_f6t_3_committee.webp"
+rect = Rect2(0.2192, 0.434, 0.4668, 0.3655)
 depth = 0.4
 figure_seed = 1462
 pose = &"idle"

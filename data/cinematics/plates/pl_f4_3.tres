@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f4_3_resource_1"]
 script = ExtResource("4_4l1ws")
-texture_path = "res://assets/cinematics/bg/bg_p5.png"
+texture_path = "res://assets/cinematics/bg/bg_p5.webp"
 
 [sub_resource type="Resource" id="pl_f4_3_resource_2"]
 script = ExtResource("4_4l1ws")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f4_3_drawings.png"
-rect = Rect2(0.24, 0.6, 0.52, 0.32)
+texture_path = "res://assets/cinematics/mid/pl_f4_3_drawings.webp"
+rect = Rect2(0.3662, 0.5608, 0.1919, 0.1128)
 depth = 0.6
 props = Array[StringName]([&"door_drawings"])
 

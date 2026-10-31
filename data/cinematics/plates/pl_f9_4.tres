@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f9_4_resource_1"]
 script = ExtResource("4_5ll0p")
-texture_path = "res://assets/cinematics/bg/bg_c1.png"
+texture_path = "res://assets/cinematics/bg/bg_c1.webp"
 
 [sub_resource type="Resource" id="pl_f9_4_resource_2"]
 script = ExtResource("4_5ll0p")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f9_4_crowd.png"
-rect = Rect2(0, 0.34, 1, 0.62)
+texture_path = "res://assets/cinematics/mid/pl_f9_4_crowd.webp"
+rect = Rect2(0.1992, 0.4453, 0.5103, 0.5503)
 depth = 0.5
 figure_seed = 1493
 pose = &"leave"

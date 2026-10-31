@@ -13,13 +13,13 @@ all_of = Array[StringName]([&"lumika_learned"])
 
 [sub_resource type="Resource" id="pl_f3_2_lumika_resource_2"]
 script = ExtResource("5_aguga")
-texture_path = "res://assets/cinematics/bg/bg_p4.png"
+texture_path = "res://assets/cinematics/bg/bg_p4.webp"
 
 [sub_resource type="Resource" id="pl_f3_2_lumika_resource_3"]
 script = ExtResource("5_aguga")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f3_2_lumika_firefly.png"
-rect = Rect2(0.42, 0.4, 0.16, 0.18)
+texture_path = "res://assets/cinematics/mid/pl_f3_2_lumika_firefly.webp"
+rect = Rect2(0.4731, 0.5208, 0.0337, 0.0269)
 depth = 0.3
 props = Array[StringName]([&"firefly_drawing"])
 

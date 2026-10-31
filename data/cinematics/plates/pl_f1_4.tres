@@ -18,13 +18,13 @@ condition = SubResource("pl_f1_4_resource_5")
 
 [sub_resource type="Resource" id="pl_f1_4_resource_1"]
 script = ExtResource("5_b8ruy")
-texture_path = "res://assets/cinematics/bg/bg_b2.png"
+texture_path = "res://assets/cinematics/bg/bg_b2.webp"
 
 [sub_resource type="Resource" id="pl_f1_4_resource_2"]
 script = ExtResource("5_b8ruy")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f1_4_light_lines.png"
-rect = Rect2(0.3, 0.86, 0.4, 0.08)
+texture_path = "res://assets/cinematics/mid/pl_f1_4_light_lines.webp"
+rect = Rect2(0.4268, 0.7474, 0.1387, 0.1128)
 depth = 0.2
 props = Array[StringName]([&"door_gap_light"])
 

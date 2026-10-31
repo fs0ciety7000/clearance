@@ -9,84 +9,84 @@
 [sub_resource type="Resource" id="pl_f9_1_resource_15"]
 script = ExtResource("3_mureg")
 text_key = "01"
-rect = Rect2(0.04, 0.3, 0.04, 0.04)
+rect = Rect2(0.1118, 0.4132, 0.022, 0.0191)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_16"]
 script = ExtResource("3_mureg")
 text_key = "02"
-rect = Rect2(0.12, 0.3, 0.04, 0.04)
+rect = Rect2(0.1895, 0.4106, 0.0205, 0.0182)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_17"]
 script = ExtResource("3_mureg")
 text_key = "03"
-rect = Rect2(0.2, 0.3, 0.04, 0.04)
+rect = Rect2(0.2617, 0.408, 0.019, 0.0165)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_18"]
 script = ExtResource("3_mureg")
 text_key = "04"
-rect = Rect2(0.28, 0.3, 0.04, 0.04)
+rect = Rect2(0.3296, 0.4063, 0.0181, 0.0156)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_19"]
 script = ExtResource("3_mureg")
 text_key = "05"
-rect = Rect2(0.36, 0.3, 0.04, 0.04)
+rect = Rect2(0.3955, 0.4054, 0.0176, 0.0156)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_20"]
 script = ExtResource("3_mureg")
 text_key = "06"
-rect = Rect2(0.44, 0.3, 0.04, 0.04)
+rect = Rect2(0.4595, 0.4045, 0.0176, 0.0148)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_21"]
 script = ExtResource("3_mureg")
 text_key = "07"
-rect = Rect2(0.52, 0.3, 0.04, 0.04)
+rect = Rect2(0.5229, 0.4045, 0.0176, 0.0148)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_22"]
 script = ExtResource("3_mureg")
 text_key = "08"
-rect = Rect2(0.6, 0.3, 0.04, 0.04)
+rect = Rect2(0.5869, 0.4054, 0.0176, 0.0156)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_23"]
 script = ExtResource("3_mureg")
 text_key = "09"
-rect = Rect2(0.68, 0.3, 0.04, 0.04)
+rect = Rect2(0.6519, 0.4063, 0.0181, 0.0156)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_24"]
 script = ExtResource("3_mureg")
 text_key = "10"
-rect = Rect2(0.76, 0.3, 0.04, 0.04)
+rect = Rect2(0.7192, 0.408, 0.019, 0.0165)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_25"]
 script = ExtResource("3_mureg")
 text_key = "11"
-rect = Rect2(0.84, 0.3, 0.04, 0.04)
+rect = Rect2(0.79, 0.4106, 0.0205, 0.0182)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_26"]
 script = ExtResource("3_mureg")
 text_key = "12"
-rect = Rect2(0.92, 0.3, 0.04, 0.04)
+rect = Rect2(0.8657, 0.4132, 0.022, 0.0191)
 literal = true
 
 [sub_resource type="Resource" id="pl_f9_1_resource_1"]
 script = ExtResource("4_iorrl")
-texture_path = "res://assets/cinematics/bg/bg_h12.png"
+texture_path = "res://assets/cinematics/bg/bg_h12.webp"
 
 [sub_resource type="Resource" id="pl_f9_1_resource_2"]
 script = ExtResource("4_iorrl")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f9_1_foreground.png"
-rect = Rect2(0, 0.62, 1, 0.38)
+texture_path = "res://assets/cinematics/mid/pl_f9_1_foreground.webp"
+rect = Rect2(0.0679, 0.6771, 0.811, 0.3229)
 depth = 0.6
 figure_seed = 1491
 pose = &"idle"
@@ -95,73 +95,85 @@ props = Array[StringName]([&"barriers"])
 [sub_resource type="Resource" id="pl_f9_1_resource_3"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_04.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_04.webp"
+rect = Rect2(0.2935, 0.408, 0.1133, 0.2474)
 state_index = 3
 
 [sub_resource type="Resource" id="pl_f9_1_resource_4"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_05.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_05.webp"
+rect = Rect2(0.3599, 0.4071, 0.103, 0.2413)
 state_index = 4
 
 [sub_resource type="Resource" id="pl_f9_1_resource_5"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_06.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_06.webp"
+rect = Rect2(0.4238, 0.4063, 0.0952, 0.2378)
 state_index = 5
 
 [sub_resource type="Resource" id="pl_f9_1_resource_6"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_07.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_07.webp"
+rect = Rect2(0.481, 0.4063, 0.0938, 0.2378)
 state_index = 6
 
 [sub_resource type="Resource" id="pl_f9_1_resource_7"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_08.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_08.webp"
+rect = Rect2(0.5356, 0.4071, 0.103, 0.2405)
 state_index = 7
 
 [sub_resource type="Resource" id="pl_f9_1_resource_8"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_09.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_09.webp"
+rect = Rect2(0.5908, 0.408, 0.1143, 0.2465)
 state_index = 8
 
 [sub_resource type="Resource" id="pl_f9_1_resource_9"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_10.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_10.webp"
+rect = Rect2(0.6465, 0.4106, 0.1274, 0.2535)
 state_index = 9
 
 [sub_resource type="Resource" id="pl_f9_1_resource_10"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_11.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_11.webp"
+rect = Rect2(0.7041, 0.4141, 0.1431, 0.2622)
 state_index = 10
 
 [sub_resource type="Resource" id="pl_f9_1_resource_11"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_12.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_12.webp"
+rect = Rect2(0.7646, 0.4193, 0.1631, 0.2743)
 state_index = 11
 
 [sub_resource type="Resource" id="pl_f9_1_resource_12"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_01.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_01.webp"
+rect = Rect2(0.0723, 0.4193, 0.1626, 0.2778)
 state_index = 0
 
 [sub_resource type="Resource" id="pl_f9_1_resource_13"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_02.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_02.webp"
+rect = Rect2(0.1514, 0.4149, 0.1445, 0.2648)
 state_index = 1
 
 [sub_resource type="Resource" id="pl_f9_1_resource_14"]
 script = ExtResource("4_iorrl")
 kind = &"lit"
-texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_03.png"
+texture_path = "res://assets/cinematics/lit/pl_f9_1_lit_03.webp"
+rect = Rect2(0.2246, 0.4106, 0.1265, 0.2552)
 state_index = 2
 
 [resource]

@@ -42,17 +42,17 @@ pose = &"leave"
 framing = &"profile"
 lighting = &"dock"
 rect = Rect2(0.36, 0.24, 0.2, 0.7)
-silhouette_path = "res://assets/cinematics/fig/fg_figure_pl_f4_1.png"
+silhouette_path = "res://assets/cinematics/fig/fg_figure_pl_f4_1.webp"
 
 [sub_resource type="Resource" id="pl_f4_1_resource_1"]
 script = ExtResource("5_w2k54")
-texture_path = "res://assets/cinematics/bg/bg_q1.png"
+texture_path = "res://assets/cinematics/bg/bg_q1.webp"
 
 [sub_resource type="Resource" id="pl_f4_1_resource_2"]
 script = ExtResource("5_w2k54")
 kind = &"fig"
-texture_path = "res://assets/cinematics/fig/pl_f4_1_guards.png"
-rect = Rect2(0.5, 0.28, 0.34, 0.66)
+texture_path = "res://assets/cinematics/fig/pl_f4_1_guards.webp"
+rect = Rect2(0.6353, 0.5356, 0.1538, 0.2266)
 depth = 0.5
 figure_seed = 1421
 pose = &"leave"

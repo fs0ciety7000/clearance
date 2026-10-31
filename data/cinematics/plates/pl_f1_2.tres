@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f1_2_resource_1"]
 script = ExtResource("4_6uacj")
-texture_path = "res://assets/cinematics/bg/bg_b2.png"
+texture_path = "res://assets/cinematics/bg/bg_b2.webp"
 
 [sub_resource type="Resource" id="pl_f1_2_resource_2"]
 script = ExtResource("4_6uacj")
 kind = &"fig"
-texture_path = "res://assets/cinematics/fig/pl_f1_2_seated.png"
-rect = Rect2(0.4, 0.42, 0.2, 0.5)
+texture_path = "res://assets/cinematics/fig/pl_f1_2_seated.webp"
+rect = Rect2(0.4536, 0.5825, 0.1006, 0.3134)
 depth = 0.5
 figure_seed = 1403
 pose = &"sit"

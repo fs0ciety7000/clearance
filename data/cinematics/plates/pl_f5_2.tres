@@ -40,17 +40,17 @@ id = &"fg_figure"
 memory_cases = Array[ExtResource("1_tjj2g")]([SubResource("pl_f5_2_resource_4"), SubResource("pl_f5_2_resource_6")])
 pose = &"leave"
 rect = Rect2(0.5, 0.2, 0.22, 0.76)
-silhouette_path = "res://assets/cinematics/fig/fg_figure_pl_f5_2.png"
+silhouette_path = "res://assets/cinematics/fig/fg_figure_pl_f5_2.webp"
 
 [sub_resource type="Resource" id="pl_f5_2_resource_1"]
 script = ExtResource("5_3i3ys")
-texture_path = "res://assets/cinematics/bg/bg_h7.png"
+texture_path = "res://assets/cinematics/bg/bg_h7.webp"
 
 [sub_resource type="Resource" id="pl_f5_2_resource_2"]
 script = ExtResource("5_3i3ys")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f5_2_families.png"
-rect = Rect2(0.04, 0.3, 0.48, 0.64)
+texture_path = "res://assets/cinematics/mid/pl_f5_2_families.webp"
+rect = Rect2(0.0229, 0.4497, 0.3135, 0.5095)
 depth = 0.3
 figure_seed = 1452
 pose = &"idle"

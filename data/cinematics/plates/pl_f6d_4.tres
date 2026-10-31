@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f6d_4_resource_1"]
 script = ExtResource("4_icc84")
-texture_path = "res://assets/cinematics/bg/bg_q7.png"
+texture_path = "res://assets/cinematics/bg/bg_q7.webp"
 
 [sub_resource type="Resource" id="pl_f6d_4_resource_2"]
 script = ExtResource("4_icc84")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f6d_4_cargo_lights.png"
-rect = Rect2(0.34, 0.24, 0.32, 0.3)
+texture_path = "res://assets/cinematics/mid/pl_f6d_4_cargo_lights.webp"
+rect = Rect2(0.4468, 0.4349, 0.0942, 0.1102)
 depth = 0.05
 props = Array[StringName]([&"cargo_lights"])
 

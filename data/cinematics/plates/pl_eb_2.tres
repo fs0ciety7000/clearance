@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_eb_2_resource_1"]
 script = ExtResource("4_yfmoq")
-texture_path = "res://assets/cinematics/bg/bg_r2.png"
+texture_path = "res://assets/cinematics/bg/bg_r2.webp"
 
 [sub_resource type="Resource" id="pl_eb_2_resource_2"]
 script = ExtResource("4_yfmoq")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_eb_2_council.png"
-rect = Rect2(0.14, 0.34, 0.72, 0.6)
+texture_path = "res://assets/cinematics/mid/pl_eb_2_council.webp"
+rect = Rect2(0.2754, 0.474, 0.4546, 0.4505)
 depth = 0.4
 figure_seed = 1521
 pose = &"sit"

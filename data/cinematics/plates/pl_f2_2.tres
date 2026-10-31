@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f2_2_resource_1"]
 script = ExtResource("4_ufiug")
-texture_path = "res://assets/cinematics/bg/bg_p1.png"
+texture_path = "res://assets/cinematics/bg/bg_p1.webp"
 
 [sub_resource type="Resource" id="pl_f2_2_resource_2"]
 script = ExtResource("4_ufiug")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f2_2_boxes.png"
-rect = Rect2(0.1, 0.52, 0.46, 0.44)
+texture_path = "res://assets/cinematics/mid/pl_f2_2_boxes.webp"
+rect = Rect2(0.0283, 0.6267, 0.4175, 0.3733)
 depth = 0.6
 props = Array[StringName]([&"cartons", &"stove"])
 

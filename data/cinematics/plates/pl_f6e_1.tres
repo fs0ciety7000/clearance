@@ -9,12 +9,12 @@
 [sub_resource type="Resource" id="pl_f6e_1_resource_3"]
 script = ExtResource("3_128vw")
 text_key = "BASSE-MARÉE"
-rect = Rect2(0.56, 0.4, 0.18, 0.05)
+rect = Rect2(0.3706, 0.4002, 0.1509, 0.0755)
 literal = true
 
 [sub_resource type="Resource" id="pl_f6e_1_resource_1"]
 script = ExtResource("4_pkqw2")
-texture_path = "res://assets/cinematics/bg/bg_q5.png"
+texture_path = "res://assets/cinematics/bg/bg_q5.webp"
 
 [sub_resource type="Resource" id="pl_f6e_1_resource_2"]
 script = ExtResource("4_pkqw2")

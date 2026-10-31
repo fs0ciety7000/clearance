@@ -9,18 +9,18 @@
 [sub_resource type="Resource" id="pl_ea_2_resource_3"]
 script = ExtResource("3_d6trs")
 text_key = "04"
-rect = Rect2(0.47, 0.18, 0.06, 0.06)
+rect = Rect2(0.4678, 0.2326, 0.0581, 0.0512)
 literal = true
 
 [sub_resource type="Resource" id="pl_ea_2_resource_1"]
 script = ExtResource("4_c8ari")
-texture_path = "res://assets/cinematics/bg/bg_h3.png"
+texture_path = "res://assets/cinematics/bg/bg_h3.webp"
 
 [sub_resource type="Resource" id="pl_ea_2_resource_2"]
 script = ExtResource("4_c8ari")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_ea_2_short_queue.png"
-rect = Rect2(0.1, 0.4, 0.4, 0.54)
+texture_path = "res://assets/cinematics/mid/pl_ea_2_short_queue.webp"
+rect = Rect2(0.084, 0.4427, 0.3804, 0.5573)
 depth = 0.4
 figure_seed = 1511
 pose = &"idle"

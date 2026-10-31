@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f7_4_resource_1"]
 script = ExtResource("4_73b2g")
-texture_path = "res://assets/cinematics/bg/bg_h2.png"
+texture_path = "res://assets/cinematics/bg/bg_h2.webp"
 
 [sub_resource type="Resource" id="pl_f7_4_resource_2"]
 script = ExtResource("4_73b2g")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f7_4_queue.png"
-rect = Rect2(0.06, 0.3, 0.88, 0.64)
+texture_path = "res://assets/cinematics/mid/pl_f7_4_queue.webp"
+rect = Rect2(0.2612, 0.3229, 0.271, 0.6632)
 depth = 0.4
 figure_seed = 1471
 pose = &"idle"

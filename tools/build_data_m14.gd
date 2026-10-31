@@ -20,7 +20,7 @@
 ##   Dossier (`portrait_cases`).
 ##
 ## Rendu hors ligne (lot C, `tools/build_plates.gd`) : chaque couche nomme son
-## image (`res://assets/cinematics/<bg|mid|fig|lit>/<id>.png`) ; les fonds
+## image (`res://assets/cinematics/<bg|mid|fig|lit>/<id>.webp`) ; les fonds
 ## partagés (46, `bg_<id>`) portent le même chemin. Caméras laissées aux valeurs
 ## par défaut : le lot C les règle et les reporte ici (ou les lit dans son
 ## manifeste). Rectangles des couches, labels et figures : intentions de
@@ -31,6 +31,12 @@ const CINEMATICS_DIR: String = "res://data/cinematics"
 const PLATES_DIR: String = "res://data/cinematics/plates"
 const AUDIO_DIR: String = "res://data/audio"
 const ASSET_ROOT: String = "res://assets/cinematics"
+## Lot C (BOOTH_SCENE §21) : manifeste des planches rendues. Quand il existe,
+## les rectangles des couches `MID`/`FIG`/`LIT` et des `Label` littéraux posés
+## sur une ancre du décor (plaques de numéro, plaque de coque) sont **lus dans le
+## rendu** (`_rendered_rect`, `_anchor_rect`) ; sinon les intentions ci-dessous.
+const RENDER_MANIFEST: String = "res://assets/cinematics/manifest.json"
+static var _render_cache: Dictionary = {}
 
 ## Traitement D-195 « lavis gravé » (BOOTH_SCENE §19.4, variante B) : Kuwahara
 ## rayon 6, rampe de 8 tons ; hachures, papier et grain réglés par le lot C.
@@ -351,19 +357,19 @@ static func _plate(id: StringName, bg: String, set_id: StringName, set_variant: 
 	p.pan = Vector2(1.0, 0.0)
 	var layer: PlateLayerDef = PlateLayerDef.new()
 	layer.kind = PlateLayerDef.KIND_BG
-	layer.texture_path = "%s/bg/%s.png" % [ASSET_ROOT, bg]
+	layer.texture_path = "%s/bg/%s.webp" % [ASSET_ROOT, bg]
 	layer.depth = 0.0
 	p.layers.append(layer)
 	return p
 
 
-## Couche `MID` (accessoires, foule) : image `mid/<planche>_<nom>.png`.
+## Couche `MID` (accessoires, foule) : image `mid/<planche>_<nom>.webp`.
 static func _mid(p: PlateDef, name: String, rect: Rect2, depth: float, props: Array[StringName] = [],
 		seed: int = 0, pose: StringName = &"") -> void:
 	var layer: PlateLayerDef = PlateLayerDef.new()
 	layer.kind = PlateLayerDef.KIND_MID
-	layer.texture_path = "%s/mid/%s_%s.png" % [ASSET_ROOT, p.id, name]
-	layer.rect = rect
+	layer.texture_path = "%s/mid/%s_%s.webp" % [ASSET_ROOT, p.id, name]
+	layer.rect = _rendered_rect(layer.texture_path, rect)
 	layer.depth = depth
 	layer.props = props
 	layer.figure_seed = seed
@@ -377,8 +383,8 @@ static func _fig(p: PlateDef, name: String, rect: Rect2, depth: float, pose: Str
 		seed: int) -> void:
 	var layer: PlateLayerDef = PlateLayerDef.new()
 	layer.kind = PlateLayerDef.KIND_FIG
-	layer.texture_path = "%s/fig/%s_%s.png" % [ASSET_ROOT, p.id, name]
-	layer.rect = rect
+	layer.texture_path = "%s/fig/%s_%s.webp" % [ASSET_ROOT, p.id, name]
+	layer.rect = _rendered_rect(layer.texture_path, rect)
 	layer.depth = depth
 	layer.pose = pose
 	layer.facing_deg = facing_deg
@@ -400,7 +406,7 @@ static func _fx(p: PlateDef, kind: StringName, density: float, depth: float = 0.
 static func _label(p: PlateDef, text: String, rect: Rect2, style: StringName, literal: bool) -> void:
 	var label: PlateLabelDef = PlateLabelDef.new()
 	label.text_key = text
-	label.rect = rect
+	label.rect = _anchor_rect(p, text, rect) if literal else rect
 	label.style = style
 	label.literal = literal
 	p.labels.append(label)
@@ -419,9 +425,39 @@ static func _slot(p: PlateDef, id: StringName, cases: Array[ConditionalKey], pos
 	slot.render_size = Vector2i(512, 768)
 	slot.rect = rect
 	slot.depth = depth
-	slot.silhouette_path = "%s/fig/%s_%s.png" % [ASSET_ROOT, id, p.id]
+	slot.silhouette_path = "%s/fig/%s_%s.webp" % [ASSET_ROOT, id, p.id]
 	slot.omit_plate_if_missing = omit
 	p.figures.append(slot)
+
+
+## Manifeste du lot C (vide s'il n'a pas encore été rendu).
+static func _rendered() -> Dictionary:
+	if _render_cache.is_empty() and FileAccess.file_exists(RENDER_MANIFEST):
+		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(RENDER_MANIFEST))
+		_render_cache = data if data is Dictionary else {"files": {}}
+	return _render_cache
+
+
+## Rectangle réel d'une couche rendue (0..1), sinon l'intention.
+static func _rendered_rect(path: String, intent: Rect2) -> Rect2:
+	var entry: Dictionary = (_rendered().get("files", {}) as Dictionary).get(path, {})
+	if entry.is_empty():
+		return intent
+	var r: Array = entry["rect_norm"]
+	return Rect2(float(r[0]), float(r[1]), float(r[2]), float(r[3]))
+
+
+## Ancre d'un `Label` littéral dans le décor de la planche (plaque « 04 »…), sinon l'intention.
+static func _anchor_rect(p: PlateDef, text: String, intent: Rect2) -> Rect2:
+	if p.layers.is_empty():
+		return intent
+	var stem: String = p.layers[0].texture_path.get_file().get_basename()
+	var group: Dictionary = (_rendered().get("groups", {}) as Dictionary).get(stem, {})
+	for anchor: Dictionary in group.get("labels", []):
+		if String(anchor.get("text", "")) == text:
+			var r: Array = anchor["rect_norm"]
+			return Rect2(float(r[0]), float(r[1]), float(r[2]), float(r[3]))
+	return intent
 
 
 static func _flag(name: StringName) -> FlagCondition:
@@ -650,8 +686,9 @@ static func _plates_f9() -> Array[PlateDef]:
 	for n: int in order:
 		var layer: PlateLayerDef = PlateLayerDef.new()
 		layer.kind = PlateLayerDef.KIND_LIT
-		layer.texture_path = "%s/lit/%s_lit_%02d.png" % [ASSET_ROOT, p1.id, n]
+		layer.texture_path = "%s/lit/%s_lit_%02d.webp" % [ASSET_ROOT, p1.id, n]
 		layer.state_index = n - 1
+		layer.rect = _rendered_rect(layer.texture_path, Rect2(0.0, 0.0, 1.0, 1.0))
 		layer.depth = 0.0
 		p1.layers.append(layer)
 	for n: int in range(1, 13):

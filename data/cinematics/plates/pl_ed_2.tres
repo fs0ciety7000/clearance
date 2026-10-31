@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_ed_2_resource_1"]
 script = ExtResource("4_tjmbh")
-texture_path = "res://assets/cinematics/bg/bg_t4.png"
+texture_path = "res://assets/cinematics/bg/bg_t4.webp"
 
 [sub_resource type="Resource" id="pl_ed_2_resource_2"]
 script = ExtResource("4_tjmbh")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_ed_2_kept_seat.png"
-rect = Rect2(0.4, 0.52, 0.22, 0.32)
+texture_path = "res://assets/cinematics/mid/pl_ed_2_kept_seat.webp"
+rect = Rect2(0.3809, 0.5894, 0.0991, 0.1563)
 depth = 0.5
 props = Array[StringName]([&"empty_seat", &"bowl"])
 

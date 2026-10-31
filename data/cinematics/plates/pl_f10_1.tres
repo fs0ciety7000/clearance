@@ -15,13 +15,13 @@ literal = true
 
 [sub_resource type="Resource" id="pl_f10_1_resource_1"]
 script = ExtResource("4_ey0d8")
-texture_path = "res://assets/cinematics/bg/bg_q1.png"
+texture_path = "res://assets/cinematics/bg/bg_q1.webp"
 
 [sub_resource type="Resource" id="pl_f10_1_resource_2"]
 script = ExtResource("4_ey0d8")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f10_1_transit7.png"
-rect = Rect2(0.2, 0.2, 0.7, 0.5)
+texture_path = "res://assets/cinematics/mid/pl_f10_1_transit7.webp"
+rect = Rect2(0.292, 0.3134, 0.4995, 0.2543)
 depth = 0.2
 props = Array[StringName]([&"transit7_hull"])
 

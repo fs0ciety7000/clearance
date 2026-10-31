@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f5b_4_resource_1"]
 script = ExtResource("4_4gyh4")
-texture_path = "res://assets/cinematics/bg/bg_p6.png"
+texture_path = "res://assets/cinematics/bg/bg_p6.webp"
 
 [sub_resource type="Resource" id="pl_f5b_4_resource_2"]
 script = ExtResource("4_4gyh4")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f5b_4_drawings.png"
-rect = Rect2(0.22, 0.54, 0.56, 0.38)
+texture_path = "res://assets/cinematics/mid/pl_f5b_4_drawings.webp"
+rect = Rect2(0.3179, 0.3524, 0.377, 0.3038)
 depth = 0.6
 props = Array[StringName]([&"shuttle_drawings"])
 

@@ -105,12 +105,12 @@ pose = &"present_docs"
 framing = &"bust"
 rect = Rect2(0.38, 0.18, 0.24, 0.62)
 depth = 0.5
-silhouette_path = "res://assets/cinematics/fig/fg_figure31_pl_e_fig.png"
+silhouette_path = "res://assets/cinematics/fig/fg_figure31_pl_e_fig.webp"
 omit_plate_if_missing = true
 
 [sub_resource type="Resource" id="pl_e_fig_resource_1"]
 script = ExtResource("5_4ivmr")
-texture_path = "res://assets/cinematics/bg/bg_h3.png"
+texture_path = "res://assets/cinematics/bg/bg_h3.webp"
 
 [resource]
 script = ExtResource("6_fhj7h")

@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="pl_f10_3_resource_1"]
 script = ExtResource("4_lktdc")
-texture_path = "res://assets/cinematics/bg/bg_x1.png"
+texture_path = "res://assets/cinematics/bg/bg_x1.webp"
 
 [sub_resource type="Resource" id="pl_f10_3_resource_2"]
 script = ExtResource("4_lktdc")
 kind = &"mid"
-texture_path = "res://assets/cinematics/mid/pl_f10_3_benches.png"
-rect = Rect2(0.04, 0.44, 0.92, 0.54)
+texture_path = "res://assets/cinematics/mid/pl_f10_3_benches.webp"
+rect = Rect2(0, 0.4688, 1, 0.5313)
 depth = 0.5
 figure_seed = 1501
 pose = &"sit"
