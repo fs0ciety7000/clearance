@@ -775,8 +775,10 @@ static func _migrate_5_to_6(data: Dictionary) -> Dictionary:
 
 
 ## Contrôle de schéma : message d'erreur, vide si conforme. `max_day` : borne
-## haute du jour (défaut : `last_day()`, dernier jour des données ; ≤ 0 si les
-## données sont introuvables = pas de borne).
+## haute du jour (défaut : `last_day()`, dernier jour des données, ramené au J5
+## dans la démo — QA-089 : `DemoMode.last_day` ; ≤ 0 si les données sont
+## introuvables = pas de borne). Toute lecture (`parse` : état courant,
+## instantanés) passe par ici : la démo refuse une sauvegarde J6+.
 static func validate(data: Dictionary, max_day: int = -1) -> String:
 	for key: String in SCHEMA:
 		if not data.has(key):
@@ -789,7 +791,7 @@ static func validate(data: Dictionary, max_day: int = -1) -> String:
 	var day: int = as_int(data["current_day"])
 	if day < 1:
 		return "jour %d invalide" % day
-	var last: int = max_day if max_day >= 0 else last_day()
+	var last: int = max_day if max_day >= 0 else DemoMode.last_day(last_day())
 	if last > 0 and day > last:
 		return "jour %d au-delà du dernier jour (%d)" % [day, last]
 	return ""

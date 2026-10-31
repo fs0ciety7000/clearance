@@ -87,7 +87,9 @@ const CINEMATIC_AUTO: float = 0.0
 const CINEMATIC_MANUAL: float = 1.0
 ## M15 (D-213) — « Langue » : `fr` / `en` (texte ; seul réglage non numérique).
 ## Défaut (`""` dans `DEFAULTS`) : langue du système si `en*`, sinon `fr`
-## (`Localization.system_language`). Appliquée à chaud (`Localization`).
+## (`Localization.system_language`) à une première installation ; un
+## `settings.cfg` existant sans langue (0.14 et avant) → `fr` (D-226).
+## Appliquée à chaud (`Localization`).
 const KEY_LANGUAGE: StringName = &"language"
 ## M15 (D-214) — pseudo-localisation `en-XA` : réglage **caché** (absent des
 ## Options), ignoré hors debug ; argument `--pseudo-loc` (valeur de session).
@@ -394,6 +396,11 @@ func load_settings() -> Error:
 		return err
 	for key: StringName in DEFAULTS:
 		var stored: Variant = config.get_value(SECTION, String(key), DEFAULTS[key])
+		if key == KEY_LANGUAGE and not config.has_section_key(SECTION, String(key)):
+			# D-226 (QA-093) : réglages d'une version antérieure (sans langue) →
+			# français, langue de ses parties ; la langue du système ne vaut que
+			# pour une première installation (aucun `settings.cfg`).
+			stored = Localization.LANG_FR
 		_persisted[key] = _sanitize(key, stored)
 		if not _session_keys.has(key):
 			_values[key] = _persisted[key]

@@ -1208,7 +1208,9 @@ static func build_events() -> Array[StationEventDef]:
 	mrz.window_kind = StationEventDef.WindowKind.PASSENGERS
 	mrz.window_passengers = 4
 	mrz.rulebook_key = "sev_mrz_reader_rb"
-	mrz.changes = [RuleChangeDef.retire(&"r_mrz_valid", "sev_mrz_reader_rb")]
+	# QA-085 : note de la règle barrée sans compteur (le compteur reste dans
+	# la ligne ambre `sev_mrz_reader_rb`, formatée par `StationEventBanner`).
+	mrz.changes = [RuleChangeDef.retire(&"r_mrz_valid", "sev_mrz_reader_note")]
 	mrz.garde_required_unit = &"u05"
 	mrz.garde_window_passengers = 4
 	var comparator: StationEventDef = _event(2, &"comparator", StationEventDef.EventClass.B)

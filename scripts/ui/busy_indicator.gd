@@ -89,6 +89,16 @@ func remaining() -> float:
 	return maxf(duration - elapsed, 0.0)
 
 
+## QA-086 (contrat `on_language_changed`) : « Le passager répond » est
+## réécrit à chaque image depuis `_text` : retraduit à la source.
+func on_language_changed() -> void:
+	if _text.is_empty():
+		return
+	_text = Localization.retranslate_text(_text)
+	if is_busy() and _label != null:
+		_refresh()
+
+
 func get_text() -> String:
 	return _label.text if _label != null else ""
 

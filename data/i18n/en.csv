@@ -289,7 +289,7 @@ line_about_health_1,"I'm fine. I… I'm fine, I promise you."
 line_about_health_2,"It's the dust from the docks. It's not contagious, the doctor said so."
 line_about_health_3,"The machine got it wrong. Badly calibrated, everyone came out red."
 line_about_health_outrage_1,I'm in perfect health! It's there in black and white.
-line_about_health_outrage_2,"""Fit."" That's the word on the paper. Fit."
+line_about_health_outrage_2,'Fit.' That's the word on the paper. Fit.
 line_about_other_1,I… I can explain. Give me a minute.
 line_about_other_2,"A data-entry error, surely. These forms change all the time."
 line_about_other_3,Everything's in order. It's your machine that can't read.
@@ -350,7 +350,7 @@ okonkwo_j1_open,"Intercom (N): bring the first one up. While they walk, take a l
 okonkwo_j1_inspect,"Hand on the console… Space is Inspection. Click a field, then another."
 okonkwo_j1_expiry,"This one, look at the expiry date… then today's date, at the top of the Rulebook."
 okonkwo_j1_discordance,"Magenta thread: discrepancy pinned, that's your proof. Ask the question (Q), then hold X."
-okonkwo_j1_concordant,"Compare anyway. ""Match"" costs nothing: the tool punishes nobody."
+okonkwo_j1_concordant,Compare anyway. 'Match' costs nothing: the tool punishes nobody.
 okonkwo_j1_alone,"You're on your own. No card, no entry: rule 01 is proof enough."
 okonkwo_j1_citation,"A notice of infraction. The first two each day are warnings; after that, it's your pay."
 okonkwo_j1_goodbye,"Good. I'll leave you to it, my own queue's waiting. Glory to the Consortium… as they say."
@@ -373,7 +373,7 @@ sc04_mira_purpose,"Kessler-Ashe Orbital. Airlock maintenance, night crew."
 sc05_luciole_messenger_arrival,It's raining on the docks tonight… ‹Lumika.›
 sc05_luciole_messenger_present,‹Tal ka nesu.› Look closely.
 sc05_luciole_messenger_about_mismatch,A printing error. Look closer… look at the corner of the permit.
-sc05_luciole_messenger_note,"""Let him through. We will help you."" — a firefly drawing, in magenta ink."
+sc05_luciole_messenger_note,"'Let him through. We will help you.' — a firefly drawing, in magenta ink."
 cit_serial,G04-J%02d-%02d
 cit_motive,REASON
 cit_rule,Rule %02d · %s
@@ -673,7 +673,7 @@ q_about_implant,This implant is not declared.
 sc06_amara_arrival,Do you remember me? Tuesday. The expired card.
 sc06_amara_present,‹Tal ka nesu.› It's new. I slept three nights in the Hall for it.
 sc06_amara_purpose,"My children. Ring D. They're six and eleven, they've been waiting since Tuesday."
-sc06_amara_stay,"Two weeks. Then we'll see. There's always a ""then we'll see""."
+sc06_amara_stay,Two weeks. Then we'll see. There's always a 'then we'll see'.
 sc06_amara_origin,"Earth. Then your Hall, on my suitcases."
 sc06_amara_confront,Everything is in order. I checked ten times. ‹Somi…› Please.
 sc06_amara_exit_approve,"‹Shen tavi.› Thank you. I don't hold Tuesday against you. Well, a little."
@@ -690,7 +690,7 @@ sc07_valcourt_exit_deny,You're denying a Valcourt? You'll be hearing from me.
 sc07_valcourt_exit_approve,"You'll go far. Not very far, but far."
 sc08_dmitri_arrival,‹Oru ka.› Hello. They told me you listen.
 sc08_dmitri_present,‹Tal ka nesu.› The permit's from before. Before everything.
-sc08_dmitri_purpose,"To work. Anything. Kessler-Ashe ""reassigned"" me on Monday."
+sc08_dmitri_purpose,To work. Anything. Kessler-Ashe 'reassigned' me on Monday.
 sc08_dmitri_stay,"Long enough to find an employer. What the permit says, if the air holds."
 sc08_dmitri_origin,"Tycho, shaft 14. Twenty-two years of dust in this hand."
 sc08_dmitri_about_rule_violated,"No employer, yes. They crossed out the line at the dock. I didn't cross anything out."
@@ -779,8 +779,8 @@ sc18_sefa_arrival,"‹Oru ka.› They told me Booth 04, third window from the le
 sc18_sefa_present,‹Tal ka nesu.› There's one paper extra. It's not for you.
 sc18_sefa_purpose,Transit. I drop something off and leave again on the Long-Ruban.
 sc18_sefa_origin,"The Long-Ruban. A freighter. My mother was born there, me too."
-sc18_sefa_note,"""For Ilan, Petrel Block: recycler 3, Thursday, 04:00. Bring the key."" A firefly."
-sc18_sefa_note_lev,"Below, in another hand: ""Thanks for Monday. — L."""
+sc18_sefa_note,"'For Ilan, Petrel Block: recycler 3, Thursday, 04:00. Bring the key.' A firefly."
+sc18_sefa_note_lev,"Below, in another hand: 'Thanks for Monday. — L.'"
 sc18_sefa_exit_approve,"‹Shen tavi.› It rains, even here."
 sc18_sefa_exit_deny,Keep the paper anyway. It'll find its way.
 sc19_wren_arrival,‹Oru ka.› I don't need to get in. I came to see you.
@@ -788,7 +788,7 @@ sc19_wren_present,‹Tal ka nesu.› The stamp is old. So am I.
 sc19_wren_purpose,Selling sailcloth. And seats. Not at the same time.
 sc19_wren_origin,Nowhere. Very handy: nobody can send you back there.
 sc19_wren_about_rule_violated,"The old seal? We bought it the day before yesterday. News travels fast, here."
-sc19_wren_note,"""Dock 6, Basse-Marée, Friday 05:00. Three seats, ₵40. Old women cough badly adrift. Four seats, if you insist."""
+sc19_wren_note,"'Dock 6, Basse-Marée, Friday 05:00. Three seats, ₵40. Old women cough badly adrift. Four seats, if you insist.'"
 sc19_wren_exit_deny,I thought as much. Keep the card. Windows can be left behind.
 sc19_wren_exit_approve,Thank you. The card still stands.
 sc20_arkady_arrival,"Hello, Booth. Lovely day for breathing."
@@ -1167,7 +1167,7 @@ sc23_lindgren_purpose,"Going back to the Bureau. Archives, sub-level 3. I file w
 sc23_lindgren_stay,Forever. You don't leave the archives: you get filed there.
 sc23_lindgren_origin,"Here. Born on sub-level 3, I believe. Nobody ever told me otherwise."
 sc23_lindgren_confront,"Everything is in order. Order is my trade. My own, especially."
-sc23_lindgren_note,"""FORM 27-B — Application to obtain form 27-C. Mandatory attachment: form 27-B."""
+sc23_lindgren_note,'FORM 27-B — Application to obtain form 27-C. Mandatory attachment: form 27-B.'
 sc23_lindgren_exit_approve,"Thank you. If you find a 27-B, save it for me. I'll be back."
 sc23_lindgren_exit_deny,"Denied? I'll need a form to appeal. The 27-B, I suppose."
 sc24_dmitri_arrival,‹Oru ka.› Remember? The metal hand. Last Friday.
@@ -1244,7 +1244,7 @@ sc33_corvo_stay,"Long enough to sell. Or the rest of my life, if it sells badly.
 sc33_corvo_origin,"The Sillage. Sixty-eight years aboard. It ended up as plating, six credits a kilo."
 sc33_corvo_about_rule_violated,Not in your register? It was in there seventy years. Things get erased fast here.
 sc33_corvo_confront,"In 2151, the Sillage carried children out of Tycho. No register says that."
-sc33_corvo_note,"A polished nut worn as a pendant, inside a yellowed page: ""Sillage manifest, 2151. Evacuated: 63. Left in Shaft 9: 212."" Names follow."
+sc33_corvo_note,"A polished nut worn as a pendant, inside a yellowed page: 'Sillage manifest, 2151. Evacuated: 63. Left in Shaft 9: 212.' Names follow."
 sc33_corvo_exit_deny,Keep the nut. For the little one who draws. I'm told there is one.
 sc33_corvo_exit_approve,"‹Shen tavi.› The Sillage would have liked to get through a window, once."
 sc34_hiro_arrival,"Hello. Don't look at my eyes, I'm updating. 3%."
@@ -1300,11 +1300,11 @@ sc37_fatou_exit_approve,"‹Shen tavi.› Kwame, say goodbye to the window. It w
 sc37_fatou_exit_deny,‹Ravel ka ota…› We did everything we were told. Everything.
 sc38_sato_arrival,Colleague! Eleven-minute break. I'm here to test your vigilance. Unofficially.
 sc38_sato_present,‹Tal ka nesu.› I slipped in one error. Just one. I won't say where.
-sc38_sato_purpose,"Back from the ""Rebalancing, module 3"" training. I got 100%."
+sc38_sato_purpose,"Back from the 'Rebalancing, module 3' training. I got 100%."
 sc38_sato_origin,"Here. Ring C, top bunk. I'm aiming for the bottom one."
 sc38_sato_about_mismatch,The macron! You saw the macron! Excellent. Note it. I'm noting it.
 sc38_sato_confront,I won't say a thing. An inspector says nothing. I'm not an inspector. Yet.
-sc38_sato_exit_deny,"Denied! Perfect! I'm putting ""exemplary"" in my personal notebook."
+sc38_sato_exit_deny,Denied! Perfect! I'm putting 'exemplary' in my personal notebook.
 sc38_sato_exit_approve,Approved?! With a macron? I have to report it. Sorry. Not very.
 sc39_leila_arrival,Hello. My father is at the Meridian hospice. They told me: before tonight.
 sc39_leila_present,‹Tal ka nesu.› I took my queue ticket at 15:40. The queue was long.
@@ -1327,7 +1327,7 @@ sc41_sato_arrival,"Colleague… It's me. Sato. From 03. Well, formerly 03."
 sc41_sato_present,"‹Tal ka nesu.› I'm on the list. I stamped it myself, this morning."
 sc41_sato_purpose,Going home to Ring C. My bunk. The top one. I'm not aiming low any more.
 sc41_sato_origin,"Here. I reported a commissioner's nephew. He was in breach, though."
-sc41_sato_about_revoked,"Revoked for ""untimely zeal"". I didn't know that existed. I noted it."
+sc41_sato_about_revoked,Revoked for 'untimely zeal'. I didn't know that existed. I noted it.
 sc41_sato_confront,Apply the rule. I won't hold it against you. It's what I'd have done. Yesterday.
 sc41_sato_exit_deny,Thank you. That's compliant. [he puts his notebook away] I've no one left to note.
 sc41_sato_exit_approve,You… you broke the rule for me? I'm not going to note that.
@@ -1353,20 +1353,20 @@ sc44_lindgren_present,‹Tal ka nesu.› Everything's valid. I checked it in tri
 sc44_lindgren_purpose,Back to the archives. And have you sign the 27-B. That's all I need.
 sc44_lindgren_stay,In the archives? Until they file me. With the rest.
 sc44_lindgren_origin,Here. Sub-level 3. Have you ever been down there? Nobody goes down there.
-sc44_lindgren_note,"""FORM 27-B — Certificate of receipt of form 27-B. Officer's signature: ______"" On the back, in a slanted hand: ""Shaft 9, 2151. Page 212 of 212. I file what gets forgotten. — K. L."""
+sc44_lindgren_note,"'FORM 27-B — Certificate of receipt of form 27-B. Officer's signature: ______' On the back, in a slanted hand: 'Shaft 9, 2151. Page 212 of 212. I file what gets forgotten. — K. L.'"
 sc44_lindgren_exit_approve,"Thank you. A signature, at last. You don't know what that's worth. I do."
 sc44_lindgren_exit_deny,"Denied, with a new card? I'll need a 27-B. Joking. Partly."
 sc45_ravel_arrival,"Hello, Booth 04. The roles are reversed. It's very instructive."
 sc45_ravel_present,"‹Tal ka nesu.› Revoked. My number is on your list. Do check, please."
 sc45_ravel_purpose,Going home to Ring C. They took my flat. Not my courtesy.
-sc45_ravel_stay,"‹Ravel ka ota.› ""My family is waiting."" Odd language, that carries my name."
+sc45_ravel_stay,"‹Ravel ka ota.› 'My family is waiting.' Odd language, that carries my name."
 sc45_ravel_origin,"Here. We're all from here, deep down. I told you so."
 sc45_ravel_about_revoked,"My audits were too lenient, apparently. I was inspected. That's fair."
 sc45_ravel_confront,"Do your job, Booth 04. I did it enough for you."
 sc45_ravel_confront_passed,You returned my envelope. It's the only clean thing in my notebooks.
 sc45_ravel_confront_kept,You kept my thirty credits. I don't hold it against you any more. I envy you.
 sc45_ravel_albedo,The Albedo file? The Bureau wrote it. I read it. I didn't understand it.
-sc45_ravel_note,"""BOOTH 04 FILE — Officer Inspection."" Six pages in his cramped hand. Every one of your envelopes, every one of your silences."
+sc45_ravel_note,"'BOOTH 04 FILE — Officer Inspection.' Six pages in his cramped hand. Every one of your envelopes, every one of your silences."
 sc45_ravel_exit_deny,"Compliant. I wouldn't have done better. I didn't do better, in fact."
 sc45_ravel_exit_approve,You're letting me through. I wouldn't have done it for you. Thank you.
 sc46_wren_arrival,‹Oru ka.› The Basse-Marée leaves on Monday. I came to tell you face to face.
@@ -1374,7 +1374,7 @@ sc46_wren_arrival_stayed,"You stayed, on Friday. I'm leaving Monday. I won't ask
 sc46_wren_present,"‹Tal ka nesu.› New pass. New seal. I learned, you see."
 sc46_wren_purpose,Selling sailcloth. And four seats. Still not at the same time.
 sc46_wren_origin,"Nowhere. You breathe better there than here, this week."
-sc46_wren_note,"""Dock 6, Basse-Marée, Monday 02.04, 05:00. Four seats, ₵60. After that, dock 6 closes to freighters."""
+sc46_wren_note,"'Dock 6, Basse-Marée, Monday 02.04, 05:00. Four seats, ₵60. After that, dock 6 closes to freighters.'"
 sc46_wren_exit_approve,"Monday, 05:00. After that, the Consortium closes dock 6."
 sc46_wren_exit_deny,Denied by the book? All the more reason to leave. Monday.
 sc47_kasimir_arrival,"Hello, Booth. I've heard about you. Good or bad, depends who's talking."
@@ -1394,7 +1394,7 @@ sc48_paz_present,‹Tal ka nesu.› Born on 1 April. Card that expires on 1 Apri
 sc48_paz_purpose,Trade. And celebrate my twenty-seventh where the air is filtered.
 sc48_paz_stay,Five days. Until the 6th. Nothing funny about the 6th.
 sc48_paz_origin,Ceres. Out there they say papers lie on 1 April. Mine don't.
-sc48_paz_confront,"""Expires today"" means valid today. I asked three times."
+sc48_paz_confront,'Expires today' means valid today. I asked three times.
 sc48_paz_exit_approve,Thanks! You're the first window that doesn't laugh. That makes me laugh.
 sc48_paz_exit_deny,Denied on my birthday. Now that's a joke. A bad one.
 sc49_lindgren_arrival,Hello. I have nothing to ask for today. It feels very strange.
@@ -1982,9 +1982,9 @@ sc54_sato_exit_approve,Thanks! I'm putting you in the minutes. Favourably. Offic
 sc54_sato_exit_deny,Denied? With a reinstatement? I have to note it. It breaks my notebook's heart.
 sc55_valentin_arrival,Hello. They're reinstating everyone this morning. I've come to see if I exist.
 sc55_valentin_present,"‹Tal ka nesu.› My card. Same as six days ago. Me, a little less."
-sc55_valentin_purpose,"Going home. Ring D. My children have learned the word ""revoked"". I'd like to erase it."
+sc55_valentin_purpose,Going home. Ring D. My children have learned the word 'revoked'. I'd like to erase it.
 sc55_valentin_origin,"Here. Three generations. And one hour of open valve, on the 22nd."
-sc55_valentin_about_revoked,"No date next to my name? ""Except those involved."" That's me."
+sc55_valentin_about_revoked,No date next to my name? 'Except those involved.' That's me.
 sc55_valentin_confront,They reinstate the ones who closed the valves. Not the one who opened them.
 sc55_valentin_exit_deny,It's fair. It's written. I'm starting to confuse the two.
 sc55_valentin_exit_approve,Thank you. A second time. I'll end up owing you a valve.
@@ -1994,8 +1994,8 @@ sc56_okafor_purpose,Back to school. The Inquiry wants to question the children. 
 sc56_okafor_stay,Always. A school doesn't leave. Sometimes it closes.
 sc56_okafor_origin,Here. Ring C. I taught half of Petrel Block to read.
 sc56_okafor_confront,Everything's in order. I mark papers: I know where to look.
-sc56_okafor_note,"A station in yellow felt-tip. Every window is lit, except one, magenta. On the back: ""For window 04. NOA"""
-sc56_okafor_note_vitres,"A station in yellow felt-tip. Every window is dark, except one, magenta. On the back: ""For window 04. NOA"""
+sc56_okafor_note,"A station in yellow felt-tip. Every window is lit, except one, magenta. On the back: 'For window 04. NOA'"
+sc56_okafor_note_vitres,"A station in yellow felt-tip. Every window is dark, except one, magenta. On the back: 'For window 04. NOA'"
 sc56_okafor_exit_approve,Thank you. I'll tell Noa her window said hello to me.
 sc56_okafor_exit_deny,"Denied? I'll teach in the Hall. There's room, apparently."
 sc57_noor_arrival,Hello. I'll keep it short. I'm still missing a paper.
@@ -2006,13 +2006,13 @@ sc57_noor_purpose,To heal. The Grey Fever is still here. Meridian still isn't.
 sc57_noor_stay,Until the children stop coughing. That hasn't changed either.
 sc57_noor_origin,"Tycho. They closed Shaft 14 on Monday. I'll go and treat them there, afterwards."
 sc57_noor_confront,"Look at your regulations, not my strip. This time, they're what changed."
-sc57_noor_note,"An unlabelled bottle and a note: ""Syrup for Noa. Twice a day. No bill. — N."""
+sc57_noor_note,An unlabelled bottle and a note: 'Syrup for Noa. Twice a day. No bill. — N.'
 sc57_noor_exit_approve,"Thank you. Petrel Block, tonight. The bottle is for the little one."
 sc57_noor_exit_deny,"Denied for no reason. That, at least, hasn't changed."
 sc58_ophelie_arrival,Hello. I've brought my bio-scan. Out of habit. It's all I have left.
 sc58_ophelie_present,"‹Tal ka nesu.› My card. And my certificate. It's expired, but it's very pretty."
 sc58_ophelie_purpose,Going home. Meridian took the certificates back to the docks. My counter closed.
-sc58_ophelie_stay,"I don't know. They said ""reassigned"". I didn't dare ask where."
+sc58_ophelie_stay,I don't know. They said 'reassigned'. I didn't dare ask where.
 sc58_ophelie_origin,Here. Ring E. Twelve years stamping certificates. I've a whole crate left.
 sc58_ophelie_about_expired,"It's expired, yes. It doesn't exist any more, either. Is it bad, both?"
 sc58_ophelie_confront,Check it anyway. Nobody looks at it any more. It makes me sad.
@@ -2022,7 +2022,7 @@ sc59_beaumont_arrival,"Hello, Booth 04. Don't get up. I no longer watch how you 
 sc59_beaumont_present,‹Tal ka nesu.› I still say it. You don't lose a language with a post.
 sc59_beaumont_purpose,Going home to Ring F. They left me the flat. Not the door.
 sc59_beaumont_origin,Petrel Block. Middle bunk. I may go back there. Like everyone.
-sc59_beaumont_about_revoked,"Revoked for ""respiratory overzealousness"". I obeyed too well. Like you."
+sc59_beaumont_about_revoked,Revoked for 'respiratory overzealousness'. I obeyed too well. Like you.
 sc59_beaumont_confront_obeyed,"On the 30th, you obeyed. I'm blamed for the order. You, for nothing. That's fair."
 sc59_beaumont_confront_defied,"On the 30th, you disobeyed me. You were right. Don't repeat that."
 sc59_beaumont_confront,Apply the rule. I wrote it. It would be galling if it didn't work.
@@ -2042,7 +2042,7 @@ sc61_amara_arrival_refused,"Hello. Two denials, here. This time I have a lady wi
 sc61_amara_arrival_mercy,"Hello. You let me through, on the first day. I'm coming back through the door."
 sc61_amara_present,‹Tal ka nesu.› And a sponsor. She went through just before me.
 sc61_amara_purpose,"My children, in Ring D. And Mrs Ferreira's plants. They're thirsty."
-sc61_amara_stay,"Two weeks. Like the first time. There's always a ""then we'll see""."
+sc61_amara_stay,Two weeks. Like the first time. There's always a 'then we'll see'.
 sc61_amara_origin,Earth. Then your Hall. Then Ring D. Then your Hall.
 sc61_amara_about_sponsor,She's not on your list? She was right in front of me. With a cat!
 sc61_amara_exit_approve,"‹Shen tavi.› For once, someone else queued for me."
@@ -2071,16 +2071,16 @@ sc64_lindgren_purpose,The archives. And standing sponsor this afternoon. A lady 
 sc64_lindgren_stay,"Until the conclusions. After that, they'll reclassify me. Or shelve me."
 sc64_lindgren_origin,Sub-level 3. We found the Albedo file there. Twice. Two covers.
 sc64_lindgren_albedo,The first is dated the day before. Or the day after. Archives get the hour wrong.
-sc64_lindgren_note,"""FORM 27-B/2 — Sponsor request for obtaining a form. Sponsor: ______"""
+sc64_lindgren_note,'FORM 27-B/2 — Sponsor request for obtaining a form. Sponsor: ______'
 sc64_lindgren_exit_approve,"Thank you. Remember my number. It'll be useful, for once."
 sc64_lindgren_exit_deny,Denied? I'll need a 27-B/2 to appeal. Joking. Not at all.
 sc65_yara_arrival,‹Oru ka.› My brother still works the recycler in your block.
 sc65_yara_present,‹Tal ka nesu.› Look at the last digit. And the sponsor: the archives man.
 sc65_yara_purpose,To see my brother. And tell the Hall what we breathe on Tycho. Not much.
 sc65_yara_stay,Three days. The strike committee gave me three days. And a message.
-sc65_yara_origin,"Tycho. Since this morning, the air there is ""rebalanced"". We take turns breathing."
+sc65_yara_origin,"Tycho. Since this morning, the air there is 'rebalanced'. We take turns breathing."
 sc65_yara_about_sponsor,The archives man? He went through before me. He said he'd filed me.
-sc65_yara_note,"""Tycho strike committee. Air: 31 hours. We ask for nothing. We are counting. — Y."" A firefly."
+sc65_yara_note,'Tycho strike committee. Air: 31 hours. We ask for nothing. We are counting. — Y.' A firefly.
 sc65_yara_exit_approve,‹Shen tavi.› I'll tell the committee one window can still read.
 sc65_yara_exit_deny,I'll take the shuttle back. The committee will count one more.
 sc66_lev_arrival,"Hello. You know my face. This time, it's my name too."
@@ -2092,7 +2092,7 @@ sc66_lev_purpose,"Testify for the Tycho committee. If the Arbiter listens. If no
 sc66_lev_origin,"Tycho. Messenger, then Whitmore, then nobody. Today, Petrenko."
 sc66_lev_about_summons,Not in your tab? The Arbiter summons slowly. We work fast.
 sc66_lev_confront,A summons is paper. The Consortium started it. We're carrying on.
-sc66_lev_note,"Twelve blank summonses, the Arbitration seal faked with a stamp. A note: ""For the ones who follow."""
+sc66_lev_note,"Twelve blank summonses, the Arbitration seal faked with a stamp. A note: 'For the ones who follow.'"
 sc66_lev_exit_deny,Another window. The summonses will find their way.
 sc66_lev_exit_approve,Thank you. Again. One day I'll have to ask you your name.
 sc66_lev_exit_detain,"[to the guards] Easy. It's a forgery, not a weapon."
@@ -2123,7 +2123,7 @@ sc70_montclair_arrival,"Hello, Booth 04. I'm queuing today. It's part of the Inq
 sc70_montclair_arrival_kept,"Hello. You kept my fifty credits, on the 22nd. So we can talk."
 sc70_montclair_arrival_refused,Hello. You turned me away on the 22nd. I've queued since. A long time.
 sc70_montclair_present,‹Tal ka nesu.› My card. The Bureau never corrected it. I wanted to see.
-sc70_montclair_purpose,"Going home. And observing an ""exemplary"" booth. I was told 04. Or the worst."
+sc70_montclair_purpose,Going home. And observing an 'exemplary' booth. I was told 04. Or the worst.
 sc70_montclair_origin,Ring F. On the right side of the glass for fifty-eight years.
 sc70_montclair_about_mismatch,One letter. Always the same one. Will you turn away the Arbiter over a P?
 sc70_montclair_confront,I chair the Inquiry that will hear you on Tuesday. Think it over. Or don't.
@@ -2148,7 +2148,7 @@ sc72_wren_purpose,"Selling what's left of the freighter. The plating, by the kil
 sc72_wren_origin,"The Basse-Marée. Thirty years. It'll end up as footrests, apparently."
 sc72_wren_about_rule_violated,Struck from the register on Monday. Things get erased fast here. Corvo told me.
 sc72_wren_confront,I know the rule. I learned it for you. It didn't wait for me.
-sc72_wren_note,"""Thursday 12.04, 05:00, the Hold, airlock 9. No freighter: a tug. Four seats, ₵70. Last time. — W."""
+sc72_wren_note,"'Thursday 12.04, 05:00, the Hold, airlock 9. No freighter: a tug. Four seats, ₵70. Last time. — W.'"
 sc72_wren_exit_deny,Keep the card. There's one door left. It's in the Hold.
 sc72_wren_exit_approve,‹Shen tavi.› You're cheating for a wreck. That touches me. A little.
 sc73_celeste_arrival,Hello. Nurse at the Meridian hospice. And sponsor for the one right after me.
@@ -2190,7 +2190,7 @@ sc76_sato_purpose,Handing out summonses. Tomorrow it's your turn. Don't prepare.
 sc76_sato_origin,Here. Inquiry registry. I note everything. Now they reread me. It's hard.
 sc76_sato_about_summons,Not in the tab? I wrote it myself. To be sure I'd be summoned.
 sc76_sato_confront,It's a forgery. But a very well-made one. Module 3: I got 100%.
-sc76_sato_note,"""SUMMONS ENQ-0004 — Officer of Booth 04. Deposition: Tuesday 10.04, 18:00. Bring: your memory. — Registry, A. Sato"""
+sc76_sato_note,"'SUMMONS ENQ-0004 — Officer of Booth 04. Deposition: Tuesday 10.04, 18:00. Bring: your memory. — Registry, A. Sato'"
 sc76_sato_exit_deny,Denied! Exemplary. I'm writing it in your file. Tomorrow's.
 sc76_sato_exit_approve,"Approved, with a forgery?! I have to note it. Tomorrow. Sorry. A bit."
 sc77_lindgren_arrival,"Hello. My card expires today. Well, its extension does. It's my last day."
@@ -2200,7 +2200,7 @@ sc77_lindgren_stay,Until the conclusions. They're written. Only the witnesses ar
 sc77_lindgren_origin,Sub-level 3. I found two truths there. They don't speak to each other.
 sc77_lindgren_albedo,11:40 or 12:20. One is a copy of the other. I don't know which.
 sc77_lindgren_confront,"Everything is valid until midnight. So am I, I think."
-sc77_lindgren_note,"""REPORT — Dock 3 incident, 2179. Two copies. Explosion: 11:40. Second copy: 12:20. Neither is marked 'copy'. — K. L."""
+sc77_lindgren_note,"'REPORT — Dock 3 incident, 2179. Two copies. Explosion: 11:40. Second copy: 12:20. Neither is marked COPY. — K. L.'"
 sc77_lindgren_exit_approve,"Thank you. Keep the file, or don't. But read the time."
 sc77_lindgren_exit_deny,Denied on the last day. That's compliant. It's even elegant.
 sc78_mazur_arrival,Hello. You let me through on the 18th. Then they took me on the 20th.
@@ -2218,7 +2218,7 @@ sc79_adeyemi_purpose,Going home. Tomorrow I'm on dock duty for the Transit-7. Wi
 sc79_adeyemi_origin,"Here. My father was in the Guard, in 2151. He never talked about it."
 sc79_adeyemi_stay,Forty names to put in holding on arrival. I don't want to know I have it.
 sc79_adeyemi_confront,Everything's in order. Except me. That doesn't show on a card.
-sc79_adeyemi_note,"""Tycho rebalancing — strike delegates to be placed in holding on arrival of the Transit-7"": forty names. The seventh: Moreno-Lind, Yara."
+sc79_adeyemi_note,"'Tycho rebalancing — strike delegates to be placed in holding on arrival of the Transit-7': forty names. The seventh: Moreno-Lind, Yara."
 sc79_adeyemi_exit_approve,"Thank you. If I left it with you, I left it. You forget everything here."
 sc79_adeyemi_exit_deny,"Denied. Then I keep it. And tomorrow, I'll read it aloud."
 sc80_margaux_arrival,"Hello, young window. Mistigri has been promoted to head ratter. He won't speak to me."
@@ -2267,7 +2267,7 @@ sc82_mira_luciole_reply,Then we still understand each other. The families are be
 sc82_mira_exit_approve,"Thank you. Count them, after me. Every one counts."
 sc82_mira_exit_deny,Another window. There aren't many left. They close at 18:00.
 sc82_mira_exit_detain,[to the guards] I know the way. I've taken it twice.
-sc82_note,"""Tycho Register, 2187: those still breathing."" 1,214 names, in pencil. At the top: ""So they aren't read too late."""
+sc82_note,"'Tycho Register, 2187: those still breathing.' 1,214 names, in pencil. At the top: 'So they aren't read too late.'"
 day21_directive_title,Directive No. 21 — Continuity Extension
 day21_intro,Continuity Arbitration now runs the Hall. Documents that expired between 22.03 and 01.04: extended until 10.04 inclusive. Breathing quota suspended during the Inquiry. Curfew lifted: the queue ticket is withdrawn.
 day21_slogan,Continuity resumes where it left off.
@@ -2946,16 +2946,16 @@ sc91_sato_arrival,"Colleague! Kiosk inspection. Unofficially, I've come to see y
 sc91_sato_present,‹Tal ka nesu.› My card. Take a good look at the strip. Or don't. That's the test.
 sc91_sato_purpose,"Going home. And checking that windows do better than kiosks. Officially, no."
 sc91_sato_about_mrz,A zero instead of the O. The kiosk let it through three times this morning.
-sc91_sato_exit_deny,"Denied! I'm noting: ""human superior to machine"". They'll love it."
-sc91_sato_exit_approve,"Approved, like the kiosk. I'm noting: ""window compliant"". Is that a compliment?"
+sc91_sato_exit_deny,Denied! I'm noting: 'human superior to machine'. They'll love it.
+sc91_sato_exit_approve,"Approved, like the kiosk. I'm noting: 'window compliant'. Is that a compliment?"
 sc91_sato_fallen_arrival,Hello. I repair the kiosks now. They never say thank you.
 sc91_sato_fallen_present,‹Tal ka nesu.› C-4. They kept my name. Not my notebook.
 sc91_sato_fallen_exit_approve,"Thank you. You, at least, look at people. I'm noting it. In my head."
 sc91_sato_fallen_exit_deny,"Denied, in order? Even the kiosk would have let me through. That, I'm noting."
-sc92_okonkwo_arrival,"Hello, colleague. They replaced me with a kiosk. It says ""next"" better than I did."
+sc92_okonkwo_arrival,"Hello, colleague. They replaced me with a kiosk. It says 'next' better than I did."
 sc92_okonkwo_present,"‹Tal ka nesu.› Retired, C-3. They kept the class. Not the job… as they say."
 sc92_okonkwo_purpose,To see how you're holding up. You're holding up. That's something.
-sc92_okonkwo_advice,"The rule, just enough. Kiosks have no ""just enough"". You do."
+sc92_okonkwo_advice,"The rule, just enough. Kiosks have no 'just enough'. You do."
 sc92_okonkwo_exit_approve,Thank you. I'll go and sit in the Hall. Watch a window that still thinks.
 sc92_okonkwo_exit_deny,"A retiree in order, denied? The kiosk would have done the same. That worries me."
 sc92_okonkwo_arrival_denounced,"Hello. Do you recognise me? We weren't speaking any more, at the end."
@@ -2988,7 +2988,7 @@ sc93_ilan_purpose,"Going home to sleep. I leave on Monday. This time, I'm repair
 sc93_ilan_exit_approve,Thank you. Tonight I'll make dinner. Don't count the portions.
 sc93_ilan_exit_deny,Denied. In order. I'll sleep at the contract workers' hostel. Will you come?
 sc93_note_arrival,Hello. They gave me this for Booth 04. I haven't read it. Hardly at all.
-sc93_note,"""I couldn't find another window. This one, I still recognise. — M."""
+sc93_note,"'I couldn't find another window. This one, I still recognise. — M.'"
 day31_b_directive_title,AIR COUNCIL — 11 APRIL WELCOME
 day31_b_intro,"Friday 11.04.2188, one year after the last shuttle. Quota abolished. No more origin bans. What remains: identity, prohibited implants, Council notices, Council List."
 day31_b_intro_f5c,The Air Charter hangs above every window. The Council asks you to take up yours again for one day.
@@ -3008,7 +3008,7 @@ val_seal_council_air_old,COUNCIL BREATH · OLD MODEL
 wanted_council_reason,"Council notice: responsible for the nights of 2187, wanted."
 revoked_reason_council,Council List
 sc94_beaumont_arrival,"Hello, Booth 04. I'm on a list. I know lists. I've written some."
-sc94_beaumont_present,"‹Tal ka nesu.› Isadora Beaumont. Former Commissioner. The word ""former"" is recent."
+sc94_beaumont_present,‹Tal ka nesu.› Isadora Beaumont. Former Commissioner. The word 'former' is recent.
 sc94_beaumont_purpose,"Going home, Ring E. I hear the air is free there. I'd like to check."
 sc94_beaumont_about_revoked,The Council List. That's fair. We had ours. It was longer.
 sc94_beaumont_about_revoked_reinstated,"Reinstated, for a striker's family. It was announced in public. On purpose."
@@ -3053,8 +3053,8 @@ sc97_lindgren_present,"‹Tal ka nesu.› My card. And the form, if you have tim
 sc97_lindgren_purpose,Filing last year's depositions. Yours is in the first box.
 sc97_lindgren_origin,"Sub-level 3. You can see the pipes there. They weep a little, like the Hall."
 sc97_lindgren_stay,The Albedo report? Two versions. I bound them together. It's more honest.
-sc97_form,"""Form 27-B/6: declaration of memory. Tick what you remember."" A single box."
-sc97_lindgren_exit_approve,"Thank you. I'll file you under B. ""Bygone"", or ""bridge"". We'll see."
+sc97_form,'Form 27-B/6: declaration of memory. Tick what you remember.' A single box.
+sc97_lindgren_exit_approve,"Thank you. I'll file you under B. 'Bygone', or 'bridge'. We'll see."
 sc97_lindgren_exit_deny,Denied. I'll note it on the form. It has a box for that now.
 sc98_okafor_arrival,Hello. I'm standing sponsor. Again. The school kept the benches.
 sc98_okafor_arrival_refused,Hello. You've turned me away before. I keep count: it's my job.
@@ -3112,7 +3112,7 @@ sc102_wren_arrival_drift,‹Oru ka.› See? Windows can be left behind. And foun
 sc102_wren_present,"‹Tal ka nesu.› The bio-scan is old. So am I. You don't run into Meridian, out adrift."
 sc102_wren_purpose,Delivering canisters to the committee. And selling seats. Still not at the same time.
 sc102_wren_about_expired,"Forty days? Adrift, we count in ports of call. That's two. It's young."
-sc102_note,"""Basse-Marée, Castellanos dock, Monday 05:00. Four seats. Free, this time."""
+sc102_note,"'Basse-Marée, Castellanos dock, Monday 05:00. Four seats. Free, this time.'"
 sc102_wren_exit_deny,I thought as much. The only window that turns me away wherever it goes.
 sc102_wren_exit_approve,"Thank you. The card still stands. Four seats, if you insist."
 sc103_mira_arrival,Hello. Is that you behind the glass? On Tycho? Then the world has turned.
@@ -3266,7 +3266,7 @@ sc83_tech_exit_approve,Thanks. Tell Ilan valve 3 still creaks. That'll please th
 sc83_tech_exit_deny,"Another denial? You're starting to know me, though."
 sc83_tech_arrival_demoted,Remember? You denied me entry on the first day. My papers were in order.
 sc83_tech_present_demoted,"‹Tal ka nesu.› Look at the class. C-4. Six more days on assignment, and there you go."
-sc83_tech_purpose_demoted,"Going home. Contract worker now. They said it was ""temporary""."
+sc83_tech_purpose_demoted,Going home. Contract worker now. They said it was 'temporary'.
 sc83_tech_exit_approve_demoted,Thanks. This time you read the card. It says less than before.
 msg_ilan_day16_tech,Ilan smiles at the mention of valve 3.
 end_trace_sc83_tech_demoted,"Someone in order, denied on the first day, came back as a C-4."
@@ -3335,7 +3335,7 @@ sc90_first_purpose_a,Going home. The kiosk sends me to you. It doesn't like me.
 sc90_first_purpose_b,Going home. I hear they don't count the air any more. I wanted to see it close up.
 sc90_first_purpose_c,"Going home, and listening to the depositions at 12:20. I hear yours is first."
 sc90_first_purpose_d,Delivering for the committee. You've changed sides too.
-sc90_first_exit_approve,"Thank you. You said ""next"", last time. Say it again."
+sc90_first_exit_approve,"Thank you. You said 'next', last time. Say it again."
 sc90_first_exit_deny,"A denial, in order? You were surer of yourself a year ago."
 dos_name_premiers,The first ones of 13 March
 dos_name_technicien,The Ring C regular
@@ -3899,15 +3899,15 @@ msg_soute_drawer,A carpenter in the Hold makes drawers for the windows. The bott
 msg_okonkwo_book,"My copy of the regulations, annotated since 2179. It's yours for ten credits, the price of my mug. The margins are worth more than the pages."
 msg_okonkwo_drawer_found,"Ravel found your drawer. Me, I wouldn't have looked for it. He looks for nothing else."
 msg_vh_monitor,"Valcourt-Hsu Logistique offers booths a queue monitor: the Transit-7 manifest, passenger by passenger. Flow, vigilance, Continuity."
-okonkwo_note_1,"""Check the date before the face. Faces lie better."""
-okonkwo_note_2,"""Meridian, not Meridiane. Always."""
-okonkwo_note_3,"""A short permit for a C-4. Count the days."""
-okonkwo_note_4,"""The block first, then the origin."""
-okonkwo_note_5,"""A hidden implant isn't always a weapon."""
-okonkwo_note_6,"""The rule, just enough… as they say."""
+okonkwo_note_1,'Check the date before the face. Faces lie better.'
+okonkwo_note_2,"'Meridian, not Meridiane. Always.'"
+okonkwo_note_3,'A short permit for a C-4. Count the days.'
+okonkwo_note_4,"'The block first, then the origin.'"
+okonkwo_note_5,'A hidden implant isn't always a weapon.'
+okonkwo_note_6,"'The rule, just enough… as they say.'"
 okonkwo_j4_statement,"Listen to what they say, not just how. What they say is one more document."
 okonkwo_j4_statement_pinned,You caught them out of their own mouth. The only paper they write themselves… as they say.
-okonkwo_j4_statement_vague,"""A few days"" isn't a lie. It's someone who doesn't know. Let it go."
+okonkwo_j4_statement_vague,'A few days' isn't a lie. It's someone who doesn't know. Let it go.
 okonkwo_j4_statement_missed,"The Belter, three weeks on a five-day permit. Said it to your face. You didn't ask."
 msg_cons_day08_portique,PH-1 scanner arch: every window now sees under jackets. It is used on grounds. The Consortium sees. The Consortium protects.
 msg_luc_day08_search,The arch sees what people carry. It doesn't see who they carry it for. Look at that too.
@@ -3973,11 +3973,11 @@ sc107_nair_arrival,Hello. Is this where you get in? The broker said: window 04 i
 sc107_nair_present,‹Tal ka nesu.› A contract. Three months' trial. I know how to plant.
 sc107_nair_purpose,"Work, at Ceres-Verte. The greenhouses. Three months, to start with."
 sc107_nair_origin,Earth. Dry zone 9. My mother paid the broker with the house.
-sc107_nair_about_statement,"Kessler-Ashe? No. It says ""greenhouses"" on the brochure. Look."
+sc107_nair_about_statement,Kessler-Ashe? No. It says 'greenhouses' on the brochure. Look.
 sc107_nair_exit_deny,"Then I'll go home. The broker has a contract too. With whom, I wonder."
 sc107_nair_exit_approve,"Thank you. The greenhouses, at last. You'll tell me if they're pretty."
 sc62_tariq_nair,A girl from Zone 9 went back. Same broker as me. You saved her.
-sc108_note,"""She's carrying what's missing down below. Don't look in her satchel. — L."""
+sc108_note,'She's carrying what's missing down below. Don't look in her satchel. — L.'
 sc108_note_label,Note slipped under the permit
 sc108_ilse_arrival,Hello. The queue is long today. So are the coughing fits.
 sc108_ilse_present,‹Tal ka nesu.› Family visit. Three days. My sister's coughing.
@@ -4276,3 +4276,5 @@ faction_tyc_sector_2,Tycho Crater — Kessler-Ashe dormitories
 ui_quoted,"""%s"""
 ui_speaker_quoted,"%s: ""%s"""
 val_no_employer,NO EMPLOYER
+sev_mrz_reader_note,R21 SUSPENDED · READER DOWN
+val_feline,(FELINE)

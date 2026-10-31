@@ -24,7 +24,8 @@ const VALUE_KEY_PREFIX: String = "val_"
 const ORIGIN_SECTOR_PATH: StringName = &"origin_sector"
 ## M15 (lot U) : valeurs de champ texte qui ne sont pas des noms (mentions des
 ## données, en français) → clé d'affichage. La logique compare la donnée brute.
-const DATA_TEXT_KEYS: Dictionary = {"SANS EMPLOYEUR": "val_no_employer"}
+## QA-082 : « (FÉLIN) », prénom du contrat de travail du chat (SC-27).
+const DATA_TEXT_KEYS: Dictionary = {"SANS EMPLOYEUR": "val_no_employer", "(FÉLIN)": "val_feline"}
 ## Traductions : chargées par `Localization.ensure_loaded()` (FR source, EN
 ## M15, `Localization.TRANSLATION_PATHS`) ; locale de repli `fr`
 ## (`internationalization/locale/fallback`).
@@ -32,12 +33,16 @@ const DATA_TEXT_KEYS: Dictionary = {"SANS EMPLOYEUR": "val_no_employer"}
 const RECIPE_GENERATION: int = 20000
 
 ## M15 (retraduction à chaud, `Localization.retranslate_text`) : texte produit
-## → recette `[clé, arguments, repli]` (`[&"upper", recette]` pour la même
-## chaîne en capitales ; `[&"plural", clé, n, repli singulier, repli
+## → recette `[clé, arguments, repli]` (`[&"upper", recette]` /
+## `[&"lower", recette]` pour la même chaîne en capitales / minuscules ; `[&"plural", clé, n, repli singulier, repli
 ## pluriel]` ; `[&"call", Callable]` pour un texte composé par une fonction,
 ## `remember_call`). Deux générations bornées : coût d'une insertion par appel.
 static var _recipes: Dictionary = {}
 static var _old_recipes: Dictionary = {}
+## QA-083 : profondeur courante de `remake` (une recette dont un argument
+## renvoie à elle-même ne boucle jamais).
+static var _remake_depth: int = 0
+const REMAKE_MAX_DEPTH: int = 16
 
 
 ## Enregistre les traductions auprès du `TranslationServer` (idempotent).
@@ -49,6 +54,10 @@ static func ensure_translations() -> void:
 ## Pseudo-localisation (debug) : le repli est pseudo-localisé lui aussi.
 static func t(key: String, fallback: String = "") -> String:
 	var out: String = _translate(key, fallback)
+	# QA-086 : clé absente rendue par un repli déjà produit par `UiText`
+	# (`t(clé_variante, t(clé))`) : la recette du repli est la bonne, gardée.
+	if out == fallback and _recipe_of(fallback) != null and not has(key):
+		return out
 	_remember(out, [key, [], fallback])
 	return out
 
@@ -119,6 +128,10 @@ static func _remember(text: String, recipe: Array) -> void:
 	var upper: String = text.to_upper()
 	if upper != text and not _recipes.has(upper):
 		_recipes[upper] = [&"upper", recipe]
+	# QA-086 : variante en minuscules (motif d'un avis « · refus de … »).
+	var lower: String = text.to_lower()
+	if lower != text and not _recipes.has(lower):
+		_recipes[lower] = [&"lower", recipe]
 
 
 static func _recipe_of(text: String) -> Variant:
@@ -146,9 +159,12 @@ static func has_recipe(text: String) -> bool:
 ## texte n'a pas été produit par `UiText` (nom propre, code, valeur…).
 static func remake(text: String) -> Variant:
 	var recipe: Variant = _recipe_of(text)
-	if recipe == null:
+	if recipe == null or _remake_depth >= REMAKE_MAX_DEPTH:
 		return null
-	return _remake_recipe(recipe)
+	_remake_depth += 1
+	var out: String = _remake_recipe(recipe)
+	_remake_depth -= 1
+	return out
 
 
 ## Mémorise un texte composé par `maker` (rappelé tel quel dans la nouvelle
@@ -164,15 +180,34 @@ static func _remake_recipe(recipe: Array) -> String:
 		return str(maker.call()) if maker.is_valid() else ""
 	if recipe.size() == 2 and recipe[0] is StringName and recipe[0] == &"upper":
 		return _remake_recipe(recipe[1]).to_upper()
+	if recipe.size() == 2 and recipe[0] is StringName and recipe[0] == &"lower":
+		return _remake_recipe(recipe[1]).to_lower()
 	if recipe.size() == 5 and recipe[0] is StringName and recipe[0] == &"plural":
 		return plural(recipe[1], recipe[2], recipe[3], recipe[4])
 	var args: Array = recipe[1]
+	var fallback: String = _remade_fallback(recipe[2])
 	if args.is_empty():
-		return t(recipe[0], recipe[2])
+		return t(recipe[0], fallback)
 	var new_args: Array = []
 	for arg: Variant in args:
 		new_args.append(Localization.retranslate_text(arg) if arg is String else arg)
-	return tf(recipe[0], new_args, recipe[2])
+	return tf(recipe[0], new_args, fallback)
+
+
+## QA-086 : repli lui-même produit par `UiText` (`t(clé_variante, t(clé))` :
+## notes du foyer, didascalies au féminin, objets de fouille…) recomposé dans
+## la langue courante ; sinon le texte restait figé dans l'ancienne langue
+## quand la clé variante n'existe pas. (Pseudo-localisation : repli gardé, il
+## serait pseudo-localisé deux fois.)
+static func _remade_fallback(fallback: String) -> String:
+	if fallback.is_empty() or Localization.is_pseudo():
+		return fallback
+	var own: Variant = _recipe_of(fallback)
+	if own == null or (own is Array and (own as Array).size() == 3 and str((own as Array)[2]) == fallback):
+		# Pas de recette, ou recette « clé absente → ce même repli » : rien à recomposer.
+		return fallback
+	var remade: Variant = remake(fallback)
+	return remade if remade is String and not (remade as String).is_empty() else fallback
 
 
 ## Valeur affichée d'un champ (jamais tronquée, capitales pour les codes).
@@ -210,6 +245,17 @@ static func quoted(text: String) -> String:
 	return tf("ui_quoted", [text], "« %s »")
 
 
+## Comme `quoted`, sauf pour un texte déjà entre guillemets (« … », "…", “…”) :
+## rendu tel quel (choix de soirée déjà cités dans les données : jamais
+## « « Vas-y. » »).
+static func quoted_once(text: String) -> String:
+	var core: String = text.strip_edges()
+	for pair: Array in [["«", "»"], ["\"", "\""], ["“", "”"]]:
+		if core.length() >= 2 and core.begins_with(pair[0]) and core.ends_with(pair[1]):
+			return text
+	return quoted(text)
+
+
 ## M15 (lot U) : « LOCUTEUR : « réplique » » selon la langue (`ui_speaker_quoted`).
 static func speaker_quoted(speaker: String, text: String) -> String:
 	return tf("ui_speaker_quoted", [speaker, text], "%s : « %s »")
@@ -227,6 +273,37 @@ static func document_title(def: DocumentTypeDef) -> String:
 	if def == null:
 		return ""
 	return t(def.title_key, String(def.id).replace("_", " ").to_upper())
+
+
+## QA-081 : nom d'un type de document écrit dans une phrase (« votre carte
+## d'identité », « your ID card », détail « ID card expired: … »).
+## `sentence_start` : majuscule initiale (début de phrase), sinon minuscule.
+static func document_name_in_sentence(def: DocumentTypeDef, sentence_start: bool) -> String:
+	return name_in_sentence(document_title(def), sentence_start)
+
+
+## Casse de phrase qui garde les sigles : chaque mot en minuscules, sauf un mot
+## entièrement en capitales d'au moins deux lettres (« ID », « MRZ ») ;
+## première lettre en capitale seulement si `sentence_start`.
+static func name_in_sentence(text: String, sentence_start: bool) -> String:
+	var words: PackedStringArray = text.split(" ")
+	for i: int in words.size():
+		if not _is_acronym(words[i]):
+			words[i] = words[i].to_lower()
+	var out: String = " ".join(words)
+	if sentence_start and not out.is_empty():
+		out = out.left(1).to_upper() + out.substr(1)
+	return out
+
+
+static func _is_acronym(word: String) -> bool:
+	var letters: int = 0
+	for c: String in word:
+		if c.to_upper() != c.to_lower():
+			if c != c.to_upper():
+				return false
+			letters += 1
+	return letters >= 2
 
 
 ## Nom de l'émetteur (`issuer_<id>`).

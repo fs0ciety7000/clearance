@@ -118,7 +118,7 @@ func test_qa083_retranslate_survives_unbalanced_bracket() -> void:
 	if bad.is_empty() and not overflow:
 		assert_true(true, "textes à crochet isolé rendus tels quels, sans erreur")
 	else:
-		pending("QA-083 : retraduction d'un texte à « [ » isolé : dépassement de pile=%s, %s" % [overflow, ", ".join(bad)])
+		fail_test("QA-083 : retraduction d'un texte à « [ » isolé : dépassement de pile=%s, %s" % [overflow, ", ".join(bad)])
 
 
 ## QA-084 : bascules répétées en plein shift ; après chaque bascule, puis après le
@@ -141,7 +141,7 @@ func test_qa084_documents_follow_language_across_passengers() -> void:
 	if report.is_empty():
 		assert_true(true, "aucun texte dans l'autre langue")
 	else:
-		pending("QA-084 : %d textes revenus à l'ancienne langue, ex. %s" % [report.size(), report[0]])
+		fail_test("QA-084 : %d textes revenus à l'ancienne langue, ex. %s" % [report.size(), report[0]])
 
 
 func _leftovers(where: String) -> PackedStringArray:
@@ -172,7 +172,7 @@ func test_qa081_english_document_names_keep_their_acronym() -> void:
 	if bad.is_empty():
 		assert_true(true)
 	else:
-		pending("QA-081 : sigle « ID » perdu dans les phrases anglaises — %s" % ", ".join(bad))
+		fail_test("QA-081 : sigle « ID » perdu dans les phrases anglaises — %s" % ", ".join(bad))
 
 
 ## QA-082 : les valeurs écrites en dur dans les cas scénarisés restent en français
@@ -185,7 +185,7 @@ func test_qa082_scripted_joke_values_are_translated() -> void:
 	if keys.has("(FÉLIN)"):
 		assert_ne(UiText.t(str(keys["(FÉLIN)"]), "(FÉLIN)"), "(FÉLIN)")
 	else:
-		pending("QA-082 : « (FÉLIN) » (contrat de travail du chat, SC-27) affiché tel quel en anglais")
+		fail_test("QA-082 : « (FÉLIN) » (contrat de travail du chat, SC-27) affiché tel quel en anglais")
 
 
 ## QA-085 : une règle suspendue par un événement de station affiche sa note par
@@ -214,7 +214,7 @@ func test_qa085_rule_notes_of_station_events_have_no_raw_specifier() -> void:
 	if bad.is_empty():
 		assert_true(true, "notes de règle sans spécificateur brut")
 	else:
-		pending("QA-085 : note de règle affichée avec « %%d » brut — %s" % "; ".join(bad))
+		fail_test("QA-085 : note de règle affichée avec « %%d » brut — %s" % "; ".join(bad))
 
 
 ## QA-086 : textes non retraduits à chaud (restent dans l'ancienne langue jusqu'à
@@ -241,7 +241,7 @@ func test_qa086_household_notes_follow_hot_language_switch() -> void:
 	if bad.is_empty():
 		assert_true(true)
 	else:
-		pending("QA-086 : textes figés dans l'ancienne langue après la bascule — %s" % "; ".join(bad))
+		fail_test("QA-086 : textes figés dans l'ancienne langue après la bascule — %s" % "; ".join(bad))
 
 
 ## QA-089 : la démo accepte une sauvegarde au-delà du J5. `SaveService.validate`
@@ -264,7 +264,7 @@ func test_qa089_demo_refuses_a_save_beyond_day_5() -> void:
 	if not verdict.is_empty() and not verdict6.is_empty():
 		assert_true(true, "démo : sauvegardes J6+ refusées")
 	else:
-		pending("QA-089 : la démo accepte une sauvegarde du J19 (« %s ») et du J6 (« %s »)" % [verdict, verdict6])
+		fail_test("QA-089 : la démo accepte une sauvegarde du J19 (« %s ») ou du J6 (« %s »)" % [verdict, verdict6])
 
 
 ## QA-093 : mise à jour 0.14 → 0.15. Un `settings.cfg` écrit par la 0.14 n'a pas
@@ -294,7 +294,7 @@ func test_qa093_upgraded_0_14_settings_keep_french() -> void:
 	elif lang == Localization.LANG_FR:
 		assert_eq(lang, Localization.LANG_FR)
 	else:
-		pending("QA-093 : réglages 0.14 sans langue → « %s » (langue du système) à la mise à jour" % lang)
+		fail_test("QA-093 : réglages 0.14 sans langue → « %s » (langue du système) à la mise à jour" % lang)
 
 
 ## QA-094 : rapport « LA NUIT AU BLOC PÉTREL » — une lettre à valeur (prélèvement
@@ -320,13 +320,13 @@ func test_qa094_night_report_rows_have_no_raw_specifier() -> void:
 	if bad.is_empty():
 		assert_true(true)
 	else:
-		pending("QA-094 : « %%d » brut dans le rapport de la nuit — %s" % "; ".join(bad))
+		fail_test("QA-094 : « %%d » brut dans le rapport de la nuit — %s" % "; ".join(bad))
 
 
-## QA-087 : répliques anglaises affichées entre guillemets droits (`ui_quoted`
-## → "…") qui contiennent elles-mêmes des guillemets droits doubles : « "Thank
-## you. You said "next", last time." » (65 répliques). Attendu (guide de style
-## à compléter) : guillemets simples à l'intérieur (‘next’ / 'next').
+## QA-087 (corrigé) : répliques anglaises affichées entre guillemets droits
+## (`ui_quoted` → "…") qui contenaient elles-mêmes des guillemets droits doubles :
+## « "Thank you. You said "next", last time." » (56 répliques). Règle
+## (LOCALIZATION §4) : guillemets simples à l'intérieur ('next').
 func test_qa087_english_dialogue_has_no_nested_double_quotes() -> void:
 	var en: Dictionary = Localization.csv_messages(Localization.CSV_PATHS["en"])
 	var re: RegEx = RegEx.create_from_string("^(sc|line|bark|react|ans|okonkwo|sato|j31|cue)")
@@ -334,10 +334,8 @@ func test_qa087_english_dialogue_has_no_nested_double_quotes() -> void:
 	for key: String in en:
 		if re.search(key) != null and str(en[key]).contains("\""):
 			nested.append(key)
-	if nested.is_empty():
-		assert_true(true)
-	else:
-		pending("QA-087 : %d répliques à guillemets doubles imbriqués, ex. %s" % [nested.size(), ", ".join(nested.slice(0, 4))])
+	assert_gt(en.size(), 1000, "témoin : en.csv chargé")
+	assert_eq(nested.size(), 0, "QA-087 : %d répliques à guillemets doubles imbriqués, ex. %s" % [nested.size(), ", ".join(nested.slice(0, 4))])
 
 
 ## QA-088 : version non montée pour la 0.15 / 1.0 RC : `config/version` vaut

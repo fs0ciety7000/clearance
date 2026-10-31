@@ -102,10 +102,14 @@ static func rulebook_line(plan: StationEventPlan, p_processed: int) -> String:
 	if not text.contains("%d"):
 		return text
 	var left: int = plan.remaining(p_processed)
+	var out: String
 	if left >= 0:
-		return text.replace("%d", str(left))
-	var cleaned: RegEx = RegEx.create_from_string("\\s*\\(%d[^)]*\\)")
-	return cleaned.sub(text, "", true).replace("%d", "—")
+		out = text.replace("%d", str(left))
+	else:
+		var cleaned: RegEx = RegEx.create_from_string("\\s*\\(%d[^)]*\\)")
+		out = cleaned.sub(text, "", true).replace("%d", "—")
+	# QA-086 : ligne composée gardée avec sa recette (retraduite à chaud).
+	return UiText.remember_call(out, rulebook_line.bind(plan, p_processed))
 
 
 func _rebuild() -> void:

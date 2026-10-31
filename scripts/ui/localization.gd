@@ -73,6 +73,8 @@ const CUSTOM_TEXT_PROPERTIES: Array[StringName] = [&"caption", &"hint", &"locked
 ## Contrat : un nœud qui expose `on_language_changed()` est rappelé après la
 ## retraduction de ses textes (largeurs recalculées, texte recomposé).
 const LANGUAGE_HOOK: StringName = &"on_language_changed"
+## Profondeur maximale de découpe d'un texte composé (QA-083).
+const RETRANSLATE_MAX_DEPTH: int = 12
 
 static var _loaded: bool = false
 static var _pseudo: bool = false
@@ -401,60 +403,84 @@ static func _set_if_changed(node: Object, property: StringName, text: String) ->
 
 ## Texte recomposé dans la langue courante, ou `text` inchangé s'il n'est pas
 ## issu de `UiText` (nom propre, code, valeur générée). Les textes composés
-## sont retraduits pièce par pièce : segments hors balises BBCode, lignes,
-## puis pièces séparées par « · », « — » ou « – ».
+## sont retraduits pièce par pièce : segments hors crochets (balises BBCode
+## gardées telles quelles, didascalies « [en colère] » retraduites à
+## l'intérieur), lignes, puis pièces séparées par « · », « — », « – », « › ».
+## QA-083 : chaque découpe rend des pièces **strictement plus courtes** (un
+## « [ » sans « ] » n'est qu'un caractère : jamais une découpe) et la
+## profondeur est bornée (`RETRANSLATE_MAX_DEPTH`) : aucune récursion sans fin.
 static func retranslate_text(text: String) -> String:
+	return _retranslate(text, 0)
+
+
+static func _retranslate(text: String, depth: int) -> String:
 	if text.is_empty():
 		return text
 	var direct: Variant = UiText.remake(text)
 	if direct is String:
 		return direct
-	if text.contains("["):
-		return _retranslate_bbcode(text)
+	if depth >= RETRANSLATE_MAX_DEPTH:
+		return text
+	if text.contains("[") and text.contains("]"):
+		if _bbcode_regex == null:
+			_bbcode_regex = RegEx.create_from_string("\\[[^\\[\\]]*\\]")
+		var matches: Array[RegExMatch] = _bbcode_regex.search_all(text)
+		if not matches.is_empty():
+			return _retranslate_bracketed(text, matches, depth + 1)
 	if text.contains("\n"):
-		return _retranslate_joined(text, "\n")
+		return _retranslate_joined(text, "\n", depth + 1)
 	for sep: String in [" · ", " — ", " – ", " › "]:
 		if text.contains(sep):
-			return _retranslate_joined(text, sep)
+			return _retranslate_joined(text, sep, depth + 1)
 	return text
 
 
-static func _retranslate_joined(text: String, sep: String) -> String:
+static func _retranslate_joined(text: String, sep: String, depth: int) -> String:
 	var parts: PackedStringArray = text.split(sep)
 	var changed: bool = false
 	for i: int in parts.size():
-		var piece: String = retranslate_text(parts[i])
+		var piece: String = _retranslate(parts[i], depth)
 		if piece != parts[i]:
 			parts[i] = piece
 			changed = true
 	return sep.join(parts) if changed else text
 
 
-static func _retranslate_bbcode(text: String) -> String:
-	if _bbcode_regex == null:
-		_bbcode_regex = RegEx.create_from_string("\\[[^\\[\\]]*\\]")
+## Texte à crochets : les balises BBCode (`[b]`, `[color=…]`) sont gardées ;
+## une didascalie (« [en colère] », « [serre son sac] ») est du texte,
+## retraduite entre ses crochets (QA-086). Chaque segment est plus court que
+## `text` (au moins deux crochets en moins).
+static func _retranslate_bracketed(text: String, matches: Array[RegExMatch], depth: int) -> String:
 	var out: String = ""
 	var last: int = 0
 	var changed: bool = false
-	for m: RegExMatch in _bbcode_regex.search_all(text):
+	for m: RegExMatch in matches:
 		var run: String = text.substr(last, m.get_start() - last)
-		var new_run: String = _retranslate_run(run)
+		var new_run: String = _retranslate_run(run, depth)
 		changed = changed or new_run != run
-		out += new_run + m.get_string()
+		out += new_run
+		var token: String = m.get_string()
+		var inner: String = token.substr(1, token.length() - 2)
+		if _is_bbcode_tag(inner):
+			out += token
+		else:
+			var new_inner: String = _retranslate_run(inner, depth)
+			changed = changed or new_inner != inner
+			out += "[" + new_inner + "]"
 		last = m.get_end()
 	var tail: String = text.substr(last)
-	var new_tail: String = _retranslate_run(tail)
+	var new_tail: String = _retranslate_run(tail, depth)
 	changed = changed or new_tail != tail
 	out += new_tail
 	return out if changed else text
 
 
 ## Segment de texte entre deux balises : espaces de bord conservés.
-static func _retranslate_run(run: String) -> String:
+static func _retranslate_run(run: String, depth: int) -> String:
 	var core: String = run.strip_edges()
 	if core.is_empty():
 		return run
-	var new_core: String = retranslate_text(core)
+	var new_core: String = _retranslate(core, depth)
 	if new_core == core:
 		return run
 	var start: int = run.find(core)

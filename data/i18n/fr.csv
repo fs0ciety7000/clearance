@@ -4276,3 +4276,5 @@ faction_tyc_sector_2,Cratère Tycho — dortoirs Kessler-Ashe
 ui_quoted,« %s »
 ui_speaker_quoted,%s : « %s »
 val_no_employer,SANS EMPLOYEUR
+sev_mrz_reader_note,R21 SUSPENDUE · LECTEUR HS
+val_feline,(FÉLIN)

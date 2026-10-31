@@ -701,7 +701,8 @@ static func _apply_events(report: EveningReport, events: Array[EveningEvent], ch
 			EveningEventDef.Kind.LETTER:
 				report.event_texts.append(event.text_key)
 				report.event_texts.append_array(event.extra_keys)
-				report.add_event(event.text_key, EveningReport.Tone.INFO)
+				# QA-094 : la lettre garde ses valeurs (prélèvements des J11, J25).
+				report.add_event(event.text_key, EveningReport.Tone.INFO, &"", event.text_args)
 				for key: String in event.extra_keys:
 					report.add_event(key, EveningReport.Tone.INFO)
 				if event.def.household != &"":

@@ -40,8 +40,10 @@ var income_lines: Array[ExpenseLine] = []
 var upgrades_bought: Array[StringName] = []
 
 
-func add_event(key: String, tone: Tone, member: StringName = &"") -> void:
-	events.append({"key": key, "member": member, "tone": tone})
+## `args` (QA-094) : valeurs du texte (`EveningEvent.text_args` d'une lettre à
+## valeur : prélèvements des J11 et J25), substituées dans l'ordre à l'affichage.
+func add_event(key: String, tone: Tone, member: StringName = &"", args: Array = []) -> void:
+	events.append({"key": key, "member": member, "tone": tone, "args": args.duplicate()})
 
 
 func has_event(key: String, member: StringName = &"") -> bool:
