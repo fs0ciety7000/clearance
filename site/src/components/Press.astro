@@ -7,7 +7,7 @@ import { t, type Lang } from '../lib/i18n';
 interface Props { lang: Lang }
 const all = t(Astro.props.lang);
 const d = all.press;
-const pressKeys = ['m9_booth_j1', 'm6_day3_autoplay', 'm7_envelope', 'm8_symbol_report', 'm7_implants', 'm9_booth_j1_deck'];
+const pressKeys = ['m9_booth_j1', 'm13_journal', 'm13_search', 'm12_garde_shift', 'm7_envelope', 'm8_symbol_report', 'm14_plate_f9_1', 'm9_booth_j1_deck'];
 const pngs = await Promise.all(pressKeys.map((k) => getImage({ src: shot(k), format: 'png', width: shot(k).width })));
 const files: Record<string, string> = { 'logo-svg': '/press/clearance-icon.svg', 'logo-png': logoPng };
 const names: Record<string, string> = { 'logo-svg': 'clearance-icon.svg', 'logo-png': 'clearance-icon-1024.png' };

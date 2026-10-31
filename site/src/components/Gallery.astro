@@ -6,7 +6,8 @@ import { t, type Lang } from '../lib/i18n';
 interface Props { lang: Lang }
 const d = t(Astro.props.lang).gallery;
 const keys = Object.keys(d.items);
-const spans = ['s7', 's5', 's4', 's4', 's4', 's5', 's7', 's4', 's4', 's4'];
+// 12 vignettes en rangées de 12 colonnes : 7/5 · 4/4/4 · 5/7 · 6/6 · 4/4/4
+const spans = ['s7', 's5', 's4', 's4', 's4', 's5', 's7', 's6', 's6', 's4', 's4', 's4'];
 const full = await Promise.all(keys.map((k) => getImage({ src: shot(k), format: 'webp', width: Math.min(1920, shot(k).width), quality: 82 })));
 ---
 <section class="section gal" id="galerie" aria-labelledby="gal-title">

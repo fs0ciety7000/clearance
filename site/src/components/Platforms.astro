@@ -3,12 +3,15 @@ import { Picture } from 'astro:assets';
 import Icon from './Icon.astro';
 import { shot } from '../lib/shots';
 import { t, type Lang } from '../lib/i18n';
-import { DOWNLOAD_URL } from '../config';
+import { DOWNLOAD_URL, RELEASED, VERSION } from '../config';
 interface Props { lang: Lang }
 const d = t(Astro.props.lang).platforms;
+const r = d.release;
 const icon = { windows: 'windows', macos: 'apple', linux: 'linux', deck: 'deck' } as const;
+// Liste complète des versions : la page Releases sans « /latest ».
+const allReleases = DOWNLOAD_URL.replace(/\/latest\/?$/, '');
 ---
-<section class="section plat gridbg" aria-labelledby="plat-title">
+<section class="section plat gridbg" id="telecharger" aria-labelledby="plat-title">
   <div class="wrap">
     <header class="section-head">
       <p class="kicker">{d.label}</p>
@@ -19,14 +22,28 @@ const icon = { windows: 'windows', macos: 'apple', linux: 'linux', deck: 'deck' 
         <li data-reveal><Icon name={icon[p.id as keyof typeof icon]} size={30} /><b>{p.name}</b><span>{p.note}</span></li>
       ))}
     </ul>
+
+    <div class="rel holo chamfer chamfer-l" data-reveal>
+      <div class="rel-v">
+        <span class="label">{r.version}</span>
+        <b>{VERSION}</b>
+        <span class={RELEASED ? 'badge ok' : 'badge soon'}>{RELEASED ? r.available : r.upcoming}</span>
+      </div>
+      <p class="rel-t">{RELEASED ? r.availableText : r.upcomingText}</p>
+      <div class="rel-a">
+        <a class="btn btn-primary" href={DOWNLOAD_URL} rel="noopener"><Icon name="download" size={18} />{r.cta}</a>
+        {allReleases !== DOWNLOAD_URL && <a class="more mono" href={allReleases} rel="noopener">{r.all}<Icon name="ext" size={14} /></a>}
+      </div>
+    </div>
+
     <div class="split">
       <div class="left" data-reveal style="--y:40px">
-      <div class="deck frame">
-        <Picture fallbackFormat="webp" src={shot('m9_booth_j1_deck')} alt={d.deckAlt} formats={['avif', 'webp']} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 50vw" loading="lazy" decoding="async" />
-      </div>
-          <ul class="os">
-            {d.notes.map((n) => <li><Icon name="tri" size={16} /><span><b>{n.os}</b> — {n.text}</span></li>)}
-          </ul>
+        <div class="deck frame">
+          <Picture fallbackFormat="webp" src={shot('m9_booth_j1_deck')} alt={d.deckAlt} formats={['avif', 'webp']} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 50vw" loading="lazy" decoding="async" />
+        </div>
+        <ul class="os">
+          {d.notes.map((n) => <li><Icon name="tri" size={16} /><span><b>{n.os}</b> — {n.text}</span></li>)}
+        </ul>
       </div>
       <div class="specs" data-reveal style="--d:.1s">
         <h3>{d.specsTitle}</h3>
@@ -34,21 +51,44 @@ const icon = { windows: 'windows', macos: 'apple', linux: 'linux', deck: 'deck' 
           {d.specs.map(([k, v]) => <div><dt class="label">{k}</dt><dd>{v}</dd></div>)}
         </dl>
         <p class="note">{d.specsNote}</p>
-        <div class="dl">
-          <a class="btn btn-primary" href={DOWNLOAD_URL} rel="noopener"><Icon name="download" size={18} />{d.download}</a>
-          <span class="label">{d.downloadNote}</span>
-        </div>
       </div>
+    </div>
+
+    <div class="log" data-reveal>
+      <h3>{d.logTitle}</h3>
+      <ol>
+        {d.log.map((l, i) => (
+          <li class={i === 0 ? 'next' : ''}>
+            <span class="v mono">{l.v}</span>
+            <b>{l.n}</b>
+            <span class="x">{l.x}</span>
+            {i === 0 && !RELEASED && <span class="badge soon">{r.upcoming}</span>}
+          </li>
+        ))}
+      </ol>
     </div>
   </div>
 </section>
 <style>
   .plat{border-top:1px solid var(--line)}
-  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:clamp(48px,6vw,80px)}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
   .tiles li{display:grid;gap:6px;padding:24px;background:var(--panel);border:1px solid var(--line)}
   .tiles :global(svg){color:var(--cyan);margin-bottom:18px}
   .tiles b{font-family:var(--f-display);font-weight:700;font-size:24px;text-transform:uppercase}
   .tiles span{font-size:14px;color:var(--tx2)}
+
+  .rel{display:grid;grid-template-columns:auto 1fr auto;gap:20px 40px;align-items:center;padding:28px clamp(20px,3vw,36px);margin-bottom:clamp(56px,7vw,96px)}
+  .rel-v{display:grid;gap:4px;justify-items:start}
+  .rel-v b{font-family:var(--f-display);font-weight:700;font-size:44px;line-height:1}
+  .rel-v .label{font-size:11px}
+  .badge{display:inline-block;font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;padding:4px 8px;border:1px solid currentColor}
+  .badge.soon{color:var(--amber);background:var(--amber-12)}
+  .badge.ok{color:var(--green);background:var(--green-12)}
+  .rel-t{color:var(--tx2);font-size:15.5px;line-height:1.55;max-width:40rem}
+  .rel-a{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:flex-end}
+  .more{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx2)}
+  .more:hover{color:var(--cyan)}
+
   .split{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(32px,5vw,80px);align-items:start}
   .deck{border:1px solid var(--cyan-40);background:var(--panel)}
   .deck :global(img){width:100%}
@@ -56,12 +96,28 @@ const icon = { windows: 'windows', macos: 'apple', linux: 'linux', deck: 'deck' 
   dl>div{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:12px 0;border-top:1px solid var(--line)}
   dt{font-size:11px;padding-top:3px}
   dd{font-size:15px;line-height:1.5}
-  .note{font-size:13.5px;color:var(--tx2);margin:16px 0 20px;line-height:1.55}
+  .note{font-size:13.5px;color:var(--tx2);margin:16px 0 0;line-height:1.55}
   .os{display:grid;gap:10px;margin-top:28px}
   .os li{display:flex;gap:10px;font-size:14px;color:var(--tx2);line-height:1.5}
   .os :global(svg){color:var(--amber);flex:none;margin-top:2px}
   .os b{color:var(--tx);font-weight:600}
-  .dl{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center}
-  .dl .label{font-size:11px}
-  @media (max-width:900px){.tiles{grid-template-columns:1fr 1fr}.split{grid-template-columns:1fr}dl>div{grid-template-columns:1fr;gap:4px}}
+
+  .log{margin-top:clamp(56px,7vw,96px)}
+  .log ol{display:grid}
+  .log li{display:grid;grid-template-columns:90px 160px 1fr auto;gap:8px 24px;align-items:baseline;padding:14px 0;border-top:1px solid var(--line)}
+  .log li:last-child{border-bottom:1px solid var(--line)}
+  .log .v{font-size:13px;color:var(--cyan)}
+  .log li.next .v{color:var(--amber)}
+  .log b{font-family:var(--f-display);font-weight:600;font-size:18px;text-transform:uppercase}
+  .log .x{color:var(--tx2);font-size:15px;line-height:1.5}
+  @media (max-width:900px){
+    .tiles{grid-template-columns:1fr 1fr}
+    .rel{grid-template-columns:1fr}
+    .rel-a{justify-content:flex-start}
+    .split{grid-template-columns:1fr}
+    dl>div{grid-template-columns:1fr;gap:4px}
+    .log li{grid-template-columns:72px 1fr}
+    .log .x{grid-column:1 / -1}
+    .log .badge{grid-column:1 / -1;justify-self:start}
+  }
 </style>

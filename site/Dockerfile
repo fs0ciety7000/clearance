@@ -5,8 +5,19 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
 ARG SITE_URL=https://clearance.cardormedia.com
-ARG PUBLIC_DOWNLOAD_URL=https://github.com/fs0ciety7000/clearance/releases
-ENV SITE_URL=$SITE_URL PUBLIC_DOWNLOAD_URL=$PUBLIC_DOWNLOAD_URL ASTRO_TELEMETRY_DISABLED=1
+ARG PUBLIC_DOWNLOAD_URL=https://github.com/fs0ciety7000/clearance/releases/latest
+ARG PUBLIC_VERSION=0.15.0
+ARG PUBLIC_RELEASED=0
+ARG PUBLIC_WEB_DEMO=0
+ARG PUBLIC_WEB_DEMO_URL=/play/
+# Facultatif : archive .zip de l'export Web (index.html à la racine), dépliée dans public/play/ avant le build.
+ARG WEB_DEMO_ZIP_URL=
+ENV SITE_URL=$SITE_URL PUBLIC_DOWNLOAD_URL=$PUBLIC_DOWNLOAD_URL PUBLIC_VERSION=$PUBLIC_VERSION \
+    PUBLIC_RELEASED=$PUBLIC_RELEASED PUBLIC_WEB_DEMO=$PUBLIC_WEB_DEMO PUBLIC_WEB_DEMO_URL=$PUBLIC_WEB_DEMO_URL \
+    ASTRO_TELEMETRY_DISABLED=1
+RUN if [ -n "$WEB_DEMO_ZIP_URL" ]; then \
+      mkdir -p public/play && wget -qO /tmp/web.zip "$WEB_DEMO_ZIP_URL" && unzip -qo /tmp/web.zip -d public/play && rm /tmp/web.zip; \
+    fi
 RUN npm run build
 
 FROM nginx:1.29-alpine

@@ -1,0 +1,140 @@
+---
+import { Picture } from 'astro:assets';
+import { shot } from '../lib/shots';
+import { t, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const d = t(Astro.props.lang).systems;
+const pic = { formats: ['avif', 'webp'] as ('avif' | 'webp')[], loading: 'lazy' as const, decoding: 'async' as const, fallbackFormat: 'webp' as const };
+// Cadrage de chaque capture (point focal + zoom) : on montre le détail utile, pas l'écran entier.
+const focus: Record<string, string> = {
+  m13_journal: '--fx:0%;--fy:24%;--z:1.7',
+  m13_search: '--fx:96%;--fy:24%;--z:1.7',
+  m13_shop: '--fx:4%;--fy:62%;--z:1.9',
+  m12_station_event: '--fx:46%;--fy:8%;--z:1.6',
+  m14_plate_f9_1: '--fx:50%;--fy:50%;--z:1',
+  m14_hall_act1_strip: '--fx:50%;--fy:50%;--z:1',
+  m14_ui_dossier_people: '--fx:16%;--fy:40%;--z:1.55',
+};
+const [plate, ...amb] = d.ambience;
+---
+<section class="section sys gridbg" id="systemes" aria-labelledby="sys-title">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="kicker">{d.label}</p>
+      <h2 class="h2" id="sys-title" data-reveal>{d.title}</h2>
+      <p class="lede" data-reveal style="--d:.1s">{d.intro}</p>
+    </header>
+
+    <div class="booth" data-stagger="90">
+      {d.booth.map((b) => (
+        <article class="card" data-reveal>
+          <div class="shot" style={focus[b.key]}>
+            <Picture src={shot(b.key)} alt={b.alt} widths={[640, 960, 1440]} sizes="(max-width: 900px) 92vw, 46vw" {...pic} />
+          </div>
+          <div class="body">
+            <p class="k mono">{b.kicker}</p>
+            <h3>{b.title}</h3>
+            <p class="t">{b.text}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+
+    <h3 class="sub" data-reveal>{d.ambienceTitle}</h3>
+    <article class="plate frame" data-reveal>
+      <Picture src={shot(plate.key)} alt={plate.alt} widths={[800, 1280, 1920]} sizes="(max-width: 1440px) 94vw, 1360px" {...pic} />
+      <div class="plate-txt">
+        <p class="k mono">{plate.kicker}</p>
+        <h4>{plate.title}</h4>
+        <p class="t">{plate.text}</p>
+      </div>
+    </article>
+    <div class="amb" data-stagger="100">
+      {amb.map((a) => (
+        <article class="card" data-reveal>
+          <div class="shot wide" style={focus[a.key]}>
+            <Picture src={shot(a.key)} alt={a.alt} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 32vw" {...pic} />
+          </div>
+          <div class="body">
+            <p class="k mono">{a.kicker}</p>
+            <h4>{a.title}</h4>
+            <p class="t">{a.text}</p>
+          </div>
+        </article>
+      ))}
+      <article class="card music" data-reveal>
+        <div class="eq" aria-hidden="true">
+          {d.music.layers.map((l, i) => (
+            <div class="lay" style={`--i:${i}`}><span class="mono">L{i}</span><b></b><em>{l}</em></div>
+          ))}
+        </div>
+        <div class="body">
+          <p class="k mono">{d.music.kicker}</p>
+          <h4>{d.music.title}</h4>
+          <p class="t">{d.music.text}</p>
+        </div>
+      </article>
+    </div>
+
+    <div class="comfort">
+      <div class="c-shot frame" data-reveal>
+        <Picture src={shot('m11_a11y_options')} alt={d.comfortAlt} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 44vw" {...pic} />
+      </div>
+      <div data-reveal style="--d:.1s">
+        <h3 class="sub tight">{d.comfortTitle}</h3>
+        <dl class="clist">
+          {d.comfort.map((c) => <div><dt>{c.t}</dt><dd>{c.x}</dd></div>)}
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+  .sys{border-top:1px solid var(--line)}
+  .booth{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .card{position:relative;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);transition:border-color var(--dur-base)}
+  .card:hover{border-color:var(--cyan-40)}
+  .shot{--fx:50%;--fy:50%;--z:1;aspect-ratio:16/9;overflow:hidden;border-bottom:1px solid var(--line);background:var(--void)}
+  .shot.wide{aspect-ratio:16/8}
+  .shot :global(picture){display:block;width:100%;height:100%}
+  .shot :global(img){width:100%;height:100%;object-fit:cover;object-position:var(--fx) var(--fy);transform-origin:var(--fx) var(--fy);transform:scale(var(--z));transition:transform .7s var(--ease)}
+  .card:hover .shot :global(img){transform:scale(calc(var(--z) * 1.03))}
+  .body{padding:clamp(20px,2.2vw,30px)}
+  .k{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px}
+  h3:not(.sub),h4{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,2vw,28px);line-height:1.05;text-transform:uppercase;margin-bottom:10px}
+  .t{color:var(--tx2);font-size:15.5px;line-height:1.6;max-width:38rem}
+  .sub{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,3.4vw,46px);line-height:1;text-transform:uppercase;margin:clamp(72px,9vw,128px) 0 28px}
+  .sub.tight{margin:0 0 24px}
+
+  .plate{position:relative;border:1px solid var(--cyan-40);background:var(--void);overflow:visible}
+  .plate :global(img){width:100%;aspect-ratio:21/9;object-fit:cover;object-position:50% 55%}
+  .plate-txt{position:absolute;left:0;bottom:0;max-width:34rem;padding:clamp(20px,3vw,40px);background:linear-gradient(to top right,#07080CF0 30%,#07080C00)}
+  .plate-txt .t{color:var(--tx)}
+  .amb{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+
+  .music .eq{display:grid;gap:10px;padding:22px 22px 18px;aspect-ratio:16/8;align-content:center;border-bottom:1px solid var(--line);background:linear-gradient(var(--cyan-08),var(--cyan-08)),var(--void)}
+  .lay{display:grid;grid-template-columns:28px 1fr 96px;align-items:center;gap:12px;font-size:11px;color:var(--tx2)}
+  .lay b{height:6px;background:var(--line);position:relative;overflow:hidden}
+  .lay b::after{content:"";position:absolute;inset:0;background:var(--cyan);transform-origin:left;transform:scaleX(calc(.92 - var(--i) * .16));animation:lvl calc(2.4s + var(--i) * .7s) var(--ease) infinite alternate}
+  .lay em{font-style:normal;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+  .lay:nth-child(4) b::after{background:var(--magenta)}
+  @keyframes lvl{from{transform:scaleX(calc(.25 + var(--i) * .02))}to{transform:scaleX(calc(.95 - var(--i) * .1))}}
+
+  .comfort{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(32px,5vw,80px);align-items:center;margin-top:clamp(72px,9vw,128px)}
+  .c-shot{border:1px solid var(--cyan-40);overflow:hidden;background:var(--void)}
+  .c-shot :global(img){width:100%;aspect-ratio:4/3;object-fit:cover;object-position:50% 30%;transform:scale(1.32);transform-origin:50% 26%}
+  .clist{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}
+  .clist>div{padding:16px 0;border-top:1px solid var(--line)}
+  .clist dt{font-family:var(--f-mono);font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--tx);margin-bottom:6px}
+  .clist dd{color:var(--tx2);font-size:15px;line-height:1.55}
+
+  @media (max-width:1100px){.amb{grid-template-columns:1fr 1fr}}
+  @media (max-width:900px){
+    .booth,.amb,.comfort{grid-template-columns:1fr}
+    .plate :global(img){aspect-ratio:16/10}
+    .plate-txt{position:static;max-width:none;background:var(--panel);border-top:1px solid var(--line)}
+    .plate-txt .t{color:var(--tx2)}
+  }
+  @media (max-width:560px){.clist{grid-template-columns:1fr}.lay{grid-template-columns:24px 1fr 84px}}
+  @media (prefers-reduced-motion:reduce){.lay b::after{animation:none}}
+</style>

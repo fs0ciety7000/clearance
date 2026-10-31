@@ -1,0 +1,111 @@
+---
+import { t, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const d = t(Astro.props.lang).campaign;
+// Frise des 30 jours + J31 : un segment par jour, regroupés par acte.
+const acts = [
+  { from: 1, to: 10, tone: 'cyan' },
+  { from: 11, to: 20, tone: 'yellow' },
+  { from: 21, to: 30, tone: 'amber' },
+];
+---
+<section class="section camp" id="campagne" aria-labelledby="camp-title">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="kicker">{d.label}</p>
+      <h2 class="h2" id="camp-title" data-reveal>{d.title}</h2>
+      <p class="lede" data-reveal style="--d:.1s">{d.intro}</p>
+    </header>
+
+    <dl class="stats" data-stagger="90">
+      {d.stats.map((s) => (
+        <div data-reveal><dt class="label">{s.l}</dt><dd>{s.n}</dd></div>
+      ))}
+    </dl>
+
+    <div class="rail" aria-hidden="true" data-rail>
+      {acts.map((a) => (
+        <div class={`seg-g ${a.tone}`}>
+          {Array.from({ length: a.to - a.from + 1 }, (_, i) => <i style={`--k:${a.from + i}`}></i>)}
+        </div>
+      ))}
+      <div class="seg-g epi"><i style="--k:31"></i></div>
+    </div>
+
+    <ol class="acts">
+      {d.acts.map((a, i) => (
+        <li class={`act ${acts[i].tone}`} data-reveal style={`--d:${i * 100}ms`}>
+          <p class="meta mono"><span>{a.tag}</span><span>{a.days}</span></p>
+          <h3>{a.title}</h3>
+          <p class="t">{a.text}</p>
+        </li>
+      ))}
+      <li class="act epi" data-reveal style="--d:300ms">
+        <p class="meta mono"><span>{d.epilogue.tag}</span><span>{d.epilogue.days}</span></p>
+        <h3>{d.epilogue.title}</h3>
+        <p class="t">{d.epilogue.text}</p>
+      </li>
+    </ol>
+
+    <div class="modes">
+      <h3 class="label mt" data-reveal>{d.modesTitle}</h3>
+      <div class="mgrid" data-stagger="110">
+        {d.modes.map((m, i) => (
+          <article class="mode" data-reveal>
+            <span class="n mono">0{i + 1}</span>
+            <h4>{m.title}</h4>
+            <p>{m.text}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+  .camp{border-top:1px solid var(--line)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .stats>div{display:flex;flex-direction:column-reverse;gap:8px;padding:clamp(20px,2.4vw,32px) clamp(16px,2vw,28px)}
+  .stats>div+div{border-left:1px solid var(--line)}
+  .stats dd{font-family:var(--f-display);font-weight:700;font-size:clamp(56px,8vw,120px);line-height:.85;letter-spacing:-.02em;color:var(--tx)}
+  .stats dt{font-size:11px}
+
+  .rail{display:flex;gap:10px;margin:clamp(40px,5vw,64px) 0 20px}
+  .seg-g{display:flex;gap:3px;flex:10}
+  .seg-g.epi{flex:1.4}
+  .seg-g i{flex:1;height:10px;background:var(--tone);opacity:.85;transform-origin:left}
+  .seg-g.cyan{--tone:var(--cyan)} .seg-g.yellow{--tone:var(--yellow)} .seg-g.amber{--tone:var(--amber)}
+  .seg-g.epi i{background:none;border:1px dashed var(--green)}
+  .js .rail i{transform:scaleX(0);transition:transform .35s var(--ease) calc(var(--k) * 28ms)}
+  .js .rail.is-in i{transform:none}
+
+  .acts{display:grid;grid-template-columns:repeat(3,1fr) .9fr;gap:12px}
+  .act{--tone:var(--cyan);position:relative;padding:22px 22px 26px;background:var(--panel);border:1px solid var(--line)}
+  .act::before{content:"";position:absolute;left:-1px;top:-1px;width:48px;height:3px;background:var(--tone)}
+  .act.yellow{--tone:var(--yellow)} .act.amber{--tone:var(--amber)}
+  .act.epi{--tone:var(--green);background:transparent;border-style:dashed}
+  .meta{display:flex;justify-content:space-between;gap:12px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tone);margin-bottom:18px}
+  .meta span+span{color:var(--tx2)}
+  .act h3{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,2.2vw,30px);line-height:1;text-transform:uppercase;margin-bottom:12px}
+  .act .t{color:var(--tx2);font-size:15px;line-height:1.6}
+
+  .modes{margin-top:clamp(56px,7vw,96px)}
+  .mt{margin-bottom:20px;font-size:12px}
+  .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px);border-top:1px solid var(--line);padding-top:28px}
+  .mode{display:grid;grid-template-columns:auto 1fr;gap:6px 18px}
+  .mode .n{grid-row:span 2;font-size:12px;color:var(--cyan);padding-top:8px}
+  .mode h4{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,2.6vw,36px);text-transform:uppercase;line-height:1}
+  .mode p{color:var(--tx2);font-size:16px;line-height:1.6;max-width:34rem}
+  @media (max-width:1100px){.acts{grid-template-columns:1fr 1fr}}
+  @media (max-width:700px){
+    .stats{grid-template-columns:1fr 1fr}
+    .stats>div:nth-child(3){border-left:0}
+    .stats>div:nth-child(n+3){border-top:1px solid var(--line)}
+    .acts,.mgrid{grid-template-columns:1fr}
+    .rail{gap:6px}.seg-g{gap:2px}
+  }
+  @media (prefers-reduced-motion:reduce){.js .rail i{transform:none;transition:none}}
+</style>
+<script>
+  const rail = document.querySelector('[data-rail]');
+  if (rail) new IntersectionObserver(([e], o) => { if (e.isIntersecting) { rail.classList.add('is-in'); o.disconnect(); } }, { threshold: 0.4 }).observe(rail);
+</script>

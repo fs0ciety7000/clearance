@@ -1,0 +1,80 @@
+---
+import { Picture } from 'astro:assets';
+import Icon from './Icon.astro';
+import { shot } from '../lib/shots';
+import { t, type Lang } from '../lib/i18n';
+import { DOWNLOAD_URL, WEB_DEMO, WEB_DEMO_URL } from '../config';
+interface Props { lang: Lang }
+const d = t(Astro.props.lang).demo;
+---
+<section class="section demo" id="demo" aria-labelledby="demo-title">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="kicker">{d.label}</p>
+      <h2 class="h2" id="demo-title" data-reveal>{d.title}</h2>
+      <p class="lede" data-reveal style="--d:.1s">{d.intro}</p>
+    </header>
+
+    <div class="cols">
+      <ol class="days" data-stagger="80">
+        {d.days.map((x) => (
+          <li data-reveal>
+            <span class="dn mono">{x.d}</span>
+            <div><h3>{x.t}</h3><p>{x.x}</p></div>
+          </li>
+        ))}
+      </ol>
+
+      <div class="side" data-reveal style="--d:.12s">
+        <div class="card holo chamfer chamfer-l">
+          <ul class="facts">
+            {d.facts.map((f) => <li class="mono">{f}</li>)}
+          </ul>
+          <a class="btn btn-primary" href={DOWNLOAD_URL} rel="noopener"><Icon name="download" size={18} />{d.cta}</a>
+        </div>
+
+        {WEB_DEMO && (
+          <div class="web" id="jouer">
+            <a class="web-shot frame" href={WEB_DEMO_URL} aria-label={`${d.web.cta} — ${d.web.title}`}>
+              <Picture src={shot('m9_booth_j1')} alt={d.web.alt} formats={['avif', 'webp']} fallbackFormat="webp" widths={[480, 800, 1200]} sizes="(max-width: 900px) 92vw, 40vw" loading="lazy" decoding="async" />
+              <span class="play" aria-hidden="true"><Icon name="play" size={30} /></span>
+            </a>
+            <p class="k mono">{d.web.kicker}</p>
+            <h3>{d.web.title}</h3>
+            <p class="t">{d.web.text}</p>
+            <a class="btn btn-secondary" href={WEB_DEMO_URL}><Icon name="play" size={18} />{d.web.cta}</a>
+            <p class="label note">{d.web.note}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+  .demo{border-top:1px solid var(--line);background:radial-gradient(800px 380px at 85% 0%,#00E5FF0D,transparent 70%),var(--void)}
+  .cols{display:grid;grid-template-columns:1.25fr 1fr;gap:clamp(32px,6vw,96px);align-items:start}
+  .days{display:grid}
+  .days li{display:grid;grid-template-columns:72px 1fr;gap:20px;padding:22px 0;border-top:1px solid var(--line)}
+  .days li:last-child{border-bottom:1px solid var(--line)}
+  .dn{font-size:13px;letter-spacing:.14em;color:var(--yellow);padding-top:6px}
+  .days h3{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,2.2vw,30px);text-transform:uppercase;line-height:1.05;margin-bottom:6px}
+  .days p{color:var(--tx2);font-size:15.5px;line-height:1.55}
+  .side{display:grid;gap:24px;position:sticky;top:calc(var(--nav-h) + 24px)}
+  .card{padding:28px;display:grid;gap:24px}
+  .facts{display:grid;gap:10px}
+  .facts li{display:flex;align-items:center;gap:12px;font-size:13px;letter-spacing:.08em;color:var(--tx)}
+  .facts li::before{content:"";width:7px;height:7px;background:var(--cyan);transform:rotate(45deg);flex:none}
+  .card .btn{width:100%}
+  .web{display:grid;gap:12px;padding:24px;border:1px solid var(--line);background:var(--panel)}
+  .web-shot{display:block;position:relative;border:1px solid var(--cyan-40);margin-bottom:8px}
+  .web-shot :global(img){width:100%;aspect-ratio:16/9;object-fit:cover;object-position:62% 18%;filter:brightness(.7)}
+  .play{position:absolute;inset:0;margin:auto;width:72px;height:72px;display:grid;place-items:center;background:var(--yellow);color:var(--void);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);transition:transform var(--dur-base) var(--ease)}
+  .web-shot:hover .play,.web-shot:focus-visible .play{transform:scale(1.08)}
+  .web-shot :global(svg){fill:currentColor}
+  .k{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan)}
+  .web h3{font-family:var(--f-display);font-weight:700;font-size:26px;text-transform:uppercase;line-height:1}
+  .t{color:var(--tx2);font-size:15px;line-height:1.55}
+  .web .btn{justify-self:start}
+  .note{font-size:11px}
+  @media (max-width:900px){.cols{grid-template-columns:1fr}.side{position:static}.days li{grid-template-columns:56px 1fr;gap:14px}}
+</style>

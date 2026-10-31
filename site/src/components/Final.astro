@@ -2,7 +2,7 @@
 import Icon from './Icon.astro';
 import Mark from './Mark.astro';
 import { t, type Lang } from '../lib/i18n';
-import { DOWNLOAD_URL } from '../config';
+import { DOWNLOAD_URL, VERSION } from '../config';
 interface Props { lang: Lang }
 const all = t(Astro.props.lang);
 const d = all.final, f = all.footer;
@@ -26,7 +26,7 @@ const d = all.final, f = all.footer;
     <p class="slogan">{f.slogan}</p>
     <a class="top mono" href="#main"><Icon name="up" size={16} />{f.top}</a>
   </div>
-  <div class="wrap row2"><p>{f.rights}</p><p class="mono">v0.8.1</p></div>
+  <div class="wrap row2"><p>{f.rights}</p><p class="mono">v{VERSION}</p></div>
 </footer>
 <style>
   .final{position:relative;padding-block:clamp(120px,16vw,220px);border-top:1px solid var(--line);overflow:hidden;background:radial-gradient(900px 420px at 50% 100%,#FFE6000D,transparent 70%),var(--void)}

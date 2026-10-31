@@ -1,8 +1,10 @@
 ---
 import { t, type Lang } from '../lib/i18n';
+import { WEB_DEMO } from '../config';
 interface Props { lang: Lang }
 const all = t(Astro.props.lang);
 const c = all.credits, f = all.faq;
+const faq = [...f.items, { q: f.web.q, a: WEB_DEMO ? f.web.yes : f.web.no }];
 ---
 <section class="section cf" aria-labelledby="cr-title">
   <div class="wrap cols">
@@ -18,7 +20,7 @@ const c = all.credits, f = all.faq;
       <p class="kicker">{f.label}</p>
       <h2 class="h3">{f.title}</h2>
       <div class="faq">
-        {f.items.map((x) => (
+        {faq.map((x) => (
           <details>
             <summary><span>{x.q}</span><i aria-hidden="true"></i></summary>
             <p>{x.a}</p>

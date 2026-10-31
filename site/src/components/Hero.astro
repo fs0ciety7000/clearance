@@ -3,7 +3,6 @@ import { Picture } from 'astro:assets';
 import Icon from './Icon.astro';
 import { shot } from '../lib/shots';
 import { t, type Lang } from '../lib/i18n';
-import { DOWNLOAD_URL } from '../config';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const d = t(lang);
@@ -64,7 +63,7 @@ const d = t(lang);
     <div class="row">
       <p class="tagline appear appear--soft" style="--d:.95s">{d.hero.tagline}</p>
       <div class="ctas">
-        <a class="btn btn-primary appear appear--btn" style="--d:1.1s" href={DOWNLOAD_URL} rel="noopener">
+        <a class="btn btn-primary appear appear--btn" style="--d:1.1s" href="#telecharger">
           <Icon name="download" size={18} />{d.hero.ctaPrimary}
         </a>
         <a class="btn btn-secondary appear appear--btn" style="--d:1.22s" href="#inspection">
