@@ -741,6 +741,7 @@ File réelle émulée par l'outil depuis le vrai roster (`emulated_queue=1`) tan
 ### 21.3 Exécution (lot D)
 - `PlateFigureService` (`scripts/booth/plate_figure_service.gd`) : `request_for(slot, GameState.case_memory, ctx_flags, plate.dominant)` pendant la carte de titre → texture immédiate (silhouette de repli), mise à jour sur place (`figure_ready`) ; headless, REVOIR du Dossier, figure jamais vue : silhouette.
 - `PortraitService.size` (`DOSSIER_SIZE` = 128×160) : à poser avant `add_child` ; esquisse et rendu à la taille demandée ; changer la taille vide le cache.
+- **D-210 (finition)** : la toute première image d'un studio `PortraitService` neuf sortait vide en OpenGL 3 (fond seul ; reproduit au Dossier › PERSONNES sans amorce : première vignette vide). Correctif à la source dans `_pump` : une passe de chauffe (`UPDATE_ONCE` + `frame_post_draw`) **une fois par studio**, avant la première lecture ; la vignette d'amorce du Dossier est retirée. Capture [`m14_fix_d210_dossier_people.png`](mockups/m14_fix_d210_dossier_people.png).
 - Papier : `PlatePaintStyle.paper_material(rect.position_px, rect.size_px, Settings.fx_intensity)` comme matériau de chaque `TextureRect` de couche.
 - Bande 3D : `BoothDirector.set_rendering_paused(true)` pendant la séquence (§20.4).
 - `tools/plate_compose.gd` préfigure l'assemblage (captures `docs/mockups/m14_{f9_1,f1_1,f2_2,f10_3}_b[_deck].png`).

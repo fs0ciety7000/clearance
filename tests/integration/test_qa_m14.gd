@@ -200,26 +200,75 @@ func test_real_0_13_profile_migrates_with_last_encounter_portraits() -> void:
 ## QA-072 : version non montée (export « CLEARANCE-0.13.0 », `game_version` des sauvegardes).
 func test_qa072_version_is_0_14() -> void:
 	var version: String = str(ProjectSettings.get_setting("application/config/version", ""))
-	_pass_or_pending(version.begins_with("0.14"), "QA-072", "config/version = %s" % version)
+	# Version montée à la livraison de M14 et jamais redescendue ensuite (≥ 0.14).
+	var parts: PackedStringArray = version.split(".")
+	assert_true(parts.size() >= 2 and (int(parts[0]) > 0 or int(parts[1]) >= 14),
+		"QA-072 : config/version = %s (attendu ≥ 0.14)" % version)
 
 
-## QA-073 : REVOIR rejoue les planches conditionnelles telles que vues (F3 Lumika, F4 Dora).
+## QA-073 : REVOIR rejoue la séquence telle que vue (F3 Lumika, F4 Dora…) :
+## chemin réel — la cinématique de la partie est jouée puis passée (le profil
+## inscrit son contexte), puis `DossierScreen.replays_for` + `play_replay` sur
+## le profil relu ; mêmes planches, mêmes légendes, même variante du thème.
 func test_qa073_replay_shows_the_conditional_plates_seen() -> void:
 	var bad: PackedStringArray = []
+	var dir: String = TEST_DIR.path_join("replay")
 	for c: Array in REACHABLE:
 		var ending: StringName = StringName(c[0])
 		var act: int = c[1]
+		var day: int = c[2]
 		var flags: Dictionary[StringName, Variant] = _typed(c[3])
 		var variant: StringName = EpilogueService.variant_of(ending, flags)
-		var def: CinematicDef = CinematicService.select(ending, variant, flags, act, c[2])
-		var real: PackedStringArray = _sequence(def, CinematicService.context_flags(flags, act, variant, c[2]), act)
-		# DossierScreen.replays_for / play_replay : drapeaux vides, variante et acte du profil.
-		var empty: Dictionary[StringName, Variant] = {}
-		var replay_def: CinematicDef = CinematicService.select(ending, variant, empty, act)
-		var replay: PackedStringArray = _sequence(replay_def, CinematicService.context_flags(empty, act, variant), act)
-		if replay != real:
-			bad.append("%s/%s" % [ending, ",".join(PackedStringArray(Array(real).filter(func(p: String) -> bool: return not replay.has(p))))])
-	_pass_or_pending(bad.is_empty(), "QA-073", "REVOIR ≠ séquence vue : %s" % "; ".join(bad))
+		var def: CinematicDef = CinematicService.select(ending, variant, flags, act, day)
+		assert_not_null(def, "%s/%s : séquence" % [ending, variant])
+		if def == null:
+			continue
+		var ctx: Dictionary[StringName, Variant] = CinematicService.context_flags(flags, act, variant, day)
+		var real: PackedStringArray = _sequence(def, ctx, act)
+		# Profil neuf : la fin vue, puis la séquence jouée en partie et passée.
+		DirAccess.make_dir_recursive_absolute(dir)
+		var profile: Dictionary = ProfileService.empty_profile()
+		profile["endings_seen"] = [{"id": String(ending), "variant": String(variant), "act": act, "day": day,
+				"date": "2026-10-31T20:00:00", "count": 1}]
+		ProfileService.save_profile(profile, dir)
+		var seen: CinematicScreen = CinematicScreen.new()
+		seen.setup(def, CinematicService.plates_for(def, ctx, act, {}), ctx, {}, ending, variant)
+		seen.save_dir = dir
+		add_child(seen)
+		seen.skip_all()
+		var info: Dictionary = {}
+		for entry: Dictionary in DossierScreen.replays_for(ProfileService.load_profile(dir), ending):
+			if str(entry["id"]) == String(def.id):
+				info = entry
+		if info.is_empty():
+			bad.append("%s/%s : pas de REVOIR %s" % [ending, variant, def.id])
+			continue
+		var dossier: DossierScreen = DossierScreen.new()
+		dossier.save_dir = dir
+		dossier.profile = ProfileService.load_profile(dir)
+		var replay: CinematicScreen = dossier.play_replay(info)
+		var got: PackedStringArray = []
+		if replay != null:
+			for plate: PlateDef in replay.plates:
+				got.append("%s:%s" % [plate.id, CinematicService.caption_key(plate, replay.ctx)])
+		if got != real:
+			bad.append("%s/%s : vu %s, revu %s" % [ending, variant, ",".join(real), ",".join(got)])
+		var path: String = AudioDirector.theme_path_for_ending(ending, variant)
+		if not path.is_empty() and ResourceLoader.exists(path):
+			var theme: MusicThemeDef = load(path) as MusicThemeDef
+			var v_seen: MusicThemeVariantDef = theme.variant_for(flags)
+			var v_replay: MusicThemeVariantDef = theme.variant_for(dossier.replay_theme_flags)
+			if v_seen != v_replay:
+				bad.append("%s/%s : thème %s, revu %s" % [ending, variant, v_seen.id if v_seen != null else "base",
+						v_replay.id if v_replay != null else "base"])
+		dossier.free()
+	assert_true(bad.is_empty(), "QA-073 : REVOIR ≠ séquence vue : %s" % "; ".join(bad))
+	# Un profil antérieur (sans contexte) garde son REVOIR (sélection sans drapeaux).
+	var legacy: Dictionary = ProfileService.empty_profile()
+	legacy["endings_seen"] = [{"id": "f10_pont", "variant": "", "act": 3, "day": 30}]
+	legacy["cinematics_seen"] = ["cin_f10"]
+	var legacy_replays: Array[Dictionary] = DossierScreen.replays_for(legacy, &"f10_pont")
+	assert_eq(legacy_replays.size(), 1, "profil sans contexte : REVOIR quand même")
 
 
 ## QA-074 : le fondu de sortie (1,5 s) n'est pas étouffé par le passe-bas de la pause.
@@ -228,9 +277,7 @@ func test_qa074_exit_fade_is_not_muffled_like_the_pause() -> void:
 	add_child_autofree(scene)
 	await wait_frames(3)
 	var audio: AudioDirector = scene.get_node(^"%AudioDirector") as AudioDirector
-	if not audio.music.is_playing():
-		pending("QA-074 : musique absente (données non rendues)")
-		return
+	assert_true(audio.music.is_playing(), "précondition : musique du jour en cours")
 	scene._leave_after_music_fade(func() -> void: pass)
 	var paused: bool = get_tree().paused
 	# L'arbre est en pause pendant le fondu : on fait tourner l'AudioDirector
@@ -239,7 +286,7 @@ func test_qa074_exit_fade_is_not_muffled_like_the_pause() -> void:
 	var muffle: float = audio.music_muffle()
 	get_tree().paused = false
 	assert_true(paused, "précondition : arbre en pause pendant le fondu (D-208)")
-	_pass_or_pending(is_zero_approx(muffle), "QA-074", "passe-bas %.0f Hz pendant le fondu de sortie (pause de l'arbre)" % muffle)
+	assert_true(is_zero_approx(muffle), "QA-074 : passe-bas %.0f Hz pendant le fondu de sortie (pause de l'arbre)" % muffle)
 
 
 ## QA-075 : titre → partie : la musique du titre s'éteint en fondu (pas de coupure nette).
@@ -248,14 +295,16 @@ func test_qa075_title_music_fades_out_before_the_game_scene() -> void:
 	main.set(&"change_scene", false)
 	add_child_autofree(main)
 	var title: MusicDirector = main.get_node_or_null(^"TitleMusic") as MusicDirector
-	if title == null or not title.is_playing():
-		pending("QA-075 : musique du titre absente")
+	assert_not_null(title, "précondition : TitleMusic")
+	assert_true(title != null and title.is_playing(), "précondition : musique du titre en cours")
+	if title == null:
 		return
 	await wait_seconds(1.8) # fondu d'entrée de 1,5 s terminé
 	main.call(&"_start_day")
 	await wait_frames(3)
 	var fading: bool = title._fade_left > 0.0 or MusicDirector.get_fade_db() < -0.5
-	_pass_or_pending(fading, "QA-075", "aucun fondu de sortie au départ vers day.tscn (main.gd change de scène tout de suite)")
+	assert_true(fading, "QA-075 : aucun fondu de sortie au départ vers day.tscn (main.gd change de scène tout de suite)")
+	assert_true(title.is_playing(), "QA-075 : la musique joue encore pendant le fondu (pas de coupure nette)")
 
 
 ## QA-076 : l'horloge de mesures du `MusicDirector` ne perd pas de temps sur
@@ -276,7 +325,10 @@ func test_qa076_bar_clock_survives_a_long_frame() -> void:
 	var clock_ms: float = d._clock_usec / 1000.0
 	var lag: float = real_ms - clock_ms
 	var fade: float = MusicDirector.get_fade_db()
-	_pass_or_pending(lag < 60.0, "QA-076", "horloge en retard de %.0f ms sur le flux après une image de 700 ms (fondu d'entrée à %.1f dB)" % [lag, fade])
+	assert_true(lag < 60.0, "QA-076 : horloge en retard de %.0f ms sur le flux après une image de 700 ms" % lag)
+	# Le fondu d'entrée part du silence à la 1ʳᵉ image qui suit `play()` : deux
+	# images headless plus tard, il est encore très bas (pas −15,6 dB d'un coup).
+	assert_true(fade < -30.0, "QA-076 : fondu d'entrée à %.1f dB juste après une image longue (attendu : depuis le silence)" % fade)
 
 
 ## QA-077 : une annonce `drop` ne fait pas descendre le niveau sous le plancher du jour.
@@ -288,13 +340,27 @@ func test_qa077_drop_keeps_the_day_floor() -> void:
 	it.apply_action(HallAnnouncementDef.MUSIC_DROP)
 	var decision: Dictionary = it.decide()
 	assert_true((int(decision["mask"]) & MusicSetDef.MASK_POWER_DOWN) != 0, "drop : L0 seule pendant 4 mesures")
-	_pass_or_pending(int(decision["level"]) >= it.floor_level, "QA-077",
-			"niveau visé %d < plancher %d pendant le drop (J30 : N2 → N1, la musique revient un cran plus bas)" % [decision["level"], it.floor_level])
+	assert_true(int(decision["level"]) >= it.floor_level, "QA-077 : niveau visé %d < plancher %d pendant le drop (J30 : N2 → N1, la musique revient un cran plus bas)" % [decision["level"], it.floor_level])
+	assert_eq(float(decision["extra_db"]), MusicIntensity.DROP_DB, "drop : −6 dB")
 
 
 ## QA-078 : chrono critique (< 15 s) → N4 atteint avant la sirène, même depuis N1
-## (option Stable, journée calme) ; pire phase de mesure, 75 BPM (3,2 s).
+## (journée calme) ; pire phase de mesure, 75 BPM (3,2 s). D-211 : montée d'un
+## niveau par mesure au chrono critique (`fast_up` de la décision) ; en Stable,
+## aucune montée liée au chrono.
 func test_qa078_critical_clock_reaches_n4_in_time() -> void:
+	var calm: MusicIntensity = MusicIntensity.new()
+	calm.smoothed = 0.2
+	calm.level = 1
+	calm.remaining_sec = 14.0
+	var crit: Dictionary = calm.decide()
+	assert_eq(int(crit["level"]), 4, "chrono critique : N4 visé")
+	assert_true(bool(crit["fast_up"]), "chrono critique : montée rapide")
+	calm.stable = true
+	var stable: Dictionary = calm.decide()
+	assert_eq(int(stable["level"]), MusicIntensity.STABLE_LEVEL, "Stable : aucune montée liée au chrono")
+	assert_false(bool(stable["fast_up"]), "Stable : pas de montée rapide")
+	assert_true((int(stable["mask"]) & MusicSetDef.MASK_NO_MELODY) != 0, "Stable : L3 coupée au chrono critique")
 	var bar: float = 3.2
 	var level: int = 1
 	var since: int = 99
@@ -302,7 +368,7 @@ func test_qa078_critical_clock_reaches_n4_in_time() -> void:
 	var reached: float = INF
 	while t < MusicIntensity.CRITICAL_SEC:
 		since += 1
-		var next: int = MusicDirector.next_level(level, 4, since)
+		var next: int = MusicDirector.next_level(level, 4, since, bool(crit["fast_up"]))
 		if next != level:
 			level = next
 			since = 0
@@ -310,8 +376,8 @@ func test_qa078_critical_clock_reaches_n4_in_time() -> void:
 				reached = t
 				break
 		t += bar
-	_pass_or_pending(reached < MusicIntensity.CRITICAL_SEC - 2.0, "QA-078",
-			"depuis N1, N4 n'est pas atteint dans les 15 s (+1 / 2 mesures) ; mesuré en jeu : J15 Stable, N4 à 1 s de la sirène")
+	assert_true(reached < MusicIntensity.CRITICAL_SEC - 2.0,
+			"QA-078 : depuis N1, N4 n'est pas atteint dans les 15 s (atteint à %.1f s)" % reached)
 
 
 ## QA-079 : fins simulées des actes I–II (F4, F5, F7, F8, F9) : pas de thème de
@@ -324,7 +390,8 @@ func test_qa079_simulated_early_endings_keep_the_evening_music() -> void:
 	assert_null(CinematicService.select(&"f4_glory", &"", GameState.narrative_flags, 2, 20), "F4 acte II : aucune cinématique")
 	director.music_state = &"evening"
 	director.on_end_screen(&"f4_glory")
-	_pass_or_pending(director.theme_id == &"", "QA-079", "F4 de l'acte II : thème %s lancé sous l'écran de fin" % director.theme_id)
+	assert_eq(director.theme_id, &"", "QA-079 : F4 de l'acte II : thème %s lancé sous l'écran de fin" % director.theme_id)
+	assert_eq(director.music_state, &"evening", "QA-079 : MS-06 continue")
 
 
 ## QA-080 : capture de debug `--cinematic=<id>` : la séquence demandée est jouée
@@ -341,4 +408,4 @@ func test_qa080_debug_cinematic_plays_the_requested_sequence() -> void:
 		var got: CinematicDef = CinematicService.select(def.endings[0], EpilogueService.variant_of(def.endings[0], flags), flags, 3, 30)
 		if got == null or got.id != id:
 			wrong.append("%s → %s" % [id, got.id if got != null else "aucune"])
-	_pass_or_pending(wrong.is_empty(), "QA-080", ", ".join(wrong))
+	assert_true(wrong.is_empty(), "QA-080 : %s" % ", ".join(wrong))

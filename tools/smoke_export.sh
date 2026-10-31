@@ -15,6 +15,11 @@
 # 3. M12 : une Garde de nuit courte (`--garde=CODE`, 8 passagers jugés dont
 #    3 faux : directive n° 1, puis FIN DE GARDE) et un J31 par clé d'épilogue
 #    (`--epilogue=<fin>`, 7 passagers jugés puis conclusion).
+# 4. M14 : une fin avec cinématique puis retour au titre (`--screen=end
+#    --ending=<fin> --end-to-title`, J30, Acte III) : cinématique de la fin
+#    (exigée) vue 1 s puis passée, écran de fin, RETOUR AU TITRE, fondu de
+#    sortie de la musique, `main.tscn` atteint (ligne « titre atteint »
+#    exigée dans le journal), puis on quitte.
 # Échec si une ligne ERROR / SCRIPT ERROR apparaît (hors fuites signalées à la
 # sortie forcée par --quit-after). Données utilisateur isolées dans build/smoke/.
 #
@@ -22,6 +27,7 @@
 #   --garde=CODE      code de la Garde (défaut K2Q-9TX ; --garde seul = défaut)
 #   --epilogue=<fin>  fin d'où part le J31 (répétable ; défaut f10_pont et
 #                     f6_drift : mondes C et D) — ex. --epilogue=f9_strike
+#   --end=<fin>       fin jouée par l'étape 4 (défaut f10_pont) — ex. --end=f9_strike
 #   --no-m12          campagne seule (comportement d'avant M12)
 #   GODOT=… pour un autre binaire.
 set -euo pipefail
@@ -29,11 +35,13 @@ set -euo pipefail
 GARDE_CODE="K2Q-9TX"
 EPILOGUES=()
 WITH_M12=1
+END_ENDING="f10_pont"
 for arg in "$@"; do
 	case "$arg" in
 		--garde) ;;
 		--garde=*) GARDE_CODE="${arg#--garde=}" ;;
 		--epilogue=*) EPILOGUES+=("${arg#--epilogue=}") ;;
+		--end=*) END_ENDING="${arg#--end=}" ;;
 		--no-m12) WITH_M12=0 ;;
 		*) echo "smoke_export: argument inconnu : $arg" >&2; exit 2 ;;
 	esac
@@ -80,5 +88,11 @@ if [[ $WITH_M12 -eq 1 ]]; then
 		run "debug_epilogue_$ending" "$SMOKE/debug" --quit-after 900 -- --epilogue="$ending" --skip-cases=7
 	done
 fi
+run "debug_end_to_title" "$SMOKE/debug" --quit-after 3000 -- --day=30 --seed=3 --screen=end --ending="$END_ENDING" \
+	--flags=act2_started,act3_started --end-to-title
+grep -q "end-to-title : cinématique" "$SMOKE/debug_end_to_title.log" \
+	|| die "debug_end_to_title : aucune cinématique de fin jouée (journal : build/smoke/debug_end_to_title.log)"
+grep -q "titre atteint" "$SMOKE/debug_end_to_title.log" \
+	|| die "debug_end_to_title : écran titre jamais atteint (journal : build/smoke/debug_end_to_title.log)"
 rm -rf "$SMOKE/debug" "$SMOKE/xdg"
 echo "== smoke test OK (journaux dans build/smoke/)"

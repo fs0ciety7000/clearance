@@ -929,6 +929,8 @@ func _debug_screen(which: String) -> void:
 			else:
 				_simulated_history()
 				show_end(StringName(_arg("ending", "demo_complete")))
+				if _args.has("end-to-title"):
+					_debug_end_to_title.call_deferred()
 		"chapter2":
 			if briefing != null:
 				briefing.closed.disconnect(_on_briefing_closed)
@@ -1010,7 +1012,32 @@ func _debug_cinematic(id: StringName) -> void:
 		sequence.set_process(false) # planche figée pour la capture (shaders vivants)
 
 
-## Capture : drapeaux qui donnent la variante voulue d'une fin (`--cinematic`).
+## Smoke des exports (`tools/smoke_export.sh`) : `--screen=end --ending=<fin>
+## --end-to-title` — la cinématique de la fin (exigée) est vue 1 s puis
+## passée, l'écran de fin s'ouvre, RETOUR AU TITRE, fondu de sortie, puis
+## `main.tscn` (qui quitte en l'annonçant, voir `main.gd`).
+func _debug_end_to_title() -> void:
+	var sequence: CinematicScreen = cinematic
+	if sequence == null:
+		push_error("DayScene: --end-to-title sans cinématique de fin")
+		return
+	var id: StringName = sequence.def.id
+	await get_tree().create_timer(1.0).timeout
+	if is_instance_valid(sequence):
+		sequence.skip_all()
+	await get_tree().create_timer(1.0).timeout
+	var end: EndScreen = screen as EndScreen
+	if end == null or not is_instance_valid(end) or end.title_button == null:
+		push_error("DayScene: --end-to-title : écran de fin absent après la cinématique")
+		return
+	print("DayScene: --end-to-title : cinématique %s passée, RETOUR AU TITRE" % id)
+	end.title_button.pressed.emit()
+
+
+## Capture : drapeaux qui donnent la variante voulue d'une fin (`--cinematic`),
+## à l'acte déjà posé par les drapeaux d'acte (QA-080 : F5 Charte, Brûlants ;
+## F6 Dérive). Les variantes « par défaut » (F1 double, F5 seconde vanne,
+## F6 Tycho, J10 / J20) n'ont besoin d'aucun drapeau.
 static func ctx_variant_flags(ending: StringName, wanted: StringName) -> void:
 	match [ending, wanted]:
 		[EndingService.F1_ARRESTED, EpilogueService.VARIANT_AUDIT]:
@@ -1019,6 +1046,18 @@ static func ctx_variant_flags(ending: StringName, wanted: StringName) -> void:
 			GameState.set_flag(EndingService.FLAG_REVIEW_ARRESTED, true)
 		[EndingService.F1_ARRESTED, EpilogueService.VARIANT_DEPOSITION]:
 			GameState.set_flag(EndingService.FLAG_DEPOSITION_ARRESTED, true)
+		[EndingService.F5_AIR, EpilogueService.VARIANT_CHARTER]:
+			GameState.set_flag(&"climate_vanne", true)
+		[EndingService.F5_AIR, EpilogueService.VARIANT_BURNERS]:
+			match EpilogueService.act_of(GameState.narrative_flags):
+				3:
+					GameState.set_flag(EndingService.FLAG_BRULANTS2, true)
+				2:
+					GameState.set_flag(&"sc47_kasimir_passed", true)
+				_:
+					GameState.set_flag(&"brulants_package", true)
+		[EndingService.F6_DRIFT, EpilogueService.VARIANT_DRIFT]:
+			GameState.set_flag(&"exit3_drift", true)
 
 
 ## Mise en scène de capture M7 (après l'arrivée des documents).

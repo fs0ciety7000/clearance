@@ -67,6 +67,8 @@ var replay_buttons: Dictionary[String, Button] = {}
 var replay: CinematicScreen = null
 var portrait_service: PortraitService = null
 var title_music: TitleMusic = null
+## Drapeaux passés au thème du dernier REVOIR (variante du thème ; tests).
+var replay_theme_flags: Dictionary[StringName, Variant] = {}
 var _replay_from: String = ""
 var _scroll: ScrollContainer = null
 var _body: VBoxContainer = null
@@ -286,18 +288,37 @@ func _ending_card(card: Dictionary, number: int) -> Control:
 
 
 ## Cinématiques revoyables d'une fin : une par séquence **vue** (profil), dans
-## l'ordre des fins vues ; `{id, ending, variant, act}`. Sélection des données
-## (`CinematicService.select`) sur la variante et l'acte inscrits au profil.
+## l'ordre des fins vues ; `{id, ending, variant, act, day, plates, flags}`.
+## QA-073 : d'abord les séquences dont le contexte est au profil
+## (`cinematic_replays` : planches et drapeaux de la séquence vue) ; sinon
+## (profil antérieur) sélection des données (`CinematicService.select`) sur la
+## variante et l'acte inscrits au profil, sans drapeaux.
 static func replays_for(p_profile: Dictionary, ending: StringName) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var clean: Dictionary = ProfileService.sanitize(p_profile)
 	var ids: PackedStringArray = []
 	var empty: Dictionary[StringName, Variant] = {}
+	var stored: Dictionary = clean["cinematic_replays"]
+	var stored_ids: Array = stored.keys()
+	stored_ids.sort()
 	for row: Dictionary in clean["endings_seen"]:
 		if str(row["id"]) != String(ending):
 			continue
 		var variant: StringName = StringName(str(row.get("variant", "")))
 		var act: int = clampi(SaveService.as_int(row.get("act", 1)), 1, 3)
+		var found: bool = false
+		for cin_id: Variant in stored_ids:
+			var ctx: Dictionary = stored[cin_id]
+			if str(ctx["ending"]) != String(ending) or str(ctx["variant"]) != String(variant):
+				continue
+			found = true
+			if ids.has(str(cin_id)) or not ProfileService.has_seen_cinematic(clean, str(cin_id)):
+				continue
+			ids.append(str(cin_id))
+			out.append({"id": str(cin_id), "ending": String(ending), "variant": String(variant), "act": int(ctx["act"]),
+					"day": int(ctx["day"]), "plates": ctx["plates"], "flags": ctx["flags"]})
+		if found:
+			continue
 		var def: CinematicDef = CinematicService.select(ending, variant, empty, act)
 		if def == null or ids.has(String(def.id)) or not ProfileService.has_seen_cinematic(clean, String(def.id)):
 			continue
@@ -306,9 +327,37 @@ static func replays_for(p_profile: Dictionary, ending: StringName) -> Array[Dict
 	return out
 
 
+## Drapeaux de contexte d'une séquence à revoir (`info["flags"]`, QA-073),
+## typés ; vides si le profil ne les a pas gardés.
+static func replay_flags(info: Dictionary) -> Dictionary[StringName, Variant]:
+	var out: Dictionary[StringName, Variant] = {}
+	var raw: Variant = info.get("flags", {})
+	if raw is Dictionary:
+		for key: Variant in raw:
+			out[StringName(str(key))] = (raw as Dictionary)[key]
+	return out
+
+
+## Planches à revoir : celles de la séquence vue (`info["plates"]`, dans
+## l'ordre ; QA-073), sinon la sélection des données sur `ctx`.
+static func replay_plates(def: CinematicDef, info: Dictionary, ctx: Dictionary[StringName, Variant], act: int) -> Array[PlateDef]:
+	var result: Array[PlateDef] = []
+	var raw: Variant = info.get("plates", [])
+	if raw is Array:
+		for plate_id: Variant in raw:
+			for plate: PlateDef in def.plates:
+				if plate != null and String(plate.id) == str(plate_id):
+					result.append(plate)
+					break
+	if result.is_empty():
+		result = CinematicService.plates_for(def, ctx, act, {})
+	return result
+
+
 ## REVOIR : la séquence par-dessus le Dossier, figures en silhouette, rien
-## d'inscrit ; `info` = `{id, ending, variant, act, eyebrow, title}` (fin) ou
-## `{id, world}` (épilogue).
+## d'inscrit ; `info` = `{id, ending, variant, act, day, plates, flags,
+## eyebrow, title}` (fin) ou `{id, world, …}` (épilogue). QA-073 : planches,
+## légendes et variante du thème de la séquence vue (contexte du profil).
 func play_replay(info: Dictionary) -> CinematicScreen:
 	if replay != null and is_instance_valid(replay):
 		return replay
@@ -318,9 +367,9 @@ func play_replay(info: Dictionary) -> CinematicScreen:
 		return null
 	var act: int = int(info.get("act", 3))
 	var variant: StringName = StringName(str(info.get("variant", "")))
-	var empty: Dictionary[StringName, Variant] = {}
-	var ctx: Dictionary[StringName, Variant] = CinematicService.context_flags(empty, act, variant)
-	var plates: Array[PlateDef] = CinematicService.plates_for(def, ctx, act, {})
+	var flags: Dictionary[StringName, Variant] = replay_flags(info)
+	var ctx: Dictionary[StringName, Variant] = CinematicService.context_flags(flags, act, variant, int(info.get("day", 0)))
+	var plates: Array[PlateDef] = replay_plates(def, info, ctx, act)
 	if plates.is_empty():
 		return null
 	var ending: StringName = StringName(str(info.get("ending", "")))
@@ -337,12 +386,16 @@ func play_replay(info: Dictionary) -> CinematicScreen:
 	if is_inside_tree():
 		get_viewport().gui_release_focus()
 	add_child(sequence)
-	_play_replay_theme(ending, variant, StringName(str(info.get("world", ""))))
+	_play_replay_theme(ending, variant, StringName(str(info.get("world", ""))), flags)
 	return sequence
 
 
-## Thème de la fin (ou du monde) sur la musique du titre (`index.json`).
-func _play_replay_theme(ending: StringName, variant: StringName, world: StringName) -> void:
+## Thème de la fin (ou du monde) sur la musique du titre (`index.json`), avec
+## les drapeaux de la séquence vue (variante du thème, QA-073) ; un monde : sans
+## drapeaux, comme en jeu.
+func _play_replay_theme(ending: StringName, variant: StringName, world: StringName,
+		flags: Dictionary[StringName, Variant] = {}) -> void:
+	replay_theme_flags = {} if world != &"" else flags
 	if title_music == null or not is_instance_valid(title_music):
 		return
 	var path: String = AudioDirector.theme_path_for_world(world) if world != &"" else AudioDirector.theme_path_for_ending(ending, variant)
@@ -350,7 +403,7 @@ func _play_replay_theme(ending: StringName, variant: StringName, world: StringNa
 		return
 	var theme: MusicThemeDef = load(path) as MusicThemeDef
 	if theme != null:
-		title_music.play_theme_after_fade(theme, {}, Settings.fx_intensity < 1.0)
+		title_music.play_theme_after_fade(theme, replay_theme_flags, Settings.fx_intensity < 1.0)
 
 
 func _on_replay_finished(_skipped: bool) -> void:
@@ -426,9 +479,6 @@ func _ensure_portraits() -> void:
 	portrait_service.size = PortraitService.DOSSIER_SIZE # avant l'entrée dans l'arbre
 	portrait_service.max_entries = DossierData.PORTRAIT_CACHE
 	add_child(portrait_service)
-	# Le tout premier rendu d'un studio neuf sort vide (fond seul, constaté en
-	# OpenGL 3) : une vignette d'amorce anonyme, jamais affichée, le précède.
-	portrait_service.get_portrait(PlateFigureService.anonymous_appearance())
 
 
 ## Portrait d'un personnage tel que vu à la vitre, ou null (jamais vu : initiales).
@@ -599,7 +649,8 @@ func _world_block(world: Dictionary) -> Control:
 		var replay_button: Button = ScreenBase.button(UiText.t("cin_replay", "REVOIR"), &"ButtonTool")
 		replay_button.name = "Replay_%s" % def.id
 		replay_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		var info: Dictionary = {"id": String(def.id), "world": str(world["world"]), "act": 3}
+		var info: Dictionary = ProfileService.cinematic_replay(profile, String(def.id))
+		info.merge({"id": String(def.id), "world": str(world["world"]), "act": 3, "day": 31}, true)
 		replay_button.pressed.connect(func() -> void: play_replay(info))
 		head.add_child(ScreenBase.spacer())
 		head.add_child(replay_button)

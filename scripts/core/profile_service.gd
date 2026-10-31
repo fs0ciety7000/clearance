@@ -26,7 +26,14 @@
 ##   de la **dernière rencontre** tel que vu à la vitre (`visor` : `down`,
 ##   `up`, `none`), ≤ 400 o par personnage ; écrit à chaque sauvegarde du soir
 ##   et à la fin pour les cas du jour joué (`record_portraits`) ;
-## - `cinematics_seen` : ids des cinématiques vues (`record_cinematic_seen`).
+## - `cinematics_seen` : ids des cinématiques vues (`record_cinematic_seen`) ;
+## - `cinematic_replays` (QA-073, ajout sans changement de version) :
+##   `{cin_id: {ending, variant, world, act, day, plates, flags}}`, ce qu'il
+##   faut pour que REVOIR rejoue la **dernière** séquence vue telle quelle :
+##   planches retenues (ids, dans l'ordre) et drapeaux de contexte lus par ses
+##   conditions (planches, légendes, figures) et par les variantes de son thème
+##   (≤ `REPLAY_MAX_FLAGS`). Absent (profil antérieur) : `{}`, REVOIR retombe
+##   sur la sélection sans drapeaux.
 ## Migration v2 → v3 (`migrate_v2`) : `portraits` reconstruits depuis la
 ## `case_memory` des emplacements (le plus ancien d'abord : la partie la plus
 ## récente l'emporte), copie `profile.v2.bak`. Un profil v1 passe par
@@ -46,6 +53,9 @@ const PORTRAIT_MAX_BYTES: int = 400
 const TOP_RUNS: int = 10
 const DAILY_DAYS: int = 60
 const FREE_SEEDS: int = 20
+## `cinematic_replays` : planches et drapeaux gardés par séquence (QA-073).
+const REPLAY_MAX_PLATES: int = 8
+const REPLAY_MAX_FLAGS: int = 32
 
 
 static func profile_path(dir: String = SaveService.DEFAULT_DIR) -> String:
@@ -70,6 +80,7 @@ static func empty_profile() -> Dictionary:
 		"last_campaign": {},
 		"portraits": {},
 		"cinematics_seen": [],
+		"cinematic_replays": {},
 	}
 
 
@@ -138,6 +149,7 @@ static func sanitize(raw: Dictionary) -> Dictionary:
 		profile["last_campaign"] = {}
 	profile["portraits"] = _sanitize_portraits(profile.get("portraits", {}))
 	profile["cinematics_seen"] = _unique_strings(profile.get("cinematics_seen", []))
+	profile["cinematic_replays"] = _sanitize_replays(profile.get("cinematic_replays", {}))
 	profile["version"] = VERSION
 	return profile
 
@@ -487,16 +499,75 @@ static func portraits_from_memory(memory: Dictionary, day: int = 0, table: Chara
 	return result
 
 
-## Cinématique vue (`CIN-…` : `cin_f1`…). Renvoie vrai si écrit.
-static func record_cinematic_seen(dir: String, cinematic_id: String) -> bool:
+## Cinématique vue (`CIN-…` : `cin_f1`…). Renvoie vrai si écrit. `replay`
+## (QA-073) : contexte de la séquence vue (`{ending, variant, world, act, day,
+## plates, flags}`, voir `cinematic_replays`), remplace le précédent.
+static func record_cinematic_seen(dir: String, cinematic_id: String, replay: Dictionary = {}) -> bool:
 	if cinematic_id.is_empty():
 		return false
 	var profile: Dictionary = load_profile(dir)
 	var seen: Array = profile["cinematics_seen"]
-	if seen.has(cinematic_id):
+	var changed: bool = false
+	if not seen.has(cinematic_id):
+		seen.append(cinematic_id)
+		changed = true
+	if not replay.is_empty():
+		var clean: Dictionary = _sanitize_replay(replay)
+		var replays: Dictionary = profile["cinematic_replays"]
+		if JSON.stringify(replays.get(cinematic_id, {})) != JSON.stringify(clean):
+			replays[cinematic_id] = clean
+			changed = true
+	if not changed:
 		return false
-	seen.append(cinematic_id)
 	return save_profile(profile, dir) == OK
+
+
+## Contexte REVOIR d'une séquence vue (`cinematic_replays`), `{}` si absent.
+static func cinematic_replay(profile: Dictionary, cinematic_id: String) -> Dictionary:
+	var replays: Variant = profile.get("cinematic_replays", {})
+	if not replays is Dictionary or not (replays as Dictionary).has(cinematic_id):
+		return {}
+	return _sanitize_replay((replays as Dictionary)[cinematic_id])
+
+
+static func _sanitize_replays(raw: Variant) -> Dictionary:
+	var out: Dictionary = {}
+	if not raw is Dictionary:
+		return out
+	for key: Variant in raw:
+		if str(key).is_empty() or not (raw as Dictionary)[key] is Dictionary:
+			continue
+		out[str(key)] = _sanitize_replay((raw as Dictionary)[key])
+	return out
+
+
+static func _sanitize_replay(raw: Variant) -> Dictionary:
+	var row: Dictionary = raw if raw is Dictionary else {}
+	var plates: Array = _unique_strings(row.get("plates", []))
+	var flags: Dictionary = {}
+	var raw_flags: Variant = row.get("flags", {})
+	if raw_flags is Dictionary:
+		var names: Array = (raw_flags as Dictionary).keys()
+		names.sort()
+		for name: Variant in names:
+			if flags.size() >= REPLAY_MAX_FLAGS or str(name).is_empty():
+				break
+			var value: Variant = (raw_flags as Dictionary)[name]
+			if value is bool:
+				flags[str(name)] = value
+			elif value is int or value is float:
+				flags[str(name)] = SaveService.as_int(value)
+			elif value is String or value is StringName:
+				flags[str(name)] = str(value)
+	return {
+		"ending": str(row.get("ending", "")),
+		"variant": str(row.get("variant", "")),
+		"world": str(row.get("world", "")),
+		"act": clampi(SaveService.as_int(row.get("act", 3), 3), 1, 3),
+		"day": maxi(SaveService.as_int(row.get("day", 0)), 0),
+		"plates": plates.slice(0, REPLAY_MAX_PLATES),
+		"flags": flags,
+	}
 
 
 static func has_seen_cinematic(profile: Dictionary, cinematic_id: String) -> bool:

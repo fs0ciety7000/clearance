@@ -16,8 +16,13 @@
 ## La position de lecture d'un `AudioStreamInteractive` n'est pas exposée par
 ## Godot 4.7 (`get_playback_position()` = 0) : le directeur tient sa propre
 ## horloge de mesures en temps réel (`Time.get_ticks_usec`, insensible à
-## `Engine.time_scale` et à la pause). Les décisions de niveau tombent au début
-## d'une mesure ; chaque couche entre ou sort en une mesure.
+## `Engine.time_scale` et à la pause), **sans borne** : le flux avance en temps
+## réel dans le thread de mixage pendant une image longue (chargement,
+## compilation de shader), l'horloge aussi (QA-076). Les décisions de niveau
+## tombent au début d'une mesure ; chaque couche entre ou sort en une mesure.
+## Un fondu `fade_to()` part de sa valeur de départ à la première image qui
+## suit l'appel (un fondu d'entrée commence au silence, même après une image
+## longue).
 ##
 ## Données : `configure_from_def()` (un `MusicSetDef` du lot A : couches,
 ## gains, masques exposé / sans mélodie / power down, groupes) et
@@ -48,7 +53,9 @@ const LEVEL_LAYERS: Array[Array] = [
 ]
 const EXPOSED_LAYERS: Array[int] = [1, 0, 0, 1, 0]
 ## Montée : +1 niveau au plus toutes les 2 mesures ; descente : −1 toutes les 4.
+## Chrono critique (D-211, `fast_up`) : +1 niveau à chaque mesure.
 const BARS_PER_STEP_UP: int = 2
+const BARS_PER_STEP_UP_FAST: int = 1
 const BARS_PER_STEP_DOWN: int = 4
 ## Fondu croisé entre deux clips (ensembles ou thèmes), en temps.
 const CLIP_FADE_BEATS: float = 8.0
@@ -64,6 +71,8 @@ var target_level: int = 0
 var mute_motif: bool = false
 ## « Power down » (EV-05, grève du J20) : couches `keeps_on_power_down` seules.
 var power_down: bool = false
+## Montée rapide (chrono critique, D-211) : +1 niveau par mesure vers la cible.
+var fast_up: bool = false
 ## Groupes de couches sélectionnés (MS-06 chaud / crise, mondes de MS-07…).
 var groups: Array[StringName] = []
 ## Nombre total d'écritures de volume de couche (outil de stress, tests).
@@ -87,6 +96,9 @@ var _fade_to_db: float = 0.0
 var _fade_left: float = 0.0
 var _fade_total: float = 0.0
 var _stop_after_fade: bool = false
+## Fondu demandé depuis la dernière image : sa première image n'avance pas
+## (il part de sa valeur de départ, QA-076).
+var _fade_fresh: bool = false
 ## Thème à jouer à la fin du fondu de sortie en cours (`play_theme_after_fade`).
 var _pending_theme: Dictionary = {}
 ## Lecteur arrêté par `volume_music` à 0 (CPU nul, docs/M14.md §2.11) :
@@ -388,6 +400,7 @@ func fade_to(db: float, seconds: float, stop_at_end: bool = false) -> void:
 	_fade_total = maxf(seconds, 0.0)
 	_fade_left = _fade_total
 	_stop_after_fade = stop_at_end
+	_fade_fresh = true
 	if _fade_total <= 0.0:
 		_set_fade_db(db)
 		_finish_fade()
@@ -418,10 +431,11 @@ static func layers_for_level(value: int, motif_muted: bool = false) -> PackedByt
 
 
 ## Pas de niveau autorisé à une limite de mesure (fonction pure, tests).
-static func next_level(current: int, wanted: int, bars_since_change: int) -> int:
+## `fast` (chrono critique, D-211) : montée d'un niveau à chaque mesure.
+static func next_level(current: int, wanted: int, bars_since_change: int, fast: bool = false) -> int:
 	if current == LEVEL_EXPOSED or wanted == LEVEL_EXPOSED:
 		return wanted
-	if wanted > current and bars_since_change >= BARS_PER_STEP_UP:
+	if wanted > current and bars_since_change >= (BARS_PER_STEP_UP_FAST if fast else BARS_PER_STEP_UP):
 		return current + 1
 	if wanted < current and bars_since_change >= BARS_PER_STEP_DOWN:
 		return current - 1
@@ -435,12 +449,15 @@ static func get_fade_db() -> float:
 
 func _process(_delta: float) -> void:
 	var now: int = Time.get_ticks_usec()
-	var dt: float = clampf((now - _last_usec) / 1_000_000.0, 0.0, 0.25)
+	# Temps réel sans borne (QA-076) : le flux a avancé d'autant.
+	var elapsed_usec: int = maxi(now - _last_usec, 0)
 	_last_usec = now
-	_update_fade(dt)
+	var dt: float = elapsed_usec / 1_000_000.0
+	_update_fade(0.0 if _fade_fresh else dt)
+	_fade_fresh = false
 	if player == null or not player.playing or _current_clip == &"":
 		return
-	_clock_usec += int(dt * 1_000_000.0)
+	_clock_usec += elapsed_usec
 	var bar: int = int(_clock_usec / (_bar_sec * 1_000_000.0))
 	while _bar_index < bar:
 		_bar_index += 1
@@ -451,7 +468,7 @@ func _process(_delta: float) -> void:
 
 func _on_bar() -> void:
 	bar_passed.emit(_bar_index)
-	var next: int = next_level(level, target_level, _bars_since_change)
+	var next: int = next_level(level, target_level, _bars_since_change, fast_up)
 	if next != level:
 		level = next
 		_bars_since_change = 0

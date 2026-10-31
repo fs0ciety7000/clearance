@@ -6,7 +6,7 @@ Jeu 3D stylisé cyberpunk inspiré de *Papers, Please*, développé avec **Godot
 
 ## État du projet
 
-**Phase : production — campagne complète jouable (jours 1 à 30, 10 fins).** Jalons livrés : M1 Fondations · M2 Documents & règles · M3 Générateur & apparences · M4 Interface de comparaison + guichet 3D · M5 Boucle de jour (scoring, soirée, sauvegarde) · M6 Passager final (Kenney + Quaternius) et audio · M7 Jours 4–10 (détention, objets glissés, avis de recherche, Lucioles, soirées à choix, fins) · QA (17 bugs corrigés) · Exports Windows / macOS / Linux · Décor définitif du guichet et personnages optimisés · Acte II J11–J20 (v0.9.0) · Acte III J21–J30 (v0.10.0) · M11 Confort : sauvegardes à emplacements, mode Récit, manette, accessibilité, tutoriel (v0.11.0) · M12 Rejouabilité : épilogue J31, Garde de nuit, événements de station, échos, Dossier de l'agent (v0.12.0) · M13 Gameplay : interrogatoire à contradictions, fouille holographique, améliorations du guichet (v0.13.0).
+**Phase : production — campagne complète jouable (jours 1 à 30, 10 fins).** Jalons livrés : M1 Fondations · M2 Documents & règles · M3 Générateur & apparences · M4 Interface de comparaison + guichet 3D · M5 Boucle de jour (scoring, soirée, sauvegarde) · M6 Passager final (Kenney + Quaternius) et audio · M7 Jours 4–10 (détention, objets glissés, avis de recherche, Lucioles, soirées à choix, fins) · QA (17 bugs corrigés) · Exports Windows / macOS / Linux · Décor définitif du guichet et personnages optimisés · Acte II J11–J20 (v0.9.0) · Acte III J21–J30 (v0.10.0) · M11 Confort : sauvegardes à emplacements, mode Récit, manette, accessibilité, tutoriel (v0.11.0) · M12 Rejouabilité : épilogue J31, Garde de nuit, événements de station, échos, Dossier de l'agent (v0.12.0) · M13 Gameplay : interrogatoire à contradictions, fouille holographique, améliorations du guichet (v0.13.0) · M14 Ambiance : musique dynamique, cinématiques de fin illustrées, hall vivant, portraits (v0.14.0).
 
 Captures : [guichet J3](docs/mockups/m6_day3_autoplay.png) · [enveloppe J4](docs/mockups/m7_envelope.png) · [fin « Rendre l'air »](docs/mockups/m7_end_f5.png) · [interface](docs/mockups/m4_day.png) · [Steam Deck](docs/mockups/m4_day_deck.png) · [briefing](docs/mockups/m5_briefing.png) · [soirée](docs/mockups/m5_evening.png)
 
@@ -30,6 +30,7 @@ Captures : [guichet J3](docs/mockups/m6_day3_autoplay.png) · [enveloppe J4](doc
 | [`docs/M11.md`](docs/M11.md) | M11 Confort : sauvegarde v6, mode Récit, lots et contrat partagé |
 | [`docs/M12.md`](docs/M12.md) | M12 Rejouabilité : épilogue J31, Garde de nuit, événements, échos, Dossier |
 | [`docs/M13.md`](docs/M13.md) | M13 Gameplay : interrogatoire à contradictions, fouille holographique, Économat |
+| [`docs/M14.md`](docs/M14.md) | M14 Ambiance : musique procédurale, cinématiques, hall, portraits |
 | [`docs/QA.md`](docs/QA.md) | Passe QA : couverture, bugs (QA-001…), campagnes, i18n |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions |
 | [`DECISIONS.md`](DECISIONS.md) | Journal des décisions |

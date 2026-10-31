@@ -10,7 +10,8 @@
 ## emplacements de démonstration dans `user://qa_demo_saves`, jamais les vraies
 ## sauvegardes), `--title=new|difficulty|overwrite|load|days`, `--damage-slot=N`
 ## (avec `--demo-saves` : emplacement de démonstration N rendu illisible et
-## marqué endommagé, capture QA-043).
+## marqué endommagé, capture QA-043), `--end-to-title` (smoke des exports :
+## arrivée depuis l'écran de fin annoncée sur la sortie, puis on quitte).
 ## M12 (lot C, I28 / I29) : entrées **GARDE DE NUIT** (`GardeScreen` ; active
 ## si `GardeService.is_unlocked(profil)`, sinon grisée avec « Terminez votre
 ## premier jour au Guichet 04. ») et **DOSSIER DE L'AGENT** (`DossierScreen` ;
@@ -20,6 +21,10 @@
 ## puis `DayScene.pending_garde_run`. Captures : `--demo-profile` (profil de
 ## démonstration dans `user://qa_demo_saves`, avec `--demo-saves`),
 ## `--title=garde|dossier|dossier-people|dossier-garde|dossier-epilogues|dossier-last`.
+## M14 (QA-075) : titre → partie (CONTINUER, NOUVELLE PARTIE, CHARGER, Garde,
+## épilogue) : la musique du titre s'éteint en fondu (`TitleMusic.fade_out`,
+## 1,5 s) sous un voile noir, arbre en pause, **puis** la scène de jour —
+## même logique que `DayScene._leave_after_music_fade` (D-208).
 extends Control
 
 const DAY_SCENE_PATH: String = "res://scenes/main/day.tscn"
@@ -47,8 +52,13 @@ var quit_button: Button = null
 var options: OptionsPanel = null
 ## Écran ouvert par-dessus le titre (Nouvelle partie, Charger), null sinon.
 var screen: ScreenBase = null
-## Faux : `_start_day` n'ouvre pas la scène de jour (tests).
+## Faux : `_start_day` n'ouvre pas la scène de jour (tests) ; le fondu de la
+## musique du titre est quand même lancé.
 var change_scene: bool = true
+## Vrai pendant le fondu de sortie vers la scène de jour (un seul départ).
+var leaving: bool = false
+## Voile noir du fondu de sortie (créé au premier départ).
+var blackout: ColorRect = null
 ## Toasts du titre (chargement impossible), créés au premier besoin.
 var title_toasts: ToastStack = null
 var _menu: Array[Control] = []
@@ -108,6 +118,10 @@ func _ready() -> void:
 		GardeScreen.open_on_title = false
 		open_garde.call_deferred()
 	_debug_title(str(args.get("title", "")))
+	if args.has("end-to-title"):
+		# Smoke des exports : fin → cinématique → écran de fin → titre atteint.
+		print("main: titre atteint (--end-to-title)")
+		get_tree().create_timer(1.0).timeout.connect(get_tree().quit)
 
 
 ## Mention de version : « Démo · v0.8.0 » (`application/config/version`) ;
@@ -365,8 +379,41 @@ func _ensure_title_toasts() -> void:
 func _start_day() -> void:
 	TutorialOverlay.pending = GameState.current_day == 1 and Settings.get_bool(Settings.KEY_TUTORIAL)
 	shift_start_requested.emit()
-	if change_scene:
+	_leave_for_day()
+
+
+## QA-075 : fondu de sortie de la musique du titre (1,5 s, effet `Fade`) sous
+## un voile noir, arbre en pause (plus rien ne répond), puis `day.tscn`. Sans
+## musique : tout de suite. `change_scene` faux (tests) : le fondu seul.
+func _leave_for_day() -> void:
+	if leaving:
+		return
+	var title_music: TitleMusic = get_node_or_null(^"TitleMusic") as TitleMusic
+	var wait: float = title_music.fade_out(DS.MUSIC_EXIT_FADE) if title_music != null else 0.0
+	if not change_scene:
+		return
+	leaving = true
+	if wait <= 0.0 or not is_inside_tree():
 		get_tree().change_scene_to_file(DAY_SCENE_PATH)
+		return
+	if blackout == null:
+		blackout = ColorRect.new()
+		blackout.name = "Blackout"
+		blackout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		add_child(blackout)
+	blackout.color = Color(DS.BG_VOID, 0.0)
+	blackout.mouse_filter = Control.MOUSE_FILTER_STOP
+	blackout.process_mode = Node.PROCESS_MODE_ALWAYS
+	move_child(blackout, get_child_count() - 1)
+	get_viewport().gui_release_focus()
+	get_tree().paused = true
+	var veil: Tween = blackout.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	veil.tween_property(blackout, "color:a", 1.0, DS.DUR_FAST if Settings.reduce_motion else wait)
+	await get_tree().create_timer(wait, true).timeout
+	if not is_inside_tree():
+		return
+	get_tree().paused = false
+	get_tree().change_scene_to_file(DAY_SCENE_PATH)
 
 
 # ---------------------------------------------------------------------------
@@ -383,8 +430,7 @@ func start_garde(code: String) -> bool:
 	DayScene.pending_garde_run = run
 	TutorialOverlay.pending = false
 	shift_start_requested.emit()
-	if change_scene:
-		get_tree().change_scene_to_file(DAY_SCENE_PATH)
+	_leave_for_day()
 	return true
 
 
@@ -406,8 +452,7 @@ func _play_epilogue(epi: Dictionary, slot: int) -> bool:
 		return false
 	TutorialOverlay.pending = false
 	shift_start_requested.emit()
-	if change_scene:
-		get_tree().change_scene_to_file(DAY_SCENE_PATH)
+	_leave_for_day()
 	return true
 
 

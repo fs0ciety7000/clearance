@@ -1489,6 +1489,8 @@ var face: PassengerAppearance = CinematicService.figure_appearance(slot, GameSta
 
 **Profil** (`ProfileService.VERSION = 3`) : champs v2 + `portraits {chr_id: {appearance, visor, case_id, day, act}}` (≤ 400 o chacun, `PORTRAIT_MAX_BYTES`) et `cinematics_seen` (ids).
 
+**Rejeu fidèle (QA-073, D-212)** : champ `cinematic_replays {cin_id: {ending, variant, world, act, day, plates, flags}}` (≤ 8 planches, ≤ 32 drapeaux, seulement ceux lus par les conditions de la séquence et les variantes de son thème), écrit par `record_cinematic_seen(..., context)` ; lu par `cinematic_replay()`. Version inchangée (v3) : un profil sans le champ le reçoit vide ; sans contexte, REVOIR retombe sur la sélection sans drapeaux.
+
 ```gdscript
 static func record_portraits(dir, memory: Dictionary, day := 0, table: CharacterTableDef = null) -> bool
 static func portraits_from_memory(memory, day := 0, table = null) -> Dictionary   # dernière rencontre (jour, index), liste blanche

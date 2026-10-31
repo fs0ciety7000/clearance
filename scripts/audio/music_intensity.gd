@@ -13,8 +13,8 @@
 ## `I = clamp(0,25·Q + 0,35·T + 0,15·D + 0,15·K + 0,20·E + τ, 0, 1)` ; lissage
 ## exponentiel (montée τ = 4 s, descente 8 s) ; quantification avec hystérésis
 ## (`MusicSetDef.level_for`) ; cas particuliers dans l'ordre de M14 §2.5. La
-## vitesse (+1 niveau / 2 mesures, −1 / 4) est tenue par
-## `MusicDirector.next_level` (à la mesure).
+## vitesse (+1 niveau / 2 mesures, −1 / 4 ; +1 / mesure au chrono critique,
+## D-211) est tenue par `MusicDirector.next_level` (à la mesure).
 class_name MusicIntensity
 extends RefCounted
 
@@ -69,7 +69,8 @@ var tension: int = 0
 var floor_level: int = -1
 ## Plafond Récit / J31 (N2).
 var capped: bool = false
-## « Musique : Stable » : N1 figé pendant le shift.
+## « Musique : Stable » : N1 figé pendant le shift (le plancher du jour s'il
+## est plus haut, D-211).
 var stable: bool = false
 ## Coupure EV-05, grève du J20 (`lights_out`), annonce `silence`.
 var power_down: bool = false
@@ -166,30 +167,37 @@ static func quantize(value: float, current: int, set_def: MusicSetDef = null) ->
 
 
 ## Décision complète (niveau visé et masques) sur la valeur lissée courante :
-## `{level, mask (MusicSetDef.MASK_*), extra_db}`. Cas particuliers dans
-## l'ordre de M14 §2.5 : power down, chrono critique, Inspection, Stable,
-## Récit / J31, annonce, plancher.
+## `{level, mask (MusicSetDef.MASK_*), extra_db, fast_up}`. Cas particuliers
+## dans l'ordre de M14 §2.5 : power down, chrono critique, Inspection, Stable,
+## Récit / J31, annonce, plancher. D-211 : le plancher du jour vaut aussi en
+## Stable et pendant un `drop` (masque et gain seulement, niveau conservé) ;
+## chrono critique : N4 visé avec montée d'un niveau par mesure (`fast_up`),
+## sauf en Stable (aucune montée liée au chrono, seule L3 coupée).
 func decide(set_def: MusicSetDef = null) -> Dictionary:
 	level = quantize(smoothed, level, set_def)
 	var wanted: int = level
 	var mask: int = 0
 	var extra_db: float = 0.0
+	var fast_up: bool = false
+	var is_stable: bool = stable and not garde
 	if floor_level >= 0:
 		wanted = maxi(wanted, floor_level)
 	if action == HallAnnouncementDef.MUSIC_SWELL and action_bars > 0:
 		wanted = mini(wanted + 1, LEVEL_MAX)
-	if stable and not garde:
-		wanted = STABLE_LEVEL
+	if is_stable:
+		wanted = maxi(STABLE_LEVEL, floor_level)
 	if capped:
 		wanted = mini(wanted, STORY_MAX_LEVEL)
 	if inspection_reduce:
 		mask |= MusicSetDef.MASK_NO_MELODY
 	if timed and remaining_sec <= CRITICAL_SEC and remaining_sec > 0.0 and not capped:
-		wanted = LEVEL_MAX
 		mask |= MusicSetDef.MASK_NO_MELODY
+		if not is_stable:
+			wanted = LEVEL_MAX
+			fast_up = true
 	if action == HallAnnouncementDef.MUSIC_DROP and action_bars > 0:
-		wanted = 0
-		mask |= MusicSetDef.MASK_POWER_DOWN # L0 seule
+		# L0 seule −6 dB ; niveau conservé (jamais sous le plancher, QA-077).
+		mask |= MusicSetDef.MASK_POWER_DOWN
 		extra_db += DROP_DB
 	if power_down or action == HallAnnouncementDef.MUSIC_SILENCE:
 		# Power down : L0 seule, −6 dB (le passe-bas 400 Hz est posé par l'AudioDirector).
@@ -198,7 +206,7 @@ func decide(set_def: MusicSetDef = null) -> Dictionary:
 		extra_db = DROP_DB
 	if set_def != null:
 		wanted = mini(wanted, set_def.max_level)
-	return {"level": clampi(wanted, 0, LEVEL_MAX), "mask": mask, "extra_db": extra_db}
+	return {"level": clampi(wanted, 0, LEVEL_MAX), "mask": mask, "extra_db": extra_db, "fast_up": fast_up}
 
 
 ## Une mesure écoulée : décompte des annonces `drop` / `swell`.

@@ -171,6 +171,44 @@ func test_cinematics_seen_and_sanitize() -> void:
 	assert_eq(ProfileService.empty_profile()["portraits"], {})
 
 
+## QA-073 : contexte REVOIR (`cinematic_replays`) — ajout sans changement de
+## version : un profil v3 qui ne l'a pas le reçoit vide, rien d'autre ne bouge ;
+## valeurs assainies, bornées, le dernier contexte vu l'emporte.
+func test_cinematic_replays_context() -> void:
+	var older: Dictionary = ProfileService.empty_profile()
+	older.erase("cinematic_replays")
+	older["cinematics_seen"] = ["cin_f3"]
+	ProfileService.save_profile(older, DIR)
+	var w: FileAccess = FileAccess.open(SaveService.resolve_dir(DIR).path_join(ProfileService.FILE_NAME), FileAccess.WRITE)
+	w.store_string(JSON.stringify(older))
+	w.close()
+	var loaded: Dictionary = ProfileService.load_profile(DIR)
+	assert_eq(int(loaded["version"]), ProfileService.VERSION, "même version")
+	assert_eq(loaded["cinematic_replays"], {}, "migration triviale : vide")
+	assert_eq(loaded["cinematics_seen"], ["cin_f3"])
+	assert_eq(ProfileService.cinematic_replay(loaded, "cin_f3"), {}, "sans contexte")
+	var ctx: Dictionary = {"ending": "f3_family_lost", "variant": "", "act": 3, "day": 30,
+			"plates": ["pl_f3_1", "pl_f3_2", "pl_f3_2", 7], "flags": {"lumika_learned": true, "pont": 2.0, "x": [1]}}
+	assert_true(ProfileService.record_cinematic_seen(DIR, "cin_f3", ctx), "déjà vue, contexte nouveau : écrit")
+	assert_false(ProfileService.record_cinematic_seen(DIR, "cin_f3", ctx), "même contexte : rien")
+	var got: Dictionary = ProfileService.cinematic_replay(ProfileService.load_profile(DIR), "cin_f3")
+	assert_eq(got["plates"], ["pl_f3_1", "pl_f3_2"], "ids uniques, textes seulement")
+	assert_eq(got["flags"], {"lumika_learned": true, "pont": 2}, "booléens, entiers, textes")
+	assert_eq(int(got["act"]), 3)
+	assert_eq(int(got["day"]), 30)
+	ctx["flags"] = {}
+	assert_true(ProfileService.record_cinematic_seen(DIR, "cin_f3", ctx), "dernière séquence vue")
+	assert_eq(ProfileService.cinematic_replay(ProfileService.load_profile(DIR), "cin_f3")["flags"], {})
+	var many: Dictionary = {}
+	for i: int in 60:
+		many["flag_%02d" % i] = true
+	var big: Dictionary = ProfileService.sanitize({"cinematic_replays": {"cin_x": {"flags": many, "plates": range(20).map(func(i: int) -> String: return "p%d" % i)},
+			"": {}, "cin_y": "?"}})
+	assert_eq((big["cinematic_replays"] as Dictionary).keys(), ["cin_x"], "entrées invalides retirées")
+	assert_eq((big["cinematic_replays"]["cin_x"]["flags"] as Dictionary).size(), ProfileService.REPLAY_MAX_FLAGS)
+	assert_eq((big["cinematic_replays"]["cin_x"]["plates"] as Array).size(), ProfileService.REPLAY_MAX_PLATES)
+
+
 func test_m14_settings_defaults_and_domains() -> void:
 	var settings: Node = autofree(SettingsScript.new())
 	assert_eq(settings.call(&"get_value", &"music_inspection_reduce"), true, "discrète par défaut (§8 n° 3)")

@@ -202,10 +202,10 @@ func test_qa064_document_fault_chip_is_written_as_a_document_discrepancy() -> vo
 
 func test_qa065_version_is_0_13() -> void:
 	var version: String = str(ProjectSettings.get_setting("application/config/version", ""))
-	if not version.begins_with("0.13"):
-		pending("QA-065 : config/version = %s (M13 = 0.13)" % version)
-		return
-	assert_true(version.begins_with("0.13"))
+	# Version montée à la livraison de M13 et jamais redescendue ensuite (≥ 0.13).
+	var parts: PackedStringArray = version.split(".")
+	assert_true(parts.size() >= 2 and (int(parts[0]) > 0 or int(parts[1]) >= 13),
+		"QA-065 : config/version = %s (attendu ≥ 0.13)" % version)
 
 
 # ---------------------------------------------------------------------------

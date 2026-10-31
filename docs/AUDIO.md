@@ -410,9 +410,9 @@ L'`AudioDirector` (nœud de `day.tscn`) est le **seul** écouteur audio de l'Eve
 - **Un seul** `AudioStreamPlayer` (`MusicPlayer`, bus `Music`), `volume_db = 0` **jamais modifié** (ni tween, ni écriture par image).
 - Flux : un `AudioStreamInteractive` dont chaque clip est un ensemble (`AudioStreamSynchronized`, ≤ 5 couches) ou un thème ; transition `CLIP_ANY → CLIP_ANY` à la mesure suivante, fondu croisé de 8 temps (2 mesures) dans le flux ; thème → queue par **avance automatique** du clip (`configure_theme(…, tail)`), `skip_to_tail()` pour une cinématique passée.
 - Niveaux : volume de chaque couche par `AudioStreamSynchronized.set_sync_stream_volume()` (lu par le thread de mixage, aucune allocation, aucun `bus_details` remplacé) ; rampe linéaire en amplitude d'**une mesure** ; une écriture au plus par couche et par image, seulement si la valeur change ; couche muette = −80 dB exactement.
-- Horloge : Godot 4.7 ne donne pas la position d'un `AudioStreamInteractive` (`get_playback_position()` = 0, vérifié) → horloge de mesures en temps réel (`Time.get_ticks_usec`, insensible à `Engine.time_scale` et à la pause). `request_level()` s'applique en début de mesure (+1 toutes les 2 mesures, −1 toutes les 4 : `next_level()`, pur) ; `force_level()` pour les outils.
+- Horloge : Godot 4.7 ne donne pas la position d'un `AudioStreamInteractive` (`get_playback_position()` = 0, vérifié) → horloge de mesures en temps réel (`Time.get_ticks_usec`, insensible à `Engine.time_scale` et à la pause), **sans borne** depuis QA-076 (§13.16). `request_level()` s'applique en début de mesure (+1 toutes les 2 mesures, −1 toutes les 4 ; +1 à chaque mesure au chrono critique, D-211 : `next_level(…, fast)`, pur) ; `force_level()` pour les outils.
 - Masques : `configure_from_def(MusicSetDef)` → couches de `MusicSetDef.active_layers(level, mask, groups)` (exposé, sans mélodie, power down, groupes) et gain « exposé » ; sans donnée, la table de M14 §2.5. API de la phase 2 déjà présente sous forme minimale : `use_library()`, `set_groups()`, `set_mask()`, `play_theme()`, `skip_to_tail()`.
-- Fondus globaux : `fade_to(db, s, stop_at_end)` écrit l'effet `Fade` une fois par image (rampe en amplitude).
+- Fondus globaux : `fade_to(db, s, stop_at_end)` écrit l'effet `Fade` une fois par image (rampe en amplitude) ; la première image après l'appel n'avance pas le fondu (un fondu d'entrée part du silence, QA-076).
 - `_exit_tree` : `stop()`, `stream = null`, `Fade` remis à 0 dB (QA-039). `AudioDirector._exit_tree` arrête de toute façon tous les lecteurs de ses enfants.
 
 ### 13.3 Stress D-083 (B82, M-17) — résultat : **le moteur ne déclenche pas la course**
@@ -497,7 +497,7 @@ Tous les points de la liste de la phase 1 sont traités (§13.8 → §13.14), sa
 | `evening` | `day_ended` (campagne) | MS-06, **fondu croisé de 2 mesures dans le flux** ; couche `crisis` (solde < 0, bilan négatif, proche malade ou froid) sinon `warm`, réévaluée à l'ouverture d'`EveningScreen` |
 | `garde_end` / `epilogue_end` | `day_ended` (Garde / J31) | MS-05 au niveau N1 / MS-07 au repos |
 | `cinematic` | écran dont la classe globale est `CinematicScreen` (lot D) | thème de la fin (J31 : thème du monde) après un fondu `Fade` de 2 s ; `finished(true)` → `skip_to_tail()` |
-| `end` | `EndScreen` | thème de la fin (`EpilogueService.variant_of`, variante de drapeaux, « effets réduits » si `fx_intensity` < 1) ; TH-F7 : la **sortie** directement ; démo et fins simulées des actes I–II : MS-06 continue |
+| `end` | `EndScreen` | thème de la fin (`EpilogueService.variant_of`, variante de drapeaux, « effets réduits » si `fx_intensity` < 1) ; TH-F7 : la **sortie** directement ; démo et fins simulées des actes I–II (F4, F5, F7, F8, F9 avant l'Acte III : `SIMULATED_EARLY_ENDINGS`, QA-079) : MS-06 continue |
 | `epilogue_end` | `EpilogueConclusion` | **queue** du thème de la fin d'origine (graine d'épilogue) |
 
 Les écrans sont **lus** sur `DayScene.screen` (comme l'UI est lue sur `ComparisonUI`) : `day_scene.gd` n'est pas modifié. `AudioDirector.fade_out_music(1,5 s)` est fourni pour les fondus de sortie avant rechargement (soirée → jour suivant, fin → titre) : à appeler par le lot D (§13.15).
@@ -509,16 +509,16 @@ Les écrans sont **lus** sur `DayScene.screen` (comme l'UI est lue sur `Comparis
 | Cas (ordre de M14 §2.5) | Effet réalisé |
 |---|---|
 | Power down (EV-05, annonce `ends_shift` / `music_action = silence`) | couches `keeps_on_power_down` seules (L0), −6 dB (effet `Duck`), passe-bas **400 Hz** (effet `Muffle`) |
-| Chrono critique (< 15 s, chronométré, hors Récit) | N4, **L3 coupée** |
+| Chrono critique (< 15 s, chronométré, hors Récit) | N4 visé, **montée d'un niveau par mesure** depuis tout niveau (`fast_up`, D-211), **L3 coupée** ; en Stable : L3 coupée seulement, aucune montée |
 | Mode Inspection + `music_inspection_reduce` | **−6 dB** (rampe 0,5 s sur `Duck`), passe-bas **3,5 kHz** (`Muffle`), L3 coupée |
-| `music_dynamics` = Stable | N1 figé pendant le shift (pas en Garde) |
+| `music_dynamics` = Stable | N1 figé pendant le shift (le plancher du jour s'il est plus haut, D-211 ; pas en Garde) |
 | Récit, J31 | plafond N2 |
-| Annonce `drop` / `swell` | L0 seule −6 dB pendant 4 mesures / +1 niveau pendant 4 mesures |
+| Annonce `drop` / `swell` | L0 seule −6 dB pendant 4 mesures, **niveau conservé** (jamais sous le plancher, D-211, QA-077) / +1 niveau pendant 4 mesures |
 | Plancher du jour | niveau ≥ `music_floor` |
 | `volume_music` = 0 | lecteur **arrêté** (CPU nul), repris sur le même clip au retour |
 | Annonce PA (jeu ou ambiance) | musique −3 dB pendant l'annonce (`Duck`) |
 
-L'effet `Muffle` (passe-bas) sert à la pause (2,5 kHz), au Mode Inspection (3,5 kHz) et au power down (400 Hz) : la fréquence la plus basse l'emporte, écrite seulement quand l'état change ; remise à 2,5 kHz et coupée à la sortie de l'arbre. Aucun `volume_db` de lecteur de musique n'est jamais écrit.
+L'effet `Muffle` (passe-bas) sert à la pause (2,5 kHz ; **pas** la pause de l'arbre pendant le fondu de sortie avant un changement de scène, QA-074), au Mode Inspection (3,5 kHz) et au power down (400 Hz) : la fréquence la plus basse l'emporte, écrite seulement quand l'état change ; remise à 2,5 kHz et coupée à la sortie de l'arbre. Aucun `volume_db` de lecteur de musique n'est jamais écrit.
 
 ### 13.10 Annonces d'ambiance (B85) et lits par acte (B88, son)
 
@@ -611,6 +611,21 @@ GUT **unit** : 671 tests, 670 passent — le seul échec (`test_m14_plates`, man
 - **QA** : M-10 et M-11 sur Steam Deck avec `tools/qa_audio_load.gd` ; écoute des transitions (fondu croisé shift → soirée, fin → thème) ; playtest « Musique discrète ».
 - **Écarts assumés** : `swell` = +1 niveau seulement (pas de « MO-1 entier » forcé) ; la Garde ne transpose pas MO-1 à chaque palier (le palier élève l'intensité) ; MS-07 n'a que deux couches communes (N2 = N1 au J31) ; jingles et voix des annonces rendus à 16 kHz.
 
+### 13.16 Correctifs de la passe QA M14 (QA-074, QA-076 → QA-079, D-211)
+
+| Bug | Correctif | Test (strict) |
+|---|---|---|
+| **QA-076** horloge de mesures en retard sur le flux | `MusicDirector._process` : l'horloge avance du temps réel écoulé **sans borne** (le flux avance en temps réel dans le thread de mixage pendant une image longue ; sa position n'est toujours pas exposée par Godot 4.7 pour un `AudioStreamInteractive`, d'où le temps réel depuis `play()`) ; les rampes de couches suivent le même temps. Le fondu `fade_to()` n'avance pas à la première image qui suit l'appel (`_fade_fresh`) : un fondu d'entrée commence au silence (−80 dB) même après une image longue | `test_qa076_bar_clock_survives_a_long_frame` : retard < 60 ms après une image de 700 ms, fondu encore < −30 dB |
+| **QA-074** fondu de sortie étouffé | `AudioDirector.fade_out_music()` pose `_leaving` ; `_update_pause` ignore la pause de l'arbre pendant ce fondu (fondu de bus seul) ; remis à faux à `start_day_music` | `test_qa074_exit_fade_is_not_muffled_like_the_pause` |
+| **QA-077** `drop` sous le plancher | `MusicIntensity.decide` : `drop` = masque `POWER_DOWN` (L0 seule) et −6 dB, **niveau conservé** | `test_qa077_drop_keeps_the_day_floor` (+ −6 dB) |
+| **QA-078** N4 hors d'atteinte au chrono critique | `decide()` renvoie `fast_up` au chrono critique ; `MusicDirector.fast_up` → `next_level(…, fast = true)` : +1 niveau **à chaque mesure** (N1 → N4 en 3 mesures, 9,6 s au pire à 75 BPM). Stable : L3 coupée, **aucune** montée ; le niveau Stable respecte le plancher du jour | `test_qa078_critical_clock_reaches_n4_in_time` (+ décision Stable) ; la vitesse générique (+1 / 2 mesures) reste testée par `test_music_intensity` / `test_music_director` |
+| **QA-079** thème joué sous une fin simulée des actes I–II | `AudioDirector.on_end_screen` : F4, F5, F7, F8, F9 avec `EpilogueService.act_of(flags) < 3` → MS-06 continue | `test_qa079_simulated_early_endings_keep_the_evening_music` (+ `music_state` = `evening`) |
+| **QA-075** (appel par `main.gd`, lot UI) | API `TitleMusic.fade_out(seconds = 1,5) -> float` : fondu `Fade` puis arrêt du lecteur, renvoie la durée à attendre (0 sans musique) ; annule un thème REVOIR en attente | `test_qa075_*` (lot UI) |
+
+**Vérifications** (2026-10-31, après correctifs) : GUT unit **671 / 671** ; integration **38 fichiers** un par un, 0 échec (`test_qa_m14` : 13 verts, 1 `pending` = QA-072, hors audio). Audit `qa_audio_audit.gd` (18 partitions) : **791 mesures, 0 échec** (aucun fichier audio régénéré). Stress D-083 : **320 rechargements** de `day.tscn` (160 jeu seul J20 graine 3, `--qa-control=off` ; 160 moteur greffé J30 graine 12 : 481 changements de niveau, 48 changements de clip, 99 fondus, 30 459 écritures de couche) : **0 plantage, 0 fuite, 0 « Playback can only happen », 0 SCRIPT ERROR**. Journées réelles (`qa_m14_day`) : J15 Stable → aucune montée au chrono critique (N4 non atteint, voulu) ; J15 Dynamique → N4 atteint au chrono critique ; J30 graine 3 → `drop` à N3 avec plancher N2, jamais sous N2.
+
+**À reprendre côté QA** : `tests/qa_drivers/qa_m14_day.gd` et `qa_m14_campaign.gd` comptent `fast_up` toute montée en moins de `BARS_PER_STEP_UP` mesures ; depuis D-211, une montée d'une mesure au chrono critique est voulue (J15 Dynamique : `fast_up=1`). Le pilote peut lire `BARS_PER_STEP_UP_FAST` quand `rem ≤ 15 s`.
+
 ## Changelog
 
 - 0.1 — Création : intentions, bus, cue sheet, barks MVP, budget, mix, conventions, licences.
@@ -619,3 +634,4 @@ GUT **unit** : 671 tests, 670 passent — le seul échec (`test_m14_plates`, man
 - 0.4 — M9 : interfaces de l'Acte III sans cue nouvelle (§12).
 - 0.5 — M14 phase 1 (lot B) : §13 musique dynamique — `MusicDirector` (moteur D-176), stress D-083 (B82), chaîne de rendu `build_music.gd` (partitions JSON, `AudioDsp` étendu, Vorbis déterministe, `manifest.json`), audit `qa_audio_audit.gd`, échantillons MS-02 et TH-F9 ; effet `Fade` du bus Music (§2) ; OGG d'ambiance et de musique M6 rendus déterministes ; question n° 5 close.
 - 0.6 — M14 phase 2 (lot B) : musique branchée (`MusicDirector` du jour et du titre, `set_music()` retiré), `MusicIntensity`, Mode Inspection / Stable / power down, catalogue complet (MS-01 → MS-07, TH-F1 → TH-F10 et variantes, TH-EA → TH-ED), annonces d'ambiance (`PaScheduler`, voix synthétisée), lits par acte, murmure ∝ file, `qa_audio_load.gd`, audit du catalogue ; §4.4, §4.5, §6, §8.1 mis à jour ; boucles `mus_*` M6 supprimées.
+- 0.7 — Passe QA M14 : QA-074 (fondu de sortie sans passe-bas de pause), QA-076 (horloge de mesures sans borne, fondu d'entrée depuis le silence), QA-077 / QA-078 (D-211 : `drop` au plancher, montée d'un niveau par mesure au chrono critique, Stable sans montée), QA-079 (fins simulées des actes I–II : MS-06), `TitleMusic.fade_out()` pour QA-075 (§13.16).

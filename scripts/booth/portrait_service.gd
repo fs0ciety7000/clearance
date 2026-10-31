@@ -69,6 +69,8 @@ var _camera: Camera3D = null
 var _rig: PassengerRig = null
 var _pose_player: AnimationPlayer = null
 var _sitter: Node3D = null
+## D-210 : vrai une fois que le studio a produit une première image.
+var _warmed: bool = false
 
 
 func _ready() -> void:
@@ -242,6 +244,19 @@ func _pump() -> void:
 	_camera.position = Vector3(0, center_y, DISTANCE)
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw
+	if not _warmed:
+		# D-210 : en OpenGL 3, la toute première image d'un studio neuf sort vide
+		# (fond seul : cible de rendu et matériaux pas encore prêts à la première
+		# passe). Une seconde passe, une fois par studio, avant toute lecture.
+		_warmed = true
+		if not is_inside_tree() or _viewport == null:
+			_busy = false
+			return
+		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+		await RenderingServer.frame_post_draw
+	if not is_inside_tree() or _viewport == null:
+		_busy = false
+		return
 	var img: Image = _viewport.get_texture().get_image()
 	if img != null and not img.is_empty():
 		img.convert(Image.FORMAT_RGBA8)

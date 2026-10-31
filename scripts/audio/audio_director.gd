@@ -64,6 +64,10 @@ const GROUP_CRISIS: StringName = &"crisis"
 const MUSIC_ENTER_SEC: float = 1.5
 ## Fin → thème : fondu de sortie de 2 s (bus) puis le thème depuis le début.
 const END_FADE_SEC: float = 2.0
+## Fins des actes I–II simulées seulement (démo, `--screen=end`, D-076,
+## D-086) : sans cinématique, MS-06 continue sous l'écran de fin (QA-079).
+const SIMULATED_EARLY_ENDINGS: Array[StringName] = [EndingService.F4_GLORY, EndingService.F5_AIR,
+		EndingService.F7_REOPENS, EndingService.F8_REGISTRE, EndingService.F9_STRIKE]
 ## Mode Inspection discret : −6 dB et passe-bas 3,5 kHz ; power down : −6 dB
 ## et passe-bas 400 Hz ; pause : passe-bas 2,5 kHz (effet `Muffle`).
 const INSPECTION_DUCK_DB: float = -6.0
@@ -161,6 +165,8 @@ var _closing: bool = false
 var _inspecting: bool = false
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _paused_fx: bool = false
+## Fondu de sortie avant changement de scène en cours (`fade_out_music`).
+var _leaving: bool = false
 ## UI dont les signaux publics sont branchés.
 var _bound_ui: ComparisonUI = null
 var _last_hover_msec: int = -HOVER_MIN_INTERVAL_MSEC
@@ -682,7 +688,9 @@ func _update_pause() -> void:
 	var paused: bool = get_tree().paused
 	_paused_fx = paused
 	var cutoff: float = 20000.0
-	if paused:
+	# Fondu de sortie (D-208) : l'arbre est en pause, mais ce n'est pas une
+	# pause du joueur — fondu de bus seul, sans passe-bas (QA-074).
+	if paused and not _leaving:
 		cutoff = minf(cutoff, PAUSE_CUTOFF_HZ)
 	if music_state == &"shift" and intensity.inspection_reduce:
 		cutoff = minf(cutoff, INSPECTION_CUTOFF_HZ)
@@ -1116,6 +1124,7 @@ static func theme_path_for_world(world: StringName, index: Dictionary = {}) -> S
 ## Début du jour : ensemble du jour (+ soirée MS-06), « exposé » au briefing,
 ## intensité et annonces d'ambiance remises à zéro.
 func start_day_music(day: DayDef) -> void:
+	_leaving = false
 	music_state = &""
 	theme_id = &""
 	_shift_open = false
@@ -1173,6 +1182,7 @@ func end_shift_music(summary: DaySummary) -> void:
 	_music_extra_db = 0.0
 	music.mute_motif = false
 	music.power_down = false
+	music.fast_up = false
 	if _day == null or music_state == &"":
 		return
 	match _day.mode:
@@ -1219,6 +1229,7 @@ func _update_intensity(delta: float) -> void:
 	var mask: int = int(decision["mask"])
 	music.mute_motif = (mask & MusicSetDef.MASK_NO_MELODY) != 0
 	music.power_down = (mask & MusicSetDef.MASK_POWER_DOWN) != 0
+	music.fast_up = bool(decision.get("fast_up", false))
 	_music_extra_db = float(decision["extra_db"])
 
 
@@ -1331,9 +1342,11 @@ static func is_cinematic_screen(node: Node) -> bool:
 ## maintenant). TH-F7 (`reuse_set_id`) : la sortie sous l'écran de fin.
 func on_end_screen(ending: StringName) -> void:
 	var flags: Dictionary[StringName, Variant] = GameState.narrative_flags
+	if SIMULATED_EARLY_ENDINGS.has(ending) and EpilogueService.act_of(flags) < 3:
+		return # fins simulées des actes I–II (pas de cinématique) : MS-06 continue (QA-079)
 	var path: String = theme_path_for_ending(ending, EpilogueService.variant_of(ending, flags))
 	if path.is_empty() or not ResourceLoader.exists(path):
-		return # démo, fins simulées des actes I–II : MS-06 continue
+		return # démo : MS-06 continue
 	var theme: MusicThemeDef = load(path) as MusicThemeDef
 	if theme == null:
 		return
@@ -1465,9 +1478,11 @@ func _play_pa(job: PaJob) -> void:
 ## Fondu de sortie de la musique par l'effet `Fade` (soirée → jour suivant,
 ## écran de fin → titre : 1,5 s, docs/M14.md §2.6). À appeler par la scène
 ## (lot D) avant `reload_current_scene` / `change_scene_to_file` ; renvoie la
-## durée à attendre (0 sans musique).
+## durée à attendre (0 sans musique). La scène est quittée : la pause de
+## l'arbre qui suit n'y pose pas le passe-bas de pause (QA-074).
 func fade_out_music(seconds: float = MUSIC_ENTER_SEC) -> float:
 	if music == null or not music.is_playing():
 		return 0.0
+	_leaving = true
 	music.fade_to(MusicDirector.SILENT_DB, seconds, true)
 	return seconds

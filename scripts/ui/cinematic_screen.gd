@@ -36,7 +36,10 @@
 ##   planche.
 ## - **Fin** : `finished(skipped: bool)` (signal hérité de `ScreenBase`, porteur
 ##   d'un **booléen** ici, contrat ARCHITECTURE §12 ter.6 ; l'`AudioDirector`
-##   l'écoute : passée → queue du thème) et `ProfileService.record_cinematic_seen`.
+##   l'écoute : passée → queue du thème) et `ProfileService.record_cinematic_seen`
+##   avec le contexte de REVOIR (`replay_record` : planches retenues, variante,
+##   acte, jour, drapeaux lus par les conditions de la séquence et de son
+##   thème — QA-073).
 ## La musique n'est pas pilotée ici : l'`AudioDirector` reconnaît l'écran par sa
 ## classe et lit `ending` (thème de la fin, ou du monde au J31).
 class_name CinematicScreen
@@ -172,6 +175,78 @@ static func plate_duration(plate: PlateDef, caption: String) -> float:
 static func caption_text(plate: PlateDef, flags: Dictionary[StringName, Variant]) -> String:
 	var key: String = CinematicService.caption_key(plate, flags)
 	return UiText.t(key, "") if UiText.has(key) else ""
+
+
+## QA-073 : ce que REVOIR doit savoir pour rejouer **cette** séquence telle
+## que vue (`ProfileService.cinematic_replays`) : planches retenues (ids, dans
+## l'ordre), fin, variante, monde (J31), acte et jour (pseudo-drapeaux de
+## `ctx`), et la valeur des seuls drapeaux que lisent les conditions des
+## planches (planche, légendes, figures) et des variantes du thème.
+func replay_record() -> Dictionary:
+	if def == null:
+		return {}
+	var names: Array[StringName] = []
+	for plate: PlateDef in def.plates:
+		if plate == null:
+			continue
+		condition_flags(plate.condition, names)
+		for entry: ConditionalKey in plate.captions:
+			if entry != null:
+				condition_flags(entry.condition, names)
+		for slot: FigureSlotDef in plate.figures:
+			if slot != null:
+				for entry: ConditionalKey in slot.memory_cases:
+					if entry != null:
+						condition_flags(entry.condition, names)
+	var world: String = ""
+	if def.is_epilogue():
+		world = str(GameState.epilogue_seed.get("world", ""))
+		if not def.worlds.has(StringName(world)) and not def.worlds.is_empty():
+			world = String(def.worlds[0])
+	var theme_path: String = AudioDirector.theme_path_for_world(StringName(world)) if not world.is_empty() \
+			else AudioDirector.theme_path_for_ending(ending, variant)
+	if not theme_path.is_empty() and ResourceLoader.exists(theme_path):
+		var theme: MusicThemeDef = load(theme_path) as MusicThemeDef
+		if theme != null:
+			for v: MusicThemeVariantDef in theme.variants:
+				if v != null:
+					condition_flags(v.condition, names)
+	var flags: Dictionary = {}
+	for flag: StringName in names:
+		if ctx.has(flag):
+			flags[String(flag)] = ctx[flag]
+	var ids: Array = []
+	for plate: PlateDef in plates:
+		if plate != null:
+			ids.append(String(plate.id))
+	return {"ending": String(ending), "variant": String(variant), "world": world,
+			"act": _ctx_number(CinematicService.FLAG_ACT_PREFIX, 3), "day": _ctx_number(CinematicService.FLAG_DAY_PREFIX, 0),
+			"plates": ids, "flags": flags}
+
+
+## Noms des drapeaux et jauges qu'une condition lit (sous-conditions comprises).
+static func condition_flags(condition: FlagCondition, out: Array[StringName]) -> void:
+	if condition == null:
+		return
+	var all_names: Array = []
+	all_names.append_array(condition.all_of)
+	all_names.append_array(condition.none_of)
+	all_names.append_array(condition.gauges_min.keys())
+	all_names.append_array(condition.gauges_max.keys())
+	for flag: Variant in all_names:
+		if not out.has(StringName(flag)):
+			out.append(StringName(flag))
+	for sub: Resource in condition.any_of:
+		condition_flags(sub as FlagCondition, out)
+
+
+## Nombre d'un pseudo-drapeau `cin_act_<n>` / `cin_day_<n>` de `ctx` (sinon `fallback`).
+func _ctx_number(prefix: String, fallback: int) -> int:
+	for key: StringName in ctx:
+		var text: String = String(key)
+		if text.begins_with(prefix) and text.trim_prefix(prefix).is_valid_int() and FlagCondition.is_flag_true(ctx, key):
+			return text.trim_prefix(prefix).to_int()
+	return fallback
 
 
 ## Durée totale aux réglages courants (carte de titre comprise) — M-14.
@@ -609,7 +684,7 @@ func _finish(was_skipped: bool) -> void:
 	skipped = was_skipped
 	_cancel_hold()
 	if record_seen and def != null:
-		ProfileService.record_cinematic_seen(save_dir, String(def.id))
+		ProfileService.record_cinematic_seen(save_dir, String(def.id), replay_record())
 	_closing = true
 	_kill_tweens()
 	_collect_preloads()
