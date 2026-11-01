@@ -1,6 +1,6 @@
 pkgbase = clearance-bin
 	pkgdesc = Cyberpunk identity-control game at the gate of a corporate orbital station (inspired by Papers, Please)
-	pkgver = 1.0.0
+	pkgver = 1.1.0
 	pkgrel = 1
 	url = https://clearance.cardormedia.com
 	arch = x86_64
@@ -29,9 +29,9 @@ pkgbase = clearance-bin
 	conflicts = clearance
 	options = !strip
 	options = !debug
-	source = CLEARANCE-1.0.0-linux.tar.gz::https://github.com/fs0ciety7000/clearance/releases/download/v1.0.0/CLEARANCE-1.0.0-linux.tar.gz
+	source = CLEARANCE-1.1.0-linux.tar.gz::https://github.com/fs0ciety7000/clearance/releases/download/v1.1.0/CLEARANCE-1.1.0-linux.tar.gz
 	source = clearance.desktop
-	sha256sums = 0000000000000000000000000000000000000000000000000000000000000000
+	sha256sums = 159c0d708915fd833c1df2b854475d8d7c024e58f0d54419ea9377f0f57ec191
 	sha256sums = 36c68639f0b286ebfa0017695a1f47e7a7dcf790953e4d98f8babf197a0fd881
 
 pkgname = clearance-bin

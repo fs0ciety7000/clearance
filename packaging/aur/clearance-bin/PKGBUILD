@@ -6,7 +6,7 @@
 # Publication : packaging/aur/README.md.
 
 pkgname=clearance-bin
-_relver=1.0.0
+_relver=1.1.0
 pkgver=${_relver//-/_}
 pkgrel=1
 pkgdesc="Cyberpunk identity-control game at the gate of a corporate orbital station (inspired by Papers, Please)"
@@ -28,7 +28,7 @@ source=("${_archive}.tar.gz::https://github.com/fs0ciety7000/clearance/releases/
         'clearance.desktop')
 # 1re somme : écrite par tools/update_aur.sh depuis la Release (des zéros = pas encore
 # mis à jour : makepkg échoue volontairement à la vérification).
-sha256sums=('0000000000000000000000000000000000000000000000000000000000000000'
+sha256sums=('159c0d708915fd833c1df2b854475d8d7c024e58f0d54419ea9377f0f57ec191'
             '36c68639f0b286ebfa0017695a1f47e7a7dcf790953e4d98f8babf197a0fd881')
 
 package() {
