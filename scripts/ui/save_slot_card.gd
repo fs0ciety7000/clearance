@@ -12,6 +12,10 @@
 ## M12 (lot C, I29) : partie terminée dont la fin ouvre l'épilogue (méta
 ## `epilogue_available`) → puce « ÉPILOGUE » (icône + texte), « · JOUÉ » si
 ## `epilogue_done` ; l'écran Charger ajoute l'action « JOUER « UN AN PLUS TARD » ».
+## M16 (D-232) : emplacement portant une **copie de conflit** (deux appareils
+## ont avancé) → bloc « DEUX VERSIONS » (puce ambre ⚠ + texte : jour, appareil
+## et date de l'autre version) ajouté par l'écran Charger (`add_conflict`),
+## avec les actions « GARDER CELLE-CI » / « GARDER L'AUTRE ».
 class_name SaveSlotCard
 extends PanelContainer
 
@@ -22,6 +26,9 @@ var slot: int = 0
 var meta: Dictionary = {}
 ## Rangée (colonne) des boutons d'action de l'écran.
 var actions: VBoxContainer = null
+## M16 : bloc « DEUX VERSIONS » (null sans conflit).
+var conflict_box: PanelContainer = null
+var _box: VBoxContainer = null
 
 
 static func make(p_slot: int, p_meta: Dictionary) -> SaveSlotCard:
@@ -69,7 +76,7 @@ static func is_meta_damaged(p_meta: Dictionary) -> bool:
 ## Emplacement de « Continuer » côté interface : `SaveService.latest_slot`,
 ## mais jamais un emplacement endommagé (partie active suivante la plus
 ## récente, même ordre que `latest_slot` : `saved_at`, `saved_unix_ms`,
-## `save_serial`), sinon `NO_SLOT`.
+## `save_tick` — `save_serial` avant M16), sinon `NO_SLOT`.
 static func continue_slot(dir: String = SaveService.DEFAULT_DIR) -> int:
 	var latest: int = SaveService.latest_slot(dir)
 	if latest == SaveService.NO_SLOT:
@@ -83,7 +90,7 @@ static func continue_slot(dir: String = SaveService.DEFAULT_DIR) -> int:
 		if m.is_empty() or is_meta_damaged(m) or str(m.get("status", SaveService.STATUS_ACTIVE)) != SaveService.STATUS_ACTIVE:
 			continue
 		var key: String = "%s|%015d|%09d" % [str(m.get("saved_at", "")), SaveService.as_int(m.get("saved_unix_ms", 0)),
-				SaveService.as_int(m.get("save_serial", 0))]
+				SaveService.save_tick(m)]
 		if best == SaveService.NO_SLOT or key > best_key:
 			best = SaveService.as_int(m.get("slot", SaveService.NO_SLOT))
 			best_key = key
@@ -97,6 +104,7 @@ func _build() -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var box: VBoxContainer = ScreenBase.vbox(DS.SPACE_3)
 	add_child(box)
+	_box = box
 	var head: HBoxContainer = ScreenBase.hbox(DS.SPACE_2)
 	box.add_child(head)
 	head.add_child(ScreenBase.eyebrow(UiText.tf("slot_title", [slot], "EMPLACEMENT %d"), Palette.TEXT_SECONDARY))
@@ -184,6 +192,40 @@ func _pair(grid: GridContainer, caption: String, value: String) -> void:
 	var v: Label = ScreenBase.wrapped(value, &"DataSmall", DS.TEXT_PRIMARY)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_child(v)
+
+
+## M16 : bloc « DEUX VERSIONS » au-dessus des actions — `copy` =
+## `SaveService.read_conflict` (méta de l'autre version, `origin`), `count`
+## = nombre de copies de l'emplacement.
+func add_conflict(copy: Dictionary, count: int = 1) -> PanelContainer:
+	conflict_box = ScreenBase.panel(&"ElevatedCard")
+	conflict_box.name = "Conflict"
+	var inner: VBoxContainer = ScreenBase.vbox(DS.SPACE_1)
+	conflict_box.add_child(inner)
+	inner.add_child(ScreenBase.chip(UiText.t("slot_conflict", "DEUX VERSIONS"), UiIcon.Kind.WARNING, Palette.STATE_AMBER))
+	var text: Label = ScreenBase.wrapped(conflict_text(copy), &"BodySmall", DS.TEXT_PRIMARY)
+	text.name = "ConflictText"
+	inner.add_child(text)
+	if count > 1:
+		inner.add_child(ScreenBase.label(UiText.plural("slot_conflict_more", count - 1, "+ %d autre copie", "+ %d autres copies"),
+				&"CaptionLabel"))
+	_box.add_child(conflict_box)
+	_box.move_child(conflict_box, actions.get_index())
+	return conflict_box
+
+
+## « Autre version : jour 04 · Deck · 01.11.2026 · 14:32 » (partie terminée : « fin »).
+static func conflict_text(copy: Dictionary) -> String:
+	var meta: Dictionary = copy.get("meta", {}) if copy.get("meta") is Dictionary else {}
+	var origin: Dictionary = copy.get("origin", {}) if copy.get("origin") is Dictionary else {}
+	var parts: PackedStringArray = [UiText.tf("slot_conflict_day", [SaveService.as_int(meta.get("current_day", 0))], "jour %02d")]
+	if str(meta.get("status", "")) == SaveService.STATUS_ENDED:
+		parts.append(UiText.t("slot_conflict_ended", "partie terminée"))
+	var device: String = str(origin.get("device", ""))
+	if not device.is_empty():
+		parts.append(device)
+	parts.append(format_saved_at(str(meta.get("saved_at", ""))))
+	return UiText.tf("slot_conflict_other", [" · ".join(parts)], "Autre version : %s")
 
 
 ## Bouton d'action ajouté à la carte (focus manette, cible ≥ 40 px).

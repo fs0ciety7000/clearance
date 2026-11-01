@@ -4278,3 +4278,117 @@ ui_speaker_quoted,"%s: ""%s"""
 val_no_employer,NO EMPLOYER
 sev_mrz_reader_note,R21 SUSPENDED · READER DOWN
 val_feline,(FELINE)
+online_agent_tag,Agent #%s
+online_state_connected,ONLINE · %s
+online_state_syncing,SYNCING…
+online_state_connecting,CONNECTING…
+online_state_offline,OFFLINE · LOCAL SAVES
+online_state_error,ACCOUNT: ERROR · OPTIONS › ACCOUNT
+online_state_expired,SESSION EXPIRED · OPTIONS › ACCOUNT
+online_state_conflict,TWO VERSIONS OF A GAME · SEE LOAD
+online_conflict_toast_title,TWO VERSIONS OF A GAME
+online_conflict_toast_body,Two devices moved the same game forward. Both are kept: choose in Load.
+online_err_network,Server unreachable. Your data stays on this device; we'll try again later.
+online_err_session_expired,Session expired: sign in again.
+online_err_email_invalid,Invalid email address.
+online_err_otp_invalid,Wrong or expired code.
+online_err_otp_locked,Too many tries for this code: ask for a new one.
+online_err_otp_missing,Ask for a code first.
+online_err_rate_limited,Too many requests. Wait a few minutes.
+online_err_api_version,The server needs a newer version of the game.
+online_err_quota,Online storage full: delete some games.
+online_err_too_large,Save too large for the cloud: it stays on this device.
+online_err_pseudo_invalid,"Name refused: 20 characters at most, letters, digits, space, _ . ' -"
+online_err_version_future,A cloud save comes from a newer version of the game: it was not loaded.
+online_err_server,The server refused the request.
+online_err_quiet,Nothing is sent during a shift.
+online_err_no_account,No account signed in.
+acct_section,ONLINE ACCOUNT
+acct_intro,"Optional. Cloud saves (PC, Steam Deck, browser), Night Watch leaderboard, ending statistics. Without an account, nothing leaves this device."
+acct_demo_note,Demo: its saves are synced apart from the full game's.
+acct_from_title,Sign in from the title screen.
+acct_sign_in,SIGN IN BY EMAIL…
+acct_signed_in_as,Signed in: %s
+acct_state_online,ONLINE
+acct_in_game,Nothing is sent during a shift: the evening save goes up afterwards. Account settings are on the title screen.
+acct_pseudo,Public name
+acct_pseudo_hint,"Shown on the Night Watch leaderboard. 20 characters at most; empty: ""Agent #tag""."
+acct_pseudo_save,SAVE
+acct_pseudo_saving,Saving your name…
+acct_pseudo_saved,Name saved.
+acct_auto_sync,Automatic sync
+acct_auto_sync_hint,"Download on the title screen, upload after each evening and when a game ends."
+acct_sync_title,Cloud saves
+acct_sync_now,SYNC NOW
+acct_sync_ok,Saves synced.
+acct_sync_conflict,Two versions of a game: choose which one to keep in Load.
+acct_last_sync,Last sync: %s
+acct_last_sync_never,Never synced on this device.
+acct_leave,This device
+acct_sign_out,SIGN OUT
+acct_sign_out_hint,Signing out keeps all data on this device.
+acct_signed_out,Signed out. Your data stays on this device.
+acct_signed_in_ok,Signed in. Syncing.
+acct_delete_title,Delete the account
+acct_delete_hint,"Erases the account, online saves, scores and endings from the server. Data on this device stays."
+acct_delete,DELETE ACCOUNT AND DATA…
+acct_delete_eyebrow,ONLINE ACCOUNT · DELETION
+acct_delete_q1,Delete the account and all its online data?
+acct_delete_b1,"Cloud saves, Night Watch scores and recorded endings will be erased from the server. Games on this device stay."
+acct_delete_continue,CONTINUE…
+acct_delete_q2,Delete for good?
+acct_delete_b2,This cannot be undone. A new account starts from scratch.
+acct_delete_final,DELETE FOR GOOD
+acct_deleting,Deleting…
+acct_deleted,Account and online data deleted. Data on this device stays.
+acct_signin_eyebrow,ONLINE ACCOUNT · SIGN IN
+acct_signin_title,Get a code by email
+acct_signin_body,"No password: a 6-digit code, valid for 10 minutes. The account is created the first time you sign in."
+acct_email_label,EMAIL ADDRESS
+acct_email_placeholder,agent@example.org
+acct_keyboard,KEYBOARD
+acct_keyboard_hint,Steam Deck: STEAM + X also opens the keyboard.
+acct_send_code,SEND ME A CODE
+acct_sending,Sending the code…
+acct_code_sent,Code sent. It stays valid for 10 minutes.
+acct_code_title,Enter the code you received
+acct_code_body,Sent to %s. Check your spam folder too.
+acct_code_label,6-DIGIT CODE
+acct_code_pad_hint,change the digit · or type / paste the code
+acct_code_incomplete,The code has %d digits.
+acct_verify,CONFIRM
+acct_verifying,Checking…
+acct_resend,RESEND CODE
+acct_change_email,OTHER ADDRESS
+lb_title,ONLINE LEADERBOARD
+lb_daily_title,LEADERBOARD · DAILY SEED
+lb_col_rank,RANK
+lb_col_agent,OFFICER
+lb_col_score,SCORE
+lb_col_errors,ERRORS
+lb_you,YOU
+lb_my_rank,Your rank: %d / %d
+lb_total_one,%d officer ranked
+lb_total,%d officers ranked
+lb_no_account,Online leaderboard: sign in from Options › Account. Your local records stay here.
+lb_loading,Loading the leaderboard…
+lb_offline_none,Offline: local records only.
+lb_offline_cached,offline: last known leaderboard
+lb_empty,Nobody has played this seed yet. The first score sets the leaderboard.
+dos_end_percent,%s of officers
+dos_end_percent_low,Under 1% of officers
+slot_conflict,TWO VERSIONS
+slot_conflict_other,Other version: %s
+slot_conflict_day,day %02d
+slot_conflict_ended,game over
+slot_conflict_more_one,+ %d other copy
+slot_conflict_more,+ %d other copies
+load_conflict_eyebrow,SYNC · TWO VERSIONS
+load_keep_this,KEEP THIS ONE
+load_keep_other,KEEP THE OTHER · DAY %02d
+load_keep_other_accept,KEEP THE OTHER
+load_keep_this_title,Keep the version shown in slot %d?
+load_keep_this_body,%s — it will be deleted from this device.
+load_keep_other_title,Use the other version in slot %d?
+load_keep_other_body,"The version shown (day %02d) will be replaced on this device, then in the cloud at the next sync."
+acct_resend_wait,RESEND IN %d s

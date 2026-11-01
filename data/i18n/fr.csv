@@ -4278,3 +4278,117 @@ ui_speaker_quoted,%s : « %s »
 val_no_employer,SANS EMPLOYEUR
 sev_mrz_reader_note,R21 SUSPENDUE · LECTEUR HS
 val_feline,(FÉLIN)
+online_agent_tag,Agent·e #%s
+online_state_connected,EN LIGNE · %s
+online_state_syncing,SYNCHRONISATION…
+online_state_connecting,CONNEXION…
+online_state_offline,HORS LIGNE · SAUVEGARDES LOCALES
+online_state_error,COMPTE : ERREUR · OPTIONS › COMPTE
+online_state_expired,SESSION EXPIRÉE · OPTIONS › COMPTE
+online_state_conflict,DEUX VERSIONS D'UNE PARTIE · VOIR CHARGER
+online_conflict_toast_title,DEUX VERSIONS D'UNE PARTIE
+online_conflict_toast_body,Deux appareils ont avancé la même partie. Les deux sont gardées : choisissez dans Charger.
+online_err_network,Serveur injoignable. Vos données restent sur cet appareil ; nouvel essai plus tard.
+online_err_session_expired,Session expirée : reconnectez-vous.
+online_err_email_invalid,Adresse e-mail invalide.
+online_err_otp_invalid,Code incorrect ou expiré.
+online_err_otp_locked,Trop d'essais pour ce code : demandez-en un nouveau.
+online_err_otp_missing,Demandez d'abord un code.
+online_err_rate_limited,Trop de demandes. Patientez quelques minutes.
+online_err_api_version,Le serveur demande une version plus récente du jeu.
+online_err_quota,Espace en ligne plein : supprimez des parties.
+online_err_too_large,Sauvegarde trop volumineuse pour le cloud : elle reste sur cet appareil.
+online_err_pseudo_invalid,"Pseudo refusé : 20 caractères au plus, lettres, chiffres, espace, _ . ' -"
+online_err_version_future,Une sauvegarde du cloud vient d'une version plus récente du jeu : elle n'a pas été chargée.
+online_err_server,Le serveur a refusé la demande.
+online_err_quiet,"Pendant un shift, rien n'est envoyé."
+online_err_no_account,Aucun compte connecté.
+acct_section,COMPTE EN LIGNE
+acct_intro,"Facultatif. Sauvegardes dans le cloud (PC, Steam Deck, navigateur), classement de la Garde de nuit, statistiques des fins. Sans compte, rien ne quitte cet appareil."
+acct_demo_note,Démo : ses sauvegardes sont synchronisées à part de celles du jeu complet.
+acct_from_title,Connexion depuis l'écran titre.
+acct_sign_in,SE CONNECTER PAR E-MAIL…
+acct_signed_in_as,Connecté·e : %s
+acct_state_online,EN LIGNE
+acct_in_game,Rien n'est envoyé pendant un shift : la sauvegarde du soir part ensuite. Réglages du compte depuis l'écran titre.
+acct_pseudo,Pseudo public
+acct_pseudo_hint,Affiché au classement de la Garde. 20 caractères au plus ; vide : « Agent·e #tag ».
+acct_pseudo_save,ENREGISTRER
+acct_pseudo_saving,Enregistrement du pseudo…
+acct_pseudo_saved,Pseudo enregistré.
+acct_auto_sync,Synchronisation automatique
+acct_auto_sync_hint,"Tirage à l'écran titre, envoi après chaque soirée et à la fin d'une partie."
+acct_sync_title,Sauvegardes dans le cloud
+acct_sync_now,SYNCHRONISER MAINTENANT
+acct_sync_ok,Sauvegardes synchronisées.
+acct_sync_conflict,Deux versions d'une partie : choisissez laquelle garder dans Charger.
+acct_last_sync,Dernière synchronisation : %s
+acct_last_sync_never,Jamais synchronisé sur cet appareil.
+acct_leave,Cet appareil
+acct_sign_out,SE DÉCONNECTER
+acct_sign_out_hint,Se déconnecter garde toutes les données sur cet appareil.
+acct_signed_out,Déconnecté·e. Les données restent sur cet appareil.
+acct_signed_in_ok,Connecté·e. Synchronisation en cours.
+acct_delete_title,Supprimer le compte
+acct_delete_hint,"Efface du serveur le compte, les sauvegardes en ligne, les scores et les fins. Les données de cet appareil restent."
+acct_delete,SUPPRIMER LE COMPTE ET LES DONNÉES…
+acct_delete_eyebrow,COMPTE EN LIGNE · SUPPRESSION
+acct_delete_q1,Supprimer le compte et toutes ses données en ligne ?
+acct_delete_b1,"Sauvegardes dans le cloud, scores de Garde et fins enregistrées seront effacés du serveur. Les parties de cet appareil restent."
+acct_delete_continue,CONTINUER…
+acct_delete_q2,Suppression définitive ?
+acct_delete_b2,Impossible à annuler. Un nouveau compte repartira de zéro.
+acct_delete_final,SUPPRIMER DÉFINITIVEMENT
+acct_deleting,Suppression en cours…
+acct_deleted,Compte et données en ligne supprimés. Les données de cet appareil restent.
+acct_signin_eyebrow,COMPTE EN LIGNE · CONNEXION
+acct_signin_title,Recevoir un code par e-mail
+acct_signin_body,"Pas de mot de passe : un code à 6 chiffres, valable 10 minutes. Le compte est créé à la première connexion."
+acct_email_label,ADRESSE E-MAIL
+acct_email_placeholder,agent@exemple.org
+acct_keyboard,CLAVIER
+acct_keyboard_hint,Steam Deck : STEAM + X ouvre aussi le clavier.
+acct_send_code,RECEVOIR UN CODE
+acct_sending,Envoi du code…
+acct_code_sent,Code envoyé. Il reste valable 10 minutes.
+acct_code_title,Saisir le code reçu
+acct_code_body,Envoyé à %s. Vérifiez aussi les indésirables.
+acct_code_label,CODE À 6 CHIFFRES
+acct_code_pad_hint,changer le chiffre · ou taper / coller le code
+acct_code_incomplete,Le code a %d chiffres.
+acct_verify,VALIDER
+acct_verifying,Vérification…
+acct_resend,RENVOYER LE CODE
+acct_change_email,AUTRE ADRESSE
+lb_title,CLASSEMENT EN LIGNE
+lb_daily_title,CLASSEMENT · GRAINE DU JOUR
+lb_col_rank,RANG
+lb_col_agent,AGENT
+lb_col_score,SCORE
+lb_col_errors,ERREURS
+lb_you,VOUS
+lb_my_rank,Votre rang : %d / %d
+lb_total_one,%d agent classé
+lb_total,%d agents classés
+lb_no_account,Classement en ligne : connectez-vous dans Options › Compte. Vos records locaux restent ici.
+lb_loading,Lecture du classement…
+lb_offline_none,Hors ligne : records locaux seulement.
+lb_offline_cached,hors ligne : dernier classement connu
+lb_empty,Personne n'a encore joué cette graine. Le premier score fixe le classement.
+dos_end_percent,%s des agents
+dos_end_percent_low,Moins de 1 % des agents
+slot_conflict,DEUX VERSIONS
+slot_conflict_other,Autre version : %s
+slot_conflict_day,jour %02d
+slot_conflict_ended,partie terminée
+slot_conflict_more_one,+ %d autre copie
+slot_conflict_more,+ %d autres copies
+load_conflict_eyebrow,SYNCHRONISATION · DEUX VERSIONS
+load_keep_this,GARDER CELLE-CI
+load_keep_other,GARDER L'AUTRE · JOUR %02d
+load_keep_other_accept,GARDER L'AUTRE
+load_keep_this_title,Garder la version affichée de l'emplacement %d ?
+load_keep_this_body,%s — elle sera supprimée de cet appareil.
+load_keep_other_title,Reprendre l'autre version dans l'emplacement %d ?
+load_keep_other_body,"La version affichée (jour %02d) sera remplacée sur cet appareil, puis dans le cloud à la prochaine synchronisation."
+acct_resend_wait,RENVOYER DANS %d s

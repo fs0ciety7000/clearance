@@ -107,7 +107,8 @@ const SCHEMA: Dictionary[String, int] = {
 }
 
 static var _last_day_cache: int = 0
-## Compteur d'écritures du processus (départage deux sauvegardes de la même ms).
+## Compteur d'écritures du processus (départage deux sauvegardes de la même
+## ms : `save_tick` de la méta depuis M16).
 static var _save_serial: int = 0
 ## Dossier qui remplace `DEFAULT_DIR` (`use_root`), vide sinon.
 static var _root: String = ""
@@ -309,9 +310,15 @@ static func save_slot(data: Dictionary, slot: int = DEFAULT_SLOT, dir: String = 
 		if later > day:
 			remove_with_fallbacks(snapshot_path(slot, later, dir))
 	var meta: Dictionary = build_meta(payload)
+	# M16 (D-232) : `save_serial` = nombre d'écritures **de cet emplacement**
+	# (la méta précédente compte, même écrite par un autre appareil puis
+	# tirée) — il départage deux versions divergentes (la plus avancée
+	# gagne). Le départage de « Continuer » dans la même milliseconde passe
+	# par `save_tick`, compteur du processus (avant M16 : `save_serial`).
 	_save_serial += 1
 	meta["saved_unix_ms"] = int(Time.get_unix_time_from_system() * 1000.0) if saved_at.is_empty() else 0
-	meta["save_serial"] = _save_serial
+	meta["save_serial"] = slot_serial(slot, dir) + 1
+	meta["save_tick"] = _save_serial
 	return write_atomic(meta_path(slot, dir), JSON.stringify(meta, "\t", true))
 
 
@@ -540,12 +547,19 @@ static func _set_meta_flag(slot: int, key: String, value: bool, dir: String) -> 
 	return write_atomic(meta_path(slot, dir), JSON.stringify(meta, "\t", true))
 
 
-## Vide un emplacement (état, instantanés, méta) ; le profil n'est pas touché.
+## Vide un emplacement (état, instantanés, méta ; M16 : copies de conflit
+## `conflict_*/` comprises) ; le profil n'est pas touché.
 static func delete_slot(slot: int, dir: String = DEFAULT_DIR) -> void:
-	var path: String = slot_dir(slot, dir)
+	remove_tree(slot_dir(slot, dir))
+
+
+## Supprime un dossier et tout son contenu (sous-dossiers compris).
+static func remove_tree(path: String) -> void:
 	var folder: DirAccess = DirAccess.open(path)
 	if folder == null:
 		return
+	for sub: String in folder.get_directories():
+		remove_tree(path.path_join(sub))
 	for file: String in folder.get_files():
 		DirAccess.remove_absolute(path.path_join(file))
 	DirAccess.remove_absolute(path)
@@ -641,8 +655,13 @@ static func _rename_aside(from: String, to: String) -> void:
 
 
 static func _recency_key(meta: Dictionary) -> String:
-	return "%s|%015d|%09d" % [str(meta.get("saved_at", "")), as_int(meta.get("saved_unix_ms", 0)),
-			as_int(meta.get("save_serial", 0))]
+	return "%s|%015d|%09d" % [str(meta.get("saved_at", "")), as_int(meta.get("saved_unix_ms", 0)), save_tick(meta)]
+
+
+## Départage de « Continuer » dans la même milliseconde : `save_tick`
+## (compteur du processus, M16), sinon `save_serial` (méta d'avant M16).
+static func save_tick(meta: Dictionary) -> int:
+	return as_int(meta.get("save_tick", meta.get("save_serial", 0)))
 
 
 static func _truthy(value: Variant) -> bool:
@@ -795,3 +814,164 @@ static func validate(data: Dictionary, max_day: int = -1) -> String:
 	if last > 0 and day > last:
 		return "jour %d au-delà du dernier jour (%d)" % [day, last]
 	return ""
+
+
+# --- M16 : synchronisation en ligne (D-232, ARCHITECTURE §18) ---------------------------
+#
+# Crochets **ajoutés** pour `SaveSync` / `OnlineClient` (scripts/online) et
+# l'écran Charger : lecture et écriture **brutes** d'un emplacement (aucune
+# migration : le fichier tel quel, comme le serveur le stocke) et copies de
+# conflit `slot_N/conflict_<horodatage>/` (jamais envoyées, jamais listées
+# comme instantanés ; supprimées avec l'emplacement).
+
+## Préfixe des dossiers de copie de conflit dans un emplacement.
+const CONFLICT_PREFIX: String = "conflict_"
+## Fiche d'origine d'une copie de conflit (appareil, série, horodatage).
+const CONFLICT_ORIGIN_FILE: String = "origin.json"
+
+
+## `save_serial` de la méta d'un emplacement (0 si absente ou illisible).
+static func slot_serial(slot: int, dir: String = DEFAULT_DIR) -> int:
+	return as_int(read_json(meta_path(slot, dir)).get("save_serial", 0))
+
+
+## Fichiers bruts d'un emplacement : `{meta, current, snapshots: {jour: …}}`
+## (dictionnaires JSON tels que lus ; fichiers illisibles omis, instantané
+## `day_31.json` d'épilogue compris). Vide si l'emplacement n'a ni méta ni état.
+static func read_slot_files(slot: int, dir: String = DEFAULT_DIR) -> Dictionary:
+	return _read_files_in(slot_dir(slot, dir))
+
+
+static func _read_files_in(folder_path: String) -> Dictionary:
+	var meta: Dictionary = read_json(folder_path.path_join(META_FILE))
+	var current: Dictionary = read_json(folder_path.path_join(CURRENT_FILE))
+	var snapshots: Dictionary = {}
+	var folder: DirAccess = DirAccess.open(folder_path)
+	if folder != null:
+		for file: String in folder.get_files():
+			var name: String = file.trim_suffix(BACKUP_SUFFIX).trim_suffix(TMP_SUFFIX)
+			if not (name.begins_with("day_") and name.ends_with(".json")):
+				continue
+			var number: String = name.trim_prefix("day_").trim_suffix(".json")
+			if not number.is_valid_int() or snapshots.has(number.to_int()):
+				continue
+			var data: Dictionary = read_json(folder_path.path_join(name))
+			if not data.is_empty():
+				snapshots[number.to_int()] = data
+	if meta.is_empty() and current.is_empty():
+		return {}
+	return {"meta": meta, "current": current, "snapshots": snapshots}
+
+
+## Remplace le contenu d'un emplacement par `files` (`read_slot_files`) :
+## instantanés, `current.json`, puis `meta.json` **en dernier** ; les
+## instantanés locaux absents de `files` sont supprimés (une seule ligne de
+## temps). Les copies de conflit ne sont pas touchées. Refuse un jeu sans méta
+## ou sans état courant.
+static func write_slot_files(slot: int, files: Dictionary, dir: String = DEFAULT_DIR) -> Error:
+	return _write_files_in(slot_dir(slot, dir), files)
+
+
+static func _write_files_in(folder_path: String, files: Dictionary) -> Error:
+	var meta: Dictionary = files.get("meta", {}) if files.get("meta") is Dictionary else {}
+	var current: Dictionary = files.get("current", {}) if files.get("current") is Dictionary else {}
+	if meta.is_empty() or current.is_empty():
+		return ERR_INVALID_DATA
+	var snapshots: Dictionary = files.get("snapshots", {}) if files.get("snapshots") is Dictionary else {}
+	var keep: Array[int] = []
+	for key: Variant in snapshots:
+		var day: int = as_int(key) if not key is String else (key as String).to_int()
+		if day < 1 or day > EPILOGUE_DAY or not snapshots[key] is Dictionary:
+			continue
+		keep.append(day)
+		var err: Error = write_atomic(folder_path.path_join("day_%02d.json" % day), JSON.stringify(snapshots[key], "\t", true))
+		if err != OK:
+			return err
+	var folder: DirAccess = DirAccess.open(folder_path)
+	if folder != null:
+		for file: String in folder.get_files():
+			var name: String = file.trim_suffix(BACKUP_SUFFIX).trim_suffix(TMP_SUFFIX)
+			if name.begins_with("day_") and name.ends_with(".json"):
+				var number: String = name.trim_prefix("day_").trim_suffix(".json")
+				if number.is_valid_int() and not keep.has(number.to_int()):
+					DirAccess.remove_absolute(folder_path.path_join(file))
+	var err_current: Error = write_atomic(folder_path.path_join(CURRENT_FILE), JSON.stringify(current, "\t", true))
+	if err_current != OK:
+		return err_current
+	return write_atomic(folder_path.path_join(META_FILE), JSON.stringify(meta, "\t", true))
+
+
+## Copies de conflit d'un emplacement (noms de dossier `conflict_<horodatage>`),
+## de la plus ancienne à la plus récente.
+static func list_conflicts(slot: int, dir: String = DEFAULT_DIR) -> PackedStringArray:
+	var names: PackedStringArray = []
+	var folder: DirAccess = DirAccess.open(slot_dir(slot, dir))
+	if folder == null:
+		return names
+	for sub: String in folder.get_directories():
+		if sub.begins_with(CONFLICT_PREFIX) and FileAccess.file_exists(slot_dir(slot, dir).path_join(sub).path_join(META_FILE)):
+			names.append(sub)
+	names.sort()
+	return names
+
+
+static func has_conflict(slot: int, dir: String = DEFAULT_DIR) -> bool:
+	return not list_conflicts(slot, dir).is_empty()
+
+
+## Écrit une copie de conflit (`files` : `read_slot_files`) dans
+## `slot_N/conflict_<stamp>/`, avec sa fiche d'origine (`origin` : appareil,
+## série, horodatage, `source` = `remote` | `local`). Renvoie le nom du
+## dossier, vide en cas d'échec.
+static func write_conflict(slot: int, files: Dictionary, origin: Dictionary = {}, stamp: String = "",
+		dir: String = DEFAULT_DIR) -> String:
+	if stamp.is_empty():
+		stamp = Time.get_datetime_string_from_system(true).replace("-", "").replace(":", "")
+	var name: String = CONFLICT_PREFIX + stamp
+	var n: int = 1
+	while DirAccess.dir_exists_absolute(slot_dir(slot, dir).path_join(name)):
+		n += 1
+		name = "%s%s_%d" % [CONFLICT_PREFIX, stamp, n]
+	var path: String = slot_dir(slot, dir).path_join(name)
+	if _write_files_in(path, files) != OK:
+		remove_tree(path)
+		return ""
+	var info: Dictionary = origin.duplicate(true)
+	info["created_unix_ms"] = int(Time.get_unix_time_from_system() * 1000.0)
+	write_atomic(path.path_join(CONFLICT_ORIGIN_FILE), JSON.stringify(info, "\t", true))
+	return name
+
+
+## Fichiers d'une copie de conflit (comme `read_slot_files`) + `origin`.
+static func read_conflict(slot: int, name: String, dir: String = DEFAULT_DIR) -> Dictionary:
+	var path: String = slot_dir(slot, dir).path_join(name)
+	var files: Dictionary = _read_files_in(path)
+	if not files.is_empty():
+		files["origin"] = read_json(path.path_join(CONFLICT_ORIGIN_FILE))
+	return files
+
+
+## « Garder celle-ci » : la copie de conflit est supprimée (choix du joueur).
+static func discard_conflict(slot: int, name: String, dir: String = DEFAULT_DIR) -> void:
+	if name.begins_with(CONFLICT_PREFIX):
+		remove_tree(slot_dir(slot, dir).path_join(name))
+
+
+## « Garder l'autre » : la copie de conflit remplace l'emplacement (choix du
+## joueur ; la version écartée est supprimée), série relevée au-dessus des
+## deux et `saved_unix_ms` = maintenant (elle l'emporte à la prochaine
+## synchronisation). La copie est ensuite retirée.
+static func adopt_conflict(slot: int, name: String, dir: String = DEFAULT_DIR) -> Error:
+	var files: Dictionary = read_conflict(slot, name, dir)
+	if files.is_empty():
+		return ERR_DOES_NOT_EXIST
+	var meta: Dictionary = files["meta"]
+	_save_serial += 1
+	meta["save_serial"] = maxi(slot_serial(slot, dir), as_int(meta.get("save_serial", 0))) + 1
+	meta["save_tick"] = _save_serial
+	meta["saved_unix_ms"] = int(Time.get_unix_time_from_system() * 1000.0)
+	files.erase("origin")
+	var err: Error = write_slot_files(slot, files, dir)
+	if err == OK:
+		discard_conflict(slot, name, dir)
+	return err

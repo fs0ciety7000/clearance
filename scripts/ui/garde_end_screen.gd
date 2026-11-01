@@ -6,6 +6,10 @@
 ## Actions : REJOUER CETTE GARDE (focus) · NOUVELLE GRAINE · COPIER LE CODE ·
 ## RETOUR. Ⓑ / Échap = RETOUR (titre). Choix émis par `finished` :
 ## `&"replay"`, `&"new_seed"`, `&"title"`.
+## M16 (D-233) : à l'ouverture, le score part au classement (compte
+## seulement ; hors ligne : en file, envoyé plus tard — `OnlineService.submit_garde`)
+## et le **classement en ligne** de la graine s'affiche sous le code à
+## partager (top 10, rang du joueur).
 class_name GardeEndScreen
 extends ScreenBase
 
@@ -21,6 +25,8 @@ var new_button: Button = null
 var copy_button: Button = null
 var back_button: Button = null
 var toasts: ToastStack = null
+## M16 : classement en ligne de la graine jouée.
+var leaderboard: LeaderboardView = null
 
 
 func setup(p_record: Dictionary, p_badges: Dictionary = {}, p_rule_titles: Dictionary = {}) -> void:
@@ -38,6 +44,9 @@ func default_focus() -> Control:
 
 
 func _build() -> void:
+	if not record.is_empty() and not code().is_empty():
+		# M16 : score au classement (compte seulement, file d'envoi hors ligne).
+		OnlineService.submit_garde(record, badges.get("first_try", false) == true)
 	var root: VBoxContainer = ScreenBase.vbox(DS.SPACE_5)
 	root_box().add_child(root)
 	var top: HBoxContainer = ScreenBase.hbox(DS.SPACE_3)
@@ -116,6 +125,9 @@ func _score_column() -> Control:
 	share_box.add_child(code_label)
 	share_box.add_child(ScreenBase.wrapped(UiText.t("garde_share_hint", "Mêmes passagers, mêmes directives : comparez vos scores."), &"CaptionLabel"))
 	col.add_child(share)
+	if not code().is_empty():
+		leaderboard = LeaderboardView.make(code(), SaveService.as_int(record.get("garde_version", 1), 1))
+		col.add_child(leaderboard)
 	return col
 
 

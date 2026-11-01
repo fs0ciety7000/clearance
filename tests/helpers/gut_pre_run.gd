@@ -11,6 +11,8 @@
 ## sauvegardes ; les dossiers des processus terminés sont supprimés au départ.
 ## M15 : langue fixée au français (valeur de session), quelle que soit la
 ## langue du système.
+## M16 : le service en ligne passe sur un **faux serveur** (jamais le réseau)
+## et sur les fichiers du dossier de test (aucun compte : aucune requête).
 extends GutHookScript
 
 const TEST_RUNS_ROOT: String = "user://test_runs"
@@ -31,6 +33,7 @@ func run() -> void:
 	# système (défaut du réglage `language`) ne doit pas la faire basculer.
 	Settings.set_session_value(Settings.KEY_LANGUAGE, Localization.LANG_FR)
 	SaveService.use_root(root.path_join("saves"))
+	OnlineService.use_transport(FakeOnlineServer.new(), SaveService.DEFAULT_DIR)
 
 
 ## Supprime les dossiers d'exécutions dont le processus n'existe plus.
