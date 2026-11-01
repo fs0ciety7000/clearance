@@ -17,6 +17,7 @@ ENV SITE_URL=$SITE_URL PUBLIC_DOWNLOAD_URL=$PUBLIC_DOWNLOAD_URL PUBLIC_VERSION=$
     ASTRO_TELEMETRY_DISABLED=1
 # L'archive contient un dossier racine (CLEARANCE-<version>-web/) : on copie le dossier qui
 # porte index.html directement dans public/play/, et le build échoue si index.html manque.
+# Téléchargement par Node (le wget busybox de l'image ne gère pas HTTPS).
 # Valeur nettoyée (guillemets, espaces, préfixe « WEB_DEMO_ZIP_URL= » collé par erreur) et
 # vérifiée avant le téléchargement, avec un message clair si elle est invalide.
 RUN if [ -n "$WEB_DEMO_ZIP_URL" ]; then \
@@ -24,7 +25,8 @@ RUN if [ -n "$WEB_DEMO_ZIP_URL" ]; then \
       case "$url" in http://*|https://*) ;; \
         *) echo "WEB_DEMO_ZIP_URL invalide : doit commencer par https:// (reçu : « $url »)" >&2; exit 1 ;; \
       esac; \
-      mkdir -p public/play /tmp/webzip && wget -qO /tmp/web.zip "$url" \
+      mkdir -p public/play /tmp/webzip \
+      && WEB_URL="$url" node -e "fetch(process.env.WEB_URL).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer()}).then(b=>require('fs').writeFileSync('/tmp/web.zip',Buffer.from(b))).catch(e=>{console.error('Téléchargement de WEB_DEMO_ZIP_URL impossible : '+e.message);process.exit(1)})" \
       && unzip -qo /tmp/web.zip -d /tmp/webzip \
       && src="$(dirname "$(find /tmp/webzip -maxdepth 2 -name index.html | head -n 1)")" \
       && cp -a "$src"/. public/play/ && rm -rf /tmp/web.zip /tmp/webzip \
