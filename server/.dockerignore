@@ -1,0 +1,6 @@
+# Seuls pb_migrations/, pb_hooks/ et docker-entrypoint.sh entrent dans l'image.
+# dev_hooks/ (mode dev OTP) ne doit JAMAIS y entrer.
+dev_hooks/
+tests/
+pb_data/
+*.md
