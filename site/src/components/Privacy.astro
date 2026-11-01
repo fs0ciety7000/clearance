@@ -5,7 +5,6 @@ import Nav from './Nav.astro';
 import Footer from './Footer.astro';
 import Icon from './Icon.astro';
 import { t, homePath, privacyPath, type Lang } from '../lib/i18n';
-import { REPO_URL } from '../config';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const all = t(lang);
@@ -49,7 +48,7 @@ const sections = p.sections as Section[];
               {s.list && <ul class="ticks">{s.list.map((x) => <li>{x}</li>)}</ul>}
               {s.after && <p class="after">{s.after}</p>}
               {s.id === 'contact' && (
-                <a class="btn btn-secondary" href={`${REPO_URL}/issues`} rel="noopener"><Icon name="ext" size={18} />{p.contactCta}</a>
+                <a class="btn btn-secondary" href="mailto:hello@cardormedia.com"><Icon name="ext" size={18} />{p.contactCta}</a>
               )}
             </section>
           ))}

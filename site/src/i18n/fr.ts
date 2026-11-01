@@ -346,7 +346,7 @@ const fr = {
       { key: 'logo-png', label: 'Icône — PNG', meta: '1024 × 1024' },
     ],
     shotsLabel: 'Capture — PNG',
-    contact: 'Contact presse : ouvrez une issue sur le dépôt GitHub du projet.',
+    contact: 'Contact presse : hello@cardormedia.com',
   },
   credits: {
     label: '12 — Crédits & licences',
@@ -497,11 +497,11 @@ const fr = {
         id: 'contact',
         title: 'Questions et demandes',
         body: [
-          'Pour toute question ou demande (accès, rectification), ouvrez une issue sur le dépôt GitHub du projet. N’y indiquez pas votre adresse e-mail : les issues sont publiques.',
+          'Pour toute question ou demande concernant vos données (accès, rectification, suppression), écrivez à hello@cardormedia.com depuis l’adresse liée à votre compte.',
         ],
       },
     ],
-    contactCta: 'Dépôt GitHub du projet',
+    contactCta: 'hello@cardormedia.com',
     site: 'Ce site, lui, ne dépose aucun cookie, n’utilise aucun traceur et ne communique pas avec le serveur du jeu.',
     back: 'Retour à l’accueil',
   },

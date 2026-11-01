@@ -348,7 +348,7 @@ const en: Dict = {
       { key: 'logo-png', label: 'Icon — PNG', meta: '1024 × 1024' },
     ],
     shotsLabel: 'Screenshot — PNG',
-    contact: 'Press contact: open an issue on the project’s GitHub repository.',
+    contact: 'Press contact: hello@cardormedia.com',
   },
   credits: {
     label: '12 — Credits & licenses',
@@ -499,11 +499,11 @@ const en: Dict = {
         id: 'contact',
         title: 'Questions and requests',
         body: [
-          'For any question or request (access, correction), open an issue on the project’s GitHub repository. Do not include your e-mail address: issues are public.',
+          'For any question or request about your data (access, correction, deletion), write to hello@cardormedia.com from the address linked to your account.',
         ],
       },
     ],
-    contactCta: 'Project GitHub repository',
+    contactCta: 'hello@cardormedia.com',
     site: 'This website itself sets no cookies, uses no tracking and does not talk to the game server.',
     back: 'Back to home',
   },
