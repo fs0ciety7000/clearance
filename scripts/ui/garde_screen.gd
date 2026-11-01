@@ -10,6 +10,9 @@
 ##   garde » si `garde_version` diffère), statistiques.
 ## Ⓑ / Échap : retour au titre (`finished(&"back")`). `start_requested(code)` :
 ## le titre lance la garde (`Campaign.start_garde`).
+## M16 (D-233) : sous les records, **classement en ligne** de la graine du jour
+## (`LeaderboardView` : top 10 et rang du joueur ; sans compte ou hors ligne,
+## les records locaux restent seuls).
 class_name GardeScreen
 extends ScreenBase
 
@@ -33,6 +36,8 @@ var random_button: Button = null
 var back_button: Button = null
 ## Code libre canonique saisi (vide si invalide).
 var free_code: String = ""
+## M16 : classement en ligne de la graine du jour.
+var leaderboard: LeaderboardView = null
 var _status_label: Label = null
 var _status_icon: UiIcon = null
 
@@ -65,6 +70,8 @@ func _build() -> void:
 	left.add_child(_daily_card())
 	left.add_child(_free_card())
 	var right: VBoxContainer = _records()
+	leaderboard = LeaderboardView.make(daily_code, current_version(), UiText.t("lb_daily_title", "CLASSEMENT · GRAINE DU JOUR"))
+	right.add_child(leaderboard)
 	right.custom_minimum_size.x = RECORDS_WIDTH
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(right)

@@ -6,7 +6,7 @@ Jeu 3D stylisé cyberpunk inspiré de *Papers, Please*, développé avec **Godot
 
 ## État du projet
 
-**Version 1.0.0 — jeu complet (jours 1 à 30, épilogue, 10 fins, français et anglais, démo J1–J5 et version Web de la démo).** Jalons livrés : M1 Fondations · M2 Documents & règles · M3 Générateur & apparences · M4 Interface de comparaison + guichet 3D · M5 Boucle de jour (scoring, soirée, sauvegarde) · M6 Passager final (Kenney + Quaternius) et audio · M7 Jours 4–10 (détention, objets glissés, avis de recherche, Lucioles, soirées à choix, fins) · QA (17 bugs corrigés) · Exports Windows / macOS / Linux · Décor définitif du guichet et personnages optimisés · Acte II J11–J20 (v0.9.0) · Acte III J21–J30 (v0.10.0) · M11 Confort : sauvegardes à emplacements, mode Récit, manette, accessibilité, tutoriel (v0.11.0) · M12 Rejouabilité : épilogue J31, Garde de nuit, événements de station, échos, Dossier de l'agent (v0.12.0) · M13 Gameplay : interrogatoire à contradictions, fouille holographique, améliorations du guichet (v0.13.0) · M14 Ambiance : musique dynamique, cinématiques de fin illustrées, hall vivant, portraits (v0.14.0) · M15 Monde : version anglaise, démo J1–J5, version Web de la démo (v0.15.0).
+**Version 1.1.0 — jeu complet (jours 1 à 30, épilogue, 10 fins, français et anglais, démo J1–J5 et version Web de la démo), compte en ligne facultatif et installateurs.** Jalons livrés : M1 Fondations · M2 Documents & règles · M3 Générateur & apparences · M4 Interface de comparaison + guichet 3D · M5 Boucle de jour (scoring, soirée, sauvegarde) · M6 Passager final (Kenney + Quaternius) et audio · M7 Jours 4–10 (détention, objets glissés, avis de recherche, Lucioles, soirées à choix, fins) · QA (17 bugs corrigés) · Exports Windows / macOS / Linux · Décor définitif du guichet et personnages optimisés · Acte II J11–J20 (v0.9.0) · Acte III J21–J30 (v0.10.0) · M11 Confort : sauvegardes à emplacements, mode Récit, manette, accessibilité, tutoriel (v0.11.0) · M12 Rejouabilité : épilogue J31, Garde de nuit, événements de station, échos, Dossier de l'agent (v0.12.0) · M13 Gameplay : interrogatoire à contradictions, fouille holographique, améliorations du guichet (v0.13.0) · M14 Ambiance : musique dynamique, cinématiques de fin illustrées, hall vivant, portraits (v0.14.0) · M15 Monde : version anglaise, démo J1–J5, version Web de la démo (v0.15.0) · 1.0.0 · M16 En ligne : compte facultatif sans mot de passe, sauvegardes dans le cloud, classement de la Garde de nuit, statistiques des fins ; installateurs Windows, macOS, AppImage et AUR (v1.1.0).
 
 Captures : [guichet J3](docs/mockups/m6_day3_autoplay.png) · [enveloppe J4](docs/mockups/m7_envelope.png) · [fin « Rendre l'air »](docs/mockups/m7_end_f5.png) · [interface](docs/mockups/m4_day.png) · [Steam Deck](docs/mockups/m4_day_deck.png) · [briefing](docs/mockups/m5_briefing.png) · [soirée](docs/mockups/m5_evening.png)
 
@@ -74,28 +74,50 @@ Notes :
 
 ## Builds
 
-Exports release Windows / macOS / Linux (+ Steam Deck) reproductibles, détails dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §16.
+### Quoi télécharger (page Releases GitHub)
 
-Prérequis : Godot **4.7.2-stable** et ses modèles d'export (`bash tools/install_godot.sh --templates`, ou depuis l'éditeur : *Éditeur > Gérer les modèles d'export*), `zip`, `tar`.
+| Plateforme | Recommandé | Alternative |
+|---|---|---|
+| **Windows** 10/11 x64 | `CLEARANCE-Setup-<version>.exe` : assistant FR/EN, installation **par utilisateur sans droits administrateur** (`%LOCALAPPDATA%\Programs\CLEARANCE`), raccourcis menu Démarrer et Bureau, désinstallation par *Paramètres › Applications* | `CLEARANCE-<version>-windows.zip` (à extraire, lancer `CLEARANCE.exe`) |
+| **macOS** 10.13+ (Intel) / 11+ (Apple Silicon) | `CLEARANCE-<version>.dmg` : glisser `CLEARANCE.app` sur *Applications*, puis **clic droit › Ouvrir** au premier lancement | `CLEARANCE-<version>-macos.zip` |
+| **Linux** x86_64 | `CLEARANCE-<version>-x86_64.AppImage` : `chmod +x` puis lancer (aucune installation ; `fusermount3` requis, sinon `--appimage-extract-and-run`) | `CLEARANCE-<version>-linux.tar.gz` puis `./install.sh` (lanceur et icônes dans `~/.local/share`, sans root ; `./uninstall.sh`) |
+| **Arch / Garuda / Manjaro** | AUR : `yay -S clearance-bin` (ou `paru`, ou *pamac* sur Garuda) → `/opt/clearance`, commande `clearance`, lanceur et icônes | l'AppImage ci-dessus |
+| **Steam Deck** | `CLEARANCE-<version>-linux.tar.gz` (mode Bureau, ajouter `CLEARANCE.x86_64` à Steam comme jeu non-Steam) | AppImage |
+
+**Démo J1–J5** : mêmes formats, préfixe `CLEARANCE-Demo-` (`CLEARANCE-Demo-Setup-<version>.exe`, `CLEARANCE-Demo-<version>.dmg`, `CLEARANCE-Demo-<version>-x86_64.AppImage`) et archives `-demo-` ; elle s'installe à côté du jeu complet. Empreintes : `SHA256SUMS`, `SHA256SUMS-demo`, `SHA256SUMS-web`, `SHA256SUMS-installers`. Les sauvegardes ne sont jamais supprimées par les désinstallations.
+
+> **macOS — application non notarisée.** Au premier lancement, Gatekeeper bloque l'app : **clic droit (ou Ctrl+clic) sur `CLEARANCE.app` > Ouvrir**, puis *Ouvrir* ; ou, dans le Terminal : `xattr -dr com.apple.quarantine /Applications/CLEARANCE.app`. Sur macOS 15+, passer par *Réglages Système > Confidentialité et sécurité > Ouvrir quand même*. Le DMG contient un `LISEZ-MOI - READ ME.txt` qui le rappelle.
+>
+> **Windows** : l'installateur et le jeu ne sont pas signés ; SmartScreen peut afficher « Windows a protégé votre ordinateur » → *Informations complémentaires > Exécuter quand même*.
+
+### Construire
+
+Exports release Windows / macOS / Linux (+ Steam Deck) reproductibles, détails dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §16 (installateurs : §16.9).
+
+Prérequis : Godot **4.7.2-stable** et ses modèles d'export (`bash tools/install_godot.sh --templates`, ou depuis l'éditeur : *Éditeur > Gérer les modèles d'export*), `zip`, `tar`, `python3`.
 
 ```bash
-bash tools/export_all.sh            # windows macos linux (ou : linux, all = + linux-arm64)
+bash tools/export_all.sh            # windows macos linux (ou : linux, all = + linux-arm64) ; --demo pour la démo
 bash tools/smoke_export.sh          # facultatif : lance les exports Linux (titre + J1/J4/J7/J10/J15/J20/J25/J30)
+# Installateurs (après export_all.sh ; --demo pour la démo) :
+bash tools/package_windows.sh       # CLEARANCE-Setup-<version>.exe        (makensis : apt install nsis / pacman -S nsis)
+bash tools/package_linux_appimage.sh  # CLEARANCE-<version>-x86_64.AppImage (appimagetool figé, téléchargé et vérifié)
+bash tools/package_macos_dmg.sh     # CLEARANCE-<version>.dmg              (sur un Mac ; brew install create-dmg facultatif)
+bash tools/update_aur.sh <version>  # après une Release : PKGBUILD + .SRCINFO AUR (packaging/aur/README.md)
 ```
 
 | Archive (`build/dist/`) | Contenu |
 |---|---|
 | `CLEARANCE-<version>-windows.zip` | `CLEARANCE.exe` (x86_64, icône + infos de version) + `CLEARANCE.pck` |
 | `CLEARANCE-<version>-macos.zip` | `CLEARANCE.app` universel (Intel + Apple Silicon, macOS 10.13 / 11+), signé **ad hoc** |
-| `CLEARANCE-<version>-linux.tar.gz` | `CLEARANCE.x86_64` (bit exécutable conservé) + `CLEARANCE.pck` — **Steam Deck** compris |
+| `CLEARANCE-<version>-linux.tar.gz` | `CLEARANCE.x86_64` (bit exécutable conservé) + `CLEARANCE.pck` + `install.sh` / `uninstall.sh` + `icons/` — **Steam Deck** compris |
+| `CLEARANCE-Setup-<version>.exe` | installateur NSIS (contenu de l'archive Windows + `uninstall.exe`) |
+| `CLEARANCE-<version>.dmg` | `CLEARANCE.app`, lien *Applications*, `LISEZ-MOI - READ ME.txt`, `Licences/` (construit par le job macOS de la CI) |
+| `CLEARANCE-<version>-x86_64.AppImage` | AppImage type 2 (squashfs zstd, `.desktop`, icônes, métadonnées AppStream) |
 
-Chaque archive contient aussi `CREDITS.txt` et `licenses/` (polices OFL, Kenney et Quaternius CC0, moteur Godot MIT et composants tiers) ; `build/dist/SHA256SUMS` donne les empreintes. `build/` n'est jamais versionné. Version : `application/config/version` de `project.godot` (seule source). CI : workflow **Build** (GitHub Actions), lancé à la main ou par un tag `v*` (Release GitHub).
+Chaque archive contient aussi `CREDITS.txt` et `licenses/` (polices OFL, Kenney et Quaternius CC0, moteur Godot MIT et composants tiers) ; `build/dist/SHA256SUMS` donne les empreintes. `build/` n'est jamais versionné. Version : `application/config/version` de `project.godot` (seule source). CI : workflow **Build** (GitHub Actions), lancé à la main ou par un tag `v*` : job Linux (tests, archives, démo, Web, `.exe`, `.AppImage`) → job macOS (`.dmg`) → Release GitHub sur tag.
 
-> **macOS — application non notarisée.** Au premier lancement, Gatekeeper bloque l'app : **clic droit (ou Ctrl+clic) sur `CLEARANCE.app` > Ouvrir**, puis *Ouvrir* ; ou, dans le Terminal : `xattr -dr com.apple.quarantine /chemin/vers/CLEARANCE.app`. Sur macOS 15+, passer par *Réglages Système > Confidentialité et sécurité > Ouvrir quand même*.
->
-> **Windows** : l'exécutable n'est pas signé ; SmartScreen peut afficher « Windows a protégé votre ordinateur » → *Informations complémentaires > Exécuter quand même*.
-
-Icônes (`assets/icons/icon.ico`, `icon.icns`) régénérées depuis `icon.svg` par `godot --headless --script res://tools/build_icons.gd`.
+Icônes (`assets/icons/icon.ico`, `icon.icns`) régénérées depuis `icon.svg` par `godot --headless --script res://tools/build_icons.gd` ; les PNG Linux (16 → 512 px) en sont extraits à l'empaquetage (`packaging/icons.py`).
 
 ## Feuille de route MVP
 

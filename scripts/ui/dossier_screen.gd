@@ -29,6 +29,10 @@
 ## par-dessus le Dossier, figures en silhouette (aucune mémoire de partie),
 ## rien d'inscrit ; thème de la fin par `TitleMusic.play_theme_after_fade`,
 ## puis retour de la musique du titre.
+## M16 (D-234) : sur chaque fin **vue** seulement, « X % des agents » (icône
+## balance + texte) — statistiques demandées pour les seules fins vues
+## (`OnlineService.request_ending_stats`, compte seulement), cache local lu
+## tout de suite ; ligne masquée tant qu'aucun chiffre n'est connu.
 class_name DossierScreen
 extends ScreenBase
 
@@ -70,6 +74,8 @@ var title_music: TitleMusic = null
 ## Drapeaux passés au thème du dernier REVOIR (variante du thème ; tests).
 var replay_theme_flags: Dictionary[StringName, Variant] = {}
 var _replay_from: String = ""
+## M16 : ligne « X % des agents » par fin vue (id → rangée).
+var percent_rows: Dictionary[String, HBoxContainer] = {}
 var _scroll: ScrollContainer = null
 var _body: VBoxContainer = null
 
@@ -140,6 +146,10 @@ func _build() -> void:
 	back_button.pressed.connect(go_back)
 	foot.add_child(back_button)
 	show_tab(TAB_ENDINGS)
+	OnlineService.ending_stats_updated.connect(func(_stats: Dictionary) -> void: update_percents())
+	var seen: PackedStringArray = ProfileService.ending_ids(profile)
+	if OnlineService.has_account() and not seen.is_empty():
+		OnlineService.request_ending_stats(seen)
 
 
 func default_focus() -> Control:
@@ -176,6 +186,7 @@ func show_tab(tab: StringName) -> void:
 	epilogue_buttons.clear()
 	filter_buttons.clear()
 	replay_buttons.clear()
+	percent_rows.clear()
 	garde_button = null
 	match tab:
 		TAB_ENDINGS:
@@ -255,6 +266,14 @@ func _ending_card(card: Dictionary, number: int) -> Control:
 	box.add_child(ScreenBase.label(UiText.tf("dos_first_seen", [DossierData.short_date(str(card["first_date"])), int(card["day"])],
 			"Première fois : %s · J%d") + " · " + UiText.plural("dos_count", int(card["count"]), "Vue %d fois", "Vue %d fois"),
 			&"DataSmall", Palette.TEXT_SECONDARY))
+	# M16 (D-234) : part des agents qui ont vu cette fin (fins vues seulement).
+	var pct_row: HBoxContainer = ScreenBase.hbox(DS.SPACE_1)
+	pct_row.name = "Percent"
+	pct_row.add_child(UiIcon.make(UiIcon.Kind.SCALES, DS.ACCENT_CYAN, DS.ICON_S))
+	pct_row.add_child(ScreenBase.label("", &"DataSmall", DS.ACCENT_CYAN))
+	box.add_child(pct_row)
+	percent_rows[str(card["id"])] = pct_row
+	_update_percent(str(card["id"]))
 	var variants: PackedStringArray = card["variants"]
 	if not variants.is_empty():
 		var flow: HFlowContainer = HFlowContainer.new()
@@ -285,6 +304,22 @@ func _ending_card(card: Dictionary, number: int) -> Control:
 			row.add_child(b)
 			replay_buttons[str(entry["id"])] = b
 	return panel_node
+
+
+## M16 : met à jour les lignes « X % des agents » (cache de `OnlineService`).
+func update_percents() -> void:
+	for id: String in percent_rows.keys():
+		_update_percent(id)
+
+
+func _update_percent(id: String) -> void:
+	var row: HBoxContainer = percent_rows.get(id, null)
+	if row == null or not is_instance_valid(row):
+		return
+	var value: float = OnlineService.ending_percent(id) if OnlineService.has_account() else -1.0
+	row.visible = value >= 0.0
+	if value >= 0.0:
+		(row.get_child(1) as Label).text = OnlineText.ending_percent_text(value)
 
 
 ## Cinématiques revoyables d'une fin : une par séquence **vue** (profil), dans

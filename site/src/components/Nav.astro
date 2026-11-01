@@ -2,10 +2,14 @@
 import Mark from './Mark.astro';
 import Icon from './Icon.astro';
 import { t, homePath, type Lang } from '../lib/i18n';
-interface Props { lang: Lang }
-const { lang } = Astro.props;
+// `alt` : page équivalente dans l'autre langue (défaut : accueil). Hors de l'accueil (`home` faux),
+// les ancres de section pointent vers l'accueil.
+interface Props { lang: Lang; alt?: string; home?: boolean }
+const { lang, home = true } = Astro.props;
 const d = t(lang);
 const other: Lang = lang === 'fr' ? 'en' : 'fr';
+const altHref = Astro.props.alt ?? homePath(other);
+const at = (href: string): string => (home || !href.startsWith('#') ? href : homePath(lang) + href);
 ---
 <header class="nav" data-nav>
   <div class="nav-in">
@@ -14,13 +18,13 @@ const other: Lang = lang === 'fr' ? 'en' : 'fr';
       <span>CLEARANCE</span>
     </a>
     <nav class="links" aria-label={d.nav.label}>
-      {d.nav.links.map((l) => <a href={l.href}>{l.label}</a>)}
+      {d.nav.links.map((l) => <a href={at(l.href)}>{l.label}</a>)}
     </nav>
     <div class="right">
-      <a class="lang" href={homePath(other)} hreflang={other} lang={other} aria-label={`FR / EN — ${d.nav.switchTo}`}>
+      <a class="lang" href={altHref} hreflang={other} lang={other} aria-label={`FR / EN — ${d.nav.switchTo}`}>
         <span class={lang === 'fr' ? 'on' : ''}>FR</span><i aria-hidden="true">/</i><span class={lang === 'en' ? 'on' : ''}>EN</span>
       </a>
-      <a class="btn btn-secondary btn-sm cta" href="#telecharger">
+      <a class="btn btn-secondary btn-sm cta" href={at('#telecharger')}>
         <Icon name="download" size={16} />{d.nav.cta}
       </a>
       <button class="burger" type="button" aria-expanded="false" aria-controls="menu" data-burger>
@@ -32,11 +36,11 @@ const other: Lang = lang === 'fr' ? 'en' : 'fr';
 </header>
 <div class="menu" id="menu" data-menu hidden>
     <nav aria-label={d.nav.label}>
-      {d.nav.links.map((l, i) => <a href={l.href} style={`--i:${i}`}><span class="mono">0{i + 1}</span>{l.label}</a>)}
+      {d.nav.links.map((l, i) => <a href={at(l.href)} style={`--i:${i}`}><span class="mono">0{i + 1}</span>{l.label}</a>)}
     </nav>
     <div class="menu-foot">
-      <a class="btn btn-primary" href="#telecharger"><Icon name="download" size={18} />{d.hero.ctaPrimary}</a>
-      <a class="lang" href={homePath(other)} hreflang={other} lang={other}>{d.nav.switchTo}</a>
+      <a class="btn btn-primary" href={at('#telecharger')}><Icon name="download" size={18} />{d.hero.ctaPrimary}</a>
+      <a class="lang" href={altHref} hreflang={other} lang={other}>{d.nav.switchTo}</a>
     </div>
   </div>
 

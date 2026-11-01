@@ -348,7 +348,7 @@ const en: Dict = {
       { key: 'logo-png', label: 'Icon — PNG', meta: '1024 × 1024' },
     ],
     shotsLabel: 'Screenshot — PNG',
-    contact: 'Press contact: open an issue on the project’s GitHub repository.',
+    contact: 'Press contact: hello@cardormedia.com',
   },
   credits: {
     label: '12 — Credits & licenses',
@@ -374,6 +374,7 @@ const en: Dict = {
       { q: 'Can I play without the clock pressure?', a: 'Yes. Story mode removes the clock and fines; every ending stays within reach. You can switch to Hard at any time.' },
       { q: 'Does it run on Steam Deck?', a: 'It is built for it: Linux build, interface designed for 1280 × 800, full gamepad support with matching prompts. It has not yet been validated on the device itself.' },
       { q: 'Are there accessibility options?', a: 'Yes: text size from 90 to 150%, four colour vision modes, adjustable visual effects and flicker, “Reduce motion”, subtitles, a slower shift clock, mono audio and full gamepad support.' },
+      { q: 'Do I need an online account?', a: 'No: the game is fully playable offline. From version 1.1, an optional, passwordless account syncs your saves and unlocks the Night Watch leaderboard. Details on the Account and privacy page, linked in the footer.' },
     ],
     web: {
       q: 'Can I play in the browser?',
@@ -393,6 +394,118 @@ const en: Dict = {
     slogan: '“Glory to the Consortium.” — Vesh ota lumi.',
     rights: 'CLEARANCE © 2026 Studio CLEARANCE. Fictional world and characters.',
     top: 'Back to top',
+    privacy: 'Account and privacy',
+  },
+  online: {
+    kicker: 'From version 1.1',
+    title: 'Online, if you want it.',
+    items: [
+      { title: 'Night Watch leaderboard', text: 'Daily seed or shared code: compare your watch with other agents’, under a nickname or anonymously. A friendly leaderboard.' },
+      { title: 'Cloud saves', text: 'Pick up your game on PC, Steam Deck or in the browser. Offline first: the game stays fully playable without an account.' },
+    ],
+    note: 'Optional, passwordless account. No ads, no tracking.',
+    link: 'Account and privacy',
+  },
+  privacy: {
+    meta: {
+      title: 'Account and privacy — CLEARANCE',
+      description: 'The CLEARANCE online account (from version 1.1) is optional and passwordless. What it stores, what is public, for how long, and how to delete everything from the game.',
+    },
+    kicker: 'Online account · from version 1.1',
+    title: 'Account and privacy',
+    intro: 'From version 1.1, CLEARANCE offers an optional online account: cloud saves, the Night Watch leaderboard and ending percentages. Here is exactly what it keeps, and nothing more.',
+    updated: 'Updated: 1 November 2026',
+    summaryLabel: 'In short',
+    summary: [
+      { t: 'Optional', x: 'The game is fully playable offline, without an account.' },
+      { t: 'Passwordless', x: 'A 6-digit code sent by e-mail.' },
+      { t: 'Nothing else', x: 'No ads, no tracking, no resale.' },
+      { t: 'Erasable', x: 'Account and data deleted from the game, immediately.' },
+    ],
+    tocLabel: 'Contents',
+    sections: [
+      {
+        id: 'optional',
+        title: 'An optional account',
+        body: [
+          'CLEARANCE is fully playable offline, without an account or a connection: campaign, demo, epilogue, Night Watch and local saves. The account is only used to sync your saves between your devices (PC, Steam Deck, browser version), to appear on the Night Watch leaderboard and to show the share of agents who reached the same endings as you.',
+          'Without an account, no save, score or ending ever leaves your device.',
+        ],
+      },
+      {
+        id: 'sign-in',
+        title: 'Passwordless sign-in',
+        body: [
+          'In the game, Options › Account: enter your e-mail address, then the 6-digit code you receive by e-mail. The code is valid for 10 minutes. The account is created on the first code request; there is no sign-up form, no password and no social login.',
+          'You stay signed in for 30 days, renewed whenever you play online. You can sign out at any time.',
+        ],
+      },
+      {
+        id: 'data',
+        title: 'Data we store',
+        body: ['If you create an account, our server keeps:'],
+        list: [
+          'your e-mail address, only to send you sign-in codes; it is never shown or shared;',
+          'an optional public nickname (up to 20 characters) and a short random tag, for example #B8C0;',
+          'your synced saves: game slots and profile;',
+          'your best Night Watch scores, with the details of the watch (seed, errors, tier reached, passengers, duration);',
+          'the endings you reached, used only to compute anonymous percentages.',
+        ],
+        after: 'Nothing else. No ads, no tracking, no telemetry beyond this data, no resale.',
+      },
+      {
+        id: 'public',
+        title: 'What is public',
+        body: ['Only two things are visible to other players:'],
+        list: [
+          'on the Night Watch leaderboard: your nickname, or “Agent #B8C0” if you did not choose one, and your score with the details of the watch;',
+          'for endings: aggregated percentages (“X% of agents”), never tied to a player. The game only shows them for endings you have already seen.',
+        ],
+        after: 'Your e-mail address never appears, on the leaderboard or anywhere else. You can change or clear your nickname at any time in Options › Account.',
+      },
+      {
+        id: 'leaderboard',
+        title: 'A friendly leaderboard',
+        body: [
+          'The server rejects scores that are clearly impossible, but there is no strong anti-cheat: a score may have been faked. The leaderboard is there for the fun of comparing watches, with no rewards.',
+        ],
+      },
+      {
+        id: 'hosting',
+        title: 'Hosting',
+        body: [
+          'The data is hosted on our own server, running the open-source PocketBase software. Traffic between the game and the server is encrypted (HTTPS). Sign-in e-mails go through our e-mail delivery provider (SMTP), which receives your address and the code.',
+        ],
+      },
+      {
+        id: 'retention',
+        title: 'Retention',
+        list: [
+          'Account, saves, scores and endings: as long as the account exists.',
+          'Sign-in codes: 10 minutes.',
+          'Server technical logs (IP address, requests): 7 days, for security.',
+          'Automatic server backups: rolled over within 7 days.',
+        ],
+      },
+      {
+        id: 'delete',
+        title: 'Delete your account and data',
+        body: [
+          'In the game, Options › Account › Delete account and data. After a double confirmation, the account and all its data on the server (online saves, scores, endings) are erased immediately and permanently. Automatic server backups, which may still contain them, are overwritten within 7 days.',
+          'Your local files stay on your device: you keep your game. Signing out, on the other hand, deletes nothing on the server.',
+        ],
+      },
+      {
+        id: 'contact',
+        title: 'Questions and requests',
+        body: [
+          'For any question or request about your data (access, correction, deletion), write to hello@cardormedia.com from the address linked to your account.',
+        ],
+      },
+    ],
+    contactCta: 'hello@cardormedia.com',
+    site: 'This website itself sets no cookies, uses no tracking and does not talk to the game server.',
+    back: 'Back to home',
   },
   notFound: {
     title: 'Access denied',

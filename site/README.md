@@ -19,6 +19,7 @@ Toutes publiques (préfixe `PUBLIC_` = injectées dans le HTML), lues dans `src/
 |---|---|---|
 | `SITE_URL` | `https://clearance.cardormedia.com` | canonical, sitemap, Open Graph |
 | `PUBLIC_DOWNLOAD_URL` | `https://github.com/fs0ciety7000/clearance/releases/latest` | cible des boutons « Télécharger » ; « Toutes les versions » = la même URL sans `/latest` |
+| `PUBLIC_REPO_URL` | `https://github.com/fs0ciety7000/clearance` | dépôt du projet : bouton de contact (issues) de la page Compte et confidentialité |
 | `PUBLIC_VERSION` | `1.0.0` | version affichée (Téléchargements, pied de page, JSON-LD) |
 | `PUBLIC_RELEASED` | `0` | `1` quand cette version est réellement publiée : badge « Disponible » au lieu de « À venir » |
 | `PUBLIC_WEB_DEMO` | `0` | `1` affiche « Jouer dans le navigateur » (section Démo) et la réponse FAQ correspondante — seulement si le lot W valide l'export Web |
@@ -36,7 +37,8 @@ Version Web : l'export Godot est servi sous `/play/` (fichiers dans `public/play
 - **Page anglaise** (QA-092) : `shot(clé, lang)` (`src/lib/shots.ts`) remplace une capture française par son équivalent anglais `m15_en_*` (WebP q84, depuis `docs/mockups/m15_en_*`) quand il existe ; les captures sans équivalent anglais restent communes aux deux pages.
 - Exclues volontairement (spoilers) : `m7_end_f5`, `m7_evening_j9`, `m7_rulebook_wanted`, `m11_end_f8/f9`, `m12_end_f10`, `m12_booth_j30_final_figure`, `m12_epilogue_*`, `m14_f*`, `m14_ui_cin_*`, `m14_ui_revoir_*`, `m12_dossier_endings`.
 - Images Open Graph : `public/og-fr.jpg`, `public/og-en.jpg` (1200 × 630).
-- Captures du site : `docs/mockups/m15_site_*.png`.
+- **Compte et confidentialité** (M16, lot W) : `/confidentialite/` (FR) et `/en/privacy/` (EN), composant `Privacy.astro`, textes `privacy` des dictionnaires, fidèles à `docs/ONLINE.md` §9 et `server/README.md` §7 (à resynchroniser si le serveur change). Liée depuis le pied de page (`Footer.astro`) et l'encart « À partir de la 1.1 » de la section Campagne (textes `online`). Le site n'appelle pas l'API : CSP de `location /` inchangée.
+- Captures du site : `docs/mockups/m15_site_*.png`, `docs/mockups/m16_site_privacy_{fr,en}.png`.
 
 ## Déploiement
 

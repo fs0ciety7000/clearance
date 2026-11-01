@@ -27,6 +27,10 @@
 ## (`Settings.KEY_LANGUAGE` → `Localization` : tous les écrans ouverts sont
 ## retraduits, ce panneau compris ; le focus reste sur le bouton choisi).
 ## La pseudo-localisation `en-XA` (debug) n'a **pas** de ligne : réglage caché.
+## M16 (D-231 → D-234) : section **COMPTE EN LIGNE** en dernier
+## (`AccountSection` : connexion par code, pseudo, synchronisation
+## automatique, synchroniser maintenant, déconnexion, suppression du compte ;
+## dans le menu pause : état seul).
 class_name OptionsPanel
 extends VBoxContainer
 
@@ -65,6 +69,8 @@ var hard_mode_row: Control = null
 var hard_mode_button: Button = null
 ## M15 : boutons de langue par code (`fr`, `en`).
 var language_buttons: Dictionary[String, Button] = {}
+## M16 : section Compte en ligne.
+var account: AccountSection = null
 var _rows: VBoxContainer = null
 
 
@@ -122,6 +128,9 @@ func _ready() -> void:
 			PAD_GLYPH_KEYS, [-1.0, 0.0, 1.0])
 	_rows.add_child(_controls_summary())
 	_add_game_section()
+	account = AccountSection.new()
+	account.in_game = in_game
+	_rows.add_child(account)
 	var row: HBoxContainer = ScreenBase.hbox(DS.SPACE_3)
 	add_child(row)
 	row.add_child(ScreenBase.label(UiText.t("opt_saved", "Réglages enregistrés automatiquement."), &"CaptionLabel"))
@@ -158,6 +167,9 @@ func _add_game_section() -> void:
 func refresh_game_section() -> void:
 	if hard_mode_row != null:
 		hard_mode_row.visible = in_game and GameState.is_story_mode()
+	if account != null and account.in_game != in_game:
+		account.in_game = in_game
+		account.rebuild()
 
 
 func focus_first() -> void:

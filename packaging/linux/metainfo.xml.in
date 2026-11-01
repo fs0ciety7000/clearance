@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Métadonnées AppStream de l'AppImage (ARCHITECTURE §16.9).
+     Modèle rempli par tools/package_linux_appimage.sh : @ID@, @NAME@, @VERSION@, @DATE@. -->
+<component type="desktop-application">
+  <id>@ID@</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LicenseRef-proprietary</project_license>
+  <name>@NAME@</name>
+  <summary>Identity control at the gate of a corporate orbital station</summary>
+  <summary xml:lang="fr">Contrôle d'identité à l'entrée d'une station orbitale corporative</summary>
+  <developer id="com.clearance">
+    <name>Studio CLEARANCE</name>
+  </developer>
+  <description>
+    <p>
+      Halcyon Gate, 2187. You are the control agent at the entry booth of a corporate orbital
+      station: check every passenger's holographic documents, apply rules that change every day
+      and face moral dilemmas under time pressure.
+    </p>
+    <p xml:lang="fr">
+      Halcyon Gate, 2187. Vous êtes l'agent de contrôle au guichet d'entrée d'une station orbitale
+      corporative : vérifiez les documents holographiques de chaque passager, appliquez des règles
+      qui changent chaque jour et affrontez des dilemmes moraux sous la pression du temps.
+    </p>
+  </description>
+  <launchable type="desktop-id">@ID@.desktop</launchable>
+  <url type="homepage">https://clearance.cardormedia.com</url>
+  <categories>
+    <category>Game</category>
+    <category>Simulation</category>
+  </categories>
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-realistic">mild</content_attribute>
+    <content_attribute id="language-profanity">mild</content_attribute>
+  </content_rating>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>gamepad</control>
+  </supports>
+  <releases>
+    <release version="@VERSION@" date="@DATE@"/>
+  </releases>
+</component>

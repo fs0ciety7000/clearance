@@ -1,0 +1,32 @@
+---
+import Icon from './Icon.astro';
+import Mark from './Mark.astro';
+import { t, privacyPath, type Lang } from '../lib/i18n';
+import { VERSION } from '../config';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const f = t(lang).footer;
+---
+<footer class="foot">
+  <div class="wrap row">
+    <a class="brand" href="#main"><Mark size={20} /><span>CLEARANCE</span></a>
+    <p class="slogan">{f.slogan}</p>
+    <a class="top mono" href="#main"><Icon name="up" size={16} />{f.top}</a>
+  </div>
+  <div class="wrap row2">
+    <p>{f.rights}</p>
+    <p class="r2"><a class="priv" href={privacyPath(lang)}>{f.privacy}</a><span class="mono">v{VERSION}</span></p>
+  </div>
+</footer>
+<style>
+  .foot{border-top:1px solid var(--line);padding:40px 0 max(32px,env(safe-area-inset-bottom))}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;letter-spacing:.1em;min-height:44px}
+  .slogan{color:var(--yellow);font-size:14px}
+  .top{display:inline-flex;gap:8px;align-items:center;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2);min-height:44px}
+  .top:hover{color:var(--cyan)}
+  .row2{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--tx2);flex-wrap:wrap}
+  .r2{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .priv{display:inline-flex;align-items:center;min-height:44px;color:var(--tx);text-decoration:underline;text-decoration-color:var(--tx3);text-underline-offset:4px;transition:color var(--dur-fast),text-decoration-color var(--dur-fast)}
+  .priv:hover{color:var(--cyan);text-decoration-color:var(--cyan)}
+</style>

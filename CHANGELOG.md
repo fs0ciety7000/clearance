@@ -1,5 +1,18 @@
 # Changelog — CLEARANCE
 
+## 1.1.0 — 2026-11-01
+
+### M16 « En ligne » (facultatif : le jeu reste entièrement jouable hors ligne)
+- **Compte sans mot de passe** : connexion par code à 6 chiffres envoyé par e-mail, utilisable à la manette et sur Steam Deck ; pseudo public facultatif ; déconnexion ; suppression du compte et de toutes ses données depuis Options › Compte (D-230, D-231).
+- **Sauvegardes dans le cloud** : emplacements et profil synchronisés entre PC, Steam Deck et version Web ; jamais de perte silencieuse : en cas de conflit, l'autre version est gardée en copie et l'écran Charger propose de choisir ; profil fusionné ; synchronisation automatique (désactivable) ou « Synchroniser maintenant » ; la démo garde ses propres données (D-232).
+- **Classement de la Garde de nuit** : top 10 de la graine du jour et votre rang, à l'accueil et à la fin de la Garde (D-233).
+- **Statistiques des fins** : « X % des agents » au Dossier, seulement pour les fins déjà vues (D-234).
+- Aucune requête pendant un shift ; aucune requête sans compte.
+- Page « Compte et confidentialité » sur le site (D-237).
+
+### Installation
+- **Installateurs** à chaque Release : Windows `CLEARANCE-Setup-*.exe` (par utilisateur, sans droits administrateur, raccourcis, désinstalleur), macOS `.dmg`, Linux `.AppImage`, archive Linux avec `install.sh` (lanceur et icône), paquet AUR `clearance-bin` pour Arch / Garuda ; mêmes formats pour la démo (D-238–D-243).
+
 ## 1.0.0 — 2026-11-01
 
 **Première version définitive.** Campagne complète en trois actes (jours 1 à 30), épilogue « Un an plus tard », 10 fins ; mode Récit et mode Dur ; Garde de nuit ; français et anglais ; démo J1–J5 et version Web de la démo. Contenu identique à la 0.15.0 (recette 1.0 RC, `docs/QA.md` §18).

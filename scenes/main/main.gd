@@ -21,10 +21,22 @@
 ## puis `DayScene.pending_garde_run`. Captures : `--demo-profile` (profil de
 ## démonstration dans `user://qa_demo_saves`, avec `--demo-saves`),
 ## `--title=garde|dossier|dossier-people|dossier-garde|dossier-epilogues|dossier-last`.
+## M16 (avec `--online-fake[=demo|signed-out|offline]`, faux serveur en
+## mémoire) : `--title=account` (Options défilées jusqu'à COMPTE EN LIGNE),
+## `--title=sign-in` (boîte de connexion, étape du code, 3 chiffres saisis),
+## `--title=load-conflict` (copie de conflit de démonstration sur
+## l'emplacement 1 de `--demo-saves`, écran Charger) — captures
+## `docs/mockups/m16_*.png` (UI_FLOW §8.10).
 ## M14 (QA-075) : titre → partie (CONTINUER, NOUVELLE PARTIE, CHARGER, Garde,
 ## épilogue) : la musique du titre s'éteint en fondu (`TitleMusic.fade_out`,
 ## 1,5 s) sous un voile noir, arbre en pause, **puis** la scène de jour —
 ## même logique que `DayScene._leave_after_music_fade` (D-208).
+## M16 (D-232) : à chaque arrivée au titre, `OnlineService.on_title()`
+## (fin du silence de shift ; premier contact, tirage des sauvegardes si un
+## compte existe) ; indicateur **discret** d'état en bas à gauche
+## (`OnlineStatusBadge`, masqué sans compte) ; toast quand une synchronisation
+## trouve deux versions d'une partie (« voir Charger »). Le menu se relit quand
+## un tirage réécrit un emplacement (`save_slots_changed`).
 extends Control
 
 const DAY_SCENE_PATH: String = "res://scenes/main/day.tscn"
@@ -61,6 +73,8 @@ var leaving: bool = false
 var blackout: ColorRect = null
 ## Toasts du titre (chargement impossible), créés au premier besoin.
 var title_toasts: ToastStack = null
+## M16 : indicateur d'état en ligne (bas gauche).
+var online_badge: OnlineStatusBadge = null
 var _menu: Array[Control] = []
 var _applied_min_px: int = -1
 
@@ -122,6 +136,9 @@ func _ready() -> void:
 	EventBus.profile_changed.connect(refresh_menu)
 	refresh_menu()
 	default_focus().grab_focus.call_deferred()
+	_add_online_badge()
+	OnlineService.sync_finished.connect(_on_sync_finished)
+	OnlineService.on_title()
 	if GardeScreen.open_on_title:
 		# « NOUVELLE GRAINE » depuis la fin de garde : retour à l'accueil de la Garde.
 		GardeScreen.open_on_title = false
@@ -134,6 +151,30 @@ func _ready() -> void:
 		# Smoke des exports : fin → cinématique → écran de fin → titre atteint.
 		print("main: titre atteint (--end-to-title)")
 		get_tree().create_timer(1.0).timeout.connect(get_tree().quit)
+
+
+## M16 : indicateur d'état en ligne, en bas à gauche (masqué sans compte).
+func _add_online_badge() -> void:
+	online_badge = OnlineStatusBadge.new()
+	online_badge.anchor_left = 0.0
+	online_badge.anchor_right = 0.0
+	online_badge.anchor_top = 1.0
+	online_badge.anchor_bottom = 1.0
+	online_badge.offset_left = DS.SPACE_8
+	online_badge.offset_top = -(DS.SPACE_8 + DS.ICON_M)
+	online_badge.offset_bottom = -DS.SPACE_8
+	online_badge.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	add_child(online_badge)
+
+
+## M16 : une synchronisation a trouvé deux versions d'une partie → toast.
+func _on_sync_finished(report: Dictionary) -> void:
+	var conflicts: Array = report.get("conflicts", []) if report.get("conflicts") is Array else []
+	if conflicts.is_empty() or not is_inside_tree():
+		return
+	_ensure_title_toasts()
+	title_toasts.push(ToastStack.Kind.WARNING, UiText.t("online_conflict_toast_title", "DEUX VERSIONS D'UNE PARTIE"),
+			UiText.t("online_conflict_toast_body", "Deux appareils ont avancé la même partie. Les deux sont gardées : choisissez dans Charger."))
 
 
 ## Mention de version : « Démo · v0.15.0 » dans la démo (`DemoMode`, D-215),
@@ -521,6 +562,20 @@ func _debug_title(which: String) -> void:
 			# M14 : options, section Audio (musique) visible.
 			_show_options()
 			_debug_options_m14.call_deferred()
+		"account":
+			# M16 : Options › COMPTE EN LIGNE.
+			_show_options()
+			_debug_account.call_deferred(false)
+		"sign-in":
+			# M16 : boîte de connexion par code (étape du code).
+			_show_options()
+			_debug_account.call_deferred(true)
+		"load-conflict":
+			# M16 : deux versions d'une partie (copie de conflit de démonstration).
+			if SaveService.resolve_dir(SaveService.DEFAULT_DIR) == DEMO_SAVES_DIR:
+				write_demo_conflict(DEMO_SAVES_DIR, 1)
+				EventBus.save_slots_changed.emit()
+			open_load()
 
 
 ## Capture M14 : REVOIR `id` depuis le Dossier, planche `--plate=N` à
@@ -548,6 +603,50 @@ func _debug_options_m14() -> void:
 	if target != null:
 		target.grab_focus()
 		options.scroll.ensure_control_visible(target)
+
+
+## Capture M16 : Options défilées jusqu'au compte ; `sign_in` : boîte de
+## connexion ouverte, code demandé au faux serveur, 3 chiffres saisis.
+func _debug_account(sign_in: bool) -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var section: AccountSection = options.account
+	if section == null:
+		return
+	var target: Control = section.sync_button if section.sync_button != null else section.sign_in_button
+	if target != null:
+		target.grab_focus()
+		options.scroll.ensure_control_visible(section)
+		options.scroll.ensure_control_visible(target)
+	if not sign_in or section.sign_in_button == null:
+		return
+	var dialog: SignInDialog = section.open_sign_in()
+	await get_tree().process_frame
+	dialog.email_input.text = "nadia.demo@example.org"
+	dialog.send_code()
+	while dialog.step != SignInDialog.Step.CODE or dialog.busy:
+		await get_tree().process_frame
+	await get_tree().process_frame
+	dialog.code_entry.set_code("042")
+
+
+## Capture M16 : copie de conflit de démonstration sur l'emplacement `slot`
+## (l'autre version : deux jours de moins, venue du « Deck »), dossier de
+## démonstration seul.
+static func write_demo_conflict(dir: String, slot: int) -> void:
+	if dir != DEMO_SAVES_DIR or slot < 1 or slot > SaveService.SLOT_COUNT:
+		return
+	var files: Dictionary = SaveService.read_slot_files(slot, dir)
+	if files.is_empty():
+		return
+	var meta: Dictionary = files["meta"]
+	var day: int = maxi(1, SaveService.as_int(meta.get("current_day", 1)) - 2)
+	meta["current_day"] = day
+	meta["saved_at"] = "2026-10-31T22:47:00"
+	var current: Dictionary = files["current"]
+	current["current_day"] = day
+	SaveService.write_conflict(slot, files, {"source": "remote", "device": "Deck",
+			"save_serial": SaveService.as_int(meta.get("save_serial", 0)), "saved_unix_ms": 0}, "20261101T081500", dir)
 
 
 ## Capture QA-043 : `current.json` de l'emplacement de démonstration illisible,

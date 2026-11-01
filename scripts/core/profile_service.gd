@@ -833,3 +833,180 @@ static func _today() -> String:
 
 static func _is_true(value: Variant) -> bool:
 	return value is bool and value
+
+
+# --- M16 : fusion de deux profils (synchronisation, D-232) ----------------------------
+
+## Fusionne deux profils (local et distant) **sans rien perdre** : union des
+## fins vues (par `(id, variant)` : première date, dernière date, nombre de
+## passages = le plus grand des deux, première ligne connue), des personnages
+## croisés, des noms appris, des cinématiques vues, des portraits (dernière
+## rencontre : acte puis jour les plus avancés), des épilogues (passages = le
+## plus grand, dernières lignes de la date la plus récente), des records de
+## Garde (10 meilleurs, sans doublon ; graine du jour : meilleur et essais = le
+## plus grand ; graines libres : meilleur) ; `max_day_reached` = le plus grand ;
+## `story_mode_used`, `epilogue_unlocked` = l'un ou l'autre ; `last_campaign`
+## = la plus récente. Les maxima (et non des sommes) rendent la fusion
+## **idempotente** : fusionner deux fois le même profil ne change rien.
+## Champs inconnus : ceux de `a`, complétés par ceux de `b`. Pur.
+static func merge(a: Dictionary, b: Dictionary) -> Dictionary:
+	var left: Dictionary = sanitize(a)
+	var right: Dictionary = sanitize(b)
+	var out: Dictionary = left.duplicate(true)
+	for key: Variant in right:
+		if not out.has(key):
+			out[key] = right[key]
+	# Fins vues.
+	var endings: Array = []
+	for source: Array in [left["endings_seen"], right["endings_seen"]]:
+		for entry: Dictionary in source:
+			var existing: Dictionary = _find_ending(endings, str(entry["id"]), str(entry["variant"]))
+			if existing.is_empty():
+				endings.append(entry.duplicate(true))
+				continue
+			if _earlier(str(entry["date"]), str(existing["date"])) or (str(entry["date"]) == str(existing["date"])
+					and SaveService.as_int(entry["day"]) < SaveService.as_int(existing["day"])):
+				existing["date"] = entry["date"]
+				existing["day"] = entry["day"]
+				existing["act"] = entry["act"]
+			if str(entry["last_date"]) > str(existing["last_date"]):
+				existing["last_date"] = entry["last_date"]
+			existing["count"] = maxi(SaveService.as_int(existing["count"]), SaveService.as_int(entry["count"]))
+			var line: String = str(entry["first_line_key"])
+			if not line.is_empty() and (str(existing["first_line_key"]).is_empty() or line < str(existing["first_line_key"])):
+				existing["first_line_key"] = line
+	endings.sort_custom(func(x: Dictionary, y: Dictionary) -> bool:
+		return "%s|%s|%s" % [x["date"], x["id"], x["variant"]] < "%s|%s|%s" % [y["date"], y["id"], y["variant"]])
+	out["endings_seen"] = endings
+	for key: String in ["characters_met", "known_names", "cinematics_seen"]:
+		var union: Array = (left[key] as Array).duplicate()
+		for id: Variant in right[key]:
+			if not union.has(id):
+				union.append(id)
+		union.sort()
+		out[key] = union
+	out["max_day_reached"] = maxi(SaveService.as_int(left["max_day_reached"]), SaveService.as_int(right["max_day_reached"]))
+	out["story_mode_used"] = left["story_mode_used"] or right["story_mode_used"]
+	out["epilogue_unlocked"] = left["epilogue_unlocked"] or right["epilogue_unlocked"]
+	out["epilogues"] = _merge_epilogues(left["epilogues"], right["epilogues"])
+	out["best_runs"] = _merge_runs(left["best_runs"], right["best_runs"])
+	out["garde_daily"] = _merge_daily(left["garde_daily"], right["garde_daily"])
+	out["garde_seeds"] = _merge_seeds(left["garde_seeds"], right["garde_seeds"])
+	var stats: Dictionary = {}
+	for key: String in ["runs", "total_correct", "longest_run"]:
+		stats[key] = maxi(SaveService.as_int((left["garde_stats"] as Dictionary).get(key, 0)),
+				SaveService.as_int((right["garde_stats"] as Dictionary).get(key, 0)))
+	out["garde_stats"] = stats
+	var last_l: Dictionary = left["last_campaign"]
+	var last_r: Dictionary = right["last_campaign"]
+	out["last_campaign"] = _later(last_l, last_r, str(last_l.get("date", "")), str(last_r.get("date", ""))).duplicate(true)
+	var portraits: Dictionary = (left["portraits"] as Dictionary).duplicate(true)
+	for chr_id: Variant in right["portraits"]:
+		var theirs: Dictionary = (right["portraits"] as Dictionary)[chr_id]
+		var mine: Dictionary = portraits.get(chr_id, {})
+		var rank_mine: int = SaveService.as_int(mine.get("act", 0)) * 100 + SaveService.as_int(mine.get("day", 0))
+		var rank_theirs: int = SaveService.as_int(theirs["act"]) * 100 + SaveService.as_int(theirs["day"])
+		if mine.is_empty() or rank_theirs > rank_mine or (rank_theirs == rank_mine
+				and JSON.stringify(theirs, "", true) > JSON.stringify(mine, "", true)):
+			portraits[chr_id] = theirs.duplicate(true)
+	out["portraits"] = portraits
+	var replays: Dictionary = (left["cinematic_replays"] as Dictionary).duplicate(true)
+	for cin_id: Variant in right["cinematic_replays"]:
+		var theirs_replay: Dictionary = (right["cinematic_replays"] as Dictionary)[cin_id]
+		if not replays.has(cin_id) or JSON.stringify(theirs_replay, "", true) > JSON.stringify(replays[cin_id], "", true):
+			replays[cin_id] = theirs_replay.duplicate(true)
+	out["cinematic_replays"] = replays
+	return sanitize(out)
+
+
+## La plus récente de deux entrées datées ; à date égale, la même quel que
+## soit l'ordre (fusion commutative : deux appareils convergent).
+static func _later(x: Dictionary, y: Dictionary, date_x: String, date_y: String) -> Dictionary:
+	if date_x != date_y:
+		return x if date_x > date_y else y
+	return x if JSON.stringify(x, "", true) >= JSON.stringify(y, "", true) else y
+
+
+## Vrai si la date `x` est connue et antérieure à `y` (une date vide est la plus tardive).
+static func _earlier(x: String, y: String) -> bool:
+	if x.is_empty():
+		return false
+	return y.is_empty() or x < y
+
+
+static func _merge_epilogues(left: Dictionary, right: Dictionary) -> Dictionary:
+	var out: Dictionary = left.duplicate(true)
+	for key: Variant in right:
+		var theirs: Dictionary = right[key]
+		if not out.has(key):
+			out[key] = theirs.duplicate(true)
+			continue
+		var mine: Dictionary = out[key]
+		var seed_mine: Dictionary = mine.get("seed", {})
+		var seed_theirs: Dictionary = theirs.get("seed", {})
+		if seed_mine.is_empty() or (not seed_theirs.is_empty() and JSON.stringify(seed_theirs, "", true) > JSON.stringify(seed_mine, "", true)):
+			mine["seed"] = seed_theirs.duplicate(true)
+		if _earlier(str(theirs["first_date"]), str(mine["first_date"])):
+			mine["first_date"] = theirs["first_date"]
+		if str(theirs["last_date"]) > str(mine["last_date"]) or (str(theirs["last_date"]) == str(mine["last_date"])
+				and JSON.stringify(theirs["last_lines"]) > JSON.stringify(mine["last_lines"])):
+			mine["last_date"] = theirs["last_date"]
+			mine["last_lines"] = (theirs["last_lines"] as Array).duplicate()
+		mine["count"] = maxi(SaveService.as_int(mine["count"]), SaveService.as_int(theirs["count"]))
+		for field: String in ["world", "key"]:
+			if str(mine[field]).is_empty():
+				mine[field] = theirs[field]
+	return out
+
+
+static func _merge_runs(left: Array, right: Array) -> Array:
+	var runs: Array = []
+	var seen: Dictionary = {}
+	for source: Array in [left, right]:
+		for row: Dictionary in source:
+			var key: String = JSON.stringify(row, "", true)
+			if seen.has(key):
+				continue
+			seen[key] = true
+			runs.append(row.duplicate(true))
+	runs.sort_custom(func(x: Dictionary, y: Dictionary) -> bool:
+		if int(x["score"]) != int(y["score"]):
+			return int(x["score"]) > int(y["score"])
+		return JSON.stringify(x, "", true) < JSON.stringify(y, "", true))
+	return runs.slice(0, TOP_RUNS)
+
+
+static func _merge_daily(left: Dictionary, right: Dictionary) -> Dictionary:
+	var out: Dictionary = left.duplicate(true)
+	var latest: String = ""
+	for key: Variant in right:
+		var theirs: Dictionary = right[key]
+		if not out.has(key) or SaveService.as_int((out[key] as Dictionary)["garde_version"]) < SaveService.as_int(theirs["garde_version"]):
+			out[key] = theirs.duplicate(true)
+			continue
+		var mine: Dictionary = out[key]
+		if SaveService.as_int(mine["garde_version"]) != SaveService.as_int(theirs["garde_version"]):
+			continue
+		for field: String in ["best", "first_try", "attempts"]:
+			mine[field] = maxi(SaveService.as_int(mine[field]), SaveService.as_int(theirs[field]))
+	for key: Variant in out:
+		if str(key) > latest:
+			latest = str(key)
+	return _purge_daily(out, latest) if not latest.is_empty() else out
+
+
+static func _merge_seeds(left: Array, right: Array) -> Array:
+	var out: Array = []
+	for source: Array in [left, right]:
+		for row: Dictionary in source:
+			var found: bool = false
+			for mine: Dictionary in out:
+				if str(mine["seed_code"]) == str(row["seed_code"]) and SaveService.as_int(mine["garde_version"]) == SaveService.as_int(row["garde_version"]):
+					mine["best"] = maxi(SaveService.as_int(mine["best"]), SaveService.as_int(row["best"]))
+					found = true
+					break
+			if not found:
+				out.append(row.duplicate(true))
+	out.sort_custom(func(x: Dictionary, y: Dictionary) -> bool:
+		return "%s|%04d" % [x["seed_code"], int(x["garde_version"])] < "%s|%04d" % [y["seed_code"], int(y["garde_version"])])
+	return out.slice(0, FREE_SEEDS)

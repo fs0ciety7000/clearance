@@ -43,6 +43,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Mot de passe du superadmin local, tiré au hasard pour ce lancement (partagé avec les tests).
+export CLEARANCE_DEV_SUPERUSER_PASSWORD="$(openssl rand -hex 12)"
+
 CLEARANCE_ENDINGS_CACHE_S=2 \
 CLEARANCE_GARDE_MIN_INTERVAL_S=1 \
 CLEARANCE_OTP_PER_10MIN=12 \

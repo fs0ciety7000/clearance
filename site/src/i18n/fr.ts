@@ -346,7 +346,7 @@ const fr = {
       { key: 'logo-png', label: 'Icône — PNG', meta: '1024 × 1024' },
     ],
     shotsLabel: 'Capture — PNG',
-    contact: 'Contact presse : ouvrez une issue sur le dépôt GitHub du projet.',
+    contact: 'Contact presse : hello@cardormedia.com',
   },
   credits: {
     label: '12 — Crédits & licences',
@@ -372,6 +372,7 @@ const fr = {
       { q: 'Peut-on jouer sans la pression du chrono ?', a: 'Oui. Le mode Récit retire le chrono et les amendes ; toutes les fins restent accessibles. Vous pouvez passer en Dur à tout moment.' },
       { q: 'Fonctionne-t-il sur Steam Deck ?', a: 'Il est conçu pour : version Linux, interface pensée pour le 1280 × 800, manette complète avec invites adaptées. Il n’a pas encore été validé sur la console elle-même.' },
       { q: 'Y a-t-il des options d’accessibilité ?', a: 'Oui : taille du texte de 90 à 150 %, quatre modes de vision des couleurs, effets visuels et scintillement réglables, « Réduire les animations », sous-titres, horloge du shift ralentie, son mono et manette complète.' },
+      { q: 'Faut-il un compte en ligne ?', a: 'Non : le jeu est entièrement jouable hors ligne. À partir de la 1.1, un compte facultatif et sans mot de passe synchronise les sauvegardes et ouvre le classement de la Garde de nuit. Détails sur la page Compte et confidentialité, en pied de page.' },
     ],
     web: {
       q: 'Peut-on jouer dans le navigateur ?',
@@ -391,6 +392,118 @@ const fr = {
     slogan: '« Gloire au Consortium. » — Vesh ota lumi.',
     rights: 'CLEARANCE © 2026 Studio CLEARANCE. Univers et personnages fictifs.',
     top: 'Haut de page',
+    privacy: 'Compte et confidentialité',
+  },
+  online: {
+    kicker: 'À partir de la 1.1',
+    title: 'En ligne, si vous le voulez.',
+    items: [
+      { title: 'Classement de la Garde de nuit', text: 'Graine du jour ou code partagé : comparez votre garde à celles des autres agents, sous pseudo ou anonymement. Un classement amical.' },
+      { title: 'Sauvegardes dans le cloud', text: 'Reprenez votre partie sur PC, Steam Deck ou dans le navigateur. Hors ligne d’abord : le jeu reste entièrement jouable sans compte.' },
+    ],
+    note: 'Compte facultatif, sans mot de passe. Aucune publicité, aucun traceur.',
+    link: 'Compte et confidentialité',
+  },
+  privacy: {
+    meta: {
+      title: 'Compte et confidentialité — CLEARANCE',
+      description: 'Le compte en ligne de CLEARANCE (à partir de la 1.1) est facultatif et sans mot de passe. Ce qu’il stocke, ce qui est public, combien de temps, et comment tout supprimer depuis le jeu.',
+    },
+    kicker: 'Compte en ligne · à partir de la 1.1',
+    title: 'Compte et confidentialité',
+    intro: 'À partir de la version 1.1, CLEARANCE propose un compte en ligne facultatif : sauvegardes dans le cloud, classement de la Garde de nuit et pourcentages des fins. Voici exactement ce qu’il conserve, et rien de plus.',
+    updated: 'Mise à jour : 1er novembre 2026',
+    summaryLabel: 'En bref',
+    summary: [
+      { t: 'Facultatif', x: 'Le jeu est entièrement jouable hors ligne, sans compte.' },
+      { t: 'Sans mot de passe', x: 'Un code à 6 chiffres envoyé par e-mail.' },
+      { t: 'Rien d’autre', x: 'Aucune publicité, aucun traceur, aucune revente.' },
+      { t: 'Effaçable', x: 'Compte et données supprimés depuis le jeu, immédiatement.' },
+    ],
+    tocLabel: 'Sommaire',
+    sections: [
+      {
+        id: 'facultatif',
+        title: 'Un compte facultatif',
+        body: [
+          'CLEARANCE est entièrement jouable hors ligne, sans compte ni connexion : campagne, démo, épilogue, Garde de nuit et sauvegardes locales. Le compte sert uniquement à synchroniser vos sauvegardes entre vos appareils (PC, Steam Deck, version navigateur), à figurer au classement de la Garde de nuit et à afficher la part des agents qui ont obtenu les mêmes fins que vous.',
+          'Sans compte, aucune sauvegarde, aucun score et aucune fin ne quittent votre appareil.',
+        ],
+      },
+      {
+        id: 'connexion',
+        title: 'Connexion sans mot de passe',
+        body: [
+          'Dans le jeu, Options › Compte : saisissez votre adresse e-mail, puis le code à 6 chiffres reçu par e-mail. Le code est valable 10 minutes. Le compte est créé à la première demande de code ; il n’y a ni formulaire d’inscription, ni mot de passe, ni connexion par un réseau social.',
+          'La connexion reste valable 30 jours et se renouvelle quand vous jouez en ligne. Vous pouvez vous déconnecter à tout moment.',
+        ],
+      },
+      {
+        id: 'donnees',
+        title: 'Données stockées',
+        body: ['Si vous créez un compte, notre serveur conserve :'],
+        list: [
+          'votre adresse e-mail, uniquement pour vous envoyer les codes de connexion ; elle n’est jamais affichée ni partagée ;',
+          'un pseudo public facultatif (20 caractères au plus) et un identifiant court tiré au hasard, par exemple #B8C0 ;',
+          'vos sauvegardes synchronisées : emplacements de partie et profil ;',
+          'vos meilleurs scores de Garde de nuit, avec le détail de la garde (graine, erreurs, palier atteint, passagers, durée) ;',
+          'les fins que vous avez obtenues, utilisées seulement pour calculer des pourcentages anonymes.',
+        ],
+        after: 'Rien d’autre. Pas de publicité, pas de traceur, pas de télémétrie au-delà de ces données, pas de revente.',
+      },
+      {
+        id: 'public',
+        title: 'Ce qui est public',
+        body: ['Deux choses seulement sont visibles par les autres joueurs :'],
+        list: [
+          'au classement de la Garde de nuit : votre pseudo, ou « Agent·e #B8C0 » si vous n’en avez pas choisi, et votre score avec le détail de la garde ;',
+          'pour les fins : des pourcentages agrégés (« X % des agents »), jamais rattachés à un joueur. Le jeu ne les affiche que pour les fins que vous avez déjà vues.',
+        ],
+        after: 'Votre adresse e-mail n’apparaît jamais, ni au classement ni ailleurs. Le pseudo se change ou s’efface à tout moment dans Options › Compte.',
+      },
+      {
+        id: 'classement',
+        title: 'Un classement amical',
+        body: [
+          'Le serveur écarte les scores manifestement impossibles, mais il n’y a pas d’anti-triche fort : un score peut avoir été falsifié. Le classement est là pour le plaisir de comparer ses gardes, sans récompense.',
+        ],
+      },
+      {
+        id: 'hebergement',
+        title: 'Hébergement',
+        body: [
+          'Les données sont hébergées sur notre propre serveur, qui fait tourner le logiciel libre PocketBase. Les échanges avec le jeu sont chiffrés (HTTPS). Les e-mails de connexion passent par notre prestataire d’envoi (SMTP), qui reçoit votre adresse et le code.',
+        ],
+      },
+      {
+        id: 'conservation',
+        title: 'Durée de conservation',
+        list: [
+          'Compte, sauvegardes, scores et fins : tant que le compte existe.',
+          'Codes de connexion : 10 minutes.',
+          'Journaux techniques du serveur (adresse IP, requêtes) : 7 jours, pour la sécurité.',
+          'Sauvegardes automatiques du serveur : renouvelées en 7 jours.',
+        ],
+      },
+      {
+        id: 'suppression',
+        title: 'Supprimer le compte et les données',
+        body: [
+          'Dans le jeu, Options › Compte › Supprimer le compte et les données. Après une double confirmation, le compte et toutes les données associées sur le serveur (sauvegardes en ligne, scores, fins) sont effacés immédiatement et définitivement. Les sauvegardes automatiques du serveur, qui peuvent encore les contenir, sont écrasées sous 7 jours.',
+          'Vos fichiers locaux restent sur votre appareil : vous gardez votre partie. Se déconnecter, en revanche, ne supprime rien sur le serveur.',
+        ],
+      },
+      {
+        id: 'contact',
+        title: 'Questions et demandes',
+        body: [
+          'Pour toute question ou demande concernant vos données (accès, rectification, suppression), écrivez à hello@cardormedia.com depuis l’adresse liée à votre compte.',
+        ],
+      },
+    ],
+    contactCta: 'hello@cardormedia.com',
+    site: 'Ce site, lui, ne dépose aucun cookie, n’utilise aucun traceur et ne communique pas avec le serveur du jeu.',
+    back: 'Retour à l’accueil',
   },
   notFound: {
     title: 'Accès refusé',

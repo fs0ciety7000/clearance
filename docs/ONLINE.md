@@ -468,7 +468,7 @@ Données conservées : adresse e-mail (connexion uniquement, jamais publiée), p
 
 ## 10. Développement et tests
 
-- `tools/online_dev_server.sh` : PocketBase local (`http://127.0.0.1:8090`), migrations et crochets du dépôt, superadmin de test `dev@clearance.local` / `devpassword123` (local uniquement), SMTP désactivé, **mode dev OTP** (`CLEARANCE_DEV_OTP=1`).
+- `tools/online_dev_server.sh` : PocketBase local (`http://127.0.0.1:8090`), migrations et crochets du dépôt, superadmin de test `dev@clearance.local` avec mot de passe aléatoire (`CLEARANCE_DEV_SUPERUSER_PASSWORD` ou `<data>/.dev_superuser`, local uniquement), SMTP désactivé, **mode dev OTP** (`CLEARANCE_DEV_OTP=1`).
 - **Mode dev OTP** (jamais en production : le crochet `server/dev_hooks/dev_otp.pb.js` n'est pas dans l'image Docker et exige en plus la variable) :
   - aucun e-mail n'est envoyé ; le code est écrit dans le journal du serveur (`[dev-otp] <otpId> <code>`) ;
   - `GET /api/clearance/dev/otp?otpId=<otpId>` → `200 {"otpId": "…", "code": "042317"}` (404 hors mode dev) : utilisé par les tests d'intégration du lot C contre un PocketBase local.

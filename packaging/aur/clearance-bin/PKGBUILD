@@ -1,0 +1,53 @@
+# Maintainer: NOM <e-mail>   (à remplir par le mainteneur AUR, voir ../README.md)
+#
+# Paquet AUR « clearance-bin » : binaire officiel de la Release GitHub (archive
+# Linux x86_64 produite par tools/export_all.sh, ARCHITECTURE §16.9).
+# Mise à jour : bash tools/update_aur.sh <version>  (pkgver, sommes, .SRCINFO).
+# Publication : packaging/aur/README.md.
+
+pkgname=clearance-bin
+_relver=1.0.0
+pkgver=${_relver//-/_}
+pkgrel=1
+pkgdesc="Cyberpunk identity-control game at the gate of a corporate orbital station (inspired by Papers, Please)"
+arch=('x86_64')
+url="https://clearance.cardormedia.com"
+license=('LicenseRef-CLEARANCE' 'MIT' 'OFL-1.1' 'CC0-1.0')
+# Le binaire Godot ne lie que la glibc ; le reste est chargé à l'exécution (dlopen).
+depends=('glibc' 'libx11' 'libxcursor' 'libxext' 'libxi' 'libxinerama' 'libxrandr'
+         'libxrender' 'libglvnd' 'vulkan-icd-loader' 'alsa-lib' 'fontconfig' 'hicolor-icon-theme')
+optdepends=('libpulse: PulseAudio / PipeWire-Pulse audio output'
+            'wayland: native Wayland session'
+            'libdecor: window decorations under Wayland'
+            'vulkan-driver: Vulkan (Forward+) renderer, otherwise OpenGL fallback')
+provides=('clearance')
+conflicts=('clearance')
+options=('!strip' '!debug')
+_archive="CLEARANCE-${_relver}-linux"
+source=("${_archive}.tar.gz::https://github.com/fs0ciety7000/clearance/releases/download/v${_relver}/${_archive}.tar.gz"
+        'clearance.desktop')
+# 1re somme : écrite par tools/update_aur.sh depuis la Release (des zéros = pas encore
+# mis à jour : makepkg échoue volontairement à la vérification).
+sha256sums=('0000000000000000000000000000000000000000000000000000000000000000'
+            '36c68639f0b286ebfa0017695a1f47e7a7dcf790953e4d98f8babf197a0fd881')
+
+package() {
+  cd "${srcdir}/${_archive}"
+
+  # Jeu : binaire + .pck côte à côte (Godot cherche le .pck près de l'exécutable réel).
+  install -Dm755 CLEARANCE.x86_64 "${pkgdir}/opt/clearance/CLEARANCE.x86_64"
+  install -Dm644 CLEARANCE.pck "${pkgdir}/opt/clearance/CLEARANCE.pck"
+  install -d "${pkgdir}/usr/bin"
+  ln -s /opt/clearance/CLEARANCE.x86_64 "${pkgdir}/usr/bin/clearance"
+
+  # Lanceur et icônes hicolor (16 → 512 px + SVG).
+  install -Dm644 "${srcdir}/clearance.desktop" "${pkgdir}/usr/share/applications/clearance.desktop"
+  local icon
+  for icon in icons/hicolor/*/apps/clearance.*; do
+    install -Dm644 "${icon}" "${pkgdir}/usr/share/${icon}"
+  done
+
+  # Crédits et licences (jeu, moteur Godot MIT, polices OFL, modèles CC0).
+  install -Dm644 CREDITS.txt "${pkgdir}/usr/share/licenses/${pkgname}/CREDITS.txt"
+  install -Dm644 licenses/* -t "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

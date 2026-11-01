@@ -19,6 +19,12 @@
 ## ÉPILOGUE de la carte, `SaveService.has_epilogue`) → action « JOUER « UN AN
 ## PLUS TARD » » en premier (sans confirmation : rien n'est écrasé) →
 ## `epilogue_requested(slot)`.
+## M16 (D-232) : emplacement en **conflit de synchronisation** (copie
+## `slot_N/conflict_*`) → bloc « DEUX VERSIONS » de la carte et deux actions
+## en tête : « GARDER CELLE-CI » (l'autre copie est supprimée) et « GARDER
+## L'AUTRE · JOUR nn » (elle remplace l'emplacement, puis repart au cloud),
+## chacune confirmée (`ConfirmDialog`, focus ANNULER). Une synchronisation
+## qui tire ou trouve un conflit relit l'écran.
 class_name LoadScreen
 extends ScreenBase
 
@@ -38,6 +44,9 @@ var day_buttons: Dictionary[int, Button] = {}
 var delete_buttons: Dictionary[int, Button] = {}
 ## M12 : « JOUER « UN AN PLUS TARD » » par emplacement terminé de l'Acte III.
 var epilogue_buttons: Dictionary[int, Button] = {}
+## M16 : « GARDER CELLE-CI » / « GARDER L'AUTRE » par emplacement en conflit.
+var keep_this_buttons: Dictionary[int, Button] = {}
+var keep_other_buttons: Dictionary[int, Button] = {}
 var back_button: Button = null
 ## Emplacement dont la liste des jours est ouverte (`NO_SLOT` sinon).
 var picker_slot: int = SaveService.NO_SLOT
@@ -98,7 +107,18 @@ func _build() -> void:
 	toasts.offset_top = DS.SPACE_8
 	toasts.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	add_child(toasts)
+	OnlineService.sync_finished.connect(_on_sync_finished)
 	refresh()
+
+
+## M16 : une synchronisation a réécrit un emplacement ou trouvé un conflit.
+func _on_sync_finished(report: Dictionary) -> void:
+	if is_closing() or dialog != null or picker_slot != SaveService.NO_SLOT:
+		return
+	var pulled: Array = report.get("pulled", []) if report.get("pulled") is Array else []
+	var conflicts: Array = report.get("conflicts", []) if report.get("conflicts") is Array else []
+	if not pulled.is_empty() or not conflicts.is_empty():
+		refresh()
 
 
 ## Relit les emplacements et reconstruit les cartes.
@@ -114,6 +134,8 @@ func refresh() -> void:
 	day_buttons.clear()
 	delete_buttons.clear()
 	epilogue_buttons.clear()
+	keep_this_buttons.clear()
+	keep_other_buttons.clear()
 	_armed_delete = SaveService.NO_SLOT
 	var used: int = 0
 	var metas: Array[Dictionary] = SaveService.list_slots(save_dir)
@@ -126,6 +148,7 @@ func refresh() -> void:
 		if card.is_free():
 			continue
 		used += 1
+		_add_conflict_actions(card, number)
 		if card.is_damaged():
 			# QA-043 : visible mais désactivé (et sauté par la croix).
 			var dead: Button = card.add_action(UiText.t("load_resume", "REPRENDRE"), &"ButtonTool")
@@ -155,6 +178,70 @@ func refresh() -> void:
 		delete_buttons[number] = delete
 	_empty_note.visible = used == 0
 	_refocus()
+
+
+## M16 : bloc « DEUX VERSIONS » et ses deux actions (copie la plus récente).
+func _add_conflict_actions(card: SaveSlotCard, number: int) -> void:
+	var copies: PackedStringArray = SaveService.list_conflicts(number, save_dir)
+	if copies.is_empty():
+		return
+	var name_copy: String = copies[copies.size() - 1]
+	var copy: Dictionary = SaveService.read_conflict(number, name_copy, save_dir)
+	card.add_conflict(copy, copies.size())
+	var keep: Button = card.add_action(UiText.t("load_keep_this", "GARDER CELLE-CI"), &"ButtonTool")
+	keep.name = "KeepThis%d" % number
+	keep.pressed.connect(confirm_keep_this.bind(number, name_copy))
+	keep_this_buttons[number] = keep
+	var other_day: int = SaveService.as_int((copy.get("meta", {}) as Dictionary).get("current_day", 0))
+	var other: Button = card.add_action(UiText.tf("load_keep_other", [other_day], "GARDER L'AUTRE · JOUR %02d"), &"ButtonTool")
+	other.name = "KeepOther%d" % number
+	other.pressed.connect(confirm_keep_other.bind(number, name_copy))
+	keep_other_buttons[number] = other
+
+
+## « GARDER CELLE-CI » : l'autre version est supprimée de cet appareil.
+func confirm_keep_this(slot: int, copy_name: String) -> ConfirmDialog:
+	var copy: Dictionary = SaveService.read_conflict(slot, copy_name, save_dir)
+	dialog = ConfirmDialog.make(UiText.t("load_conflict_eyebrow", "SYNCHRONISATION · DEUX VERSIONS"),
+			UiText.tf("load_keep_this_title", [slot], "Garder la version affichée de l'emplacement %d ?"),
+			UiText.tf("load_keep_this_body", [SaveSlotCard.conflict_text(copy)], "%s — elle sera supprimée de cet appareil."),
+			UiText.t("load_keep_this", "GARDER CELLE-CI"))
+	dialog.name = "ConflictDialog"
+	dialog.confirmed.connect(func() -> void:
+		dialog = null
+		SaveService.discard_conflict(slot, copy_name, save_dir)
+		EventBus.save_slots_changed.emit()
+		refresh())
+	dialog.cancelled.connect(_after_conflict_dialog.bind(slot))
+	add_child(dialog)
+	return dialog
+
+
+## « GARDER L'AUTRE » : l'autre version remplace l'emplacement (et le cloud ensuite).
+func confirm_keep_other(slot: int, copy_name: String) -> ConfirmDialog:
+	var meta: Dictionary = SaveService.load_meta(slot, save_dir)
+	dialog = ConfirmDialog.make(UiText.t("load_conflict_eyebrow", "SYNCHRONISATION · DEUX VERSIONS"),
+			UiText.tf("load_keep_other_title", [slot], "Reprendre l'autre version dans l'emplacement %d ?"),
+			UiText.tf("load_keep_other_body", [SaveService.as_int(meta.get("current_day", 0))],
+			"La version affichée (jour %02d) sera remplacée sur cet appareil, puis dans le cloud à la prochaine synchronisation."),
+			UiText.t("load_keep_other_accept", "GARDER L'AUTRE"))
+	dialog.name = "ConflictDialog"
+	dialog.confirmed.connect(func() -> void:
+		dialog = null
+		if SaveService.adopt_conflict(slot, copy_name, save_dir) != OK:
+			show_load_failed(slot)
+			return
+		EventBus.save_slots_changed.emit()
+		refresh())
+	dialog.cancelled.connect(_after_conflict_dialog.bind(slot))
+	add_child(dialog)
+	return dialog
+
+
+func _after_conflict_dialog(slot: int) -> void:
+	dialog = null
+	if keep_this_buttons.has(slot):
+		keep_this_buttons[slot].grab_focus.call_deferred()
 
 
 func default_focus() -> Control:
