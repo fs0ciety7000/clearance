@@ -6,7 +6,7 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 ARG SITE_URL=https://clearance.cardormedia.com
 ARG PUBLIC_DOWNLOAD_URL=https://github.com/fs0ciety7000/clearance/releases/latest
-ARG PUBLIC_VERSION=1.0.0
+ARG PUBLIC_VERSION=1.1.0
 ARG PUBLIC_RELEASED=0
 ARG PUBLIC_WEB_DEMO=0
 ARG PUBLIC_WEB_DEMO_URL=/play/
