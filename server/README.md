@@ -175,7 +175,7 @@ tools/test_online_server.sh           # lance un serveur neuf + tests d'intégra
 ```
 
 - Binaire téléchargé (et vérifié) dans `build/pocketbase/` (ignoré par git).
-- Superadmin de test : `dev@clearance.local` / `devpassword123` — **local uniquement**.
+- Superadmin de test : `dev@clearance.local`, mot de passe aléatoire à chaque lancement (ou `CLEARANCE_DEV_SUPERUSER_PASSWORD`), copié dans `<data>/.dev_superuser` — **local uniquement**.
 - Mode dev OTP : aucun e-mail ; code dans le journal (`[dev-otp] <otpId> <code>`) et via
   `GET /api/clearance/dev/otp?otpId=…` (`docs/ONLINE.md` §10).
 - Les tests GUT du jeu n'utilisent jamais le réseau réel (M16 §3) ; un test d'intégration

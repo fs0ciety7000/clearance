@@ -8,7 +8,8 @@
 # - Migrations (server/pb_migrations) et crochets (server/pb_hooks) du dépôt, plus
 #   le crochet de dev server/dev_hooks/dev_otp.pb.js (mode dev OTP : aucun e-mail,
 #   code lisible par GET /api/clearance/dev/otp?otpId=…).
-# - SMTP désactivé ; superadmin de test dev@clearance.local / devpassword123
+# - SMTP désactivé ; superadmin de test dev@clearance.local, mot de passe aléatoire
+#   (ou CLEARANCE_DEV_SUPERUSER_PASSWORD), copié dans <data>/.dev_superuser
 #   (console http://127.0.0.1:<port>/_/) — LOCAL UNIQUEMENT.
 # - Tourne au premier plan (Ctrl+C pour arrêter). Les variables d'environnement
 #   CLEARANCE_* sont transmises (ex. CLEARANCE_ENDINGS_CACHE_S=2).
@@ -91,7 +92,11 @@ export CLEARANCE_BACKUP_CRON="${CLEARANCE_BACKUP_CRON:-off}"
 ORIGINS="${CLEARANCE_ORIGINS:-https://clearance.cardormedia.com,https://www.clearance.cardormedia.com,http://localhost:8060,http://127.0.0.1:8060}"
 
 common=(--dir "$DATA" --migrationsDir "$ROOT/server/pb_migrations" --hooksDir "$HOOKS" --automigrate=false)
-"$BIN" superuser upsert dev@clearance.local devpassword123 "${common[@]}" --dev=false >/dev/null
+# Mot de passe du superadmin local : CLEARANCE_DEV_SUPERUSER_PASSWORD s'il est fourni,
+# sinon tiré au hasard à chaque lancement et écrit dans $DATA/.dev_superuser (jamais versionné).
+DEV_PW="${CLEARANCE_DEV_SUPERUSER_PASSWORD:-$(openssl rand -hex 12)}"
+printf '%s\n' "$DEV_PW" > "$DATA/.dev_superuser"; chmod 600 "$DATA/.dev_superuser"
+"$BIN" superuser upsert dev@clearance.local "$DEV_PW" "${common[@]}" --dev=false >/dev/null
 
 echo "[online_dev_server] PocketBase $PB_VERSION sur http://127.0.0.1:$PORT (données : $DATA, mode dev OTP)" >&2
 dev_flag="--dev=false"

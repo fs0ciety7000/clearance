@@ -7,7 +7,8 @@
 
 const BASE = process.argv[2] || "http://127.0.0.1:8090"
 const SITE = "https://clearance.cardormedia.com"
-const SUPERUSER = { identity: "dev@clearance.local", password: "devpassword123" }
+const SUPERUSER = { identity: "dev@clearance.local", password: process.env.CLEARANCE_DEV_SUPERUSER_PASSWORD || "" }
+if (!SUPERUSER.password) { console.error("CLEARANCE_DEV_SUPERUSER_PASSWORD manquant (lancer via tools/test_online_server.sh)"); process.exit(2) }
 
 let passed = 0
 let failed = 0
