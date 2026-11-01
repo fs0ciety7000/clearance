@@ -57,7 +57,7 @@ et la zone DNS `cardormedia.com` (Cloudflare).
    *Coolify › l'application › Terminal* (conteneur en cours d'exécution) :
 
    ```sh
-   /pb/pocketbase superuser upsert "admin@cardormedia.com" "<mot de passe long et unique>" --dir /pb/pb_data
+   /pb/pocketbase superuser upsert "admin@cardormedia.com" "<mot de passe long et unique>" --dir /pb/pb_data --encryptionEnv=PB_ENCRYPTION_KEY
    ```
 
    Le mot de passe ne va **jamais** dans le dépôt ni dans les variables Coolify ;
