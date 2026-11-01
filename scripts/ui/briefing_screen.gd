@@ -405,7 +405,7 @@ func _household() -> Control:
 func _slogan() -> Control:
 	var slogan_row: HBoxContainer = hbox(DS.SPACE_2)
 	slogan_row.add_child(UiIcon.make(UiIcon.Kind.LOGO, DS.YELLOW_60, DS.ICON_S))
-	var slogan: Label = wrapped("« %s »" % UiText.t(content.slogan_key, ""), &"BodySmall", DS.ACCENT_YELLOW)
+	var slogan: Label = wrapped(UiText.quoted(UiText.t(content.slogan_key, "")), &"BodySmall", DS.ACCENT_YELLOW)
 	slogan.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slogan_row.add_child(slogan)
 	return slogan_row

@@ -226,5 +226,8 @@ func fragment_length(key: String, args: Array) -> int:
 		return 0
 	var total: int = text_lengths.get(key, 0)
 	for arg: Variant in args:
-		total += str(arg).length() - 2
+		# M15 : un lieu donné par clé compte pour la longueur de son texte
+		# source (français) — le choix des cadres ne dépend pas de la langue.
+		var arg_text: String = str(arg)
+		total += (text_lengths[arg_text] if text_lengths.has(arg_text) else arg_text.length()) - 2
 	return total

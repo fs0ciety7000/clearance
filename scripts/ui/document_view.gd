@@ -43,6 +43,8 @@ const WIDE_FIELD_IDS: Array[StringName] = [&"employer", &"origin_sector", &"mrz"
 const PORTRAIT_SIDE_ROWS: int = 3
 const MRZ_FIELD_ID: StringName = &"mrz"
 const SERIAL_PATH: StringName = &"document.serial"
+## M15 (lot U) : lignes de l'émetteur dans l'en-tête (au-delà : ellipse).
+const ISSUER_MAX_LINES: int = 2
 ## Champ renommé « TITULAIRE » sur un document d'un tiers (QA-028).
 const HOLDER_PATH: StringName = &"family_name"
 ## M7 — marque « luciole » (code 1) : petit dessin magenta au coin bas-droit,
@@ -274,7 +276,13 @@ func _build_header(def: DocumentTypeDef, show_serial: bool) -> Control:
 	issuer.text = UiText.issuer_name(instance.issuer_id)
 	issuer.uppercase = true
 	issuer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# M15 (lot U) : l'émetteur passe sur deux lignes plutôt que d'être coupé
+	# par le n° de série (« CONSORTIUM · CONTINUITY BURE… » au Deck) ; au-delà,
+	# ellipse (jamais plus de deux lignes).
+	issuer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	issuer.max_lines_visible = ISSUER_MAX_LINES
 	issuer.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	issuer.name = "Issuer"
 	titles.add_child(issuer)
 	var title: Label = Label.new()
 	title.theme_type_variation = &"DocTitle"

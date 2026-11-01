@@ -6,7 +6,7 @@ interface Props { lang: Lang }
 const d = t(Astro.props.lang).dilemmas;
 const keys = ['m7_envelope', 'm8_symbol_report', 'm5_evening'];
 ---
-<section class="section dil" aria-labelledby="dil-title">
+<section class="section dil" data-lang={Astro.props.lang} aria-labelledby="dil-title">
   <div class="wrap">
     <header class="section-head">
       <p class="kicker">{d.label}</p>
@@ -16,7 +16,7 @@ const keys = ['m7_envelope', 'm8_symbol_report', 'm5_evening'];
       {d.cards.map((c, i) => (
         <article class={`card ${c.tone}`} data-reveal>
           <div class="shot">
-            <Picture fallbackFormat="webp" src={shot(keys[i])} alt={c.alt} formats={['avif', 'webp']} widths={[480, 800, 1200]} sizes="(max-width: 900px) 92vw, 30vw" loading="lazy" decoding="async" />
+            <Picture fallbackFormat="webp" src={shot(keys[i], Astro.props.lang)} alt={c.alt} formats={['avif', 'webp']} widths={[480, 800, 1200]} sizes="(max-width: 900px) 92vw, 30vw" loading="lazy" decoding="async" />
           </div>
           <div class="body">
             <p class="k mono">{c.kicker}</p>
@@ -47,6 +47,9 @@ const keys = ['m7_envelope', 'm8_symbol_report', 'm5_evening'];
   .card{--fx:66%;--fy:78%;--z:2.1}
   .card:nth-child(2){--fx:92%;--fy:84%;--z:2.2}
   .card:nth-child(3){--fx:82%;--fy:42%;--z:1.9}
+  /* QA-092 : capture anglaise des symboles subversifs (bulletin du Rulebook, pas le document). */
+  .dil[data-lang="en"] .card:nth-child(2){--fx:100%;--fy:60%;--z:2}
+  .dil[data-lang="en"] .card:nth-child(2) .shot :global(img){object-position:100% 50%}
   .card:hover .shot :global(img){transform:scale(calc(var(--z) * 1.04))}
   .body{padding:clamp(22px,2.2vw,30px)}
   .k{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--tone);margin-bottom:14px}

@@ -4,6 +4,8 @@
 ## Toutes les chaînes visibles passent par `tr()` sur une clé ; si la clé n'a
 ## pas de traduction, `t()` renvoie le repli fourni (ou la clé elle-même), ce
 ## qui garde l'UI lisible tant que `data/i18n/fr.csv` est incomplet.
+## M15 : chaque texte produit garde sa recette (`remake`) pour la
+## retraduction à chaud (`Localization`) ; clé absente en anglais → français.
 ## Classe utilitaire : fonctions statiques uniquement.
 class_name UiText
 extends RefCounted
@@ -18,62 +20,194 @@ const SHIFT_WARN_MIN: int = 30
 const EPOCH_WEEKDAY: int = 4
 ## Préfixe des clés de valeurs ENUM (`val_work` → « TRAVAIL »).
 const VALUE_KEY_PREFIX: String = "val_"
-## Traductions générées par l'import de `res://data/i18n/fr.csv` (fichiers
-## `.translation` ignorés par git, régénérés par `godot --import`). Chargées
-## à la demande plutôt que déclarées dans `project.godot` : un clone neuf ne
-## lève pas d'erreur avant le premier import. Locale de repli : `fr`
+## Champ dont la valeur est un secteur d'origine (`Passenger.origin_sector`).
+const ORIGIN_SECTOR_PATH: StringName = &"origin_sector"
+## M15 (lot U) : valeurs de champ texte qui ne sont pas des noms (mentions des
+## données, en français) → clé d'affichage. La logique compare la donnée brute.
+## QA-082 : « (FÉLIN) », prénom du contrat de travail du chat (SC-27).
+const DATA_TEXT_KEYS: Dictionary = {"SANS EMPLOYEUR": "val_no_employer", "(FÉLIN)": "val_feline"}
+## Traductions : chargées par `Localization.ensure_loaded()` (FR source, EN
+## M15, `Localization.TRANSLATION_PATHS`) ; locale de repli `fr`
 ## (`internationalization/locale/fallback`).
-const TRANSLATION_PATHS: PackedStringArray = ["res://data/i18n/fr.fr.translation"]
+## M15 : nombre de recettes gardées par génération (deux générations).
+const RECIPE_GENERATION: int = 20000
 
-static var _translations_loaded: bool = false
+## M15 (retraduction à chaud, `Localization.retranslate_text`) : texte produit
+## → recette `[clé, arguments, repli]` (`[&"upper", recette]` /
+## `[&"lower", recette]` pour la même chaîne en capitales / minuscules ; `[&"plural", clé, n, repli singulier, repli
+## pluriel]` ; `[&"call", Callable]` pour un texte composé par une fonction,
+## `remember_call`). Deux générations bornées : coût d'une insertion par appel.
+static var _recipes: Dictionary = {}
+static var _old_recipes: Dictionary = {}
+## QA-083 : profondeur courante de `remake` (une recette dont un argument
+## renvoie à elle-même ne boucle jamais).
+static var _remake_depth: int = 0
+const REMAKE_MAX_DEPTH: int = 16
 
 
-## Enregistre les traductions FR auprès du `TranslationServer` (idempotent).
+## Enregistre les traductions auprès du `TranslationServer` (idempotent).
 static func ensure_translations() -> void:
-	if _translations_loaded:
-		return
-	_translations_loaded = true
-	for path: String in TRANSLATION_PATHS:
-		if not ResourceLoader.exists(path):
-			push_warning("UiText: traduction absente (%s) — lancer `godot --headless --import`." % path)
-			continue
-		var translation: Translation = load(path) as Translation
-		if translation != null:
-			TranslationServer.add_translation(translation)
+	Localization.ensure_loaded()
 
 
 ## Traduction de `key` ; `fallback` (ou la clé) si aucune traduction n'existe.
+## Pseudo-localisation (debug) : le repli est pseudo-localisé lui aussi.
 static func t(key: String, fallback: String = "") -> String:
+	var out: String = _translate(key, fallback)
+	# QA-086 : clé absente rendue par un repli déjà produit par `UiText`
+	# (`t(clé_variante, t(clé))`) : la recette du repli est la bonne, gardée.
+	if out == fallback and _recipe_of(fallback) != null and not has(key):
+		return out
+	_remember(out, [key, [], fallback])
+	return out
+
+
+static func _translate(key: String, fallback: String) -> String:
 	ensure_translations()
 	if key.is_empty():
 		return fallback
 	var translated: String = TranslationServer.translate(key)
 	if translated == key:
-		return fallback if not fallback.is_empty() else key
-	return translated
+		var text: String = fallback if not fallback.is_empty() else key
+		return Localization.pseudo(text) if Localization.is_pseudo() and not fallback.is_empty() else text
+	return Localization.pseudo(translated) if Localization.is_pseudo() else translated
 
 
 ## Accord singulier / pluriel : `<key>_one` si `count` ≤ 1, `<key>` sinon
 ## (les deux formats reçoivent `count`).
 static func plural(key: String, count: int, fallback_one: String, fallback_many: String) -> String:
+	var out: String
 	if absi(count) <= 1:
-		var one: String = t(key + "_one", fallback_one)
-		return one % count if one.contains("%d") else one
-	return tf(key, [count], fallback_many)
+		var one: String = _translate(key + "_one", fallback_one)
+		out = one % count if one.contains("%d") else one
+	else:
+		out = _format(_translate(key, fallback_many), [count])
+	_remember(out, [&"plural", key, count, fallback_one, fallback_many])
+	return out
 
 
 ## Vrai si la clé a une traduction chargée.
 static func has(key: String) -> bool:
 	ensure_translations()
+	# (pseudo-localisation : appliquée au texte, jamais à la clé)
 	return not key.is_empty() and TranslationServer.translate(key) != key
 
 
 ## Traduction formatée (`%s`, `%d`…).
 static func tf(key: String, args: Array, fallback: String = "") -> String:
-	var pattern: String = t(key, fallback)
+	var pattern: String = _translate(key, fallback)
+	_remember(pattern, [key, [], fallback])
 	if args.is_empty():
 		return pattern
+	var out: String = _format(pattern, args)
+	_remember(out, [key, args.duplicate(), fallback])
+	return out
+
+
+## `pattern % args`, sans planter sur une traduction au nombre de
+## spécificateurs différent (repli : motif français).
+static func _format(pattern: String, args: Array) -> String:
+	var percents: int = pattern.count("%") - 2 * pattern.count("%%")
+	if percents != args.size() and Localization.format_specs(pattern).size() != args.size():
+		push_warning("UiText: spécificateurs incohérents dans « %s »" % pattern)
+		return pattern
 	return pattern % args
+
+
+# ---------------------------------------------------------------------------
+# M15 : recettes (retraduction à chaud)
+# ---------------------------------------------------------------------------
+
+static func _remember(text: String, recipe: Array) -> void:
+	if text.is_empty():
+		return
+	if _recipes.size() >= RECIPE_GENERATION:
+		_old_recipes = _recipes
+		_recipes = {}
+	_recipes[text] = recipe
+	var upper: String = text.to_upper()
+	if upper != text and not _recipes.has(upper):
+		_recipes[upper] = [&"upper", recipe]
+	# QA-086 : variante en minuscules (motif d'un avis « · refus de … »).
+	var lower: String = text.to_lower()
+	if lower != text and not _recipes.has(lower):
+		_recipes[lower] = [&"lower", recipe]
+
+
+static func _recipe_of(text: String) -> Variant:
+	if _recipes.has(text):
+		return _recipes[text]
+	if _old_recipes.has(text):
+		return _old_recipes[text]
+	return null
+
+
+## Oublie toutes les recettes. Appelé à la sortie (`Settings._exit_tree`) :
+## des `Callable` (lambdas, objets liés) gardés dans une variable statique
+## jusqu'à l'arrêt du moteur corrompent la mémoire à la sortie (Godot 4.7.2).
+static func clear_recipes() -> void:
+	_recipes = {}
+	_old_recipes = {}
+
+
+## Vrai si `text` a été produit par `t` / `tf` / `plural` (recette connue).
+static func has_recipe(text: String) -> bool:
+	return _recipe_of(text) != null
+
+
+## Recompose `text` dans la langue courante d'après sa recette ; null si le
+## texte n'a pas été produit par `UiText` (nom propre, code, valeur…).
+static func remake(text: String) -> Variant:
+	var recipe: Variant = _recipe_of(text)
+	if recipe == null or _remake_depth >= REMAKE_MAX_DEPTH:
+		return null
+	_remake_depth += 1
+	var out: String = _remake_recipe(recipe)
+	_remake_depth -= 1
+	return out
+
+
+## Mémorise un texte composé par `maker` (rappelé tel quel dans la nouvelle
+## langue) ; renvoie `text`.
+static func remember_call(text: String, maker: Callable) -> String:
+	_remember(text, [&"call", maker])
+	return text
+
+
+static func _remake_recipe(recipe: Array) -> String:
+	if recipe.size() == 2 and recipe[0] is StringName and recipe[0] == &"call":
+		var maker: Callable = recipe[1]
+		return str(maker.call()) if maker.is_valid() else ""
+	if recipe.size() == 2 and recipe[0] is StringName and recipe[0] == &"upper":
+		return _remake_recipe(recipe[1]).to_upper()
+	if recipe.size() == 2 and recipe[0] is StringName and recipe[0] == &"lower":
+		return _remake_recipe(recipe[1]).to_lower()
+	if recipe.size() == 5 and recipe[0] is StringName and recipe[0] == &"plural":
+		return plural(recipe[1], recipe[2], recipe[3], recipe[4])
+	var args: Array = recipe[1]
+	var fallback: String = _remade_fallback(recipe[2])
+	if args.is_empty():
+		return t(recipe[0], fallback)
+	var new_args: Array = []
+	for arg: Variant in args:
+		new_args.append(Localization.retranslate_text(arg) if arg is String else arg)
+	return tf(recipe[0], new_args, fallback)
+
+
+## QA-086 : repli lui-même produit par `UiText` (`t(clé_variante, t(clé))` :
+## notes du foyer, didascalies au féminin, objets de fouille…) recomposé dans
+## la langue courante ; sinon le texte restait figé dans l'ancienne langue
+## quand la clé variante n'existe pas. (Pseudo-localisation : repli gardé, il
+## serait pseudo-localisé deux fois.)
+static func _remade_fallback(fallback: String) -> String:
+	if fallback.is_empty() or Localization.is_pseudo():
+		return fallback
+	var own: Variant = _recipe_of(fallback)
+	if own == null or (own is Array and (own as Array).size() == 3 and str((own as Array)[2]) == fallback):
+		# Pas de recette, ou recette « clé absente → ce même repli » : rien à recomposer.
+		return fallback
+	var remade: Variant = remake(fallback)
+	return remade if remade is String and not (remade as String).is_empty() else fallback
 
 
 ## Valeur affichée d'un champ (jamais tronquée, capitales pour les codes).
@@ -93,8 +227,38 @@ static func value_text(field: FieldDef, value: Variant) -> String:
 				return tf("unit_days", [days_count], "%d JOURS")
 			return str(value)
 		FieldDef.FieldKind.TEXT:
-			return str(value).to_upper()
+			# M15 (lot U) : secteur d'origine traduit comme au Rulebook.
+			if field.truth_path == ORIGIN_SECTOR_PATH:
+				return RulebookReference.sector_text(str(value)).to_upper()
+			# Mentions de procédure écrites en français dans les données (« SANS
+			# EMPLOYEUR », comparé tel quel par R09) : traduites à l'affichage.
+			var data_text: String = str(value).to_upper()
+			if DATA_TEXT_KEYS.has(data_text):
+				return t(DATA_TEXT_KEYS[data_text], data_text).to_upper()
+			return data_text
 	return FieldValue.to_display(value, field)
+
+
+## M15 (lot U) : réplique ou devise entre guillemets de la langue courante
+## (« … » en français, "…" en anglais, clé `ui_quoted`).
+static func quoted(text: String) -> String:
+	return tf("ui_quoted", [text], "« %s »")
+
+
+## Comme `quoted`, sauf pour un texte déjà entre guillemets (« … », "…", “…”) :
+## rendu tel quel (choix de soirée déjà cités dans les données : jamais
+## « « Vas-y. » »).
+static func quoted_once(text: String) -> String:
+	var core: String = text.strip_edges()
+	for pair: Array in [["«", "»"], ["\"", "\""], ["“", "”"]]:
+		if core.length() >= 2 and core.begins_with(pair[0]) and core.ends_with(pair[1]):
+			return text
+	return quoted(text)
+
+
+## M15 (lot U) : « LOCUTEUR : « réplique » » selon la langue (`ui_speaker_quoted`).
+static func speaker_quoted(speaker: String, text: String) -> String:
+	return tf("ui_speaker_quoted", [speaker, text], "%s : « %s »")
 
 
 ## Libellé d'un champ (clé `label_key`, repli : identifiant en capitales).
@@ -109,6 +273,37 @@ static func document_title(def: DocumentTypeDef) -> String:
 	if def == null:
 		return ""
 	return t(def.title_key, String(def.id).replace("_", " ").to_upper())
+
+
+## QA-081 : nom d'un type de document écrit dans une phrase (« votre carte
+## d'identité », « your ID card », détail « ID card expired: … »).
+## `sentence_start` : majuscule initiale (début de phrase), sinon minuscule.
+static func document_name_in_sentence(def: DocumentTypeDef, sentence_start: bool) -> String:
+	return name_in_sentence(document_title(def), sentence_start)
+
+
+## Casse de phrase qui garde les sigles : chaque mot en minuscules, sauf un mot
+## entièrement en capitales d'au moins deux lettres (« ID », « MRZ ») ;
+## première lettre en capitale seulement si `sentence_start`.
+static func name_in_sentence(text: String, sentence_start: bool) -> String:
+	var words: PackedStringArray = text.split(" ")
+	for i: int in words.size():
+		if not _is_acronym(words[i]):
+			words[i] = words[i].to_lower()
+	var out: String = " ".join(words)
+	if sentence_start and not out.is_empty():
+		out = out.left(1).to_upper() + out.substr(1)
+	return out
+
+
+static func _is_acronym(word: String) -> bool:
+	var letters: int = 0
+	for c: String in word:
+		if c.to_upper() != c.to_lower():
+			if c != c.to_upper():
+				return false
+			letters += 1
+	return letters >= 2
 
 
 ## Nom de l'émetteur (`issuer_<id>`).
@@ -128,7 +323,8 @@ static func weekday(days: int) -> int:
 
 ## « MER. 19.03.2187 ».
 static func date_with_weekday(days: int) -> String:
-	return "%s %s" % [t("weekday_%d" % weekday(days), "J%d" % (weekday(days) + 1)), date(days)]
+	var text: String = "%s %s" % [t("weekday_%d" % weekday(days), "J%d" % (weekday(days) + 1)), date(days)]
+	return remember_call(text, date_with_weekday.bind(days))
 
 
 ## Minutes in-game écoulées depuis l'ouverture, d'après le temps réel restant.
@@ -153,7 +349,7 @@ static func passenger_number(case: Case) -> String:
 		return ""
 	var feminine: bool = case.passenger_presented != null and case.passenger_presented.sex == Passenger.SEX_F
 	var noun: String = t("speaker_passenger_f" if feminine else "speaker_passenger", "PASSAGÈRE" if feminine else "PASSAGER")
-	return "%s %02d" % [noun, case.index + 1]
+	return remember_call("%s %02d" % [noun, case.index + 1], passenger_number.bind(case))
 
 
 ## Nom affiché une fois les documents posés (nom tel que présenté).

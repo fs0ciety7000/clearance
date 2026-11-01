@@ -77,6 +77,13 @@ func _ready() -> void:
 	_title.add_theme_font_size_override(&"font_size", DS.FS_DISPLAY_XL)
 	_title.add_theme_color_override(&"font_color", DS.ACCENT_CYAN)
 	_content.add_theme_constant_override(&"separation", DS.SPACE_4)
+	# M15 : surtitre et devise traduits (textes de la scène = repli français).
+	var eyebrow: Label = _content.get_node_or_null("Eyebrow") as Label
+	if eyebrow != null:
+		eyebrow.text = UiText.t("title_eyebrow", eyebrow.text)
+	var tagline: Label = _content.get_node_or_null("Subtitle") as Label
+	if tagline != null:
+		tagline.text = UiText.t("title_tagline", tagline.text)
 	var version: Label = _content.get_node_or_null("Version") as Label
 	if version != null:
 		version.text = version_text()
@@ -102,6 +109,8 @@ func _ready() -> void:
 	dossier_locked_label = _add_locked_label(UiText.t("dos_empty", "Aucun dossier."))
 	options_button = _add_button(UiText.t("title_options", "OPTIONS"), _show_options)
 	quit_button = _add_button(UiText.t("title_quit", "QUITTER"), func() -> void: get_tree().quit())
+	# M15 (lot W) : pas de « QUITTER » dans un navigateur (on ferme l'onglet).
+	quit_button.visible = not OS.has_feature("web")
 	if version != null:
 		_content.move_child(version, _content.get_child_count() - 1)
 	options = OptionsPanel.new()
@@ -117,6 +126,9 @@ func _ready() -> void:
 		# « NOUVELLE GRAINE » depuis la fin de garde : retour à l'accueil de la Garde.
 		GardeScreen.open_on_title = false
 		open_garde.call_deferred()
+	if DemoMode.is_demo():
+		# M15 (D-215) : édition annoncée sur la sortie (smoke de la démo).
+		print("main: démo J1–J%d (données : %s)" % [DemoMode.LAST_DAY, SaveService.resolve_dir(SaveService.DEFAULT_DIR)])
 	_debug_title(str(args.get("title", "")))
 	if args.has("end-to-title"):
 		# Smoke des exports : fin → cinématique → écran de fin → titre atteint.
@@ -124,15 +136,17 @@ func _ready() -> void:
 		get_tree().create_timer(1.0).timeout.connect(get_tree().quit)
 
 
-## Mention de version : « Démo · v0.8.0 » (`application/config/version`) ;
-## « Démo » seul si la version n'est pas définie (QA-013).
+## Mention de version : « Démo · v0.15.0 » dans la démo (`DemoMode`, D-215),
+## « v0.15.0 » dans le jeu complet (`application/config/version`) ; « Démo »
+## seul si la version n'est pas définie dans la démo (QA-013).
 static func version_text() -> String:
 	var version: String = str(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
+	var demo: bool = DemoMode.is_demo()
 	if version.is_empty():
-		return UiText.t("title_version_none", "Démo")
+		return UiText.t("title_version_none", "Démo") if demo else ""
 	if not version.begins_with("v"):
 		version = "v" + version
-	return UiText.tf("title_version", [version], "Démo · %s")
+	return UiText.tf("title_version", [version], "Démo · %s") if demo else version
 
 
 ## Thème DS avec le plancher de texte Steam Deck (D-023), comme `ScreenBase` :
@@ -193,10 +207,16 @@ func refresh_menu() -> void:
 	_set_enabled(load_button, used)
 	# M12 : Garde (D-128) et Dossier (D-131) selon le profil.
 	var profile: Dictionary = ProfileService.load_profile()
-	var garde_open: bool = GardeService.is_unlocked(profile)
+	# M15 (D-215) : démo — Garde de nuit et Dossier désactivés, mention « Dans le jeu complet. ».
+	var demo: bool = DemoMode.is_demo()
+	var garde_open: bool = GardeService.is_unlocked(profile) and not demo
 	_set_enabled(garde_button, garde_open)
 	garde_locked_label.set_meta(&"locked", not garde_open)
-	var dossier_open: bool = DossierData.has_dossier(profile)
+	var full_only: String = UiText.t("demo_full_game_only", "Dans le jeu complet.")
+	if demo:
+		garde_locked_label.text = full_only
+		dossier_locked_label.text = full_only
+	var dossier_open: bool = DossierData.has_dossier(profile) and not demo
 	_set_enabled(dossier_button, dossier_open)
 	dossier_locked_label.set_meta(&"locked", not dossier_open)
 	_sync_locked_labels()
@@ -235,6 +255,7 @@ func _show_menu() -> void:
 	options.visible = false
 	for item: Control in _menu:
 		item.visible = true
+	quit_button.visible = not OS.has_feature("web")
 	_sync_locked_labels()
 	options_button.grab_focus.call_deferred()
 

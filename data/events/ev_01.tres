@@ -7,7 +7,7 @@
 script = ExtResource("1_y8rda")
 op = 1
 rule_id = &"r_mrz_valid"
-note_key = "sev_mrz_reader_rb"
+note_key = "sev_mrz_reader_note"
 
 [resource]
 script = ExtResource("2_5io8o")

@@ -17,6 +17,10 @@ var _text: Label = null
 var _number: Label = null
 ## Acte III : note affichée sous le texte (motif de retrait, quota suspendu).
 var note_text: String = ""
+## QA-086 : quota du jour (texte de R23) et libellé de la note, pour la
+## retraduction à chaud (`on_language_changed`).
+var _quota: int = 0
+var _note_label: Label = null
 ## M12 : surlignage (directive de Garde), 1 → 0.
 var glow: float = 0.0:
 	set(value):
@@ -37,6 +41,7 @@ static func rule_text(p_entry: RulebookEntry, quota: int = 0) -> String:
 func setup(p_entry: RulebookEntry, p_number: int, quota: int = 0, extra_note: String = "", note_icon: int = -1) -> void:
 	entry = p_entry
 	number = p_number
+	_quota = quota
 	ref = p_entry.ref if p_entry.ref != null else FieldRef.rulebook_rule(p_entry.rule_id)
 	comparable = not p_entry.retired
 	if not p_entry.note_key.is_empty():
@@ -94,10 +99,33 @@ func setup(p_entry: RulebookEntry, p_number: int, quota: int = 0, extra_note: St
 			icon = note_icon as UiIcon.Kind
 		var note: PanelContainer = ScreenBase.chip(note_text, icon, chip_color)
 		note.name = "Note"
+		_note_label = note.find_children("*", "Label", true, false).front() as Label
 		note.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		column.add_child(note)
 	margin.minimum_size_changed.connect(_sync_min_size.bind(margin))
 	_sync_min_size(margin)
+
+
+## QA-085 / QA-086 (contrat `on_language_changed`, D-221) : texte, titre, note
+## et infobulle recomposés depuis l'entrée (clés) : le texte de R23 (quota
+## substitué), le repli titre → texte et la note du jour n'ont pas de recette.
+func on_language_changed() -> void:
+	if entry == null or _text == null:
+		super()
+		return
+	if not entry.note_key.is_empty():
+		note_text = UiText.t(entry.note_key, "")
+	elif not note_text.is_empty():
+		note_text = Localization.retranslate_text(note_text)
+	var title: String = UiText.t(entry.title_key, String(entry.rule_id))
+	display_label = "%02d · %s" % [number, title] if not entry.retired else title
+	tooltip_text = title
+	if entry.retired and not note_text.is_empty():
+		tooltip_text = "%s — %s" % [title, note_text]
+	_text.text = rule_text(entry, _quota)
+	if _note_label != null and is_instance_valid(_note_label):
+		_note_label.text = note_text
+	_refresh_content()
 
 
 ## Badge « NOUVEAU » : ambre plein, texte #07080C, triangle (DS §7.5).

@@ -76,6 +76,16 @@ static func chip_text(p_statement: Statement, p_struck: bool) -> String:
 	return ComparisonUI.passenger_text(text)
 
 
+## QA-086 : texte de la puce recomposé dans la nouvelle langue (fragment
+## traduit + arguments), sans recréer la puce (sélection, discordance gardées).
+func on_language_changed() -> void:
+	if statement != null and _label != null:
+		var text: String = chip_text(statement, struck)
+		display_label = text
+		_label.text = text
+	_refresh_content()
+
+
 func get_text() -> String:
 	return _label.text if _label != null else ""
 

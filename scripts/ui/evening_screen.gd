@@ -490,8 +490,9 @@ func _expense_row(line: ExpenseLine, height: float = ROW_H) -> Button:
 	texts.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	content.add_child(texts)
 	var title: String = UiText.t(line.label_key, String(line.id))
-	if line.member_id != &"":
-		title = title % HouseholdView.member_name(line.member_id) if title.contains("%s") else title
+	if line.member_id != &"" and title.contains("%s"):
+		# QA-086 : `tf` garde la recette (« Médicaments — Noa » retraduit à chaud).
+		title = UiText.tf(line.label_key, [HouseholdView.member_name(line.member_id)], String(line.id))
 	var title_label: Label = label(title, &"BodyStrong")
 	title_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	texts.add_child(title_label)
@@ -773,7 +774,11 @@ func _event_accent(event: EveningEvent) -> Color:
 ## Texte d'un événement, valeurs (`text_args`) substituées aux `%d` dans
 ## l'ordre ; jamais de `%d` brut à l'écran (valeur manquante : « — »).
 static func event_text(event: EveningEvent) -> String:
-	return format_args(UiText.t(event.text_key, ""), event.text_args)
+	var pattern: String = UiText.t(event.text_key, "")
+	if event.text_args.is_empty() or Localization.format_specs(pattern).is_empty():
+		return format_args(pattern, event.text_args)
+	# QA-086 : texte à valeurs gardé avec sa recette (retraduit à chaud).
+	return UiText.remember_call(format_args(pattern, event.text_args), event_text.bind(event))
 
 
 ## Substitue `%d` / `%s` dans l'ordre (sans erreur si le nombre diffère).
@@ -1082,7 +1087,7 @@ func _deposition_verdict(event: EveningEvent) -> Control:
 		var said_id: StringName = choices.get(events[i].id, &"")
 		var said: EveningOptionDef = events[i].get_option(said_id)
 		if events[i].is_choice() and said != null:
-			var quote: Label = label("« %s »" % UiText.t(said.label_key, String(said.id)), &"CaptionLabel", Palette.TEXT_SECONDARY)
+			var quote: Label = label(UiText.quoted_once(UiText.t(said.label_key, String(said.id))), &"CaptionLabel", Palette.TEXT_SECONDARY)
 			quote.name = "Said"
 			box.add_child(quote)
 			break
@@ -1195,7 +1200,7 @@ func _open_final_confirm(event: EveningEvent, option: EveningOptionDef) -> void:
 	var title: Label = label(UiText.t("ev_final_title", "QUITTER HALCYON ?"), &"DisplayLabel", DS.TEXT_PRIMARY)
 	title.name = "FinalTitle"
 	box.add_child(title)
-	var choice: Label = wrapped("« %s »" % UiText.t(option.label_key, String(option.id)), &"BodyStrong", Palette.STATE_AMBER)
+	var choice: Label = wrapped(UiText.quoted_once(UiText.t(option.label_key, String(option.id))), &"BodyStrong", Palette.STATE_AMBER)
 	choice.custom_minimum_size.x = 400.0
 	box.add_child(choice)
 	box.add_child(wrapped(UiText.t("ev_final_text", "La partie s'arrête ce soir : vous quittez Halcyon, et le Guichet 04 ne rouvrira pas pour vous."),
@@ -1454,14 +1459,20 @@ func _luciole_note() -> PanelContainer:
 	box.add_child(wrapped(UiText.t("ev_note_choice", ""), &"BodySmall"))
 	var buttons: HBoxContainer = hbox(DS.SPACE_3)
 	box.add_child(buttons)
-	var report_button: Button = button(UiText.t("ev_note_report", "SIGNALER AU CONSORTIUM") + "  " +
-			credits(DataCatalog.load_economy().report_bonus, true))
+	var report_button: Button = button(report_button_text(DataCatalog.load_economy().report_bonus))
 	report_button.pressed.connect(_decide_luciole.bind(true))
 	buttons.add_child(report_button)
 	var burn_button: Button = button(UiText.t("ev_note_burn", "BRÛLER LE MOT"))
 	burn_button.pressed.connect(_decide_luciole.bind(false))
 	buttons.add_child(burn_button)
 	return card
+
+
+## QA-086 : « SIGNALER AU CONSORTIUM  +10 ₵ » — libellé et montant (format de
+## la langue) recomposés ensemble au changement de langue.
+static func report_button_text(bonus: int) -> String:
+	var text: String = UiText.t("ev_note_report", "SIGNALER AU CONSORTIUM") + "  " + Localization.credits(bonus, true)
+	return UiText.remember_call(text, report_button_text.bind(bonus))
 
 
 func _decide_luciole(report_it: bool) -> void:
@@ -1593,11 +1604,23 @@ func _event_row(event: Dictionary) -> Control:
 		signed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(signed)
 		return row
-	var text: String = UiText.t(key, key)
-	if text.contains("%s"):
-		text = text % HouseholdView.member_name(member)
-	row.add_child(wrapped(text, &"BodyLabel"))
+	var args: Array = event.get("args", [])
+	row.add_child(wrapped(event_row_text(key, member, args), &"BodyLabel"))
 	return row
+
+
+## QA-094 : texte d'une ligne du rapport de la nuit — valeurs de l'événement
+## (`args` : prélèvements) ou nom du membre du foyer (`%s`) substitués par
+## `format_args` (jamais de `%d` brut : valeur manquante → « — ») ; recette
+## gardée pour la retraduction à chaud.
+static func event_row_text(key: String, member: StringName, args: Array) -> String:
+	var pattern: String = UiText.t(key, key)
+	if Localization.format_specs(pattern).is_empty():
+		return pattern
+	var values: Array = args.duplicate()
+	if values.is_empty() and pattern.contains("%s"):
+		values = [HouseholdView.member_name(member)]
+	return UiText.remember_call(format_args(pattern, values), event_row_text.bind(key, member, args.duplicate()))
 
 
 ## Case à cocher DS : carré chanfreiné, coche cyan, cadenas si verrouillée.

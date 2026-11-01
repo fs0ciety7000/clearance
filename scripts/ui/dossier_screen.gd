@@ -264,7 +264,7 @@ func _ending_card(card: Dictionary, number: int) -> Control:
 		for text: String in variants:
 			flow.add_child(ScreenBase.chip(text, UiIcon.Kind.DIAMOND, accent))
 	if not str(card["first_line"]).is_empty():
-		box.add_child(ScreenBase.wrapped("« %s »" % ComparisonUI.lumika_text(str(card["first_line"]), true), &"BodySmall", DS.TEXT_PRIMARY))
+		box.add_child(ScreenBase.wrapped(UiText.quoted(ComparisonUI.lumika_text(str(card["first_line"]), true)), &"BodySmall", DS.TEXT_PRIMARY))
 	var replays: Array[Dictionary] = replays_for(profile, StringName(card["id"]))
 	if not replays.is_empty():
 		var row: HFlowContainer = HFlowContainer.new()
@@ -667,7 +667,7 @@ func _world_block(world: Dictionary) -> Control:
 				else UiText.tf("dos_epi_played", [str(variant["first_date"]), count], "Première fois : %s · joué %d fois")
 		col.add_child(ScreenBase.label(meta, &"DataSmall", Palette.TEXT_SECONDARY))
 		if not str(variant["last_line"]).is_empty():
-			col.add_child(ScreenBase.wrapped("« %s »" % ComparisonUI.lumika_text(str(variant["last_line"]), true), &"BodySmall"))
+			col.add_child(ScreenBase.wrapped(UiText.quoted(ComparisonUI.lumika_text(str(variant["last_line"]), true)), &"BodySmall"))
 		var b: Button = ScreenBase.button(UiText.t("dos_epi_play", "JOUER") if count == 0 else UiText.t("dos_epi_replay", "REJOUER"),
 				&"ButtonPrimary" if count == 0 else &"ButtonTool")
 		b.name = "Play_%s" % str(variant["key"]).replace(":", "_")

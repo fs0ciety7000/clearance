@@ -129,7 +129,7 @@ static func question_text(topic: StringName, case: Case) -> String:
 	if doc_id != &"" and case != null:
 		var doc: DocumentInstance = case.get_document(doc_id)
 		if doc != null:
-			doc_name = UiText.document_title(doc.type_def).to_lower()
+			doc_name = UiText.document_name_in_sentence(doc.type_def, false)  # QA-081 : « ID card »
 	var fallback: String = String(topic)
 	var text: String = UiText.t(key, fallback)
 	return text.replace("{doc}", doc_name) if not doc_name.is_empty() else text.replace(" {doc}", "").replace("{doc}", "")

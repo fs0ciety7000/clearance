@@ -152,7 +152,7 @@ func _build_summary(box: VBoxContainer) -> void:
 	grid.add_theme_constant_override("h_separation", DS.SPACE_3)
 	grid.add_theme_constant_override("v_separation", DS.SPACE_1)
 	box.add_child(grid)
-	_pair(grid, UiText.t("slot_credits", "CRÉDITS"), "₵ %d" % SaveService.as_int(meta.get("credits", 0)))
+	_pair(grid, UiText.t("slot_credits", "CRÉDITS"), _credits_text(SaveService.as_int(meta.get("credits", 0))))
 	_pair(grid, UiText.t("slot_household", "FOYER"), household_text(meta.get("household_summary", {})))
 	_pair(grid, UiText.t("slot_saved_at", "ENREGISTRÉ"), format_saved_at(str(meta.get("saved_at", ""))))
 	_pair(grid, UiText.t("slot_play_time", "TEMPS DE JEU"), format_play_time(SaveService.as_int(meta.get("play_time_sec", 0))))
@@ -221,6 +221,11 @@ static func household_text(summary: Variant) -> String:
 	if absent > 0:
 		parts.append(UiText.plural("slot_absent", absent, "%d absent·e", "%d absent·es"))
 	return " · ".join(parts)
+
+
+## M15 : solde au format de la langue (retraduisible à chaud).
+static func _credits_text(amount: int) -> String:
+	return UiText.remember_call(Localization.credits_tag(amount), Localization.credits_tag.bind(amount))
 
 
 ## Horodatage UTC de `saved_at` en heure locale : « 29.10.2026 · 14:32 ».

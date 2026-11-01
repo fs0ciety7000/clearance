@@ -141,6 +141,13 @@ static func _font_variant(path: String, weight: int, spacing_px: float) -> Font:
 		return null
 	var variant: FontVariation = FontVariation.new()
 	variant.base_font = base
+	# M15 : repli Inter pour les glyphes absents de Chakra Petch (ᵉ ʳ ⚠ ↔) et
+	# de JetBrains Mono (₵ ᵉ ʳ) — couverture FR / EN / pseudo-loc testée
+	# (`test_m15_fonts`).
+	if path != DS.FONT_UI_PATH and ResourceLoader.exists(DS.FONT_UI_PATH):
+		var ui: Font = load(DS.FONT_UI_PATH) as Font
+		if ui != null:
+			variant.fallbacks = [ui] as Array[Font]
 	if weight > 0:
 		variant.variation_opentype = {"wght": weight}
 	if spacing_px != 0.0:

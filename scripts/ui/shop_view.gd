@@ -72,7 +72,7 @@ func _ready() -> void:
 		var intro_box: VBoxContainer = ScreenBase.vbox(0)
 		intro.add_child(intro_box)
 		intro_box.add_child(ScreenBase.label(UiText.t("spk_okonkwo", "OKONKWO"), &"DocFieldLabel", Palette.TEXT_SECONDARY))
-		intro_box.add_child(ScreenBase.wrapped("« %s »" % UiText.t("shop_intro", ""), &"BodySmall", DS.TEXT_PRIMARY))
+		intro_box.add_child(ScreenBase.wrapped(UiText.quoted(UiText.t("shop_intro", "")), &"BodySmall", DS.TEXT_PRIMARY))
 		add_child(intro)
 	var catalog: Array[ExpenseLine] = []
 	var off: Array[ExpenseLine] = []

@@ -1,5 +1,17 @@
 # Changelog — CLEARANCE
 
+## 0.15.0 — 2026-11-01
+
+### M15 « Monde »
+- **Version anglaise complète** (4 200+ textes), choix de la langue dans les Options, appliqué à chaud même en pleine partie ; la génération des passagers ne dépend pas de la langue. Un joueur qui met à jour garde le français ; la langue du système ne s'applique qu'à une première installation (D-213, D-214, D-221–D-226).
+- **Démo J1–J5** : sauvegardes séparées, écran de fin de démo, archives pour Windows, macOS et Linux (D-215, D-223).
+- **Version Web de la démo** (HTML5, ≈ 42 Mo) à jouer dans le navigateur sur ordinateur (D-216, D-220).
+- **Site** mis à jour : campagne complète sans spoiler, nouveautés, démo, téléchargements, version anglaise (D-218).
+- Interface robuste à l'anglais sur PC, Steam Deck et texte agrandi ; secteurs d'origine et mentions traduits de façon cohérente (D-225).
+
+### Corrections
+- Passe QA M15 (QA-081 à QA-094) : changement de langue qui pouvait vider une réplique, textes restés dans l'ancienne langue, « %d » bruts, sigle « ID card », guillemets doublés, démo bornée au J5.
+
 ## 0.14.0 — 2026-10-31
 
 ### M14 « Ambiance »

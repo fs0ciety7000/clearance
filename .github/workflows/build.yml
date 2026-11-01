@@ -80,13 +80,19 @@ jobs:
       - name: Smoke test des exports Linux
         run: bash tools/smoke_export.sh
 
+      - name: Exports de la démo (J1–J5) + archives
+        run: bash tools/export_all.sh --demo
+
+      - name: Export Web de la démo (D-216, D-220)
+        run: bash tools/export_web.sh
+
       - name: Artefacts
         uses: actions/upload-artifact@v4
         with:
           name: CLEARANCE-${{ github.ref_name }}-${{ github.run_number }}
           path: |
             build/dist/CLEARANCE-*
-            build/dist/SHA256SUMS
+            build/dist/SHA256SUMS*
           if-no-files-found: error
           retention-days: 30
 
@@ -95,6 +101,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" build/dist/CLEARANCE-* build/dist/SHA256SUMS \
+          gh release create "$GITHUB_REF_NAME" build/dist/CLEARANCE-* build/dist/SHA256SUMS* \
             --title "CLEARANCE $GITHUB_REF_NAME" --prerelease \
-            --notes "Builds Windows (x86_64), macOS (universel, signé ad hoc, non notarisé : clic droit > Ouvrir) et Linux x86_64 / Steam Deck. Voir README > Builds."
+            --notes "Builds Windows (x86_64), macOS (universel, signé ad hoc, non notarisé : clic droit > Ouvrir) et Linux x86_64 / Steam Deck ; démo J1–J5 (archives -demo-) et version Web de la démo (-web.zip, à servir avec les en-têtes COOP/COEP de web/nginx-clearance-web.conf). Voir README > Builds."

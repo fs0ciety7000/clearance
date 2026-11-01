@@ -1,7 +1,7 @@
 # CLEARANCE · site de présentation — spec de build
 
 ## 0. Brief
-Site vitrine bilingue (FR par défaut, EN) du jeu **CLEARANCE** (Studio CLEARANCE, Godot 4.7.2, démo 0.8.1). Visiteur cible : joueur PC / Steam Deck amateur de *Papers, Please*, presse et créateurs de contenu.
+Site vitrine bilingue (FR par défaut, EN) du jeu **CLEARANCE** (Studio CLEARANCE, Godot 4.7.2). Mise à jour M15 (lot S) : campagne complète 3 actes / 30 jours / 10 fins + épilogue J31, nouveautés M11–M14, démo J1–J5, version 0.15.0, version Web conditionnelle. Visiteur cible : joueur PC / Steam Deck amateur de *Papers, Please*, presse et créateurs de contenu.
 Humeur : **nocturne, bureaucratique, humide**.
 Signature : **le Mode Inspection jouable** — le visiteur relie deux champs d'un dossier holographique fictif, révèle CONCORDANT / DISCORDANCE, puis tamponne. Le jeu se comprend en 20 secondes, sans vidéo.
 Support : hero « poste de contrôle » sur la vraie capture du guichet (`m9_booth_j1`), pluie en canvas, titre révélé par une ligne de balayage holographique, horloge de shift vivante.
@@ -44,7 +44,10 @@ Hiérarchie : tx 100 % titres → tx2 corps → mono 11–12 px +0,18em labels.
 | journée 1–4 | `m5_briefing`, `m6_day3_autoplay`, `m9_booth_j7_detain`, `m5_summary` | cadre holo 16:9 |
 | passagers | `m6_visor_down` / `m6_visor_up` (comparateur), `m6_portraits`, `m6_lineup` | |
 | dilemmes | `m7_envelope`, `m8_symbol_report`, `m5_evening` | |
-| galerie | 10 captures | lightbox `<dialog>` |
+| campagne | — (frise de 30 + 1 segments, couleurs d'acte cyan / jaune / ambre, épilogue vert pointillé) | |
+| au guichet | `m13_journal`, `m13_search`, `m13_shop`, `m12_station_event` (recadrages zoomés `--fx/--fy/--z`) ; `m14_plate_f9_1` (21:9), `m14_hall_act1_strip`, `m14_ui_dossier_people` ; `m11_a11y_options` | |
+| démo (Web) | `m9_booth_j1` + bouton lecture jaune | si `PUBLIC_WEB_DEMO=1` |
+| galerie | 12 captures (7/5 · 4/4/4 · 5/7 · 6/6 · 4/4/4) | lightbox `<dialog>` |
 | Deck | `m9_booth_j1_deck` | |
 Exclues (spoilers) : fin `m7_end_f5`, soirée J9 `m7_evening_j9`, avis de recherche J10 `m7_rulebook_wanted`.
 
@@ -62,5 +65,13 @@ Exclues (spoilers) : fin `m7_end_f5`, soirée J9 `m7_evening_j9`, avis de recher
 11. **Presse** — fiche technique, textes courts/longs, téléchargements (logo SVG/PNG, captures PNG).
 12. **Crédits & licences**, **FAQ** (`<details>`), **Appel final** (tampon APPROUVÉ animé à l'entrée), **Pied de page**.
 
+### 6 bis. Sections ajoutées en M15 (lot S)
+- **03 Campagne** (`#campagne`) : 4 chiffres clés (3 / 30 / 10 / J31) en Chakra 700, frise des jours animée au scroll (statique si `prefers-reduced-motion`), 3 cartes d'acte + carte Épilogue (pointillés verts), puis « Récit ou Dur » et « Garde de nuit ». Aucun nom de fin.
+- **05 Au guichet** (`#systemes`) : 4 cartes à capture recadrée (interrogatoire, fouille, Économat, événements) ; « Une station qui respire » : planche de cinématique 21:9 avec légende en surimpression, hall vivant, Dossier, carte Musique dynamique (5 couches L0–L4 animées, figées en mouvement réduit) ; « Confort & accessibilité » : capture des options + 6 entrées.
+- **09 Démo** (`#demo`) : J01–J05 (horodatage mono jaune), carte holo chanfreinée (faits + CTA jaune), carte « Jouer dans le navigateur » (`#jouer`, lien vers `PUBLIC_WEB_DEMO_URL`) **uniquement** si `PUBLIC_WEB_DEMO=1`.
+- **10 Téléchargements** (`#telecharger`, ex-Plateformes) : 4 tuiles, bandeau de version (badge ambre « À venir » ou vert « Disponible » selon `PUBLIC_RELEASED`), CTA vers `PUBLIC_DOWNLOAD_URL`, configuration, journal des versions 0.9 → 0.15 sans spoiler.
+- Navigation : Le jeu · Campagne · Inspection · Galerie · Démo · Presse ; CTA « Télécharger » → `#telecharger`. Hero : bandeau `3 ACTES · 30 JOURS · 10 FINS · DÉMO J1–J5 · FR · EN · plateformes`.
+- FAQ : + mode Récit, + « jouer dans le navigateur » (réponse selon `PUBLIC_WEB_DEMO`), anglais disponible en 0.15.0.
+
 ## 7. Contraintes
-Lighthouse ≥ 95 ×4 mobile/desktop. Aucun secret. URL de téléchargement : `PUBLIC_DOWNLOAD_URL` (défaut : Releases GitHub, dépôt privé). Pas de bande-annonce tant qu'aucune vidéo n'est fournie. Cibles tactiles ≥ 44 px, focus cyan 2 px visible partout, contrastes AA (tx3 jamais pour une info).
+Lighthouse ≥ 95 ×4 mobile/desktop. Aucun secret. URL de téléchargement : `PUBLIC_DOWNLOAD_URL` (défaut : `…/releases/latest`). Version Web : `/play/` (CSP `wasm-unsafe-eval`, COOP/COEP dans `nginx.conf`). Pas de bande-annonce tant qu'aucune vidéo n'est fournie. Cibles tactiles ≥ 44 px, focus cyan 2 px visible partout, contrastes AA (tx3 jamais pour une info).

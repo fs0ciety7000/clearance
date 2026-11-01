@@ -187,6 +187,11 @@ func _notification(what: int) -> void:
 
 ## Recalcule (en différé) le palier d'abandon pour que la barre tienne dans
 ## sa largeur (QA-031).
+## M15 : textes retraduits — compaction réévaluée.
+func on_language_changed() -> void:
+	queue_compaction()
+
+
 func queue_compaction() -> void:
 	if _compaction_queued or _margin == null:
 		return
@@ -395,7 +400,8 @@ func set_quota_suspended(value: bool) -> void:
 func set_credits(credits: int) -> void:
 	if garde_mode:
 		return # SCORE à la place des crédits (`set_garde`)
-	var text: String = "₵ %d" % credits
+	# M15 : format de la langue (« ₵ 42 » / « ₵42 »), retraduisible à chaud.
+	var text: String = UiText.remember_call(Localization.credits_tag(credits), Localization.credits_tag.bind(credits))
 	if text.length() != _credits.text.length():
 		queue_compaction()
 	_credits.text = text

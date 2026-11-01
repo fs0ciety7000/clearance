@@ -27,8 +27,10 @@ const STATE_IDLE: StringName = &"idle"
 const STATE_QUEUED: StringName = &"queued"
 const STATE_SCANNING: StringName = &"scanning"
 const STATE_DONE: StringName = &"done"
-## Colonne des boutons de zone (nom de zone + état sur une ligne).
-const ZONES_COLUMN_W: float = 256.0
+## Colonne des boutons de zone (nom de zone + état sur une ligne). M15 (lot U) :
+## 256 → 280 px, « Z3 ARMS/HANDS · CLEAR » et « Z3 BRAS ET MAINS » entiers au
+## Deck en texte 1,5 (la colonne des objets garde la place d'une ligne).
+const ZONES_COLUMN_W: float = 280.0
 
 var motive: StringName = &""
 var motive_text: String = ""
@@ -124,8 +126,7 @@ func _ready() -> void:
 		row.offset_left = DS.SPACE_3
 		row.offset_right = -DS.SPACE_3
 		button.add_child(row)
-		var zone_label: Label = ScreenBase.label("Z%d  %s" % [SearchLayout.ZONES.find(zone) + 1, UiText.t("zone_%s" % zone, String(zone))],
-				&"BodySmall", DS.TEXT_PRIMARY)
+		var zone_label: Label = ScreenBase.label(zone_caption(zone), &"BodySmall", DS.TEXT_PRIMARY)
 		zone_label.name = "Name"
 		zone_label.clip_text = true
 		zone_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -206,6 +207,13 @@ func is_open() -> bool:
 
 func get_motive_text() -> String:
 	return _motive_label.text if _motive_label != null else ""
+
+
+## « Z1 TÊTE ET NUQUE » : numéro de zone + nom traduit ; M15 (lot U) :
+## recomposé au changement de langue (recette `UiText.remember_call`).
+static func zone_caption(zone: StringName) -> String:
+	var text: String = "Z%d %s" % [SearchLayout.ZONES.find(zone) + 1, UiText.t("zone_%s" % zone, String(zone))]
+	return UiText.remember_call(text, zone_caption.bind(zone))
 
 
 ## Premier bouton de zone encore à scanner (focus manette), sinon TOUT SCANNER

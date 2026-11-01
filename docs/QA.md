@@ -1582,3 +1582,178 @@ xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl
 godot --headless --script res://tools/build_data.gd && git status --short data/      # aucun fichier modifié
 bash tools/export_all.sh linux && bash tools/smoke_export.sh && ls -l build/linux/CLEARANCE.pck
 ```
+
+## 18. Passe QA M15 « Monde » et recette 1.0 RC
+
+> Passe du 31.10.2026 sur `claude/laughing-bell-8ayudz` après `a607500` (M15 intégré : langue FR/EN à chaud, traduction complète, démo J1–J5, version Web de la démo, site 0.15, anglais sans débordement). Godot 4.7.2, GUT 9.7.1, Chromium 153 (Playwright 1.63), Node 24.22.2 (scratchpad) pour le site. **QA ne corrige pas le code de jeu** : bugs QA-081 à QA-094 ci-dessous, chacun avec son propriétaire suggéré et, quand c'est testable, un test `pending` dans `tests/integration/test_qa_m15.gd`. Le conteneur n'a ni GPU ni sortie son.
+
+### 18.1 Méthode et couverture
+
+| Volet | Outil | Résultat |
+|---|---|---|
+| Suite existante | GUT : unit (214 s), puis integration en **deux lots `-gtest=`** (20 fichiers, 312 s ; 21 fichiers, 265 s) | **1 099 / 1 099** à l'arrivée (unit 708, integration 173 + 218) ; après la passe **1 111 tests : 1 100 verts + 11 `pending`** (QA-081 → QA-094), 0 échec |
+| Anglais à l'écran | **`tests/qa_drivers/qa_m15_lang.gd`** (nouveau, étend `qa_m14_campaign.gd`) : tous les textes visibles relevés toutes les 15 images (y compris infobulles et propriétés `_draw`), découpés comme `test_m15_hot_language`, classés FR restant / EN restant / clé brute / spécificateur / « i » minuscule ; `--qa-dump` = corpus de relecture ; `--qa-flip=S` bascule la langue toutes les S s | 3 campagnes J1 → J30 + 1 reprise 0.14 (§18.2) ; **≈ 36 400 textes uniques** (somme des 4 campagnes) relus (échantillonnage manuel des déclarations, soirées, fins, cinématiques, épilogue) |
+| J31, Garde en anglais | **`qa_m15_day_lang.gd`** (nouveau, étend `qa_m14_day.gd`, lecteur partagé `qa_m15_scan.gd`) | J31 F10 (monde C, CIN-EC), J31 F6 (monde D), Garde 500 s : 0 reste, 0 clé, 0 spécificateur |
+| Bascule à chaud écran par écran | **`qa_m15_flip.gd`** (nouveau, étend `tools/qa_capture.gd`, xvfb OpenGL 3) : bascule à −4 s, relecture à −1 s, capture | **36 écrans FR → EN** (titre, options, nouvelle partie, charger, difficulté, briefing, guichet, Rulebook ×6 onglets, journal, interrogatoire, portique, Contrebande, bilan, soirée, Économat, pause, fin, cinématique, épilogue, Garde ×3, Dossier ×5, chapitres II/III, carte d'aide, tutoriel, fin de démo) + **9 écrans EN → FR** (§18.3) |
+| Démo | `export_all.sh --demo` (3 plateformes) + `smoke_demo.sh` ; **`qa_m15_demo.gd`** (nouveau : J1 → J5 en vraie scène avec `--demo`, écran « Fin de la démo », lien, titre de la démo, dossiers) | §18.4 |
+| Web | `export_web.sh` + `node tools/smoke_web.js --gl=angle-gl --no-shots` en `fr-FR` et `en-US` | §18.5 |
+| Site | `npm ci && npm run build` (Node 24), Playwright (script du scratchpad) `/`, `/en/` × desktop 1440 et mobile 390, variante `PUBLIC_WEB_DEMO=1` avec `build/web` monté sous `/play/` (COOP/COEP) | §18.6 |
+| Recette RC | `build_data`, `export_all.sh` (3 plateformes) + `smoke_export.sh`, binaire release en anglais, `qa_audio_audit.gd` (18 partitions), `qa_plates_audit.gd` (FR et `--lang=en`), vraie sauvegarde et vrai profil **0.14.0** (`git archive 3bddb4a`) | §18.7 |
+| Release | `CLEARANCE.x86_64` **release** exporté avec un autoload de sonde (copie du projet dans le scratchpad, jamais dans le dépôt) : comportement de QA-083 hors debug | §18.8 |
+
+**Vrai `user://` jamais touché par les outils du jeu** : tout sous `XDG_DATA_HOME` jetable (scratchpad), aucun `override.cfg`. `profile.json` réel (md5 `f158aaf9…`, déjà différent de celui noté au §17.1 à l'arrivée) et `settings.cfg` (`91d48bf5…`) inchangés en fin de passe ; seuls des journaux `logs/godot*.log` y ont été ajoutés par `export_all.sh` / `export_web.sh` (l'éditeur d'export ne prend pas d'`XDG_DATA_HOME` jetable). Un dossier `qa_demo_saves/` (12:18, avant la passe) traîne dans le vrai `user://` : écrit par un outil d'un lot précédent lancé sans dossier jetable.
+
+### 18.2 Anglais en jeu : campagnes réelles (`day.tscn`, bot `--autoplay`, ×10, deux tronçons de 9,5 min repris sur la vraie sauvegarde)
+
+| Campagne | Langue | Mode | Jours | Fin (cinématique) | Textes uniques | FR / EN restants · clés · spécificateurs | SCRIPT ERROR |
+|---|---|---|---|---|---|---|---|
+| A — graine 3, loyal | **EN** | Dur | J1 → J30 | **F7** (CIN-F7, auto 26,3 s) | 9 271 | **0 · 0 · 0** | 0 |
+| B — graine 3, loyal | **FR** | Dur | J1 → J30 | **F7** (CIN-F7) | 9 435 | **0 · 0 · 0** | 0 |
+| C — graine 7, drift | EN, **bascule FR ↔ EN toutes les 25 s** (353 bascules) | **Récit** | J1 → J30 | **F6 Dérive** (CIN-F6D, Wren au visage de la partie, appuis Ⓐ 5,2 s) | 11 154 | 707 FR / 1 166 EN (bascule : QA-083, QA-084, QA-086) · 0 · **4** (QA-085) | **102** (toutes QA-083) |
+| D — **vraie sauvegarde 0.14.0** (graine 9, J15) | EN | Dur | J15 → J30 | **F7** (CIN-F7) | 6 536 | 0 · 0 · **3** (QA-085, QA-094) | 0 |
+
+- **Même graine → mêmes cas** : les 30 lignes `QA_DAY` de A (EN) et B (FR) sont **identiques** (traités, corrects, citations, net, quota, crédits, drapeaux) ; en GUT, 6 jours × file complète sérialisés (`CaseSerializer` + cadres des déclarations) identiques dans les deux langues (`test_same_seed_same_cases_in_both_languages`, ✅). D-224 tenu.
+- **Relecture** (corpus des dumps, échantillonnage manuel) : glossaire respecté (Booth, Desk, discrepancy, Logbook, Sponsor, Summonses, Night Watch, Officer's File, Commissary, Fireflies, Burners…), anglais britannique, montants `₵25` / `+₵30` / `−₵9`, pourcentages `72%`, dates `JJ.MM.AAAA`, Tessar intact entre chevrons, noms d'employeurs et émetteurs gardés en français comme prévu (D-219 : « Dispensaire de Tycho », « Meridian Biosystèmes », « Délégation tharsienne », « Banque Aurel »). Déclarations composées : 0 « i » minuscule, casse juste, cadres cohérents (« Work, at Ondine. Three weeks. », « With Céleste Marchetti, who vouches for me. To see my family. 25 days, no more. ») ; incohérence mineure de style : durées tantôt en lettres, tantôt en chiffres en tête de phrase (« 17 days, while the job lasts ») — identique en français, non relevée comme bug. Défauts : **QA-081** (« Id card » / « id card »), **QA-082** (« (FÉLIN) »), **QA-087** (guillemets doubles imbriqués).
+- **Cinématiques et légendes** en anglais : CIN-F7 (A, D), CIN-F6D (C), CIN-EC (J31), légende recomposée à chaud pendant la séquence (§18.3) ; longueurs ≤ 70 (GUT de lot B) et `qa_plates_audit --lang=en` : 66 planches, contraste ≥ 7:1, zone sûre.
+- **Sous-titres** : annonces de la station sous-titrées en anglais dans les journées sans bot (J31 ×2, Garde) ; 0 reste.
+
+### 18.3 Bascule de langue à chaud
+
+| Moment | Résultat |
+|---|---|
+| Titre, Options, Nouvelle partie, Charger, Difficulté, bilan, pause, fin, épilogue J31, Garde (accueil, guichet, fin), Dossier (5 onglets), chapitres, carte d'aide, tutoriel, fin de démo | ✅ 0 reste |
+| **Cinématique** en cours (CIN-F9, planche 2) | ✅ légende recomposée (« Without windows, nobody checks anybody. ») [`m15_qa_flip_cinematic_fr2en.png`](mockups/m15_qa_flip_cinematic_fr2en.png) ; Dossier : [`m15_qa_flip_dossier_people_fr2en.png`](mockups/m15_qa_flip_dossier_people_fr2en.png) |
+| **Guichet** (Rulebook, journal, portique, Contrebande, onglet Origines) | ❌ **QA-083** : dépassement de pile dans `Localization.retranslate_text` sur 5 des 11 configurations du guichet ; ligne du passager amputée (« [un seul gant, à la main gauche] » → «  seul gant, à la main gauche] », la phrase d'arrivée reste en français) [`m15_qa_flip_rulebook_fr2en_qa083.png`](mockups/m15_qa_flip_rulebook_fr2en_qa083.png) |
+| Guichet, passager suivant | ❌ **QA-084** : « TODAY'S DATE » ↔ « DATE DU JOUR » et libellés / infobulles des champs revenus à l'ancienne langue au rafraîchissement suivant |
+| **Soirée**, briefing, journal | ❌ **QA-086** : « Médicaments — Noa », « SIGNALER AU CONSORTIUM +10 ₵ » (et format français du montant), notes du foyer, « Euh… … normalement. » dans une réponse du journal, « [en colère] », « Le passager répond » [`m15_qa_flip_evening_fr2en.png`](mockups/m15_qa_flip_evening_fr2en.png), [`m15_qa_flip_journal_fr2en.png`](mockups/m15_qa_flip_journal_fr2en.png) (référence anglaise directe : tout est juste) |
+
+Tout est rétabli au rechargement de l'écran suivant ; rien ne touche la partie (même CaseKey, mêmes drapeaux). `test_m15_hot_language` reste vert : il bascule une seule fois, sur des textes jeunes, sans infobulle à crochet isolé ni rafraîchissement ultérieur.
+
+### 18.4 Démo J1–J5
+
+- **Exports** `export_all.sh --demo windows macos linux` : 87 s ; `CLEARANCE-0.14.0-demo-windows.zip` 80,2 Mo, `-macos.zip` 102,7 Mo, `-linux.tar.gz` 70,4 Mo, `SHA256SUMS-demo` (nom : QA-088). `.pck` de la démo 51,06 Mo (tout le contenu, J6–J30 verrouillés, D-223).
+- **`smoke_demo.sh`** : OK (titre FR puis EN sans erreur, « main: démo J1–J5 (données : user://demo/saves) », rien dans `user://saves`).
+- **Partie complète** (`qa_m15_demo.gd`, `--demo`, graine 5, FR **et** EN) : J1 → J5 joués (8, 10, 11, 12, 12 passagers), soirée du J5 → **« Fin de la démo »** (`screen_history` = briefing, bilan, soirée, `demo_end`), focus sur **VOIR LE JEU COMPLET** / **SEE THE FULL GAME**, lien `https://clearance.cardormedia.com/` (= domaine du site), tuiles solde (−9 ₵ / −₵9), conformité 72 % / 72%, foyer 3/3 ; partie archivée (`status = ended`, `ending_id = demo_complete`, `current_day` 5), **`user://saves` jamais créé** ; RETOUR AU TITRE → titre de la démo : Garde et Dossier grisés « Dans le jeu complet. » / « In the full game. », CONTINUER grisé, « Démo · v0.14.0 ». 0 `QA_ISSUE`.
+- **Rien au-delà du J5 ?** Non accessible par l'interface ; **accessible par une sauvegarde** : QA-089 (une sauvegarde du J19 copiée dans `user://demo/saves` est jouée en démo, la démo se termine au soir de ce jour).
+
+### 18.5 Version Web
+
+- `export_web.sh` : 32 s ; `index.wasm` 37,0 Mo (gzip 9,7), `index.pck` 38,8 Mo (gzip 32,3) : **42,0 Mo transférés** (≤ 60 ✅), archive `CLEARANCE-0.14.0-web.zip` 43 Mo.
+- `smoke_web.js --gl=angle-gl` (llvmpipe) **FR** et **EN** : ✅. Titre 6,0 s / 5,3 s ; écran d'emplacement 14 s ; briefing 26 s ; guichet J1 32 s ; titre après rechargement 80 s avec **CONTINUER — J1 / CONTINUE — DAY 1** focalisé (sauvegarde IndexedDB) ; entrées manette, clavier, souris du parcours ; audio `running`, **0 % de blocs vides** au titre (45 i/s) et au guichet (4 i/s) ; tas wasm 138 Mo ; 0 erreur console ; **QUITTER absent** ; Garde et Dossier « In the full game. » [`m15_qa_web_title_after_reload_en.png`](mockups/m15_qa_web_title_after_reload_en.png).
+- Guichet Web en anglais : enseignes 3D en français (« GATE · ANNEAU A », « CONTRÔLE · GUICHET 04 ») — **QA-091** [`m15_qa_web_j1_en_qa091.png`](mockups/m15_qa_web_j1_en_qa091.png) (même chose en natif).
+- Lancé depuis le site (§18.6) : `/play/` isolé (`crossOriginIsolated = true`), démo au titre en 11 s [`m15_qa_site_play_en.png`](mockups/m15_qa_site_play_en.png).
+
+### 18.6 Site 0.15
+
+- `npm ci` (7 s) puis `npm run build` (60 s ; 3 pages, 229 images optimisées, `dist` 17 Mo) avec Node 24.22.2 (le Node 22.22 du conteneur est sous l'exigence d'Astro 7.4) ; `site/node_modules` et `site/dist` ignorés par git, non commités.
+- Playwright, `/` et `/en/` × desktop 1440×900 et mobile 390×844 : statut 200, `lang` juste, **0 erreur / avertissement console**, 0 requête interne en échec, **0 lien interne cassé** (36 liens ; externes : Releases GitHub), **pas de défilement horizontal** (seul le carrousel déborde dans son conteneur masqué), **aucun nom de fin** (32 titres FR/EN de fins cherchés ; seuls « le registre » et « partir » apparaissent, comme mots courants hors contexte de fin). Une `<img data-lb-img>` sans `src` (visionneuse vide, cachée) : sans effet.
+- **`PUBLIC_WEB_DEMO=1`** : bouton « Lancer la démo Web » / « Launch the web demo » → `/play/` (404 en local sans le build Web, attendu) ; avec `build/web` monté sous `/play/` et les en-têtes de `web/nginx-clearance-web.conf` : la démo démarre (ci-dessus).
+- Défauts cosmétiques regroupés en **QA-092** (page anglaise illustrée de captures françaises, liste à puces « · » en début de ligne au mobile, « version Web à l'étude » dans la chronologie des versions) ; captures [`m15_qa_site_fr_desktop.png`](mockups/m15_qa_site_fr_desktop.png), [`m15_qa_site_en_mobile.png`](mockups/m15_qa_site_en_mobile.png).
+
+### 18.7 Recette 1.0 RC (non-régression globale)
+
+| Contrôle | Résultat |
+|---|---|
+| GUT | unit **708/708** ; integration **173/173 + 230** (dont 11 `pending` QA-081 → QA-094) ; total **1 111 : 1 100 verts, 11 `pending`, 0 échec** |
+| `build_data` | 261 fichiers réécrits, **0 modifié** (`git status data/` vide) : déterministe |
+| `export_all.sh` (Windows, macOS, Linux) | 71 s ; `windows.zip` **80,2 Mo** (≤ 84 ✅), `macos.zip` 102,7 Mo, `linux.tar.gz` 70,4 Mo ; **`.pck` 51 059 260 o = 51,06 Mo** (cible M-12 ≤ 50 : **QA-090**) |
+| `smoke_export.sh` | **OK** en 240 s (titre release, J1, J4, J7, J8, J10, J15, J19, J20, J24, J25, J30, Garde, J31 F10 et F6, fin → titre) ; le smoke ne joue rien en anglais : titre release lancé à part avec `settings.cfg` `language="en"` → 0 erreur |
+| Campagnes J1 → J30 | **Dur FR** (B) et **Dur EN** (A) : F7 ; **Récit** (C) : F6 Dérive ; 0 blocage, sauvegarde relue = `GameState` chaque soir (contrôle de `qa_campaign`), seuls `QA_ISSUE` : « solde aberrant » attendu (+3 000 ₵) |
+| Vraie sauvegarde **0.14.0** | `git archive 3bddb4a`, import, campagne réelle graine 9 (passeur) J1 → J14 en 0.14.0 → `current.json` v6 du J15 + `profile.json` v3 ; repris par la version courante (en anglais) jusqu'au J30 : **F7**, 0 `SCRIPT ERROR`, profil v3 inchangé de format, `endings_seen` f7, 41 portraits, `cinematics_seen = [cin_f7]` |
+| Profil 0.14 au titre courant | titre, Charger (« DAY 15 · ACT II », REPRENDRE, reprise d'un jour passé), Dossier (FINS, PERSONNES) ouverts sur le vrai `user://` 0.14 + un vrai `settings.cfg` 0.14 (sans `language`) : 0 erreur ; **la langue devient celle du système** (anglais ici) — **QA-093** |
+| Audit audio | `qa_audio_audit.gd`, 18 partitions (4 en parallèle, 137 s) : **791 mesures, 0 échec** (aucun asset audio modifié depuis la 0.14.0 : `git diff --stat 3bddb4a -- assets/audio assets/cinematics` vide) |
+| Audit des planches | `qa_plates_audit.gd` (xvfb, OpenGL 3) en FR et en EN : **66 planches, 0 échec, 0 avertissement**, 9,95 Mo, VRAM pire paire 22,6 Mo |
+
+### 18.8 Release : comportement de QA-083 hors debug
+
+Un binaire release n'exécute pas de script externe (`--script` ignoré) : copie du projet dans le scratchpad + autoload de sonde, export « Linux » release (9 s), `QA_PROBE=1` : `retranslate_text("[b]x[/b]")` = intact ; `retranslate_text("Onglet précédent ( [ · LB )")` = **""**, **sans plantage ni message** (le garde-fou de profondeur de GDScript existe en release). Conséquence joueur : textes **vidés** à la bascule (infobulles des onglets du Rulebook, répliques du passager, journal), pas de plantage. Non répété sur Windows/macOS.
+
+### 18.9 Liste des bugs (M15)
+
+Statut : 🔴 ouvert. « Test » : test `pending` de `tests/integration/test_qa_m15.gd`.
+
+| ID | Sév. | Titre | Reproduction | Propriétaire suggéré | Preuve |
+|---|---|---|---|---|---|
+| QA-081 | Cosmétique (EN) | ✅ Corrigé (0.15.0) — **Sigle « ID » perdu dans les phrases** : « Your **id card** has expired. Why come only today? », « The details on your id card don't match », détail de discordance et suggestion de la borne « ACV-2 · suggestion — **Id card** expired: … » (`to_lower()` de `InterrogationTopics.question_text`, `ComparisonUI._sentence_case`) | J5+ en anglais, comparer une carte expirée, puis interroger | UI/UX Expert (casse sensible aux sigles, ou clé « nom en phrase » par document) + Scénariste | `test_qa081_*`, campagne A |
+| QA-082 | Cosmétique (EN) | ✅ Corrigé (0.15.0) — **« (FÉLIN) »** (prénom du contrat de travail du chat Mistigri, SC-27, J12) affiché tel quel : la plaisanterie est illisible en anglais | J12 en anglais, SC-27 | Scénariste + Gameplay Systems (valeur traduite à l'affichage, comme « SANS EMPLOYEUR » : `UiText.DATA_TEXT_KEYS`) | `test_qa082_*` |
+| QA-083 | **Majeur** | ✅ Corrigé (0.15.0) — **Bascule à chaud : texte à « [ » isolé → récursion infinie** dans `Localization.retranslate_text` (`_retranslate_bbcode` → `_retranslate_run` → `retranslate_text` sans fin quand la regex ne trouve aucune balise). Debug : `SCRIPT ERROR: Stack overflow` + « Stack underflow (Engine Bug) » ; release : texte **vidé** en silence. Déclencheurs vus : infobulles « Onglet précédent ( [ · LB ) » / « Onglet suivant ( ] · RB ) » (dès que leur recette n'est plus la première trouvée), lignes du passager avec didascalie. Effet : réplique amputée (une didascalie de fouille « [un seul gant…] » est un **indice de jeu**), phrase restée en français, infobulles vides | Guichet J12 (Rulebook ouvert) ou J13 (journal), Options › ENGLISH ; campagne C : 102 erreurs | Godot Architect (`scripts/ui/localization.gd` : sans balise, rendre le segment tel quel ; un test unitaire « crochet isolé ») | `test_qa083_*` (sonde en processus séparé `qa_m15_probe.gd`), §18.8, [`m15_qa_flip_rulebook_fr2en_qa083.png`](mockups/m15_qa_flip_rulebook_fr2en_qa083.png) |
+| QA-084 | Mineur | ✅ Corrigé (0.15.0) — **`DocFieldView.display_label` jamais recomposé** : `_refresh_content` remet l'infobulle (et le libellé d'un champ épinglé) depuis la chaîne d'origine → « DATE DU JOUR » du Rulebook revient à l'ancienne langue **à chaque passager suivant** ; champs des documents posés au moment de la bascule idem après une comparaison | bascule en plein shift, appeler le passager suivant | UI/UX Expert (`doc_field_view.gd` : `on_language_changed()` qui recalcule `display_label`) | `test_qa084_*` (8 restes), campagne C |
+| QA-085 | Mineur (depuis 0.12) | ✅ Corrigé (0.15.0) — **« %d » brut dans le Rulebook** pendant EV-01 (lecteur MRZ en panne) : « R21 SUSPENDUE · LECTEUR HS (passagers restants : %d) » / « … (passengers remaining: %d) » — `RuleCardView.setup` rend `note_key` par `UiText.t` sans argument (carte de règle **et** note) | EV-01 (J9+), campagnes C et D (J22, J23) | UI/UX Expert (`rule_card_view.gd`) + Gameplay Systems (passer le nombre restant à la note) | `test_qa085_*` |
+| QA-086 | Mineur | ✅ Corrigé (0.15.0) — **Autres textes figés après la bascule** (jusqu'à l'écran suivant) : recette d'un texte rendu par **son repli déjà traduit** (`UiText.t(clé_variante, UiText.t(clé))` : notes du foyer `hh_note_<id>_<état>`, objets de fouille), bouton « SIGNALER AU CONSORTIUM +10 ₵ » (texte et format monétaire), « Médicaments — Noa », « Le passager répond », étiquette d'humeur « [en colère] » (prise pour une balise BBCode), réponse du journal (« Euh… », « normalement. »), notes « R44 SUSPENDUE · PORTIQUE HORS TENSION », nom de faction dans les lignes de soirée, « retour » | soirée J8 / briefing / journal J13, Options › langue | Godot Architect (`UiText` : recette qui garde la clé de repli ; crochets non BBCode) + UI/UX Expert (soirée, journal) | `test_qa086_*` (foyer), [`m15_qa_flip_evening_fr2en.png`](mockups/m15_qa_flip_evening_fr2en.png), [`m15_qa_flip_journal_fr2en.png`](mockups/m15_qa_flip_journal_fr2en.png) |
+| QA-087 | Cosmétique (EN) | ✅ Corrigé (0.15.0) — **Guillemets doubles imbriqués** : les répliques sont affichées entre "…" (`ui_quoted`) et 56 d'entre elles contiennent des "…" (« "Thank you. You said "next", last time. Say it again." », Okonkwo « "Match" costs nothing ») | J1 en anglais, Okonkwo | Scénariste (`en.csv` : guillemets simples à l'intérieur ; règle à ajouter à LOCALIZATION §4) | `test_qa087_*` |
+| QA-088 | Mineur (livraison) | ✅ Corrigé (0.15.0) — **Version non montée** : `config/version = "0.14.0"` en M15 → archives `CLEARANCE-0.14.0-*` (démo, Web), « Démo · v0.14.0 » au titre, `game_version` des sauvegardes, alors que le site annonce la 0.15.0 ; pas de section 0.15 au `CHANGELOG.md` (répète QA-065 / QA-072) | `bash tools/export_all.sh --demo linux` | Orchestrateur (à la livraison 0.15.0 / 1.0 RC) | `test_qa088_*` |
+| QA-089 | Mineur | ✅ Corrigé (0.15.0) — **La démo accepte une sauvegarde au-delà du J5** : `SaveService.validate` borne le jour par `last_day()` (30) et non par `DemoMode.last_day` ; `DemoMode.is_locked_day` n'est appelé nulle part. Une sauvegarde du jeu complet copiée dans `user://demo/saves` (même dossier utilisateur) ou un `current.json` retouché ouvre n'importe quel jour 6–30 (contenu présent dans le paquet, D-223) ; la démo s'arrête au soir de ce jour | `--demo --qa-load=tests/fixtures/qa_save_v6_013_j19.json` : J19 joué | Godot Architect (`save_service.gd` : `max_day = DemoMode.last_day(last_day())`, garde au chargement) | `test_qa089_*` |
+| QA-090 | Mineur (budget) | ✅ Tranché (D-227) — **`.pck` 51,06 Mo > 50 Mo** (M-12, marge M14 0,36 Mo) : +1,42 Mo en M15 (traduction anglaise, polices, démo) ; même taille pour la démo (51,06) ; zip Windows 80,2 Mo ≤ 84 ✅ | `bash tools/export_all.sh linux && ls -l build/linux/CLEARANCE.pck` | Orchestrateur + 3D Designer / Asset Lead (réviser la cible ou libérer de la place) | §18.7 |
+| QA-091 | Cosmétique (EN, décision) | ✅ Tranché (D-228) — **Enseignes 3D du guichet en français en anglais** : « CONTRÔLE · GUICHET 04 », « GATE · ANNEAU A », « ANNEAU B › PORTE 2 », « DÉPARTS · NAVETTES », « GLOIRE AU CONSORTIUM » (texte cuit en géométrie par `tools/build_booth.gd`) | guichet J1 en anglais (natif et Web) | 3D Designer + Orchestrateur (assumer le français diégétique — à écrire dans LOCALIZATION §3 — ou variante anglaise) | [`m15_qa_web_j1_en_qa091.png`](mockups/m15_qa_web_j1_en_qa091.png) |
+| QA-092 | Cosmétique (site) | ✅ Corrigé (0.15.0) — Page **anglaise illustrée de captures du jeu en français** (héros : « CARTE D'IDENTITÉ » alors que `m15_en_*` existent) ; ligne de badges du héros au mobile qui commence par « · » ; chronologie « 0.15.0 … version Web à l'étude / web version under evaluation » alors que D-220 la déclare viable et que la FAQ dit « Oui » | `/en/` mobile 390 | Lot S (`site/src`) | [`m15_qa_site_en_mobile.png`](mockups/m15_qa_site_en_mobile.png) |
+| QA-093 | Mineur (décision) | ✅ Corrigé (0.15.0) — **Mise à jour 0.14 → 0.15 : la langue change toute seule** : un `settings.cfg` de la 0.14 n'a pas de `language`, la langue devient celle du système ; un joueur français sur un système anglais (Steam Deck : `en_US` par défaut) retrouve sa partie en anglais | vrai `user://` 0.14 + vrai `settings.cfg` 0.14, système anglais | Godot Architect + Game Designer (proposition : `settings.cfg` antérieur sans langue → français ; défaut système seulement au premier lancement) | `test_qa093_*` |
+| QA-094 | Mineur | ✅ Corrigé (0.15.0) — **« %d » brut dans le rapport « LA NUIT AU BLOC PÉTREL »** : les lettres à valeur (prélèvements du J11 « 30 % de votre épargne… : %d ₵ » et du J25 « 20 %… pour l'air de Tycho ») sont relayées par `EveningService` (`report.add_event(event.text_key)`) sans leurs `text_args` ; `EveningScreen._event_row` ne substitue que `%s` (FR comme EN) | campagne D, soirée du J25 | Gameplay Systems (`evening_service.gd` : arguments avec l'événement) + UI/UX Expert (`_event_row` via `format_args`) | `test_qa094_*` |
+
+Total M15 : **0 bloquant, 1 majeur (QA-083), 8 mineurs, 5 cosmétiques** (14 bugs). Aucun bug des passes précédentes réapparu, sauf le schéma de QA-065 / QA-072 (QA-088). QA-085 et QA-094 sont antérieurs à M15 (0.12 et Acte II) : la lecture systématique des spécificateurs à l'écran les a trouvés.
+
+### 18.10 Verdict 1.0 RC
+
+**Prêt sous réserve.** Le jeu est complet, stable et déterministe : 1 100 tests verts, 4 campagnes réelles sans blocage ni erreur hors bascule de langue, exports 3 plateformes + démo + Web fumés, site construit et propre, audio et planches conformes, sauvegarde et profil 0.14 repris. La traduction anglaise est de bonne tenue (0 texte français ni clé brute en partie anglaise sur ≈ 36 000 textes uniques relevés).
+
+Réserves (à lever avant de signer la RC) :
+1. **QA-083** (majeur) : corriger la récursion de `retranslate_text` — la bascule en plein shift est une promesse de M15 et peut effacer un indice de fouille.
+2. **QA-088** : monter la version (0.15.0, puis 1.0.0-rc) et le CHANGELOG.
+3. Recommandé dans la même livraison : **QA-084**, **QA-086** (bascule à chaud propre), **QA-094**, **QA-085** (« %d » à l'écran), **QA-089**, **QA-093** (décision), **QA-090** (décision de budget).
+4. Cosmétiques (QA-081, 082, 087, 091, 092) : après la RC si besoin.
+
+**Ce qui n'a pas pu être vérifié ici, et risques associés :**
+
+| Non vérifié | Risque |
+|---|---|
+| **Steam Deck réel** (M-10 CPU, M-11 mémoire, M-13 sur GPU, à-coups de chargement des planches en Bas, glyphes, `en_US` par défaut) | performances et confort de la cible principale ; QA-093 y touche tous les joueurs français |
+| **GPU réel** (natif et Web) : FPS au guichet ≥ 30 en Auto/Bas, coût WebGL 2 | la version Web n'a été mesurée qu'en rendu logiciel (4 i/s au guichet) ; Firefox et Safari non testés ; mobile non visé |
+| **Écoute humaine** (transitions, Garde, annonces, voix Tessar, Web en mode Stream) | tout l'audio est jugé par mesures (aucune sortie son) |
+| **Playtest humain** (lisibilité de l'anglais en situation, difficulté, durée 8–10 h annoncée par le site, démo comme vitrine) | ton et rythme de l'anglais non éprouvés par un lecteur natif ; QA-081/087 le laissent deviner |
+| **Windows et macOS** exécutés (seuls les binaires Linux sont lancés ; macOS signé ad hoc seulement) | démarrage, chemins `user://`, ouverture du lien de la démo (`OS.shell_open`) |
+| Hébergement réel (nginx + Cloudflare, COOP/COEP en production, cache) | en-têtes perdus derrière un cache = démo Web noire (WEB.md §5) |
+| Manette physique dans le navigateur, plein écran, onglet en arrière-plan | entrées Web vérifiées par manette simulée seulement |
+
+### 18.11 Tests ajoutés (`tests/integration/test_qa_m15.gd`, 12 tests) et outils
+
+| Test | État |
+|---|---|
+| `test_same_seed_same_cases_in_both_languages` | ✅ passe (D-224) |
+| `test_qa081_*` … `test_qa094_*` (QA-081, 082, 083, 084, 085, 086, 087, 088, 089, 093, 094) | ⏸ `pending` (11) ; QA-090, QA-091, QA-092 sans test GUT (taille d'export, géométrie cuite, site) |
+
+Pilotes (hors GUT, `tests/qa_drivers/`) : `qa_m15_lang.gd` (campagne lue à l'écran : `QA15_HIT kind=FR|EN|KEY|PH|LOWI`, `QA15_FLIP`, `QA15_SUMMARY` ; `--qa-flip=S`, `--qa-dump=`), `qa_m15_scan.gd` (lecteur partagé), `qa_m15_day_lang.gd` (journée sans bot lue à l'écran), `qa_m15_flip.gd` (bascule à chaud d'un écran puis capture : `QA15F_LEFT`, `QA15F_SUMMARY`), `qa_m15_demo.gd` (démo J1 → J5 jusqu'à la fin de démo et au titre : `QA15D_END`, `QA15D_DIRS`, `QA15D_TITLE`), `qa_m15_probe.gd` (sonde en processus séparé pour QA-083).
+
+### 18.12 Rejouer la passe M15
+
+```bash
+# GUT (unit, puis integration en deux lots < 10 min)
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig= -gdir=res://tests/unit/ -gprefix=test_ -gsuffix=.gd \
+    -gpre_run_script=res://tests/helpers/gut_pre_run.gd -gexit
+ls tests/integration/*.gd | sed 's#^#res://#' | head -20 | paste -sd, > /tmp/lot1    # tail -n +21 → lot 2
+godot --headless -s addons/gut/gut_cmdln.gd -gconfig= -gtest=$(cat /tmp/lot1) -gpre_run_script=res://tests/helpers/gut_pre_run.gd -gexit
+# Campagnes lues à l'écran (deux tronçons : le second reprend slot_1/current.json par --qa-load)
+X=$(mktemp -d); XDG_DATA_HOME=$X timeout 570 godot --headless --script res://tools/qa_boot.gd -- --lang=en \
+    --qa-node=res://tests/qa_drivers/qa_m15_lang.gd --autoplay --qa-seed=3 --qa-profile=loyal --qa-credits=3000 \
+    --qa-speed=10 --qa-dump=/tmp/en.txt          # --lang=fr ; --qa-seed=7 --qa-profile=drift --qa-story --qa-flip=25 --qa-cin=tap
+# J31 / Garde en anglais
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --lang=en \
+    --qa-node=res://tests/qa_drivers/qa_m15_day_lang.gd --epilogue=f10_pont --autoplay --qa-speed=4 --qa-follow=45
+# Bascule à chaud d'un écran (arguments de scène de tools/qa_pseudo_captures.sh)
+XDG_DATA_HOME=$(mktemp -d) xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 \
+    --script res://tools/qa_boot.gd -- --qa-node=res://tests/qa_drivers/qa_m15_flip.gd --lang=fr --qa-flip-to=en \
+    --qa-wait=16 --qa-out=/tmp/f.png --reduce-motion --day=8 --screen=evening --no-booth --household=demo
+# Démo
+bash tools/export_all.sh --demo windows macos linux && bash tools/smoke_demo.sh
+XDG_DATA_HOME=$(mktemp -d) godot --headless --script res://tools/qa_boot.gd -- --demo --lang=en \
+    --qa-node=res://tests/qa_drivers/qa_m15_demo.gd --autoplay --qa-seed=5 --qa-speed=10
+# Web
+bash tools/export_web.sh && xvfb-run -a node tools/smoke_web.js --gl=angle-gl --no-shots --locale=en-US   # puis fr-FR
+# Site (Node ≥ 22.23 ; ici Node 24 du scratchpad en tête du PATH)
+cd site && npm ci && npm run build && PUBLIC_WEB_DEMO=1 npm run build
+# Recette
+godot --headless --script res://tools/build_data.gd && git status --short data/
+bash tools/export_all.sh && bash tools/smoke_export.sh && ls -l build/linux/CLEARANCE.pck
+godot --headless --path . --script res://tools/qa_audio_audit.gd -- --only=ms02 --json=/tmp/ms02.json   # ×18
+xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 --script res://tools/qa_plates_audit.gd [-- --lang=en]
+#   user:// de la 0.14.0 : git archive 3bddb4a | tar -x -C /tmp/v014 ; cp -r .godot /tmp/v014 ; godot --headless --path /tmp/v014 --import ;
+#   campagne qa_campaign graine 9 (un tronçon) dans un XDG jetable, puis --qa-load=<…>/slot_1/current.json dans la version courante
+```

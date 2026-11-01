@@ -236,7 +236,16 @@ func test_id_card_fields_flow_below_the_portrait() -> void:
 				shown.append((label as Label).text)
 		assert_eq(shown.size(), 1, "bande MRZ : la valeur seule, sans ligne de libellé")
 	# Plus de colonne vide sous la photo : la carte est plus basse que photo + 7 lignes.
-	assert_lt(card.get_combined_minimum_size().y, 600.0, "carte plus basse (1080p)")
+	# M15 (lot U) : l'émetteur passe sur deux lignes au lieu d'être coupé par le
+	# n° de série (« CONSORTIUM · BUREAU DE CONTIN… ») — sa ligne en plus est
+	# comptée à part, le reste de la carte garde la même borne.
+	var issuer: Label = card.find_child("Issuer", true, false) as Label
+	assert_not_null(issuer, "émetteur de la carte")
+	var extra: float = 0.0
+	if issuer != null:
+		extra = (issuer.get_line_count() - 1) * (issuer.get_line_height() + issuer.get_theme_constant(&"line_spacing"))
+	assert_lte(issuer.get_line_count() if issuer != null else 0, DocumentView.ISSUER_MAX_LINES, "émetteur : deux lignes au plus")
+	assert_lt(card.get_combined_minimum_size().y - extra, 600.0, "carte plus basse (1080p)")
 
 
 func test_document_values_reach_13_px_at_1080p_with_four_and_five_documents() -> void:

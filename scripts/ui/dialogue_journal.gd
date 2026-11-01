@@ -137,7 +137,8 @@ func add_line(text: String, caption: String = "", tag: bool = false) -> Dictiona
 	var flow: HFlowContainer = _flow()
 	box.add_child(flow)
 	var words: Array[Label] = _add_words(flow, text)
-	return _push({"node": box, "frozen": false, "chips": [] as Array[StatementChipView], "words": words, "tag": tag})
+	return _push({"node": box, "frozen": false, "chips": [] as Array[StatementChipView], "words": words, "tag": tag,
+			"flow": flow, "source": text})
 
 
 ## Réplique composée : `frame_text` (cadre traduit, emplacements `{motif}`…)
@@ -146,6 +147,15 @@ func add_statement_line(frame_text: String, statements: Array[Statement], captio
 	var box: VBoxContainer = _entry_box(caption)
 	var flow: HFlowContainer = _flow()
 	box.add_child(flow)
+	var filled: Dictionary = _fill_statement_flow(flow, frame_text, statements, {})
+	return _push({"node": box, "frozen": false, "chips": filled["chips"], "words": filled["words"], "tag": false,
+			"flow": flow, "frame": frame_text, "statements": statements})
+
+
+## Remplit `flow` d'après le cadre : mots et puces. `reuse` : puces existantes
+## (clé `_chip_key`) remises en place au lieu d'être recréées (retraduction à
+## chaud : sélection, discordance et gel conservés).
+func _fill_statement_flow(flow: HFlowContainer, frame_text: String, statements: Array[Statement], reuse: Dictionary) -> Dictionary:
 	var words: Array[Label] = []
 	var chips: Array[StatementChipView] = []
 	for segment: Dictionary in Statement.segments(frame_text):
@@ -166,8 +176,94 @@ func add_statement_line(frame_text: String, statements: Array[Statement], captio
 		var struck: bool = segment["struck"]
 		if struck and statement.struck_text(func(key: String) -> String: return UiText.t(key, key)).is_empty():
 			continue
-		chips.append(_add_chip(flow, statement, struck))
-	return _push({"node": box, "frozen": false, "chips": chips, "words": words, "tag": false})
+		var kept: StatementChipView = reuse.get(_chip_key(statement, struck), null)
+		if kept != null and is_instance_valid(kept):
+			reuse.erase(_chip_key(statement, struck))
+			flow.add_child(kept)
+			chips.append(kept)
+		else:
+			chips.append(_add_chip(flow, statement, struck))
+	return {"words": words, "chips": chips}
+
+
+static func _chip_key(statement: Statement, struck: bool) -> String:
+	return "%s|%s" % [statement.id if statement != null else &"", struck]
+
+
+## QA-086 (contrat `on_language_changed`, D-221) : les répliques sont posées mot
+## à mot (un `Label` par mot) ; aucune recette ne couvre un mot isolé. Chaque
+## entrée garde sa source (texte, ou cadre + déclarations) et ses mots sont
+## reposés dans la nouvelle langue ; les puces sont gardées (même objet).
+func on_language_changed() -> void:
+	var changed: bool = false
+	for entry: Dictionary in entries:
+		var flow: HFlowContainer = entry.get("flow", null)
+		if flow == null or not is_instance_valid(flow):
+			continue
+		if entry.has("frame"):
+			var frame: String = entry["frame"]
+			var new_frame: String = Localization.retranslate_text(frame)
+			if new_frame == frame:
+				continue
+			entry["frame"] = new_frame
+			_refill_statement_entry(entry, flow, new_frame)
+			changed = true
+		elif entry.has("source"):
+			var source: String = entry["source"]
+			var new_source: String = Localization.retranslate_text(source)
+			if new_source == source:
+				continue
+			entry["source"] = new_source
+			for label: Label in entry["words"]:
+				if is_instance_valid(label):
+					label.get_parent().remove_child(label)
+					label.queue_free()
+			var frozen_tag: Node = _detach_frozen(flow)
+			entry["words"] = _add_words(flow, new_source)
+			if frozen_tag != null:
+				flow.add_child(frozen_tag)
+			changed = true
+	if changed:
+		_restyle()
+
+
+func _refill_statement_entry(entry: Dictionary, flow: HFlowContainer, frame_text: String) -> void:
+	var reuse: Dictionary = {}
+	for chip: StatementChipView in entry["chips"]:
+		if is_instance_valid(chip):
+			reuse[_chip_key(chip.statement, chip.struck)] = chip
+	var frozen_tag: Node = _detach_frozen(flow)
+	for child: Node in flow.get_children():
+		if child is StatementChipView:
+			flow.remove_child(child)
+			continue
+		if child is HBoxContainer and String(child.name).begins_with("ChipGroup_"):
+			for inner: Node in child.get_children():
+				if inner is StatementChipView:
+					child.remove_child(inner)
+		flow.remove_child(child)
+		child.queue_free()
+	for chip: StatementChipView in reuse.values():
+		chip.tight_end = false
+	var statements: Array[Statement] = entry["statements"]
+	var filled: Dictionary = _fill_statement_flow(flow, frame_text, statements, reuse)
+	var chips: Array[StatementChipView] = filled["chips"]
+	for orphan: StatementChipView in reuse.values():
+		# Puce sans emplacement dans le nouveau cadre (ne devrait pas arriver) :
+		# gardée en fin de réplique, jamais perdue.
+		flow.add_child(orphan)
+		chips.append(orphan)
+	entry["words"] = filled["words"]
+	entry["chips"] = chips
+	if frozen_tag != null:
+		flow.add_child(frozen_tag)
+
+
+func _detach_frozen(flow: HFlowContainer) -> Node:
+	var tag: Node = flow.find_child("FrozenTag", false, false)
+	if tag != null:
+		flow.remove_child(tag)
+	return tag
 
 
 ## Réplique scénarisée en prose (non épinglable, D-154) suivie d'une rangée de

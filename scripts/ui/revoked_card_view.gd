@@ -69,7 +69,7 @@ func setup(p_entry: RevokedEntry, p_number: int, today: int = 0, council: bool =
 	detail_row.add_child(status)
 	# Acte III (R33) : colonne « RÉINTÉGRÉ·E LE » ou motif d'exclusion.
 	if p_entry.reinstated_on > 0:
-		var on: Label = ScreenBase.label("%s %s" % [UiText.t("rb_col_reinstated", "RÉINTÉGRÉ·E LE"), UiText.date(p_entry.reinstated_on)],
+		var on: Label = ScreenBase.label(reinstated_text(p_entry.reinstated_on),
 				&"DocFieldLabel", Palette.STATE_GREEN if reinstated else Palette.TEXT_SECONDARY)
 		on.name = "ReinstatedOn"
 		column.add_child(on)
@@ -109,3 +109,9 @@ func _draw() -> void:
 func _draw_underline(_rect: Rect2) -> void:
 	if inspection_active and comparable and not is_flagged() and not selected:
 		draw_rect(Rect2(Vector2.ZERO, size), DS.CYAN_24 if _hovered else DS.CYAN_08, false, 1.0)
+
+
+## « RÉINTÉGRÉ·E LE 12.04.2187 » ; QA-086 : recette gardée (retraduit à chaud).
+static func reinstated_text(days: int) -> String:
+	var text: String = "%s %s" % [UiText.t("rb_col_reinstated", "RÉINTÉGRÉ·E LE"), UiText.date(days)]
+	return UiText.remember_call(text, reinstated_text.bind(days))

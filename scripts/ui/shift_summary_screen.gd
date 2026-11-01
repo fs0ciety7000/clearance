@@ -23,6 +23,8 @@ extends ScreenBase
 
 const LEFT_RATIO: float = 1.7
 const TICKETS_WIDTH: float = 380.0
+## M15 (lot U) : part maximale de la largeur utile pour les avis d'infraction.
+const TICKETS_MAX_SHARE: float = 0.4
 
 var summary: DaySummary = null
 var day: DayDef = null
@@ -298,7 +300,8 @@ func _rule_label(rule_id: StringName) -> String:
 
 func _tickets() -> Control:
 	var box: VBoxContainer = vbox(DS.SPACE_3)
-	box.custom_minimum_size.x = TICKETS_WIDTH
+	box.name = "Tickets"
+	box.custom_minimum_size.x = tickets_width()
 	var citations: Array[CaseResult] = summary.get_citations()
 	box.add_child(section(UiText.t("sum_tickets", "AVIS D'INFRACTION"), UiIcon.Kind.LOGO, DS.ACCENT_YELLOW, str(citations.size())))
 	if citations.is_empty():
@@ -311,6 +314,8 @@ func _tickets() -> Control:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	box.add_child(scroll)
 	var list: VBoxContainer = vbox(DS.SPACE_3)
+	# M15 (lot U) : les tickets prennent toute la largeur de la colonne.
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
 	for result: CaseResult in citations:
 		var number: int = 0
@@ -323,6 +328,15 @@ func _tickets() -> Control:
 		list.add_child(CitationTicket.make(result, summary.day_number, number, title,
 				day.free_citations_per_day if day != null else 2, true, GameState.is_story_mode()))
 	return box
+
+
+## M15 (lot U) : largeur de la colonne des avis d'infraction — `TICKETS_WIDTH`
+## agrandie comme le texte (`text_room`, Deck et texte 1,5 : l'en-tête
+## « CONSORTIUM · NOTICE OF INFRACTION » et le motif ne s'empilent plus mot à
+## mot), sans dépasser `TICKETS_MAX_SHARE` de la largeur utile.
+func tickets_width() -> float:
+	var usable: float = (size.x if size.x > 0.0 else get_viewport_rect().size.x) - 2.0 * SCREEN_MARGIN_X
+	return minf(TICKETS_WIDTH * text_room(), maxf(usable * TICKETS_MAX_SHARE, TICKETS_WIDTH))
 
 
 func _footer() -> Control:

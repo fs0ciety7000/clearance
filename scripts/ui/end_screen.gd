@@ -301,7 +301,7 @@ func _recap_column() -> Control:
 	table_scroll.add_child(table)
 	var tiles: HBoxContainer = hbox(DS.SPACE_3)
 	right.add_child(tiles)
-	tiles.add_child(stat_tile(UiText.t("end_compliance", "INDICE DE CONFORMITÉ"), "%d %%" % roundi(compliance * 100.0),
+	tiles.add_child(stat_tile(UiText.t("end_compliance", "INDICE DE CONFORMITÉ"), percent(roundi(compliance * 100.0)),
 			UiText.t("end_compliance_detail", "Cas corrects / cas traités"), DS.ACCENT_CYAN, UiIcon.Kind.CHECK))
 	tiles.add_child(stat_tile(UiText.t("end_balance", "SOLDE FINAL"), credits(final_credits),
 			UiText.t("end_balance_detail", "Banque Aurel"), Palette.STATE_RED if final_credits < 0 else DS.ACCENT_YELLOW, UiIcon.Kind.LOGO))
@@ -456,7 +456,7 @@ func _table() -> Control:
 	for entry: Dictionary in history:
 		var balance: int = _n(entry, "balance")
 		var cells: Array[String] = [
-			"J%02d" % _n(entry, "day"),
+			UiText.tf("dos_chr_first", [_n(entry, "day")], "J%02d"), # M15 (lot U) : « D01 » en anglais
 			"%d / %d" % [_n(entry, "processed"), _n(entry, "planned")],
 			str(_n(entry, "correct")),
 			str(_n(entry, "citations")),

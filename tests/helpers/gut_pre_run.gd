@@ -9,6 +9,8 @@
 ## M12 (lot A2) : dossier **propre au processus** (`user://test_runs/<PID>/`)
 ## — deux exécutions GUT simultanées ne se vident plus mutuellement leurs
 ## sauvegardes ; les dossiers des processus terminés sont supprimés au départ.
+## M15 : langue fixée au français (valeur de session), quelle que soit la
+## langue du système.
 extends GutHookScript
 
 const TEST_RUNS_ROOT: String = "user://test_runs"
@@ -25,6 +27,9 @@ func run() -> void:
 	_clear_dir(root)
 	DirAccess.make_dir_recursive_absolute(root)
 	Settings.use_storage(root.path_join("settings.cfg"))
+	# M15 : la suite est écrite contre les textes français ; la langue du
+	# système (défaut du réglage `language`) ne doit pas la faire basculer.
+	Settings.set_session_value(Settings.KEY_LANGUAGE, Localization.LANG_FR)
 	SaveService.use_root(root.path_join("saves"))
 
 

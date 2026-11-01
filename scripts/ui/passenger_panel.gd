@@ -122,7 +122,7 @@ func _draw() -> void:
 ## M13 : la réplique s'inscrit au journal (`to_journal`), sauf si l'appelant
 ## l'y inscrit lui-même (réponse à puces) ; `caption` : question posée.
 func set_line(text: String, quoted: bool = true, to_journal: bool = true, caption: String = "") -> void:
-	_line.text = ("« %s »" % text) if quoted and not text.is_empty() else text
+	_line.text = UiText.quoted(text) if quoted and not text.is_empty() else text
 	if to_journal and not text.is_empty() and journal != null:
 		journal.add_line(text, caption)
 	speaking = not text.is_empty()
@@ -298,7 +298,7 @@ func _make_unlocked_card(card: Dictionary) -> Control:
 	var text: Label = Label.new()
 	text.theme_type_variation = &"BodyLabel"
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	text.text = "« %s »" % str(card.get("text", ""))
+	text.text = UiText.quoted(str(card.get("text", "")))
 	column.add_child(text)
 	var keys: HBoxContainer = HBoxContainer.new()
 	keys.add_theme_constant_override("separation", DS.SPACE_1)

@@ -2,7 +2,6 @@
 import Mark from './Mark.astro';
 import Icon from './Icon.astro';
 import { t, homePath, type Lang } from '../lib/i18n';
-import { DOWNLOAD_URL } from '../config';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const d = t(lang);
@@ -21,7 +20,7 @@ const other: Lang = lang === 'fr' ? 'en' : 'fr';
       <a class="lang" href={homePath(other)} hreflang={other} lang={other} aria-label={`FR / EN — ${d.nav.switchTo}`}>
         <span class={lang === 'fr' ? 'on' : ''}>FR</span><i aria-hidden="true">/</i><span class={lang === 'en' ? 'on' : ''}>EN</span>
       </a>
-      <a class="btn btn-secondary btn-sm cta" href={DOWNLOAD_URL} rel="noopener">
+      <a class="btn btn-secondary btn-sm cta" href="#telecharger">
         <Icon name="download" size={16} />{d.nav.cta}
       </a>
       <button class="burger" type="button" aria-expanded="false" aria-controls="menu" data-burger>
@@ -36,7 +35,7 @@ const other: Lang = lang === 'fr' ? 'en' : 'fr';
       {d.nav.links.map((l, i) => <a href={l.href} style={`--i:${i}`}><span class="mono">0{i + 1}</span>{l.label}</a>)}
     </nav>
     <div class="menu-foot">
-      <a class="btn btn-primary" href={DOWNLOAD_URL} rel="noopener"><Icon name="download" size={18} />{d.hero.ctaPrimary}</a>
+      <a class="btn btn-primary" href="#telecharger"><Icon name="download" size={18} />{d.hero.ctaPrimary}</a>
       <a class="lang" href={homePath(other)} hreflang={other} lang={other}>{d.nav.switchTo}</a>
     </div>
   </div>

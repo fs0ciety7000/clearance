@@ -1,6 +1,6 @@
 ---
 // Icônes SVG inline, trait carré (DS §6).
-interface Props { name: 'arrow' | 'download' | 'diamond' | 'check' | 'octagon' | 'neq' | 'eq' | 'tri' | 'windows' | 'apple' | 'linux' | 'deck' | 'plus' | 'close' | 'menu' | 'chev-l' | 'chev-r' | 'copy' | 'up' | 'file'; size?: number; class?: string }
+interface Props { name: 'arrow' | 'download' | 'diamond' | 'check' | 'octagon' | 'neq' | 'eq' | 'tri' | 'windows' | 'apple' | 'linux' | 'deck' | 'plus' | 'close' | 'menu' | 'chev-l' | 'chev-r' | 'copy' | 'up' | 'file' | 'play' | 'ext'; size?: number; class?: string }
 const { name, size = 20, class: cls } = Astro.props;
 ---
 <svg class={cls} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true" focusable="false">
@@ -23,5 +23,7 @@ const { name, size = 20, class: cls } = Astro.props;
   {name === 'chev-r' && <path d="M9 5l7 7-7 7" />}
   {name === 'copy' && <><path d="M8 8h12v12H8z" /><path d="M4 16V4h12" /></>}
   {name === 'up' && <path d="M12 20V5M6 11l6-6 6 6" />}
+  {name === 'play' && <path d="M7 4.5v15l12-7.5z" />}
+  {name === 'ext' && <><path d="M14 4h6v6M20 4l-9 9" /><path d="M18 14v6H4V6h6" /></>}
   {name === 'file' && <><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /></>}
 </svg>

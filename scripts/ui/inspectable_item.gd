@@ -132,6 +132,16 @@ func _refresh_content() -> void:
 	pass
 
 
+## QA-084 (contrat `on_language_changed`, D-221) : le libellé lisible
+## (`display_label` : infobulle, libellé d'un champ épinglé, messages) est
+## recomposé dans la nouvelle langue ; sinon `_refresh_content` remettait
+## l'ancien au rafraîchissement suivant (« DATE DU JOUR » à chaque passager).
+func on_language_changed() -> void:
+	if not display_label.is_empty():
+		display_label = Localization.retranslate_text(display_label)
+	_refresh_content()
+
+
 func _draw() -> void:
 	var rect: Rect2 = Rect2(Vector2.ZERO, size)
 	var flagged: bool = is_flagged()

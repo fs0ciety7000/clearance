@@ -474,7 +474,12 @@ func _place_stage(s: PlateStage) -> void:
 
 
 func _on_cinematic_settings_changed(key: StringName, _value: Variant) -> void:
-	if key == Settings.KEY_TEXT_SCALE or key == Settings.KEY_REDUCE_MOTION:
+	if key == Settings.KEY_LANGUAGE or key == Settings.KEY_PSEUDO_LOC:
+		# M15 : légende recomposée (retour à la ligne manuel) dans la nouvelle langue.
+		if phase == Phase.PLATES and index >= 0 and index < plates.size():
+			_caption_source = caption_text(plates[index], ctx)
+		_layout.call_deferred()
+	elif key == Settings.KEY_TEXT_SCALE or key == Settings.KEY_REDUCE_MOTION:
 		_layout.call_deferred()
 	elif key == Settings.KEY_FX_INTENSITY or key == Settings.KEY_HOLO_FLICKER or key == Settings.KEY_GRAPHICS_QUALITY:
 		if stage != null and is_instance_valid(stage):

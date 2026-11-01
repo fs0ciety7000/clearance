@@ -5,6 +5,8 @@
 #   bash tools/export_all.sh                   # windows macos linux
 #   bash tools/export_all.sh linux             # une ou plusieurs plateformes
 #   bash tools/export_all.sh all               # + linux-arm64
+#   bash tools/export_all.sh --demo [linux…]   # M15 (D-215) : démo J1–J5, préréglages « … Demo »
+#                                              # (fonctionnalité « demo » ; windows macos linux)
 # Variables : GODOT (binaire, défaut « godot »), GODOT_TEMPLATES_DIR (dossier des
 # modèles 4.7.2.stable, défaut : dossier de données Godot de l'utilisateur).
 #
@@ -14,6 +16,8 @@
 #   build/dist/CLEARANCE-<version>-macos.zip        CLEARANCE.app (universel, signé ad hoc) + CREDITS.txt + licenses/
 #   build/dist/CLEARANCE-<version>-linux.tar.gz     binaire x86_64 (Steam Deck) + .pck + CREDITS.txt + licenses/
 #   build/dist/SHA256SUMS
+# Avec --demo : build/demo-<plateforme>/ et build/dist/CLEARANCE-<version>-demo-<plateforme>.*
+# (SHA256SUMS couvre alors les archives de la démo).
 set -euo pipefail
 
 GODOT="${GODOT:-godot}"
@@ -25,12 +29,30 @@ DIST="$BUILD/dist"
 die() { echo "export_all: ERREUR : $*" >&2; exit 1; }
 
 # --- Plateformes demandées ------------------------------------------------------
-PLATFORMS=("$@")
+DEMO=0
+PLATFORMS=()
+for arg in "$@"; do
+	case "$arg" in
+		--demo) DEMO=1 ;;
+		*) PLATFORMS+=("$arg") ;;
+	esac
+done
 [[ ${#PLATFORMS[@]} -eq 0 ]] && PLATFORMS=(windows macos linux)
 [[ "${PLATFORMS[*]}" == "all" ]] && PLATFORMS=(windows macos linux linux-arm64)
 
 preset_of()   { case "$1" in windows) echo "Windows Desktop";; macos) echo "macOS";; linux) echo "Linux";; linux-arm64) echo "Linux ARM64";; *) return 1;; esac; }
 output_of()   { case "$1" in windows) echo "CLEARANCE.exe";; macos) echo "CLEARANCE.zip";; linux) echo "CLEARANCE.x86_64";; linux-arm64) echo "CLEARANCE.arm64";; esac; }
+if [[ $DEMO -eq 1 ]]; then
+	# Démo (D-215) : préréglages « <nom> Demo », binaires CLEARANCE-Demo.*, pas d'ARM64.
+	preset_of() { case "$1" in windows) echo "Windows Desktop Demo";; macos) echo "macOS Demo";; linux) echo "Linux Demo";; *) return 1;; esac; }
+	output_of() { case "$1" in windows) echo "CLEARANCE-Demo.exe";; macos) echo "CLEARANCE-Demo.zip";; linux) echo "CLEARANCE-Demo.x86_64";; esac; }
+	kept=()
+	for p in "${PLATFORMS[@]}"; do [[ "$p" == "linux-arm64" ]] || kept+=("$p"); done
+	PLATFORMS=("${kept[@]}")
+fi
+build_dir_of() { if [[ $DEMO -eq 1 ]]; then echo "$BUILD/demo-$1"; else echo "$BUILD/$1"; fi; }
+DIST_TAG=""
+[[ $DEMO -eq 1 ]] && DIST_TAG="demo-"
 template_of() { case "$1" in windows) echo "windows_release_x86_64.exe";; macos) echo "macos.zip";; linux) echo "linux_release.x86_64";; linux-arm64) echo "linux_release.arm64";; esac; }
 
 for p in "${PLATFORMS[@]}"; do
@@ -67,7 +89,7 @@ VERSION="$(sed -n 's/^config\/version="\(.*\)"$/\1/p' "$ROOT/project.godot")"
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git -C "$ROOT" log -1 --format=%ct 2>/dev/null || date +%s)}"
 export SOURCE_DATE_EPOCH
 
-echo "== CLEARANCE $VERSION — Godot $ACTUAL — ${PLATFORMS[*]}"
+echo "== CLEARANCE $VERSION$([[ $DEMO -eq 1 ]] && echo " DÉMO J1–J5") — Godot $ACTUAL — ${PLATFORMS[*]}"
 
 # --- Import (génère .godot/imported et fr.fr.translation) -------------------------
 "$GODOT" --headless --path "$ROOT" --import >/dev/null 2>&1 || die "échec de l'import Godot"
@@ -92,10 +114,10 @@ zip_dir() { # $1 dossier parent, $2 nom du dossier racine, $3 archive
 # --- Export + archive par plateforme ----------------------------------------------
 for p in "${PLATFORMS[@]}"; do
 	preset="$(preset_of "$p")"
-	out_dir="$BUILD/$p"
+	out_dir="$(build_dir_of "$p")"
 	out_file="$out_dir/$(output_of "$p")"
 	rm -rf "$out_dir" && mkdir -p "$out_dir"
-	log="$BUILD/export_$p.log"
+	log="$BUILD/export_${DIST_TAG}$p.log"
 	echo "-- export « $preset » → ${out_file#"$ROOT"/}"
 	rc=0
 	"$GODOT" --headless --path "$ROOT" --export-release "$preset" "$out_file" >"$log.raw" 2>&1 || rc=$?
@@ -105,13 +127,13 @@ for p in "${PLATFORMS[@]}"; do
 		die "export « $preset » en échec (journal : ${log#"$ROOT"/})"
 	fi
 
-	name="CLEARANCE-$VERSION-$p"
+	name="CLEARANCE-$VERSION-${DIST_TAG}$p"
 	stage="$BUILD/_stage/$name"
 	rm -rf "$BUILD/_stage" && mkdir -p "$stage"
 	cp -r "$COMMON/." "$stage/"
 	case "$p" in
 		windows)
-			cp "$out_dir"/CLEARANCE.exe "$out_dir"/CLEARANCE.pck "$stage/"
+			cp "$out_file" "${out_file%.exe}.pck" "$stage/"
 			archive="$DIST/$name.zip"; rm -f "$archive"
 			find "$stage" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
 			zip_dir "$BUILD/_stage" "$name" "$archive"
@@ -125,7 +147,7 @@ for p in "${PLATFORMS[@]}"; do
 			(cd "$stage" && find CREDITS.txt licenses -print | LC_ALL=C sort | zip -q -X -@ "$archive")
 			;;
 		linux|linux-arm64)
-			cp "$out_dir"/CLEARANCE.* "$stage/"
+			cp "${out_file%.*}".* "$stage/"
 			chmod 0755 "$stage/$(output_of "$p")"
 			archive="$DIST/$name.tar.gz"; rm -f "$archive"
 			tar -C "$BUILD/_stage" --sort=name --owner=0 --group=0 --numeric-owner \
@@ -137,6 +159,12 @@ for p in "${PLATFORMS[@]}"; do
 done
 rm -rf "$COMMON"
 
-(cd "$DIST" && sha256sum CLEARANCE-"$VERSION"-* > SHA256SUMS)
+SUMS="SHA256SUMS"
+[[ $DEMO -eq 1 ]] && SUMS="SHA256SUMS-demo"
+if [[ $DEMO -eq 1 ]]; then
+	(cd "$DIST" && sha256sum CLEARANCE-"$VERSION"-demo-* > "$SUMS")
+else
+	(cd "$DIST" && find . -maxdepth 1 -name "CLEARANCE-$VERSION-*" ! -name "CLEARANCE-$VERSION-demo-*" -printf '%f\n' | LC_ALL=C sort | xargs sha256sum > "$SUMS")
+fi
 echo "== archives dans ${DIST#"$ROOT"/} :"
-(cd "$DIST" && ls -l CLEARANCE-"$VERSION"-* SHA256SUMS)
+(cd "$DIST" && ls -l CLEARANCE-"$VERSION"-${DIST_TAG}* "$SUMS")

@@ -1303,7 +1303,10 @@ func _on_discrepancy_checked(result: Discrepancy) -> void:
 
 func _on_interrogation_answered(topic: StringName, line_key: String) -> void:
 	var raw: String = UiText.t(line_key, line_key)
-	var text: String = passenger_text(answer_text(raw))
+	var case_statements: Array[Statement] = []
+	if current_case != null:
+		case_statements = current_case.statements
+	var text: String = answer_line(line_key, case_statements)
 	passenger_panel.set_line(text, true, false)
 	# M13 : cadre composé → puces aux emplacements ; prose → texte (puces à part
 	# à réception de `statement_given`).
@@ -1467,6 +1470,11 @@ func _on_settings_changed(key: StringName, value: Variant) -> void:
 			passenger_panel.busy.reduce_motion = reduce_motion
 		Settings.KEY_SUBTITLES:
 			subtitles.enabled = value
+		Settings.KEY_LANGUAGE, Settings.KEY_PSEUDO_LOC:
+			# M15 : textes déjà retraduits (`Localization`) ; bandeau d'état,
+			# barre d'outils et menu des questions recomposés, largeurs revues.
+			_refresh_all()
+			propagate_call(&"queue_redraw")
 		Settings.KEY_COLOR_VISION:
 			# Palette changée (DESIGN_SYSTEM §2.5) : thème et tracés (liens,
 			# champs, tampons) suivent ; les panneaux déjà construits gardent
@@ -1649,7 +1657,7 @@ func ask(topic: StringName) -> void:
 	var question: String = InterrogationTopics.question_text(topic, current_case)
 	_last_question = question
 	# Rappel de la question jusqu'à la réponse (qui la reprend en légende au journal).
-	passenger_panel.set_hint(UiText.t("speaker_agent", "AGENT") + " : « " + question + " »")
+	passenger_panel.set_hint(UiText.speaker_quoted(UiText.t("speaker_agent", "AGENT"), question))
 	question_menu_open = false
 	# M13 : la demande de fouille n'est pas une question (R08, ARCHITECTURE §12.5).
 	if not asked_topics.has(topic) and topic != InterrogationTopics.SEARCH:
@@ -1946,7 +1954,7 @@ func _describe_m13(result: Discrepancy) -> String:
 		var shown: String = "—"
 		if other != null and other.is_document_field():
 			var doc: DocumentInstance = current_case.get_document(other.document_id)
-			doc_name = _sentence_case(UiText.document_title(doc.type_def)) if doc != null else ""
+			doc_name = UiText.document_name_in_sentence(doc.type_def, true) if doc != null else ""
 			var field: FieldDef = current_case.get_field_def(other)
 			shown = UiText.value_text(field, current_case.get_value(other))
 		if result.result == Discrepancy.Result.CONCORDANT:
@@ -1964,7 +1972,7 @@ func _describe_m13(result: Discrepancy) -> String:
 		if doc_ref != null and doc_ref.is_document_field():
 			var doc_instance: DocumentInstance = current_case.get_document(doc_ref.document_id)
 			var doc_field: FieldDef = current_case.get_field_def(doc_ref)
-			where = "%s · %s" % [_sentence_case(UiText.document_title(doc_instance.type_def)) if doc_instance != null else "",
+			where = "%s · %s" % [UiText.document_name_in_sentence(doc_instance.type_def, true) if doc_instance != null else "",
 					UiText.field_label(doc_field) if doc_field != null else String(doc_ref.field_id)]
 			value = UiText.value_text(doc_field, current_case.get_value(doc_ref))
 		return UiText.tf("disc_statement_doc_detail", [where, value, said_text], "%s : %s ≠ déclaré : %s")
@@ -1993,9 +2001,9 @@ func _describe_m13(result: Discrepancy) -> String:
 
 
 ## « PERMIS D'ENTRÉE » → « Permis d'entrée ».
+## Casse de phrase en tête de phrase, sigles gardés (QA-081 : « ID card »).
 static func _sentence_case(text: String) -> String:
-	var lower: String = text.to_lower()
-	return lower.left(1).to_upper() + lower.substr(1)
+	return UiText.name_in_sentence(text, true)
 
 
 ## Texte BBCode gras dans une couleur sémantique `DS` (pas de hex en dur).
@@ -2215,7 +2223,7 @@ func describe(result: Discrepancy) -> String:
 			if expiry is int:
 				var expiry_days: int = expiry
 				expiry_text = UiText.date(expiry_days)
-			return UiText.tf("disc_expired_detail", [_sentence_case(UiText.document_title(doc.type_def)) if doc != null else "",
+			return UiText.tf("disc_expired_detail", [UiText.document_name_in_sentence(doc.type_def, true) if doc != null else "",
 					expiry_text, today_text],
 					"%s expiré : %s < date du jour %s")
 		Discrepancy.REASON_MISMATCH:
@@ -2281,6 +2289,21 @@ func answer_text(raw: String) -> String:
 	if current_case == null or current_case.statements.is_empty() or not has_statement_slots(raw):
 		return raw
 	return Statement.compose(raw, current_case.statements, func(key: String) -> String: return UiText.t(key, key))
+
+
+## Réplique d'une réponse (`line_key`), cadre composé avec les déclarations du
+## cas et mot inconnu appliqué (`passenger_text`). QA-086 : un texte composé
+## garde sa recette (`UiText.remember_call`) : retraduit à chaud dans la bulle,
+## le journal et les sous-titres (« Euh… … normalement. » restait en français).
+static func answer_line(line_key: String, statements: Array[Statement]) -> String:
+	var raw: String = UiText.t(line_key, line_key)
+	var composed: String = raw
+	if not statements.is_empty() and has_statement_slots(raw):
+		composed = Statement.compose(raw, statements, func(key: String) -> String: return UiText.t(key, key))
+	var text: String = passenger_text(composed)
+	if text == raw:
+		return text
+	return UiText.remember_call(text, answer_line.bind(line_key, statements))
 
 
 ## Puces obtenues (`statement_given`) : une réplique en prose (scénarisée)
