@@ -15,9 +15,12 @@
 #   build/dist/CLEARANCE-<version>-windows.zip      .exe + .pck + CREDITS.txt + licenses/
 #   build/dist/CLEARANCE-<version>-macos.zip        CLEARANCE.app (universel, signé ad hoc) + CREDITS.txt + licenses/
 #   build/dist/CLEARANCE-<version>-linux.tar.gz     binaire x86_64 (Steam Deck) + .pck + CREDITS.txt + licenses/
+#                                                   + install.sh / uninstall.sh + icons/hicolor/ (lanceur sans root)
 #   build/dist/SHA256SUMS
 # Avec --demo : build/demo-<plateforme>/ et build/dist/CLEARANCE-<version>-demo-<plateforme>.*
 # (SHA256SUMS couvre alors les archives de la démo).
+# Installateurs (.exe NSIS, .AppImage, .dmg) : tools/package_*.sh après ce script
+# (ARCHITECTURE §16.9).
 set -euo pipefail
 
 GODOT="${GODOT:-godot}"
@@ -82,6 +85,9 @@ fi
 for tool in zip tar sha256sum; do
 	command -v "$tool" >/dev/null 2>&1 || die "outil « $tool » requis"
 done
+if [[ " ${PLATFORMS[*]} " == *" linux"* ]]; then
+	command -v python3 >/dev/null 2>&1 || die "python3 requis (icônes de l'archive Linux, packaging/icons.py)"
+fi
 
 VERSION="$(sed -n 's/^config\/version="\(.*\)"$/\1/p' "$ROOT/project.godot")"
 [[ -n "$VERSION" ]] || die "application/config/version absente de project.godot"
@@ -149,6 +155,12 @@ for p in "${PLATFORMS[@]}"; do
 		linux|linux-arm64)
 			cp "${out_file%.*}".* "$stage/"
 			chmod 0755 "$stage/$(output_of "$p")"
+			# Installation par utilisateur sans root (lanceur .desktop + icônes,
+			# packaging/linux/, ARCHITECTURE §16.9) ; icons/ sert aussi à l'AUR.
+			install -m 0755 "$ROOT/packaging/linux/install.sh" "$ROOT/packaging/linux/uninstall.sh" "$stage/"
+			python3 -I "$ROOT/packaging/icons.py" "$ROOT/assets/icons" "$ROOT/icon.svg" "$stage/icons" \
+				|| die "icônes Linux non générées (packaging/icons.py)"
+			find "$stage" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
 			archive="$DIST/$name.tar.gz"; rm -f "$archive"
 			tar -C "$BUILD/_stage" --sort=name --owner=0 --group=0 --numeric-owner \
 				--mtime="@$SOURCE_DATE_EPOCH" -cf - "$name" | gzip -n -9 > "$archive"
@@ -164,7 +176,7 @@ SUMS="SHA256SUMS"
 if [[ $DEMO -eq 1 ]]; then
 	(cd "$DIST" && sha256sum CLEARANCE-"$VERSION"-demo-* > "$SUMS")
 else
-	(cd "$DIST" && find . -maxdepth 1 -name "CLEARANCE-$VERSION-*" ! -name "CLEARANCE-$VERSION-demo-*" -printf '%f\n' | LC_ALL=C sort | xargs sha256sum > "$SUMS")
+	(cd "$DIST" && find . -maxdepth 1 -name "CLEARANCE-$VERSION-*" ! -name "CLEARANCE-$VERSION-demo-*" ! -name "*.AppImage" -printf '%f\n' | LC_ALL=C sort | xargs sha256sum > "$SUMS")
 fi
 echo "== archives dans ${DIST#"$ROOT"/} :"
 (cd "$DIST" && ls -l CLEARANCE-"$VERSION"-${DIST_TAG}* "$SUMS")

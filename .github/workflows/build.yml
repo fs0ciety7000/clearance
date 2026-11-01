@@ -2,6 +2,9 @@
 # Déclenché UNIQUEMENT à la main (Actions > Build > Run workflow) ou par un tag v*
 # (ex. git tag v0.8.0 && git push origin v0.8.0) — jamais à chaque push.
 # Aucun secret requis : signature macOS ad hoc, Windows non signé.
+# Jobs : build (Linux : tests, archives, démo, Web, installateur NSIS, AppImage)
+#        → macos-dmg (runner macOS : .dmg depuis l'archive macOS du job build)
+#        → release (sur tag v* : Release GitHub, toutes les sorties + SHA256SUMS).
 name: Build
 
 on:
@@ -23,9 +26,7 @@ jobs:
   build:
     name: Tests GUT + exports Windows / macOS / Linux
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    permissions:
-      contents: write   # publication de la Release sur tag (gh release)
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
@@ -86,21 +87,99 @@ jobs:
       - name: Export Web de la démo (D-216, D-220)
         run: bash tools/export_web.sh
 
+      # --- Installateurs (ARCHITECTURE §16.9) -------------------------------------------
+      - name: Outils d'installateurs (NSIS, validateurs .desktop / AppStream)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends nsis desktop-file-utils appstream
+
+      - name: Installateurs Windows (NSIS) — jeu et démo
+        run: |
+          bash tools/package_windows.sh
+          bash tools/package_windows.sh --demo
+
+      - name: AppImage Linux — jeu et démo
+        run: |
+          bash tools/package_linux_appimage.sh
+          bash tools/package_linux_appimage.sh --demo
+
       - name: Artefacts
         uses: actions/upload-artifact@v4
         with:
-          name: CLEARANCE-${{ github.ref_name }}-${{ github.run_number }}
+          name: CLEARANCE-run${{ github.run_number }}
           path: |
             build/dist/CLEARANCE-*
             build/dist/SHA256SUMS*
           if-no-files-found: error
           retention-days: 30
 
-      - name: Release GitHub (tag v*)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Archives macOS pour le job macos-dmg
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-zips-${{ github.run_number }}
+          path: build/dist/CLEARANCE-*-macos.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  macos-dmg:
+    name: Images disque macOS (.dmg)
+    needs: build
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Archives macOS du job build
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-zips-${{ github.run_number }}
+          path: build/dist
+
+      - name: create-dmg (fond et disposition ; repli hdiutil sinon)
+        run: |
+          brew install create-dmg || echo "::warning::create-dmg indisponible, DMG sans mise en page"
+
+      - name: DMG — jeu et démo
+        run: |
+          bash tools/package_macos_dmg.sh
+          bash tools/package_macos_dmg.sh --demo
+
+      - name: Artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CLEARANCE-run${{ github.run_number }}-dmg
+          path: build/dist/CLEARANCE-*.dmg
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Release GitHub (tag v*)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, macos-dmg]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write   # publication de la Release (gh release)
+    steps:
+      - name: Artefacts des jobs build et macos-dmg
+        uses: actions/download-artifact@v4
+        with:
+          pattern: CLEARANCE-run${{ github.run_number }}*
+          path: dist
+          merge-multiple: true
+
+      - name: Empreintes des installateurs
+        working-directory: dist
+        run: |
+          ls -l
+          sha256sum CLEARANCE-Setup-*.exe CLEARANCE-Demo-Setup-*.exe CLEARANCE-*.AppImage CLEARANCE-*.dmg > SHA256SUMS-installers
+          cat SHA256SUMS-installers
+
+      - name: Release GitHub
+        working-directory: dist
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" build/dist/CLEARANCE-* build/dist/SHA256SUMS* \
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" CLEARANCE-* SHA256SUMS* \
             --title "CLEARANCE $GITHUB_REF_NAME" $( [[ "$GITHUB_REF_NAME" == v0.* ]] && echo --prerelease ) \
-            --notes "Builds Windows (x86_64), macOS (universel, signé ad hoc, non notarisé : clic droit > Ouvrir) et Linux x86_64 / Steam Deck ; démo J1–J5 (archives -demo-) et version Web de la démo (-web.zip, à servir avec les en-têtes COOP/COEP de web/nginx-clearance-web.conf). Voir README > Builds."
+            --notes "Installateurs : Windows \`CLEARANCE-Setup-*.exe\` (assistant FR/EN, par utilisateur, sans droits administrateur ; non signé : SmartScreen › Informations complémentaires › Exécuter quand même), macOS \`CLEARANCE-*.dmg\` (universel, signé ad hoc, non notarisé : clic droit › Ouvrir), Linux \`CLEARANCE-*-x86_64.AppImage\` (chmod +x puis lancer) ; Arch / Garuda : paquet AUR clearance-bin. Archives : Windows (x86_64), macOS, Linux x86_64 / Steam Deck (\`.tar.gz\` avec install.sh). Démo J1–J5 : mêmes formats (\`CLEARANCE-Demo-*\`, archives \`-demo-\`) et version Web de la démo (\`-web.zip\`, à servir avec les en-têtes COOP/COEP de web/nginx-clearance-web.conf). Empreintes : SHA256SUMS*. Voir README › Builds."

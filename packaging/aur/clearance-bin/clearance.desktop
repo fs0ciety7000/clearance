@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=CLEARANCE
+GenericName=Identity control game
+GenericName[fr]=Jeu de contrôle d'identité
+Comment=Identity control at the gate of a corporate orbital station
+Comment[fr]=Contrôle d'identité à l'entrée d'une station orbitale corporative
+Exec=clearance
+Icon=clearance
+Terminal=false
+Categories=Game;Simulation;
+Keywords=papers;border;identity;space;station;
+Keywords[fr]=papiers;frontière;identité;espace;station;
+StartupWMClass=CLEARANCE
+PrefersNonDefaultGPU=true

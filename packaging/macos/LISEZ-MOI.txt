@@ -1,0 +1,40 @@
+@APP_NAME@ @VERSION@ — macOS 10.13+ (Intel) / 11+ (Apple Silicon)
+=====================================================================
+
+FRANÇAIS
+
+1. Glissez « @APP_FILE@ » sur le dossier « Applications ».
+2. Premier lancement : l'application est signée « ad hoc » mais n'est pas
+   notarisée par Apple ; macOS la bloque au premier double-clic.
+   → Dans le dossier Applications, faites un CLIC DROIT (ou Ctrl+clic) sur
+     « @APP_FILE@ » puis choisissez « Ouvrir », et confirmez « Ouvrir ».
+   → macOS 15 (Sequoia) et suivants : double-cliquez une première fois, puis
+     ouvrez Réglages Système › Confidentialité et sécurité et cliquez
+     « Ouvrir quand même » en bas de la page.
+   → Ou, dans le Terminal :
+       xattr -dr com.apple.quarantine "/Applications/@APP_FILE@"
+   Les lancements suivants se font normalement.
+3. Désinstaller : glissez l'application dans la Corbeille. Vos sauvegardes
+   restent dans ~/Library/Application Support/Godot/app_userdata/CLEARANCE/.
+
+Crédits et licences : dossier « Licences » de cette image disque.
+Site : https://clearance.cardormedia.com
+
+
+ENGLISH
+
+1. Drag "@APP_FILE@" onto the "Applications" folder.
+2. First launch: the app is ad-hoc signed but not notarized by Apple, so
+   macOS blocks it on the first double-click.
+   → In Applications, RIGHT-CLICK (or Control-click) "@APP_FILE@", choose
+     "Open", then confirm "Open".
+   → macOS 15 (Sequoia) and later: double-click once, then open System
+     Settings › Privacy & Security and click "Open Anyway" at the bottom.
+   → Or, in Terminal:
+       xattr -dr com.apple.quarantine "/Applications/@APP_FILE@"
+   Later launches work normally.
+3. Uninstall: drag the app to the Trash. Your saves stay in
+   ~/Library/Application Support/Godot/app_userdata/CLEARANCE/.
+
+Credits and licenses: "Licences" folder on this disk image.
+Website: https://clearance.cardormedia.com

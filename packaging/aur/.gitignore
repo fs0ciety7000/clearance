@@ -1,0 +1,5 @@
+# Artefacts de makepkg (tests locaux du PKGBUILD) : jamais versionnés ni poussés sur l AUR.
+clearance-bin/src/
+clearance-bin/pkg/
+clearance-bin/*.pkg.tar.*
+clearance-bin/*.tar.gz
