@@ -1,5 +1,11 @@
 # Changelog — CLEARANCE
 
+## 1.0.0 — 2026-11-01
+
+**Première version définitive.** Campagne complète en trois actes (jours 1 à 30), épilogue « Un an plus tard », 10 fins ; mode Récit et mode Dur ; Garde de nuit ; français et anglais ; démo J1–J5 et version Web de la démo. Contenu identique à la 0.15.0 (recette 1.0 RC, `docs/QA.md` §18).
+
+Limites connues (non vérifiables avant publication, D-229) : performances sur Steam Deck réel et version Web sur GPU réel, Firefox et Safari ; exécution réelle sous Windows et macOS ; relecture par un anglophone natif ; équilibrage à confirmer en playtest humain (profil « passeur », monde C de l'épilogue). Builds non signés (macOS : clic droit > Ouvrir ; Windows : « Exécuter quand même »).
+
 ## 0.15.0 — 2026-11-01
 
 ### M15 « Monde »

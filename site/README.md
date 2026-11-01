@@ -19,7 +19,7 @@ Toutes publiques (préfixe `PUBLIC_` = injectées dans le HTML), lues dans `src/
 |---|---|---|
 | `SITE_URL` | `https://clearance.cardormedia.com` | canonical, sitemap, Open Graph |
 | `PUBLIC_DOWNLOAD_URL` | `https://github.com/fs0ciety7000/clearance/releases/latest` | cible des boutons « Télécharger » ; « Toutes les versions » = la même URL sans `/latest` |
-| `PUBLIC_VERSION` | `0.15.0` | version affichée (Téléchargements, pied de page, JSON-LD) |
+| `PUBLIC_VERSION` | `1.0.0` | version affichée (Téléchargements, pied de page, JSON-LD) |
 | `PUBLIC_RELEASED` | `0` | `1` quand cette version est réellement publiée : badge « Disponible » au lieu de « À venir » |
 | `PUBLIC_WEB_DEMO` | `0` | `1` affiche « Jouer dans le navigateur » (section Démo) et la réponse FAQ correspondante — seulement si le lot W valide l'export Web |
 | `PUBLIC_WEB_DEMO_URL` | `/play/` | adresse de la version Web (export Godot) |

@@ -102,5 +102,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" build/dist/CLEARANCE-* build/dist/SHA256SUMS* \
-            --title "CLEARANCE $GITHUB_REF_NAME" --prerelease \
+            --title "CLEARANCE $GITHUB_REF_NAME" $( [[ "$GITHUB_REF_NAME" == v0.* ]] && echo --prerelease ) \
             --notes "Builds Windows (x86_64), macOS (universel, signé ad hoc, non notarisé : clic droit > Ouvrir) et Linux x86_64 / Steam Deck ; démo J1–J5 (archives -demo-) et version Web de la démo (-web.zip, à servir avec les en-têtes COOP/COEP de web/nginx-clearance-web.conf). Voir README > Builds."

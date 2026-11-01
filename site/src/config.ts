@@ -6,7 +6,7 @@ export const DOWNLOAD_URL: string =
   env.PUBLIC_DOWNLOAD_URL || 'https://github.com/fs0ciety7000/clearance/releases/latest';
 
 /** Version annoncée par le site. */
-export const VERSION: string = env.PUBLIC_VERSION || '0.15.0';
+export const VERSION: string = env.PUBLIC_VERSION || '1.0.0';
 
 /** `1` quand la version ci-dessus est réellement publiée au lien de téléchargement ; sinon « à venir ». */
 export const RELEASED: boolean = env.PUBLIC_RELEASED === '1';
