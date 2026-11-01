@@ -5,6 +5,9 @@ const env = import.meta.env;
 export const DOWNLOAD_URL: string =
   env.PUBLIC_DOWNLOAD_URL || 'https://github.com/fs0ciety7000/clearance/releases/latest';
 
+/** Dépôt du projet (contact : issues GitHub, comme le kit presse). */
+export const REPO_URL: string = env.PUBLIC_REPO_URL || 'https://github.com/fs0ciety7000/clearance';
+
 /** Version annoncée par le site. */
 export const VERSION: string = env.PUBLIC_VERSION || '1.0.0';
 

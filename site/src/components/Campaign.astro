@@ -1,7 +1,8 @@
 ---
-import { t, type Lang } from '../lib/i18n';
+import { t, privacyPath, type Lang } from '../lib/i18n';
 interface Props { lang: Lang }
 const d = t(Astro.props.lang).campaign;
+const o = t(Astro.props.lang).online;
 // Frise des 30 jours + J31 : un segment par jour, regroupés par acte.
 const acts = [
   { from: 1, to: 10, tone: 'cyan' },
@@ -59,6 +60,15 @@ const acts = [
         ))}
       </div>
     </div>
+
+    <aside class="online" aria-labelledby="online-title" data-reveal>
+      <p class="badge mono">{o.kicker}</p>
+      <h3 id="online-title">{o.title}</h3>
+      <ul class="ogrid">
+        {o.items.map((it) => <li><h4>{it.title}</h4><p>{it.text}</p></li>)}
+      </ul>
+      <p class="onote">{o.note} <a href={privacyPath(Astro.props.lang)}>{o.link}</a></p>
+    </aside>
   </div>
 </section>
 <style>
@@ -95,12 +105,21 @@ const acts = [
   .mode .n{grid-row:span 2;font-size:12px;color:var(--cyan);padding-top:8px}
   .mode h4{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,2.6vw,36px);text-transform:uppercase;line-height:1}
   .mode p{color:var(--tx2);font-size:16px;line-height:1.6;max-width:34rem}
+  .online{margin-top:clamp(40px,5vw,64px);padding:clamp(22px,2.6vw,32px);border:1px dashed var(--cyan-40);background:var(--cyan-08);display:grid;gap:16px}
+  .badge{justify-self:start;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--void);background:var(--cyan);padding:4px 10px}
+  .online h3{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,2vw,28px);text-transform:uppercase;line-height:1}
+  .ogrid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,3vw,48px)}
+  .ogrid h4{font-weight:600;font-size:16px;margin-bottom:6px}
+  .ogrid p{color:var(--tx2);font-size:15px;line-height:1.6;max-width:34rem}
+  .onote{font-size:14px;color:var(--tx2)}
+  .onote a{color:var(--tx);text-decoration:underline;text-decoration-color:var(--cyan-60);text-underline-offset:4px;display:inline-block;padding-block:10px}
+  .onote a:hover{color:var(--cyan)}
   @media (max-width:1100px){.acts{grid-template-columns:1fr 1fr}}
   @media (max-width:700px){
     .stats{grid-template-columns:1fr 1fr}
     .stats>div:nth-child(3){border-left:0}
     .stats>div:nth-child(n+3){border-top:1px solid var(--line)}
-    .acts,.mgrid{grid-template-columns:1fr}
+    .acts,.mgrid,.ogrid{grid-template-columns:1fr}
     .rail{gap:6px}.seg-g{gap:2px}
   }
   @media (prefers-reduced-motion:reduce){.js .rail i{transform:none;transition:none}}
