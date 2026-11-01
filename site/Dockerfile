@@ -17,8 +17,14 @@ ENV SITE_URL=$SITE_URL PUBLIC_DOWNLOAD_URL=$PUBLIC_DOWNLOAD_URL PUBLIC_VERSION=$
     ASTRO_TELEMETRY_DISABLED=1
 # L'archive contient un dossier racine (CLEARANCE-<version>-web/) : on copie le dossier qui
 # porte index.html directement dans public/play/, et le build échoue si index.html manque.
+# Valeur nettoyée (guillemets, espaces, préfixe « WEB_DEMO_ZIP_URL= » collé par erreur) et
+# vérifiée avant le téléchargement, avec un message clair si elle est invalide.
 RUN if [ -n "$WEB_DEMO_ZIP_URL" ]; then \
-      mkdir -p public/play /tmp/webzip && wget -qO /tmp/web.zip "$WEB_DEMO_ZIP_URL" \
+      url="$(printf '%s' "$WEB_DEMO_ZIP_URL" | tr -d "\"' \t\r\n" | sed 's/^WEB_DEMO_ZIP_URL=//')"; \
+      case "$url" in http://*|https://*) ;; \
+        *) echo "WEB_DEMO_ZIP_URL invalide : doit commencer par https:// (reçu : « $url »)" >&2; exit 1 ;; \
+      esac; \
+      mkdir -p public/play /tmp/webzip && wget -qO /tmp/web.zip "$url" \
       && unzip -qo /tmp/web.zip -d /tmp/webzip \
       && src="$(dirname "$(find /tmp/webzip -maxdepth 2 -name index.html | head -n 1)")" \
       && cp -a "$src"/. public/play/ && rm -rf /tmp/web.zip /tmp/webzip \
