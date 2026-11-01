@@ -1,0 +1,53 @@
+---
+// Bouton « Télécharger » adapté à la plateforme du visiteur (amélioration progressive).
+// Sans JS : bouton générique vers `href` (page Releases). Avec JS : lien direct vers l'installeur
+// de la plateforme détectée ; mobile ou inconnu → ancre vers les liens par plateforme (`other`).
+// Steam Deck n'est pas détectable de façon fiable : il est traité comme Linux (AppImage).
+import Icon from './Icon.astro';
+import { t, type Lang } from '../lib/i18n';
+import { file, type Edition, type Os } from '../lib/downloads';
+import { VERSION } from '../config';
+interface Props { lang: Lang; edition: Edition; href: string; label: string; other: string; class?: string; size?: number }
+const { lang, edition, href, label, other, class: cls = '', size = 18 } = Astro.props;
+const dl = t(lang).platforms.dl;
+const names: Record<Os, string> = { windows: 'Windows', macos: 'macOS', linux: 'Linux' };
+const targets = Object.fromEntries(
+  (['windows', 'macos', 'linux'] as const).map((os) => {
+    const f = file(edition, os, 'installer');
+    const lead = edition === 'demo' ? dl.demoFor : dl.for;
+    return [os, { href: f.url, label: `${lead} ${names[os]} · ${VERSION} · ${f.sizeMb} ${dl.mb}` }];
+  }),
+);
+const data = JSON.stringify({ ...targets, other: { href: other, label: dl.choose } });
+---
+<a class={`btn btn-primary dl-auto ${cls}`} href={href} rel="noopener" data-dl={data}><Icon name="download" size={size} /><span data-dl-label>{label}</span></a>
+<style>
+  .dl-auto{white-space:normal;text-align:left;line-height:1.25;padding-block:10px;max-width:100%}
+</style>
+<script>
+  type Target = { href: string; label: string };
+  const detect = (): 'windows' | 'macos' | 'linux' | 'other' => {
+    const n = navigator as Navigator & { userAgentData?: { platform?: string; mobile?: boolean } };
+    const ua = n.userAgent || '';
+    const s = `${n.userAgentData?.platform ?? ''} ${n.platform ?? ''} ${ua}`;
+    if (n.userAgentData?.mobile || /Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return 'other';
+    if (/Mac/.test(s)) return n.maxTouchPoints > 1 ? 'other' : 'macos'; // iPadOS se présente en Mac
+    if (/Windows|Win32|Win64/.test(s)) return 'windows';
+    if (/CrOS/.test(ua)) return 'other';
+    if (/Linux|X11|BSD/i.test(s)) return 'linux'; // Steam Deck inclus
+    return 'other';
+  };
+  const os = detect();
+  document.querySelectorAll<HTMLAnchorElement>('a[data-dl]').forEach((a) => {
+    try {
+      const t = (JSON.parse(a.dataset.dl || '{}') as Record<string, Target>)[os];
+      if (!t) return;
+      a.href = t.href;
+      const l = a.querySelector('[data-dl-label]');
+      if (l) l.textContent = t.label;
+      a.dataset.os = os;
+      if (t.href.startsWith('#')) a.removeAttribute('rel');
+    } catch { /* bouton générique conservé */ }
+  });
+  if (os !== 'other') document.querySelectorAll(`[data-dl-card="${os}"]`).forEach((c) => c.classList.add('is-you'));
+</script>

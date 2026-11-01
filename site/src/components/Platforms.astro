@@ -1,15 +1,30 @@
 ---
 import { Picture } from 'astro:assets';
 import Icon from './Icon.astro';
+import DownloadButton from './DownloadButton.astro';
 import { shot } from '../lib/shots';
 import { t, type Lang } from '../lib/i18n';
-import { DOWNLOAD_URL, RELEASED, VERSION } from '../config';
+import { DOWNLOAD_URL, RELEASED, REPO_URL, VERSION, WEB_DEMO, WEB_DEMO_URL } from '../config';
+import { CHECKSUMS, RELEASES_URL, RELEASE_PAGE, file, type Os } from '../lib/downloads';
 interface Props { lang: Lang }
-const d = t(Astro.props.lang).platforms;
+const lang = Astro.props.lang;
+const d = t(lang).platforms;
 const r = d.release;
+const dl = d.dl;
 const icon = { windows: 'windows', macos: 'apple', linux: 'linux', deck: 'deck' } as const;
+type Id = keyof typeof icon;
 // Liste complète des versions : la page Releases sans « /latest ».
 const allReleases = DOWNLOAD_URL.replace(/\/latest\/?$/, '');
+// Fichiers par carte : le Steam Deck reprend la version Linux.
+const osOf = (id: string): Os => (id === 'deck' ? 'linux' : (id as Os));
+// Texte avec `code` entre accents graves : segments impairs rendus en <code>.
+const parts = (s: string): string[] => s.split('`');
+const aurUrl = `${REPO_URL.replace(/\/$/, '')}/tree/main/packaging/aur/clearance-bin`;
+const demoOs = [
+  { os: 'windows', name: 'Windows', icon: 'windows' },
+  { os: 'macos', name: 'macOS', icon: 'apple' },
+  { os: 'linux', name: 'Linux · Steam Deck', icon: 'linux' },
+] as const;
 ---
 <section class="section plat gridbg" id="telecharger" aria-labelledby="plat-title">
   <div class="wrap">
@@ -17,13 +32,16 @@ const allReleases = DOWNLOAD_URL.replace(/\/latest\/?$/, '');
       <p class="kicker">{d.label}</p>
       <h2 class="h2" id="plat-title" data-reveal>{d.title}</h2>
     </header>
-    <ul class="tiles" data-stagger="90">
-      {d.items.map((p) => (
-        <li data-reveal><Icon name={icon[p.id as keyof typeof icon]} size={30} /><b>{p.name}</b><span>{p.note}</span></li>
-      ))}
-    </ul>
 
-    <div class="rel holo chamfer chamfer-l" data-reveal>
+    {!RELEASED && (
+      <ul class="tiles" data-stagger="90">
+        {d.items.map((p) => (
+          <li data-reveal><Icon name={icon[p.id as Id]} size={30} /><b>{p.name}</b><span>{p.note}</span></li>
+        ))}
+      </ul>
+    )}
+
+    <div class={RELEASED ? 'rel holo chamfer chamfer-l on' : 'rel holo chamfer chamfer-l'} data-reveal>
       <div class="rel-v">
         <span class="label">{r.version}</span>
         <b>{VERSION}</b>
@@ -31,15 +49,83 @@ const allReleases = DOWNLOAD_URL.replace(/\/latest\/?$/, '');
       </div>
       <p class="rel-t">{RELEASED ? r.availableText : r.upcomingText}</p>
       <div class="rel-a">
-        <a class="btn btn-primary" href={DOWNLOAD_URL} rel="noopener"><Icon name="download" size={18} />{r.cta}</a>
-        {allReleases !== DOWNLOAD_URL && <a class="more mono" href={allReleases} rel="noopener">{r.all}<Icon name="ext" size={14} /></a>}
+        {RELEASED
+          ? <DownloadButton lang={lang} edition="full" href={DOWNLOAD_URL} label={r.cta} other="#dl-cards" />
+          : <a class="btn btn-primary" href={DOWNLOAD_URL} rel="noopener"><Icon name="download" size={18} />{r.cta}</a>}
+        {RELEASED
+          ? <a class="more mono" href="#dl-cards">{dl.other}</a>
+          : allReleases !== DOWNLOAD_URL && <a class="more mono" href={allReleases} rel="noopener">{r.all}<Icon name="ext" size={14} /></a>}
       </div>
     </div>
+
+    {RELEASED && (
+      <>
+        <h3 class="sr-only" id="dl-cards-title">{dl.cardsTitle}</h3>
+        <ul class="cards" id="dl-cards" aria-labelledby="dl-cards-title" data-stagger="90">
+          {d.items.map((p) => {
+            const id = p.id as Id;
+            const main = file('full', osOf(id), 'installer');
+            const arc = file('full', osOf(id), 'archive');
+            return (
+              <li class="card" data-reveal data-dl-card={id === 'deck' ? undefined : id}>
+                <div class="c-head">
+                  <Icon name={icon[id]} size={30} />
+                  <span class="badge you">{dl.you}</span>
+                </div>
+                <b class="c-name">{p.name}</b>
+                <span class="c-note">{p.note}</span>
+                <a class="btn btn-secondary btn-sm c-main" href={main.url} rel="noopener">
+                  <Icon name="download" size={16} />
+                  <span><span class="sr-only">{p.name} — </span>{dl.primary[id]} · {main.sizeMb} {dl.mb}</span>
+                </a>
+                <a class="c-alt mono" href={arc.url} rel="noopener"><span class="sr-only">{p.name} — </span>{dl.archive[id]} · {arc.sizeMb} {dl.mb}</a>
+                <p class="c-help">{parts(dl.install[id]).map((x, i) => (i % 2 ? <code>{x}</code> : x))}</p>
+                {id === 'linux' && (
+                  <p class="c-help c-aur">{parts(dl.aur).map((x, i) => (i % 2 ? <code>{x}</code> : x))} <a href={aurUrl} rel="noopener"><code>{dl.aurLink}</code></a>.</p>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+
+        <div class="dl-demo" id="dl-demo" data-reveal>
+          <div class="dd-t">
+            <p class="kicker">{dl.demoKicker}</p>
+            <h3>{dl.demoTitle}</h3>
+            <p>{dl.demoText}</p>
+            {WEB_DEMO && <a class="btn btn-secondary btn-sm" href={WEB_DEMO_URL}><Icon name="play" size={16} />{dl.web}</a>}
+          </div>
+          <ul class="dd-l">
+            {demoOs.map((o) => {
+              const main = file('demo', o.os, 'installer');
+              const arc = file('demo', o.os, 'archive');
+              return (
+                <li>
+                  <span class="dd-os"><Icon name={o.icon} size={18} />{o.name}</span>
+                  <a class="dd-a" href={main.url} rel="noopener"><Icon name="download" size={14} /><span><span class="sr-only">{dl.demoFor} {o.name} — </span>{main.ext} · {main.sizeMb} {dl.mb}</span></a>
+                  <a class="dd-a" href={arc.url} rel="noopener"><Icon name="download" size={14} /><span><span class="sr-only">{dl.demoFor} {o.name} — </span>{arc.ext} · {arc.sizeMb} {dl.mb}</span></a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div class="dl-more" data-reveal>
+          <a class="more mono" href={RELEASES_URL} rel="noopener">{r.all}<Icon name="ext" size={14} /></a>
+          <a class="more mono" href={RELEASE_PAGE} rel="noopener">{dl.notes} {VERSION}<Icon name="ext" size={14} /></a>
+          <span class="sums">
+            <span class="label">{dl.checksums}</span>
+            {CHECKSUMS.map((c) => <a class="more mono" href={c.url} rel="noopener">{c.name}</a>)}
+          </span>
+          <p class="c-help">{parts(dl.checksumsHelp).map((x, i) => (i % 2 ? <code>{x}</code> : x))}</p>
+        </div>
+      </>
+    )}
 
     <div class="split">
       <div class="left" data-reveal style="--y:40px">
         <div class="deck frame">
-          <Picture fallbackFormat="webp" src={shot('m9_booth_j1_deck', Astro.props.lang)} alt={d.deckAlt} formats={['avif', 'webp']} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 50vw" loading="lazy" decoding="async" />
+          <Picture fallbackFormat="webp" src={shot('m9_booth_j1_deck', lang)} alt={d.deckAlt} formats={['avif', 'webp']} widths={[640, 960, 1280]} sizes="(max-width: 900px) 92vw, 50vw" loading="lazy" decoding="async" />
         </div>
         <ul class="os">
           {d.notes.map((n) => <li><Icon name="tri" size={16} /><span><b>{n.os}</b> — {n.text}</span></li>)}
@@ -78,6 +164,7 @@ const allReleases = DOWNLOAD_URL.replace(/\/latest\/?$/, '');
   .tiles span{font-size:14px;color:var(--tx2)}
 
   .rel{display:grid;grid-template-columns:auto 1fr auto;gap:20px 40px;align-items:center;padding:28px clamp(20px,3vw,36px);margin-bottom:clamp(56px,7vw,96px)}
+  .rel.on{margin-bottom:16px}
   .rel-v{display:grid;gap:4px;justify-items:start}
   .rel-v b{font-family:var(--f-display);font-weight:700;font-size:44px;line-height:1}
   .rel-v .label{font-size:11px}
@@ -85,9 +172,44 @@ const allReleases = DOWNLOAD_URL.replace(/\/latest\/?$/, '');
   .badge.soon{color:var(--amber);background:var(--amber-12)}
   .badge.ok{color:var(--green);background:var(--green-12)}
   .rel-t{color:var(--tx2);font-size:15.5px;line-height:1.55;max-width:40rem}
-  .rel-a{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:flex-end}
+  .rel-a{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:flex-end;min-width:0}
   .more{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx2)}
   .more:hover{color:var(--cyan)}
+
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .card{display:flex;flex-direction:column;gap:8px;padding:24px;background:var(--panel);border:1px solid var(--line);min-width:0;transition:border-color var(--dur-base) var(--ease)}
+  .card.is-you{border-color:var(--cyan-60);background:linear-gradient(var(--cyan-08),var(--cyan-08)),var(--panel)}
+  .c-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+  .c-head :global(svg){color:var(--cyan)}
+  .you{display:none;color:var(--cyan);background:var(--cyan-12)}
+  .is-you .you{display:inline-block}
+  .c-name{font-family:var(--f-display);font-weight:700;font-size:24px;text-transform:uppercase}
+  .c-note{font-size:14px;color:var(--tx2)}
+  .c-main{margin-top:10px;width:100%;white-space:normal;text-align:left;line-height:1.25;padding-block:8px}
+  .c-alt{align-self:flex-start;display:inline-flex;align-items:center;min-height:44px;font-size:12px;letter-spacing:.06em;color:var(--tx2);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px}
+  .c-alt:hover{color:var(--cyan);text-decoration-color:currentColor}
+  .c-help{font-size:13.5px;line-height:1.55;color:var(--tx2)}
+  .c-help code{font-family:var(--f-mono);font-size:.9em;color:var(--tx);background:var(--cyan-08);padding:1px 4px;overflow-wrap:anywhere}
+  .c-aur{margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+  .c-aur a{color:var(--cyan);text-decoration:underline;text-underline-offset:3px}
+
+  .dl-demo{display:grid;grid-template-columns:1fr 1.4fr;gap:20px 40px;align-items:center;padding:24px clamp(20px,3vw,36px);margin-top:16px;border:1px solid var(--line);background:var(--panel)}
+  .dd-t{display:grid;gap:10px;justify-items:start}
+  .dd-t h3{margin:0}
+  .dd-t p:not(.kicker){color:var(--tx2);font-size:15px;line-height:1.5}
+  .dd-l{display:grid}
+  .dd-l li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:0 24px;align-items:center;padding:4px 0;border-top:1px solid var(--line)}
+  .dd-l li:last-child{border-bottom:1px solid var(--line)}
+  .dd-os{display:inline-flex;align-items:center;gap:10px;font-weight:600}
+  .dd-os :global(svg){color:var(--cyan);flex:none}
+  .dd-a{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-family:var(--f-mono);font-size:12.5px;color:var(--tx2);white-space:nowrap}
+  .dd-a:hover{color:var(--cyan)}
+
+  .dl-more{display:flex;flex-wrap:wrap;align-items:center;gap:0 28px;margin:20px 0 clamp(56px,7vw,96px)}
+  .sums{display:inline-flex;flex-wrap:wrap;align-items:center;gap:0 16px}
+  .sums .label{font-size:11px}
+  .sums .more{font-size:11.5px;letter-spacing:.04em;text-transform:none}
+  .dl-more .c-help{flex-basis:100%}
 
   .split{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(32px,5vw,80px);align-items:start}
   .deck{border:1px solid var(--cyan-40);background:var(--panel)}
@@ -110,14 +232,21 @@ const allReleases = DOWNLOAD_URL.replace(/\/latest\/?$/, '');
   .log li.next .v{color:var(--amber)}
   .log b{font-family:var(--f-display);font-weight:600;font-size:18px;text-transform:uppercase}
   .log .x{color:var(--tx2);font-size:15px;line-height:1.5}
+  @media (max-width:1100px){.cards{grid-template-columns:1fr 1fr}}
   @media (max-width:900px){
     .tiles{grid-template-columns:1fr 1fr}
     .rel{grid-template-columns:1fr}
     .rel-a{justify-content:flex-start}
+    .dl-demo{grid-template-columns:1fr}
     .split{grid-template-columns:1fr}
     dl>div{grid-template-columns:1fr;gap:4px}
     .log li{grid-template-columns:72px 1fr}
     .log .x{grid-column:1 / -1}
     .log .badge{grid-column:1 / -1;justify-self:start}
+  }
+  @media (max-width:560px){
+    .cards{grid-template-columns:1fr}
+    .dd-l li{grid-template-columns:auto auto;justify-content:start;gap:0 20px}
+    .dd-os{grid-column:1 / -1;padding-top:10px}
   }
 </style>
