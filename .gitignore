@@ -32,3 +32,9 @@ Thumbs.db
 art_src/downloads/
 art_src/mixamo/
 art_src/plates/
+
+# Serveur en ligne (M16) : binaire PocketBase et données jamais versionnés
+# (tools/online_dev_server.sh télécharge le binaire dans build/pocketbase/).
+pb_data/
+server/pb_data/
+server/pocketbase
