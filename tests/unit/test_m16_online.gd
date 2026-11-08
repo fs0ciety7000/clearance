@@ -65,7 +65,7 @@ func _day(dir: String, slot: int) -> int:
 # ---------------------------------------------------------------------------
 
 func test_config_helpers() -> void:
-	assert_eq(OnlineConfig.DEFAULT_BASE_URL, "https://api.clearance.cardormedia.com")
+	assert_eq(OnlineConfig.DEFAULT_BASE_URL, "https://clearance-api.cardormedia.com")
 	assert_eq(OnlineConfig.base_url("http://127.0.0.1:8090/"), "http://127.0.0.1:8090")
 	assert_true(OnlineConfig.is_valid_email("agent@example.org"))
 	for bad: String in ["", "agent", "agent@", "@example.org", "a b@example.org", "agent@example", "a@b@c.org"]:

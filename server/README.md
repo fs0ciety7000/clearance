@@ -27,7 +27,7 @@ server/
 Prérequis : Coolify relié au dépôt GitHub du jeu (comme pour le site, `site/README.md`),
 et la zone DNS `cardormedia.com` (Cloudflare).
 
-1. **DNS** — enregistrement `A api.clearance.cardormedia.com → IP du serveur Coolify`.
+1. **DNS** — enregistrement `CNAME clearance-api.cardormedia.com → tunnel Cloudflare de netcup (proxifié)`.
    Cloudflare : proxifié (nuage orange) accepté, SSL/TLS **Full (strict)**. Laisser
    *Rocket Loader* et toute transformation de réponse désactivés pour ce sous-domaine.
 2. **Nouvelle ressource** — *Projects › (projet CLEARANCE) › + New › Application* →
@@ -37,8 +37,8 @@ et la zone DNS `cardormedia.com` (Cloudflare).
    - **Dockerfile Location** : `/Dockerfile`
    - **Ports Exposes** : `8090`
 4. **Domaine** — *Configuration › General › Domains* :
-   `https://api.clearance.cardormedia.com` (Coolify/Traefik obtient le certificat).
-   Si l'interface demande le port : `https://api.clearance.cardormedia.com:8090` est
+   `https://clearance-api.cardormedia.com` (Coolify/Traefik obtient le certificat).
+   Si l'interface demande le port : `https://clearance-api.cardormedia.com:8090` est
    la notation Coolify pour « ce domaine → port 8090 du conteneur ».
 5. **Stockage persistant** — *Configuration › Persistent Storage › + Add* :
    type **Volume**, nom `clearance-pb-data`, *Destination Path* **`/pb/pb_data`**.
@@ -53,7 +53,7 @@ et la zone DNS `cardormedia.com` (Cloudflare).
    Coolify, *Health Checks* : chemin `/api/health`, port `8090` (facultatif).
 8. **Deploy**. Le premier démarrage applique les migrations (collections, règles,
    index) puis les réglages tirés des variables (SMTP, limites, sauvegardes…).
-9. **Compte superadmin** (console `https://api.clearance.cardormedia.com/_/`) —
+9. **Compte superadmin** (console `https://clearance-api.cardormedia.com/_/`) —
    *Coolify › l'application › Terminal* (conteneur en cours d'exécution) :
 
    ```sh
@@ -63,22 +63,22 @@ et la zone DNS `cardormedia.com` (Cloudflare).
    Le mot de passe ne va **jamais** dans le dépôt ni dans les variables Coolify ;
    le ranger dans le gestionnaire de mots de passe du studio. (Autre voie : au premier
    démarrage, le journal affiche un lien `…/_/#/pbinstall/…` à usage unique ; remplacer
-   `http://0.0.0.0:8090` par `https://api.clearance.cardormedia.com`.)
+   `http://0.0.0.0:8090` par `https://clearance-api.cardormedia.com`.)
    Puis, dans la console : *Settings › Superusers* → activer **MFA**/OTP pour le
    superadmin si souhaité, et éventuellement restreindre `superuserIPs`.
 10. **Vérifications** (depuis un poste quelconque) :
 
     ```sh
-    curl -s https://api.clearance.cardormedia.com/api/health
-    curl -s https://api.clearance.cardormedia.com/api/clearance/status
-    curl -sI https://api.clearance.cardormedia.com/api/clearance/status | grep -i cross-origin-resource-policy
+    curl -s https://clearance-api.cardormedia.com/api/health
+    curl -s https://clearance-api.cardormedia.com/api/clearance/status
+    curl -sI https://clearance-api.cardormedia.com/api/clearance/status | grep -i cross-origin-resource-policy
     curl -s -X POST -H 'Content-Type: application/json' \
-         -d '{"email":"<votre adresse>"}' https://api.clearance.cardormedia.com/api/collections/users/request-otp
+         -d '{"email":"<votre adresse>"}' https://clearance-api.cardormedia.com/api/collections/users/request-otp
     ```
 
     Le dernier appel doit déposer un code dans votre boîte (sinon : §5). Le compte de
     test se supprime ensuite depuis la console (*Collections › users*).
-11. **Site** (lot W) : ajouter `https://api.clearance.cardormedia.com` à `connect-src`
+11. **Site** (lot W) : ajouter `https://clearance-api.cardormedia.com` à `connect-src`
     de la CSP de `/play/` dans `site/nginx.conf` (`docs/ONLINE.md` §1.2).
 
 ---
@@ -98,7 +98,7 @@ et la zone DNS `cardormedia.com` (Cloudflare).
 | `PB_ENCRYPTION_KEY` | *(vide = pas de chiffrement)* | **secret**, **exactement 32 caractères** : chiffre les réglages stockés (dont `SMTP_PASSWORD`) dans `pb_data`. Générer : `openssl rand -hex 16`. Ne plus jamais le changer ensuite (sinon réglages illisibles). |
 | `CLEARANCE_ORIGINS` | `https://clearance.cardormedia.com,https://www.clearance.cardormedia.com` | origines CORS autorisées (page `/play/`). Les clients natifs n'envoient pas d'`Origin`. |
 | `CLEARANCE_TRUSTED_PROXY_HEADERS` | `CF-Connecting-IP,X-Forwarded-For` | en-têtes donnant l'IP réelle (limites par IP). Sans Cloudflare : `X-Forwarded-For`. |
-| `CLEARANCE_APP_URL` | `https://api.clearance.cardormedia.com` | URL publique (liens de la console) |
+| `CLEARANCE_APP_URL` | `https://clearance-api.cardormedia.com` | URL publique (liens de la console) |
 | `CLEARANCE_OTP_PER_10MIN` | `5` | demandes de code par IP et par 10 min (échanges : le double) |
 | `CLEARANCE_RATE_LIMITS` | `1` | `0` désactive les limites par IP de PocketBase (déconseillé) |
 | `CLEARANCE_ENDINGS_CACHE_S` | `300` | cache des agrégats de fins (s) |

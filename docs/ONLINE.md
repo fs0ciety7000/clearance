@@ -15,7 +15,7 @@ Serveur : **PocketBase 0.40.6** (`server/`), une seule instance, SQLite.
 
 | | |
 |---|---|
-| URL de base (production) | `https://api.clearance.cardormedia.com` |
+| URL de base (production) | `https://clearance-api.cardormedia.com` |
 | URL de base (dev local) | `http://127.0.0.1:8090` (`tools/online_dev_server.sh`) |
 | Format | JSON UTF-8 (`Content-Type: application/json`) en requête et en réponse |
 | Authentification | en-tête `Authorization: <jeton>` (le préfixe `Bearer ` est aussi accepté) |
@@ -58,7 +58,7 @@ Toute erreur a la forme PocketBase, enrichie d'un `code` stable sur les routes `
 - **CORS** : origines autorisées = variable `CLEARANCE_ORIGINS` du serveur (défaut : `https://clearance.cardormedia.com,https://www.clearance.cardormedia.com`). PocketBase répond aux pré-vols `OPTIONS` (`Access-Control-Allow-Headers` reprend les en-têtes demandés, dont `Authorization` et `Content-Type` ; méthodes `GET, HEAD, PUT, PATCH, POST, DELETE`). Pas de cookies : le client Web appelle `fetch` **sans** `credentials`.
 - **Clients natifs** (PC, Steam Deck) : `HTTPRequest` n'envoie pas d'`Origin` ⇒ CORS sans objet ; aucune restriction.
 - **`Origin: null`** (fichier local, iframe isolée) : **non autorisée** par défaut (M16 §2 l'évoquait) — aucun client du jeu n'en émet ; l'ajouter à `CLEARANCE_ORIGINS` reviendrait à ouvrir l'API à toute page. L'authentification passe par un en-tête (pas de cookie) : CORS n'est pas une barrière de sécurité ici, seulement une hygiène.
-- **Lot W** : la CSP de `/play/` (`site/nginx.conf`) doit ajouter l'API à `connect-src` : `connect-src 'self' blob: data: https://api.clearance.cardormedia.com`. Sans cela, le navigateur bloque les appels même si CORS/CORP sont corrects.
+- **Lot W** : la CSP de `/play/` (`site/nginx.conf`) doit ajouter l'API à `connect-src` : `connect-src 'self' blob: data: https://clearance-api.cardormedia.com`. Sans cela, le navigateur bloque les appels même si CORS/CORP sont corrects.
 - Le serveur ajoute aussi, par défaut (PocketBase), `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Cross-Origin-Opener-Policy: same-origin` (sans effet sur un appel `fetch`).
 
 ### 1.3 État du serveur

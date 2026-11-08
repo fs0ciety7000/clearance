@@ -12,7 +12,7 @@ onBootstrap((e) => {
   const s = e.app.settings()
 
   s.meta.appName = lib.env("CLEARANCE_APP_NAME", "CLEARANCE")
-  s.meta.appURL = lib.env("CLEARANCE_APP_URL", "https://api.clearance.cardormedia.com")
+  s.meta.appURL = lib.env("CLEARANCE_APP_URL", "https://clearance-api.cardormedia.com")
   s.meta.senderName = lib.env("SMTP_SENDER_NAME", "CLEARANCE")
   s.meta.senderAddress = lib.env("SMTP_SENDER_ADDRESS", "no-reply@cardormedia.com")
   s.meta.hideControls = lib.env("CLEARANCE_HIDE_CONTROLS", "1") === "1"
