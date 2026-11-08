@@ -30,8 +30,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Downloads from GitHub release assets can fail (504): the editor and the AppImage tools
+      # are cached, so they are fetched once per version, not on every run.
+      - name: Dossier de l'éditeur (accessible au cache)
+        run: sudo mkdir -p /opt/godot && sudo chown "$USER" /opt/godot
+
+      - name: Cache de l'éditeur Godot
+        id: godot
+        uses: actions/cache@v4
+        with:
+          path: /opt/godot
+          key: godot-editor-${{ env.GODOT_VERSION }}-linux.x86_64
+
       - name: Godot ${{ env.GODOT_VERSION }}
+        if: steps.godot.outputs.cache-hit != 'true'
         run: sudo bash tools/install_godot.sh
+
+      - name: Lien godot (éditeur en cache)
+        if: steps.godot.outputs.cache-hit == 'true'
+        run: |
+          sudo ln -sf "/opt/godot/Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
+          godot --version
 
       - name: Cache des modèles d'export
         id: templates
@@ -98,7 +117,17 @@ jobs:
           bash tools/package_windows.sh
           bash tools/package_windows.sh --demo
 
+      - name: Cache des outils AppImage (appimagetool, runtime)
+        uses: actions/cache@v4
+        with:
+          path: build/_tools
+          key: appimage-tools-${{ hashFiles('tools/package_linux_appimage.sh') }}
+
+      # Optional: the AppImage tools come from GitHub release assets, which sometimes answer 504.
+      # Without them the release still ships every other format (tar.gz, AUR, Steam Deck, .exe, .dmg).
       - name: AppImage Linux — jeu et démo
+        id: appimage
+        continue-on-error: true
         run: |
           bash tools/package_linux_appimage.sh
           bash tools/package_linux_appimage.sh --demo
@@ -172,7 +201,10 @@ jobs:
         working-directory: dist
         run: |
           ls -l
-          sha256sum CLEARANCE-Setup-*.exe CLEARANCE-Demo-Setup-*.exe CLEARANCE-*.AppImage CLEARANCE-*.dmg > SHA256SUMS-installers
+          shopt -s nullglob
+          appimages=(CLEARANCE-*.AppImage)
+          [ ${#appimages[@]} -gt 0 ] || echo "::warning::pas d'AppImage dans cette Release (téléchargement des outils en échec)"
+          sha256sum CLEARANCE-Setup-*.exe CLEARANCE-Demo-Setup-*.exe "${appimages[@]}" CLEARANCE-*.dmg > SHA256SUMS-installers
           cat SHA256SUMS-installers
 
       - name: Release GitHub

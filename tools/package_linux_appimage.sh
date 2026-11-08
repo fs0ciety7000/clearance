@@ -47,7 +47,7 @@ mkdir -p "$TOOLS"
 fetch() { # $1 url, $2 fichier, $3 sha256
 	if [[ ! -f "$2" ]] || ! echo "$3  $2" | sha256sum -c --quiet - >/dev/null 2>&1; then
 		rm -f "$2"
-		curl -fsSL --retry 3 -o "$2.part" "$1" || die "téléchargement impossible : $1"
+		curl -fsSL --retry 6 --retry-delay 30 --connect-timeout 30 -o "$2.part" "$1" || die "téléchargement impossible : $1"
 		echo "$3  $2.part" | sha256sum -c --quiet - || { rm -f "$2.part"; die "SHA-256 inattendu pour $1"; }
 		mv "$2.part" "$2"
 	fi
