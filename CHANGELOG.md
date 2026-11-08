@@ -1,6 +1,6 @@
 # Changelog — CLEARANCE
 
-## Non publié
+## 1.1.1 — 2026-11-08
 
 - **API en ligne** : nouvelle adresse `https://clearance-api.cardormedia.com` (client, page `/play/`, serveur). Les versions 1.1.0 et antérieures utilisent l'ancienne adresse, qui cessera de répondre : elles passeront en mode hors ligne jusqu'à leur mise à jour (D-254).
 
