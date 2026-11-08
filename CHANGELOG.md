@@ -1,5 +1,9 @@
 # Changelog — CLEARANCE
 
+## Non publié
+
+- **API en ligne** : nouvelle adresse `https://clearance-api.cardormedia.com` (client, page `/play/`, serveur). Les versions 1.1.0 et antérieures utilisent l'ancienne adresse, qui cessera de répondre : elles passeront en mode hors ligne jusqu'à leur mise à jour (D-254).
+
 ## 1.1.0 — 2026-11-01
 
 ### M16 « En ligne » (facultatif : le jeu reste entièrement jouable hors ligne)
