@@ -123,7 +123,11 @@ jobs:
           path: build/_tools
           key: appimage-tools-${{ hashFiles('tools/package_linux_appimage.sh') }}
 
+      # Optional: the AppImage tools come from GitHub release assets, which sometimes answer 504.
+      # Without them the release still ships every other format (tar.gz, AUR, Steam Deck, .exe, .dmg).
       - name: AppImage Linux — jeu et démo
+        id: appimage
+        continue-on-error: true
         run: |
           bash tools/package_linux_appimage.sh
           bash tools/package_linux_appimage.sh --demo
@@ -197,7 +201,10 @@ jobs:
         working-directory: dist
         run: |
           ls -l
-          sha256sum CLEARANCE-Setup-*.exe CLEARANCE-Demo-Setup-*.exe CLEARANCE-*.AppImage CLEARANCE-*.dmg > SHA256SUMS-installers
+          shopt -s nullglob
+          appimages=(CLEARANCE-*.AppImage)
+          [ ${#appimages[@]} -gt 0 ] || echo "::warning::pas d'AppImage dans cette Release (téléchargement des outils en échec)"
+          sha256sum CLEARANCE-Setup-*.exe CLEARANCE-Demo-Setup-*.exe "${appimages[@]}" CLEARANCE-*.dmg > SHA256SUMS-installers
           cat SHA256SUMS-installers
 
       - name: Release GitHub
