@@ -15,7 +15,7 @@
 class_name OnlineConfig
 extends RefCounted
 
-const DEFAULT_BASE_URL: String = "https://api.clearance.cardormedia.com"
+const DEFAULT_BASE_URL: String = "https://clearance-api.cardormedia.com"
 ## Version de l'API attendue (`GET /api/clearance/status` → `api_version`).
 const API_VERSION: int = 1
 ## Délai d'une requête (s) : connexion + réponse (`HTTPRequest.timeout`).

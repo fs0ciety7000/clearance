@@ -1874,7 +1874,7 @@ Contrats : `docs/M16.md` (§3), **`docs/ONLINE.md`** (API 1 du serveur, fait foi
 - **Liens avec le jeu** : `main.gd` appelle `OnlineService.on_title()` à chaque arrivée au titre (fin du silence ; premier contact : statut + version d'API, jeton rafraîchi s'il a plus de 24 h, tirage si la synchronisation automatique est active, file d'envoi) ; `EventBus.day_started` → **silence** (`set_quiet(true)` : **aucune requête pendant un shift**, épilogue et Garde compris ; la partie chargée devient l'emplacement protégé) ; `day_ended` → fin du silence, ce qui attendait part ; `game_saved` (soirée) et `save_slots_changed` (fin archivée, suppression, conflit tranché) → envoi ; `profile_changed` → fusion du profil et fins à envoyer. Les demandes d'une même image sont regroupées (`_schedule`) ; les écritures du client sont relayées (`save_slots_changed`, `profile_changed`) sans se relancer.
 - **Réseau** : délai 10 s (`OnlineConfig.REQUEST_TIMEOUT_S`) ; nouvelles tentatives à 2, 8, 30 s (ou `retry_after_s` d'un `429`) **seulement** sur erreur réseau, délai, `429` ou `5xx` ; jamais sur un autre `4xx`. `401` sur une requête authentifiée → session oubliée (`DISCONNECTED`, `session_expired`), **données locales intactes**. Aucune requête ne bloque le fil principal (`HTTPRequest` asynchrone, `use_threads = false` pour le Web).
 - **Confidentialité** : l'adresse n'est stockée que pour l'affichage masqué d'Options › Compte (`n•••@e•••.org`), jamais journalisée ; `otpId` en mémoire seulement ; journaux : méthode, chemin sans requête, statut.
-- **URL** : `OnlineConfig.DEFAULT_BASE_URL` = `https://api.clearance.cardormedia.com` ; réglage caché `api_url` de `account.json` ; debug (`DebugArgs.enabled`) : `--online-url=http://127.0.0.1:8090`, `--online-fake[=demo|signed-out|offline]` (faux serveur, compte de démonstration dans `user://qa_online_fake`, jamais le vrai compte).
+- **URL** : `OnlineConfig.DEFAULT_BASE_URL` = `https://clearance-api.cardormedia.com` ; réglage caché `api_url` de `account.json` ; debug (`DebugArgs.enabled`) : `--online-url=http://127.0.0.1:8090`, `--online-fake[=demo|signed-out|offline]` (faux serveur, compte de démonstration dans `user://qa_online_fake`, jamais le vrai compte).
 
 ### 18.3 Fichiers locaux (`OnlineStore`)
 
@@ -1912,7 +1912,7 @@ La démo **synchronise** sous la **famille `demo`** (`SaveSync.family()` : `kind
 
 ### 18.8 Web, Steam Deck, accessibilité
 
-- **Web** : même code ; Godot passe par `fetch` sans cookies. Le serveur renvoie CORS + `Cross-Origin-Resource-Policy: cross-origin` (page `/play/` en COEP `require-corp`) ; la CSP de `/play/` doit autoriser `connect-src https://api.clearance.cardormedia.com` (lot W, D-236). Libellé d'appareil `Web`.
+- **Web** : même code ; Godot passe par `fetch` sans cookies. Le serveur renvoie CORS + `Cross-Origin-Resource-Policy: cross-origin` (page `/play/` en COEP `require-corp`) ; la CSP de `/play/` doit autoriser `connect-src https://clearance-api.cardormedia.com` (lot W, D-236). Libellé d'appareil `Web`.
 - **Steam Deck** : connexion **sans navigateur** (code à 6 chiffres) ; saisie du code entièrement à la croix (`OtpCodeEntry` : ↑ ↓ change le chiffre, ← → change de case, Ⓐ valide) ; champ d'adresse : bouton CLAVIER (`steam://open/keyboard`) + rappel STEAM + X. Libellé d'appareil `Deck` (`SteamDeck=1`).
 - Manette et focus : UI_FLOW §9.2 ; couleurs d'état toujours doublées d'une icône et d'un texte (DS §2.5).
 
