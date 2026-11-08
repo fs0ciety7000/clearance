@@ -20,7 +20,7 @@ MIRRORS=(
 fetch() {
 	local base
 	for base in "${MIRRORS[@]}"; do
-		if curl -fsSL --retry 3 --retry-delay 5 -o "$2" "${base}/$1" && unzip -tq "$2" >/dev/null 2>&1; then
+		if curl -fsSL --retry 6 --retry-delay 30 --connect-timeout 30 -o "$2" "${base}/$1" && unzip -tq "$2" >/dev/null 2>&1; then
 			return 0
 		fi
 		echo "échec du téléchargement depuis ${base}, essai suivant" >&2
